@@ -6,21 +6,17 @@ import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:lexilingo_app/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:lexilingo_app/features/home/presentation/pages/home_page.dart';
-import 'package:lexilingo_app/features/course/presentation/pages/course_list_page.dart';
-import 'package:lexilingo_app/features/course/data/datasources/course_local_data_source.dart';
-import 'package:lexilingo_app/features/course/data/repositories/course_repository_impl.dart';
-import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
-import 'package:lexilingo_app/features/chat/presentation/pages/chat_page.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
+import 'package:lexilingo_app/features/course/data/datasources/course_local_data_source.dart';
+import 'package:lexilingo_app/features/course/data/repositories/course_repository_impl.dart';
+import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/data/datasources/vocab_local_data_source.dart';
 import 'package:lexilingo_app/features/vocabulary/data/repositories/vocab_repository_impl.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
-import 'package:lexilingo_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,45 +68,9 @@ class LexiLingoApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const MainNavigation(),
+        home: const MainScreen(),
       ),
     );
   }
 }
 
-class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
-
-  @override
-  State<MainNavigation> createState() => _MainNavigationState();
-}
-
-class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomePage(),
-    const CourseListPage(),
-    const ChatPage(),
-    const VocabLibraryPage(),
-    const ProfilePage(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: 'Courses'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'AI Tutor'),
-          NavigationDestination(icon: Icon(Icons.book_outlined), selectedIcon: Icon(Icons.book), label: 'Vocab'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
