@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Learning Courses</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Lexend', sans-serif;
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#111418] dark:text-white">
+<div class="relative flex h-auto min-h-screen w-full flex-col max-w-[480px] mx-auto overflow-x-hidden">
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="flex items-center p-4 justify-between">
+<div class="text-[#111418] dark:text-white flex size-12 shrink-0 items-center">
+<span class="material-symbols-outlined cursor-pointer">arrow_back_ios</span>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Learning Courses</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-[#111418] dark:text-white p-0">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex flex-col p-4 gap-4">
+<div class="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 flex items-center justify-between border border-primary/20">
+<div class="flex flex-col">
+<p class="text-primary font-bold text-sm">Daily Habit</p>
+<p class="text-[#111418] dark:text-white text-base">Practice AI Conversation</p>
+</div>
+<button class="bg-primary text-white p-2 rounded-full">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] bg-white dark:bg-[#1c2a38] overflow-hidden">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDSgBnCW0jvJgf-Nxcog8rxc8sqp7x1ZGy__-lXf8pDRRyY0UVvhlRfcNT8uV-8ivezgKEJYagvz-Ppop9aN1Jdg39RGROT6uAemGBPvK17QM11sIOkX5WHAfMVBdIqsgjiga0YegCou6Z5RIHjlikk22nh-w61gcygOhvgiFPyN6drRJcQFbbJVsTgQOZiTQedICW9WrM7efcpxo5trF4QbIWCdjreHdaZ3qDBPvWQzBYCTFB27MjZ9c_SiyNX3GJVACQ3Gb2hEf5i");'></div>
+<div class="flex flex-col gap-3 p-4">
+<div class="flex flex-col gap-1">
+<p class="text-primary text-xs font-bold uppercase tracking-wider">Grammar &amp; Basics</p>
+<p class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">Beginner Path</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal">Start your journey with basic phrases and daily greetings.</p>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<p class="text-[#111418] dark:text-white text-sm font-medium">Progress</p>
+<p class="text-primary text-sm font-bold">45%</p>
+</div>
+<div class="rounded-full bg-gray-200 dark:bg-gray-700 h-2 overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 45%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="text-[#617589] dark:text-gray-400 text-xs font-medium">12/30 Lessons</span>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm active:scale-95 transition-transform">
+<span class="truncate">Continue</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] bg-white dark:bg-[#1c2a38] overflow-hidden">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCoyJyr2IOMdN0vbHwkxVbw2epPh1jAU9GtK_s6HGX1GqiKAZ1oA2yapIvDtSSLCV4QezFkmZhnacrE5gF2xUa2iQ4hzEZSA4525roedjhkIPLlpGBOLXXSsEa4tWO0nRNdKpcOXPe9SRo5zFI2vxhe1fmPKCBIy4e1r9a5eL0PdxXFsX5EJQcfeUoYQAgvXYFD2aKTVJLYv7016a4QVOfrgR8XWT9Ld3FqikOEIqKwf8bafUT30XdG9U5QtNyT-gZobaUy0DIHt3Hi");'></div>
+<div class="flex flex-col gap-3 p-4">
+<div class="flex flex-col gap-1">
+<p class="text-primary text-xs font-bold uppercase tracking-wider">Fluency Focus</p>
+<p class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">Intermediate Path</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal">Improve your fluency and master complex sentence structures.</p>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<p class="text-[#111418] dark:text-white text-sm font-medium">Progress</p>
+<p class="text-primary text-sm font-bold">15%</p>
+</div>
+<div class="rounded-full bg-gray-200 dark:bg-gray-700 h-2 overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 15%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="text-[#617589] dark:text-gray-400 text-xs font-medium">5/45 Lessons</span>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm active:scale-95 transition-transform">
+<span class="truncate">Continue</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] bg-white dark:bg-[#1c2a38] overflow-hidden opacity-90">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQUFRFJzNyhDBV4dCp5BU2d-3621-QR3J7pnEF7A07P3AEkEoyi65YWHuWxs1ucMf_1bBnQ65c2JOK5XA39F5Qm7mPkx_6J_hlJYUTP3Ew20j1WFMo71iKZS6bz0qaZGCUpFgf2UyMO-jpRKvmZdEF6Q2wyqQ_me439GXSWWRfrCg75A5CJXKRuYY_NKCwcFHdS1NRX65EWMP9TDiwA3GePpDUTdyx4iV3qeOZ7UvPD_CNB9UHf_yN192_rCImhwYNiEdanG_Jsgf0");'></div>
+<div class="flex flex-col gap-3 p-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#e2a21e] text-xs font-bold uppercase tracking-wider">Exam Prep</p>
+<p class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">TOEIC Master</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal">Targeted practice for workplace communication and exam success.</p>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<p class="text-[#111418] dark:text-white text-sm font-medium">Not Started</p>
+<p class="text-gray-400 text-sm font-bold">0%</p>
+</div>
+<div class="rounded-full bg-gray-200 dark:bg-gray-700 h-2 overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 0%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="text-[#617589] dark:text-gray-400 text-xs font-medium">60 Lessons total</span>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm active:scale-95 transition-transform">
+<span class="truncate">Start Path</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] bg-white dark:bg-[#1c2a38] overflow-hidden opacity-90">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD8ZsKj4GByQKV9RyeGeDt6lSwBYvT8ycqksgX6qLh-alxDBzjbjy9tuvL9qDAAHoh_CBcNf9sLc4EMSw3zJtBgawNcmDtZAl_lPz6AuwQyA3Re4JyWqKmdhbjDZrTnwRc7FBzH7IwJ8fhQGpdH5r_inAV4dnrYVtHvAXW2cY6Ui13gC-Fh8j_FCvedXHC1aA-bXT39EVMSsTqdIEyqyq4W29vOyOl4UqoH_WDvd93piTIoYcHmG-4rrHHmUx25w3tpfxROrN5V5byE");'></div>
+<div class="flex flex-col gap-3 p-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#e2a21e] text-xs font-bold uppercase tracking-wider">Academic Focus</p>
+<p class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">IELTS Prep</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal">Intensive vocabulary and grammar for higher band scores.</p>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<p class="text-[#111418] dark:text-white text-sm font-medium">Not Started</p>
+<p class="text-gray-400 text-sm font-bold">0%</p>
+</div>
+<div class="rounded-full bg-gray-200 dark:bg-gray-700 h-2 overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 0%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="text-[#617589] dark:text-gray-400 text-xs font-medium">80 Lessons total</span>
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm active:scale-95 transition-transform">
+<span class="truncate">Start Path</span>
+</button>
+</div>
+</div>
+</div>
+<div class="h-20"></div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto bg-white/90 dark:bg-[#1c2a38]/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 flex items-center justify-around py-3 px-2 z-50">
+<div class="flex flex-1 flex-col items-center gap-1 text-[#617589] dark:text-gray-400">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-medium">Discovery</span>
+</div>
+<div class="flex flex-1 flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="text-[10px] font-medium">Learning</span>
+</div>
+<div class="flex flex-1 flex-col items-center gap-1 text-[#617589] dark:text-gray-400">
+<span class="material-symbols-outlined">forum</span>
+<span class="text-[10px] font-medium">Chat</span>
+</div>
+<div class="flex flex-1 flex-col items-center gap-1 text-[#617589] dark:text-gray-400">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-medium">Notification</span>
+</div>
+<div class="flex flex-1 flex-col items-center gap-1 text-[#617589] dark:text-gray-400">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-medium">Account</span>
+</div>
+</nav>
+</div>
+
+</body></html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Tutor Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "accent-yellow": "#FFD644",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Lexend', sans-serif; }
+        .ios-shadow { box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-screen max-w-md mx-auto flex-col bg-white dark:bg-gray-950 overflow-hidden shadow-2xl">
+<header class="bg-accent-yellow dark:bg-yellow-600 px-4 pt-12 pb-4 flex items-center justify-between ios-shadow z-20">
+<button class="text-gray-900 flex size-10 items-center justify-center rounded-full bg-white/20">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<div class="flex flex-col items-center">
+<h2 class="text-gray-900 text-lg font-bold leading-tight">AI Tutor</h2>
+<div class="flex items-center gap-1">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-medium text-gray-800">Online | Learning Guide</span>
+</div>
+</div>
+<button class="text-gray-900 flex size-10 items-center justify-center rounded-full bg-white/20">
+<span class="material-symbols-outlined">info</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto p-4 space-y-6 hide-scrollbar">
+<div class="flex flex-col items-center py-6">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-24 w-24 border-4 border-accent-yellow shadow-md" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB7j08S11fEpUVbsYxQF7dLRe1TbFOIMCXBxdZepnZ4a6XfLsK4MpdIAr--vTv_b_sQRcHo1i7FjivInGLaxT_p4W873AbslxtutlGVoBNLttdGthAJ9bvVXsI_vKboU0hvRr9va6EIk5Y6zRh5iT1-Gumps6V_Y1mYqctJZC6Qj9y9p1bLcn8P2vP-coBy9dH60woBanrMV5gfVLkwqWMIuVEjrGv0w1dZ8rZUWmCXIIxrc3JIyi--dYM2dlX0IePD8wMqbfregMAJ");'>
+</div>
+<p class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400 max-w-[240px]">
+                    Today's Topic: <span class="font-semibold text-primary">Daily Habits</span>
+</p>
+</div>
+<div class="flex items-end gap-3 max-w-[85%]">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 shrink-0 mb-1" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E");'></div>
+<div class="flex flex-col gap-1">
+<p class="text-gray-500 text-[11px] font-medium ml-1">AI Tutor</p>
+<div class="text-sm font-normal leading-relaxed rounded-2xl rounded-bl-none px-4 py-3 bg-[#f0f2f4] dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm">
+                        Hello! Let's practice. What is the first thing you usually do when you wake up in the morning?
+                    </div>
+</div>
+</div>
+<div class="flex items-end gap-3 justify-end ml-auto max-w-[85%]">
+<div class="flex flex-col gap-1 items-end">
+<p class="text-gray-500 text-[11px] font-medium mr-1">You</p>
+<div class="text-sm font-normal leading-relaxed rounded-2xl rounded-br-none px-4 py-3 bg-primary text-white shadow-md">
+                        I am go to the kitchen for coffee.
+                    </div>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 shrink-0 mb-1" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAqMp7eP7f5P4Ys18yc-E2dnnaw5O7k3GdkVfBbgduka0-lSnnuafKYdSIhNa0ucEcwR8FYlqi4tGeY6zlKkeQfbHxK81S6DL8GCqzbfDuQuzCXfNDtFo2GQSlFA6shionhvtBJWYsfzD5pSUIGzGrkD-_RAWA4z9gv9LMJagNna4AXQLzAgzuR1rjoPZsJ9bLTf8lnpt2zqy0ci4DNsE-yENDdWJHqLksWIGdA1M8dWXyxE1WvgvCcG6q3vxMZsBhdKeNFw00UmXOK");'></div>
+</div>
+<div class="animate-in fade-in slide-in-from-bottom-2 duration-500">
+<div class="flex flex-col items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-800 p-4">
+<div class="flex w-full items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">auto_fix_high</span>
+<p class="text-primary text-sm font-bold">Grammar Correction</p>
+</div>
+<label class="relative flex h-[24px] w-[44px] cursor-pointer items-center rounded-full bg-primary/20 p-1 has-[:checked]:justify-end has-[:checked]:bg-primary transition-all">
+<div class="h-4 w-4 rounded-full bg-white shadow-sm"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+<p class="text-gray-700 dark:text-gray-300 text-sm leading-normal">
+                        "I <span class="text-red-500 line-through">am go</span> to the kitchen..." → 
+                        <span class="text-green-600 font-semibold italic">"I go to the kitchen..."</span>
+</p>
+</div>
+</div>
+<div class="flex items-end gap-3 max-w-[85%]">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 shrink-0 mb-1" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCRh61JxVQkTtaKdo7qZu2uyhfEFQ-aqLcOs-CTBgt_ZkA3nLbZEBzalKJNCF_IaMPnNViBsCWvO03eI6a6H8FofRESVuM9ohEbLJ1gviiUsoOMBWw5JjvvcJaudJiTdWKg6YHzp6IxMfTcZfTU-SfYwsFE_F25AmZh0Nyx3PGLHwPZTUnFNCX7YDuW8FwLUaUy7rrI_cACNetcaOsRyvp0uWkW7cZeCfyhhhFKYsYnKl4opQTKWTqV8ZMlSzoUv73rUVU9dIQN1sJP");'></div>
+<div class="flex flex-col gap-1">
+<p class="text-gray-500 text-[11px] font-medium ml-1">AI Tutor</p>
+<div class="text-sm font-normal leading-relaxed rounded-2xl rounded-bl-none px-4 py-3 bg-[#f0f2f4] dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm">
+                        Great! "I go to the kitchen" is correct. Do you prefer coffee or tea in the morning?
+                    </div>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800">
+<div class="p-4 space-y-4">
+<div class="flex gap-2 overflow-x-auto hide-scrollbar">
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50">
+                        I prefer coffee.
+                    </button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50">
+                        I usually drink tea.
+                    </button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50">
+                        Can you explain why?
+                    </button>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex flex-1 items-center bg-gray-100 dark:bg-gray-800 rounded-2xl px-3 py-1">
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 dark:text-white" placeholder="Type your message..." type="text"/>
+<button class="text-gray-400 hover:text-primary">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+<button class="flex size-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+<nav class="flex items-center justify-around border-t border-gray-100 dark:border-gray-800 px-2 py-3">
+<a class="flex flex-col items-center gap-1 text-gray-400" href="#">
+<span class="material-symbols-outlined text-[24px]">explore</span>
+<span class="text-[10px] font-medium">Discovery</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400" href="#">
+<span class="material-symbols-outlined text-[24px]">school</span>
+<span class="text-[10px] font-medium">Learning</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1">chat_bubble</span>
+<span class="text-[10px] font-medium">Chat</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400" href="#">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="text-[10px] font-medium">Notification</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-gray-400" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[10px] font-medium">Account</span>
+</a>
+</nav>
+<div class="h-6"></div>
+</footer>
+</div>
+
+</body></html>
