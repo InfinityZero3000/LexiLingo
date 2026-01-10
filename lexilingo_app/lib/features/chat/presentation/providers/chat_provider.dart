@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/message.dart';
-import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/get_chat_history_usecase.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/save_message_usecase.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/send_message_to_ai_usecase.dart';
 
 class ChatProvider extends ChangeNotifier {
-  final ChatRepository repository;
+  final SendMessageToAIUseCase sendMessageToAIUseCase;
+  final SaveMessageUseCase saveMessageUseCase;
+  final GetChatHistoryUseCase getChatHistoryUseCase;
   List<Message> _messages = [];
   bool _isLoading = false;
 
-  ChatProvider({required this.repository}) {
+  ChatProvider({
+    required this.sendMessageToAIUseCase,
+    required this.saveMessageUseCase,
+    required this.getChatHistoryUseCase,
+  }) {
     _loadHistory();
   }
 
@@ -15,7 +24,7 @@ class ChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Future<void> _loadHistory() async {
-    _messages = await repository.getChatHistory();
+    _messages = await getChatHistoryUseCase(NoParams());
     notifyListeners();
   }
 
@@ -27,14 +36,14 @@ class ChatProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    await repository.saveMessage(userMsg);
+    await saveMessageUseCase(SaveMessageParams(message: userMsg));
 
     try {
-      final aiResponseText = await repository.sendMessageToAI(content);
+      final aiResponseText = await sendMessageToAIUseCase(SendMessageParams(message: content));
       final aiMsg = Message(content: aiResponseText, isUser: false, timestamp: DateTime.now());
       
       _messages.add(aiMsg);
-      await repository.saveMessage(aiMsg);
+      await saveMessageUseCase(SaveMessageParams(message: aiMsg));
     } catch (e) {
       _messages.add(Message(content: "Error: Could not get response.", isUser: false, timestamp: DateTime.now()));
     } finally {
