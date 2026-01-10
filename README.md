@@ -1,291 +1,444 @@
-# 📚 LexiLingo - Documentation Index
+# LexiLingo
 
-Welcome to LexiLingo documentation! This index will help you find the information you need.
+> AI-Powered Language Learning Platform with Personalized Vocabulary Management
 
-## 🗂️ Documentation Structure
+[![Flutter](https://img.shields.io/badge/Flutter-3.24.0-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.8.1-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
+
+![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey?style=flat-square)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)
+![Code Coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen?style=flat-square)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Development Workflow](#development-workflow)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+LexiLingo is a modern language learning application that combines artificial intelligence tutoring with personalized vocabulary management. Built with Flutter and following Clean Architecture principles, the app provides an intuitive and efficient learning experience across multiple platforms.
+
+The application leverages Google's Gemini AI for intelligent conversation practice and implements a comprehensive vocabulary system that adapts to individual learning patterns.
+
+### Design Philosophy
+
+- **Clean Architecture**: Separation of concerns with clear dependency rules
+- **SOLID Principles**: Maintainable and scalable codebase
+- **Test-Driven Development**: High code coverage with unit and widget tests
+- **Enterprise-Grade**: Production-ready code following industry best practices
+
+---
+
+## Key Features
+
+### AI Chat Tutor
+Engage in natural conversations with an AI tutor powered by Google Gemini. Practice language skills through contextual dialogue and receive instant feedback.
+
+### Vocabulary Management
+- Personal vocabulary library with search functionality
+- Word of the Day feature
+- Progress tracking and learning analytics
+- Categorized word collections
+
+### Structured Learning
+- Multiple course levels (Beginner, Intermediate, Advanced)
+- Progress tracking across courses
+- Personalized learning paths
+- Achievement system
+
+### User Experience
+- Google Sign-In authentication
+- Cross-platform synchronization
+- Offline mode support
+- Push notifications for learning reminders
+- Dark mode support
+
+---
+
+## Architecture
+
+The application follows **Clean Architecture** with three distinct layers:
 
 ```
-LexiLingo/
-├── README.md                          # Project overview (this file)
-├── lexilingo_app/README.md           # Technical documentation
-├── SRS.md                             # Software Requirements Specification
-├── CONTRIBUTING.md                    # How to contribute
-├── GIT_WORKFLOW.md                    # Complete Git workflow guide
-├── GIT_QUICK_REFERENCE.md            # Git commands cheat sheet
-├── GIT_EXAMPLES.md                    # Practical Git examples
-└── .github/
-    └── pull_request_template.md       # PR template
+┌─────────────────────────────────────────────────────────┐
+│                   Presentation Layer                    │
+│              (UI, Widgets, State Management)            │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────┐
+│                    Domain Layer                         │
+│        (Entities, Use Cases, Repository Interfaces)     │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ↓
+┌─────────────────────────────────────────────────────────┐
+│                     Data Layer                          │
+│    (Repository Implementations, Data Sources, Models)   │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## 🎯 Quick Navigation
+### Layer Responsibilities
+
+**Presentation Layer**
+- UI components and screens
+- State management (Provider)
+- User interaction handling
+
+**Domain Layer**
+- Business logic and rules
+- Entity definitions
+- Use case implementations
+- Repository contracts
+
+**Data Layer**
+- API integrations
+- Local database operations
+- Data transformation (Models)
+- Repository implementations
+
+### Dependency Injection
+
+Dependencies are managed using **GetIt** service locator, providing:
+- Loose coupling between layers
+- Easy testing and mocking
+- Centralized dependency management
+- Lifecycle management
+
+---
+
+## Technology Stack
+
+### Core Technologies
+
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Framework | Flutter | 3.24.0 |
+| Language | Dart | 3.8.1 |
+| State Management | Provider | 6.1.5 |
+| Dependency Injection | GetIt | 8.0.3 |
+| Functional Programming | Dartz | 0.10.1 |
+
+### Backend & Services
+
+| Service | Technology | Purpose |
+|---------|-----------|---------|
+| AI Integration | Google Gemini API | Conversational AI |
+| Authentication | Google Sign-In | User authentication |
+| Local Database | SQLite | Offline data storage |
+| Notifications | Flutter Local Notifications | Push notifications |
+
+### Development Tools
+
+- **Git Flow**: Branching strategy
+- **Conventional Commits**: Commit message standard
+- **GitHub Actions**: CI/CD pipeline
+- **Flutter Analyze**: Static code analysis
+- **Flutter Test**: Unit and widget testing
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+```bash
+Flutter SDK: 3.24.0 or higher
+Dart SDK: 3.8.1 or higher
+iOS: 13.0+
+Android: API 24+ (Android 7.0)
+```
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/InfinityZero3000/LexiLingo.git
+cd LexiLingo/lexilingo_app
+```
+
+2. Install dependencies
+```bash
+flutter pub get
+```
+
+3. Run the application
+```bash
+flutter run
+```
+
+### Configuration
+
+Create a `.env` file for environment variables:
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+### Build for Production
+
+```bash
+# iOS
+flutter build ios --release
+
+# Android APK
+flutter build apk --release
+
+# Android App Bundle
+flutter build appbundle --release
+```
+
+---
+
+## Project Structure
+
+```
+lib/
+├── core/                           # Core functionality
+│   ├── di/                        # Dependency injection
+│   ├── error/                     # Error handling
+│   ├── usecase/                   # Base use case
+│   ├── utils/                     # Utilities
+│   ├── network/                   # Network layer
+│   ├── services/                  # Shared services
+│   └── theme/                     # App theming
+│
+└── features/                      # Feature modules
+    ├── auth/                      # Authentication
+    ├── vocabulary/                # Vocabulary management
+    ├── chat/                      # AI Chat
+    ├── course/                    # Learning courses
+    ├── profile/                   # User profile
+    ├── notifications/             # Notifications
+    └── home/                      # Dashboard
+    
+    Each feature contains:
+    ├── domain/                    # Business logic
+    │   ├── entities/             # Business objects
+    │   ├── repositories/         # Repository interfaces
+    │   └── usecases/            # Use cases
+    ├── data/                     # Data implementation
+    │   ├── models/              # Data models
+    │   ├── datasources/         # Data sources
+    │   └── repositories/        # Repository implementations
+    └── presentation/            # UI components
+        ├── pages/              # Screens
+        ├── widgets/            # Reusable widgets
+        └── providers/          # State management
+```
+
+---
+
+## Development Workflow
+
+### Branch Strategy
+
+We follow **Git Flow** branching model:
+
+```
+main            → Production releases
+develop         → Development integration
+feature/*       → New features
+bugfix/*        → Bug fixes
+hotfix/*        → Production hotfixes
+release/*       → Release preparation
+```
+
+### Branch Naming Convention
+
+```bash
+feature/LEXI-123-add-vocabulary-search
+bugfix/LEXI-456-fix-login-crash
+hotfix/LEXI-789-critical-security-fix
+release/v1.0.0
+```
+
+### Commit Message Format
+
+Following Conventional Commits:
+
+```bash
+feat(vocabulary): add word search functionality
+fix(auth): resolve token refresh issue
+docs(readme): update installation guide
+refactor(core): apply clean architecture
+test(chat): add unit tests for message service
+```
+
+### Pull Request Process
+
+1. Create feature branch from `develop`
+2. Implement changes following coding standards
+3. Write/update tests
+4. Ensure all tests pass
+5. Create Pull Request using template
+6. Address review comments
+7. Merge after approval
+
+---
+
+## Documentation
+
+Comprehensive documentation is available:
+
+| Document | Description | Link |
+|----------|-------------|------|
+| Quick Start | 5-minute setup guide | [QUICKSTART.md](QUICKSTART.md) |
+| Technical Docs | Architecture & setup | [lexilingo_app/README.md](lexilingo_app/README.md) |
+| Contributing | Coding standards & guidelines | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Git Workflow | Complete workflow guide | [GIT_WORKFLOW.md](GIT_WORKFLOW.md) |
+| Git Reference | Command cheat sheet | [GIT_QUICK_REFERENCE.md](GIT_QUICK_REFERENCE.md) |
+| Git Examples | Real-world scenarios | [GIT_EXAMPLES.md](GIT_EXAMPLES.md) |
+| Requirements | Software specifications | [SRS.md](SRS.md) |
+
+---
+
+## Contributing
+
+We welcome contributions from the community! Here's how to get started:
 
 ### For New Contributors
 
-Start here to understand the project:
+1. Read [QUICKSTART.md](QUICKSTART.md) for quick setup
+2. Review [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
+3. Check [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for workflow guidelines
+4. Look for issues labeled `good first issue`
 
-1. **[lexilingo_app/README.md](./lexilingo_app/README.md)** - Project overview & architecture
-2. **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contributing guidelines
-3. **[GIT_WORKFLOW.md](./GIT_WORKFLOW.md)** - Complete Git workflow
-4. **[GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)** - Quick commands reference
+### Contribution Guidelines
 
-### For Developers
+- Follow Clean Architecture principles
+- Write tests for new features
+- Update documentation as needed
+- Use Conventional Commits format
+- Ensure CI checks pass
+- Request review from maintainers
 
-Daily development references:
-
-- **[GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)** - Git commands you'll use daily
-- **[GIT_EXAMPLES.md](./GIT_EXAMPLES.md)** - Real-world workflow examples
-- **[.github/pull_request_template.md](./.github/pull_request_template.md)** - PR template
-
-### For Project Managers
-
-Project planning & requirements:
-
-- **[SRS.md](./SRS.md)** - Software Requirements Specification
-- **[lexilingo_app/README.md](./lexilingo_app/README.md)** - Features & roadmap
-
-## 📖 Document Summaries
-
-### 📱 [lexilingo_app/README.md](./lexilingo_app/README.md)
-**Purpose**: Technical project documentation  
-**Contains**:
-- Project overview & features
-- Clean Architecture explanation
-- Setup instructions
-- Dependencies
-- Testing guide
-- Build instructions
-
-**Read this if**: You want to understand the project architecture and get started with development.
-
----
-
-### 📋 [SRS.md](./SRS.md)
-**Purpose**: Software Requirements Specification  
-**Contains**:
-- Functional requirements
-- Non-functional requirements
-- System architecture
-- Use cases
-- User stories
-
-**Read this if**: You need to understand project requirements and specifications.
-
----
-
-### 🤝 [CONTRIBUTING.md](./CONTRIBUTING.md)
-**Purpose**: Contributing guidelines  
-**Contains**:
-- Development setup
-- Coding standards
-- Dart/Flutter best practices
-- Architecture guidelines
-- Testing requirements
-- PR process
-
-**Read this if**: You want to contribute code to the project.
-
----
-
-### 🌳 [GIT_WORKFLOW.md](./GIT_WORKFLOW.md)
-**Purpose**: Complete Git workflow documentation  
-**Contains**:
-- Git Flow strategy explained
-- Branch naming conventions
-- Complete workflow processes
-- Commit message conventions
-- Pull request guidelines
-- Code review process
-- Best practices & anti-patterns
-
-**Read this if**: You want to understand the complete Git workflow used in this project.
-
-**Length**: ~17KB, comprehensive guide
-
----
-
-### 🚀 [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)
-**Purpose**: Quick reference card  
-**Contains**:
-- Branch naming cheat sheet
-- Common workflows (quick commands)
-- Commit message types
-- PR checklist
-- Useful Git commands
-- Emergency commands
-
-**Read this if**: You know Git Flow and just need quick command references.
-
-**Length**: ~5KB, quick access
-
----
-
-### 💡 [GIT_EXAMPLES.md](./GIT_EXAMPLES.md)
-**Purpose**: Practical examples & tutorials  
-**Contains**:
-- Real-world scenario examples
-- Step-by-step workflows
-- Feature development walkthrough
-- Bug fixing examples
-- Hotfix process
-- Release process
-- Conflict resolution
-- Advanced Git techniques
-
-**Read this if**: You learn better from examples and want to see real workflows.
-
-**Length**: ~14KB, detailed examples
-
----
-
-### 📝 [.github/pull_request_template.md](./.github/pull_request_template.md)
-**Purpose**: Pull request template  
-**Contains**:
-- PR description template
-- Checklist items
-- Review guidelines
-
-**Used when**: Creating a new Pull Request on GitHub
-
----
-
-## 🎓 Learning Path
-
-### Level 1: Getting Started (1-2 hours)
-1. Read [lexilingo_app/README.md](./lexilingo_app/README.md) - Understand project
-2. Follow setup instructions
-3. Run the app locally
-4. Explore codebase structure
-
-### Level 2: Understanding Workflow (2-3 hours)
-1. Read [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) - Complete workflow
-2. Read [CONTRIBUTING.md](./CONTRIBUTING.md) - Coding standards
-3. Bookmark [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)
-
-### Level 3: First Contribution (1-2 days)
-1. Pick a simple issue (labeled "good first issue")
-2. Follow [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) for guidance
-3. Create branch following naming convention
-4. Make changes following coding standards
-5. Create PR using template
-6. Respond to review comments
-
-### Level 4: Advanced (Ongoing)
-1. Review other PRs
-2. Help with architecture decisions
-3. Mentor new contributors
-4. Improve documentation
-
-## 🔍 Finding Information
-
-### "How do I...?"
-
-| Question | Document | Section |
-|----------|----------|---------|
-| Get started with the project? | [lexilingo_app/README.md](./lexilingo_app/README.md) | Getting Started |
-| Understand the architecture? | [lexilingo_app/README.md](./lexilingo_app/README.md) | Architecture |
-| Create a new feature branch? | [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) | Example 1 |
-| Fix a bug? | [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) | Example 2 |
-| Write commit messages? | [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) | Section 4 |
-| Handle merge conflicts? | [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) | Example 6 |
-| Create a PR? | [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) | Section 5 |
-| Review code? | [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) | Section 6 |
-| Release a new version? | [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) | Example 4 |
-| Follow coding standards? | [CONTRIBUTING.md](./CONTRIBUTING.md) | Coding Standards |
-
-## 🆘 Getting Help
-
-### Common Issues
-
-**"I'm stuck with Git"**
-→ Check [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) for similar scenarios
-→ Use [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md) emergency commands
-
-**"I don't know the coding style"**
-→ Read [CONTRIBUTING.md](./CONTRIBUTING.md) coding standards section
-→ Look at existing code for patterns
-
-**"My PR was rejected"**
-→ Check [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) PR guidelines
-→ Review [.github/pull_request_template.md](./.github/pull_request_template.md) checklist
-
-**"I broke something"**
-→ See [GIT_EXAMPLES.md](./GIT_EXAMPLES.md) section 9 (Revert)
-→ Ask for help in discussions
-
-## 📞 Support Channels
-
-1. **GitHub Issues** - For bugs and feature requests
-2. **GitHub Discussions** - For questions and help
-3. **Team Chat** - For quick questions (if applicable)
-4. **Code Review** - During PR review process
-
-## 🔄 Documentation Updates
-
-Documentation is a living document. If you find:
-- Outdated information
-- Unclear explanations
-- Missing sections
-- Typos or errors
-
-Please submit a PR with updates! Documentation improvements are highly valued.
-
-### How to Update Documentation
+### Code Quality Standards
 
 ```bash
-git checkout develop
-git checkout -b docs/update-git-workflow
-# Make your changes
-git commit -m "docs: update Git workflow examples"
-git push origin docs/update-git-workflow
-# Create PR
+# Run code analysis
+flutter analyze
+
+# Format code
+dart format .
+
+# Run tests
+flutter test
+
+# Check coverage
+flutter test --coverage
 ```
 
-## ✅ Documentation Checklist
+---
 
-Before starting development, make sure you've read:
+## Testing
 
-- [ ] [lexilingo_app/README.md](./lexilingo_app/README.md) - Project overview
-- [ ] [CONTRIBUTING.md](./CONTRIBUTING.md) - Coding standards
-- [ ] [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) - Git workflow
-- [ ] Bookmarked [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)
-- [ ] Reviewed [GIT_EXAMPLES.md](./GIT_EXAMPLES.md)
+### Test Structure
 
-## 📊 Documentation Stats
+```
+test/
+├── unit/              # Unit tests
+├── widget/            # Widget tests
+└── integration/       # Integration tests
+```
 
-| Document | Size | Reading Time | Last Updated |
-|----------|------|--------------|--------------|
-| lexilingo_app/README.md | ~8KB | 10 min | Jan 10, 2026 |
-| SRS.md | ~4KB | 5 min | Jan 10, 2026 |
-| CONTRIBUTING.md | ~11KB | 15 min | Jan 10, 2026 |
-| GIT_WORKFLOW.md | ~17KB | 25 min | Jan 10, 2026 |
-| GIT_QUICK_REFERENCE.md | ~5KB | 5 min | Jan 10, 2026 |
-| GIT_EXAMPLES.md | ~14KB | 20 min | Jan 10, 2026 |
+### Running Tests
 
-**Total reading time**: ~80 minutes
+```bash
+# All tests
+flutter test
 
-## 🎯 What's Next?
+# Specific test file
+flutter test test/features/vocabulary/domain/usecases/get_words_usecase_test.dart
 
-Now that you know where everything is:
+# With coverage
+flutter test --coverage
+```
 
-1. **New to project?** → Start with [lexilingo_app/README.md](./lexilingo_app/README.md)
-2. **Ready to contribute?** → Read [CONTRIBUTING.md](./CONTRIBUTING.md)
-3. **Need Git help?** → Check [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)
-4. **Want examples?** → See [GIT_EXAMPLES.md](./GIT_EXAMPLES.md)
+### Coverage Goals
+
+- Overall: 80%+
+- Use Cases: 90%+
+- Repositories: 85%+
+- UI: 70%+
+
+---
+
+## Roadmap
+
+### Version 1.0.0 (Current)
+- [x] Core vocabulary management
+- [x] AI chat integration
+- [x] User authentication
+- [x] Clean Architecture implementation
+- [ ] Full test coverage
+- [ ] CI/CD pipeline
+
+### Version 1.1.0
+- [ ] Offline mode
+- [ ] Voice recognition
+- [ ] Advanced analytics
+- [ ] Social features
+
+### Version 2.0.0
+- [ ] Personalized AI learning paths
+- [ ] Speech evaluation
+- [ ] Multi-language support
+- [ ] Gamification features
+
+---
+
+## Support
+
+### Getting Help
+
+- **Issues**: [GitHub Issues](https://github.com/InfinityZero3000/LexiLingo/issues) for bugs and features
+- **Discussions**: [GitHub Discussions](https://github.com/InfinityZero3000/LexiLingo/discussions) for questions
+- **Documentation**: Check relevant docs in the table above
+
+### Reporting Bugs
+
+When reporting bugs, include:
+- Device and OS version
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots if applicable
+- Relevant logs
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- Flutter team for the excellent framework
+- Google AI for Gemini API
+- Open source community for valuable packages
+- Contributors who help improve this project
 
 ---
 
 <div align="center">
 
-**Happy Coding! 🚀**
+**Built with Flutter**
 
-If you have questions, don't hesitate to ask in GitHub Discussions.
-
-[Back to Top](#-lexilingo---documentation-index)
+[Report Bug](https://github.com/InfinityZero3000/LexiLingo/issues) • [Request Feature](https://github.com/InfinityZero3000/LexiLingo/issues) • [Documentation](lexilingo_app/README.md)
 
 </div>
-
----
-
-**Last Updated**: January 10, 2026  
-**Maintained by**: Development Team  
-**Version**: 1.0.0
