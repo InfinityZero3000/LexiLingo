@@ -8,7 +8,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
+    final authService = Provider.of<AuthProvider>(context);
     final user = authService.currentUser;
 
     return Scaffold(
