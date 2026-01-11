@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
-import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class VocabLibraryPage extends StatefulWidget {
@@ -17,7 +17,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   @override
   Widget build(BuildContext context) {
     final vocabProvider = Provider.of<VocabProvider>(context);
-    List<Vocabulary> words = vocabProvider.words;
+    List<VocabWord> words = vocabProvider.words;
 
     // Hardcoded demo data if empty to match design request
     if (words.isEmpty) {
