@@ -20,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   UserEntity? get user => _user;
+  UserEntity? get currentUser => _user;
   bool get isAuthenticated => _user != null;
 
   Future<void> _checkCurrentUser() async {

@@ -30,21 +30,25 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_p
 
 final sl = GetIt.instance; // sl = Service Locator
 
-Future<void> initializeDependencies() async {
+Future<void> initializeDependencies({bool skipDatabase = false}) async {
   // ============ Core ============
-  // Database Helper
-  sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
+  // Database Helper (skip on web platform)
+  if (!skipDatabase) {
+    sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
+  }
   
   // Notification Service
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
 
   // ============ Vocabulary Feature ============
   // Data Sources
-  sl.registerLazySingleton<VocabLocalDataSource>(
-    () => VocabLocalDataSource(databaseHelper: sl()),
-  );
+  if (!skipDatabase) {
+    sl.registerLazySingleton<VocabLocalDataSource>(
+      () => VocabLocalDataSource(dbHelper: sl()),
+    );
+  }
 
-  // Repositories
+  // RepositorieskipDatabase ? null : s
   sl.registerLazySingleton<VocabRepository>(
     () => VocabRepositoryImpl(localDataSource: sl()),
   );
@@ -88,15 +92,17 @@ Future<void> initializeDependencies() async {
 
   // ============ Chat Feature ============
   // Data Sources
-  sl.registerLazySingleton<ChatLocalDataSource>(
-    () => ChatLocalDataSource(databaseHelper: sl()),
-  );
+  if (!skipDatabase) {
+    sl.registerLazySingleton<ChatLocalDataSource>(
+      () => ChatLocalDataSource(dbHelper: sl()),
+    );
+  }
   sl.registerLazySingleton<ChatRemoteDataSource>(
     () => ChatRemoteDataSource(apiKey: 'YOUR_API_KEY'), // TODO: Move to env file
   );
 
   // Repositories
-  sl.registerLazySingleton<ChatRepository>(
+  sl.registerLazySingletkipDatabase ? null : son<ChatRepository>(
     () => ChatRepositoryImpl(
       localDataSource: sl(),
       remoteDataSource: sl(),
@@ -117,13 +123,15 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // ============ Course Feature ============
-  // Data Sources
-  sl.registerLazySingleton<CourseLocalDataSource>(
-    () => CourseLocalDataSource(databaseHelper: sl()),
+  if (!skipDatabase) {
+    sl.registerLazySingleton<CourseLocalDataSource>(
+      () => CourseLocalDataSource(dbHelper: sl()),
+    );
+  }.registerLazySingleton<CourseLocalDataSource>(
+    () => CourseLocalDataSource(dbHelper: sl()),
   );
 
-  // Repositories
+  // RepositorieskipDatabase ? null : s
   sl.registerLazySingleton<CourseRepository>(
     () => CourseRepositoryImpl(localDataSource: sl()),
   );

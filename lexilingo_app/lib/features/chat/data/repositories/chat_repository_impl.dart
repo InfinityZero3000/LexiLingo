@@ -5,9 +5,9 @@ import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource remoteDataSource;
-  final ChatLocalDataSource localDataSource;
+  final ChatLocalDataSource? localDataSource;
 
-  ChatRepositoryImpl({required this.remoteDataSource, required this.localDataSource});
+  ChatRepositoryImpl({required this.remoteDataSource, this.localDataSource});
 
   @override
   Future<String> sendMessageToAI(String message) async {
@@ -16,11 +16,13 @@ class ChatRepositoryImpl implements ChatRepository {
 
   @override
   Future<void> saveMessage(Message message) async {
-    await localDataSource.saveMessage(message);
+    if (localDataSource == null) return;
+    await localDataSource!.saveMessage(message);
   }
 
   @override
   Future<List<Message>> getChatHistory() async {
-    return await localDataSource.getHistory();
+    if (localDataSource == null) return [];
+    return await localDataSource!.getHistory();
   }
 }

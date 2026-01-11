@@ -3,17 +3,19 @@ import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dar
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocab_repository.dart';
 
 class VocabRepositoryImpl implements VocabRepository {
-  final VocabLocalDataSource localDataSource;
+  final VocabLocalDataSource? localDataSource;
 
-  VocabRepositoryImpl({required this.localDataSource});
+  VocabRepositoryImpl({this.localDataSource});
 
   @override
   Future<List<VocabWord>> getWords() async {
-    return await localDataSource.getWords();
+    if (localDataSource == null) return [];
+    return await localDataSource!.getWords();
   }
 
   @override
   Future<void> addWord(VocabWord word) async {
-    await localDataSource.addWord(word);
+    if (localDataSource == null) return;
+    await localDataSource!.addWord(word);
   }
 }
