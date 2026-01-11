@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
@@ -11,8 +14,13 @@ import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart'
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Dependency Injection
-  await di.initializeDependencies();
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Initialize Dependency Injection (skip database on web)
+  await di.initializeDependencies(skipDatabase: kIsWeb);
 
   runApp(const LexiLingoApp());
 }
