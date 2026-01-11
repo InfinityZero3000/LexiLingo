@@ -1,50 +1,90 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 
 class AuthRemoteDataSource {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
+  /// Sign in with Google using Firebase Authentication
   Future<UserEntity?> signIn() async {
     try {
-      final account = await _googleSignIn.signIn();
-      if (account != null) {
+      // Trigger the Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        return null;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential = 
+          await _firebaseAuth.signInWithCredential(credential);
+
+      final User? firebaseUser = userCredential.user;
+      
+      if (firebaseUser != null) {
         return UserEntity(
-          id: account.id,
-          email: account.email,
-          displayName: account.displayName ?? '',
-          photoUrl: account.photoUrl,
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          displayName: firebaseUser.displayName ?? '',
+          photoUrl: firebaseUser.photoURL,
         );
       }
+      
       return null;
     } catch (e) {
       throw Exception('Google Sign In Failed: $e');
     }
   }
 
+  /// Sign out from both Google and Firebase
   Future<void> signOut() async {
-    await _googleSignIn.disconnect();
+    await Future.wait([
+      _firebaseAuth.signOut(),
+      _googleSignIn.signOut(),
+    ]);
   }
 
+  /// Get current Firebase user
   Future<UserEntity?> getCurrentUser() async {
-    final account = _googleSignIn.currentUser;
-     if (account != null) {
+    final User? firebaseUser = _firebaseAuth.currentUser;
+    
+    if (firebaseUser != null) {
       return UserEntity(
-        id: account.id,
-        email: account.email,
-        displayName: account.displayName ?? '',
-        photoUrl: account.photoUrl,
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName ?? '',
+        photoUrl: firebaseUser.photoURL,
       );
     }
-    // Try silent sign in
-    final accountSilent = await _googleSignIn.signInSilently();
-    if (accountSilent != null) {
-      return UserEntity(
-        id: accountSilent.id,
-        email: accountSilent.email,
-        displayName: accountSilent.displayName ?? '',
-        photoUrl: accountSilent.photoUrl,
-      );
-    }
+    
     return null;
+  }
+
+  /// Stream of auth state changes
+  Stream<UserEntity?> get authStateChanges {
+    return _firebaseAuth.authStateChanges().map((User? firebaseUser) {
+      if (firebaseUser != null) {
+        return UserEntity(
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          displayName: firebaseUser.displayName ?? '',
+          photoUrl: firebaseUser.photoURL,
+        );
+      }
+      return null;
+    });
   }
 }
