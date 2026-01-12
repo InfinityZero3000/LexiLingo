@@ -5,7 +5,7 @@ import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 class AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
+    scopes: ['email'],
   );
 
   /// Sign in with Google using Firebase Authentication
@@ -46,6 +46,34 @@ class AuthRemoteDataSource {
       return null;
     } catch (e) {
       throw Exception('Google Sign In Failed: $e');
+    }
+  }
+
+  /// Sign in with email and password
+  Future<UserEntity?> signInWithEmailPassword(String email, String password) async {
+    try {
+      final UserCredential userCredential = 
+          await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final User? firebaseUser = userCredential.user;
+      
+      if (firebaseUser != null) {
+        return UserEntity(
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          displayName: firebaseUser.displayName ?? email.split('@')[0],
+          photoUrl: firebaseUser.photoURL,
+        );
+      }
+      
+      return null;
+    } on FirebaseAuthException catch (e) {
+      throw Exception('Email Sign In Failed: ${e.message}');
+    } catch (e) {
+      throw Exception('Email Sign In Failed: $e');
     }
   }
 
