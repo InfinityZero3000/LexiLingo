@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/auth/data/repositories/auth_repository_im
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
+import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_password_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_local_data_source.dart';
@@ -78,6 +79,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
 
   // Use Cases
   sl.registerLazySingleton(() => SignInWithGoogleUseCase(sl()));
+  sl.registerLazySingleton(() => SignInWithEmailPasswordUseCase(sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
 
@@ -85,6 +87,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   sl.registerFactory(
     () => AuthProvider(
       signInWithGoogleUseCase: sl(),
+      signInWithEmailPasswordUseCase: sl(),
       signOutUseCase: sl(),
       getCurrentUserUseCase: sl(),
     ),
@@ -102,7 +105,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   );
 
   // Repositories
-  sl.registerLazySingletkipDatabase ? null : son<ChatRepository>(
+  sl.registerLazySingleton<ChatRepository>(
     () => ChatRepositoryImpl(
       localDataSource: sl(),
       remoteDataSource: sl(),
@@ -123,15 +126,15 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
     ),
   );
 
+  // ============ Course Feature ============
+  // Data Sources
   if (!skipDatabase) {
     sl.registerLazySingleton<CourseLocalDataSource>(
       () => CourseLocalDataSource(dbHelper: sl()),
     );
-  }.registerLazySingleton<CourseLocalDataSource>(
-    () => CourseLocalDataSource(dbHelper: sl()),
-  );
+  }
 
-  // RepositorieskipDatabase ? null : s
+  // Repositories
   sl.registerLazySingleton<CourseRepository>(
     () => CourseRepositoryImpl(localDataSource: sl()),
   );
