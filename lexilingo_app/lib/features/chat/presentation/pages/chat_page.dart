@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
-import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
