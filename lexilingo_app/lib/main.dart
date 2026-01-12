@@ -6,10 +6,10 @@ import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +43,7 @@ class LexiLingoApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const MainScreen(),
+        home: const AuthWrapper(),
       ),
     );
   }
