@@ -14,5 +14,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity?> signInWithGoogle() => remoteDataSource.signIn();
 
   @override
+  Future<UserEntity?> signInWithEmailPassword(String email, String password) =>
+      remoteDataSource.signInWithEmailPassword(email, password);
+
+  @override
   Future<void> signOut() => remoteDataSource.signOut();
+
+  @override
+  Stream<UserEntity?> get authStateChanges => remoteDataSource.authStateChanges;
 }
