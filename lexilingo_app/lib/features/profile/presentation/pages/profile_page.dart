@@ -25,7 +25,7 @@ class ProfilePage extends StatelessWidget {
                if (authService.isAuthenticated) {
                  await authService.signOut();
                } else {
-                 await authService.signIn();
+                 await authService.signInWithGoogle();
                }
             },
           )
