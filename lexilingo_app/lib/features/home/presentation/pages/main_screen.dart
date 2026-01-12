@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
 import 'home_page.dart';
 import '../../../course/presentation/pages/course_list_page.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
