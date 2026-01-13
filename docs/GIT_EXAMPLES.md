@@ -160,8 +160,8 @@ Root cause: notification permissions API changed in iOS 17.2
 Solution: Added null safety checks and proper error handling
 
 Tested on:
-- iOS 17.2 Simulator ✅
-- iOS 17.2 Physical device ✅
+- iOS 17.2 Simulator 
+- iOS 17.2 Physical device 
 
 Fixes LEXI-500"
 
