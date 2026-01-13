@@ -217,12 +217,12 @@ git push origin feature/LEXI-XXX-your-feature
 We follow [Effective Dart](https://dart.dev/guides/language/effective-dart) guidelines:
 
 ```dart
-// ✅ Good
+// Good
 class VocabRepository {}
 final userName = 'John';
 const maxRetryCount = 3;
 
-// ❌ Bad
+// Bad
 class vocab_repository {}
 final UserName = 'John';
 ```

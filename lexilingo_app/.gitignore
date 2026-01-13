@@ -32,6 +32,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+.metadata
+pubspec.lock
+.packages
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +46,67 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase & Sensitive Data - BẢO VỆ DỮ LIỆU CÁ NHÂN
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+firebase_app_id_file.json
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+
+# Environment & API Keys
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+*.keystore
+key.properties
+keystore.properties
+
+# iOS Specific
+**/ios/Pods/
+**/ios/Podfile.lock
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/.symlinks/
+**/ios/Runner.xcworkspace/xcshareddata/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GoogleService-Info.plist
+
+# macOS Specific
+**/macos/Pods/
+**/macos/Podfile.lock
+**/macos/Flutter/ephemeral/
+**/macos/.symlinks/
+
+# Android Specific
+**/android/local.properties
+**/android/app/google-services.json
+**/android/key.properties
+**/android/app/*.jks
+**/android/app/*.keystore
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/gradle/wrapper/gradle-wrapper.jar
+
+# Web Specific
+**/web/.firebase/
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+*.realm
+
+# Logs and Temporary Files
+*.tmp
+*.temp
+*~
+*.bak
+*.backup
