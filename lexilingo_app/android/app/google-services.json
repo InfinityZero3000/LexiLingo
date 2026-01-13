@@ -29,6 +29,13 @@
             {
               "client_id": "432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "432329288238-88fnq4l6etmq5qs15kf73d2eqcoq3qos.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lexilingo.lexilingoApp"
+              }
             }
           ]
         }

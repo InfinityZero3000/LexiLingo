@@ -109,12 +109,12 @@ lib/
 
 #### File Naming
 ```dart
-// ✅ Good
+// Good
 user_repository.dart
 vocab_word_model.dart
 get_words_usecase.dart
 
-// ❌ Bad
+// Bad
 UserRepository.dart
 vocabWordModel.dart
 GetWords.dart
@@ -122,31 +122,31 @@ GetWords.dart
 
 #### Class Naming
 ```dart
-// ✅ Good - PascalCase
+// Good - PascalCase
 class VocabRepository {}
 class UserEntity {}
 class GetWordsUseCase {}
 
-// ❌ Bad
+// Bad
 class vocabRepository {}
 class user_entity {}
 ```
 
 #### Variable Naming
 ```dart
-// ✅ Good - camelCase
+// Good - camelCase
 final userName = 'John';
 final isAuthenticated = true;
 final wordCount = 10;
 
-// ❌ Bad
+// Bad
 final UserName = 'John';
 final is_authenticated = true;
 ```
 
 #### Constants
 ```dart
-// ✅ Good - lowerCamelCase
+// Good - lowerCamelCase
 const maxRetryCount = 3;
 const apiTimeout = Duration(seconds: 30);
 
@@ -230,30 +230,30 @@ class _HelperClass {}
 
 #### Use const constructors
 ```dart
-// ✅ Good
+// Good
 const Text('Hello');
 const SizedBox(height: 16);
 
-// ❌ Bad
+// Bad
 Text('Hello');
 SizedBox(height: 16);
 ```
 
 #### Null Safety
 ```dart
-// ✅ Good
+// Good
 String? nullableString;
 final nonNullString = nullableString ?? 'default';
 final length = nullableString?.length ?? 0;
 
-// ❌ Bad
+// Bad
 String nullableString;  // Should be String?
 final length = nullableString!.length;  // Avoid ! when possible
 ```
 
 #### Async/Await
 ```dart
-// ✅ Good
+// Good
 Future<List<Word>> getWords() async {
   try {
     final words = await repository.getWords();
@@ -263,7 +263,7 @@ Future<List<Word>> getWords() async {
   }
 }
 
-// ❌ Bad
+// Bad
 Future<List<Word>> getWords() {
   return repository.getWords().then((words) {
     return words;
@@ -275,7 +275,7 @@ Future<List<Word>> getWords() {
 
 #### Error Handling
 ```dart
-// ✅ Good
+// Good
 try {
   await performOperation();
 } on NetworkException catch (e) {
@@ -289,7 +289,7 @@ try {
   throw UnexpectedFailure(e.toString());
 }
 
-// ❌ Bad
+// Bad
 try {
   await performOperation();
 } catch (e) {
@@ -299,7 +299,7 @@ try {
 
 #### Widget Composition
 ```dart
-// ✅ Good - Extract widgets
+// Good - Extract widgets
 class UserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -317,7 +317,7 @@ class UserProfile extends StatelessWidget {
   Widget _buildFooter() => Container();
 }
 
-// ❌ Bad - Nested widgets
+// Bad - Nested widgets
 class UserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -378,12 +378,12 @@ See [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) for detailed commit guidelines.
 ## 🔄 Pull Request Process
 
 ### Before Creating PR
-1. ✅ Self-review your code
-2. ✅ Run all tests locally
-3. ✅ Update documentation
-4. ✅ Sync with latest develop
-5. ✅ No merge conflicts
-6. ✅ CI checks passing
+1. Self-review your code
+2. Run all tests locally
+3. Update documentation
+4. Sync with latest develop
+5. No merge conflicts
+6. CI checks passing
 
 ### PR Size Guidelines
 - **Small:** < 100 lines (Ideal)
@@ -413,8 +413,8 @@ We provide a PR template. Fill it completely:
 - Be constructive and respectful
 - Explain why, not just what
 - Use comment types:
-  - ❌ MUST FIX
-  - ⚠️ SHOULD FIX
+  - MUST FIX
+  - SHOULD FIX
   - 💡 SUGGESTION
   - ❓ QUESTION
   - 🎉 PRAISE
@@ -441,7 +441,7 @@ test/
 
 ### Writing Tests
 ```dart
-// ✅ Good test
+// Good test
 test('should return list of words when repository call is successful', () async {
   // Arrange
   when(mockRepository.getWords()).thenAnswer((_) async => tWordList);
