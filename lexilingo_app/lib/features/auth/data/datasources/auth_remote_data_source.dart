@@ -1,11 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email'],
+    // Web OAuth Client ID - required for web platform
+    clientId: kIsWeb 
+        ? '432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com'
+        : null,
   );
 
   /// Sign in with Google using Firebase Authentication
