@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart'
 /// import 'firebase_options.dart';
 /// // ...
 /// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
+///     options: DefaultFirebaseOptions.currentPlatform,
 /// );
 /// ```
 class DefaultFirebaseOptions {
@@ -44,38 +44,38 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForLexiLingoWeb123456789012',
-    appId: '1:123456789012:web:abcdef1234567890abcdef',
-    messagingSenderId: '123456789012',
-    projectId: 'lexilingo-demo',
-    authDomain: 'lexilingo-demo.firebaseapp.com',
-    storageBucket: 'lexilingo-demo.appspot.com',
-    measurementId: 'G-MEASUREMENT',
+    apiKey: 'AIzaSyDxb89kPDmWalE3fx8Jlo45pNYMfpe-Q5I',
+    appId: '1:432329288238:web:1e2bb6c5f46c35b2718dbf',
+    messagingSenderId: '432329288238',
+    projectId: 'lexilingo-88492',
+    authDomain: 'lexilingo-88492.firebaseapp.com',
+    storageBucket: 'lexilingo-88492.firebasestorage.app',
+    measurementId: 'G-H6F7RM710J',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForLexiLingoAndroid123456789',
-    appId: '1:123456789012:android:abcdef1234567890abcdef',
-    messagingSenderId: '123456789012',
-    projectId: 'lexilingo-demo',
-    storageBucket: 'lexilingo-demo.appspot.com',
+    apiKey: '***REMOVED***',
+    appId: '1:432329288238:android:27021651b0302784718dbf',
+    messagingSenderId: '432329288238',
+    projectId: 'lexilingo-88492',
+    storageBucket: 'lexilingo-88492.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForLexiLingoIOS123456789012',
-    appId: '1:123456789012:ios:abcdef1234567890abcdef',
-    messagingSenderId: '123456789012',
-    projectId: 'lexilingo-demo',
-    storageBucket: 'lexilingo-demo.appspot.com',
-    iosBundleId: 'com.example.lexilingoApp',
+    apiKey: 'AIzaSyDnGOEn-S0gI75ZsznWAE8KZslFbXZVhx4',
+    appId: '1:432329288238:ios:982737f02386c9ac718dbf',
+    messagingSenderId: '432329288238',
+    projectId: 'lexilingo-88492',
+    storageBucket: 'lexilingo-88492.firebasestorage.app',
+    iosBundleId: 'com.lexilingo.lexilingoApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForLexiLingoMacOS123456789012',
-    appId: '1:123456789012:ios:abcdef1234567890abcdef',
-    messagingSenderId: '123456789012',
-    projectId: 'lexilingo-demo',
-    storageBucket: 'lexilingo-demo.appspot.com',
-    iosBundleId: 'com.example.lexilingoApp',
+    apiKey: 'AIzaSyDnGOEn-S0gI75ZsznWAE8KZslFbXZVhx4',
+    appId: '1:432329288238:ios:982737f02386c9ac718dbf',
+    messagingSenderId: '432329288238',
+    projectId: 'lexilingo-88492',
+    storageBucket: 'lexilingo-88492.firebasestorage.app',
+    iosBundleId: 'com.lexilingo.lexilingoApp',
   );
 }
