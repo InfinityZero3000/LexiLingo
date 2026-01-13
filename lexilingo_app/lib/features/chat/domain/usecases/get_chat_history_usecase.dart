@@ -1,14 +1,17 @@
-import 'package:lexilingo_app/core/usecase/usecase.dart';
-import 'package:lexilingo_app/features/chat/domain/entities/message.dart';
-import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:dartz/dartz.dart';
+import '../../../../core/error/failures.dart';
+import '../entities/chat_message.dart';
+import '../repositories/chat_repository.dart';
 
-class GetChatHistoryUseCase implements UseCase<List<Message>, NoParams> {
+/// Use case for getting chat history (messages) for a session
+class GetChatHistoryUseCase {
   final ChatRepository repository;
 
   GetChatHistoryUseCase(this.repository);
 
-  @override
-  Future<List<Message>> call(NoParams params) async {
-    return await repository.getChatHistory();
+  /// Execute the use case
+  /// Returns all messages for the given session
+  Future<Either<Failure, List<ChatMessage>>> call(String sessionId) async {
+    return await repository.getMessages(sessionId);
   }
 }
