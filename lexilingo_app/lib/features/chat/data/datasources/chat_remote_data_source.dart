@@ -5,7 +5,7 @@ class ChatRemoteDataSource {
   late GenerativeModel _model;
 
   ChatRemoteDataSource({required this.apiKey}) {
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
+    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
   }
 
   Future<String> sendMessage(String message) async {
