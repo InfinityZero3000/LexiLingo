@@ -28,4 +28,7 @@ pubspec.lock
 !**/google-services.json.example
 !**/GoogleService-Info.plist.example
 !**/firebase_options.dart.example
+
+# Orther
 docs
+DL-Model-Support/
