@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
@@ -15,6 +16,9 @@ import 'package:lexilingo_app/features/user/presentation/providers/user_provider
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables from .env file
+  await dotenv.load(fileName: ".env");
   
   // Initialize Firebase
   await Firebase.initializeApp(
