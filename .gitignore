@@ -18,3 +18,13 @@ build/
 /.flutter-plugins-dependencies
 /.packages
 pubspec.lock
+
+# Firebase & Google Services - SENSITIVE DATA
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_options.dart
+
+# Keep template files
+!**/google-services.json.example
+!**/GoogleService-Info.plist.example
+!**/firebase_options.dart.example
