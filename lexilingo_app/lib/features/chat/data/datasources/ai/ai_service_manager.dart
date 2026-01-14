@@ -1,5 +1,5 @@
-import '../../../core/services/ai_service.dart';
-import '../../domain/repositories/chat_repository.dart';
+import '../../../../../core/services/ai_service.dart';
+import '../../../domain/repositories/chat_repository.dart';
 
 /// Manages multiple AI services and provides fallback logic
 /// Uses Strategy Pattern to switch between different AI models
