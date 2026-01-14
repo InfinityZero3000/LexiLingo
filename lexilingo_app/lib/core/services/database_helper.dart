@@ -4,6 +4,13 @@ import 'package:path/path.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
+  
+  // Database type constants
+  static const String idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  static const String textType = 'TEXT NOT NULL';
+  static const String textNullable = 'TEXT';
+  static const String boolType = 'BOOLEAN NOT NULL';
+  static const String intType = 'INTEGER NOT NULL';
 
   DatabaseHelper._init();
 
@@ -48,12 +55,6 @@ class DatabaseHelper {
   }
 
   Future _createDB(Database db, int version) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const textNullable = 'TEXT';
-    const boolType = 'BOOLEAN NOT NULL';
-    const intType = 'INTEGER NOT NULL';
-
     // Create all tables
     await _createUsersTable(db);
     await _createSettingsTable(db);
@@ -158,10 +159,6 @@ CREATE TABLE course_enrollments (
 
   // Vocabulary table
   Future<void> _createVocabularyTable(Database db) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const boolType = 'BOOLEAN NOT NULL';
-
     await db.execute('''
 CREATE TABLE vocabulary (
   id $idType,
@@ -184,10 +181,6 @@ CREATE TABLE vocabulary (
 
   // Chat History table
   Future<void> _createChatHistoryTable(Database db) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const boolType = 'BOOLEAN NOT NULL';
-
     await db.execute('''
 CREATE TABLE chat_history (
   id $idType,
@@ -203,10 +196,6 @@ CREATE TABLE chat_history (
 
   // Courses table
   Future<void> _createCoursesTable(Database db) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const textNullable = 'TEXT';
-
     await db.execute('''
 CREATE TABLE courses (
   id $idType,
@@ -228,10 +217,6 @@ CREATE TABLE courses (
 
   // Lessons table
   Future<void> _createLessonsTable(Database db) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const intType = 'INTEGER NOT NULL';
-
     await db.execute('''
 CREATE TABLE lessons (
   id $idType,
@@ -249,9 +234,6 @@ CREATE TABLE lessons (
 
   // User Progress table
   Future<void> _createUserProgressTable(Database db) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const intType = 'INTEGER NOT NULL';
-
     await db.execute('''
 CREATE TABLE user_progress (
   id $idType,
