@@ -1,4 +1,4 @@
-import '../../domain/repositories/chat_repository.dart';
+import '../../features/chat/domain/repositories/chat_repository.dart';
 
 /// Abstract base class for AI services
 /// All AI model integrations must implement this interface

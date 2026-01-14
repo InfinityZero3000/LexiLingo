@@ -85,7 +85,9 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   sl.registerLazySingleton<StreakService>(() => StreakService());
   
   // Course Import Service
-  sl.registerLazySingleton<CourseImportService>(() => CourseImportService());
+  if (!skipDatabase) {
+    sl.registerLazySingleton<CourseImportService>(() => CourseImportService(sl()));
+  }
 
   // ============ Vocabulary Feature ============
   // Data Sources
@@ -140,43 +142,46 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   );
 
   // ============ Chat Feature ============
+  // TEMPORARY: Simple setup for testing
   // Data Sources
   if (!skipDatabase) {
     sl.registerLazySingleton<ChatLocalDataSource>(
       () => ChatLocalDataSource(dbHelper: sl()),
     );
   }
+  
   // Load API key from .env file (secure - not committed to git)
   final geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
   sl.registerLazySingleton<ChatRemoteDataSource>(
     () => ChatRemoteDataSource(apiKey: geminiApiKey),
   );
-  sl.registerLazySingleton<ChatFirestoreDataSource>(
-    () => ChatFirestoreDataSourceImpl(firestoreService: sl()),
-  );
+  
+  // Network info for checking connectivity
+  // TODO: Implement proper NetworkInfo
+  // sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
+  
+  // Repository - COMMENTED OUT TEMPORARILY
+  // sl.registerLazySingleton<ChatRepository>(
+  //   () => ChatRepositoryImpl(
+  //     localDataSource: sl(),
+  //     remoteDataSource: sl(),
+  //     networkInfo: sl(),
+  //   ),
+  // );
 
-  // Repositories
-  sl.registerLazySingleton<ChatRepository>(
-    () => ChatRepositoryImpl(
-      localDataSource: skipDatabase ? null : sl(),
-      aiDataSource: sl(),
-      firestoreDataSource: sl(),
-    ),
-  );
+  // Use Cases - COMMENTED OUT TEMPORARILY  
+  // sl.registerLazySingleton(() => SendMessageToAIUseCase(sl()));
+  // sl.registerLazySingleton(() => SaveMessageUseCase(sl()));
+  // sl.registerLazySingleton(() => GetChatHistoryUseCase(sl()));
 
-  // Use Cases
-  sl.registerLazySingleton(() => SendMessageToAIUseCase(sl()));
-  sl.registerLazySingleton(() => SaveMessageUseCase(sl()));
-  sl.registerLazySingleton(() => GetChatHistoryUseCase(sl()));
-
-  // Providers
-  sl.registerFactory(
-    () => ChatProvider(
-      sendMessageToAIUseCase: sl(),
-      saveMessageUseCase: sl(),
-      getChatHistoryUseCase: sl(),
-    ),
-  );
+  // Providers - COMMENTED OUT TEMPORARILY
+  // sl.registerFactory(
+  //   () => ChatProvider(
+  //     sendMessageToAIUseCase: sl(),
+  //     saveMessageUseCase: sl(),
+  //     getChatHistoryUseCase: sl(),
+  //   ),
+  // );
 
   // ============ Course Feature ============
   // Data Sources
