@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
@@ -145,8 +146,10 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
       () => ChatLocalDataSource(dbHelper: sl()),
     );
   }
+  // Load API key from .env file (secure - not committed to git)
+  final geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
   sl.registerLazySingleton<ChatRemoteDataSource>(
-    () => ChatRemoteDataSource(apiKey: 'YOUR_API_KEY'), // TODO: Move to env file
+    () => ChatRemoteDataSource(apiKey: geminiApiKey),
   );
   sl.registerLazySingleton<ChatFirestoreDataSource>(
     () => ChatFirestoreDataSourceImpl(firestoreService: sl()),
