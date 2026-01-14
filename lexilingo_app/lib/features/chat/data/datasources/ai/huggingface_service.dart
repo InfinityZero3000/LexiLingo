@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../../core/services/ai_service.dart';
-import '../../../../domain/repositories/chat_repository.dart';
+import '../../../domain/repositories/chat_repository.dart';
 
 /// HuggingFace Inference API Service
 /// Provides access to free AI models via HuggingFace API

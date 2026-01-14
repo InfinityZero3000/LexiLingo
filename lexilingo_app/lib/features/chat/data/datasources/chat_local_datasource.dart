@@ -45,7 +45,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       );
       return session;
     } catch (e) {
-      throw CacheException(message: 'Failed to create session: $e');
+      throw CacheException('Failed to create session: $e');
     }
   }
 
@@ -64,7 +64,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         return ChatSessionModel.fromMap(maps[i]);
       });
     } catch (e) {
-      throw CacheException(message: 'Failed to get sessions: $e');
+      throw CacheException('Failed to get sessions: $e');
     }
   }
 
@@ -80,7 +80,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       );
 
       if (maps.isEmpty) {
-        throw CacheException(message: 'Session not found');
+        throw CacheException('Session not found');
       }
 
       // Load session with its messages
@@ -90,7 +90,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       return session.copyWith(messages: messages) as ChatSessionModel;
     } catch (e) {
       if (e is CacheException) rethrow;
-      throw CacheException(message: 'Failed to get session: $e');
+      throw CacheException('Failed to get session: $e');
     }
   }
 
@@ -113,7 +113,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         );
       });
     } catch (e) {
-      throw CacheException(message: 'Failed to delete session: $e');
+      throw CacheException('Failed to delete session: $e');
     }
   }
 
@@ -128,7 +128,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         whereArgs: [sessionId],
       );
     } catch (e) {
-      throw CacheException(message: 'Failed to update session title: $e');
+      throw CacheException('Failed to update session title: $e');
     }
   }
 
@@ -171,7 +171,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
 
       return message;
     } catch (e) {
-      throw CacheException(message: 'Failed to save message: $e');
+      throw CacheException('Failed to save message: $e');
     }
   }
 
@@ -190,7 +190,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         return ChatMessageModel.fromMap(maps[i]);
       });
     } catch (e) {
-      throw CacheException(message: 'Failed to get messages: $e');
+      throw CacheException('Failed to get messages: $e');
     }
   }
 
@@ -212,7 +212,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         whereArgs: [messageId],
       );
     } catch (e) {
-      throw CacheException(message: 'Failed to update message status: $e');
+      throw CacheException('Failed to update message status: $e');
     }
   }
 
@@ -226,7 +226,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         whereArgs: [messageId],
       );
     } catch (e) {
-      throw CacheException(message: 'Failed to delete message: $e');
+      throw CacheException('Failed to delete message: $e');
     }
   }
 }
