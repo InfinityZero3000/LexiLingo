@@ -1,5 +1,5 @@
 .idea/
-docs/
+docs/cmd
 *.iml
 *.hprof
 *.log
@@ -28,3 +28,4 @@ pubspec.lock
 !**/google-services.json.example
 !**/GoogleService-Info.plist.example
 !**/firebase_options.dart.example
+docs
