@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
@@ -7,6 +8,7 @@ import 'package:lexilingo_app/core/services/progress_sync_service.dart';
 import 'package:lexilingo_app/core/services/progress_firestore_data_source.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
 import 'package:lexilingo_app/core/services/course_import_service.dart';
+import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:lexilingo_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
@@ -15,14 +17,16 @@ import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_google_
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_password_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:lexilingo_app/features/chat/data/datasources/chat_local_data_source.dart';
+import 'package:lexilingo_app/features/chat/data/datasources/chat_local_datasource.dart';
+import 'package:lexilingo_app/features/chat/data/datasources/chat_local_datasource_web.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_firestore_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/create_session_usecase.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/get_sessions_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/get_chat_history_usecase.dart';
-import 'package:lexilingo_app/features/chat/domain/usecases/save_message_usecase.dart';
-import 'package:lexilingo_app/features/chat/domain/usecases/send_message_to_ai_usecase.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/send_message_usecase.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/course/data/datasources/course_local_data_source.dart';
 import 'package:lexilingo_app/features/course/data/repositories/course_repository_impl.dart';
@@ -42,10 +46,14 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_p
 
 // User Feature imports
 import 'package:lexilingo_app/features/user/data/datasources/user_local_data_source.dart';
+import 'package:lexilingo_app/features/user/data/datasources/user_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/user_firestore_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source.dart';
+import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_data_source.dart';
+import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source.dart';
+import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/repositories/user_repository_impl.dart';
 import 'package:lexilingo_app/features/user/data/repositories/settings_repository_impl.dart';
 import 'package:lexilingo_app/features/user/data/repositories/daily_goal_repository_impl.dart';
@@ -70,6 +78,10 @@ final sl = GetIt.instance; // sl = Service Locator
 
 Future<void> initializeDependencies({bool skipDatabase = false}) async {
   // ============ Core Services ============
+  // SharedPreferences (needed for web, useful for mobile too)
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+  
   // Firestore Service
   sl.registerLazySingleton<FirestoreService>(() => FirestoreService.instance);
   
@@ -142,11 +154,16 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   );
 
   // ============ Chat Feature ============
-  // TEMPORARY: Simple setup for testing
   // Data Sources
   if (!skipDatabase) {
+    // Mobile/Desktop: Use SQLite
     sl.registerLazySingleton<ChatLocalDataSource>(
-      () => ChatLocalDataSource(dbHelper: sl()),
+      () => ChatLocalDataSourceImpl(databaseHelper: sl()),
+    );
+  } else {
+    // Web: Use SharedPreferences
+    sl.registerLazySingleton<ChatLocalDataSource>(
+      () => ChatLocalDataSourceWeb(sharedPreferences: sl()),
     );
   }
   
@@ -156,32 +173,33 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
     () => ChatRemoteDataSource(apiKey: geminiApiKey),
   );
   
-  // Network info for checking connectivity
-  // TODO: Implement proper NetworkInfo
-  // sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
+  // Network info - simple web implementation
+  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
   
-  // Repository - COMMENTED OUT TEMPORARILY
-  // sl.registerLazySingleton<ChatRepository>(
-  //   () => ChatRepositoryImpl(
-  //     localDataSource: sl(),
-  //     remoteDataSource: sl(),
-  //     networkInfo: sl(),
-  //   ),
-  // );
+  // Repository
+  sl.registerLazySingleton<ChatRepository>(
+    () => ChatRepositoryImpl(
+      localDataSource: sl(),
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
 
-  // Use Cases - COMMENTED OUT TEMPORARILY  
-  // sl.registerLazySingleton(() => SendMessageToAIUseCase(sl()));
-  // sl.registerLazySingleton(() => SaveMessageUseCase(sl()));
-  // sl.registerLazySingleton(() => GetChatHistoryUseCase(sl()));
+  // Use Cases - Using Clean Architecture use cases
+  sl.registerLazySingleton(() => CreateSessionUseCase(sl()));
+  sl.registerLazySingleton(() => GetSessionsUseCase(sl()));
+  sl.registerLazySingleton(() => GetChatHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => SendMessageUseCase(sl()));
 
-  // Providers - COMMENTED OUT TEMPORARILY
-  // sl.registerFactory(
-  //   () => ChatProvider(
-  //     sendMessageToAIUseCase: sl(),
-  //     saveMessageUseCase: sl(),
-  //     getChatHistoryUseCase: sl(),
-  //   ),
-  // );
+  // Providers
+  sl.registerFactory(
+    () => ChatProvider(
+      createSessionUseCase: sl(),
+      getSessionsUseCase: sl(),
+      getChatHistoryUseCase: sl(),
+      sendMessageUseCase: sl(),
+    ),
+  );
 
   // ============ Course Feature ============
   // Data Sources
@@ -221,6 +239,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   // ============ User Feature ============
   // Data Sources - Local
   if (!skipDatabase) {
+    // Mobile/Desktop: Use SQLite
     sl.registerLazySingleton<UserLocalDataSource>(
       () => UserLocalDataSourceImpl(databaseHelper: sl()),
     );
@@ -232,6 +251,20 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
     );
     sl.registerLazySingleton<StreakLocalDataSource>(
       () => StreakLocalDataSourceImpl(databaseHelper: sl()),
+    );
+  } else {
+    // Web: Use SharedPreferences
+    sl.registerLazySingleton<UserLocalDataSource>(
+      () => UserLocalDataSourceWeb(sharedPreferences: sl()),
+    );
+    sl.registerLazySingleton<SettingsLocalDataSource>(
+      () => SettingsLocalDataSourceWeb(sharedPreferences: sl()),
+    );
+    sl.registerLazySingleton<DailyGoalLocalDataSource>(
+      () => DailyGoalLocalDataSourceWeb(sharedPreferences: sl()),
+    );
+    sl.registerLazySingleton<StreakLocalDataSource>(
+      () => StreakLocalDataSourceWeb(sharedPreferences: sl()),
     );
   }
   
