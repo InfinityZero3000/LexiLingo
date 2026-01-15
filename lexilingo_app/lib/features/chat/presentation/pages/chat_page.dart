@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
+import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -106,7 +107,7 @@ class _ChatPageState extends State<ChatPage> {
                    _buildAiMessage(context, "Hello! Let's practice. What is the first thing you usually do when you wake up in the morning?"),
 
                 ...messages.map((msg) {
-                  return msg.isUser 
+                  return msg.role == MessageRole.user
                     ? _buildUserMessage(context, msg.content)
                     : _buildAiMessage(context, msg.content);
                 }),

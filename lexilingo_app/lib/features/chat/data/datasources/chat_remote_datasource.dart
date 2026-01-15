@@ -3,6 +3,7 @@ import '../../../../core/services/ai_service.dart';
 import '../models/chat_message_model.dart';
 import 'ai/ai_service_manager.dart';
 import '../../domain/repositories/chat_repository.dart';
+import '../../domain/entities/chat_message.dart'; // For MessageRoleExtension
 
 /// Abstract interface for remote chat data source
 abstract class ChatRemoteDataSource {

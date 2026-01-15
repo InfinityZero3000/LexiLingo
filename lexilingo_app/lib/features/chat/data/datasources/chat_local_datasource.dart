@@ -147,7 +147,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       );
     } catch (e) {
       throw CacheException(
-          message: 'Failed to update session last message time: $e');
+          'Failed to update session last message time: $e');
     }
   }
 
