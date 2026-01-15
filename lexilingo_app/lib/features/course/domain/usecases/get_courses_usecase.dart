@@ -9,6 +9,6 @@ class GetCoursesUseCase implements UseCase<List<Course>, NoParams> {
 
   @override
   Future<List<Course>> call(NoParams params) async {
-    return await repository.getCourses();
+    return await repository.getAllCourses();
   }
 }
