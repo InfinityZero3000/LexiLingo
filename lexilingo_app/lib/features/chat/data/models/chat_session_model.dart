@@ -113,7 +113,7 @@ class ChatSessionModel extends ChatSession {
       title: title ?? this.title,
       createdAt: createdAt ?? this.createdAt,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
-      messages: messages ?? this.messages,
+      messages: messages != null ? messages.cast() : this.messages,
     );
   }
 }

@@ -7,7 +7,7 @@ import '../../domain/entities/chat_session.dart';
 import '../../domain/entities/ai_analysis_result.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../datasources/chat_local_datasource.dart';
-import '../datasources/chat_remote_datasource.dart';
+import '../datasources/chat_remote_data_source.dart';
 import '../models/chat_message_model.dart';
 import '../models/chat_session_model.dart';
 
