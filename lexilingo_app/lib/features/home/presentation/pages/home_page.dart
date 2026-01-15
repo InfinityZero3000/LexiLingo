@@ -15,94 +15,81 @@ class HomePageNew extends StatefulWidget {
 }
 
 class _HomePageNewState extends State<HomePageNew> {
-  late HomeProvider _homeProvider;
-
   @override
   void initState() {
     super.initState();
-    // Initialize HomeProvider with UserProvider reference
+    // Load home data after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = context.read<UserProvider>();
-      _homeProvider = di.sl<HomeProvider>();
-      
-      // Set userProvider reference (can't do in constructor due to circular dependency)
-      _homeProvider = HomeProvider(
-        getFeaturedCoursesUseCase: _homeProvider.getFeaturedCoursesUseCase,
-        getEnrolledCoursesUseCase: _homeProvider.getEnrolledCoursesUseCase,
-        enrollCourseUseCase: _homeProvider.enrollCourseUseCase,
-        streakService: di.sl(),
-        userProvider: userProvider,
-      );
-      
-      _homeProvider.loadHomeData();
+      final homeProvider = context.read<HomeProvider>();
+      homeProvider.loadHomeData();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _homeProvider,
-      child: Scaffold(
-        body: SafeArea(
-          child: Consumer2<HomeProvider, UserProvider>(
-            builder: (context, homeProvider, userProvider, child) {
-              if (homeProvider.isLoading && homeProvider.featuredCourses.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer2<HomeProvider, UserProvider>(
+          builder: (context, homeProvider, userProvider, child) {
+            if (homeProvider.isLoading && homeProvider.featuredCourses.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              if (homeProvider.errorMessage != null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(homeProvider.errorMessage!),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => homeProvider.loadHomeData(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () => homeProvider.refreshData(),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context, homeProvider, userProvider),
-                      const SizedBox(height: 16),
-                      _buildStreakCard(context, homeProvider),
-                      const SizedBox(height: 24),
-                      _buildDailyGoalCard(context, homeProvider),
-                      const SizedBox(height: 24),
-                      if (homeProvider.enrolledCourses.isNotEmpty) ...[
-                        _buildSectionTitle(context, 'Continue Learning'),
-                        const SizedBox(height: 12),
-                        _buildEnrolledCourses(context, homeProvider),
-                        const SizedBox(height: 24),
-                      ],
-                      _buildSectionTitle(context, 'Featured Courses'),
-                      const SizedBox(height: 12),
-                      _buildFeaturedCourses(context, homeProvider),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'Quick Actions'),
-                      const SizedBox(height: 12),
-                      _buildQuickActions(context),
-                    ],
-                  ),
+            if (homeProvider.errorMessage != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(homeProvider.errorMessage!),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => homeProvider.loadHomeData(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
                 ),
               );
-            },
-          ),
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => homeProvider.refreshData(),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, homeProvider, userProvider),
+                    const SizedBox(height: 16),
+                    _buildStreakCard(context, homeProvider),
+                    const SizedBox(height: 24),
+                    _buildDailyGoalCard(context, homeProvider),
+                    const SizedBox(height: 24),
+                    if (homeProvider.enrolledCourses.isNotEmpty) ...[
+                      _buildSectionTitle(context, 'Continue Learning'),
+                      const SizedBox(height: 12),
+                      _buildEnrolledCourses(context, homeProvider),
+                      const SizedBox(height: 24),
+                    ],
+                    _buildSectionTitle(context, 'Featured Courses'),
+                    const SizedBox(height: 12),
+                    _buildFeaturedCourses(context, homeProvider),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Quick Actions'),
+                    const SizedBox(height: 12),
+                    _buildQuickActions(context),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
-    );homeProvider, UserProvider userProvider) {
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, HomeProvider homeProvider, UserProvider userProvider) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -130,7 +117,10 @@ class _HomePageNewState extends State<HomePageNew> {
                       ),
                 ),
                 Text(
-                  '${homeProvider.totalXP} XP earned
+                  '${homeProvider.totalXP} XP earned',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textGrey,
+                      ),
                 ),
                 Text(
                   'Ready to learn?',
