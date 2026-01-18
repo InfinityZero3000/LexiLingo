@@ -2,11 +2,11 @@
 Health check routes
 """
 
-from fastapi import APIRouter, Depends
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from fastapi import APIRouter
 from datetime import datetime
 
-from api.core.database import get_database
+from api.core.database import mongodb_manager
+from api.core.redis_client import RedisClient
 from api.core.config import settings
 from api.models.schemas import HealthCheck
 
@@ -14,31 +14,41 @@ router = APIRouter()
 
 
 @router.get("/health", response_model=HealthCheck)
-async def health_check(db: AsyncIOMotorDatabase = Depends(get_database)):
+async def health_check():
     """
     Comprehensive health check endpoint.
     
     Checks:
     - MongoDB connection
-    - Redis connection (if applicable)
+    - Redis connection
     - API status
+    
+    Works even when services are down (graceful degradation).
     """
     # Check MongoDB
     mongodb_ok = False
     try:
-        await db.command("ping")
-        mongodb_ok = True
+        if mongodb_manager.is_connected:
+            await mongodb_manager.client.admin.command("ping")
+            mongodb_ok = True
     except Exception:
         pass
     
-    # Check Redis (TODO: implement when Redis is added)
-    redis_ok = True  # Placeholder
+    # Check Redis
+    redis_ok = False
+    try:
+        redis = await RedisClient.get_instance()
+        if redis:
+            await redis.ping()
+            redis_ok = True
+    except Exception:
+        pass
     
     # AI Model API (DL-Model-Support)
     ai_model_ok = False  # Will be checked when integrated
     
     return HealthCheck(
-        status="healthy" if mongodb_ok else "degraded",
+        status="healthy" if (mongodb_ok and redis_ok) else "degraded",
         version=settings.API_VERSION,
         environment=settings.ENVIRONMENT,
         services={

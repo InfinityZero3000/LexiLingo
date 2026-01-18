@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "LexiLingo API",
+    "description": "API Contract for LexiLingo Backend",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": ["{{base_url}}"],
+              "path": ["ping"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Interactions",
+      "item": [
+        {
+          "name": "Log Interaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user_123\",\n  \"session_id\": \"session_abc\",\n  \"interaction_type\": \"grammar_check\",\n  \"input_text\": \"I goes to school yesterday\",\n  \"ai_response\": {\n    \"fluency_score\": 0.75,\n    \"vocabulary_level\": \"A2\",\n    \"grammar_errors\": [\n      {\n        \"type\": \"verb_tense\",\n        \"error\": \"goes\",\n        \"correction\": \"went\",\n        \"explanation\": \"Use past tense with 'yesterday'\"\n      }\n    ],\n    \"tutor_response\": \"Good attempt!\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/ai/interactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "ai", "interactions"]
+            }
+          }
+        },
+        {
+          "name": "Get User Interactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ai/interactions/user/{{user_id}}?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "ai", "interactions", "user", "{{user_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Error Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/ai/analytics/user/{{user_id}}/errors?days=30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "ai", "analytics", "user", "{{user_id}}", "errors"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user_123\",\n  \"title\": \"English Practice\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/chat/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "chat", "sessions"]
+            }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{session_id}}\",\n  \"user_id\": \"user_123\",\n  \"message\": \"Hello! Can you help me?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/chat/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "chat", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Get Session Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/chat/sessions/{{session_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "chat", "sessions", "{{session_id}}", "messages"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Learning Pattern",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/learning-pattern",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "learning-pattern"]
+            }
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "user_123",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "session_abc",
+      "type": "string"
+    }
+  ]
+}
