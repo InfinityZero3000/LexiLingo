@@ -2,7 +2,7 @@
 
 FastAPI backend cho ứng dụng LexiLingo - AI-powered language learning platform.
 
-## 🏗️ Kiến trúc
+## 🏗 Kiến trúc
 
 Backend được thiết kế theo **Clean Architecture** tương tự Flutter app:
 
@@ -30,7 +30,7 @@ backend/
 └── vercel.json             # Vercel deployment
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Local Development
 
@@ -69,7 +69,7 @@ Truy cập API docs:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## 📋 API Endpoints
+##  API Endpoints
 
 ### Health Check
 - `GET /health` - Kiểm tra trạng thái hệ thống
@@ -92,7 +92,7 @@ Truy cập API docs:
 - `GET /api/v1/users/{user_id}/learning-pattern` - Lấy learning pattern
 - `GET /api/v1/users/{user_id}/stats` - Lấy thống kê học tập
 
-## 🔧 Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -233,7 +233,7 @@ class ChatRepositoryImpl implements ChatRepository {
 }
 ```
 
-## 📊 Database Schema
+##  Database Schema
 
 ### ai_interactions
 ```javascript
@@ -286,7 +286,7 @@ class ChatRepositoryImpl implements ChatRepository {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ```bash
 # Install test dependencies
@@ -299,7 +299,7 @@ pytest tests/
 pytest --cov=api tests/
 ```
 
-## 📝 Development Notes
+##  Development Notes
 
 ### Sync với DL-Model-Support
 

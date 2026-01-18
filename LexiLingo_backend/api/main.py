@@ -17,11 +17,12 @@ import logging
 from contextlib import asynccontextmanager
 
 # Import routes
-from api.routes import ai_router, chat_router, user_router, health_router
+from api.routes import ai_router, chat_router, user_router, health_router, training_router
 
 # Import core
 from api.core.config import settings
 from api.core.database import mongodb_manager
+from api.core.redis_client import RedisClient
 
 # Setup logging
 logging.basicConfig(
@@ -39,35 +40,91 @@ async def lifespan(app: FastAPI):
     Replaces deprecated @app.on_event("startup") and @app.on_event("shutdown")
     """
     # Startup
-    logger.info("🚀 Starting LexiLingo Backend API...")
+    logger.info("Starting LexiLingo Backend API...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"API Version: {settings.API_VERSION}")
     
     # Connect to MongoDB
     try:
         await mongodb_manager.connect()
-        logger.info("✅ MongoDB connected successfully")
+        logger.info("MongoDB connected successfully")
     except Exception as e:
-        logger.error(f"❌ Failed to connect to MongoDB: {e}")
+        logger.error(f"Failed to connect to MongoDB: {e}")
         # Continue without MongoDB (graceful degradation)
+    
+    # Connect to Redis (with graceful degradation)
+    try:
+        await RedisClient.get_instance()
+        logger.info("Redis connected successfully")
+    except Exception as e:
+        logger.warning(f"Redis connection failed: {e}. Continuing without cache...")
     
     yield
     
     # Shutdown
-    logger.info("🛑 Shutting down LexiLingo Backend API...")
+    logger.info("Shutting down LexiLingo Backend API...")
     await mongodb_manager.disconnect()
-    logger.info("✅ MongoDB disconnected")
+    await RedisClient.close()
+    logger.info("Shutdown complete")
 
 
-# Create FastAPI app
+# Create FastAPI app with comprehensive Swagger configuration
 app = FastAPI(
     title="LexiLingo API",
-    description="Backend API for LexiLingo - AI-powered English learning platform",
+    description="""
+    ## LexiLingo - AI-Powered English Learning Platform
+    
+    Backend API cho ứng dụng học tiếng Anh với sự hỗ trợ của AI.
+    
+    ### Tính năng chính:
+    * **AI Chat với Gemini**: Trò chuyện thông minh với AI tutor
+    * **Phân tích ngữ pháp**: Phát hiện và sửa lỗi tự động
+    * **Theo dõi tiến độ**: Phân tích pattern học tập
+    * **Quản lý session**: Lưu trữ lịch sử hội thoại
+    
+    ### Môi trường:
+    * **Development**: `http://localhost:8000`
+    * **Production**: `https://api.lexilingo.com`
+    
+    ### Tài liệu:
+    * **Swagger UI**: `/docs` (bạn đang ở đây)
+    * **ReDoc**: `/redoc`
+    * **API Contract**: Xem file `docs/API_CONTRACT.md`
+    """,
     version=settings.API_VERSION,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
-    lifespan=lifespan
+    docs_url="/docs",  # Swagger UI tại /docs
+    redoc_url="/redoc",  # ReDoc tại /redoc
+    openapi_url="/openapi.json",  # OpenAPI schema
+    lifespan=lifespan,
+    # Swagger UI configuration
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,  # Ẩn schemas mặc định
+        "docExpansion": "none",  # Thu gọn tất cả endpoints
+        "filter": True,  # Bật tìm kiếm
+        "showCommonExtensions": True,
+        "syntaxHighlight.theme": "monokai"  # Dark theme
+    },
+    # Contact và license info
+    contact={
+        "name": "LexiLingo Backend Team",
+        "url": "https://github.com/InfinityZero3000/LexiLingo",
+        "email": "support@lexilingo.com"
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT"
+    },
+    # Servers cho Swagger UI
+    servers=[
+        {
+            "url": "http://localhost:8000",
+            "description": "Development server"
+        },
+        {
+            "url": "https://api.lexilingo.com",
+            "description": "Production server"
+        }
+    ]
 )
 
 
@@ -119,23 +176,52 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Include routers
-app.include_router(health_router, prefix="/api", tags=["Health"])
-app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
-app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
-app.include_router(user_router, prefix="/api/user", tags=["User"])
+# Include routers with detailed tags
+app.include_router(
+    health_router, 
+    tags=["Health & Status"],
+    prefix=""
+)
+app.include_router(
+    ai_router, 
+    prefix="/api/v1/ai",
+    tags=["AI Interactions & Analytics"]
+)
+app.include_router(
+    chat_router, 
+    prefix="/api/v1/chat",
+    tags=["Chat with Gemini AI"]
+)
+app.include_router(
+    user_router, 
+    prefix="/api/v1/users",
+    tags=["User Data & Learning Pattern"]
+)
+app.include_router(
+    training_router,
+    prefix="/api/v1/training",
+    tags=["Training & Learning (ML Pipeline)"]
+)
 
 
 # Root endpoint
-@app.get("/")
+@app.get(
+    "/",
+    summary="API Root",
+    description="Thông tin cơ bản về API",
+    tags=["General"]
+)
 async def root():
-    """API root endpoint."""
+    """API root endpoint với thông tin cơ bản."""
     return {
         "name": "LexiLingo API",
         "version": settings.API_VERSION,
         "status": "running",
-        "docs": "/api/docs",
-        "environment": settings.ENVIRONMENT
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "openapi": "/openapi.json",
+        "environment": settings.ENVIRONMENT,
+        "message": "Welcome to LexiLingo API!"
     }
 
 

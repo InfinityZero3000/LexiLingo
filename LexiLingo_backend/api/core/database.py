@@ -59,10 +59,10 @@ class MongoDBManager:
             # Get database
             self._db = self._client[settings.MONGODB_DATABASE]
             
-            logger.info(f"✅ MongoDB connected: {settings.MONGODB_DATABASE}")
+            logger.info(f"MongoDB connected: {settings.MONGODB_DATABASE}")
             
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            logger.error(f"❌ Failed to connect to MongoDB: {e}")
+            logger.error(f"Failed to connect to MongoDB: {e}")
             raise
     
     async def disconnect(self) -> None:
@@ -104,7 +104,15 @@ async def get_database() -> AsyncIOMotorDatabase:
         @router.get("/")
         async def handler(db: AsyncIOMotorDatabase = Depends(get_database)):
             ...
+    
+    Raises RuntimeError if MongoDB is not connected.
     """
     if not mongodb_manager.is_connected:
-        await mongodb_manager.connect()
+        try:
+            await mongodb_manager.connect()
+        except Exception:
+            raise RuntimeError(
+                "MongoDB is not available. Please check your MongoDB connection."
+            )
+    
     return mongodb_manager.db

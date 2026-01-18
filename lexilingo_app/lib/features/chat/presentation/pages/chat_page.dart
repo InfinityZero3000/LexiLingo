@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
-import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/message_bubble.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/session_list_drawer.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -14,11 +15,25 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize chat session if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      if (!chatProvider.hasCurrentSession) {
+        chatProvider.createNewSession('user_001'); // TODO: Get actual user ID
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
     final messages = chatProvider.messages;
+    final sessions = chatProvider.sessions;
 
     // Auto scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -32,6 +47,32 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: SessionListDrawer(
+        sessions: sessions,
+        currentSessionId: chatProvider.currentSession?.id,
+        onSessionTap: (sessionId) {
+          final session = sessions.firstWhere((s) => s.id == sessionId);
+          chatProvider.selectSession(session);
+          Navigator.pop(context); // Close drawer
+        },
+        onNewSession: () {
+          chatProvider.createNewSession('user_001'); // TODO: Get actual user ID
+          Navigator.pop(context); // Close drawer
+        },
+        onDeleteSession: (session) {
+          // TODO: Implement delete session in provider and repository
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Delete session feature coming soon')),
+          );
+        },
+        onRenameSession: (session, newTitle) {
+          // TODO: Implement rename session in provider and repository
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Rename to "$newTitle" coming soon')),
+          );
+        },
+      ),
       appBar: AppBar(
         title: Column(
           children: [
@@ -48,12 +89,16 @@ class _ChatPageState extends State<ChatPage> {
         ),
         centerTitle: true,
         backgroundColor: AppColors.accentYellow,
-        leading: GestureDetector(
-          onTap: () {}, // Back
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-            child: const Icon(Icons.arrow_back_ios_new, color: AppColors.textDark, size: 18),
+        leading: Builder(
+          builder: (context) => GestureDetector(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              child: const Icon(Icons.menu, color: AppColors.textDark, size: 18),
+            ),
           ),
         ),
         actions: [
@@ -104,15 +149,23 @@ class _ChatPageState extends State<ChatPage> {
                 
                 // Existing messages
                 if (messages.isEmpty)
-                   _buildAiMessage(context, "Hello! Let's practice. What is the first thing you usually do when you wake up in the morning?"),
+                   _buildWelcomeMessage(context),
 
                 ...messages.map((msg) {
-                  return msg.role == MessageRole.user
-                    ? _buildUserMessage(context, msg.content)
-                    : _buildAiMessage(context, msg.content);
+                  return MessageBubble(
+                    message: msg,
+                    showAvatar: true,
+                    showTimestamp: true,
+                    onRetry: msg.hasError
+                        ? () {
+                            // Retry sending the message
+                            chatProvider.sendMessage(msg.content);
+                          }
+                        : null,
+                  );
                 }),
 
-                if (chatProvider.isLoading)
+                if (chatProvider.isSending)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Center(child: CircularProgressIndicator()),
@@ -206,6 +259,63 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildWelcomeMessage(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: NetworkImage(
+                    "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E"),
+                fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 4),
+                  child: Text('AI Tutor',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.w500)),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : const Color(0xFFF0F2F4),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(0),
+                    ),
+                  ),
+                  child: Text(
+                    "Hello! 👋 Let's practice English together. What is the first thing you usually do when you wake up in the morning?",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickReply(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -217,103 +327,4 @@ class _ChatPageState extends State<ChatPage> {
       child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textGrey)),
     );
   }
-
-  Widget _buildAiMessage(BuildContext context, String text) {
-     return Padding(
-       padding: const EdgeInsets.only(bottom: 16.0),
-       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Container(
-            width: 32, height: 32,
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-               image: DecorationImage(
-                  image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E"),
-                  fit: BoxFit.cover
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ConstrainedBox(
-            constraints:   BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 4, bottom: 4),
-                  child: Text('AI Tutor', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : const Color(0xFFF0F2F4),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                      bottomRight: Radius.circular(16),
-                      bottomLeft: Radius.circular(0),
-                    ),
-                  ),
-                  child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-                ),
-              ],
-            ),
-          )
-        ],
-           ),
-     );
-  }
-
-  Widget _buildUserMessage(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-           ConstrainedBox(
-            constraints:   BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: 4, bottom: 4),
-                  child: Text('You', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                      bottomRight: Radius.circular(0),
-                      bottomLeft: Radius.circular(16),
-                    ),
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]
-                  ),
-                  child: Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 32, height: 32,
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-               image: DecorationImage(
-                  image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuAqMp7eP7f5P4Ys18yc-E2dnnaw5O7k3GdkVfBbgduka0-lSnnuafKYdSIhNa0ucEcwR8FYlqi4tGeY6zlKkeQfbHxK81S6DL8GCqzbfDuQuzCXfNDtFo2GQSlFA6shionhvtBJWYsfzD5pSUIGzGrkD-_RAWA4z9gv9LMJagNna4AXQLzAgzuR1rjoPZsJ9bLTf8lnpt2zqy0ci4DNsE-yENDdWJHqLksWIGdA1M8dWXyxE1WvgvCcG6q3vxMZsBhdKeNFw00UmXOK"),
-                  fit: BoxFit.cover
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

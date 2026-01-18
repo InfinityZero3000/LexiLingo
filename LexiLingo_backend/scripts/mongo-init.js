@@ -143,10 +143,10 @@ db.ai_interactions.insertOne({
   user_feedback: null
 });
 
-print('✅ LexiLingo database initialized successfully!');
-print('📊 Collections created: ai_interactions, chat_sessions, chat_messages, learning_patterns, model_metrics, training_queue');
-print('🔍 Indexes created for optimal query performance');
-print('📝 Sample data inserted for testing
+print('OK LexiLingo database initialized successfully!');
+print('Collections Collections created: ai_interactions, chat_sessions, chat_messages, learning_patterns, model_metrics, training_queue');
+print('Indexes Indexes created for optimal query performance');
+print('Sample data Sample data inserted for testing
         status: { 
           enum: ['pending', 'processing', 'completed', 'failed']
         },
@@ -180,4 +180,4 @@ db.chat_messages.createIndex({ message_id: 1 }, { unique: true });
 
 db.learning_patterns.createIndex({ user_id: 1, analyzed_at: -1 });
 
-print('✅ LexiLingo database initialized successfully!');
+print('OK LexiLingo database initialized successfully!');
