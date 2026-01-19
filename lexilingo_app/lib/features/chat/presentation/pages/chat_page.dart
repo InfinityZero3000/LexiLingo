@@ -20,6 +20,10 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Add scroll listener for lazy loading
+    _scrollController.addListener(_onScroll);
+    
     // Initialize chat session if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
@@ -27,6 +31,24 @@ class _ChatPageState extends State<ChatPage> {
         chatProvider.createNewSession('user_001'); // TODO: Get actual user ID
       }
     });
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+  
+  void _onScroll() {
+    // Load more messages when scrolling to the top
+    if (_scrollController.position.pixels <= 100) {
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      if (chatProvider.hasMoreMessages && !chatProvider.isLoadingMoreMessages) {
+        chatProvider.loadMoreMessages();
+      }
+    }
   }
 
   @override
@@ -51,6 +73,11 @@ class _ChatPageState extends State<ChatPage> {
       drawer: SessionListDrawer(
         sessions: sessions,
         currentSessionId: chatProvider.currentSession?.id,
+        hasMoreSessions: chatProvider.hasMoreSessions,
+        isLoadingMoreSessions: chatProvider.isLoadingMoreSessions,
+        onLoadMoreSessions: () {
+          chatProvider.loadMoreSessions('user_001'); // TODO: Get actual user ID
+        },
         onSessionTap: (sessionId) {
           final session = sessions.firstWhere((s) => s.id == sessionId);
           chatProvider.selectSession(session);
@@ -117,6 +144,34 @@ class _ChatPageState extends State<ChatPage> {
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
               children: [
+                // Loading indicator at top when loading more messages
+                if (chatProvider.isLoadingMoreMessages)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                
+                // Show message if no more messages to load
+                if (!chatProvider.hasMoreMessages && messages.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        'Đã tải hết tin nhắn',
+                        style: TextStyle(
+                          color: AppColors.textGrey.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                
                 // Header Image & Topic
                 Center(
                   child: Column(
