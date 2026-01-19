@@ -28,6 +28,16 @@ class ChatProvider extends ChangeNotifier {
   bool _isSending = false;
   String? _error;
   AIModel _selectedModel = AIModel.gemini;
+  
+  // Pagination for messages
+  bool _hasMoreMessages = true;
+  bool _isLoadingMoreMessages = false;
+  int _messagesPageSize = 20;
+  
+  // Pagination for sessions
+  bool _hasMoreSessions = true;
+  bool _isLoadingMoreSessions = false;
+  int _sessionsPageSize = 10;
 
   ChatSession? get currentSession => _currentSession;
   List<ChatSession> get sessions => _sessions;
@@ -37,6 +47,10 @@ class ChatProvider extends ChangeNotifier {
   String? get error => _error;
   AIModel get selectedModel => _selectedModel;
   bool get hasCurrentSession => _currentSession != null;
+  bool get hasMoreMessages => _hasMoreMessages;
+  bool get isLoadingMoreMessages => _isLoadingMoreMessages;
+  bool get hasMoreSessions => _hasMoreSessions;
+  bool get isLoadingMoreSessions => _isLoadingMoreSessions;
 
   Future<void> createNewSession(String userId) async {
     _isLoading = true;
@@ -73,8 +87,34 @@ class ChatProvider extends ChangeNotifier {
         notifyListeners();
       },
       (sessions) {
-        _sessions = sessions;
+        _sessions = sessions.take(_sessionsPageSize).toList();
+        _hasMoreSessions = sessions.length > _sessionsPageSize;
         _isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+  
+  Future<void> loadMoreSessions(String userId) async {
+    if (_isLoadingMoreSessions || !_hasMoreSessions) return;
+    
+    _isLoadingMoreSessions = true;
+    notifyListeners();
+    
+    final result = await getSessionsUseCase(userId);
+    result.fold(
+      (failure) {
+        _error = failure.message;
+        _isLoadingMoreSessions = false;
+        notifyListeners();
+      },
+      (sessions) {
+        final startIndex = _sessions.length;
+        final endIndex = startIndex + _sessionsPageSize;
+        final newSessions = sessions.skip(startIndex).take(_sessionsPageSize).toList();
+        _sessions.addAll(newSessions);
+        _hasMoreSessions = sessions.length > endIndex;
+        _isLoadingMoreSessions = false;
         notifyListeners();
       },
     );
@@ -83,6 +123,8 @@ class ChatProvider extends ChangeNotifier {
   Future<void> selectSession(ChatSession session) async {
     _currentSession = session;
     _error = null;
+    _messages = []; // Clear messages when switching session
+    _hasMoreMessages = true; // Reset pagination
     notifyListeners();
     await loadChatHistory(session.id);
   }
@@ -99,8 +141,60 @@ class ChatProvider extends ChangeNotifier {
         notifyListeners();
       },
       (messages) {
-        _messages = messages;
+        // Load only the last N messages initially (most recent)
+        final recentMessages = messages.length > _messagesPageSize 
+            ? messages.skip(messages.length - _messagesPageSize).toList()
+            : messages;
+        _messages = recentMessages;
+        _hasMoreMessages = messages.length > _messagesPageSize;
         _isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+  
+  Future<void> loadMoreMessages() async {
+    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) return;
+    
+    _isLoadingMoreMessages = true;
+    notifyListeners();
+    
+    final result = await getChatHistoryUseCase(_currentSession!.id);
+    result.fold(
+      (failure) {
+        _error = failure.message;
+        _isLoadingMoreMessages = false;
+        notifyListeners();
+      },
+      (allMessages) {
+        // Calculate how many messages to load
+        final currentCount = _messages.length;
+        final totalCount = allMessages.length;
+        
+        if (currentCount >= totalCount) {
+          _hasMoreMessages = false;
+          _isLoadingMoreMessages = false;
+          notifyListeners();
+          return;
+        }
+        
+        // Load older messages (from the beginning)
+        final startIndex = totalCount - currentCount - _messagesPageSize;
+        final endIndex = totalCount - currentCount;
+        
+        if (startIndex < 0) {
+          // Load all remaining messages
+          final olderMessages = allMessages.take(endIndex).toList();
+          _messages.insertAll(0, olderMessages);
+          _hasMoreMessages = false;
+        } else {
+          // Load next batch
+          final olderMessages = allMessages.skip(startIndex).take(_messagesPageSize).toList();
+          _messages.insertAll(0, olderMessages);
+          _hasMoreMessages = startIndex > 0;
+        }
+        
+        _isLoadingMoreMessages = false;
         notifyListeners();
       },
     );
@@ -177,6 +271,10 @@ class ChatProvider extends ChangeNotifier {
     _isSending = false;
     _error = null;
     _selectedModel = AIModel.gemini;
+    _hasMoreMessages = true;
+    _isLoadingMoreMessages = false;
+    _hasMoreSessions = true;
+    _isLoadingMoreSessions = false;
     notifyListeners();
   }
 }

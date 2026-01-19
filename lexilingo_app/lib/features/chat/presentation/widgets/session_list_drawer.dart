@@ -4,13 +4,16 @@ import 'package:lexilingo_app/features/chat/domain/entities/chat_session.dart';
 import 'package:intl/intl.dart';
 
 /// Widget for displaying list of chat sessions
-class SessionListDrawer extends StatelessWidget {
+class SessionListDrawer extends StatefulWidget {
   final List<ChatSession> sessions;
   final String? currentSessionId;
   final Function(String sessionId) onSessionTap;
   final VoidCallback onNewSession;
   final Function(ChatSession session) onDeleteSession;
   final Function(ChatSession session, String newTitle) onRenameSession;
+  final bool hasMoreSessions;
+  final bool isLoadingMoreSessions;
+  final VoidCallback onLoadMoreSessions;
 
   const SessionListDrawer({
     super.key,
@@ -20,7 +23,40 @@ class SessionListDrawer extends StatelessWidget {
     required this.onNewSession,
     required this.onDeleteSession,
     required this.onRenameSession,
+    this.hasMoreSessions = false,
+    this.isLoadingMoreSessions = false,
+    required this.onLoadMoreSessions,
   });
+
+  @override
+  State<SessionListDrawer> createState() => _SessionListDrawerState();
+}
+
+class _SessionListDrawerState extends State<SessionListDrawer> {
+  final ScrollController _scrollController = ScrollController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+  
+  void _onScroll() {
+    // Load more sessions when scrolling to the bottom
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 100) {
+      if (widget.hasMoreSessions && !widget.isLoadingMoreSessions) {
+        widget.onLoadMoreSessions();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +86,7 @@ class SessionListDrawer extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${sessions.length} conversations',
+                  '${widget.sessions.length} conversations',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.9),
@@ -64,7 +100,7 @@ class SessionListDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
-              onPressed: onNewSession,
+              onPressed: widget.onNewSession,
               icon: const Icon(Icons.add, size: 20),
               label: const Text('New Chat'),
               style: ElevatedButton.styleFrom(
@@ -80,7 +116,7 @@ class SessionListDrawer extends StatelessWidget {
 
           // Sessions List
           Expanded(
-            child: sessions.isEmpty
+            child: widget.sessions.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -110,18 +146,38 @@ class SessionListDrawer extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: sessions.length,
+                    controller: _scrollController,
+                    itemCount: widget.sessions.length + (widget.hasMoreSessions ? 1 : 0),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemBuilder: (context, index) {
-                      final session = sessions[index];
-                      final isActive = session.id == currentSessionId;
+                      // Show loading indicator at the bottom
+                      if (index == widget.sessions.length) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: widget.isLoadingMoreSessions
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : TextButton(
+                                    onPressed: widget.onLoadMoreSessions,
+                                    child: const Text('Tải thêm...'),
+                                  ),
+                          ),
+                        );
+                      }
+                      
+                      final session = widget.sessions[index];
+                      final isActive = session.id == widget.currentSessionId;
 
                       return SessionListItem(
                         session: session,
                         isActive: isActive,
-                        onTap: () => onSessionTap(session.id),
-                        onDelete: () => onDeleteSession(session),
-                        onRename: (newTitle) => onRenameSession(session, newTitle),
+                        onTap: () => widget.onSessionTap(session.id),
+                        onDelete: () => widget.onDeleteSession(session),
+                        onRename: (newTitle) => widget.onRenameSession(session, newTitle),
                       );
                     },
                   ),
