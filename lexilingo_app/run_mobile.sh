@@ -33,7 +33,7 @@ case $choice in
         flutter run -d "$IOS_DEVICE"
         ;;
     2)
-        echo "🤖 Starting Android Emulator..."
+        echo "Starting Android Emulator..."
         # Tìm Android emulator
         ANDROID_DEVICE=$(flutter devices | grep "android" | head -1 | awk '{print $5}')
         

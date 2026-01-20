@@ -2,7 +2,7 @@
 
 ## 🎯 Đã Hoàn Thành
 
-✅ **100% Backend Logic**  
+**100% Backend Logic**  
 - Clean Architecture
 - AI Integration (Gemini + HuggingFace)
 - SQLite Database
@@ -69,9 +69,9 @@ flutter test
 flutter test test/features/chat/domain/entities/chat_entities_test.dart
 ```
 
-**Result**: ✅ 6/6 tests passed
+**Result**: 6/6 tests passed
 
-## 📚 Documentation
+##  Documentation
 
 - [Implementation Plan](CHAT_IMPLEMENTATION_PLAN.md) - Full guide
 - [Test Guide](TEST_GUIDE.md) - Testing instructions
@@ -88,5 +88,5 @@ Provider đã sẵn sàng, chỉ cần tạo:
 
 ---
 
-**Status**: ✅ Backend Ready | 🎨 UI Needed  
+**Status**: Backend Ready | 🎨 UI Needed  
 **Built**: 2026-01-13
