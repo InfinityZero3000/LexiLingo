@@ -36,7 +36,7 @@ void main() async {
       final stats = await courseImportService.getCourseStats();
       
       if (stats['total'] == 0) {
-        print('📚 Database empty, seeding real courses...');
+        print(' Database empty, seeding real courses...');
         await courseImportService.seedRealCourses();
       } else {
         print('Found ${stats['total']} courses in database');
