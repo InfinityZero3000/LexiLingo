@@ -69,9 +69,9 @@
         │                                           │
         ▼                                           │
 ┌──────────────────────────────────────────────────────────────────┐
-│                    STT: FASTER-WHISPER v3                        │
+│                    STT: WHISPER v3                               │
 ├──────────────────────────────────────────────────────────────────┤
-│  Model: openai/whisper-small (244MB) + CTranslate2 optimization  │
+│  Model: openai/whisper + CTranslate2 optimization                │
 │  Features:                                                       │
 │  • VAD (Silero): Voice Activity Detection                        │
 │  • Streaming: Real-time transcription                            │
@@ -439,6 +439,166 @@
 ```
 
 ---
+
+### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + CAG)
+
+Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* thành “hệ tri thức vận hành được”, đồng thời giữ phản hồi nhanh bằng cách tách **Fast Path / Slow Path / Background Path**.
+
+#### 2.2.1 Ba đường chạy (Fast/Slow/Background)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      V3 EXECUTION PATHS                          │
+├──────────────────────────────────────────────────────────────────┤
+│  FAST PATH (50-150ms)                                            │
+│  - Cache hit (exact/semantic)                                    │
+│  - Rule-based / template feedback for common errors              │
+│  - Return short helpful response + 1 clarifying question         │
+│                                                                  │
+│  SLOW PATH (250-1200ms)                                          │
+│  - Diagnose → Hybrid Retrieval (Vector + KG) → Grounded Generate │
+│  - Returns linked concepts + actionable fix                       │
+│                                                                  │
+│  BACKGROUND PATH (async, non-blocking)                           │
+│  - Update learner profile + write KG edges/weights               │
+│  - Generate next exercises / lesson package (CAG)                │
+│  - Summarize session, metrics logging                            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### 2.2.2 Pipeline chi tiết (grounded + tri thức liên kết)
+
+```
+┌──────────────────────┐
+│  Input Normalization │  (STT optional, lang detect, cleanup)
+└──────────┬───────────┘
+                     ▼
+┌──────────────────────┐
+│ Context Fetch        │  (history, learner profile, embeddings)
+└──────────┬───────────┘
+                     ▼
+┌──────────────────────┐
+│ Diagnose (cheap)     │  intent/skill/root-cause/confidence
+└───────┬─────────┬────┘
+                │         │
+                │         ├───────────────┐
+                │         │               │
+                ▼         ▼               ▼
+    ┌──────────┐  ┌──────────────────────┐   ┌──────────────────────────┐
+    │ Cache    │  │ Hybrid Retrieval     │   │ Clarify Question (if low)│
+    │ Gate     │  │ Vector → KG expand   │   │ 1 question, fast reply   │
+    └────┬─────┘  └──────────┬───────────┘   └──────────────────────────┘
+             │                  ▼
+             │        ┌──────────────────────┐
+             │        │ Evidence Bundle       │  concepts + examples + rules
+             │        └──────────┬───────────┘
+             │                   ▼
+             └────────►┌──────────────────────┐
+                                 │ Grounded Generation  │  LLM constrained to evidence
+                                 └──────────┬───────────┘
+                                                        ▼
+                                 ┌──────────────────────┐
+                                 │ Verify + Score       │  JSON schema + confidence
+                                 └──────────┬───────────┘
+                                                        ▼
+                                 ┌──────────────────────┐
+                                 │ Respond              │  EN + optional VI
+                                 └──────────┬───────────┘
+                                                        ▼
+                                 ┌──────────────────────┐
+                                 │ Background Jobs      │  KG update + CAG lesson gen
+                                 └──────────────────────┘
+```
+
+#### 2.2.3 Hợp đồng dữ liệu (JSON) để Orchestrator chạy ổn định
+
+**A) `DiagnosisV3` (đầu ra của bước Diagnose)**
+
+```json
+{
+    "intent": "fix_grammar|explain_rule|practice|translate|general_chat",
+    "skill": "grammar|vocabulary|fluency|pronunciation|mixed",
+    "user_problem": "short natural language summary",
+    "suspected_errors": [{"type": "verb_tense", "span": "I goes"}],
+    "root_cause_candidates": ["concept:grammar.subject_verb_agreement"],
+    "need_vietnamese": false,
+    "confidence": 0.0,
+    "next_best_action": "answer|ask_clarify|generate_practice"
+}
+```
+
+**B) `RetrievalBundleV3` (bằng chứng tri thức để LLM bám vào)**
+
+```json
+{
+    "query": "string",
+    "vector_hits": [
+        {"id": "concept:grammar.present_simple", "score": 0.82, "snippet": "..."}
+    ],
+    "kg_hits": {
+        "seed_nodes": ["concept:grammar.subject_verb_agreement"],
+        "expanded_nodes": [
+            {"id": "concept:grammar.third_person_s", "relation": "related_to"},
+            {"id": "concept:grammar.past_time_markers", "relation": "prerequisite_of"}
+        ],
+        "paths": [
+            {"from": "concept:grammar.subject_verb_agreement", "to": "concept:grammar.third_person_s", "hops": 1}
+        ]
+    },
+    "examples": [
+        {"good": "I go to school.", "bad": "I goes to school.", "why": "I + base verb"}
+    ]
+}
+```
+
+**C) `TutorResponseV3` (phản hồi cuối, có liên kết tri thức)**
+
+```json
+{
+    "tutor_response": "string",
+    "corrections": [{"error": "I goes", "correction": "I go", "type": "subject_verb_agreement"}],
+    "linked_concepts": [
+        {"id": "concept:grammar.subject_verb_agreement", "weight": 0.9}
+    ],
+    "action_plan": [
+        {"action": "practice", "concept": "concept:grammar.subject_verb_agreement", "count": 5}
+    ],
+    "confidence": 0.0,
+    "metadata": {
+        "path": "fast|slow",
+        "latency_ms": 0,
+        "models_used": ["qwen"],
+        "cache": {"hit": false, "key": "..."}
+    }
+}
+```
+
+**D) `CAGLessonRequestV3` (CAG chạy nền, sinh bài luyện từ tri thức)**
+
+```json
+{
+    "user_id": "...",
+    "level": "A2|B1|B2",
+    "target_concepts": ["concept:grammar.subject_verb_agreement"],
+    "error_patterns": ["subject_verb_agreement"],
+    "constraints": {"duration_min": 10, "types": ["grammar", "vocabulary"]}
+}
+```
+
+#### 2.2.4 Những cải tiến then chốt để đạt “tri thức liên kết, bắt đúng vấn đề”
+
+- **Hybrid Retrieval bắt buộc**: Vector để bắt ngôn ngữ tự nhiên + KG để suy ra prerequisite/root-cause (1–2 hops) và tạo “đường giải thích”.
+- **Diagnose tách riêng**: bước rẻ, ổn định, trả JSON (intent/skill/root-cause/confidence) để quyết định hỏi làm rõ hay đi thẳng.
+- **Grounded Generation**: LLM phải nhận `RetrievalBundleV3` và bị ràng buộc trả lời dựa trên evidence + trả `linked_concepts`.
+- **CAG không chặn phản hồi**: CAG chạy nền dựa trên `target_concepts` và error_patterns để tạo lesson/exercises cá nhân hoá.
+
+#### 2.2.5 Nơi gắn vào Orchestrator (mapping theo phase)
+
+- **Phase 1 (Task Analysis)**: sinh `DiagnosisV3` (cheap classifier + rules + light LLM).
+- **Phase 3 (Execution)**:
+    - Fast path: cache gate → response.
+    - Slow path: build `RetrievalBundleV3` (vector + KG) → grounded generation → verify.
+- **Phase 5/6 (State Management)**: emit background jobs: cập nhật learner profile + KG writer + CAG lesson generator.
 
 ## 3. Component Details
 
