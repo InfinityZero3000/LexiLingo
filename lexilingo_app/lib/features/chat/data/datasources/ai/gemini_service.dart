@@ -8,7 +8,7 @@ class GeminiService implements AIService {
   final String apiKey;
   late final GenerativeModel _model;
   
-  static const String _defaultModelName = 'gemini-1.5-flash';
+  static const String _defaultModelName = 'gemini-2.5-pro';
 
   GeminiService({
     required this.apiKey,

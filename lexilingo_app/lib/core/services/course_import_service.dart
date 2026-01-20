@@ -60,7 +60,7 @@ class CourseImportService {
 
   /// Seed the database with 10 real English learning courses
   Future<void> seedRealCourses() async {
-    print('📚 Starting to seed real courses...');
+    print(' Starting to seed real courses...');
     
     final courses = [
       // Beginner Level Courses
