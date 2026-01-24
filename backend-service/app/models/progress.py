@@ -12,6 +12,95 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
+class UserCourseProgress(Base):
+    """
+    User's overall progress in a course (enrollment and progress tracking).
+    Phase 2: Added for course enrollment feature.
+    """
+    
+    __tablename__ = "user_course_progress"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    progress_percentage: Mapped[float] = mapped_column(Float, default=0.0)  # 0.0-100.0
+    lessons_completed: Mapped[int] = mapped_column(Integer, default=0)
+    total_xp_earned: Mapped[int] = mapped_column(Integer, default=0)
+    
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_activity_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+    
+    # Unique constraint: one enrollment per user per course
+    __table_args__ = (
+        Index('idx_user_course_unique', 'user_id', 'course_id', unique=True),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<UserCourseProgress user={self.user_id} course={self.course_id}>"
+
+
+class LessonCompletion(Base):
+    """
+    Lesson completion status for prerequisites checking.
+    Phase 2: Simplified from UserProgress for lesson unlocking logic.
+    """
+    
+    __tablename__ = "lesson_completions"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    is_passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    best_score: Mapped[int] = mapped_column(Integer, default=0)  # 0-100
+    completed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # Unique constraint: one completion record per user per lesson
+    __table_args__ = (
+        Index('idx_user_lesson_unique', 'user_id', 'lesson_id', unique=True),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<LessonCompletion user={self.user_id} lesson={self.lesson_id} passed={self.is_passed}>"
+
+
 class UserProgress(Base):
     """User progress for lessons/courses."""
     
