@@ -57,7 +57,9 @@ htmlcov/
 
 # Documentation & Model Support (not tracked)
 docs/cmd
+DL-Model-Support
 DL-Model-Support/
+
 
 # Environment variables
 .env
