@@ -26,7 +26,7 @@ git clone https://github.com/InfinityZero3000/LexiLingo.git
 cd LexiLingo
 
 # Install dependencies
-cd lexilingo_app
+cd flutter-app
 flutter pub get
 
 # Run the app
