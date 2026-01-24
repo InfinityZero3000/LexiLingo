@@ -2,19 +2,69 @@
 SQLAlchemy Models
 
 Import all models here for Alembic auto-detection
+Extended with Phase 1-4 models
 """
 
-from app.models.user import User
-from app.models.course import Course, Lesson
+# User models (Phase 1)
+from app.models.user import User, UserDevice, RefreshToken
+
+# Course models (Phase 2)
+from app.models.course import Course, Unit, Lesson, MediaResource
+
+# Vocabulary models
 from app.models.vocabulary import Vocabulary, UserVocabulary
-from app.models.progress import UserProgress, Streak
+
+# Progress & Learning models (Phase 3)
+from app.models.progress import (
+    UserProgress,
+    LessonAttempt,
+    QuestionAttempt,
+    UserVocabKnowledge,
+    DailyReviewSession,
+    Streak,
+)
+
+# Gamification models (Phase 4)
+from app.models.gamification import (
+    Achievement,
+    UserAchievement,
+    UserWallet,
+    WalletTransaction,
+    LeaderboardEntry,
+    UserFollowing,
+    ActivityFeed,
+    ShopItem,
+    UserInventory,
+)
 
 __all__ = [
+    # User (Phase 1)
     "User",
+    "UserDevice",
+    "RefreshToken",
+    # Course (Phase 2)
     "Course",
+    "Unit",
     "Lesson",
+    "MediaResource",
+    # Vocabulary
     "Vocabulary",
     "UserVocabulary",
+    # Progress (Phase 3)
     "UserProgress",
+    "LessonAttempt",
+    "QuestionAttempt",
+    "UserVocabKnowledge",
+    "DailyReviewSession",
     "Streak",
+    # Gamification (Phase 4)
+    "Achievement",
+    "UserAchievement",
+    "UserWallet",
+    "WalletTransaction",
+    "LeaderboardEntry",
+    "UserFollowing",
+    "ActivityFeed",
+    "ShopItem",
+    "UserInventory",
 ]
