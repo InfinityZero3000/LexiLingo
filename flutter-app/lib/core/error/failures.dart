@@ -1,6 +1,9 @@
 abstract class Failure {
   final String message;
   const Failure(this.message);
+  
+  @override
+  String toString() => message;
 }
 
 class ServerFailure extends Failure {
@@ -17,6 +20,10 @@ class NetworkFailure extends Failure {
 
 class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Authentication Failed']);
+}
+
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure([super.message = 'Unauthorized']);
 }
 
 class ValidationFailure extends Failure {

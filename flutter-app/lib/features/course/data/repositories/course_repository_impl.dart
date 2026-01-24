@@ -1,99 +1,86 @@
-import 'package:lexilingo_app/features/course/data/datasources/course_local_data_source.dart';
-import 'package:lexilingo_app/features/course/domain/entities/course.dart';
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/error/exceptions.dart';
+import 'package:lexilingo_app/features/course/data/datasources/course_backend_datasource.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_detail_entity.dart';
 import 'package:lexilingo_app/features/course/domain/repositories/course_repository.dart';
 
+/// Course Repository Implementation
+/// Implements business logic and error handling
 class CourseRepositoryImpl implements CourseRepository {
-  final CourseLocalDataSource? localDataSource;
+  final CourseBackendDataSource backendDataSource;
 
-  CourseRepositoryImpl({this.localDataSource});
+  CourseRepositoryImpl({required this.backendDataSource});
 
   @override
-  Future<List<Course>> getAllCourses() async {
-    if (localDataSource == null) {
-      return _getMockCourses();
+  Future<Either<Failure, (List<CourseEntity>, int)>> getCourses({
+    int page = 1,
+    int pageSize = 20,
+    String? language,
+    String? level,
+  }) async {
+    try {
+      final response = await backendDataSource.getCourses(
+        page: page,
+        pageSize: pageSize,
+        language: language,
+        level: level,
+      );
+
+      final courses = response.data.map((model) => model as CourseEntity).toList();
+      final totalPages = response.pagination.totalPages;
+
+      return Right((courses, totalPages));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
     }
-    return await localDataSource!.getAllCourses();
   }
 
   @override
-  Future<List<Course>> getFeaturedCourses() async {
-    if (localDataSource == null) {
-      return _getMockCourses().where((c) => c.isFeatured).toList();
+  Future<Either<Failure, CourseDetailEntity>> getCourseDetail(String courseId) async {
+    try {
+      final response = await backendDataSource.getCourseDetail(courseId);
+      return Right(response.data);
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
     }
-    return await localDataSource!.getFeaturedCourses();
   }
 
   @override
-  Future<List<Course>> getCoursesByCategory(String category) async {
-    if (localDataSource == null) {
-      return _getMockCourses().where((c) => c.category == category).toList();
+  Future<Either<Failure, String>> enrollInCourse(String courseId) async {
+    try {
+      final response = await backendDataSource.enrollInCourse(courseId);
+      final message = response.data['message'] as String? ?? 'Successfully enrolled';
+      return Right(message);
+    } on BadRequestException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
     }
-    return await localDataSource!.getCoursesByCategory(category);
-  }
-
-  @override
-  Future<List<Course>> getEnrolledCourses() async {
-    if (localDataSource == null) {
-      return [];
-    }
-    return await localDataSource!.getEnrolledCourses();
-  }
-
-  @override
-  Future<Course?> getCourseById(int id) async {
-    if (localDataSource == null) {
-      return _getMockCourses().firstWhere((c) => c.id == id);
-    }
-    return await localDataSource!.getCourseById(id);
-  }
-
-  @override
-  Future<bool> enrollCourse(int id) async {
-    if (localDataSource == null) {
-      return true;
-    }
-    final result = await localDataSource!.enrollCourse(id);
-    return result > 0;
-  }
-
-  @override
-  Future<bool> updateCourseProgress(int id, double progress) async {
-    if (localDataSource == null) {
-      return true;
-    }
-    final result = await localDataSource!.updateCourseProgress(id, progress);
-    return result > 0;
-  }
-
-  List<Course> _getMockCourses() {
-    return [
-      Course(
-        id: 1,
-        title: 'English for Beginners',
-        description: 'Start your English learning journey with fundamental vocabulary and grammar.',
-        level: 'A1',
-        category: 'Language Basics',
-        imageUrl: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400',
-        duration: '4 weeks',
-        lessonsCount: 12,
-        isFeatured: true,
-        rating: 4.5,
-        enrolledCount: 1250,
-      ),
-      Course(
-        id: 2,
-        title: 'Conversational English',
-        description: 'Learn practical English for everyday conversations.',
-        level: 'B1',
-        category: 'Speaking',
-        imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-        duration: '6 weeks',
-        lessonsCount: 18,
-        isFeatured: true,
-        rating: 4.7,
-        enrolledCount: 980,
-      ),
-    ];
   }
 }
+
 

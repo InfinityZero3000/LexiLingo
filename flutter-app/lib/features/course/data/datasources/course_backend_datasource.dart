@@ -23,9 +23,9 @@ abstract class CourseBackendDataSource {
 
 /// Implementation of CourseBackendDataSource using ApiClient
 class CourseBackendDataSourceImpl implements CourseBackendDataSource {
-  final ApiClient apiClient;
+  final ApiClient _apiClient;
 
-  CourseBackendDataSourceImpl(this.apiClient);
+  CourseBackendDataSourceImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
   @override
   Future<PaginatedResponseEnvelope<List<CourseModel>>> getCourses({
@@ -34,17 +34,18 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     String? language,
     String? level,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'page_size': pageSize,
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'page_size': pageSize.toString(),
     };
     if (language != null) queryParams['language'] = language;
     if (level != null) queryParams['level'] = level;
 
-    final response = await apiClient.get(
-      '/courses',
+    final uri = Uri(
+      path: '/courses',
       queryParameters: queryParams,
     );
+    final response = await _apiClient.get(uri.toString());
 
     return PaginatedResponseEnvelope<List<CourseModel>>.fromJson(
       response,
@@ -60,7 +61,7 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   @override
   Future<ApiResponseEnvelope<CourseDetailModel>> getCourseDetail(
       String courseId) async {
-    final response = await apiClient.get('/courses/$courseId');
+    final response = await _apiClient.get('/courses/$courseId');
 
     return ApiResponseEnvelope<CourseDetailModel>.fromJson(
       response,
@@ -71,7 +72,7 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   @override
   Future<ApiResponseEnvelope<Map<String, dynamic>>> enrollInCourse(
       String courseId) async {
-    final response = await apiClient.post('/courses/$courseId/enroll');
+    final response = await _apiClient.post('/courses/$courseId/enroll');
 
     return ApiResponseEnvelope<Map<String, dynamic>>.fromJson(
       response,

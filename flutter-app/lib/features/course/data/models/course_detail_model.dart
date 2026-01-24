@@ -72,11 +72,21 @@ class UnitWithLessonsModel extends UnitWithLessonsEntity {
       'order_index': orderIndex,
       'background_color': backgroundColor,
       'icon_url': iconUrl,
-      'lessons': lessons.map((l) => LessonInRoadmapModel.fromEntity(l).toJson()).toList(),
+      'lessons': lessons
+          .map((l) => LessonInRoadmapModel(
+                id: l.id,
+                title: l.title,
+                orderIndex: l.orderIndex,
+                lessonType: l.lessonType,
+                xpReward: l.xpReward,
+                isLocked: l.isLocked,
+                isCompleted: l.isCompleted,
+              ).toJson())
+          .toList(),
     };
   }
 
-  factory LessonInRoadmapModel.fromEntity(LessonInRoadmapEntity entity) {
+  static LessonInRoadmapModel fromEntity(LessonInRoadmapEntity entity) {
     return LessonInRoadmapModel(
       id: entity.id,
       title: entity.title,
@@ -151,11 +161,32 @@ class CourseDetailModel extends CourseDetailEntity {
       'updated_at': updatedAt.toIso8601String(),
       'is_enrolled': isEnrolled,
       'user_progress': userProgress,
-      'units': units.map((u) => UnitWithLessonsModel.fromEntity(u).toJson()).toList(),
+      'units': units
+          .map((u) => UnitWithLessonsModel(
+                id: u.id,
+                title: u.title,
+                description: u.description,
+                orderIndex: u.orderIndex,
+                backgroundColor: u.backgroundColor,
+                iconUrl: u.iconUrl,
+                totalLessons: u.totalLessons,
+                lessons: u.lessons
+                    .map((l) => LessonInRoadmapModel(
+                          id: l.id,
+                          title: l.title,
+                          orderIndex: l.orderIndex,
+                          lessonType: l.lessonType,
+                          xpReward: l.xpReward,
+                          isLocked: l.isLocked,
+                          isCompleted: l.isCompleted,
+                        ))
+                    .toList(),
+              ).toJson())
+          .toList(),
     };
   }
 
-  factory UnitWithLessonsModel.fromEntity(UnitWithLessonsEntity entity) {
+  static UnitWithLessonsModel fromEntity(UnitWithLessonsEntity entity) {
     return UnitWithLessonsModel(
       id: entity.id,
       title: entity.title,

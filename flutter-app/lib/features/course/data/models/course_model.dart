@@ -1,96 +1,108 @@
-import 'package:lexilingo_app/features/course/domain/entities/course.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 
-class CourseModel extends Course {
+/// Course Model
+/// Maps JSON from backend API to CourseEntity
+class CourseModel extends CourseEntity {
   CourseModel({
-    int? id,
+    required String id,
     required String title,
-    required String description,
+    String? description,
+    required String language,
     required String level,
-    String? category,
-    String? imageUrl,
-    String? duration,
-    int lessonsCount = 0,
-    bool isFeatured = false,
-    double rating = 0.0,
-    int enrolledCount = 0,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    required List<String> tags,
+    String? thumbnailUrl,
+    required int totalXp,
+    required int estimatedDuration,
+    required int totalLessons,
+    required bool isPublished,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    bool? isEnrolled,
+    double? userProgress,
   }) : super(
           id: id,
           title: title,
           description: description,
+          language: language,
           level: level,
-          category: category,
-          imageUrl: imageUrl,
-          duration: duration,
-          lessonsCount: lessonsCount,
-          isFeatured: isFeatured,
-          rating: rating,
-          enrolledCount: enrolledCount,
+          tags: tags,
+          thumbnailUrl: thumbnailUrl,
+          totalXp: totalXp,
+          estimatedDuration: estimatedDuration,
+          totalLessons: totalLessons,
+          isPublished: isPublished,
           createdAt: createdAt,
           updatedAt: updatedAt,
+          isEnrolled: isEnrolled,
+          userProgress: userProgress,
         );
 
-  // Convert from JSON/Database to Model
+  /// Convert from JSON to Model
   factory CourseModel.fromJson(Map<String, dynamic> json) {
     return CourseModel(
-      id: json['id'] as int?,
+      id: json['id'] as String,
       title: json['title'] as String,
-      description: json['description'] as String,
+      description: json['description'] as String?,
+      language: json['language'] as String,
       level: json['level'] as String,
-      category: json['category'] as String?,
-      imageUrl: json['imageUrl'] as String?,
-      duration: json['duration'] as String?,
-      lessonsCount: (json['lessonsCount'] as int?) ?? 0,
-      isFeatured: (json['isFeatured'] as int?) == 1,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      enrolledCount: (json['enrolledCount'] as int?) ?? 0,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.tryParse(json['createdAt'] as String)
-          : null,
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.tryParse(json['updatedAt'] as String)
-          : null,
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      totalXp: json['total_xp'] as int,
+      estimatedDuration: json['estimated_duration'] as int,
+      totalLessons: json['total_lessons'] as int,
+      isPublished: json['is_published'] as bool,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      isEnrolled: json['is_enrolled'] as bool?,
+      userProgress: (json['user_progress'] as num?)?.toDouble(),
     );
   }
 
-  // Convert from Model to JSON/Database
+  /// Convert from Model to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'title': title,
       'description': description,
+      'language': language,
       'level': level,
-      'category': category,
-      'imageUrl': imageUrl,
-      'duration': duration,
-      'lessonsCount': lessonsCount,
-      'isFeatured': isFeatured ? 1 : 0,
-      'rating': rating,
-      'enrolledCount': enrolledCount,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'tags': tags,
+      'thumbnail_url': thumbnailUrl,
+      'total_xp': totalXp,
+      'estimated_duration': estimatedDuration,
+      'total_lessons': totalLessons,
+      'is_published': isPublished,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'is_enrolled': isEnrolled,
+      'user_progress': userProgress,
     };
   }
 
-  // Convert from Entity to Model
-  factory CourseModel.fromEntity(Course entity) {
+  /// Convert from Entity to Model
+  factory CourseModel.fromEntity(CourseEntity entity) {
     return CourseModel(
       id: entity.id,
       title: entity.title,
       description: entity.description,
+      language: entity.language,
       level: entity.level,
-      category: entity.category,
-      imageUrl: entity.imageUrl,
-      duration: entity.duration,
-      lessonsCount: entity.lessonsCount,
-      isFeatured: entity.isFeatured,
-      rating: entity.rating,
-      enrolledCount: entity.enrolledCount,
+      tags: entity.tags,
+      thumbnailUrl: entity.thumbnailUrl,
+      totalXp: entity.totalXp,
+      estimatedDuration: entity.estimatedDuration,
+      totalLessons: entity.totalLessons,
+      isPublished: entity.isPublished,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      isEnrolled: entity.isEnrolled,
+      userProgress: entity.userProgress,
     );
   }
 }
+
 
 

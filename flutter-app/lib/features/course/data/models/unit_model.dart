@@ -84,12 +84,22 @@ class UnitModel extends UnitEntity {
       'total_lessons': totalLessons,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      'lessons': lessons.map((l) => LessonInUnitModel.fromEntity(l).toJson()).toList(),
+      'lessons': lessons
+          .map((l) => LessonInUnitModel(
+                id: l.id,
+                title: l.title,
+                orderIndex: l.orderIndex,
+                lessonType: l.lessonType,
+                xpReward: l.xpReward,
+                isLocked: l.isLocked,
+                isCompleted: l.isCompleted,
+              ).toJson())
+          .toList(),
     };
   }
 
-  factory LessonInUnitModel.fromEntity(LessonInUnitEntity entity) {
-    return LessonInUnitModel(
+  factory UnitModel.fromEntity(UnitEntity entity) {
+    return UnitModel(
       id: entity.id,
       title: entity.title,
       orderIndex: entity.orderIndex,

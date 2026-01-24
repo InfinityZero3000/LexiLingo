@@ -1,4 +1,4 @@
-import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:get_it/get_it.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/course/data/datasources/course_backend_datasource.dart';
 import 'package:lexilingo_app/features/course/data/repositories/course_repository_impl.dart';
@@ -8,9 +8,9 @@ import 'package:lexilingo_app/features/course/domain/usecases/get_course_detail_
 import 'package:lexilingo_app/features/course/domain/usecases/enroll_in_course_usecase.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 
-/// Register Course Module
-/// Phase 2 implementation with backend API integration
-void registerCourseModule({required bool skipDatabase}) {
+/// Course Feature Dependency Injection
+/// Registers all course-related dependencies with GetIt
+void setupCourseDependencies(GetIt sl) {
   // Data Sources
   sl.registerLazySingleton<CourseBackendDataSource>(
     () => CourseBackendDataSourceImpl(apiClient: sl<ApiClient>()),
@@ -22,17 +22,16 @@ void registerCourseModule({required bool skipDatabase}) {
   );
 
   // Use Cases
-  sl.registerLazySingleton(() => GetCoursesUseCase(sl()));
-  sl.registerLazySingleton(() => GetCourseDetailUseCase(sl()));
-  sl.registerLazySingleton(() => EnrollInCourseUseCase(sl()));
+  sl.registerLazySingleton(() => GetCoursesUseCase(sl<CourseRepository>()));
+  sl.registerLazySingleton(() => GetCourseDetailUseCase(sl<CourseRepository>()));
+  sl.registerLazySingleton(() => EnrollInCourseUseCase(sl<CourseRepository>()));
 
   // Providers
   sl.registerFactory(
     () => CourseProvider(
-      getCoursesUseCase: sl(),
-      getCourseDetailUseCase: sl(),
-      enrollInCourseUseCase: sl(),
+      getCoursesUseCase: sl<GetCoursesUseCase>(),
+      getCourseDetailUseCase: sl<GetCourseDetailUseCase>(),
+      enrollInCourseUseCase: sl<EnrollInCourseUseCase>(),
     ),
   );
 }
-
