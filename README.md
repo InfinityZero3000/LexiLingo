@@ -168,7 +168,7 @@ Android: API 24+ (Android 7.0)
 1. Clone the repository
 ```bash
 git clone https://github.com/InfinityZero3000/LexiLingo.git
-cd LexiLingo/lexilingo_app
+cd LexiLingo/flutter-app
 ```
 
 2. Install dependencies
@@ -241,7 +241,7 @@ Comprehensive documentation is available:
 | Document | Description | Link |
 |----------|-------------|------|
 | Quick Start | 5-minute setup guide | [QUICKSTART.md](QUICKSTART.md) |
-| Technical Docs | Architecture & setup | [lexilingo_app/README.md](lexilingo_app/README.md) |
+| Technical Docs | Architecture & setup | [flutter-app/README.md](flutter-app/README.md) |
 | Contributing | Coding standards & guidelines | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Git Workflow | Complete workflow guide | [GIT_WORKFLOW.md](GIT_WORKFLOW.md) |
 | Git Reference | Command cheat sheet | [GIT_QUICK_REFERENCE.md](GIT_QUICK_REFERENCE.md) |
@@ -308,6 +308,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with Flutter**
 
-[Report Bug](https://github.com/InfinityZero3000/LexiLingo/issues) • [Request Feature](https://github.com/InfinityZero3000/LexiLingo/issues) • [Documentation](lexilingo_app/README.md)
+[Report Bug](https://github.com/InfinityZero3000/LexiLingo/issues) • [Request Feature](https://github.com/InfinityZero3000/LexiLingo/issues) • [Documentation](flutter-app/README.md)
 
 </div>
