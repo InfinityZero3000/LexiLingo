@@ -7,6 +7,7 @@ import 'interceptors/api_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'models.dart';
 import 'network_info.dart';
+import 'response_models.dart';
 
 /// HTTP client with basic interceptors, connectivity check, and error mapping.
 class ApiClient {
@@ -14,6 +15,7 @@ class ApiClient {
   final String _baseUrl;
   final List<ApiInterceptor> _interceptors;
   final NetworkInfo _networkInfo;
+  final Future<Map<String, String>> Function()? _authHeaderProvider;
 
   ApiClient({
     http.Client? client,
@@ -21,20 +23,35 @@ class ApiClient {
     List<ApiInterceptor>? interceptors,
     NetworkInfo? networkInfo,
     bool enableLogging = true,
+    Future<Map<String, String>> Function()? authHeaderProvider,
   })  : _client = client ?? http.Client(),
         _baseUrl = (baseUrl ?? ApiConfig.baseUrl).replaceAll(RegExp(r'/+$'), ''),
         _interceptors = [
           if (enableLogging) LoggingInterceptor(),
           ...?interceptors,
         ],
-        _networkInfo = networkInfo ?? NetworkInfoImpl();
+        _networkInfo = networkInfo ?? NetworkInfoImpl(),
+        _authHeaderProvider = authHeaderProvider;
 
-  Map<String, String> _buildHeaders(Map<String, String>? headers) {
-    return {
+  Future<Map<String, String>> _buildHeaders(Map<String, String>? headers) async {
+    final built = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      ...?headers,
     };
+
+    if (_authHeaderProvider != null) {
+      try {
+        built.addAll(await _authHeaderProvider!.call());
+      } catch (_) {
+        // If token fetch fails, continue without auth header.
+      }
+    }
+
+    if (headers != null) {
+      built.addAll(headers);
+    }
+
+    return built;
   }
 
   Uri _resolve(String path) {
@@ -43,11 +60,13 @@ class ApiClient {
     return Uri.parse('$_baseUrl$normalizedPath');
   }
 
+  /// GET request returning unwrapped data
   Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers}) async {
     final uri = _resolve(path);
     return _send('GET', uri, headers: headers);
   }
 
+  /// POST request returning unwrapped data
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, String>? headers,
@@ -57,7 +76,53 @@ class ApiClient {
     return _send('POST', uri, headers: headers, body: body);
   }
 
+  /// GET request returning full ApiResponseEnvelope
+  Future<ApiResponseEnvelope<T>> getEnvelope<T>(
+    String path, {
+    Map<String, String>? headers,
+    required T Function(dynamic) fromJson,
+  }) async {
+    final uri = _resolve(path);
+    final response = await _sendRaw('GET', uri, headers: headers);
+    return _parseResponseEnvelope<T>(response, fromJson);
+  }
+
+  /// POST request returning full ApiResponseEnvelope
+  Future<ApiResponseEnvelope<T>> postEnvelope<T>(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    required T Function(dynamic) fromJson,
+  }) async {
+    final uri = _resolve(path);
+    final response = await _sendRaw('POST', uri, headers: headers, body: body);
+    return _parseResponseEnvelope<T>(response, fromJson);
+  }
+
+  /// GET request returning PaginatedResponseEnvelope
+  Future<PaginatedResponseEnvelope<T>> getPaginated<T>(
+    String path, {
+    Map<String, String>? headers,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) async {
+    final uri = _resolve(path);
+    final response = await _sendRaw('GET', uri, headers: headers);
+    return _parsePaginatedResponse<T>(response, fromJson);
+  }
+
+  /// Internal method: sends request and returns unwrapped data
   Future<Map<String, dynamic>> _send(
+    String method,
+    Uri uri, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
+    final response = await _sendRaw(method, uri, headers: headers, body: body);
+    return _handleResponse(response);
+  }
+
+  /// Internal method: sends request and returns raw ApiResponse
+  Future<ApiResponse> _sendRaw(
     String method,
     Uri uri, {
     Map<String, String>? headers,
@@ -67,10 +132,12 @@ class ApiClient {
       throw ServerException('No network connection');
     }
 
+    final resolvedHeaders = await _buildHeaders(headers);
+
     final req = ApiRequest(
       method: method,
       uri: uri,
-      headers: _buildHeaders(headers),
+      headers: resolvedHeaders,
       body: body,
     );
 
@@ -85,7 +152,7 @@ class ApiClient {
         body: response.body,
       );
       await _notifyResponse(apiResponse);
-      return _handleResponse(apiResponse);
+      return apiResponse;
     } catch (e) {
       await _notifyError(ApiError(
         method: method,
@@ -94,6 +161,7 @@ class ApiClient {
         message: e.toString(),
       ));
       if (e is ServerException) rethrow;
+      if (e is ApiErrorException) rethrow;
       throw ServerException('$method ${uri.path} failed: $e');
     }
   }
@@ -120,15 +188,85 @@ class ApiClient {
 
   Map<String, dynamic> _handleResponse(ApiResponse response) {
     final statusCode = response.statusCode;
-    if (statusCode >= 200 && statusCode < 300) {
-      if (response.body.isEmpty) return <String, dynamic>{};
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return {'data': decoded};
+    
+    // Check for error status codes
+    if (statusCode < 200 || statusCode >= 300) {
+      _handleErrorResponse(response);
     }
+    
+    if (response.body.isEmpty) return <String, dynamic>{};
+    
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      // If it's an envelope, unwrap the data
+      if (decoded.containsKey('data')) {
+        return decoded['data'] as Map<String, dynamic>? ?? {};
+      }
+      return decoded;
+    }
+    return {'data': decoded};
+  }
+
+  /// Parse error response and throw ApiErrorException
+  void _handleErrorResponse(ApiResponse response) {
+    if (response.body.isEmpty) {
+      throw ServerException(
+        'Request ${response.uri.path} failed with status ${response.statusCode}',
+      );
+    }
+
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded.containsKey('error')) {
+        final errorEnvelope = ErrorResponseEnvelope.fromJson(decoded);
+        throw ApiErrorException(errorEnvelope);
+      }
+    } catch (e) {
+      if (e is ApiErrorException) rethrow;
+      // If parsing fails, throw generic error
+    }
+
     throw ServerException(
-      'Request ${response.uri.path} failed with status $statusCode',
+      'Request ${response.uri.path} failed with status ${response.statusCode}',
     );
+  }
+
+  /// Parse ApiResponseEnvelope from response
+  ApiResponseEnvelope<T> _parseResponseEnvelope<T>(
+    ApiResponse response,
+    T Function(dynamic) fromJson,
+  ) {
+    final statusCode = response.statusCode;
+    
+    if (statusCode < 200 || statusCode >= 300) {
+      _handleErrorResponse(response);
+    }
+
+    if (response.body.isEmpty) {
+      throw ServerException('Empty response body');
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return ApiResponseEnvelope.fromJson(decoded, fromJson);
+  }
+
+  /// Parse PaginatedResponseEnvelope from response
+  PaginatedResponseEnvelope<T> _parsePaginatedResponse<T>(
+    ApiResponse response,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    final statusCode = response.statusCode;
+    
+    if (statusCode < 200 || statusCode >= 300) {
+      _handleErrorResponse(response);
+    }
+
+    if (response.body.isEmpty) {
+      throw ServerException('Empty response body');
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return PaginatedResponseEnvelope.fromJson(decoded, fromJson);
   }
 
   Future<void> _notifyRequest(ApiRequest request) async {
