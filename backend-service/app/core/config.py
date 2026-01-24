@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    
+    # CORS
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"]
+    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1", "*.lexilingo.com"]
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
@@ -41,6 +46,10 @@ class Settings(BaseSettings):
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
+
+    # Firebase (optional, for ID token verification)
+    FIREBASE_PROJECT_ID: str | None = None
+    FIREBASE_CREDENTIALS_JSON: str | None = None
     
     model_config = SettingsConfigDict(
         env_file=".env",
