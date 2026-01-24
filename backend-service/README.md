@@ -60,6 +60,17 @@ Services will be available at:
 - **API Docs**: http://localhost:8000/docs
 - **PostgreSQL**: localhost:5432
 
+## 🔑 Firebase Auth (optional)
+
+If the mobile app signs in with Firebase Auth, the backend can verify Firebase ID tokens and map them to local users.
+
+- Create a Firebase project and download a **Service Account JSON**.
+- Set env vars (choose one way to provide credentials):
+  - `FIREBASE_PROJECT_ID=<your-project-id>`
+  - `FIREBASE_CREDENTIALS_JSON=<paste JSON string>` **or** `FIREBASE_CREDENTIALS_FILE=/absolute/path/to/service_account.json`
+- For Docker Compose, add these vars to `.env` so `backend-app` picks them up.
+- Clients should send `Authorization: Bearer <firebase_id_token>`; the backend will create the user automatically on first request.
+
 ### 2. Local Development (Without Docker)
 
 ```bash
