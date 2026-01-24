@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/interceptors/logging_interceptor.dart';
+import 'package:lexilingo_app/core/network/auth_header_provider.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
@@ -17,10 +18,12 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
   sl.registerLazySingleton<FirestoreService>(() => FirestoreService.instance);
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
+  sl.registerLazySingleton<FirebaseAuthHeaderProvider>(() => FirebaseAuthHeaderProvider());
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(
       networkInfo: sl<NetworkInfo>(),
       interceptors: [LoggingInterceptor()],
+      authHeaderProvider: sl<FirebaseAuthHeaderProvider>().call,
     ),
   );
   sl.registerLazySingleton<HealthCheckService>(

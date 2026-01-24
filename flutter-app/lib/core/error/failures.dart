@@ -18,3 +18,23 @@ class NetworkFailure extends Failure {
 class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Authentication Failed']);
 }
+
+class ValidationFailure extends Failure {
+  const ValidationFailure([super.message = 'Validation Failed']);
+}
+
+class NotFoundFailure extends Failure {
+  const NotFoundFailure([super.message = 'Resource Not Found']);
+}
+
+class ConflictFailure extends Failure {
+  const ConflictFailure([super.message = 'Resource Already Exists']);
+}
+
+class RateLimitFailure extends Failure {
+  const RateLimitFailure([super.message = 'Rate Limit Exceeded']);
+}
+
+class PermissionFailure extends Failure {
+  const PermissionFailure([super.message = 'Permission Denied']);
+}
