@@ -7,23 +7,31 @@ Architecture: Clean Architecture
 - Schemas: Pydantic validation
 - Routes: API endpoints
 - Services: Business logic
+- Middleware: Rate limiting, error handling, request logging
 """
 
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-import time
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.middleware import (
+    RateLimitMiddleware,
+    ErrorHandlerMiddleware,
+    RequestLoggingMiddleware,
+    RequestIDMiddleware,
+)
 from app.routes import (
     health_router,
     auth_router,
     users_router,
     courses_router,
 )
+from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
 logging.basicConfig(
@@ -107,7 +115,10 @@ app = FastAPI(
 )
 
 
-# CORS middleware
+# ===== MIDDLEWARE CONFIGURATION =====
+# Order matters! Middleware is executed in reverse order of addition.
+
+# 1. CORS - Allow cross-origin requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -116,40 +127,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Request logging middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """Log all incoming requests with timing."""
-    start_time = time.time()
-    
-    response = await call_next(request)
-    
-    duration = time.time() - start_time
-    
-    logger.info(
-        f"{request.method} {request.url.path} - "
-        f"Status: {response.status_code} - "
-        f"Duration: {duration:.3f}s"
+# 2. Trusted Host - Security: Prevent Host header attacks
+if not settings.is_development:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS
     )
-    
-    return response
 
+# 3. Error Handler - Catch unhandled exceptions
+app.add_middleware(ErrorHandlerMiddleware)
 
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Handle uncaught exceptions."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "message": str(exc) if settings.DEBUG else "An error occurred",
-            "path": str(request.url.path)
-        }
-    )
+# 4. Request Logging - Log all requests (Phase 5: Observability)
+app.add_middleware(RequestLoggingMiddleware)
+
+# 5. Request ID - Add unique ID to each request
+app.add_middleware(RequestIDMiddleware)
+
+# 6. Rate Limiting - Prevent abuse (Phase 1: Security)
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=60,
+    requests_per_hour=1000
+)
 
 
 # Include routers

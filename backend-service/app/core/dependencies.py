@@ -12,6 +12,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.user import User
 
 # HTTP Bearer token scheme
@@ -32,42 +33,37 @@ async def get_current_user(
     """
     token = credentials.credentials
     
-    # Decode token
+    # 1) Try local JWT (backward compatibility)
     payload = decode_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Get user_id from token
-    user_id: Optional[str] = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
-        )
-    
-    # Query user from database
-    result = await db.execute(
-        select(User).where(User.id == user_id)
+    if payload and (sub := payload.get("sub")):
+        result = await db.execute(select(User).where(User.id == sub))
+        user = result.scalar_one_or_none()
+        if user and user.is_active:
+            return user
+
+    # 2) Try Firebase ID token
+    claims = verify_firebase_token(token)
+    if claims:
+        try:
+            user = await get_or_create_user_from_claims(db, claims)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Firebase token payload",
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive user"
+            )
+        return user
+
+    # 3) Unauthorized
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    
-    return user
 
 
 async def get_current_active_user(
