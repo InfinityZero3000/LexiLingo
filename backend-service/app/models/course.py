@@ -5,9 +5,10 @@ Extended for Phase 2: Advanced Content Management System
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, Index
+from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, Index, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 
 from app.core.database import Base
 
@@ -48,6 +49,9 @@ class Course(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+    
+    # Relationships
+    units: Mapped[List["Unit"]] = relationship("Unit", back_populates="course", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         return f"<Course {self.title}>"
@@ -91,14 +95,14 @@ class Unit(Base):
         onupdate=datetime.utcnow
     )
     
+    # Relationships
+    course: Mapped["Course"] = relationship("Course", back_populates="units")
+    lessons: Mapped[List["Lesson"]] = relationship("Lesson", back_populates="unit", cascade="all, delete-orphan")
+    
     def __repr__(self) -> str:
         return f"<Unit {self.title}>"
 
-
-class Lesson(Base):
-    """
-    Lesson model with prerequisites and pass requirements.
-    Phase 2: Added pass_score, prerequisite_lesson_id, content_version.
+threshold, prerequisites, total_exercises.
     """
     
     __tablename__ = "lessons"
@@ -128,12 +132,8 @@ class Lesson(Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False)
     
     # Phase 2: Prerequisites and pass requirements
-    prerequisite_lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("lessons.id", ondelete="SET NULL"),
-        nullable=True
-    )
-    pass_score: Mapped[int] = mapped_column(Integer, default=70)  # Minimum score to pass (%)
+    prerequisites: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True, default=[])
+    pass_threshold: Mapped[int] = mapped_column(Integer, default=80)  # Minimum score to pass (%)
     
     # Lesson content stored as JSON
     content: Mapped[dict] = mapped_column(JSON, nullable=True)
@@ -141,11 +141,19 @@ class Lesson(Base):
     
     estimated_minutes: Mapped[int] = mapped_column(Integer, default=10)
     xp_reward: Mapped[int] = mapped_column(Integer, default=10)
+    total_exercises: Mapped[int] = mapped_column(Integer, default=0)
     
-    lesson_type: Mapped[str] = mapped_column(String(50), default="mixed")  # vocabulary, grammar, quiz, listening, speaking
+    lesson_type: Mapped[str] = mapped_column(String(50), default="lesson")  # lesson, practice, review, test
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+    
+    # Relationships
+    unit: Mapped["Unit"] = relationship("Unit", back_populates="lessons"updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
