@@ -49,6 +49,8 @@ htmlcov/
 **/google-services.json
 **/GoogleService-Info.plist
 **/firebase_options.dart
+**/*firebase-adminsdk*.json
+flutter-app/lexilingo-88492-firebase-adminsdk-fbsvc-aa6640bef2.json
 
 # Keep template files
 !**/google-services.json.example
@@ -64,6 +66,7 @@ DL-Model-Support/
 # Environment variables
 .env
 *.env
+**/.env.firebase.local
 !.env.example
 
 # AI Models (too large for git)
