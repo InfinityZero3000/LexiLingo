@@ -1,23 +1,49 @@
+# IDE
 .idea/
-docs/cmd
 *.iml
-*.hprof
+.vscode/
+
+# OS
+*.DS_Store
+
+# Build outputs
+build/
+.gradle/
+.cxx/
+.externalNativeBuild/
+/local.properties
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.metadata
+pubspec.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
 *.log
+*.hprof
+
+# Other
 *.orig
 *.rej
 *.swp
-*.DS_Store
-build/
-.gradle/
-/local.properties
-/.cxx/
-/.externalNativeBuild/
-/.idea/
-/.vscode/
-/.flutter-plugins
-/.flutter-plugins-dependencies
-/.packages
-pubspec.lock
 
 # Firebase & Google Services - SENSITIVE DATA
 **/google-services.json
@@ -29,6 +55,17 @@ pubspec.lock
 !**/GoogleService-Info.plist.example
 !**/firebase_options.dart.example
 
-# Orther
-docs
+# Documentation & Model Support (not tracked)
+docs/cmd
 DL-Model-Support/
+
+# Environment variables
+.env
+*.env
+!.env.example
+
+# AI Models (too large for git)
+**/models/whisper/*.pt
+**/models/hubert/*.pt
+**/models/piper/*.onnx
+**/models/embeddings/*.bin
