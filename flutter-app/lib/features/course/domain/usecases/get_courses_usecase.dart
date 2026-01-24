@@ -1,14 +1,36 @@
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
-import 'package:lexilingo_app/features/course/domain/entities/course.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/repositories/course_repository.dart';
 
-class GetCoursesUseCase implements UseCase<List<Course>, NoParams> {
+/// Get paginated list of courses
+class GetCoursesUseCase implements UseCase<(List<CourseEntity>, int), GetCoursesParams> {
   final CourseRepository repository;
 
   GetCoursesUseCase(this.repository);
 
   @override
-  Future<List<Course>> call(NoParams params) async {
-    return await repository.getAllCourses();
+  Future<Either<Failure, (List<CourseEntity>, int)>> call(GetCoursesParams params) async {
+    return await repository.getCourses(
+      page: params.page,
+      pageSize: params.pageSize,
+      language: params.language,
+      level: params.level,
+    );
   }
+}
+
+class GetCoursesParams {
+  final int page;
+  final int pageSize;
+  final String? language;
+  final String? level;
+
+  const GetCoursesParams({
+    this.page = 1,
+    this.pageSize = 20,
+    this.language,
+    this.level,
+  });
 }
