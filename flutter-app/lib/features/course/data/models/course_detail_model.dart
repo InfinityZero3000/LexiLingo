@@ -169,7 +169,6 @@ class CourseDetailModel extends CourseDetailEntity {
                 orderIndex: u.orderIndex,
                 backgroundColor: u.backgroundColor,
                 iconUrl: u.iconUrl,
-                totalLessons: u.totalLessons,
                 lessons: u.lessons
                     .map((l) => LessonInRoadmapModel(
                           id: l.id,
