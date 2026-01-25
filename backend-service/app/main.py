@@ -30,6 +30,7 @@ from app.routes import (
     auth_router,
     users_router,
     courses_router,
+    progress_router,
 )
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
@@ -156,6 +157,7 @@ app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(courses_router, prefix=f"{settings.API_V1_PREFIX}/courses", tags=["Courses"])
+app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 
 
 @app.get("/")
