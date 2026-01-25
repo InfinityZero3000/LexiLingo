@@ -101,12 +101,26 @@ class UnitModel extends UnitEntity {
   factory UnitModel.fromEntity(UnitEntity entity) {
     return UnitModel(
       id: entity.id,
+      courseId: entity.courseId,
       title: entity.title,
+      description: entity.description,
       orderIndex: entity.orderIndex,
-      lessonType: entity.lessonType,
-      xpReward: entity.xpReward,
-      isLocked: entity.isLocked,
-      isCompleted: entity.isCompleted,
+      backgroundColor: entity.backgroundColor,
+      iconUrl: entity.iconUrl,
+      totalLessons: entity.totalLessons,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      lessons: entity.lessons
+          .map((l) => LessonInUnitModel(
+                id: l.id,
+                title: l.title,
+                orderIndex: l.orderIndex,
+                lessonType: l.lessonType,
+                xpReward: l.xpReward,
+                isLocked: l.isLocked,
+                isCompleted: l.isCompleted,
+              ))
+          .toList(),
     );
   }
 }
