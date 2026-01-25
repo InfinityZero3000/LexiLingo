@@ -1,0 +1,69 @@
+import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/features/progress/data/models/progress_model.dart';
+
+/// Progress Remote Data Source Interface
+abstract class ProgressRemoteDataSource {
+  Future<ProgressStatsModel> getMyProgress();
+  Future<CourseProgressWithUnitsModel> getCourseProgress(String courseId);
+  Future<LessonCompletionResultModel> completeLesson({
+    required String lessonId,
+    required double score,
+  });
+  Future<int> getTotalXp();
+}
+
+/// Progress Remote Data Source Implementation
+class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
+  final ApiClient apiClient;
+
+  ProgressRemoteDataSourceImpl({required this.apiClient});
+
+  @override
+  Future<ProgressStatsModel> getMyProgress() async {
+    try {
+      final response = await apiClient.get('/progress/me');
+      return ProgressStatsModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CourseProgressWithUnitsModel> getCourseProgress(String courseId) async {
+    try {
+      final response = await apiClient.get('/progress/courses/$courseId');
+      return CourseProgressWithUnitsModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<LessonCompletionResultModel> completeLesson({
+    required String lessonId,
+    required double score,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/progress/lessons/$lessonId/complete',
+        body: {
+          'lesson_id': lessonId,
+          'score': score,
+        },
+      );
+      return LessonCompletionResultModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<int> getTotalXp() async {
+    try {
+      final response = await apiClient.get('/progress/xp');
+      return response['total_xp'] ?? 0;
+    } catch (e) {
+      rethrow;
+    }
+  }
+}
