@@ -98,19 +98,6 @@ async def get_current_user_optional(
         except ValueError:
             pass  # Invalid token, return None
     
-    return None
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Firebase token payload",
-            )
-        if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Inactive user"
-            )
-        return user
-
     # 3) Unauthorized
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

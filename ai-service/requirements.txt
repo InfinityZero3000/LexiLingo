@@ -46,6 +46,8 @@ piper-tts>=1.2.0
 transformers==4.36.0
 accelerate>=0.25.0
 torch==2.1.1
+peft==0.7.1  # LoRA fine-tuning and adapter loading
+
 
 # HTTP Downloads
 requests>=2.31.0
