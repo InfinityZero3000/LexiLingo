@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
-import 'package:lexilingo_app/features/course/domain/entities/course.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 
 class HomePageNew extends StatefulWidget {
@@ -307,7 +307,7 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildEnrolledCourseCard(BuildContext context, Course course) {
+  Widget _buildEnrolledCourseCard(BuildContext context, CourseEntity course) {
     return Container(
       width: 320,
       margin: const EdgeInsets.only(right: 16),
@@ -345,7 +345,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${course.lessonsCount} lessons • ${course.level}',
+                      '${course.totalLessons} lessons • ${course.level}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.textGrey,
                           ),
@@ -381,14 +381,14 @@ class _HomePageNewState extends State<HomePageNew> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: Colors.grey.shade200,
-                image: course.imageUrl != null
+                image: course.thumbnailUrl != null
                     ? DecorationImage(
-                        image: NetworkImage(course.imageUrl!),
+                        image: NetworkImage(course.thumbnailUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
               ),
-              child: course.imageUrl == null
+              child: course.thumbnailUrl == null
                   ? const Icon(Icons.image, size: 48, color: Colors.grey)
                   : null,
             ),
@@ -413,7 +413,7 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildCourseCard(BuildContext context, Course course, HomeProvider provider) {
+  Widget _buildCourseCard(BuildContext context, CourseEntity course, HomeProvider provider) {
     return Container(
       width: 260,
       margin: const EdgeInsets.only(right: 16),
@@ -437,16 +437,16 @@ class _HomePageNewState extends State<HomePageNew> {
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               color: Colors.grey.shade200,
-              image: course.imageUrl != null
+              image: course.thumbnailUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(course.imageUrl!),
+                      image: NetworkImage(course.thumbnailUrl!),
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
             child: Stack(
               children: [
-                if (course.imageUrl == null)
+                if (course.thumbnailUrl == null)
                   const Center(
                     child: Icon(Icons.school, size: 48, color: Colors.grey),
                   ),
@@ -496,14 +496,14 @@ class _HomePageNewState extends State<HomePageNew> {
                           const Icon(Icons.star, size: 14, color: Colors.amber),
                           const SizedBox(width: 4),
                           Text(
-                            '${course.rating}',
+                            '4.5', // TODO: Add rating field to CourseEntity
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(width: 8),
                           const Icon(Icons.people, size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
                           Text(
-                            '${course.enrolledCount}',
+                            '${course.totalLessons}', // Show lessons count as placeholder
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -514,16 +514,14 @@ class _HomePageNewState extends State<HomePageNew> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (course.id != null) {
-                          await provider.enrollInCourse(course.id!);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Enrolled successfully!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
+                        // TODO: Implement course enrollment
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Course enrollment coming soon!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

@@ -10,7 +10,7 @@ class SaveMessageParams {
   SaveMessageParams({required this.message});
 }
 
-class SaveMessageUseCase implements UseCase<Either<Failure, ChatMessage>, SaveMessageParams> {
+class SaveMessageUseCase implements UseCase<ChatMessage, SaveMessageParams> {
   final ChatRepository repository;
 
   SaveMessageUseCase(this.repository);

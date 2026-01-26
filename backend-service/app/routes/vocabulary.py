@@ -38,7 +38,7 @@ from app.schemas.vocabulary import (
     AddToDeckRequest
 )
 
-router = APIRouter(prefix="/vocabulary", tags=["vocabulary"])
+router = APIRouter(tags=["vocabulary"])
 
 
 # ===== Vocabulary Items (Master List) =====

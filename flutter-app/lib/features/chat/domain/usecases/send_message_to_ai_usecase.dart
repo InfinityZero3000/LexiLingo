@@ -20,7 +20,7 @@ class SendMessageParams {
   });
 }
 
-class SendMessageToAIUseCase implements UseCase<Either<Failure, String>, SendMessageParams> {
+class SendMessageToAIUseCase implements UseCase<String, SendMessageParams> {
   final ChatRepository repository;
 
   SendMessageToAIUseCase(this.repository);

@@ -43,8 +43,11 @@ class AuthRemoteDataSource {
         return UserEntity(
           id: firebaseUser.uid,
           email: firebaseUser.email ?? '',
+          username: firebaseUser.email?.split('@')[0] ?? 'user',
           displayName: firebaseUser.displayName ?? '',
-          photoUrl: firebaseUser.photoURL,
+          avatarUrl: firebaseUser.photoURL,
+          provider: 'google',
+          createdAt: DateTime.now(),
         );
       }
       
@@ -69,8 +72,11 @@ class AuthRemoteDataSource {
         return UserEntity(
           id: firebaseUser.uid,
           email: firebaseUser.email ?? '',
+          username: firebaseUser.email?.split('@')[0] ?? 'user',
           displayName: firebaseUser.displayName ?? email.split('@')[0],
-          photoUrl: firebaseUser.photoURL,
+          avatarUrl: firebaseUser.photoURL,
+          provider: 'local',
+          createdAt: DateTime.now(),
         );
       }
       
@@ -98,8 +104,10 @@ class AuthRemoteDataSource {
       return UserEntity(
         id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
+        username: firebaseUser.email?.split('@')[0] ?? 'user',
         displayName: firebaseUser.displayName ?? '',
-        photoUrl: firebaseUser.photoURL,
+        avatarUrl: firebaseUser.photoURL,
+        createdAt: DateTime.now(), // Fallback - should come from backend
       );
     }
     
@@ -113,8 +121,10 @@ class AuthRemoteDataSource {
         return UserEntity(
           id: firebaseUser.uid,
           email: firebaseUser.email ?? '',
+          username: firebaseUser.email?.split('@')[0] ?? 'user',
           displayName: firebaseUser.displayName ?? '',
-          photoUrl: firebaseUser.photoURL,
+          avatarUrl: firebaseUser.photoURL,
+          createdAt: DateTime.now(), // Fallback - should come from backend
         );
       }
       return null;

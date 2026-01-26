@@ -48,7 +48,7 @@ class ProfilePage extends StatelessWidget {
                            shape: BoxShape.circle,
                            border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 4),
                            image: DecorationImage(
-                             image: NetworkImage(user?.photoUrl ?? "https://lh3.googleusercontent.com/aida-public/AB6AXuB8snaMOqgF-A_MIAsFDzdECfymQrWk-qFBIO2qe4HdGlxXevYkJ3nAohlMsHg2lBEZzOpGal3EiYk3Sey9XBjumAonhXCh8PM1vX1x8TMJ0pVqyp4wNanasXtZm46WdsppNU-CLUJJ7-8dL8NaNoQvXibu4sytaLxJww_QwW4DHsxgjtCok6_n6rpCtVv3IZXT2pF5_UL8QnEKkUnrPsFcAZa1m9KaxD4V6ISXvBvpp6h2uZeyFOecdKHVUbPw1ei7ZQQD8QbANtH_"),
+                             image: NetworkImage(user?.avatarUrl ?? "https://lh3.googleusercontent.com/aida-public/AB6AXuB8snaMOqgF-A_MIAsFDzdECfymQrWk-qFBIO2qe4HdGlxXevYkJ3nAohlMsHg2lBEZzOpGal3EiYk3Sey9XBjumAonhXCh8PM1vX1x8TMJ0pVqyp4wNanasXtZm46WdsppNU-CLUJJ7-8dL8NaNoQvXibu4sytaLxJww_QwW4DHsxgjtCok6_n6rpCtVv3IZXT2pF5_UL8QnEKkUnrPsFcAZa1m9KaxD4V6ISXvBvpp6h2uZeyFOecdKHVUbPw1ei7ZQQD8QbANtH_"),
                              fit: BoxFit.cover
                            )
                          ),
