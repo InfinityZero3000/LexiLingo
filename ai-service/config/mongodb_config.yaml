@@ -1,0 +1,168 @@
+# MongoDB Configuration for LexiLingo AI System
+# Supports both local development and production deployment
+
+# =============================================================================
+# DEVELOPMENT (Local Docker)
+# =============================================================================
+development:
+  mongodb:
+    uri: mongodb://admin:lexilingo2026@localhost:27017/
+    database: lexilingo_dev
+    options:
+      maxPoolSize: 10
+      minPoolSize: 2
+      serverSelectionTimeoutMS: 5000
+      socketTimeoutMS: 30000
+      connectTimeoutMS: 10000
+      retryWrites: true
+      w: majority
+  
+  redis:
+    host: localhost
+    port: 6379
+    password: lexilingo2026
+    db: 0
+    decode_responses: true
+    max_connections: 10
+
+# =============================================================================
+# PRODUCTION (MongoDB Atlas + Vercel)
+# =============================================================================
+production:
+  mongodb:
+    # Get from environment variable: MONGODB_ATLAS_URI
+    # Format: ***REMOVED***
+    uri: ${MONGODB_ATLAS_URI}
+    database: lexilingo_prod
+    options:
+      maxPoolSize: 50
+      minPoolSize: 5
+      serverSelectionTimeoutMS: 10000
+      socketTimeoutMS: 60000
+      connectTimeoutMS: 20000
+      retryWrites: true
+      w: majority
+      tls: true
+      tlsAllowInvalidCertificates: false
+  
+  redis:
+    # Use Redis Cloud or Upstash for production
+    url: ${REDIS_URL}  # Format: redis://:password@host:port
+
+# =============================================================================
+# COLLECTIONS CONFIGURATION
+# =============================================================================
+collections:
+  ai_interactions:
+    name: ai_interactions
+    ttl_days: 90  # Auto-delete after 90 days
+    indexes:
+      - keys: { user_id: 1, timestamp: -1 }
+      - keys: { session_id: 1 }
+      - keys: { timestamp: -1 }
+      - keys: { "analysis.grammar_errors.type": 1 }
+    
+  model_metrics:
+    name: model_metrics
+    ttl_days: 180  # Keep metrics for 6 months
+    indexes:
+      - keys: { date: -1, model_name: 1 }
+      - keys: { model_name: 1 }
+  
+  learning_patterns:
+    name: learning_patterns
+    ttl_days: 365  # Keep patterns for 1 year
+    indexes:
+      - keys: { user_id: 1, analyzed_at: -1 }
+      - keys: { "common_errors.type": 1 }
+  
+  training_queue:
+    name: training_queue
+    ttl_days: 30  # Clear completed training jobs after 30 days
+    indexes:
+      - keys: { status: 1, created_at: -1 }
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  # What to log to MongoDB
+  enabled: true
+  
+  # Log levels
+  log_user_inputs: true
+  log_model_outputs: true
+  log_processing_times: true
+  log_errors: true
+  log_user_feedback: true
+  
+  # Sampling (to reduce storage)
+  sample_rate: 1.0  # 1.0 = log everything, 0.5 = log 50%
+  
+  # Privacy settings
+  anonymize_pii: false  # Set to true in production
+  excluded_fields: []   # Fields to exclude from logging
+
+# =============================================================================
+# DATA RETENTION POLICY
+# =============================================================================
+retention:
+  ai_interactions:
+    max_age_days: 90
+    archive_before_delete: false
+  
+  model_metrics:
+    max_age_days: 180
+    archive_before_delete: true
+    archive_format: json
+  
+  learning_patterns:
+    max_age_days: 365
+    archive_before_delete: true
+    archive_format: json
+
+# =============================================================================
+# PERFORMANCE TUNING
+# =============================================================================
+performance:
+  # Batch operations
+  batch_size: 100
+  bulk_write_timeout_ms: 30000
+  
+  # Connection pooling
+  connection_pool_size_dev: 10
+  connection_pool_size_prod: 50
+  
+  # Query optimization
+  enable_query_cache: true
+  cache_ttl_seconds: 300
+  
+  # Aggregation pipeline
+  max_aggregation_time_ms: 60000
+  allow_disk_use: true
+
+# =============================================================================
+# ATLAS-SPECIFIC SETTINGS (Production)
+# =============================================================================
+atlas:
+  # Free tier limits
+  free_tier:
+    max_storage_mb: 512
+    max_connections: 100
+    
+  # Regions (choose closest to Vercel deployment)
+  preferred_regions:
+    - us-east-1       # US East (N. Virginia)
+    - us-west-2       # US West (Oregon)
+    - eu-central-1    # Europe (Frankfurt)
+    - ap-southeast-1  # Asia Pacific (Singapore)
+  
+  # Monitoring
+  monitoring:
+    enable_profiler: true
+    slow_query_threshold_ms: 100
+    
+  # Backup (requires paid tier)
+  backup:
+    enabled: false  # Not available on free tier
+    frequency: daily
