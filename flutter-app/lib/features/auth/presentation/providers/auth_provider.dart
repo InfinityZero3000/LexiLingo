@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_usecase.dart';
@@ -40,8 +42,17 @@ class AuthProvider extends ChangeNotifier {
       _isCheckingAuth = true;
       notifyListeners();
       
-      _user = await getCurrentUserUseCase(NoParams());
-      _errorMessage = null;
+      final result = await getCurrentUserUseCase(NoParams());
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          _user = null;
+        },
+        (user) {
+          _user = user;
+          _errorMessage = null;
+        },
+      );
     } catch (e) {
       debugPrint("Check current user error: $e");
       _errorMessage = "Failed to check authentication status";
@@ -59,11 +70,20 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      _user = await signInWithGoogleUseCase(NoParams());
+      final result = await signInWithGoogleUseCase(
+        SignInWithGoogleParams(idToken: ''),  // TODO: Get real idToken from GoogleSignIn
+      );
       
-      if (_user == null) {
-        _errorMessage = "Sign in was cancelled";
-      }
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          _user = null;
+        },
+        (user) {
+          _user = user;
+          _errorMessage = null;
+        },
+      );
     } catch (e) {
       debugPrint("Google sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -86,11 +106,18 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
       
-      _user = await signInWithEmailPasswordUseCase(params);
+      final result = await signInWithEmailPasswordUseCase(params);
       
-      if (_user == null) {
-        _errorMessage = "Sign in failed. Please try again.";
-      }
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          _user = null;
+        },
+        (user) {
+          _user = user;
+          _errorMessage = null;
+        },
+      );
     } catch (e) {
       debugPrint("Email sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -141,6 +168,19 @@ class AuthProvider extends ChangeNotifier {
       return 'Incorrect password.';
     } else if (error.contains('too-many-requests')) {
       return 'Too many attempts. Please try again later.';
+    } else {
+      return 'An error occurred. Please try again.';
+    }
+  }
+
+  // Convert Failure to user-friendly message
+  String _getFailureMessage(Failure failure) {
+    if (failure is ServerFailure) {
+      return failure.message ?? 'Server error. Please try again later.';
+    } else if (failure is NetworkFailure) {
+      return 'Network error. Please check your internet connection.';
+    } else if (failure is CacheFailure) {
+      return 'Local storage error.';
     } else {
       return 'An error occurred. Please try again.';
     }

@@ -11,7 +11,7 @@ class FirebaseAuthHeaderProvider {
     if (user == null) return const {};
 
     final token = await user.getIdToken();
-    if (token.isEmpty) return const {};
+    if (token == null || token.isEmpty) return const {};
 
     return {'Authorization': 'Bearer $token'};
   }
