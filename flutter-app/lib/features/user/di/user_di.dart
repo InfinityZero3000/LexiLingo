@@ -24,7 +24,7 @@ import 'package:lexilingo_app/features/user/domain/usecases/create_user_usecase.
 import 'package:lexilingo_app/features/user/domain/usecases/get_current_streak_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_goal_history_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_settings_usecase.dart';
-import 'package:lexilingo_app/features/user/domain/usecases/get_today_goal_usecase.dart';
+// import 'package:lexilingo_app/features/user/domain/usecases/get_today_goal_usecase.dart'; // TODO: Create this file
 import 'package:lexilingo_app/features/user/domain/usecases/get_user_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_daily_progress_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_settings_usecase.dart';
@@ -90,7 +90,7 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => UpdateUserStatsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateSettingsUseCase(repository: sl()));
-  sl.registerLazySingleton(() => GetTodayGoalUseCase(repository: sl()));
+  // sl.registerLazySingleton(() => GetTodayGoalUseCase(repository: sl())); // TODO: Create GetTodayGoalUseCase
   sl.registerLazySingleton(() => UpdateDailyProgressUseCase(
         dailyGoalRepository: sl(),
         userRepository: sl(),
@@ -105,7 +105,7 @@ void registerUserModule({required bool skipDatabase}) {
       updateUserUseCase: sl(),
       getSettingsUseCase: sl(),
       updateSettingsUseCase: sl(),
-      getTodayGoalUseCase: sl(),
+      // getTodayGoalUseCase: sl(), // TODO: Add after creating usecase
       updateDailyProgressUseCase: sl(),
       getCurrentStreakUseCase: sl(),
     ),

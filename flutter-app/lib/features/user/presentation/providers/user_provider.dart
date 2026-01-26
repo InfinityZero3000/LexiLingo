@@ -6,7 +6,7 @@ import '../../domain/usecases/get_user_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';
 import '../../domain/usecases/get_settings_usecase.dart';
 import '../../domain/usecases/update_settings_usecase.dart';
-import '../../domain/usecases/get_today_goal_usecase.dart';
+// import '../../domain/usecases/get_today_goal_usecase.dart'; // TODO: Create this file
 import '../../domain/usecases/update_daily_progress_usecase.dart';
 import '../../domain/usecases/get_current_streak_usecase.dart';
 
@@ -15,7 +15,7 @@ class UserProvider with ChangeNotifier {
   final UpdateUserUseCase updateUserUseCase;
   final GetSettingsUseCase getSettingsUseCase;
   final UpdateSettingsUseCase updateSettingsUseCase;
-  final GetTodayGoalUseCase getTodayGoalUseCase;
+  // final GetTodayGoalUseCase getTodayGoalUseCase; // TODO: Add after creating usecase
   final UpdateDailyProgressUseCase updateDailyProgressUseCase;
   final GetCurrentStreakUseCase getCurrentStreakUseCase;
 
@@ -24,7 +24,7 @@ class UserProvider with ChangeNotifier {
     required this.updateUserUseCase,
     required this.getSettingsUseCase,
     required this.updateSettingsUseCase,
-    required this.getTodayGoalUseCase,
+    // required this.getTodayGoalUseCase, // TODO: Add after creating usecase
     required this.updateDailyProgressUseCase,
     required this.getCurrentStreakUseCase,
   });
@@ -75,14 +75,15 @@ class UserProvider with ChangeNotifier {
       final results = await Future.wait([
         getUserUseCase(_currentUserId!),
         getSettingsUseCase(_currentUserId!),
-        getTodayGoalUseCase(_currentUserId!),
+        // getTodayGoalUseCase(_currentUserId!), // TODO: Add after creating usecase
         getCurrentStreakUseCase(_currentUserId!),
       ]);
 
       _user = results[0] as User?;
       _settings = results[1] as Settings?;
-      _todayGoal = results[2] as DailyGoal?;
-      _currentStreak = results[3] as int;
+      // _todayGoal = results[2] as DailyGoal?; // TODO: Uncomment after usecase is created
+      _todayGoal = null; // Temporary: Set to null until usecase is ready
+      _currentStreak = results[2] as int; // Changed index from 3 to 2
 
       _isLoading = false;
       notifyListeners();

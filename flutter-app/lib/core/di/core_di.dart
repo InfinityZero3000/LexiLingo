@@ -8,7 +8,7 @@ import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
-import 'package:lexilingo_app/core/services/course_import_service.dart';
+// import 'package:lexilingo_app/core/services/course_import_service.dart'; // Disabled - old schema
 import 'service_locator.dart';
 
 /// Registers cross-cutting core dependencies.
@@ -34,6 +34,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
   if (!skipDatabase) {
     sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
-    sl.registerLazySingleton<CourseImportService>(() => CourseImportService(sl()));
+    // Commented out - CourseImportService uses old schema
+    // sl.registerLazySingleton<CourseImportService>(() => CourseImportService(sl()));
   }
 }

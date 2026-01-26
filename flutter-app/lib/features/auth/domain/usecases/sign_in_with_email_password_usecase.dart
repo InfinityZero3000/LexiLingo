@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
@@ -13,16 +15,16 @@ class SignInWithEmailPasswordParams {
 }
 
 class SignInWithEmailPasswordUseCase 
-    implements UseCase<UserEntity?, SignInWithEmailPasswordParams> {
+    implements UseCase<UserEntity, SignInWithEmailPasswordParams> {
   final AuthRepository repository;
 
   SignInWithEmailPasswordUseCase(this.repository);
 
   @override
-  Future<UserEntity?> call(SignInWithEmailPasswordParams params) async {
-    return await repository.signInWithEmailPassword(
-      params.email,
-      params.password,
+  Future<Either<Failure, UserEntity>> call(SignInWithEmailPasswordParams params) async {
+    return await repository.login(
+      email: params.email,
+      password: params.password,
     );
   }
 }
