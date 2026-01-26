@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database (Backend Service)
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: lexilingo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lexilingo
+      POSTGRES_PASSWORD: lexilingo_pass
+      POSTGRES_DB: lexilingo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lexilingo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # MongoDB Database (AI Service)
+  # ============================================
+  mongodb:
+    image: mongo:7.0
+    container_name: lexilingo-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: lexilingo
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./ai-service/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Redis Cache (Shared)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: lexilingo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Backend Service (FastAPI + PostgreSQL)
+  # ============================================
+  backend-service:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-backend-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@postgres:5432/lexilingo
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      AI_SERVICE_URL: http://ai-service:8001/api/v1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # AI Service (FastAPI + MongoDB)
+  # ============================================
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-ai-service
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      ENVIRONMENT: development
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB_NAME: lexilingo
+      REDIS_URL: redis://redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      DEBUG: ${DEBUG:-true}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./ai-service/api:/app/api
+      - ./ai-service/models:/app/models
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+    networks:
+      - lexilingo-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  lexilingo-network:
+    driver: bridge
