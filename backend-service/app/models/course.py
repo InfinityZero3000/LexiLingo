@@ -102,7 +102,11 @@ class Unit(Base):
     def __repr__(self) -> str:
         return f"<Unit {self.title}>"
 
-threshold, prerequisites, total_exercises.
+
+class Lesson(Base):
+    """
+    Lesson model - smallest learning unit.
+    Phase 2: Added content_data (JSONB), unlock_threshold, prerequisites, total_exercises.
     """
     
     __tablename__ = "lessons"
@@ -153,11 +157,7 @@ threshold, prerequisites, total_exercises.
     )
     
     # Relationships
-    unit: Mapped["Unit"] = relationship("Unit", back_populates="lessons"updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
+    unit: Mapped["Unit"] = relationship("Unit", back_populates="lessons")
     
     def __repr__(self) -> str:
         return f"<Lesson {self.title}>"

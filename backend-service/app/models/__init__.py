@@ -11,8 +11,14 @@ from app.models.user import User, UserDevice, RefreshToken
 # Course models (Phase 2)
 from app.models.course import Course, Unit, Lesson, MediaResource
 
-# Vocabulary models
-from app.models.vocabulary import Vocabulary, UserVocabulary
+# Vocabulary models (Phase 3)
+from app.models.vocabulary import (
+    VocabularyItem,
+    UserVocabulary,
+    VocabularyReview,
+    VocabularyDeck,
+    VocabularyDeckItem
+)
 
 # Progress & Learning models (Phase 3)
 from app.models.progress import (
@@ -47,9 +53,12 @@ __all__ = [
     "Unit",
     "Lesson",
     "MediaResource",
-    # Vocabulary
-    "Vocabulary",
+    # Vocabulary (Phase 3)
+    "VocabularyItem",
     "UserVocabulary",
+    "VocabularyReview",
+    "VocabularyDeck",
+    "VocabularyDeckItem",
     # Progress (Phase 3)
     "UserProgress",
     "LessonAttempt",

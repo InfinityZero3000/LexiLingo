@@ -31,7 +31,9 @@ from app.routes import (
     users_router,
     courses_router,
     progress_router,
+    vocabulary_router,
 )
+from app.routes.learning import router as learning_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -122,7 +124,7 @@ app = FastAPI(
 # 1. CORS - Allow cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.cors_origins,  # Use property to parse string
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -158,6 +160,8 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["
 app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(courses_router, prefix=f"{settings.API_V1_PREFIX}/courses", tags=["Courses"])
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
+app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
+app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
 
 
 @app.get("/")
