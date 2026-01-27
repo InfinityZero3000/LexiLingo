@@ -66,6 +66,9 @@ dependencies:
   cloud_firestore: ^5.5.2
   firedart: ^0.9.8
   flutter_dotenv: ^6.0.0
+  
+  # Flashcard Animations
+  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:
