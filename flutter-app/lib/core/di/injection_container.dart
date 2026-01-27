@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/home/di/home_di.dart';
 import 'package:lexilingo_app/features/progress/di/progress_di.dart';
 import 'package:lexilingo_app/features/user/di/user_di.dart';
 import 'package:lexilingo_app/features/vocabulary/di/vocab_di.dart';
+import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart';
 
 export 'service_locator.dart';
 
@@ -14,6 +15,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   await registerCore(skipDatabase: skipDatabase);
 
   registerVocabModule(skipDatabase: skipDatabase);
+  setupVocabularyDependencies(); // Flashcard system with SRS
   registerAuthModule();
   registerChatModule(skipDatabase: skipDatabase);
   registerCourseModule(skipDatabase: skipDatabase);
