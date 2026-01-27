@@ -8,7 +8,17 @@ import '../models/auth_models.dart';
 /// Handles device tracking for backend Phase 1 user_devices table
 class DeviceManager {
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
+
+  DeviceManager() {
+    try {
+      // Only initialize if Firebase is initialized
+      _messaging = FirebaseMessaging.instance;
+    } catch (e) {
+      // Firebase not initialized, messaging will be null
+      _messaging = null;
+    }
+  }
 
   /// Get current device information
   Future<DeviceInfo> getDeviceInfo() async {
@@ -40,7 +50,7 @@ class DeviceManager {
     // Get FCM token for push notifications
     String? fcmToken;
     try {
-      fcmToken = await _messaging.getToken();
+      fcmToken = _messaging != null ? await _messaging!.getToken() : null;
     } catch (e) {
       // FCM not configured or permission denied
       fcmToken = null;
@@ -58,9 +68,9 @@ class DeviceManager {
 
   /// Request notification permissions (iOS specific)
   Future<bool> requestNotificationPermissions() async {
-    if (!Platform.isIOS) return true;
+    if (!Platform.isIOS || _messaging == null) return true;
 
-    final settings = await _messaging.requestPermission(
+    final settings = await _messaging!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -72,13 +82,14 @@ class DeviceManager {
 
   /// Refresh FCM token if needed
   Future<String?> refreshFCMToken() async {
+    if (_messaging == null) return null;
     try {
-      return await _messaging.getToken();
+      return await _messaging!.getToken();
     } catch (e) {
       return null;
     }
   }
 
   /// Listen to FCM token refreshes
-  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+  Stream<String> get onTokenRefresh => _messaging?.onTokenRefresh ?? const Stream.empty();
 }
