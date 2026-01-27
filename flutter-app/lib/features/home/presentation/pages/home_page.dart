@@ -5,6 +5,7 @@ import 'package:lexilingo_app/features/home/presentation/providers/home_provider
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -64,6 +65,11 @@ class _HomePageNewState extends State<HomePageNew> {
                     _buildStreakCard(context, homeProvider),
                     const SizedBox(height: 24),
                     _buildDailyGoalCard(context, homeProvider),
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DailyReviewCard(),
+                    ),
                     const SizedBox(height: 24),
                     if (homeProvider.enrolledCourses.isNotEmpty) ...[
                       _buildSectionTitle(context, 'Continue Learning'),
