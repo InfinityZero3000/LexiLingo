@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse
@@ -165,6 +166,19 @@ async def refresh_token(
         refresh_token=new_refresh_token,
         token_type="bearer"
     )
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_via_auth(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current user profile via /auth/me endpoint.
+    
+    Note: This is an alias for /users/me for backward compatibility.
+    Requires authentication.
+    """
+    return current_user
 
 
 @router.post("/logout", response_model=MessageResponse)

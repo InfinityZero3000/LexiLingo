@@ -2,12 +2,13 @@
 Core module initialization.
 """
 from .config import settings
-from .database import get_db
+from .database import get_database, mongodb_manager
 from .logging_config import logger
 
 __all__ = [
     "settings",
-    "get_db",
+    "get_database",
+    "mongodb_manager",
     "logger",
 ]
 
