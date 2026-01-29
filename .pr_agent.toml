@@ -1,0 +1,72 @@
+[pr_reviewer]
+# Enable/disable features
+require_focused_review = true
+require_score_review = true
+require_tests_review = true
+require_security_review = true
+require_estimate_effort_to_review = true
+
+# Review settings
+num_code_suggestions = 5
+inline_code_comments = true
+auto_review = true
+remove_previous_review_comment = true
+
+# Language and tone
+extra_instructions = """
+- Focus on code quality, security, and best practices
+- Check for proper error handling
+- Verify Clean Architecture principles
+- Ensure proper test coverage
+- Review API design and RESTful conventions
+- Check for potential performance issues
+- Verify proper logging and monitoring
+"""
+
+[pr_code_suggestions]
+# Code improvement suggestions
+num_code_suggestions = 5
+extra_instructions = """
+- Suggest improvements for code readability
+- Recommend better naming conventions
+- Propose performance optimizations
+- Suggest security enhancements
+"""
+
+[pr_description]
+# Auto-generate PR description
+publish_description = true
+add_original_user_description = true
+extra_instructions = """
+- Summarize main changes
+- List affected components
+- Note breaking changes
+- Include testing notes
+"""
+
+[pr_questions]
+# Auto-generate clarifying questions
+num_questions = 3
+extra_instructions = """
+- Ask about design decisions
+- Question potential edge cases
+- Clarify implementation choices
+"""
+
+[config]
+# Model configuration (uncomment to customize)
+# model = "gpt-4-turbo-preview"
+# model = "anthropic/claude-3-5-sonnet-20241022"
+# fallback_models = ["gpt-3.5-turbo"]
+
+# Git provider
+git_provider = "github"
+
+# Review triggers
+pr_commands = [
+    "/review",
+    "/describe",
+    "/improve",
+    "/ask",
+    "/update_changelog",
+]
