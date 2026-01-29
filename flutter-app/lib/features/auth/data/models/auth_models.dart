@@ -35,11 +35,15 @@ class AuthTokens {
 /// From backend-service/app/routes/auth.py
 class LoginResponse {
   final AuthTokens tokens;
-  final dynamic user;  // Will be UserModel
+  final String userId;
+  final String username;
+  final String email;
 
   const LoginResponse({
     required this.tokens,
-    required this.user,
+    required this.userId,
+    required this.username,
+    required this.email,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -49,7 +53,9 @@ class LoginResponse {
         refreshToken: json['refresh_token'] as String,
         tokenType: json['token_type'] as String? ?? 'bearer',
       ),
-      user: json['user'],  // Will be parsed as UserModel externally
+      userId: json['user_id'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
     );
   }
 
@@ -58,7 +64,9 @@ class LoginResponse {
       'access_token': tokens.accessToken,
       'refresh_token': tokens.refreshToken,
       'token_type': tokens.tokenType,
-      'user': user,
+      'user_id': userId,
+      'username': username,
+      'email': email,
     };
   }
 }

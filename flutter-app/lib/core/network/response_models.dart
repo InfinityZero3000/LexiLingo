@@ -46,10 +46,26 @@ class ApiResponseEnvelope<T> extends Equatable {
     Map<String, dynamic> json,
     T Function(dynamic) fromJsonT,
   ) {
-    return ApiResponseEnvelope<T>(
-      data: fromJsonT(json['data']),
-      meta: RequestMeta.fromJson(json['meta'] as Map<String, dynamic>),
-    );
+    // Handle both wrapped (with 'data' field) and unwrapped responses
+    final hasDataField = json.containsKey('data');
+    final hasMetaField = json.containsKey('meta');
+    
+    if (hasDataField && hasMetaField) {
+      // Standard envelope format: {"data": ..., "meta": ...}
+      return ApiResponseEnvelope<T>(
+        data: fromJsonT(json['data']),
+        meta: RequestMeta.fromJson(json['meta'] as Map<String, dynamic>),
+      );
+    } else {
+      // Unwrapped format: response is the data itself
+      return ApiResponseEnvelope<T>(
+        data: fromJsonT(json),
+        meta: RequestMeta(
+          requestId: json['request_id'] as String? ?? 'unknown',
+          timestamp: json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
+        ),
+      );
+    }
   }
 
   Map<String, dynamic> toJson(Object? Function(T) toJsonT) {

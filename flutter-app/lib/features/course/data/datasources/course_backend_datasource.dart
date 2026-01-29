@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/course/data/models/course_detail_model.da
 /// Handles API communication for course endpoints
 abstract class CourseBackendDataSource {
   /// GET /api/v1/courses - Get paginated courses
-  Future<PaginatedResponseEnvelope<List<CourseModel>>> getCourses({
+  Future<PaginatedResponseEnvelope<CourseModel>> getCourses({
     int page = 1,
     int pageSize = 20,
     String? language,
@@ -28,7 +28,7 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   CourseBackendDataSourceImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
   @override
-  Future<PaginatedResponseEnvelope<List<CourseModel>>> getCourses({
+  Future<PaginatedResponseEnvelope<CourseModel>> getCourses({
     int page = 1,
     int pageSize = 20,
     String? language,
@@ -47,14 +47,9 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     );
     final response = await _apiClient.get(uri.toString());
 
-    return PaginatedResponseEnvelope<List<CourseModel>>.fromJson(
+    return PaginatedResponseEnvelope<CourseModel>.fromJson(
       response,
-      (data) {
-        final courses = (data as List<dynamic>)
-            .map((json) => CourseModel.fromJson(json as Map<String, dynamic>))
-            .toList();
-        return courses;
-      },
+      (json) => CourseModel.fromJson(json),
     );
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:lexilingo_app/firebase_options.dart'; // TODO: Generate with flutterfire configure
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -14,16 +13,28 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
+import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables from .env file
-  await dotenv.load(fileName: ".env");
+  // Add error handler for Flutter and Dart errors
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exception}');
+  };
+  
+  try {
+    // Load environment variables from .env file
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Warning: Could not load .env file: $e');
+  }
   
   // Initialize Firebase
   // TODO: Generate firebase_options.dart with: flutterfire configure
@@ -80,8 +91,10 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<HomeProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ChatProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<CourseProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<LearningProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ProgressProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

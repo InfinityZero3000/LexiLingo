@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
@@ -52,7 +51,7 @@ class VocabProvider extends ChangeNotifier {
 
   String _getFailureMessage(Failure failure) {
     if (failure is ServerFailure) {
-      return failure.message ?? 'Server error. Please try again later.';
+      return failure.message;
     } else if (failure is NetworkFailure) {
       return 'Network error. Please check your internet connection.';
     } else if (failure is CacheFailure) {

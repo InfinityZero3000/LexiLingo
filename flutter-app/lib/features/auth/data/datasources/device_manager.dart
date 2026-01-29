@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../models/auth_models.dart';
 
@@ -8,7 +7,8 @@ import '../models/auth_models.dart';
 /// Handles device tracking for backend Phase 1 user_devices table
 class DeviceManager {
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+
+  DeviceManager();
 
   /// Get current device information
   Future<DeviceInfo> getDeviceInfo() async {
@@ -18,67 +18,72 @@ class DeviceManager {
     String? deviceName;
     String? osVersion;
 
-    if (Platform.isAndroid) {
-      final androidInfo = await _deviceInfo.androidInfo;
-      deviceId = androidInfo.id;  // Android ID
-      deviceType = 'android';
-      deviceName = '${androidInfo.brand} ${androidInfo.model}';
-      osVersion = 'Android ${androidInfo.version.release}';
-    } else if (Platform.isIOS) {
-      final iosInfo = await _deviceInfo.iosInfo;
-      deviceId = iosInfo.identifierForVendor ?? 'unknown';
-      deviceType = 'ios';
-      deviceName = '${iosInfo.name} ${iosInfo.model}';
-      osVersion = 'iOS ${iosInfo.systemVersion}';
+    if (kIsWeb) {
+      // Web platform
+      try {
+        final webInfo = await _deviceInfo.webBrowserInfo;
+        deviceId = 'web-${DateTime.now().millisecondsSinceEpoch}';
+        deviceType = 'web';
+        deviceName = webInfo.browserName.name;
+        osVersion = webInfo.platform ?? 'Web';
+      } catch (e) {
+        deviceId = 'web-${DateTime.now().millisecondsSinceEpoch}';
+        deviceType = 'web';
+        deviceName = 'Web Browser';
+        osVersion = 'Web';
+      }
     } else {
-      deviceId = 'web-${DateTime.now().millisecondsSinceEpoch}';
-      deviceType = 'web';
-      deviceName = 'Web Browser';
-      osVersion = 'Web';
-    }
-
-    // Get FCM token for push notifications
-    String? fcmToken;
-    try {
-      fcmToken = await _messaging.getToken();
-    } catch (e) {
-      // FCM not configured or permission denied
-      fcmToken = null;
+      // Native platforms
+      try {
+        final baseInfo = await _deviceInfo.deviceInfo;
+        deviceId = baseInfo.data['id']?.toString() ?? 
+                   baseInfo.data['identifierForVendor']?.toString() ??
+                   'device-${DateTime.now().millisecondsSinceEpoch}';
+        
+        if (baseInfo.data.containsKey('brand')) {
+          // Android
+          deviceType = 'android';
+          deviceName = '${baseInfo.data['brand']} ${baseInfo.data['model']}';
+          osVersion = 'Android ${baseInfo.data['version']?['release'] ?? 'Unknown'}';
+        } else if (baseInfo.data.containsKey('systemName')) {
+          // iOS
+          deviceType = 'ios';
+          deviceName = '${baseInfo.data['name']} ${baseInfo.data['model']}';
+          osVersion = '${baseInfo.data['systemName']} ${baseInfo.data['systemVersion']}';
+        } else {
+          deviceType = 'unknown';
+          deviceName = 'Unknown Device';
+          osVersion = 'Unknown';
+        }
+      } catch (e) {
+        deviceId = 'device-${DateTime.now().millisecondsSinceEpoch}';
+        deviceType = 'unknown';
+        deviceName = 'Unknown Device';
+        osVersion = 'Unknown';
+      }
     }
 
     return DeviceInfo(
       deviceId: deviceId,
       deviceType: deviceType,
       deviceName: deviceName,
-      fcmToken: fcmToken,
+      fcmToken: null, // FCM handled separately
       appVersion: packageInfo.version,
       osVersion: osVersion,
     );
   }
 
-  /// Request notification permissions (iOS specific)
+  /// Request notification permissions
   Future<bool> requestNotificationPermissions() async {
-    if (!Platform.isIOS) return true;
-
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    return settings.authorizationStatus == AuthorizationStatus.authorized ||
-        settings.authorizationStatus == AuthorizationStatus.provisional;
+    // Not critical for web
+    return true;
   }
 
   /// Refresh FCM token if needed
   Future<String?> refreshFCMToken() async {
-    try {
-      return await _messaging.getToken();
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
 
   /// Listen to FCM token refreshes
-  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+  Stream<String> get onTokenRefresh => const Stream.empty();
 }

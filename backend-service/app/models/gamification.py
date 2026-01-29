@@ -6,10 +6,10 @@ Phase 4: Integrated Gamification & Social Features
 import uuid
 from datetime import datetime
 from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text, JSON, Index
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.db_types import GUID, GUIDArray
 
 
 class Achievement(Base):
@@ -21,7 +21,7 @@ class Achievement(Base):
     __tablename__ = "achievements"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
@@ -62,20 +62,20 @@ class UserAchievement(Base):
     __tablename__ = "user_achievements"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     achievement_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("achievements.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -98,13 +98,13 @@ class UserWallet(Base):
     __tablename__ = "user_wallets"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
@@ -135,20 +135,20 @@ class WalletTransaction(Base):
     __tablename__ = "wallet_transactions"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     wallet_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("user_wallets.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -178,13 +178,13 @@ class LeaderboardEntry(Base):
     __tablename__ = "leaderboard_entries"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -226,20 +226,20 @@ class UserFollowing(Base):
     __tablename__ = "user_following"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     follower_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     following_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -260,13 +260,13 @@ class ActivityFeed(Base):
     __tablename__ = "activity_feeds"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -298,7 +298,7 @@ class ShopItem(Base):
     __tablename__ = "shop_items"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
@@ -334,20 +334,20 @@ class UserInventory(Base):
     __tablename__ = "user_inventory"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     shop_item_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("shop_items.id", ondelete="CASCADE"),
         nullable=False
     )

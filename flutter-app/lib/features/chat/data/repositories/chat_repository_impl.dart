@@ -33,10 +33,15 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<Either<Failure, ChatSession>> createSession(String userId) async {
     try {
       if (apiDataSource != null && await networkInfo.isConnected) {
-        final session = await apiDataSource!.createSession(userId: userId);
-        // Cache locally for offline use
-        await localDataSource.createSession(session);
-        return Right(session.toEntity());
+        try {
+          final session = await apiDataSource!.createSession(userId: userId);
+          // Cache locally for offline use
+          await localDataSource.createSession(session);
+          return Right(session.toEntity());
+        } catch (e) {
+          // If API fails (e.g., 404), fallback to local
+          print('⚠️ Chat API not available, creating local session: $e');
+        }
       }
 
       final now = DateTime.now();
@@ -64,9 +69,14 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<Either<Failure, List<ChatSession>>> getSessions(String userId) async {
     try {
       if (apiDataSource != null && await networkInfo.isConnected) {
-        final sessions = await apiDataSource!.getSessions(userId);
-        // Optionally cache
-        return Right(sessions.map((s) => s.toEntity()).toList());
+        try {
+          final sessions = await apiDataSource!.getSessions(userId);
+          // Optionally cache
+          return Right(sessions.map((s) => s.toEntity()).toList());
+        } catch (e) {
+          // If API fails (e.g., 404), fallback to local
+          print('⚠️ Chat API not available, using local storage: $e');
+        }
       }
 
       final sessions = await localDataSource.getSessions(userId);

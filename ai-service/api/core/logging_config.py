@@ -227,3 +227,8 @@ def set_request_context(
 def clear_request_context():
     """Clear request context."""
     request_context.set({})
+
+
+# Create default logger instance
+logger = logging.getLogger("lexilingo.ai")
+setup_logging()  # Initialize with default settings

@@ -5,12 +5,12 @@ Extended for Phase 2: Advanced Content Management System
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, Index, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
 from app.core.database import Base
+from app.core.db_types import GUID, GUIDArray
 
 
 class Course(Base):
@@ -22,7 +22,7 @@ class Course(Base):
     __tablename__ = "courses"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
@@ -66,13 +66,13 @@ class Unit(Base):
     __tablename__ = "units"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -112,20 +112,20 @@ class Lesson(Base):
     __tablename__ = "lessons"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     unit_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("units.id", ondelete="CASCADE"),
         nullable=True,
         index=True
@@ -136,7 +136,7 @@ class Lesson(Base):
     order_index: Mapped[int] = mapped_column(Integer, nullable=False)
     
     # Phase 2: Prerequisites and pass requirements
-    prerequisites: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True, default=[])
+    prerequisites: Mapped[list] = mapped_column(GUIDArray(), nullable=True, default=[])
     pass_threshold: Mapped[int] = mapped_column(Integer, default=80)  # Minimum score to pass (%)
     
     # Lesson content stored as JSON
@@ -172,7 +172,7 @@ class MediaResource(Base):
     __tablename__ = "media_resources"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
