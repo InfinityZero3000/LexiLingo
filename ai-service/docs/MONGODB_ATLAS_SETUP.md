@@ -121,7 +121,7 @@
 
 6. **Replace** `<password>` with your actual password:
    ```bash
-   # Example (DON'T use this, use your own!)
+   # Example format (use YOUR actual credentials from Atlas)
    ***REMOVED***
    ```
 

@@ -6,6 +6,22 @@
 # OS
 *.DS_Store
 
+# Sensitive files - NEVER commit these!
+# Firebase credentials
+**/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
+# Environment variables
+.env
+.env.local
+.env.*.local
+# AWS credentials
+**/.aws/
+**/credentials
+# API keys
+**/secrets.yaml
+**/secrets.json
+
 # Build outputs
 build/
 .gradle/
