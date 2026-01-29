@@ -32,8 +32,10 @@ from app.routes import (
     courses_router,
     progress_router,
     vocabulary_router,
+    gamification_router,
 )
 from app.routes.learning import router as learning_router
+from app.routes.admin import router as admin_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -162,6 +164,8 @@ app.include_router(courses_router, prefix=f"{settings.API_V1_PREFIX}/courses", t
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
+app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
+app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 
 
 @app.get("/")
