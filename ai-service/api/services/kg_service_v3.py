@@ -26,7 +26,15 @@ class KnowledgeGraphServiceV3:
             os.path.dirname(__file__), "..", "..", "data", "kuzu"
         )
         db_path = os.path.abspath(db_path)
-        os.makedirs(db_path, exist_ok=True)
+        
+        # Create parent directory if doesn't exist
+        parent_dir = os.path.dirname(db_path)
+        os.makedirs(parent_dir, exist_ok=True)
+        
+        # Remove if it's a directory (Kuzu needs the path to not exist or be a valid DB)
+        if os.path.isdir(db_path):
+            import shutil
+            shutil.rmtree(db_path)
 
         self._db = kuzu.Database(db_path)
         self._conn = kuzu.Connection(self._db)

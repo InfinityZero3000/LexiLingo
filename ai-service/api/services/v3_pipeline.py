@@ -100,11 +100,14 @@ class V3Pipeline:
             resolved_profile = {**cached, **resolved_profile}
 
         ctx = V3PipelineContext(
+            user_input=text,
             session_id=session_id,
             user_id=resolved_user_id,
-            learner_profile=resolved_profile,
-            history=history,
-            context_summary="",
+            metadata={
+                "learner_profile": resolved_profile,
+                "history": history,
+                "context_summary": "",
+            }
         )
 
         cache_key = None
