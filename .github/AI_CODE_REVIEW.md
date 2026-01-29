@@ -106,9 +106,59 @@ PR-Agent sẽ comment với:
 
 ## Troubleshooting
 
+### Lệnh slash commands không hoạt động
+
+**Nguyên nhân có thể:**
+
+1. **Chưa thêm OPENAI_API_KEY**
+   - Vào `Settings` → `Secrets and variables` → `Actions`
+   - Kiểm tra xem `OPENAI_API_KEY` đã được thêm chưa
+   - Nếu chưa, thêm key từ https://platform.openai.com/api-keys
+
+2. **Chưa có PR nào được tạo**
+   - Slash commands chỉ hoạt động trong Pull Requests
+   - Không hoạt động trong Issues thông thường
+
+3. **Comment sai định dạng**
+   - Phải comment `/review` (có dấu `/` ở đầu)
+   - Không được có khoảng trắng: `/ review` ❌
+   - Phải là comment riêng, không nằm trong code review
+
+4. **Workflow chưa chạy**
+   - Vào tab `Actions` trong repo
+   - Kiểm tra xem có workflow "AI Code Review" chạy không
+   - Xem logs để biết lỗi cụ thể
+
+**Cách test:**
+
+```bash
+# Bước 1: Tạo PR mới
+1. Tạo PR từ branch feature sang main
+
+# Bước 2: Chờ workflow chạy (1-2 phút)
+2. Vào tab "Actions" xem workflow status
+
+# Bước 3: Nếu workflow thành công, thử comment
+3. Comment vào PR: /review
+
+# Bước 4: Bot sẽ reply trong vài giây
+4. Nếu không, check logs tại Actions tab
+```
+
+**Kiểm tra workflow logs:**
+
+1. Vào repo → `Actions` tab
+2. Click vào workflow run mới nhất
+3. Click vào job "AI Code Review"
+4. Xem logs để tìm lỗi:
+   - `Error: OPENAI_KEY not found` → Chưa add API key
+   - `403 Forbidden` → Permissions issue
+   - `Rate limit exceeded` → Vượt quota API
+
 ### Workflow không chạy
 - Kiểm tra `OPENAI_API_KEY` đã được thêm vào Secrets
 - Xem logs tại `Actions` tab
+- Đảm bảo workflow file không có lỗi syntax
 
 ### API Rate Limit
 - Sử dụng GPT-3.5 Turbo cho nhiều PRs
