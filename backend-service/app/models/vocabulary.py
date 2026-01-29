@@ -6,12 +6,12 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Float, JSON, Text, Index, Enum as SQLEnum, Boolean
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
 
 from app.core.database import Base
+from app.core.db_types import GUID, GUIDArray
 
 
 class VocabularyStatus(str, enum.Enum):
@@ -54,7 +54,7 @@ class VocabularyItem(Base):
     __tablename__ = "vocabulary_items"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
@@ -85,13 +85,13 @@ class VocabularyItem(Base):
     
     # Related content
     course_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("courses.id", ondelete="SET NULL"),
         nullable=True,
         index=True
     )
     lesson_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("lessons.id", ondelete="SET NULL"),
         nullable=True,
         index=True
@@ -124,20 +124,20 @@ class UserVocabulary(Base):
     __tablename__ = "user_vocabulary"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     vocabulary_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("vocabulary_items.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -215,13 +215,13 @@ class VocabularyReview(Base):
     __tablename__ = "vocabulary_reviews"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_vocabulary_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("user_vocabulary.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -263,13 +263,13 @@ class VocabularyDeck(Base):
     __tablename__ = "vocabulary_decks"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -303,20 +303,20 @@ class VocabularyDeckItem(Base):
     __tablename__ = "vocabulary_deck_items"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     deck_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("vocabulary_decks.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     user_vocabulary_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("user_vocabulary.id", ondelete="CASCADE"),
         nullable=False,
         index=True

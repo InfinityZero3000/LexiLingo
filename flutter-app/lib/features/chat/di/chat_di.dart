@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/database/database_helper.dart' as chat_db;
+import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_api_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_firestore_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_local_datasource.dart';
@@ -40,9 +41,13 @@ void registerChatModule({required bool skipDatabase}) {
     () => ChatApiDataSource(apiClient: sl<ApiClient>()),
   );
 
-  sl.registerLazySingleton<ChatFirestoreDataSource>(
-    () => ChatFirestoreDataSourceImpl(firestoreService: sl()),
-  );
+  // Only register ChatFirestoreDataSource if FirestoreService is available
+  final firestoreService = sl<FirestoreService>();
+  if (firestoreService.isAvailable) {
+    sl.registerLazySingleton<ChatFirestoreDataSource>(
+      () => ChatFirestoreDataSourceImpl(firestoreService: firestoreService),
+    );
+  }
 
   sl.registerLazySingleton<ChatRepository>(
     () => ChatRepositoryImpl(

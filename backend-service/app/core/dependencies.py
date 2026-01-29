@@ -4,6 +4,7 @@ FastAPI dependencies
 Reusable dependencies for authentication and authorization
 """
 
+import uuid
 from typing import Optional
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -37,10 +38,15 @@ async def get_current_user(
     # 1) Try local JWT (backward compatibility)
     payload = decode_token(token)
     if payload and (sub := payload.get("sub")):
-        result = await db.execute(select(User).where(User.id == sub))
-        user = result.scalar_one_or_none()
-        if user and user.is_active:
-            return user
+        try:
+            # Convert string to UUID for query
+            user_id = uuid.UUID(sub) if isinstance(sub, str) else sub
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if user and user.is_active:
+                return user
+        except (ValueError, TypeError):
+            pass  # Invalid UUID format, try Firebase next
 
     # 2) Try Firebase ID token
     claims = verify_firebase_token(token)
@@ -83,10 +89,15 @@ async def get_current_user_optional(
     # 1) Try local JWT
     payload = decode_token(token)
     if payload and (sub := payload.get("sub")):
-        result = await db.execute(select(User).where(User.id == sub))
-        user = result.scalar_one_or_none()
-        if user and user.is_active:
-            return user
+        try:
+            # Convert string to UUID for query
+            user_id = uuid.UUID(sub) if isinstance(sub, str) else sub
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if user and user.is_active:
+                return user
+        except (ValueError, TypeError):
+            pass  # Invalid UUID format, try Firebase next
 
     # 2) Try Firebase ID token
     claims = verify_firebase_token(token)

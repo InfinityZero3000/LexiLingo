@@ -1,5 +1,4 @@
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/response_models.dart';
 import '../models/auth_models.dart';
 import '../models/user_model.dart';
 import 'device_manager.dart';
@@ -49,6 +48,8 @@ class AuthBackendDataSource {
     required String email,
     required String password,
   }) async {
+    print('🔐 AuthBackendDataSource: Starting login for $email');
+    
     final request = LoginRequest(
       email: email,
       password: password,
@@ -60,13 +61,17 @@ class AuthBackendDataSource {
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
+    print('🔐 AuthBackendDataSource: Login response received');
     final loginResponse = LoginResponse.fromJson(envelope.data);
+    print('🔐 AuthBackendDataSource: Token parsed, length: ${loginResponse.tokens.accessToken.length}');
     
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
+    print('🔐 AuthBackendDataSource: Tokens saved, now registering device...');
     
     // Register device with FCM token
     await _registerDevice();
+    print('🔐 AuthBackendDataSource: Login complete');
 
     return loginResponse;
   }
@@ -120,24 +125,26 @@ class AuthBackendDataSource {
   }
 
   /// Get current user profile
-  /// GET /auth/me
+  /// GET /users/me
   Future<UserModel> getCurrentUser() async {
+    print('👤 AuthBackendDataSource: Getting current user...');
     final envelope = await apiClient.getEnvelope<Map<String, dynamic>>(
-      '/auth/me',
+      '/users/me',
       fromJson: (data) => data as Map<String, dynamic>,
     );
+    print('👤 AuthBackendDataSource: User received: ${envelope.data['email']}');
 
     return UserModel.fromJson(envelope.data);
   }
 
   /// Update user profile
-  /// PUT /auth/me
+  /// PUT /users/me
   Future<UserModel> updateProfile({
     String? displayName,
     String? avatarUrl,
   }) async {
-    final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
-      '/auth/me',
+    final envelope = await apiClient.putEnvelope<Map<String, dynamic>>(
+      '/users/me',
       body: {
         if (displayName != null) 'display_name': displayName,
         if (avatarUrl != null) 'avatar_url': avatarUrl,

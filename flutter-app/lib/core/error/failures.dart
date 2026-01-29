@@ -7,41 +7,45 @@ abstract class Failure {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure([super.message = 'Server Failure']);
+  const ServerFailure([String message = 'Server Failure']) : super(message);
 }
 
 class CacheFailure extends Failure {
-  const CacheFailure([super.message = 'Cache Failure']);
+  const CacheFailure([String message = 'Cache Failure']) : super(message);
 }
 
 class NetworkFailure extends Failure {
-  const NetworkFailure([super.message = 'No Internet Connection']);
+  const NetworkFailure([String message = 'No Internet Connection']) : super(message);
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure([super.message = 'Authentication Failed']);
+  const AuthFailure([String message = 'Authentication Failed']) : super(message);
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure([super.message = 'Unauthorized']);
+  const UnauthorizedFailure([String message = 'Unauthorized']) : super(message);
 }
 
 class ValidationFailure extends Failure {
-  const ValidationFailure([super.message = 'Validation Failed']);
+  const ValidationFailure([String message = 'Validation Failed']) : super(message);
 }
 
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([super.message = 'Resource Not Found']);
+  const NotFoundFailure([String message = 'Resource Not Found']) : super(message);
 }
 
 class ConflictFailure extends Failure {
-  const ConflictFailure([super.message = 'Resource Already Exists']);
+  const ConflictFailure([String message = 'Resource Already Exists']) : super(message);
 }
 
 class RateLimitFailure extends Failure {
-  const RateLimitFailure([super.message = 'Rate Limit Exceeded']);
+  const RateLimitFailure([String message = 'Rate Limit Exceeded']) : super(message);
 }
 
 class PermissionFailure extends Failure {
-  const PermissionFailure([super.message = 'Permission Denied']);
+  const PermissionFailure([String message = 'Permission Denied']) : super(message);
+}
+
+class UnexpectedFailure extends Failure {
+  const UnexpectedFailure([String message = 'Unexpected Error']) : super(message);
 }

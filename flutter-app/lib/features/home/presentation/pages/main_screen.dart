@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-// import '../../../course/presentation/pages/course_list_page.dart'; // TODO: Create this page
+import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
@@ -17,8 +17,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomePageNew(),
-    // const CourseListPage(), // TODO: Create course list page
-    const Center(child: Text('Courses - Coming Soon')),
+    const CourseListScreen(),
     const ChatPage(),
     const NotificationsPage(),
     const ProfilePage(),

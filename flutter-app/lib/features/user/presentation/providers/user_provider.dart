@@ -6,7 +6,8 @@ import '../../domain/usecases/get_user_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';
 import '../../domain/usecases/get_settings_usecase.dart';
 import '../../domain/usecases/update_settings_usecase.dart';
-// import '../../domain/usecases/get_today_goal_usecase.dart'; // TODO: Create this file
+import '../../domain/usecases/get_today_goal_usecase.dart';
+import '../../domain/usecases/set_daily_goal_usecase.dart';
 import '../../domain/usecases/update_daily_progress_usecase.dart';
 import '../../domain/usecases/get_current_streak_usecase.dart';
 
@@ -15,7 +16,8 @@ class UserProvider with ChangeNotifier {
   final UpdateUserUseCase updateUserUseCase;
   final GetSettingsUseCase getSettingsUseCase;
   final UpdateSettingsUseCase updateSettingsUseCase;
-  // final GetTodayGoalUseCase getTodayGoalUseCase; // TODO: Add after creating usecase
+  final GetTodayGoalUseCase getTodayGoalUseCase;
+  final SetDailyGoalUseCase setDailyGoalUseCase;
   final UpdateDailyProgressUseCase updateDailyProgressUseCase;
   final GetCurrentStreakUseCase getCurrentStreakUseCase;
 
@@ -24,7 +26,8 @@ class UserProvider with ChangeNotifier {
     required this.updateUserUseCase,
     required this.getSettingsUseCase,
     required this.updateSettingsUseCase,
-    // required this.getTodayGoalUseCase, // TODO: Add after creating usecase
+    required this.getTodayGoalUseCase,
+    required this.setDailyGoalUseCase,
     required this.updateDailyProgressUseCase,
     required this.getCurrentStreakUseCase,
   });
@@ -75,15 +78,20 @@ class UserProvider with ChangeNotifier {
       final results = await Future.wait([
         getUserUseCase(_currentUserId!),
         getSettingsUseCase(_currentUserId!),
-        // getTodayGoalUseCase(_currentUserId!), // TODO: Add after creating usecase
+        getTodayGoalUseCase(GetTodayGoalParams(userId: _currentUserId!)),
         getCurrentStreakUseCase(_currentUserId!),
       ]);
 
       _user = results[0] as User?;
       _settings = results[1] as Settings?;
-      // _todayGoal = results[2] as DailyGoal?; // TODO: Uncomment after usecase is created
-      _todayGoal = null; // Temporary: Set to null until usecase is ready
-      _currentStreak = results[2] as int; // Changed index from 3 to 2
+      
+      // Extract DailyGoal from Either result
+      final goalResult = results[2];
+      if (goalResult is DailyGoal?) {
+        _todayGoal = goalResult;
+      }
+      
+      _currentStreak = results[3] as int;
 
       _isLoading = false;
       notifyListeners();
@@ -91,6 +99,63 @@ class UserProvider with ChangeNotifier {
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // Load today's goal only
+  Future<void> loadTodayGoal() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final result = await getTodayGoalUseCase(GetTodayGoalParams(userId: _currentUserId!));
+      result.fold(
+        (failure) => _errorMessage = failure.message,
+        (goal) => _todayGoal = goal,
+      );
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
+  }
+
+  // Set daily goal
+  Future<bool> setDailyGoal({
+    required int targetXP,
+    int targetLessons = 0,
+    int targetMinutes = 0,
+  }) async {
+    if (_currentUserId == null) return false;
+
+    try {
+      final goal = DailyGoal(
+        id: _todayGoal?.id ?? 0,
+        userId: _currentUserId!,
+        date: DateTime.now(),
+        targetXP: targetXP,
+        earnedXP: _todayGoal?.earnedXP ?? 0,
+        lessonsCompleted: _todayGoal?.lessonsCompleted ?? 0,
+        wordsLearned: _todayGoal?.wordsLearned ?? 0,
+        minutesSpent: _todayGoal?.minutesSpent ?? 0,
+      );
+
+      final result = await setDailyGoalUseCase(SetDailyGoalParams(goal: goal));
+      return result.fold(
+        (failure) {
+          _errorMessage = failure.message;
+          notifyListeners();
+          return false;
+        },
+        (_) {
+          _todayGoal = goal;
+          notifyListeners();
+          return true;
+        },
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

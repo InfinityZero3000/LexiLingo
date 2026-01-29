@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
@@ -45,7 +44,12 @@ class AuthProvider extends ChangeNotifier {
       final result = await getCurrentUserUseCase(NoParams());
       result.fold(
         (failure) {
-          _errorMessage = _getFailureMessage(failure);
+          // Don't show error for AuthFailure (401) - user just not logged in
+          if (failure is AuthFailure || failure is UnauthorizedFailure) {
+            _errorMessage = null; // Silent - normal state when not logged in
+          } else {
+            _errorMessage = _getFailureMessage(failure);
+          }
           _user = null;
         },
         (user) {
@@ -55,7 +59,8 @@ class AuthProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint("Check current user error: $e");
-      _errorMessage = "Failed to check authentication status";
+      // Don't show error for auth check failures - user just not logged in
+      _errorMessage = null;
       _user = null;
     } finally {
       _isCheckingAuth = false;
@@ -176,7 +181,7 @@ class AuthProvider extends ChangeNotifier {
   // Convert Failure to user-friendly message
   String _getFailureMessage(Failure failure) {
     if (failure is ServerFailure) {
-      return failure.message ?? 'Server error. Please try again later.';
+      return failure.message;
     } else if (failure is NetworkFailure) {
       return 'Network error. Please check your internet connection.';
     } else if (failure is CacheFailure) {

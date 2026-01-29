@@ -12,9 +12,10 @@ import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dar
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 
 void registerAuthModule() {
-  // Register auth dependencies
-  sl.registerLazySingleton<TokenStorage>(() => TokenStorage());
-  sl.registerLazySingleton<DeviceManager>(() => DeviceManager());
+  // Register auth dependencies (TokenStorage is already registered in core_di.dart)
+  if (!sl.isRegistered<DeviceManager>()) {
+    sl.registerLazySingleton<DeviceManager>(() => DeviceManager());
+  }
   
   sl.registerLazySingleton<AuthBackendDataSource>(
     () => AuthBackendDataSource(

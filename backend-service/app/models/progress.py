@@ -6,10 +6,10 @@ Extended for Phase 3: Smart Learning Engine & Spaced Repetition
 import uuid
 from datetime import datetime, date
 from sqlalchemy import String, Integer, DateTime, Date, ForeignKey, Boolean, Float, JSON, Text, Index
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.db_types import GUID, GUIDArray
 
 
 class UserCourseProgress(Base):
@@ -21,20 +21,20 @@ class UserCourseProgress(Base):
     __tablename__ = "user_course_progress"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -69,20 +69,20 @@ class LessonCompletion(Base):
     __tablename__ = "lesson_completions"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("lessons.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -107,27 +107,27 @@ class UserProgress(Base):
     __tablename__ = "user_progress"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("lessons.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -164,20 +164,20 @@ class LessonAttempt(Base):
     __tablename__ = "lesson_attempts"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("lessons.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -216,13 +216,13 @@ class QuestionAttempt(Base):
     __tablename__ = "question_attempts"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     lesson_attempt_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("lesson_attempts.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -260,20 +260,20 @@ class UserVocabKnowledge(Base):
     __tablename__ = "user_vocab_knowledge"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     
     vocab_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         nullable=False,
         index=True
     )
@@ -315,13 +315,13 @@ class DailyReviewSession(Base):
     __tablename__ = "daily_review_sessions"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -354,13 +354,13 @@ class Streak(Base):
     __tablename__ = "streaks"
     
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,

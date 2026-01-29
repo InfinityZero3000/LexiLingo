@@ -42,37 +42,20 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final loginResponse = await backendDataSource.login(
+      // Login and save tokens (done in datasource)
+      await backendDataSource.login(
         email: email,
         password: password,
       );
-      // Parse user from login response
-      final userMap = loginResponse.user as Map<String, dynamic>;
-      final user = UserEntity(
-        id: userMap['id'],
-        email: userMap['email'],
-        username: userMap['username'],
-        displayName: userMap['display_name'],
-        avatarUrl: userMap['avatar_url'],
-        provider: userMap['provider'] ?? 'local',
-        isVerified: userMap['is_verified'] ?? false,
-        level: userMap['level'] ?? 'A1',
-        xp: userMap['xp'] ?? 0,
-        currentStreak: userMap['current_streak'] ?? 0,
-        lastLogin: userMap['last_login'] != null
-            ? DateTime.parse(userMap['last_login'])
-            : null,
-        lastLoginIp: userMap['last_login_ip'],
-        createdAt: DateTime.parse(userMap['created_at']),
-        updatedAt: userMap['updated_at'] != null
-            ? DateTime.parse(userMap['updated_at'])
-            : null,
-      );
+      // Fetch full user profile after login
+      final user = await backendDataSource.getCurrentUser();
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on AuthException catch (_) {
+      return Left(AuthFailure('Login failed'));
     } catch (e) {
       return Left(ServerFailure('Login failed: $e'));
     }
@@ -81,28 +64,15 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> loginWithGoogle(String idToken) async {
     try {
-      final loginResponse = await backendDataSource.loginWithGoogle(idToken);
-      final userMap = loginResponse.user as Map<String, dynamic>;
-      final user = UserEntity(
-        id: userMap['id'],
-        email: userMap['email'],
-        username: userMap['username'],
-        displayName: userMap['display_name'],
-        avatarUrl: userMap['avatar_url'],
-        provider: 'google',
-        isVerified: userMap['is_verified'] ?? true,
-        level: userMap['level'] ?? 'A1',
-        xp: userMap['xp'] ?? 0,
-        currentStreak: userMap['current_streak'] ?? 0,
-        lastLogin: DateTime.now(),
-        createdAt: DateTime.parse(userMap['created_at']),
-        updatedAt: userMap['updated_at'] != null
-            ? DateTime.parse(userMap['updated_at'])
-            : null,
-      );
+      // Login and save tokens (done in datasource)
+      await backendDataSource.loginWithGoogle(idToken);
+      // Fetch full user profile after login
+      final user = await backendDataSource.getCurrentUser();
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
+    } on AuthException catch (_) {
+      return Left(AuthFailure('Google login failed'));
     } catch (e) {
       return Left(AuthFailure('Google login failed: $e'));
     }
@@ -124,6 +94,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await backendDataSource.getCurrentUser();
       return Right(user);
+    } on AuthException catch (_) {
+      return Left(AuthFailure('Not authenticated'));
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } on ServerException catch (e) {

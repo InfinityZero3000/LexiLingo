@@ -98,7 +98,17 @@ class ApiClient {
     final response = await _sendRaw('POST', uri, headers: headers, body: body);
     return _parseResponseEnvelope<T>(response, fromJson);
   }
-
+  /// PUT request returning full ApiResponseEnvelope
+  Future<ApiResponseEnvelope<T>> putEnvelope<T>(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    required T Function(dynamic) fromJson,
+  }) async {
+    final uri = _resolve(path);
+    final response = await _sendRaw('PUT', uri, headers: headers, body: body);
+    return _parseResponseEnvelope<T>(response, fromJson);
+  }
   /// GET request returning PaginatedResponseEnvelope
   Future<PaginatedResponseEnvelope<T>> getPaginated<T>(
     String path, {
@@ -200,7 +210,15 @@ class ApiClient {
     if (decoded is Map<String, dynamic>) {
       // If it's an envelope, unwrap the data
       if (decoded.containsKey('data')) {
-        return decoded['data'] as Map<String, dynamic>? ?? {};
+        final data = decoded['data'];
+        // Handle both Map and List data
+        if (data is Map<String, dynamic>) {
+          return data;
+        } else if (data is List) {
+          // Return the full envelope if data is a list
+          return decoded;
+        }
+        return decoded;
       }
       return decoded;
     }
@@ -209,6 +227,11 @@ class ApiClient {
 
   /// Parse error response and throw ApiErrorException
   void _handleErrorResponse(ApiResponse response) {
+    // Handle 401 Unauthorized - throw AuthException
+    if (response.statusCode == 401) {
+      throw AuthException('Unauthorized');
+    }
+
     if (response.body.isEmpty) {
       throw ServerException(
         'Request ${response.uri.path} failed with status ${response.statusCode}',
@@ -223,6 +246,7 @@ class ApiClient {
       }
     } catch (e) {
       if (e is ApiErrorException) rethrow;
+      if (e is AuthException) rethrow;
       // If parsing fails, throw generic error
     }
 

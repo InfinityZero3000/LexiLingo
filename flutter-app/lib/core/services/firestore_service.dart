@@ -1,78 +1,70 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+// Firebase packages - temporarily disabled until Firebase is configured
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+// import 'package:firebase_core/firebase_core.dart';
 
+/// Stub FirestoreService when Firebase is not configured
+/// TODO: Enable Firebase imports when firebase_options.dart is generated
 class FirestoreService {
-  static final FirestoreService instance = FirestoreService._init();
-  
-  late FirebaseFirestore _firestore;
+  static FirestoreService? _instance;
+  static const bool _initialized = false;
   
   FirestoreService._init() {
-    _firestore = FirebaseFirestore.instance;
+    print('⚠️ FirestoreService: Firebase not configured - using stub');
   }
-
-  // Get Firestore instance
-  FirebaseFirestore get firestore => _firestore;
-
-  // Get current user ID from Firebase Auth
-  String? get currentUserId => firebase_auth.FirebaseAuth.instance.currentUser?.uid;
-
-  // Collections
-  CollectionReference get usersCollection => _firestore.collection('users');
-  CollectionReference get coursesCollection => _firestore.collection('courses');
-  CollectionReference get leaderboardCollection => _firestore.collection('leaderboard');
-
-  // User document reference
-  DocumentReference? getUserDocument(String? userId) {
-    if (userId == null) return null;
-    return usersCollection.doc(userId);
+  
+  static FirestoreService get instance {
+    _instance ??= FirestoreService._init();
+    return _instance!;
   }
+  
+  static bool get isInitialized => _initialized;
+  
+  /// Check if Firebase/Firestore is available for use
+  bool get isAvailable => false;
 
-  // User subcollections
-  CollectionReference? getUserEnrollments(String? userId) {
-    final userDoc = getUserDocument(userId);
-    if (userDoc == null) return null;
-    return userDoc.collection('enrollments');
-  }
+  // Get current user ID - returns null when Firebase not available
+  String? get currentUserId => null;
 
-  CollectionReference? getUserChatSessions(String? userId) {
-    final userDoc = getUserDocument(userId);
-    if (userDoc == null) return null;
-    return userDoc.collection('chatSessions');
-  }
+  // Check connection - always false when Firebase not available
+  Future<bool> checkConnection() async => false;
 
-  CollectionReference? getUserAchievements(String? userId) {
-    final userDoc = getUserDocument(userId);
-    if (userDoc == null) return null;
-    return userDoc.collection('achievements');
-  }
-
-  // Batch operations
-  WriteBatch batch() => _firestore.batch();
-
-  // Transaction
-  Future<T> runTransaction<T>(
-    TransactionHandler<T> transactionHandler, {
+  // Stub methods that return null - these are only called when Firebase is available
+  // but we need them to compile. At runtime, code should check isAvailable first.
+  
+  /// Get user document reference - returns null (stub)
+  dynamic getUserDocument(String? userId) => null;
+  
+  /// Get user chat sessions collection - returns null (stub)
+  dynamic getUserChatSessions(String? userId) => null;
+  
+  /// Get user enrollments collection - returns null (stub)
+  dynamic getUserEnrollments(String? userId) => null;
+  
+  /// Get user achievements collection - returns null (stub)
+  dynamic getUserAchievements(String? userId) => null;
+  
+  /// Get firestore instance - returns null (stub)
+  dynamic get firestore => null;
+  
+  /// Get users collection - returns null (stub)
+  dynamic get usersCollection => null;
+  
+  /// Get courses collection - returns null (stub)
+  dynamic get coursesCollection => null;
+  
+  /// Get leaderboard collection - returns null (stub)
+  dynamic get leaderboardCollection => null;
+  
+  /// Create batch - returns null (stub)
+  dynamic batch() => null;
+  
+  /// Run transaction - returns null (stub)
+  Future<T>? runTransaction<T>(
+    dynamic transactionHandler, {
     Duration timeout = const Duration(seconds: 30),
-  }) {
-    return _firestore.runTransaction(transactionHandler, timeout: timeout);
-  }
-
-  // Check connection
-  Future<bool> checkConnection() async {
-    try {
-      await _firestore.collection('_health_check').limit(1).get();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Enable offline persistence
-  Future<void> enablePersistence() async {
-    try {
-      await _firestore.settings.persistenceEnabled;
-    } catch (e) {
-      // Already enabled or not supported on platform
-    }
-  }
+  }) => null;
+  
+  /// Enable persistence - no-op (stub)
+  Future<void> enablePersistence() async {}
 }
