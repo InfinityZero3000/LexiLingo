@@ -1,3 +1,8 @@
+[config]
+# Use Google Gemini API
+model = "google/gemini-1.5-pro"
+fallback_models = ["google/gemini-1.5-flash"]
+
 [pr_reviewer]
 # Enable/disable features
 require_focused_review = true
