@@ -39,6 +39,12 @@ htmlcov/
 # Logs
 *.log
 *.hprof
+logs/
+*.log.*
+
+# Process IDs
+.pids/
+*.pid
 
 # Other
 *.orig
@@ -74,3 +80,9 @@ DL-Model-Support/
 **/models/hubert/*.pt
 **/models/piper/*.onnx
 **/models/embeddings/*.bin
+
+# Logs and temporary files
+logs/*.txt
+temp/
+tmp/
+*_log.txt

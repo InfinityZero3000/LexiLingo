@@ -25,10 +25,13 @@ class RedisClient:
     async def get_instance(cls) -> redis.Redis:
         """Get or create Redis instance."""
         if cls._instance is None:
+            # Use None for password if it's empty string
+            password = settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None
+            
             cls._pool = redis.ConnectionPool(
                 host=settings.REDIS_HOST,
                 port=settings.REDIS_PORT,
-                password=settings.REDIS_PASSWORD,
+                password=password,
                 db=settings.REDIS_DB,
                 decode_responses=True,
                 max_connections=10,
