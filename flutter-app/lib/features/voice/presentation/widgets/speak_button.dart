@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 
 /// Speak Button Widget
 /// A reusable button that uses TTS to speak text
@@ -66,8 +67,9 @@ class _SpeakButtonState extends State<SpeakButton> {
     setState(() => _isLoading = true);
 
     try {
-      final provider = context.read<VoiceProvider>();
-      final result = await provider.synthesizeAndPlay(text: widget.text);
+      final voiceProvider = context.read<VoiceProvider>();
+      final ttsSettings = context.read<TtsSettingsProvider>();
+      final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
         // Save to temp file and play
@@ -77,6 +79,8 @@ class _SpeakButtonState extends State<SpeakButton> {
         await file.writeAsBytes(result.audioData);
 
         await _player.setFilePath(file.path);
+        // Apply playback speed from settings
+        await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
         
         // Clean up temp file after playback
@@ -235,8 +239,9 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
     setState(() => _isLoading = true);
 
     try {
-      final provider = context.read<VoiceProvider>();
-      final result = await provider.synthesizeAndPlay(text: widget.text);
+      final voiceProvider = context.read<VoiceProvider>();
+      final ttsSettings = context.read<TtsSettingsProvider>();
+      final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
         final directory = await getTemporaryDirectory();
@@ -245,6 +250,8 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
         await file.writeAsBytes(result.audioData);
 
         await _player.setFilePath(file.path);
+        // Apply playback speed from settings
+        await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
         
         _player.playerStateStream.firstWhere(

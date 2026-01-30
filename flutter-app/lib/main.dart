@@ -19,6 +19,8 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_p
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +97,8 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<ProgressProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<TtsSettingsProvider>()..init()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

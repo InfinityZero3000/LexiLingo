@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_quality_buttons.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/session_header.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
+import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 
 /// Flashcard Review Screen (Presentation Layer)
 /// Interactive flashcard review with animations
@@ -100,6 +101,11 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
           ),
         ),
         centerTitle: true,
+        actions: const [
+          // TTS Speed Control Button
+          TtsSpeedButton(),
+          SizedBox(width: 8),
+        ],
       ),
       body: Consumer<FlashcardProvider>(
         builder: (context, provider, child) {
