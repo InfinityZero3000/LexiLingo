@@ -255,7 +255,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      '⚠️ AT RISK',
+                                      'AT RISK',
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.orange.shade800,

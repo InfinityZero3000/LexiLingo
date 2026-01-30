@@ -52,17 +52,17 @@ class TokenStorage {
 
   /// Save authentication tokens securely
   Future<void> saveTokens(AuthTokens tokens) async {
-    print('💾 TokenStorage: Saving tokens... (isWeb: $kIsWeb)');
-    print('💾 TokenStorage: Access token length: ${tokens.accessToken.length}');
+    print('[DEBUG] TokenStorage: Saving tokens... (isWeb: $kIsWeb)');
+    print('[DEBUG] TokenStorage: Access token length: ${tokens.accessToken.length}');
     try {
       await Future.wait([
         _write(_accessTokenKey, tokens.accessToken),
         _write(_refreshTokenKey, tokens.refreshToken),
         _write(_tokenTypeKey, tokens.tokenType),
       ]);
-      print('✅ TokenStorage: Tokens saved successfully');
+      print('[OK] TokenStorage: Tokens saved successfully');
     } catch (e) {
-      print('❌ TokenStorage: Error saving tokens: $e');
+      print('[ERROR] TokenStorage: Error saving tokens: $e');
       rethrow;
     }
   }
@@ -79,17 +79,17 @@ class TokenStorage {
 
   /// Get complete stored tokens
   Future<AuthTokens?> getTokens() async {
-    print('🔍 TokenStorage: Getting tokens...');
+    print('[DEBUG] TokenStorage: Getting tokens...');
     try {
       final accessToken = await getAccessToken();
       final refreshToken = await getRefreshToken();
       final tokenType = await _storage.read(key: _tokenTypeKey);
 
-      print('🔍 TokenStorage: accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}');
-      print('🔍 TokenStorage: refreshToken=${refreshToken != null ? "found" : "null"}');
+      print('[DEBUG] TokenStorage: accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}');
+      print('[DEBUG] TokenStorage: refreshToken=${refreshToken != null ? "found" : "null"}');
 
       if (accessToken == null || refreshToken == null) {
-        print('⚠️ TokenStorage: Tokens not found');
+        print('[WARN] TokenStorage: Tokens not found');
         return null;
       }
 
@@ -99,7 +99,7 @@ class TokenStorage {
         tokenType: tokenType ?? 'bearer',
       );
     } catch (e) {
-      print('❌ TokenStorage: Error getting tokens: $e');
+      print('[ERROR] TokenStorage: Error getting tokens: $e');
       return null;
     }
   }

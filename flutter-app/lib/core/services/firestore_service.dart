@@ -15,9 +15,9 @@ class FirestoreService {
     try {
       _firestore = FirebaseFirestore.instance;
       _initialized = true;
-      debugPrint('✅ FirestoreService: Initialized successfully');
+      debugPrint('[OK] FirestoreService: Initialized successfully');
     } catch (e) {
-      debugPrint('❌ FirestoreService: Failed to initialize: $e');
+      debugPrint('[ERROR] FirestoreService: Failed to initialize: $e');
       _initialized = false;
     }
   }

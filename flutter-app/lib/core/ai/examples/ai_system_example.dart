@@ -43,7 +43,7 @@ void main() async {
   // ============================================================
   // STEP 2: Set Learner Profile
   // ============================================================
-  print('👤 Setting learner profile...\n');
+  print('[STEP 2] Setting learner profile...\n');
 
   contextManager.setLearnerProfile(LearnerProfile(
     userId: 'user123',
@@ -74,23 +74,23 @@ void main() async {
   if (response1.analysis.grammarErrors.isNotEmpty) {
     print('\n  Errors found:');
     for (final error in response1.analysis.grammarErrors) {
-      print('    ❌ "${error.incorrect}" → "${error.correction}"');
+      print('    [X] "${error.incorrect}" -> "${error.correction}"');
       print('       Type: ${error.errorType}');
       print('       Explanation: ${error.explanation}');
     }
   }
 
-  print('\n📢 Tutor Response (English):');
+  print('\n[OUTPUT] Tutor Response (English):');
   print('  "${response1.responseEn}"\n');
 
   if (response1.responseVi != null) {
-    print('🇻🇳 Vietnamese Explanation:');
+    print('[VN] Vietnamese Explanation:');
     print('  "${response1.responseVi}"\n');
   }
 
-  print('⏱️  Processing Time: ${response1.latencyMs}ms');
-  print('🎯 Confidence: ${(response1.confidence * 100).toStringAsFixed(1)}%');
-  print('🔧 Components Used: ${response1.componentUsage}\n');
+  print('[TIME] Processing Time: ${response1.latencyMs}ms');
+  print('[SCORE] Confidence: ${(response1.confidence * 100).toStringAsFixed(1)}%');
+  print('[TOOLS] Components Used: ${response1.componentUsage}\n');
 
   // ============================================================
   // STEP 4: Process Audio Input (with Pronunciation)
@@ -104,7 +104,7 @@ void main() async {
     List.generate(44100, (i) => (i % 256)), // 1 second mock audio
   );
 
-  print('🎤 User speaks (audio)...\n');
+  print('[MIC] User speaks (audio)...\n');
 
   final response2 = await orchestrator.processAudio(audioBytes: mockAudio);
 
@@ -115,24 +115,24 @@ void main() async {
 
   if (response2.analysis.pronunciation != null) {
     final pronResult = response2.analysis.pronunciation!;
-    print('\n  🗣️ Pronunciation:');
+    print('\n  [PRONUNCIATION]:');
     print('    - Accuracy: ${(pronResult.accuracy * 100).toStringAsFixed(1)}%');
     print('    - Prosody Score: ${(pronResult.prosodyScore * 100).toStringAsFixed(1)}%');
     
     if (pronResult.errors.isNotEmpty) {
       print('\n    Pronunciation errors:');
       for (final error in pronResult.errors) {
-        print('      ❌ Phoneme ${error.phoneme} in "${error.word}"');
+        print('      [X] Phoneme ${error.phoneme} in "${error.word}"');
         print('         Pronounced as: ${error.pronouncedAs}');
       }
     }
   }
 
-  print('\n📢 Tutor Response:');
+  print('\n[OUTPUT] Tutor Response:');
   print('  "${response2.responseEn}"\n');
 
-  print('⏱️  Processing Time: ${response2.latencyMs}ms');
-  print('🎯 Confidence: ${(response2.confidence * 100).toStringAsFixed(1)}%\n');
+  print('[TIME] Processing Time: ${response2.latencyMs}ms');
+  print('[SCORE] Confidence: ${(response2.confidence * 100).toStringAsFixed(1)}%\n');
 
   // ============================================================
   // STEP 5: Synthesize Response to Audio (TTS)
@@ -146,7 +146,7 @@ void main() async {
 
   final audioOutput = await orchestrator.synthesizeResponse(textToSpeak);
 
-  print('🔊 Audio synthesized:');
+  print('[AUDIO] Audio synthesized:');
   print('  - Size: ${audioOutput.length} bytes');
   print('  - Format: WAV (22kHz)');
   print('  - Ready to play!\n');
@@ -158,7 +158,7 @@ void main() async {
   print('EXAMPLE 4: Conversation History');
   print('══════════════════════════════════════════════════════════\n');
 
-  print('📝 Conversation History (${contextManager.history.length} turns):\n');
+  print('[HISTORY] Conversation History (${contextManager.history.length} turns):\n');
 
   for (var i = 0; i < contextManager.history.length; i++) {
     final turn = contextManager.history[i];

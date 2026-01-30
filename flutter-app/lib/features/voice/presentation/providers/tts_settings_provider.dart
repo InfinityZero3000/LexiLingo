@@ -27,9 +27,9 @@ class TtsSettingsProvider extends ChangeNotifier {
 
   /// Get icon for current speed
   String getSpeedIcon() {
-    if (_playbackSpeed < 1.0) return '🐢';
-    if (_playbackSpeed > 1.0) return '🐇';
-    return '▶️';
+    if (_playbackSpeed < 1.0) return 'Slow';
+    if (_playbackSpeed > 1.0) return 'Fast';
+    return 'Normal';
   }
 
   /// Initialize from SharedPreferences

@@ -40,7 +40,7 @@ class ChatRepositoryImpl implements ChatRepository {
           return Right(session.toEntity());
         } catch (e) {
           // If API fails (e.g., 404), fallback to local
-          print('⚠️ Chat API not available, creating local session: $e');
+          print('[WARN] Chat API not available, creating local session: $e');
         }
       }
 
@@ -75,7 +75,7 @@ class ChatRepositoryImpl implements ChatRepository {
           return Right(sessions.map((s) => s.toEntity()).toList());
         } catch (e) {
           // If API fails (e.g., 404), fallback to local
-          print('⚠️ Chat API not available, using local storage: $e');
+          print('[WARN] Chat API not available, using local storage: $e');
         }
       }
 
