@@ -1,8 +1,8 @@
 
-# LexiLingo AI Architecture v2.0
+# LexiLingo AI Architecture v4.0 - LangGraph + GraphCAG
 
 > **Document**: Kiến trúc hệ thống AI cho ứng dụng học tiếng Anh  
-> **Version**: 2.0 (Optimized)  
+> **Version**: 4.0 (LangGraph + GraphCAG Hybrid)  
 > **Last Updated**: January 2026
 
 ---
@@ -26,12 +26,28 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DESIGN PRINCIPLES                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  ✓ Hybrid Models: Qwen (English) + LLaMA3 (Vietnamese)          │
-│  ✓ Unified Adapter: 1 adapter xử lý 4 tasks (giảm latency 75%)  │
-│  ✓ Lazy Loading: LLaMA3-VI chỉ load khi cần giải thích VI       │
-│  ✓ Parallel Processing: Pronunciation analysis chạy song song   │
-│  ✓ Caching: Redis cho learner profiles + common responses       │
-│  ✓ Fallback: Error handling với graceful degradation            │
+│                                                                 │
+│  LAYER 1: LangGraph (Orchestration + Observer)                  │
+│  ─────────────────────────────────────────────                  │
+│  ✓ StateGraph: Typed state machine for conversation flow        │
+│  ✓ Observer: Track errors → Update KG → Queue background jobs   │
+│  ✓ Checkpointing: Resumable sessions, persistence               │
+│  ✓ Async Background: Exercise generation without blocking       │
+│                                                                 │
+│  LAYER 2: GraphCAG (Core AI Pipeline)                           │
+│  ─────────────────────────────────────                          │
+│  ✓ KG (KuzuDB): Concept expansion, mastery tracking             │
+│  ✓ CAG (Redis): Cache-Augmented Generation, response patterns   │
+│  ✓ Rule-first: Grammar check rule-based, LLM as fallback        │
+│  ✓ Ultra-low latency: <10ms cache hit, <180ms cache miss        │
+│                                                                 │
+│  LAYER 3: AI Models                                             │
+│  ──────────────────                                             │
+│  ✓ Qwen3-1.7B: English NLP (grammar, dialogue, analysis)        │
+│  ✓ LLaMA3-3B: Vietnamese explanations (lazy loaded)             │
+│  ✓ HuBERT: Pronunciation analysis (lazy loaded)                 │
+│  ✓ Piper: Text-to-Speech                                        │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -39,6 +55,7 @@
 
 | Component | Technology | Size | Latency |
 |-----------|------------|------|---------|
+| **Orchestration** | **LangGraph** | **-** | **<5ms** |
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
 | NLP (English) | **Qwen3-1.7B** + Unified LoRA | 1.7GB + 80MB | 100-150ms |
@@ -46,7 +63,7 @@
 | Knowledge Graph | KuzuDB | <50MB | <5ms |
 | Pronunciation | HuBERT-large (lazy) | 2GB | 100-200ms |
 | TTS | Piper VITS | 30-60MB | 100-300ms |
-| Cache | Redis | - | <5ms |
+| Cache (CAG) | Redis | - | <5ms |
 | **Logging DB** | **MongoDB** | **-** | **<10ms** |
 
 ---
@@ -132,66 +149,140 @@
         │ Context Vector + Learner Profile
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│              GRAPHCAG - LangGraph Orchestration                  │
+│         LANGGRAPH + GRAPHCAG HYBRID ARCHITECTURE                 │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  **LangGraph StateGraph Architecture**                           │
-│  Replaces custom orchestrator with graph-based workflow          │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │            LANGGRAPH LAYER (Orchestration)                 │  │
+│  ├────────────────────────────────────────────────────────────┤  │
+│  │                                                            │  │
+│  │  StateGraph: Typed state machine for conversation flow     │  │
+│  │                                                            │  │
+│  │  Responsibilities:                                         │  │
+│  │  • Track conversation state across turns                   │  │
+│  │  • Route to appropriate pipeline nodes                     │  │
+│  │  • Trigger Observer for error tracking (async)             │  │
+│  │  • Enable checkpointing for session persistence            │  │
+│  │                                                            │  │
+│  │  Observer Pattern (async, non-blocking):                   │  │
+│  │  ┌──────────────────────────────────────────────────────┐  │  │
+│  │  │ 1. Qwen detects errors (verb_tense, articles, etc)   │  │  │
+│  │  │ 2. Observer logs errors to KG (update mastery)       │  │  │
+│  │  │ 3. Queue background jobs for CAG exercise gen        │  │  │
+│  │  │ 4. Next session: personalized exercises ready        │  │  │
+│  │  └──────────────────────────────────────────────────────┘  │  │
+│  │                                                            │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │            GRAPHCAG LAYER (Core AI Pipeline)               │  │
+│  ├────────────────────────────────────────────────────────────┤  │
+│  │                                                            │  │
+│  │  GraphCAG = KG + Cache-Augmented Generation                │  │
+│  │  Ultra-low latency (<50ms) for real-time tutoring          │  │
+│  │                                                            │  │
+│  │  Core Principle:                                           │  │
+│  │  • Pre-cache KG knowledge into LLM KV Cache                │  │
+│  │  • Avoid retrieval on every query → reduce latency         │  │
+│  │  • Rule-first, LLM-fallback → predictable performance      │  │
+│  │                                                            │  │
+│  │  Technology:                                               │  │
+│  │  • KuzuDB: Concept relationships, prerequisites            │  │
+│  │  • Redis: Cache layer, learner profiles, responses         │  │
+│  │  • Qwen3: Generation with pre-cached context               │  │
+│  │                                                            │  │
+│  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Core Technology:                                                │
-│  • LangGraph StateGraph (typed state machine)                    │
-│  • KuzuDB Knowledge Graph (concept expansion)                    │
-│  • Conditional edges (intelligent routing)                       │
-│  • Streaming support (real-time updates)                         │
+│  Architecture Comparison:                                        │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ RAG:     Query → Retrieve → Augment → Generate (200-500ms) │  │
+│  │ GraphCAG: Pre-cache → Query → Generate (<50ms) ⚡           │  │
+│  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  Pipeline Flow:                                                  │
-│  ┌─────────┐   ┌──────────┐   ┌───────────┐                      │
-│  │  INPUT  │──▶│ KG_EXPAND│──▶│ DIAGNOSE  │                      │
-│  └─────────┘   └──────────┘   └─────┬─────┘                      │
-│                                      │                           │
-│       ┌──────────────────────────────┼──────────┐                │
-│       ▼                              ▼          ▼                │
-│  ┌─────────┐   ┌──────────┐   ┌───────────┐                      │
-│  │ASK_CLAR │   │VIETNAMESE│   │  RETRIEVE │                      │
-│  └────┬────┘   └────┬─────┘   └─────┬─────┘                      │
-│       │             └───────────────┤                            │
-│       │                             ▼                            │
-│       │                      ┌───────────┐                       │
-│       └─────────────────────▶│ GENERATE  │                       │
-│                              └─────┬─────┘                       │
-│                                    │                             │
-│                          ┌────────┴────────┐                     │
-│                          ▼                 ▼                     │
-│                    ┌───────┐          ┌────────┐                 │
-│                    │  TTS  │──▶END    │  END   │                 │
-│                    └───────┘          └────────┘                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                                                             │ │
+│  │  ┌─────────────────────────────────────────────────────┐    │ │
+│  │  │         PHASE 1: WARM-UP (On Session Start)         │    │ │
+│  │  │                                                     │    │ │
+│  │  │  Load learner profile → Query KG prerequisites      │    │ │
+│  │  │  → Pre-cache concepts into LLM KV Cache             │    │ │
+│  │  │                                                     │    │ │
+│  │  │  ┌──────────┐   ┌──────────┐   ┌──────────────┐     │    │ │
+│  │  │  │  Redis   │──▶│  KuzuDB  │──▶│  LLM Cache   │     │    │ │
+│  │  │  │(Profile) │   │ (KG)     │   │ (KV Warmup)  │     │    │ │
+│  │  │  └──────────┘   └──────────┘   └──────────────┘     │    │ │
+│  │  │                                                     │    │ │
+│  │  └─────────────────────────────────────────────────────┘    │ │
+│  │                          │                                  │ │
+│  │                          ▼                                  │ │
+│  │  ┌─────────────────────────────────────────────────────┐    │ │
+│  │  │         PHASE 2: QUERY (Per User Message)           │    │ │
+│  │  │                                                     │    │ │
+│  │  │  User Input                                         │    │ │
+│  │  │      │                                              │    │ │
+│  │  │      ▼                                              │    │ │
+│  │  │  ┌──────────────┐                                   │    │ │
+│  │  │  │ Cache Lookup │◄── Redis: Check cached response   │    │ │
+│  │  │  └──────┬───────┘                                   │    │ │
+│  │  │         │                                           │    │ │
+│  │  │    ┌────┴────┐                                      │    │ │
+│  │  │    │Cache Hit?│                                     │    │ │
+│  │  │    └────┬────┘                                      │    │ │
+│  │  │    Yes  │  No                                       │    │ │
+│  │  │     │   └──────────────────────┐                    │    │ │
+│  │  │     ▼                          ▼                    │    │ │
+│  │  │  ┌────────┐            ┌──────────────┐             │    │ │
+│  │  │  │ Return │            │ KG Expansion │             │    │ │
+│  │  │  │ Cached │            │ (Linked      │             │    │ │
+│  │  │  │Response│            │  Concepts)   │             │    │ │
+│  │  │  └────────┘            └──────┬───────┘             │    │ │
+│  │  │      ▲                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      │                │  Diagnose    │              │    │ │
+│  │  │      │                │ (Rule-based) │              │    │ │
+│  │  │      │                └──────┬───────┘              │    │ │
+│  │  │      │                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      │                │   Generate   │              │    │ │
+│  │  │      │                │ (LLM/Rules)  │              │    │ │
+│  │  │      │                └──────┬───────┘              │    │ │
+│  │  │      │                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      └────────────────│ Cache Update │              │    │ │
+│  │  │                       └──────────────┘              │    │ │
+│  │  │                                                     │    │ │
+│  │  └─────────────────────────────────────────────────────┘    │ │
+│  │                                                             │ │
+│  └─────────────────────────────────────────────────────────────┘ │
 │                                                                  │
-│  Node Descriptions:                                              │
+│  Component Details:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ INPUT       : Parse input, load learner profile, history   │  │
-│  │ KG_EXPAND   : Query KuzuDB, expand related concepts        │  │
-│  │ DIAGNOSE    : Grammar analysis, intent detection           │  │
-│  │ VIETNAMESE  : Vietnamese explanation (A1/A2 levels)        │  │
-│  │ ASK_CLARIFY : Request clarification (low confidence)       │  │
-│  │ RETRIEVE    : Vector + KG hybrid retrieval                 │  │
-│  │ GENERATE    : Tutor response generation                    │  │
-│  │ TTS         : Text-to-Speech via Piper                     │  │
+│  │ Cache Lookup  : Redis query for similar input patterns     │  │
+│  │ KG Expansion  : KuzuDB graph traversal (1-2 hops)          │  │
+│  │ Diagnose      : Rule-based grammar check → concept mapping │  │
+│  │ Generate      : LLM with KV-cached context (fast)          │  │
+│  │ Cache Update  : Store response pattern for future use      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  State Schema (TypedDict):                                       │
+│  Latency Breakdown:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ GraphCAGState:                                             │  │
-│  │   user_input: str                                          │  │
-│  │   session_id: str                                          │  │
-│  │   learner_profile: LearnerProfile                          │  │
-│  │   kg_seed_concepts: List[str]                              │  │
-│  │   kg_expanded_nodes: List[KGExpandedNode]                  │  │
-│  │   diagnosis_errors: List[DiagnosisError]                   │  │
-│  │   tutor_response: str                                      │  │
-│  │   models_used: List[str] (accumulator)                     │  │
-│  │   latency_ms: int                                          │  │
+│  │ Component        │ Cache Hit │ Cache Miss │                │  │
+│  │──────────────────┼───────────┼────────────│                │  │
+│  │ Redis Lookup     │   <5ms    │    <5ms    │                │  │
+│  │ KG Expansion     │   skip    │   <10ms    │                │  │
+│  │ Diagnose         │   skip    │   <10ms    │                │  │
+│  │ LLM Generate     │   skip    │  100-150ms │                │  │
+│  │ Cache Update     │   skip    │    <5ms    │                │  │
+│  │──────────────────┼───────────┼────────────│                │  │
+│  │ TOTAL            │  <10ms ⚡  │  <180ms    │                │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
+                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  Phase 2: Resource Allocation                              │  │
 │  │  ────────────────────────────────────────────────────────  │  │
