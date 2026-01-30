@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
+import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
@@ -44,10 +45,12 @@ class _HomePageNewState extends State<HomePageNew> {
     // Load home data after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeProvider = context.read<HomeProvider>();
+      final authProvider = context.read<AuthProvider>();
       homeProvider.loadHomeData().then((_) {
-        // Sync XP to LevelProvider after home data loads
+        // Sync XP to LevelProvider from AuthProvider (real user data)
         final levelProvider = context.read<LevelProvider>();
-        levelProvider.updateLevel(homeProvider.totalXP);
+        final userXP = authProvider.currentUser?.xp ?? 0;
+        levelProvider.updateLevel(userXP);
       });
     });
   }
@@ -56,8 +59,8 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Consumer2<HomeProvider, UserProvider>(
-          builder: (context, homeProvider, userProvider, child) {
+        child: Consumer3<HomeProvider, UserProvider, AuthProvider>(
+          builder: (context, homeProvider, userProvider, authProvider, child) {
             if (homeProvider.isLoading &&
                 homeProvider.featuredCourses.isEmpty) {
               return _buildSkeletonLoading();
@@ -77,7 +80,7 @@ class _HomePageNewState extends State<HomePageNew> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(context, homeProvider, userProvider),
+                    _buildHeader(context, homeProvider, authProvider),
                     const SizedBox(height: 16),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -124,8 +127,15 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget _buildHeader(
     BuildContext context,
     HomeProvider homeProvider,
-    UserProvider userProvider,
+    AuthProvider authProvider,
   ) {
+    // Get user display name from AuthProvider
+    final user = authProvider.currentUser;
+    final displayName = user?.displayName.isNotEmpty == true 
+        ? user!.displayName 
+        : user?.username ?? 'User';
+    final totalXP = user?.xp ?? homeProvider.totalXP;
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -138,7 +148,15 @@ class _HomePageNewState extends State<HomePageNew> {
               color: AppColors.primary.withOpacity(0.2),
               border: Border.all(color: AppColors.primary, width: 2),
             ),
-            child: const Icon(Icons.person, color: AppColors.primary),
+            child: user?.avatarUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      user!.avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary),
+                    ),
+                  )
+                : const Icon(Icons.person, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -146,14 +164,14 @@ class _HomePageNewState extends State<HomePageNew> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back, ${homeProvider.userName}!',
+                  'Welcome back, $displayName!',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.textGrey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  '${homeProvider.totalXP} XP earned',
+                  '$totalXP XP earned',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
