@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
@@ -55,34 +56,23 @@ class _CourseListScreenState extends State<CourseListScreen> {
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
           if (provider.isLoadingCourses && provider.courses.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return SkeletonList(
+              itemCount: 5,
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+            );
           }
 
           if (provider.coursesError != null && provider.courses.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    provider.coursesError!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => provider.refreshCourses(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return ErrorDisplayWidget.fromMessage(
+              message: provider.coursesError!,
+              onRetry: () => provider.refreshCourses(),
             );
           }
 
           if (provider.courses.isEmpty) {
-            return const Center(
-              child: Text('No courses available'),
+            return EmptyStateWidget.courses(
+              onExplore: () => provider.refreshCourses(),
             );
           }
 

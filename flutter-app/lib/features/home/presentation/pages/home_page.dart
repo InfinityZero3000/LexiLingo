@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
@@ -32,24 +33,13 @@ class _HomePageNewState extends State<HomePageNew> {
         child: Consumer2<HomeProvider, UserProvider>(
           builder: (context, homeProvider, userProvider, child) {
             if (homeProvider.isLoading && homeProvider.featuredCourses.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return _buildSkeletonLoading();
             }
 
             if (homeProvider.errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(homeProvider.errorMessage!),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => homeProvider.loadHomeData(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              return ErrorDisplayWidget.fromMessage(
+                message: homeProvider.errorMessage!,
+                onRetry: () => homeProvider.loadHomeData(),
               );
             }
 
@@ -700,10 +690,75 @@ class _HomePageNewState extends State<HomePageNew> {
         else
           Icon(
             Icons.circle,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withValues(alpha: 0.4),
             size: 20,
           ),
       ],
+    );
+  }
+
+  /// Build skeleton loading state for home page
+  Widget _buildSkeletonLoading() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header skeleton
+          ShimmerContainer(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  const SkeletonCircle(size: 48),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SkeletonText(width: 150, height: 14),
+                      SizedBox(height: 6),
+                      SkeletonText(width: 100, height: 12),
+                      SizedBox(height: 6),
+                      SkeletonText(width: 120, height: 18),
+                    ],
+                  ),
+                  const Spacer(),
+                  const SkeletonCircle(size: 40),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Streak card skeleton
+          const SkeletonProgressStats(),
+          const SizedBox(height: 24),
+          // Daily goal skeleton
+          ShimmerContainer(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Section title skeleton
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: ShimmerContainer(
+              child: SkeletonText(width: 150, height: 20),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Courses skeleton
+          const SkeletonHomeSection(),
+          const SizedBox(height: 24),
+          // Another section
+          const SkeletonHomeSection(),
+        ],
+      ),
     );
   }
 }

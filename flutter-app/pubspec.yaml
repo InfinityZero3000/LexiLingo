@@ -69,6 +69,9 @@ dependencies:
   
   # Flashcard Animations
   confetti: ^0.7.0
+  
+  # Shimmer Loading Effect
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
