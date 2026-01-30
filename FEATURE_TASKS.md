@@ -39,25 +39,25 @@
 - [ ] **1.1.7** Test navigation từ Course Detail → Roadmap
 
 #### 1.2 Lesson Content từ API
-- [ ] **1.2.1** Review endpoint `GET /learning/lessons/{id}` trong backend
-- [ ] **1.2.2** Implement logic fetch lesson content thực (không mock)
-- [ ] **1.2.3** Tạo `GetLessonContentUseCase`
-- [ ] **1.2.4** Update `LearningProvider.startLesson()` để gọi API
-- [ ] **1.2.5** Handle loading/error states trong UI
+- [x] **1.2.1** Review endpoint `GET /learning/lessons/{id}` trong backend ✅ (30/01/2026)
+- [x] **1.2.2** Implement logic fetch lesson content thực (không mock) ✅ (30/01/2026)
+- [x] **1.2.3** Tạo `GetLessonContentUseCase` ✅ (đã có sẵn)
+- [x] **1.2.4** Update `LearningProvider.startLesson()` để gọi API ✅ (30/01/2026)
+- [x] **1.2.5** Handle loading/error states trong UI ✅ (đã có sẵn)
 - [ ] **1.2.6** Cache lesson content locally với SQLite
 
 #### 1.3 Answer Validation
-- [ ] **1.3.1** Review `POST /learning/lessons/{id}/submit` trong backend
-- [ ] **1.3.2** Implement validation logic (không trả mock `is_correct: true`)
+- [x] **1.3.1** Review `POST /learning/lessons/{id}/submit` trong backend ✅ (30/01/2026)
+- [x] **1.3.2** Implement validation logic (không trả mock `is_correct: true`) ✅ (30/01/2026)
 - [ ] **1.3.3** Tích hợp AI validation cho câu trả lời tự do
-- [ ] **1.3.4** Update `LearningProvider.submitAnswer()` 
-- [ ] **1.3.5** Hiển thị feedback chi tiết khi sai
+- [x] **1.3.4** Update `LearningProvider.submitAnswer()` ✅ (đã có sẵn)
+- [x] **1.3.5** Hiển thị feedback chi tiết khi sai ✅ (30/01/2026)
 
 #### 1.4 Daily Goal UseCase
-- [ ] **1.4.1** Tạo file `get_daily_goal_usecase.dart`
-- [ ] **1.4.2** Tạo file `update_daily_goal_usecase.dart`
-- [ ] **1.4.3** Uncomment registration trong `user_di.dart`
-- [ ] **1.4.4** Update `UserProvider` với daily goal methods
+- [x] **1.4.1** Tạo file `get_daily_goal_usecase.dart` ✅ (đã có sẵn: get_today_goal_usecase.dart)
+- [x] **1.4.2** Tạo file `update_daily_goal_usecase.dart` ✅ (đã có sẵn: set_daily_goal_usecase.dart)
+- [x] **1.4.3** Uncomment registration trong `user_di.dart` ✅ (đã được đăng ký)
+- [x] **1.4.4** Update `UserProvider` với daily goal methods ✅ (đã có sẵn)
 - [ ] **1.4.5** Test flow cập nhật goal từ Profile screen
 
 #### 1.5 Firebase Configuration
@@ -252,12 +252,12 @@
 - [ ] **5.1.7** Store onboarding completion flag
 
 #### 5.2 Skeleton Loading
-- [ ] **5.2.1** Tạo `SkeletonLoader` widget reusable
-- [ ] **5.2.2** Create skeleton variants: card, list, text
-- [ ] **5.2.3** Apply to Course list screen
-- [ ] **5.2.4** Apply to Vocabulary list screen
-- [ ] **5.2.5** Apply to Home screen sections
-- [ ] **5.2.6** Add shimmer animation
+- [x] **5.2.1** Tạo `SkeletonLoader` widget reusable ✅ (30/01/2026)
+- [x] **5.2.2** Create skeleton variants: card, list, text ✅ (30/01/2026)
+- [x] **5.2.3** Apply to Course list screen ✅ (30/01/2026)
+- [x] **5.2.4** Apply to Vocabulary list screen ✅ (30/01/2026)
+- [x] **5.2.5** Apply to Home screen sections ✅ (30/01/2026)
+- [x] **5.2.6** Add shimmer animation ✅ (30/01/2026)
 
 #### 5.3 Pull-to-Refresh
 - [ ] **5.3.1** Add RefreshIndicator to HomePageNew
@@ -267,19 +267,19 @@
 - [ ] **5.3.5** Implement proper refresh logic in providers
 
 #### 5.4 Empty States
-- [ ] **5.4.1** Design EmptyStateWidget với illustration
-- [ ] **5.4.2** Apply to empty course list
-- [ ] **5.4.3** Apply to empty vocabulary
+- [x] **5.4.1** Design EmptyStateWidget với illustration ✅ (30/01/2026)
+- [x] **5.4.2** Apply to empty course list ✅ (30/01/2026)
+- [x] **5.4.3** Apply to empty vocabulary ✅ (30/01/2026)
 - [ ] **5.4.4** Apply to empty notifications
 - [ ] **5.4.5** Apply to empty chat history
-- [ ] **5.4.6** Add CTA button in empty states
+- [x] **5.4.6** Add CTA button in empty states ✅ (30/01/2026)
 
 #### 5.5 Error Handling UI
-- [ ] **5.5.1** Tạo `ErrorWidget` với retry button
-- [ ] **5.5.2** Design network error state
-- [ ] **5.5.3** Design server error state
-- [ ] **5.5.4** Design timeout error state
-- [ ] **5.5.5** Add offline mode indicator
+- [x] **5.5.1** Tạo `ErrorWidget` với retry button ✅ (30/01/2026)
+- [x] **5.5.2** Design network error state ✅ (30/01/2026)
+- [x] **5.5.3** Design server error state ✅ (30/01/2026)
+- [x] **5.5.4** Design timeout error state ✅ (30/01/2026)
+- [x] **5.5.5** Add offline mode indicator ✅ (30/01/2026)
 - [ ] **5.5.6** Implement global error handler
 
 #### 5.6 Dark Mode Polish
