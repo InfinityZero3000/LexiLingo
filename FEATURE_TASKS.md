@@ -260,11 +260,11 @@
 - [x] **5.2.6** Add shimmer animation ✅ (30/01/2026)
 
 #### 5.3 Pull-to-Refresh
-- [ ] **5.3.1** Add RefreshIndicator to HomePageNew
-- [ ] **5.3.2** Add RefreshIndicator to CourseListScreen
-- [ ] **5.3.3** Add RefreshIndicator to VocabLibraryPage
-- [ ] **5.3.4** Add RefreshIndicator to NotificationsPage
-- [ ] **5.3.5** Implement proper refresh logic in providers
+- [x] **5.3.1** Add RefreshIndicator to HomePageNew ✅ (đã có sẵn)
+- [x] **5.3.2** Add RefreshIndicator to CourseListScreen ✅ (đã có sẵn)
+- [x] **5.3.3** Add RefreshIndicator to VocabLibraryPage ✅ (đã có sẵn)
+- [ ] **5.3.4** Add RefreshIndicator to NotificationsPage (cần backend)
+- [x] **5.3.5** Implement proper refresh logic in providers ✅ (đã có sẵn)
 
 #### 5.4 Empty States
 - [x] **5.4.1** Design EmptyStateWidget với illustration ✅ (30/01/2026)

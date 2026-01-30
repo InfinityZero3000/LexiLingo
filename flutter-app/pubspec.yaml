@@ -72,6 +72,12 @@ dependencies:
   
   # Shimmer Loading Effect
   shimmer: ^3.0.0
+  
+  # Voice/Audio
+  record: ^5.1.2
+  just_audio: ^0.9.39
+  path_provider: ^2.1.5
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
