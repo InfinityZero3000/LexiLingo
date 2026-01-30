@@ -45,12 +45,24 @@ class MongoDBManager:
         try:
             logger.info(f"Connecting to MongoDB: {settings.MONGODB_DATABASE}")
             
-            # Create async client
+            # MongoDB Atlas requires ServerApi for stable API version
+            from pymongo.server_api import ServerApi
+            
+            # Create async client with Atlas support
+            connection_kwargs = {
+                "maxPoolSize": settings.MONGODB_MAX_POOL_SIZE,
+                "minPoolSize": settings.MONGODB_MIN_POOL_SIZE,
+                "serverSelectionTimeoutMS": 10000,
+            }
+            
+            # Add ServerApi if using MongoDB Atlas (mongodb+srv://)
+            if "mongodb+srv://" in settings.MONGODB_URI:
+                connection_kwargs["server_api"] = ServerApi('1')
+                logger.info("Using MongoDB Atlas with Stable API v1")
+            
             self._client = AsyncIOMotorClient(
                 settings.MONGODB_URI,
-                maxPoolSize=settings.MONGODB_MAX_POOL_SIZE,
-                minPoolSize=settings.MONGODB_MIN_POOL_SIZE,
-                serverSelectionTimeoutMS=10000,
+                **connection_kwargs
             )
             
             # Test connection

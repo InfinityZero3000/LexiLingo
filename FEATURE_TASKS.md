@@ -30,13 +30,13 @@
 ### 🔴 Nhóm 1: Hoàn Thiện Tính Năng Dở Dang (Ưu tiên: CAO)
 
 #### 1.1 Learning Roadmap Screen
-- [ ] **1.1.1** Restore file `learning_roadmap_screen.dart` từ `.bak`
-- [ ] **1.1.2** Tạo `GetRoadmapUseCase` trong `features/learning/domain/usecases/`
-- [ ] **1.1.3** Tạo `RoadmapRepository` interface và implementation
-- [ ] **1.1.4** Kết nối API `GET /learning/courses/{id}/roadmap`
-- [ ] **1.1.5** Update `LearningProvider` với roadmap state
-- [ ] **1.1.6** Thiết kế UI tree-style roadmap với animations
-- [ ] **1.1.7** Test navigation từ Course Detail → Roadmap
+- [x] **1.1.1** Restore file `learning_roadmap_screen.dart` từ `.bak` ✅ (đã có sẵn)
+- [x] **1.1.2** Tạo `GetRoadmapUseCase` trong `features/learning/domain/usecases/` ✅ (get_course_roadmap_usecase.dart)
+- [x] **1.1.3** Tạo `RoadmapRepository` interface và implementation ✅ (đã có trong learning_repository)
+- [x] **1.1.4** Kết nối API `GET /learning/courses/{id}/roadmap` ✅ (đã có trong datasource)
+- [x] **1.1.5** Update `LearningProvider` với roadmap state ✅ (loadRoadmap method)
+- [x] **1.1.6** Thiết kế UI tree-style roadmap với animations ✅ (RoadmapNodeWidget, RoadmapHeaderWidget)
+- [x] **1.1.7** Test navigation từ Course Detail → Roadmap ✅ (30/01/2026)
 
 #### 1.2 Lesson Content từ API
 - [x] **1.2.1** Review endpoint `GET /learning/lessons/{id}` trong backend ✅ (30/01/2026)
