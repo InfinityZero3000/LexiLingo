@@ -70,6 +70,23 @@ class CourseResponse(CourseBase):
     is_enrolled: Optional[bool] = None
     user_progress: Optional[float] = None  # 0-100%
     
+    @validator('tags', pre=True, always=True)
+    def parse_tags(cls, v):
+        """Handle tags as dict with 'categories' key or as list."""
+        if v is None:
+            return []
+        if isinstance(v, dict):
+            if 'categories' in v:
+                return v['categories'] if isinstance(v['categories'], list) else []
+            result = []
+            for val in v.values():
+                if isinstance(val, list):
+                    result.extend(val)
+            return result
+        if isinstance(v, list):
+            return v
+        return []
+    
     class Config:
         from_attributes = True
 
@@ -87,6 +104,25 @@ class CourseListItem(BaseModel):
     total_xp: int = 0
     estimated_duration: int = 0
     is_enrolled: Optional[bool] = None
+    
+    @validator('tags', pre=True, always=True)
+    def parse_tags(cls, v):
+        """Handle tags as dict with 'categories' key or as list."""
+        if v is None:
+            return []
+        if isinstance(v, dict):
+            # Extract 'categories' or combine all values
+            if 'categories' in v:
+                return v['categories'] if isinstance(v['categories'], list) else []
+            # Flatten all list values from the dict
+            result = []
+            for val in v.values():
+                if isinstance(val, list):
+                    result.extend(val)
+            return result
+        if isinstance(v, list):
+            return v
+        return []
     
     class Config:
         from_attributes = True

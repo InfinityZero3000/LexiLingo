@@ -43,8 +43,8 @@ class _ChatPageState extends State<ChatPage> {
     // Add scroll listener for lazy loading
     _scrollController.addListener(_onScroll);
     
-    // Check microphone permission
-    _checkRecorderPermission();
+    // Note: Don't check microphone permission here to avoid auto-triggering
+    // Permission will be checked when user tries to record
     
     // Initialize chat session if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -15,12 +15,12 @@ class ChatApiDataSource {
       'user_id': userId,
       if (title != null && title.isNotEmpty) 'title': title,
     };
-    final json = await apiClient.post('/api/v1/chat/sessions', body: payload);
+    final json = await apiClient.post('/chat/sessions', body: payload);
     return _mapSession(json['data'] ?? json);
   }
 
   Future<List<ChatSessionModel>> getSessions(String userId) async {
-    final json = await apiClient.get('/api/v1/chat/sessions/user/$userId');
+    final json = await apiClient.get('/chat/sessions/user/$userId');
     final sessions = (json['data'] ?? json['sessions'] ?? json) as dynamic;
     if (sessions is List) {
       return sessions.map((e) => _mapSession(Map<String, dynamic>.from(e))).toList();
@@ -29,7 +29,7 @@ class ChatApiDataSource {
   }
 
   Future<List<ChatMessageModel>> getMessages(String sessionId) async {
-    final json = await apiClient.get('/api/v1/chat/sessions/$sessionId/messages');
+    final json = await apiClient.get('/chat/sessions/$sessionId/messages');
     final messages = (json['data'] ?? json['messages'] ?? json) as dynamic;
     if (messages is List) {
       return messages.map((e) => _mapMessage(Map<String, dynamic>.from(e))).toList();
@@ -48,7 +48,7 @@ class ChatApiDataSource {
       'session_id': sessionId,
       'message': message,
     };
-    final json = await apiClient.post('/api/v1/chat/messages', body: payload);
+    final json = await apiClient.post('/chat/messages', body: payload);
     // Backend may return {data: {ai_response: '...'}} or {ai_response: '...'}
     final data = json['data'] ?? json;
     final response = data['ai_response'] ?? data['response'] ?? data['message'] ?? data['reply'];
