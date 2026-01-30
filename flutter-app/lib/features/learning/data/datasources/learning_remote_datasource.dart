@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/response_models.dart';
 import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
+import 'package:lexilingo_app/features/learning/data/models/lesson_content_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/lesson_complete_model.dart';
@@ -10,6 +11,9 @@ import 'package:lexilingo_app/features/learning/data/models/lesson_complete_mode
 abstract class LearningRemoteDataSource {
   /// POST /learning/lessons/{lesson_id}/start - Start or resume a lesson
   Future<ApiResponseEnvelope<LessonAttemptModel>> startLesson(String lessonId);
+
+  /// GET /learning/lessons/{lesson_id}/content - Get lesson content with exercises
+  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(String lessonId);
 
   /// POST /learning/attempts/{attempt_id}/answer - Submit an answer
   Future<ApiResponseEnvelope<AnswerResponseModel>> submitAnswer({
@@ -42,6 +46,16 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
     return ApiResponseEnvelope<LessonAttemptModel>.fromJson(
       response,
       (data) => LessonAttemptModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(String lessonId) async {
+    final response = await _apiClient.get('/learning/lessons/$lessonId/content');
+
+    return ApiResponseEnvelope<LessonContentModel>.fromJson(
+      response,
+      (data) => LessonContentModel.fromJson(data as Map<String, dynamic>),
     );
   }
 

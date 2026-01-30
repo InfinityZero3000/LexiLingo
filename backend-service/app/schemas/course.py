@@ -248,3 +248,53 @@ class EnrollmentResponse(BaseModel):
 class CourseWithLessons(CourseResponse):
     """Schema for course with lessons."""
     lessons: List[LessonResponse] = []
+
+
+# =====================
+# Lesson Content Schemas (for learning session)
+# =====================
+
+class ExerciseOption(BaseModel):
+    """Option for multiple choice exercises."""
+    id: str
+    text: str
+    is_correct: bool = False
+
+
+class Exercise(BaseModel):
+    """Exercise within a lesson."""
+    id: str
+    type: str = Field(..., description="multiple_choice, true_false, fill_blank, translate, matching, reorder")
+    question: str
+    options: Optional[List[ExerciseOption]] = None
+    correct_answer: str
+    explanation: Optional[str] = None
+    hint: Optional[str] = None
+    audio_url: Optional[str] = None
+    image_url: Optional[str] = None
+    difficulty: int = Field(default=1, ge=1, le=5)
+    points: int = Field(default=10, ge=0)
+    
+    @validator('type')
+    def validate_type(cls, v):
+        allowed = ['multiple_choice', 'true_false', 'fill_blank', 'translate', 'matching', 'reorder']
+        if v not in allowed:
+            raise ValueError(f'Exercise type must be one of {allowed}')
+        return v
+
+
+class LessonContentResponse(BaseModel):
+    """Lesson content with exercises for learning session."""
+    id: uuid.UUID
+    title: str
+    description: Optional[str] = None
+    lesson_type: str
+    order_index: int
+    xp_reward: int
+    pass_threshold: int
+    estimated_minutes: int
+    total_exercises: int
+    exercises: List[Exercise] = Field(default_factory=list)
+    
+    class Config:
+        from_attributes = True
