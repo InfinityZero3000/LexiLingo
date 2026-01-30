@@ -230,12 +230,13 @@ Respond in JSON format:
         
         elif task == "dialogue_response":
             strategy_desc = strategy or "positive_feedback"
+            history_section = f"Conversation History:\n{history}" if history else ""
             prompt = f"""Task: dialogue_response
 User Message: {text}
 Learner Level: {level}
 Strategy: {strategy_desc}
 
-{f"Conversation History:\\n{history}" if history else ""}
+{history_section}
 
 You are an AI English tutor. Respond to the learner's message using the {strategy_desc} strategy.
 
@@ -253,11 +254,12 @@ Respond in JSON format:
 }}"""
         
         elif task == "comprehensive_analysis":
+            history_section = f"Conversation History:\n{history}" if history else ""
             prompt = f"""Task: comprehensive_analysis
 Text: {text}
 Learner Level: {level}
 
-{f"Conversation History:\\n{history}" if history else ""}
+{history_section}
 
 Perform comprehensive analysis of this English text, including:
 1. Fluency scoring (0.0-1.0)
