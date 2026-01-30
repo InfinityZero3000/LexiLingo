@@ -209,13 +209,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 
   String _getMotivationalMessage(double accuracy) {
     if (accuracy >= 90) {
-      return 'Excellent work! You\'re mastering these words! 🎉';
+      return 'Excellent work! You\'re mastering these words!';
     } else if (accuracy >= 70) {
-      return 'Great job! Keep up the good work! 👏';
+      return 'Great job! Keep up the good work!';
     } else if (accuracy >= 50) {
-      return 'Good effort! Practice makes perfect! 💪';
+      return 'Good effort! Practice makes perfect!';
     } else {
-      return 'Keep practicing! You\'re making progress! 🌟';
+      return 'Keep practicing! You\'re making progress!';
     }
   }
 

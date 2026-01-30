@@ -311,7 +311,7 @@ async def claim_challenge_reward(
     # For now, return success with reward info
     return ApiResponse(
         success=True,
-        message=f"🎉 Challenge completed! +{challenge['xp_reward']} XP",
+        message=f"Challenge completed! +{challenge['xp_reward']} XP",
         data={
             "challenge_id": challenge_id,
             "xp_reward": challenge["xp_reward"],

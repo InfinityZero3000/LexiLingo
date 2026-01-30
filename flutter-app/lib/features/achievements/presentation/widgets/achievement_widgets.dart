@@ -11,21 +11,16 @@ IconData _getBadgeIcon(String? badgeIcon) {
 
   switch (badgeIcon) {
     case 'trophy':
-    case '🏆':
       return Icons.emoji_events;
     case 'star':
-    case '⭐':
       return Icons.star;
     case 'diamond':
-    case '💎':
       return Icons.diamond;
     case 'medal':
       return Icons.military_tech;
     case 'fire':
-    case '🔥':
       return Icons.local_fire_department;
     case 'bolt':
-    case '⚡':
       return Icons.bolt;
     default:
       return Icons.emoji_events;
@@ -260,7 +255,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
               children: [
                 // Header
                 Text(
-                  '🎉 Achievement Unlocked!',
+                  'Achievement Unlocked!',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: badgeColor,

@@ -5,23 +5,23 @@ import 'package:lexilingo_app/features/level/presentation/providers/level_provid
 import 'package:lexilingo_app/features/level/domain/entities/level_entity.dart';
 import 'package:lexilingo_app/features/level/services/level_calculator.dart';
 
-/// Icon mapping for tier identifiers
-String _getTierIcon(String iconIdentifier) {
+/// Icon mapping for tier identifiers - returns IconData for Material icons
+IconData _getTierIcon(String iconIdentifier) {
   switch (iconIdentifier) {
     case 'seedling':
-      return '🌱';
+      return Icons.eco_outlined;
     case 'sprout':
-      return '🌿';
+      return Icons.grass;
     case 'tree':
-      return '🌳';
+      return Icons.park;
     case 'forest':
-      return '🌲';
+      return Icons.forest;
     case 'star':
-      return '⭐';
+      return Icons.star;
     case 'crown':
-      return '👑';
+      return Icons.workspace_premium;
     default:
-      return '📚';
+      return Icons.school;
   }
 }
 
@@ -65,9 +65,10 @@ class LevelBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            Icon(
               _getTierIcon(tier.iconIdentifier),
-              style: const TextStyle(fontSize: 16),
+              size: 16,
+              color: Colors.white,
             ),
             const SizedBox(width: 4),
             Text(
@@ -135,9 +136,10 @@ class LevelProgressCard extends StatelessWidget {
                             color: _getTierColor(status.currentTier).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
+                          child: Icon(
                             _getTierIcon(status.currentTier.iconIdentifier),
-                            style: const TextStyle(fontSize: 24),
+                            size: 24,
+                            color: _getTierColor(status.currentTier),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -288,9 +290,10 @@ class LevelDetailsSheet extends StatelessWidget {
               color: _getTierColor(status.currentTier).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Text(
+            child: Icon(
               _getTierIcon(status.currentTier.iconIdentifier),
-              style: const TextStyle(fontSize: 48),
+              size: 48,
+              color: _getTierColor(status.currentTier),
             ),
           ),
           const SizedBox(height: 16),
@@ -379,7 +382,7 @@ class LevelDetailsSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(_getTierIcon(tier.iconIdentifier), style: const TextStyle(fontSize: 20)),
+          Icon(_getTierIcon(tier.iconIdentifier), size: 20, color: _getTierColor(tier)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

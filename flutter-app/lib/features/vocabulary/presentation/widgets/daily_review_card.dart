@@ -112,7 +112,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     : Text(
                         _dueCount > 0
                             ? '$_dueCount words waiting'
-                            : 'All caught up! 🎉',
+                            : 'All caught up!',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 14,
