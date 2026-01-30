@@ -129,11 +129,11 @@
 - [x] **2.4.7** Highlight lỗi phát âm cụ thể ✅ (30/01/2026)
 
 #### 2.5 Voice Chat Integration
-- [ ] **2.5.1** Add voice input button vào ChatPage
-- [ ] **2.5.2** Record và transcribe user speech
-- [ ] **2.5.3** Send text to AI chat
-- [ ] **2.5.4** TTS response từ AI
-- [ ] **2.5.5** Toggle voice/text mode
+- [x] **2.5.1** Add voice input button vào ChatPage ✅ (30/01/2026)
+- [x] **2.5.2** Record và transcribe user speech ✅ (30/01/2026)
+- [x] **2.5.3** Send text to AI chat ✅ (30/01/2026)
+- [x] **2.5.4** TTS response từ AI ✅ (30/01/2026)
+- [x] **2.5.5** Toggle voice/text mode ✅ (30/01/2026)
 
 ---
 
