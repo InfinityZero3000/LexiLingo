@@ -22,6 +22,7 @@ import 'package:lexilingo_app/features/home/presentation/providers/home_provider
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +102,7 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<TtsSettingsProvider>()..init()),
         ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()..loadStreak()),
+        ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

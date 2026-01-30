@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 
 /// Progress Repository Interface
 /// Defines contract for progress tracking operations
@@ -35,4 +36,16 @@ abstract class ProgressRepository {
 
   /// Use a streak freeze to protect current streak
   Future<Either<Failure, Map<String, dynamic>>> useStreakFreeze();
+
+  // ============================================================================
+  // Daily Challenges Operations
+  // ============================================================================
+
+  /// Get today's daily challenges
+  Future<Either<Failure, DailyChallengesResponse>> getDailyChallenges();
+
+  /// Claim reward for a completed challenge
+  Future<Either<Failure, Map<String, dynamic>>> claimChallengeReward(
+    String challengeId,
+  );
 }

@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/progress/data/models/progress_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/streak_model.dart';
+import 'package:lexilingo_app/features/progress/data/models/daily_challenge_model.dart';
 
 /// Progress Remote Data Source Interface
 abstract class ProgressRemoteDataSource {
@@ -16,6 +17,10 @@ abstract class ProgressRemoteDataSource {
   Future<StreakModel> getMyStreak();
   Future<StreakUpdateResultModel> updateStreak();
   Future<Map<String, dynamic>> useStreakFreeze();
+  
+  // Daily Challenges methods
+  Future<DailyChallengesResponseModel> getDailyChallenges();
+  Future<Map<String, dynamic>> claimChallengeReward(String challengeId);
 }
 
 /// Progress Remote Data Source Implementation
@@ -101,6 +106,33 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
   Future<Map<String, dynamic>> useStreakFreeze() async {
     try {
       final response = await apiClient.post('/progress/streak/freeze', body: {});
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ============================================================================
+  // Daily Challenges Methods
+  // ============================================================================
+
+  @override
+  Future<DailyChallengesResponseModel> getDailyChallenges() async {
+    try {
+      final response = await apiClient.get('/challenges/daily');
+      return DailyChallengesResponseModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> claimChallengeReward(String challengeId) async {
+    try {
+      final response = await apiClient.post(
+        '/challenges/daily/$challengeId/claim',
+        body: {},
+      );
       return response;
     } catch (e) {
       rethrow;

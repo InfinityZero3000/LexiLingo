@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_libra
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -57,6 +58,11 @@ class _HomePageNewState extends State<HomePageNew> {
                     _buildStreakCard(context, homeProvider),
                     const SizedBox(height: 24),
                     _buildDailyGoalCard(context, homeProvider),
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DailyChallengesCard(),
+                    ),
                     const SizedBox(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
