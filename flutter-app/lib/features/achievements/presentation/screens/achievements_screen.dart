@@ -217,7 +217,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            childAspectRatio: 0.85,
+            childAspectRatio: 0.75,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),
