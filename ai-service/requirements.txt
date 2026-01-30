@@ -53,6 +53,12 @@ langgraph>=0.0.66
 langchain-core>=0.1.0
 langchain-community>=0.0.20
 
+# LLaMA.cpp for GGUF model inference (Vietnamese explanation)
+llama-cpp-python>=0.2.50
+
+# Audio Processing (for HuBERT resampling)
+scipy>=1.11.0
+
 # HTTP Downloads
 requests>=2.31.0
 
