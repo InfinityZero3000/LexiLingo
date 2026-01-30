@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
+import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Disabled - old schema
 import 'service_locator.dart';
@@ -28,6 +29,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
     () => BackendAuthHeaderProvider(tokenStorage: sl<TokenStorage>()),
   );
 
+  // Main API Client for Backend Service (Auth, Courses, Gamification)
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(
       networkInfo: sl<NetworkInfo>(),
@@ -35,6 +37,16 @@ Future<void> registerCore({required bool skipDatabase}) async {
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
     ),
   );
+  
+  // AI API Client for AI Service (Chat, STT, TTS, AI Analysis)
+  sl.registerLazySingleton<AiApiClient>(
+    () => AiApiClient(
+      networkInfo: sl<NetworkInfo>(),
+      interceptors: [LoggingInterceptor()],
+      authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
+    ),
+  );
+  
   sl.registerLazySingleton<HealthCheckService>(
     () => HealthCheckService(apiClient: sl<ApiClient>()),
   );
@@ -46,4 +58,13 @@ Future<void> registerCore({required bool skipDatabase}) async {
     // Commented out - CourseImportService uses old schema
     // sl.registerLazySingleton<CourseImportService>(() => CourseImportService(sl()));
   }
+}
+
+/// AI API Client - connects to AI Service for chat, STT, TTS
+class AiApiClient extends ApiClient {
+  AiApiClient({
+    super.networkInfo,
+    super.interceptors,
+    super.authHeaderProvider,
+  }) : super(baseUrl: AppConstants.aiServiceUrl);
 }

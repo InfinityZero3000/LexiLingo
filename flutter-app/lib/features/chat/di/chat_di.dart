@@ -1,5 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/database/database_helper.dart' as chat_db;
@@ -37,8 +38,9 @@ void registerChatModule({required bool skipDatabase}) {
     () => ChatRemoteDataSource(apiKey: geminiApiKey),
   );
 
+  // Use AiApiClient for chat - connects to AI Service on port 8001
   sl.registerLazySingleton<ChatApiDataSource>(
-    () => ChatApiDataSource(apiClient: sl<ApiClient>()),
+    () => ChatApiDataSource(apiClient: sl<AiApiClient>()),
   );
 
   // Only register ChatFirestoreDataSource if FirestoreService is available
