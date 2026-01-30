@@ -290,14 +290,17 @@ async def get_user_sessions(user_id: str):
 @app.post("/api/v1/stt/transcribe")
 async def transcribe_audio(
     audio: UploadFile = File(...),
-    language: Optional[str] = None,
+    language: Optional[str] = "en",
 ):
-    """Transcribe audio to text using Whisper or Web Speech API fallback."""
+    """
+    Transcribe audio to text.
+    
+    For web clients, recommend using Web Speech API directly for real-time STT.
+    This endpoint is for file-based transcription.
+    """
+    import tempfile
+    
     try:
-        # Try to use faster-whisper
-        from faster_whisper import WhisperModel
-        import tempfile
-        
         # Save uploaded file
         with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{audio.filename}") as tmp:
             content = await audio.read()
@@ -305,6 +308,10 @@ async def transcribe_audio(
             tmp_path = tmp.name
         
         try:
+            # Try faster-whisper first
+            from faster_whisper import WhisperModel
+            
+            # Use base model for speed, can change to large-v3 for accuracy
             model = WhisperModel("base", device="cpu", compute_type="int8")
             segments, info = model.transcribe(tmp_path, language=language)
             
@@ -314,25 +321,89 @@ async def transcribe_audio(
                 "success": True,
                 "text": text.strip(),
                 "language": info.language,
+                "model": "whisper-base",
+            }
+            
+        except ImportError:
+            logger.warning("faster-whisper not available")
+            # Return guidance to use Web Speech API
+            return {
+                "success": True,
+                "text": "",
+                "fallback": True,
+                "message": "Server STT unavailable. Use Web Speech API on client for real-time transcription.",
+                "web_speech_api": {
+                    "supported": True,
+                    "code_example": """
+// JavaScript Web Speech API
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = 'en-US';
+recognition.continuous = true;
+recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript;
+    console.log(transcript);
+};
+recognition.start();
+""",
+                }
             }
         finally:
-            os.unlink(tmp_path)
-            
-    except ImportError:
-        # Fallback: recommend Web Speech API for browser-based STT
-        return {
-            "success": True,
-            "text": "",
-            "fallback": True,
-            "message": "Server STT unavailable. Use Web Speech API on client.",
-            "web_speech_api": {
-                "supported": True,
-                "instruction": "Use browser's SpeechRecognition API",
-            }
-        }
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
+                
     except Exception as e:
         logger.error(f"STT error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+            }
+        )
+
+
+# Endpoint for checking STT/TTS capabilities
+@app.get("/api/v1/voice/capabilities")
+async def get_voice_capabilities():
+    """Check available voice capabilities on this server."""
+    
+    stt_available = False
+    tts_available = False
+    
+    try:
+        from faster_whisper import WhisperModel
+        stt_available = True
+    except ImportError:
+        pass
+    
+    try:
+        from gtts import gTTS
+        tts_available = True
+    except ImportError:
+        pass
+    
+    return {
+        "success": True,
+        "capabilities": {
+            "stt": {
+                "available": stt_available,
+                "engine": "whisper" if stt_available else "web_speech_api",
+                "languages": ["en", "vi", "fr", "de", "es", "ja", "ko", "zh"] if stt_available else ["browser_default"],
+            },
+            "tts": {
+                "available": tts_available,
+                "engine": "gtts" if tts_available else "web_speech_api",
+                "languages": ["en", "vi", "fr", "de", "es", "ja", "ko", "zh"],
+                "format": "audio/mpeg",
+            },
+            "web_speech_api": {
+                "recommended_for_realtime": True,
+                "note": "Use browser's Web Speech API for real-time voice input/output",
+            }
+        }
+    }
 
 
 # ============================================================
@@ -341,32 +412,27 @@ async def transcribe_audio(
 
 @app.post("/api/v1/tts/synthesize")
 async def synthesize_speech(text: str = Body(..., embed=True)):
-    """Synthesize speech from text using Piper or Web Speech API fallback."""
+    """Synthesize speech from text using gTTS (Google Text-to-Speech)."""
     try:
-        from piper import PiperVoice
+        from gtts import gTTS
         import io
         
-        # Model paths
-        model_path = os.getenv(
-            "TTS_MODEL_PATH",
-            "./models/piper/en_US-lessac-medium.onnx"
-        )
-        config_path = os.getenv(
-            "TTS_CONFIG_PATH", 
-            "./models/piper/en_US-lessac-medium.onnx.json"
-        )
+        # Generate speech using Google TTS
+        tts = gTTS(text=text, lang='en', slow=False)
         
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"TTS model not found: {model_path}")
+        # Save to BytesIO
+        audio_io = io.BytesIO()
+        tts.write_to_fp(audio_io)
+        audio_io.seek(0)
         
-        voice = PiperVoice.load(model_path, config_path=config_path)
-        
-        wav_io = io.BytesIO()
-        voice.synthesize(text, wav_io)
+        logger.info(f"TTS generated for: {text[:50]}...")
         
         return Response(
-            content=wav_io.getvalue(),
-            media_type="audio/wav",
+            content=audio_io.getvalue(),
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"attachment; filename=speech.mp3"
+            }
         )
         
     except ImportError:
@@ -383,17 +449,15 @@ async def synthesize_speech(text: str = Body(..., embed=True)):
                 }
             }
         )
-    except FileNotFoundError as e:
+    except Exception as e:
+        logger.error(f"TTS error: {e}")
         return JSONResponse(
-            status_code=404,
+            status_code=500,
             content={
                 "success": False,
                 "error": str(e),
             }
         )
-    except Exception as e:
-        logger.error(f"TTS error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================
