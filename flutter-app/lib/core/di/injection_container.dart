@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/chat/di/chat_di.dart';
 import 'package:lexilingo_app/features/course/di/course_di.dart';
 import 'package:lexilingo_app/features/home/di/home_di.dart';
 import 'package:lexilingo_app/features/learning/di/learning_di.dart';
+import 'package:lexilingo_app/features/level/di/level_di.dart';
 import 'package:lexilingo_app/features/notifications/di/notification_di.dart';
 import 'package:lexilingo_app/features/progress/di/progress_di.dart';
 import 'package:lexilingo_app/features/user/di/user_di.dart';
@@ -30,6 +31,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerHomeModule();
   registerAchievementModule();  // Achievement/Badge system
   registerNotificationModule(); // Notification system
+  registerLevelModule();        // Level/XP system
   initVoiceDependencies(sl);
 }
 

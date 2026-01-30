@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.da
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
@@ -112,6 +113,7 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges()),
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<LevelProvider>()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

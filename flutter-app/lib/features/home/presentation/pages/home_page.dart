@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_rev
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
+import 'package:lexilingo_app/features/level/level.dart';
 
 /// Helper function to get icon from streak identifier
 IconData _getStreakIconData(String identifier) {
@@ -43,7 +44,11 @@ class _HomePageNewState extends State<HomePageNew> {
     // Load home data after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeProvider = context.read<HomeProvider>();
-      homeProvider.loadHomeData();
+      homeProvider.loadHomeData().then((_) {
+        // Sync XP to LevelProvider after home data loads
+        final levelProvider = context.read<LevelProvider>();
+        levelProvider.updateLevel(homeProvider.totalXP);
+      });
     });
   }
 
@@ -73,6 +78,11 @@ class _HomePageNewState extends State<HomePageNew> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(context, homeProvider, userProvider),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: LevelProgressCard(),
+                    ),
                     const SizedBox(height: 16),
                     _buildStreakCard(context, homeProvider),
                     const SizedBox(height: 24),
