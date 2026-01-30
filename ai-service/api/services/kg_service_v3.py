@@ -57,34 +57,251 @@ class KnowledgeGraphServiceV3:
                 continue
 
     def _seed_default_graph(self) -> None:
-        # Minimal starter concepts for grammar tutoring
+        """
+        Seed comprehensive curriculum concepts for English learning.
+        
+        Structure:
+        - Grammar concepts (A1 → C2)
+        - Vocabulary domains
+        - Pronunciation patterns
+        - Common error patterns for Vietnamese learners
+        """
         nodes: Dict[str, Dict[str, str]] = {
+            # ============================================
+            # GRAMMAR - Level A1 (Beginner)
+            # ============================================
             "concept:grammar.subject_verb_agreement": {
                 "title": "Subject-verb agreement",
                 "keywords": "subject verb agreement I you we they base verb goes go",
+                "level": "A1",
             },
             "concept:grammar.third_person_s": {
                 "title": "Third-person -s",
                 "keywords": "third person he she it adds s",
+                "level": "A1",
             },
             "concept:grammar.present_simple": {
-                "title": "Present simple",
-                "keywords": "present simple routines habits every day",
+                "title": "Present Simple",
+                "keywords": "present simple routines habits every day always usually",
+                "level": "A1",
+            },
+            "concept:grammar.articles_a_an": {
+                "title": "Articles a/an",
+                "keywords": "article a an indefinite countable singular noun",
+                "level": "A1",
+            },
+            "concept:grammar.to_be": {
+                "title": "Verb to be",
+                "keywords": "am is are was were be being been",
+                "level": "A1",
+            },
+            "concept:grammar.plural_nouns": {
+                "title": "Plural nouns",
+                "keywords": "plural s es ies irregular plurals",
+                "level": "A1",
+            },
+            
+            # ============================================
+            # GRAMMAR - Level A2 (Elementary)
+            # ============================================
+            "concept:grammar.past_simple": {
+                "title": "Past Simple",
+                "keywords": "past simple ed yesterday last ago regular irregular",
+                "level": "A2",
             },
             "concept:grammar.past_time_markers": {
                 "title": "Past time markers",
-                "keywords": "yesterday last ago past time markers",
+                "keywords": "yesterday last ago past time markers week month",
+                "level": "A2",
+            },
+            "concept:grammar.future_will": {
+                "title": "Future with will",
+                "keywords": "will future prediction promise tomorrow next",
+                "level": "A2",
+            },
+            "concept:grammar.going_to": {
+                "title": "Going to for plans",
+                "keywords": "going to plan intention future arranged",
+                "level": "A2",
+            },
+            "concept:grammar.comparatives": {
+                "title": "Comparatives",
+                "keywords": "comparative er more than bigger better worse",
+                "level": "A2",
+            },
+            "concept:grammar.superlatives": {
+                "title": "Superlatives",
+                "keywords": "superlative est most the biggest best worst",
+                "level": "A2",
+            },
+            
+            # ============================================
+            # GRAMMAR - Level B1 (Intermediate)
+            # ============================================
+            "concept:grammar.present_perfect": {
+                "title": "Present Perfect",
+                "keywords": "present perfect have has ed experience ever never since for",
+                "level": "B1",
+            },
+            "concept:grammar.present_continuous": {
+                "title": "Present Continuous",
+                "keywords": "present continuous progressive ing now currently at the moment",
+                "level": "B1",
+            },
+            "concept:grammar.conditionals_first": {
+                "title": "First Conditional",
+                "keywords": "if will first conditional real possible future",
+                "level": "B1",
+            },
+            "concept:grammar.modal_can_could": {
+                "title": "Modal: can/could",
+                "keywords": "can could ability permission possibility request",
+                "level": "B1",
+            },
+            "concept:grammar.modal_must_should": {
+                "title": "Modal: must/should",
+                "keywords": "must should obligation advice necessity recommendation",
+                "level": "B1",
+            },
+            "concept:grammar.passive_voice": {
+                "title": "Passive Voice",
+                "keywords": "passive voice be done was made is being by agent",
+                "level": "B1",
+            },
+            
+            # ============================================
+            # GRAMMAR - Level B2 (Upper-Intermediate)
+            # ============================================
+            "concept:grammar.past_perfect": {
+                "title": "Past Perfect",
+                "keywords": "past perfect had done before after earlier",
+                "level": "B2",
+            },
+            "concept:grammar.conditionals_second": {
+                "title": "Second Conditional",
+                "keywords": "if would second conditional unreal hypothetical imagine",
+                "level": "B2",
+            },
+            "concept:grammar.conditionals_third": {
+                "title": "Third Conditional",
+                "keywords": "if would have third conditional past unreal regret",
+                "level": "B2",
+            },
+            "concept:grammar.relative_clauses": {
+                "title": "Relative Clauses",
+                "keywords": "relative clause who which that whose whom defining non-defining",
+                "level": "B2",
+            },
+            "concept:grammar.reported_speech": {
+                "title": "Reported Speech",
+                "keywords": "reported speech indirect said told asked that would",
+                "level": "B2",
+            },
+            
+            # ============================================
+            # GRAMMAR - Level C1 (Advanced)
+            # ============================================
+            "concept:grammar.inversion": {
+                "title": "Inversion",
+                "keywords": "inversion never rarely seldom hardly scarcely not only",
+                "level": "C1",
+            },
+            "concept:grammar.cleft_sentences": {
+                "title": "Cleft Sentences",
+                "keywords": "cleft it is what who emphasis focus",
+                "level": "C1",
+            },
+            "concept:grammar.mixed_conditionals": {
+                "title": "Mixed Conditionals",
+                "keywords": "mixed conditional past present result cause",
+                "level": "C1",
+            },
+            
+            # ============================================
+            # VOCABULARY DOMAINS
+            # ============================================
+            "concept:vocab.daily_life": {
+                "title": "Daily Life Vocabulary",
+                "keywords": "daily routine morning evening food home family",
+                "level": "A1",
+            },
+            "concept:vocab.work_business": {
+                "title": "Work & Business",
+                "keywords": "work office meeting business job career professional",
+                "level": "B1",
+            },
+            "concept:vocab.academic": {
+                "title": "Academic Vocabulary",
+                "keywords": "academic research study analyze evaluate evidence",
+                "level": "B2",
+            },
+            
+            # ============================================
+            # COMMON ERRORS (Vietnamese Learners)
+            # ============================================
+            "concept:error.article_omission": {
+                "title": "Article Omission",
+                "keywords": "missing article the a an Vietnamese learner",
+                "level": "A1",
+            },
+            "concept:error.tense_confusion": {
+                "title": "Tense Confusion",
+                "keywords": "wrong tense past present future confused",
+                "level": "A2",
+            },
+            "concept:error.subject_pronoun_drop": {
+                "title": "Subject Pronoun Drop",
+                "keywords": "missing subject pronoun I he she it",
+                "level": "A1",
             },
         }
 
         # Edge format: from -> [(to, relation)]
         edges: Dict[str, List[Tuple[str, str]]] = {
+            # A1 → A2 prerequisites
+            "concept:grammar.present_simple": [
+                ("concept:grammar.past_simple", "prerequisite_of"),
+                ("concept:grammar.present_continuous", "prerequisite_of"),
+            ],
+            "concept:grammar.to_be": [
+                ("concept:grammar.present_continuous", "prerequisite_of"),
+                ("concept:grammar.passive_voice", "prerequisite_of"),
+            ],
             "concept:grammar.subject_verb_agreement": [
                 ("concept:grammar.third_person_s", "related_to"),
                 ("concept:grammar.present_simple", "related_to"),
             ],
-            "concept:grammar.present_simple": [
-                ("concept:grammar.past_time_markers", "prerequisite_of"),
+            
+            # A2 → B1 prerequisites
+            "concept:grammar.past_simple": [
+                ("concept:grammar.present_perfect", "prerequisite_of"),
+                ("concept:grammar.past_perfect", "prerequisite_of"),
+            ],
+            "concept:grammar.future_will": [
+                ("concept:grammar.conditionals_first", "prerequisite_of"),
+            ],
+            
+            # B1 → B2 prerequisites
+            "concept:grammar.conditionals_first": [
+                ("concept:grammar.conditionals_second", "prerequisite_of"),
+            ],
+            "concept:grammar.conditionals_second": [
+                ("concept:grammar.conditionals_third", "prerequisite_of"),
+                ("concept:grammar.mixed_conditionals", "prerequisite_of"),
+            ],
+            "concept:grammar.present_perfect": [
+                ("concept:grammar.past_perfect", "prerequisite_of"),
+            ],
+            
+            # Related concepts
+            "concept:grammar.comparatives": [
+                ("concept:grammar.superlatives", "related_to"),
+            ],
+            "concept:grammar.articles_a_an": [
+                ("concept:error.article_omission", "related_to"),
+            ],
+            "concept:grammar.past_time_markers": [
+                ("concept:error.tense_confusion", "related_to"),
             ],
         }
 
@@ -184,3 +401,149 @@ class KnowledgeGraphServiceV3:
                 continue
 
         return None
+
+    async def get_user_mastery(self, user_id: str) -> Dict[str, float]:
+        """
+        Get mastery scores for all concepts a user has interacted with.
+        
+        Returns:
+            Dict mapping concept_id -> mastery_score (0.0 to 1.0)
+        """
+        mastery: Dict[str, float] = {}
+        
+        if not user_id:
+            return mastery
+        
+        try:
+            result = self._conn.execute(
+                "MATCH (u:User)-[m:Mastery]->(c:Concept) "
+                "WHERE u.id = $uid RETURN c.id, m.score",
+                {"uid": user_id},
+            )
+            while result.has_next():
+                row = result.get_next()
+                mastery[row[0]] = row[1]
+        except Exception:
+            pass
+        
+        return mastery
+
+    async def get_recommended_concepts(
+        self, 
+        user_id: str, 
+        current_level: str = "B1",
+        limit: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Get recommended concepts for a user based on:
+        1. Low mastery concepts at current level
+        2. Prerequisites of weak concepts
+        3. Concepts they haven't seen yet
+        
+        Returns:
+            List of recommended concept dicts with id, title, reason
+        """
+        from typing import Any
+        
+        recommendations: List[Dict[str, Any]] = []
+        level_order = ["A1", "A2", "B1", "B2", "C1", "C2"]
+        
+        try:
+            # Get user's current mastery
+            user_mastery = await self.get_user_mastery(user_id)
+            
+            # Find weak concepts (mastery < 0.6) at current level
+            all_concepts = self.get_concepts()
+            
+            for concept_id, meta in all_concepts.items():
+                if len(recommendations) >= limit:
+                    break
+                    
+                # Check if this is a concept at appropriate level
+                # (Keywords don't have level stored yet, so check all)
+                mastery_score = user_mastery.get(concept_id, 0.5)
+                
+                if mastery_score < 0.6:
+                    recommendations.append({
+                        "id": concept_id,
+                        "title": meta.get("title", ""),
+                        "mastery": mastery_score,
+                        "reason": "Low mastery - needs practice",
+                    })
+            
+            # If not enough recommendations, add unseen concepts
+            if len(recommendations) < limit:
+                for concept_id, meta in all_concepts.items():
+                    if len(recommendations) >= limit:
+                        break
+                    if concept_id not in user_mastery:
+                        recommendations.append({
+                            "id": concept_id,
+                            "title": meta.get("title", ""),
+                            "mastery": 0.5,
+                            "reason": "New concept to explore",
+                        })
+                        
+        except Exception:
+            pass
+        
+        return recommendations[:limit]
+
+    async def get_prerequisites(self, concept_id: str) -> List[str]:
+        """
+        Get prerequisites for a concept (concepts that should be mastered first).
+        
+        Returns:
+            List of prerequisite concept IDs
+        """
+        prerequisites: List[str] = []
+        
+        try:
+            result = self._conn.execute(
+                "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
+                "WHERE b.id = $cid AND e.relation = 'prerequisite_of' "
+                "RETURN a.id",
+                {"cid": concept_id},
+            )
+            while result.has_next():
+                row = result.get_next()
+                prerequisites.append(row[0])
+        except Exception:
+            pass
+        
+        return prerequisites
+
+    async def get_next_concepts(self, concept_id: str) -> List[str]:
+        """
+        Get concepts that this concept is a prerequisite for.
+        
+        Returns:
+            List of concept IDs that build on this concept
+        """
+        next_concepts: List[str] = []
+        
+        try:
+            result = self._conn.execute(
+                "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
+                "WHERE a.id = $cid AND e.relation = 'prerequisite_of' "
+                "RETURN b.id",
+                {"cid": concept_id},
+            )
+            while result.has_next():
+                row = result.get_next()
+                next_concepts.append(row[0])
+        except Exception:
+            pass
+        
+        return next_concepts
+
+    def get_concept_count(self) -> int:
+        """Get total number of concepts in the graph."""
+        try:
+            result = self._conn.execute("MATCH (c:Concept) RETURN count(c)")
+            if result.has_next():
+                return result.get_next()[0]
+        except Exception:
+            pass
+        return 0
+

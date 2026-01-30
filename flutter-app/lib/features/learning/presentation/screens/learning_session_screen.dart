@@ -4,6 +4,8 @@ import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
 import '../widgets/lesson_content_widget.dart';
+import '../../../voice/presentation/widgets/tts_speed_selector.dart';
+import '../../../progress/presentation/providers/streak_provider.dart';
 
 /// Learning Session Screen
 /// Handles the lesson learning flow with interactive exercises
@@ -53,6 +55,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             },
           ),
           actions: [
+            // TTS Speed Control Button
+            const TtsSpeedButton(),
             Consumer<LearningProvider>(
               builder: (context, provider, child) {
                 if (provider.currentLesson == null) return const SizedBox.shrink();
@@ -215,6 +219,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final score = provider.score;
     final total = provider.totalExercises;
     final percentage = (score / total * 100).toInt();
+    
+    // Update streak when lesson is completed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StreakProvider>().updateStreak();
+    });
     
     return Padding(
       padding: const EdgeInsets.all(24.0),

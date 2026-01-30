@@ -349,7 +349,7 @@ async def submit_review(
     messages = {
         5: "Perfect! 🎉",
         4: "Great job! 👍",
-        3: "Good effort! 💪",
+        3: "Good effort!",
         2: "Keep practicing!",
         1: "Don't give up!",
         0: "Review the word again"

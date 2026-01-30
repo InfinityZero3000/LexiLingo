@@ -18,7 +18,7 @@ from api.models.schemas import (
 )
 from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
-from api.services.orchestrator import get_orchestrator
+from api.services.graph_cag import get_graph_cag, GraphCAGPipeline
 from api.services.v3_pipeline import get_v3_pipeline
 
 router = APIRouter()
@@ -38,31 +38,59 @@ class AnalyzeRequest(BaseModel):
 
 
 # ============================================================
-# ORCHESTRATOR ENDPOINTS (NEW)
+# GRAPHCAG ENDPOINTS (LangGraph-based)
 # ============================================================
+
+@router.post(
+    "/graph-cag/analyze",
+    summary="Analyze input with GraphCAG Pipeline",
+    description="""
+    LangGraph-based AI analysis with Knowledge Graph integration.
+    
+    **Architecture:**
+    - LangGraph StateGraph orchestration
+    - KuzuDB Knowledge Graph for concept expansion
+    - Conditional routing based on confidence
+    - Streaming support
+    
+    **Pipeline Nodes:**
+    INPUT → KG_EXPAND → DIAGNOSE → RETRIEVE → GENERATE → TTS
+    
+    **Performance:**
+    - Target latency: <350ms
+    - KG concept expansion: <5ms
+    """
+)
+async def analyze_with_graph_cag(request: AnalyzeRequest):
+    """
+    Main endpoint for GraphCAG-powered text analysis.
+    """
+    try:
+        pipeline = await get_graph_cag()
+        return await pipeline.analyze(
+            user_input=request.text,
+            session_id=request.session_id,
+            user_id=request.user_id,
+            input_type=request.input_type,
+            learner_profile=request.learner_profile,
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"GraphCAG analysis failed: {str(e)}"
+        )
+
 
 @router.post(
     "/analyze",
     response_model=TutorResponseV3,
     summary="Analyze input with V3 Knowledge-Centric Pipeline",
-    description="""
-    Comprehensive AI analysis using V3 pipeline.
-    
-    **Features:**
-    - Fast path via response cache (low latency)
-    - Diagnose -> Hybrid Retrieval (Vector + KG) -> Grounded response
-    - Background jobs for KG write-back + learner profile updates
-    - Structured JSON output for UI integration
-    
-    **Performance:**
-    - Target latency: <350ms (fast path)
-    - Cache hit rate: >40%
-    - Success rate: >99%
-    """
+    description="Legacy V3 pipeline - use /graph-cag/analyze for new integrations."
 )
-async def analyze_with_orchestrator(request: AnalyzeRequest):
+async def analyze_with_v3(request: AnalyzeRequest):
     """
-    Main endpoint for AI-powered text analysis.
+    Legacy V3 pipeline endpoint.
     """
     try:
         pipeline = await get_v3_pipeline()
@@ -81,42 +109,29 @@ async def analyze_with_orchestrator(request: AnalyzeRequest):
 
 
 @router.get(
-    "/orchestrator/stats",
-    summary="Get Orchestrator statistics",
-    description="Get performance metrics and resource usage statistics"
+    "/graph-cag/health",
+    summary="Health check for GraphCAG",
+    description="Check if GraphCAG pipeline is healthy and ready"
 )
-async def get_orchestrator_stats():
-    """Get performance and resource statistics."""
+async def graph_cag_health():
+    """Health check endpoint for GraphCAG."""
     try:
-        orchestrator = await get_orchestrator()
-        stats = await orchestrator.get_stats()
+        pipeline = await get_graph_cag()
         
-        return stats
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get stats: {str(e)}"
-        )
-
-
-@router.get(
-    "/orchestrator/health",
-    summary="Health check for Orchestrator",
-    description="Check if Orchestrator is healthy and ready"
-)
-async def orchestrator_health():
-    """Health check endpoint."""
-    try:
-        orchestrator = await get_orchestrator()
-        health = await orchestrator.health_check()
-        
-        return health
+        return {
+            "status": "healthy",
+            "pipeline": "GraphCAG",
+            "nodes": [
+                "input_node", "kg_expand_node", "diagnose_node",
+                "retrieve_node", "generate_node", "tts_node"
+            ],
+            "backend": "LangGraph StateGraph",
+        }
         
     except Exception as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Orchestrator unhealthy: {str(e)}"
+            detail=f"GraphCAG unhealthy: {str(e)}"
         )
 
 
@@ -146,13 +161,13 @@ async def get_monitoring_dashboard():
         
         telemetry = get_telemetry()
         perf_monitor = get_performance_monitor()
-        orchestrator = await get_orchestrator()
+        graph_cag = await get_graph_cag()
         
         return {
             "telemetry": telemetry.get_dashboard_data(),
             "system": perf_monitor.get_system_stats(),
             "health": perf_monitor.check_resource_health(),
-            "orchestrator": await orchestrator.get_stats(),
+            "graph_cag": {"status": "active", "backend": "LangGraph"},
             "performance_checks": telemetry.check_performance_targets(),
             "process": perf_monitor.get_process_stats()
         }

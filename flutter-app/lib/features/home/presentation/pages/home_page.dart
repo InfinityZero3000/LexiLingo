@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
+
+/// Helper function to get icon from streak identifier
+IconData _getStreakIconData(String identifier) {
+  switch (identifier) {
+    case 'trophy':
+      return Icons.emoji_events;
+    case 'fire':
+      return Icons.local_fire_department;
+    case 'bolt':
+      return Icons.bolt;
+    case 'star':
+      return Icons.star;
+    case 'sparkles':
+      return Icons.auto_awesome;
+    default:
+      return Icons.local_fire_department;
+  }
+}
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -31,25 +53,15 @@ class _HomePageNewState extends State<HomePageNew> {
       body: SafeArea(
         child: Consumer2<HomeProvider, UserProvider>(
           builder: (context, homeProvider, userProvider, child) {
-            if (homeProvider.isLoading && homeProvider.featuredCourses.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+            if (homeProvider.isLoading &&
+                homeProvider.featuredCourses.isEmpty) {
+              return _buildSkeletonLoading();
             }
 
             if (homeProvider.errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(homeProvider.errorMessage!),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => homeProvider.loadHomeData(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              return ErrorDisplayWidget.fromMessage(
+                message: homeProvider.errorMessage!,
+                onRetry: () => homeProvider.loadHomeData(),
               );
             }
 
@@ -65,6 +77,11 @@ class _HomePageNewState extends State<HomePageNew> {
                     _buildStreakCard(context, homeProvider),
                     const SizedBox(height: 24),
                     _buildDailyGoalCard(context, homeProvider),
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DailyChallengesCard(),
+                    ),
                     const SizedBox(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -94,7 +111,11 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, HomeProvider homeProvider, UserProvider userProvider) {
+  Widget _buildHeader(
+    BuildContext context,
+    HomeProvider homeProvider,
+    UserProvider userProvider,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -117,21 +138,21 @@ class _HomePageNewState extends State<HomePageNew> {
                 Text(
                   'Welcome back, ${homeProvider.userName}!',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.textGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   '${homeProvider.totalXP} XP earned',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGrey,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
                 ),
                 Text(
                   'Ready to learn?',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -145,97 +166,228 @@ class _HomePageNewState extends State<HomePageNew> {
               border: Border.all(color: Colors.grey.withOpacity(0.2)),
             ),
             child: const Icon(Icons.notifications_outlined),
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget _buildStreakCard(BuildContext context, HomeProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFfef9c3), Color(0xFFdcfce7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.green.shade100),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DAILY MOMENTUM',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green.shade800,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
+    return Consumer<StreakProvider>(
+      builder: (context, streakProvider, child) {
+        final streak = streakProvider.streak;
+        final currentStreak = streak?.currentStreak ?? provider.streakDays;
+        final isActiveToday = streak?.isActiveToday ?? false;
+        final streakAtRisk = streak?.streakAtRisk ?? false;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: GestureDetector(
+            onTap: () {
+              if (streak != null) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => StreakDetailsSheet(streak: streak),
+                );
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: streakAtRisk
+                      ? [const Color(0xFFFEF3C7), const Color(0xFFFED7AA)]
+                      : [const Color(0xFFfef9c3), const Color(0xFFdcfce7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: streakAtRisk
+                      ? Colors.orange.shade200
+                      : Colors.green.shade100,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'DAILY MOMENTUM',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: streakAtRisk
+                                            ? Colors.orange.shade800
+                                            : Colors.green.shade800,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                      ),
+                                ),
+                                if (streakAtRisk) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '⚠️ AT RISK',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.orange.shade800,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$currentStreak Day Streak',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    color: AppColors.textDark,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1,
+                                  ),
+                            ),
+                            if (isActiveToday) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green.shade600,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Done for today!',
+                                    style: TextStyle(
+                                      color: Colors.green.shade700,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: currentStreak > 0
+                                  ? const Color(0xFFFACC15)
+                                  : Colors.grey.shade400,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              streak != null
+                                  ? _getStreakIconData(streak.streakIcon)
+                                  : Icons.local_fire_department,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
+                          if (streak != null && streak.longestStreak > 0) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.emoji_events,
+                                  size: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${streak.longestStreak}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${provider.streakDays} Day Streak',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: AppColors.textDark,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(
+                        7,
+                        (index) => _buildDayItem(
+                          ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
+                          index < provider.weekProgress.length &&
+                              provider.weekProgress[index],
+                          isCurrent: index == 3,
+                          isFuture: index > 3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Freeze info
+                  if (streak != null && streak.freezeCount > 0) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.ac_unit, size: 14, color: Colors.cyan),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${streak.freezeCount} streak freeze${streak.freezeCount > 1 ? 's' : ''} available',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFACC15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  7,
-                  (index) => _buildDayItem(
-                    ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
-                    index < provider.weekProgress.length && provider.weekProgress[index],
-                    isCurrent: index == 3,
-                    isFuture: index > 3,
-                  ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildDailyGoalCard(BuildContext context, HomeProvider provider) {
     final percentage = provider.dailyProgressPercentage;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -247,7 +399,7 @@ class _HomePageNewState extends State<HomePageNew> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
         border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
@@ -264,17 +416,17 @@ class _HomePageNewState extends State<HomePageNew> {
                   Text(
                     'Daily XP Goal',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
               Text(
                 '${provider.dailyXP}/${provider.dailyGoalXP} XP',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -289,9 +441,9 @@ class _HomePageNewState extends State<HomePageNew> {
           const SizedBox(height: 8),
           Text(
             '${(percentage * 100).toInt()}% complete',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textGrey,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
           ),
         ],
       ),
@@ -326,7 +478,7 @@ class _HomePageNewState extends State<HomePageNew> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
         border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
@@ -344,8 +496,8 @@ class _HomePageNewState extends State<HomePageNew> {
                     Text(
                       course.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -353,8 +505,8 @@ class _HomePageNewState extends State<HomePageNew> {
                     Text(
                       '${course.totalLessons} lessons • ${course.level}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                          ),
+                        color: AppColors.textGrey,
+                      ),
                     ),
                   ],
                 ),
@@ -419,7 +571,11 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildCourseCard(BuildContext context, CourseEntity course, HomeProvider provider) {
+  Widget _buildCourseCard(
+    BuildContext context,
+    CourseEntity course,
+    HomeProvider provider,
+  ) {
     return Container(
       width: 260,
       margin: const EdgeInsets.only(right: 16),
@@ -431,7 +587,7 @@ class _HomePageNewState extends State<HomePageNew> {
             color: Colors.black.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
         border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
@@ -441,7 +597,9 @@ class _HomePageNewState extends State<HomePageNew> {
           Container(
             height: 140,
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               color: Colors.grey.shade200,
               image: course.thumbnailUrl != null
                   ? DecorationImage(
@@ -460,7 +618,10 @@ class _HomePageNewState extends State<HomePageNew> {
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
@@ -490,9 +651,8 @@ class _HomePageNewState extends State<HomePageNew> {
                     children: [
                       Text(
                         course.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -506,7 +666,11 @@ class _HomePageNewState extends State<HomePageNew> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.people, size: 14, color: Colors.grey),
+                          const Icon(
+                            Icons.people,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${course.totalLessons}', // Show lessons count as placeholder
@@ -583,15 +747,15 @@ class _HomePageNewState extends State<HomePageNew> {
                     Text(
                       'AI Tutor',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       'Practice speaking',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                            fontSize: 11,
-                          ),
+                        color: AppColors.textGrey,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -632,15 +796,15 @@ class _HomePageNewState extends State<HomePageNew> {
                     Text(
                       'Vocabulary',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       'Review flashcards',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                            fontSize: 11,
-                          ),
+                        color: AppColors.textGrey,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -658,15 +822,19 @@ class _HomePageNewState extends State<HomePageNew> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
       ),
     );
   }
 
-  Widget _buildDayItem(String day, bool completed,
-      {bool isCurrent = false, bool isFuture = false}) {
+  Widget _buildDayItem(
+    String day,
+    bool completed, {
+    bool isCurrent = false,
+    bool isFuture = false,
+  }) {
     return Column(
       children: [
         Text(
@@ -700,10 +868,75 @@ class _HomePageNewState extends State<HomePageNew> {
         else
           Icon(
             Icons.circle,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withValues(alpha: 0.4),
             size: 20,
           ),
       ],
+    );
+  }
+
+  /// Build skeleton loading state for home page
+  Widget _buildSkeletonLoading() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header skeleton
+          ShimmerContainer(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  const SkeletonCircle(size: 48),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SkeletonText(width: 150, height: 14),
+                      SizedBox(height: 6),
+                      SkeletonText(width: 100, height: 12),
+                      SizedBox(height: 6),
+                      SkeletonText(width: 120, height: 18),
+                    ],
+                  ),
+                  const Spacer(),
+                  const SkeletonCircle(size: 40),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Streak card skeleton
+          const SkeletonProgressStats(),
+          const SizedBox(height: 24),
+          // Daily goal skeleton
+          ShimmerContainer(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Section title skeleton
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: ShimmerContainer(
+              child: SkeletonText(width: 150, height: 20),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Courses skeleton
+          const SkeletonHomeSection(),
+          const SizedBox(height: 24),
+          // Another section
+          const SkeletonHomeSection(),
+        ],
+      ),
     );
   }
 }

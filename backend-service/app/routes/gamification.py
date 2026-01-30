@@ -89,6 +89,46 @@ async def get_my_achievements(
     )
 
 
+@router.post("/achievements/check", response_model=ApiResponse[List[dict]])
+async def check_all_achievements(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Force check all achievements for current user.
+    
+    Evaluates all achievement conditions and unlocks any that are met.
+    Useful for catching up on achievements that might have been missed.
+    
+    Returns list of newly unlocked achievements.
+    """
+    from app.services import AchievementCheckerService
+    
+    checker = AchievementCheckerService(db)
+    unlocked = await checker.check_all(current_user.id)
+    
+    response_data = [
+        {
+            "id": str(a.id),
+            "name": a.name,
+            "description": a.description,
+            "badge_icon": a.badge_icon,
+            "badge_color": a.badge_color,
+            "category": a.category,
+            "rarity": a.rarity,
+            "xp_reward": a.xp_reward,
+            "gems_reward": a.gems_reward,
+        }
+        for a in unlocked
+    ]
+    
+    return ApiResponse(
+        success=True,
+        message=f"Checked all achievements. Unlocked {len(response_data)} new badges!",
+        data=response_data
+    )
+
+
 # ============================================================================
 # Wallet Endpoints
 # ============================================================================

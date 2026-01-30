@@ -1,4 +1,6 @@
 import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/features/achievements/di/achievement_di.dart';
 import 'package:lexilingo_app/features/auth/di/auth_di.dart';
 import 'package:lexilingo_app/features/chat/di/chat_di.dart';
 import 'package:lexilingo_app/features/course/di/course_di.dart';
@@ -8,6 +10,7 @@ import 'package:lexilingo_app/features/progress/di/progress_di.dart';
 import 'package:lexilingo_app/features/user/di/user_di.dart';
 import 'package:lexilingo_app/features/vocabulary/di/vocab_di.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart';
+import 'package:lexilingo_app/features/voice/di/voice_di.dart';
 
 export 'service_locator.dart';
 
@@ -24,5 +27,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerProgressModule();
   registerUserModule(skipDatabase: skipDatabase);
   registerHomeModule();
+  registerAchievementModule();  // Achievement/Badge system
+  initVoiceDependencies(sl);
 }
 

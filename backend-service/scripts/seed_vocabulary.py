@@ -186,7 +186,7 @@ async def seed_vocabulary():
         
         await session.commit()
         print("\n🎉 Vocabulary seeding complete!")
-        print(f"📚 Total vocabulary items: {len(SAMPLE_VOCABULARY)}")
+        print(f"Total vocabulary items: {len(SAMPLE_VOCABULARY)}")
     
     await engine.dispose()
 

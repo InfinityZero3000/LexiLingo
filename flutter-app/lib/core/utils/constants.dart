@@ -9,8 +9,9 @@ class AppConstants {
   static const String localeKey = 'locale';
   static const String firstTimeUserKey = 'first_time_user';
   
-  // API Config (Mock)
-  static const String apiBaseUrl = 'https://api.lexilingo.com/v1';
+  // API Config
+  static const String apiBaseUrl = 'http://localhost:8000/api/v1';
+  static const String aiServiceUrl = 'http://localhost:8001/api/v1';
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 }

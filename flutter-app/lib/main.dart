@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:lexilingo_app/firebase_options.dart'; // TODO: Generate with flutterfire configure
+import 'package:firebase_core/firebase_core.dart';
+import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Already disabled
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
+import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
@@ -19,6 +21,10 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_p
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +43,14 @@ void main() async {
   }
   
   // Initialize Firebase
-  // TODO: Generate firebase_options.dart with: flutterfire configure
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Warning: Firebase initialization failed: $e');
+  }
   
   // Initialize Dependency Injection (skip database on web)
   await di.initializeDependencies(skipDatabase: kIsWeb);
@@ -95,6 +105,11 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<ProgressProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<TtsSettingsProvider>()..init()),
+        ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()..loadStreak()),
+        ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges()),
+        ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import async_engine, AsyncSessionLocal
+from app.core.database import engine, AsyncSessionLocal
 from app.core.security import get_password_hash
 from app.models import *
 
@@ -92,7 +92,7 @@ async def seed_courses(db: AsyncSession):
             estimated_duration=1200,  # 20 hours
             content_version=1,
             is_published=True,
-            thumbnail_url="https://example.com/beginner-course.jpg"
+            thumbnail_url="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400"
         )
         db.add(course1)
         await db.flush()
@@ -151,7 +151,7 @@ async def seed_courses(db: AsyncSession):
             "description": "Learn different ways to greet people",
             "order_index": 1,
             "lesson_type": "vocabulary",
-            "pass_score": 70,
+            "pass_threshold": 70,
             "estimated_minutes": 10,
             "xp_reward": 10,
             "content": {
@@ -171,7 +171,7 @@ async def seed_courses(db: AsyncSession):
             "description": "Practice self-introduction",
             "order_index": 2,
             "lesson_type": "grammar",
-            "pass_score": 70,
+            "pass_threshold": 70,
             "estimated_minutes": 15,
             "xp_reward": 15,
             "content": {
@@ -191,7 +191,7 @@ async def seed_courses(db: AsyncSession):
             "description": "Learn everyday objects",
             "order_index": 1,
             "lesson_type": "vocabulary",
-            "pass_score": 80,
+            "pass_threshold": 80,
             "estimated_minutes": 12,
             "xp_reward": 12,
             "content": {
@@ -229,16 +229,17 @@ async def seed_courses(db: AsyncSession):
 
 
 async def seed_achievements(db: AsyncSession):
-    """Create sample achievements."""
+    """Create comprehensive achievements/badges."""
     print("🔧 Creating achievements...")
     
     achievements_data = [
+        # ========== LESSON ACHIEVEMENTS ==========
         {
             "name": "First Steps",
             "description": "Complete your first lesson",
             "condition_type": "lesson_complete",
             "condition_value": 1,
-            "badge_icon": "🎯",
+            "badge_icon": "target",
             "badge_color": "#4CAF50",
             "category": "lessons",
             "xp_reward": 10,
@@ -246,15 +247,152 @@ async def seed_achievements(db: AsyncSession):
             "rarity": "common",
         },
         {
+            "name": "Dedicated Learner",
+            "description": "Complete 10 lessons",
+            "condition_type": "lesson_complete",
+            "condition_value": 10,
+            "badge_icon": "📖",
+            "badge_color": "#8BC34A",
+            "category": "lessons",
+            "xp_reward": 30,
+            "gems_reward": 15,
+            "rarity": "common",
+        },
+        {
+            "name": "Knowledge Seeker",
+            "description": "Complete 50 lessons",
+            "condition_type": "lesson_complete",
+            "condition_value": 50,
+            "badge_icon": "🎓",
+            "badge_color": "#009688",
+            "category": "lessons",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Scholar",
+            "description": "Complete 100 lessons",
+            "condition_type": "lesson_complete",
+            "condition_value": 100,
+            "badge_icon": "trophy",
+            "badge_color": "#673AB7",
+            "category": "lessons",
+            "xp_reward": 200,
+            "gems_reward": 100,
+            "rarity": "epic",
+        },
+        {
+            "name": "Professor",
+            "description": "Complete 500 lessons",
+            "condition_type": "lesson_complete",
+            "condition_value": 500,
+            "badge_icon": "crown",
+            "badge_color": "#FFD700",
+            "category": "lessons",
+            "xp_reward": 500,
+            "gems_reward": 250,
+            "rarity": "legendary",
+        },
+        
+        # ========== STREAK ACHIEVEMENTS ==========
+        {
+            "name": "Getting Started",
+            "description": "Maintain a 3-day streak",
+            "condition_type": "reach_streak",
+            "condition_value": 3,
+            "badge_icon": "fire",
+            "badge_color": "#FF9800",
+            "category": "streak",
+            "xp_reward": 15,
+            "gems_reward": 10,
+            "rarity": "common",
+        },
+        {
             "name": "Week Warrior",
             "description": "Maintain a 7-day streak",
             "condition_type": "reach_streak",
             "condition_value": 7,
-            "badge_icon": "🔥",
+            "badge_icon": "fire",
             "badge_color": "#FF5722",
             "category": "streak",
             "xp_reward": 50,
-            "gems_reward": 20,
+            "gems_reward": 25,
+            "rarity": "rare",
+        },
+        {
+            "name": "Two Weeks Strong",
+            "description": "Maintain a 14-day streak",
+            "condition_type": "reach_streak",
+            "condition_value": 14,
+            "badge_icon": "bolt",
+            "badge_color": "#E91E63",
+            "category": "streak",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Month Master",
+            "description": "Maintain a 30-day streak",
+            "condition_type": "reach_streak",
+            "condition_value": 30,
+            "badge_icon": "⚡",
+            "badge_color": "#9C27B0",
+            "category": "streak",
+            "xp_reward": 200,
+            "gems_reward": 100,
+            "rarity": "epic",
+        },
+        {
+            "name": "Quarterly Champion",
+            "description": "Maintain a 90-day streak",
+            "condition_type": "reach_streak",
+            "condition_value": 90,
+            "badge_icon": "🌟",
+            "badge_color": "#3F51B5",
+            "category": "streak",
+            "xp_reward": 500,
+            "gems_reward": 250,
+            "rarity": "legendary",
+        },
+        {
+            "name": "Year Legend",
+            "description": "Maintain a 365-day streak",
+            "condition_type": "reach_streak",
+            "condition_value": 365,
+            "badge_icon": "🏅",
+            "badge_color": "#FFD700",
+            "category": "streak",
+            "xp_reward": 1000,
+            "gems_reward": 500,
+            "rarity": "legendary",
+            "is_hidden": True,
+        },
+        
+        # ========== VOCABULARY ACHIEVEMENTS ==========
+        {
+            "name": "Word Collector",
+            "description": "Master 10 vocabulary words",
+            "condition_type": "vocab_mastered",
+            "condition_value": 10,
+            "badge_icon": "📝",
+            "badge_color": "#00BCD4",
+            "category": "vocabulary",
+            "xp_reward": 20,
+            "gems_reward": 10,
+            "rarity": "common",
+        },
+        {
+            "name": "Vocab Builder",
+            "description": "Master 50 vocabulary words",
+            "condition_type": "vocab_mastered",
+            "condition_value": 50,
+            "badge_icon": "📕",
+            "badge_color": "#03A9F4",
+            "category": "vocabulary",
+            "xp_reward": 75,
+            "gems_reward": 35,
             "rarity": "rare",
         },
         {
@@ -262,15 +400,168 @@ async def seed_achievements(db: AsyncSession):
             "description": "Master 100 vocabulary words",
             "condition_type": "vocab_mastered",
             "condition_value": 100,
-            "badge_icon": "📚",
+            "badge_icon": "book",
             "badge_color": "#2196F3",
             "category": "vocabulary",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "epic",
+        },
+        {
+            "name": "Walking Dictionary",
+            "description": "Master 500 vocabulary words",
+            "condition_type": "vocab_mastered",
+            "condition_value": 500,
+            "badge_icon": "📖",
+            "badge_color": "#1976D2",
+            "category": "vocabulary",
+            "xp_reward": 400,
+            "gems_reward": 200,
+            "rarity": "legendary",
+        },
+        
+        # ========== XP ACHIEVEMENTS ==========
+        {
+            "name": "XP Hunter",
+            "description": "Earn 100 XP total",
+            "condition_type": "xp_earned",
+            "condition_value": 100,
+            "badge_icon": "star",
+            "badge_color": "#FFC107",
+            "category": "xp",
+            "xp_reward": 10,
+            "gems_reward": 5,
+            "rarity": "common",
+        },
+        {
+            "name": "XP Warrior",
+            "description": "Earn 500 XP total",
+            "condition_type": "xp_earned",
+            "condition_value": 500,
+            "badge_icon": "🌟",
+            "badge_color": "#FF9800",
+            "category": "xp",
+            "xp_reward": 50,
+            "gems_reward": 25,
+            "rarity": "rare",
+        },
+        {
+            "name": "XP Champion",
+            "description": "Earn 1000 XP total",
+            "condition_type": "xp_earned",
+            "condition_value": 1000,
+            "badge_icon": "💫",
+            "badge_color": "#FF5722",
+            "category": "xp",
             "xp_reward": 100,
             "gems_reward": 50,
             "rarity": "epic",
         },
+        {
+            "name": "XP Legend",
+            "description": "Earn 5000 XP total",
+            "condition_type": "xp_earned",
+            "condition_value": 5000,
+            "badge_icon": "🔮",
+            "badge_color": "#9C27B0",
+            "category": "xp",
+            "xp_reward": 250,
+            "gems_reward": 125,
+            "rarity": "legendary",
+        },
+        
+        # ========== PERFECT SCORE ACHIEVEMENTS ==========
+        {
+            "name": "Perfectionist",
+            "description": "Get a perfect score on a lesson",
+            "condition_type": "perfect_score",
+            "condition_value": 1,
+            "badge_icon": "💯",
+            "badge_color": "#4CAF50",
+            "category": "quiz",
+            "xp_reward": 25,
+            "gems_reward": 15,
+            "rarity": "common",
+        },
+        {
+            "name": "Perfect 10",
+            "description": "Get 10 perfect scores",
+            "condition_type": "perfect_score",
+            "condition_value": 10,
+            "badge_icon": "target",
+            "badge_color": "#8BC34A",
+            "category": "quiz",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Flawless",
+            "description": "Get 50 perfect scores",
+            "condition_type": "perfect_score",
+            "condition_value": 50,
+            "badge_icon": "✨",
+            "badge_color": "#CDDC39",
+            "category": "quiz",
+            "xp_reward": 250,
+            "gems_reward": 125,
+            "rarity": "epic",
+        },
+        
+        # ========== COURSE ACHIEVEMENTS ==========
+        {
+            "name": "Graduate",
+            "description": "Complete your first course",
+            "condition_type": "course_complete",
+            "condition_value": 1,
+            "badge_icon": "🎓",
+            "badge_color": "#3F51B5",
+            "category": "course",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Multi-Course Master",
+            "description": "Complete 5 courses",
+            "condition_type": "course_complete",
+            "condition_value": 5,
+            "badge_icon": "🎖️",
+            "badge_color": "#673AB7",
+            "category": "course",
+            "xp_reward": 300,
+            "gems_reward": 150,
+            "rarity": "epic",
+        },
+        
+        # ========== VOICE/PRONUNCIATION ACHIEVEMENTS ==========
+        {
+            "name": "Voice Starter",
+            "description": "Complete 10 pronunciation practices",
+            "condition_type": "voice_practice",
+            "condition_value": 10,
+            "badge_icon": "🎤",
+            "badge_color": "#E91E63",
+            "category": "voice",
+            "xp_reward": 30,
+            "gems_reward": 15,
+            "rarity": "common",
+        },
+        {
+            "name": "Voice Pro",
+            "description": "Complete 100 pronunciation practices",
+            "condition_type": "voice_practice",
+            "condition_value": 100,
+            "badge_icon": "🎙️",
+            "badge_color": "#9C27B0",
+            "category": "voice",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "epic",
+        },
     ]
     
+    created_count = 0
     for achievement_data in achievements_data:
         result = await db.execute(
             select(Achievement).where(Achievement.name == achievement_data["name"])
@@ -280,12 +571,13 @@ async def seed_achievements(db: AsyncSession):
         if not achievement:
             achievement = Achievement(**achievement_data)
             db.add(achievement)
+            created_count += 1
             print(f"  ✅ Created achievement: {achievement.name}")
         else:
             print(f"  ⏭️  Achievement already exists: {achievement.name}")
     
     await db.commit()
-    print(f"✅ Achievements created\n")
+    print(f"✅ Achievements created: {created_count} new, {len(achievements_data)} total\n")
 
 
 async def seed_shop_items(db: AsyncSession):
