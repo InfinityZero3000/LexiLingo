@@ -1,8 +1,8 @@
 """
 LexiLingo AI Service - Lite Version
 
-Simplified API for Chat, STT, TTS only.
-Avoids heavy ML dependencies for easier development.
+Simplified API for Chat, STT, TTS.
+Supports Qwen (local) or Gemini (cloud) for chat.
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Body
@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 
 # Environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+USE_QWEN = os.getenv("USE_QWEN", "true").lower() == "true"
+QWEN_MODEL = os.getenv("QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
+
+# Global Qwen engine (lazy loaded)
+qwen_engine = None
 
 # FastAPI App
 app = FastAPI(
@@ -69,6 +74,55 @@ messages = {}
 
 
 # ============================================================
+# Qwen Engine Helper
+# ============================================================
+
+async def get_qwen_response(message: str) -> Optional[str]:
+    """Get response from Qwen model."""
+    global qwen_engine
+    
+    if not USE_QWEN:
+        return None
+    
+    try:
+        # Lazy load Qwen engine
+        if qwen_engine is None:
+            logger.info(f"Loading Qwen model: {QWEN_MODEL}...")
+            from api.services.qwen_engine import QwenEngine
+            
+            qwen_engine = QwenEngine(
+                model_name=QWEN_MODEL,
+                device="cpu",  # Use CPU for macOS compatibility
+                load_in_8bit=False,
+            )
+            await qwen_engine.initialize()
+            logger.info("✅ Qwen model loaded successfully")
+        
+        # Build prompt for dialogue task
+        prompt = f"""You are LexiLingo, an AI English tutor helping ESL learners.
+Respond helpfully and encourage the user to practice English.
+
+User: {message}
+Assistant:"""
+        
+        # Generate response using Qwen
+        result = await qwen_engine.generate(
+            prompt=prompt,
+            max_new_tokens=256,
+            temperature=0.7,
+        )
+        
+        # Extract response text
+        if isinstance(result, dict):
+            return result.get("response") or result.get("text") or result.get("raw_output")
+        return str(result)
+        
+    except Exception as e:
+        logger.warning(f"Qwen error: {e}, falling back to Gemini")
+        return None
+
+
+# ============================================================
 # Health Endpoints
 # ============================================================
 
@@ -78,6 +132,9 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0-lite",
+        "qwen_enabled": USE_QWEN,
+        "qwen_model": QWEN_MODEL if USE_QWEN else None,
+        "qwen_loaded": qwen_engine is not None and qwen_engine.is_loaded if qwen_engine else False,
         "gemini_configured": bool(GEMINI_API_KEY),
     }
 
@@ -116,23 +173,64 @@ async def create_session(request: CreateSessionRequest):
 @app.post("/api/v1/chat/messages")
 async def send_message(request: SendMessageRequest):
     session_id = request.session_id
+    ai_response = None
+    model_used = None
     
-    # Initialize Gemini if available
-    if GEMINI_API_KEY:
+    # 1. Try Qwen first (local model)
+    if USE_QWEN:
+        ai_response = await get_qwen_response(request.message)
+        if ai_response:
+            model_used = "qwen"
+            logger.info("Using Qwen for response")
+    
+    # 2. Fallback to Gemini API
+    if ai_response is None and GEMINI_API_KEY:
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-pro')
+            import httpx
             
-            # Get AI response
-            response = model.generate_content(request.message)
-            ai_response = response.text
+            # Gemini API endpoint (use gemini-2.0-flash)
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": f"You are LexiLingo, an AI English tutor. Help the user learn English. User message: {request.message}"
+                    }]
+                }]
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(url, json=payload)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    # Extract text from Gemini response
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        content = candidates[0].get("content", {})
+                        parts = content.get("parts", [])
+                        if parts:
+                            ai_response = parts[0].get("text", "I couldn't generate a response.")
+                        else:
+                            ai_response = "I couldn't generate a response."
+                    else:
+                        ai_response = "I couldn't generate a response."
+                else:
+                    logger.error(f"Gemini API error: {response.status_code} - {response.text}")
+                    ai_response = f"API error: {response.status_code}"
+            
+            if ai_response:
+                model_used = "gemini"
+                logger.info("Using Gemini for response")
+                    
         except Exception as e:
             logger.error(f"Gemini error: {e}")
             ai_response = f"I apologize, but I'm having trouble processing your request. Error: {str(e)}"
-    else:
-        # Fallback response
-        ai_response = "Hello! I'm LexiLingo AI. The Gemini API is not configured yet, so I can't provide intelligent responses. Please set up GEMINI_API_KEY."
+    
+    # 3. Final fallback if no model available
+    if ai_response is None:
+        ai_response = "Hello! I'm LexiLingo AI. No AI model is available. Please configure Qwen or Gemini API."
+        model_used = "fallback"
     
     # Store messages
     if session_id not in messages:
@@ -164,6 +262,7 @@ async def send_message(request: SendMessageRequest):
         "data": {
             "message_id": message_id,
             "ai_response": ai_response,
+            "model_used": model_used,
             "processing_time_ms": 100,
         }
     }
@@ -193,7 +292,7 @@ async def transcribe_audio(
     audio: UploadFile = File(...),
     language: Optional[str] = None,
 ):
-    """Transcribe audio to text using Whisper."""
+    """Transcribe audio to text using Whisper or Web Speech API fallback."""
     try:
         # Try to use faster-whisper
         from faster_whisper import WhisperModel
@@ -220,13 +319,17 @@ async def transcribe_audio(
             os.unlink(tmp_path)
             
     except ImportError:
-        return JSONResponse(
-            status_code=501,
-            content={
-                "success": False,
-                "error": "STT not available. Install: pip install faster-whisper",
+        # Fallback: recommend Web Speech API for browser-based STT
+        return {
+            "success": True,
+            "text": "",
+            "fallback": True,
+            "message": "Server STT unavailable. Use Web Speech API on client.",
+            "web_speech_api": {
+                "supported": True,
+                "instruction": "Use browser's SpeechRecognition API",
             }
-        )
+        }
     except Exception as e:
         logger.error(f"STT error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -238,7 +341,7 @@ async def transcribe_audio(
 
 @app.post("/api/v1/tts/synthesize")
 async def synthesize_speech(text: str = Body(..., embed=True)):
-    """Synthesize speech from text using Piper."""
+    """Synthesize speech from text using Piper or Web Speech API fallback."""
     try:
         from piper import PiperVoice
         import io
@@ -267,11 +370,17 @@ async def synthesize_speech(text: str = Body(..., embed=True)):
         )
         
     except ImportError:
+        # Fallback: return JSON indicating to use Web Speech Synthesis
         return JSONResponse(
-            status_code=501,
             content={
-                "success": False,
-                "error": "TTS not available. Install: pip install piper-tts",
+                "success": True,
+                "text": text,
+                "fallback": True,
+                "message": "Server TTS unavailable. Use Web Speech API on client.",
+                "web_speech_api": {
+                    "supported": True,
+                    "instruction": "Use browser's SpeechSynthesis API with text",
+                }
             }
         )
     except FileNotFoundError as e:
