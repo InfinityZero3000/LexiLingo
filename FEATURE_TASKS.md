@@ -117,7 +117,7 @@
 - [ ] **2.3.2** Cache audio files locally
 - [x] **2.3.3** Implement playback với `just_audio` ✅ (30/01/2026)
 - [ ] **2.3.4** Add speed controls (0.5x, 1x, 1.5x)
-- [ ] **2.3.5** Tích hợp vào Vocabulary cards (tap to pronounce)
+- [x] **2.3.5** Tích hợp vào Vocabulary cards (tap to pronounce) ✅ (30/01/2026)
 
 #### 2.4 Pronunciation Practice Screen
 - [x] **2.4.1** Tạo `VoicePracticeScreen` UI ✅ (30/01/2026)

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
+import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 
 /// Flashcard Widget with Flip Animation
 /// Clean Code: Single responsibility - render and animate flashcard
@@ -148,16 +149,28 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
           const SizedBox(height: 16),
 
-          // Pronunciation
-          if (vocabulary.pronunciation != null)
-            Text(
-              vocabulary.pronunciation!,
-              style: TextStyle(
-                fontSize: 18,
-                color: AppColors.textGrey,
-                fontStyle: FontStyle.italic,
+          // Pronunciation with Speak Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (vocabulary.pronunciation != null)
+                Text(
+                  vocabulary.pronunciation!,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.textGrey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              // TTS Speak Button
+              SpeakIconButton(
+                text: vocabulary.word,
+                size: 24,
+                color: AppColors.primary,
               ),
-            ),
+            ],
+          ),
 
           const SizedBox(height: 8),
 
@@ -297,6 +310,12 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                               height: 1.5,
                             ),
                           ),
+                        ),
+                        // Speak example sentence
+                        SpeakIconButton(
+                          text: example,
+                          size: 18,
+                          color: AppColors.textGrey,
                         ),
                       ],
                     ),
