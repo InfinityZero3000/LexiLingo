@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -114,21 +115,28 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
 
           // List
           Expanded(
-            child: words.isEmpty
-                ? _buildDemoList(context)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: words.length,
-                    itemBuilder: (context, index) {
-                      final word = words[index];
-                      return _buildWordCard(
-                        context,
-                        word.word,
-                        "/.../", // IPA missing in entity
-                        word.definition, 
-                      );
-                    },
-                  ),
+            child: vocabProvider.isLoading 
+                ? _buildSkeletonList()
+                : words.isEmpty
+                    ? EmptyStateWidget.vocabulary(
+                        onAdd: () => _showAddWordDialog(context, vocabProvider),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => vocabProvider.loadWords(),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: words.length,
+                          itemBuilder: (context, index) {
+                            final word = words[index];
+                            return _buildWordCard(
+                              context,
+                              word.word,
+                              "/.../", // IPA missing in entity
+                              word.definition, 
+                            );
+                          },
+                        ),
+                      ),
           ),
         ],
       ),
@@ -266,6 +274,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      itemBuilder: (context, index) => const SkeletonVocabCard(),
     );
   }
 }

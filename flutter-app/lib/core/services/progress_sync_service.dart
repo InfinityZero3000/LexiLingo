@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../../features/user/data/datasources/user_local_data_source.dart';
 import '../../features/user/data/datasources/user_firestore_data_source.dart';
 import '../../features/user/data/models/user_model.dart';
@@ -20,7 +19,8 @@ class ProgressSyncService {
     required this.firestoreService,
   });
 
-  String? get _currentUserId => firebase_auth.FirebaseAuth.instance.currentUser?.uid;
+  // Use firestoreService to get current user ID safely
+  String? get _currentUserId => firestoreService.currentUserId;
 
   /// Check if device is online and Firestore is accessible
   Future<bool> isOnline() async {

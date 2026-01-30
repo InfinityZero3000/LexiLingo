@@ -21,7 +21,7 @@ class TokenRefreshInterceptor implements ApiInterceptor {
     required this.getRefreshToken,
     required this.saveTokens,
     required this.onRefreshFailed,
-    this.refreshTokenEndpoint = '/auth/refresh-token',
+    this.refreshTokenEndpoint = '/auth/refresh',
     http.Client? client,
   }) : client = client ?? http.Client();
 
@@ -112,8 +112,10 @@ class TokenRefreshInterceptor implements ApiInterceptor {
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     
-    // Parse response envelope
-    final data = decoded['data'] as Map<String, dynamic>;
+    // Parse response - backend returns tokens directly, not wrapped in 'data'
+    final data = decoded.containsKey('data') 
+        ? decoded['data'] as Map<String, dynamic>
+        : decoded;
     
     return {
       'access_token': data['access_token'] as String,

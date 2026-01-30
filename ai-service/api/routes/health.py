@@ -49,13 +49,10 @@ async def health_check():
     
     return HealthCheck(
         status="healthy" if (mongodb_ok and redis_ok) else "degraded",
+        mongodb="connected" if mongodb_ok else "disconnected",
+        redis="connected" if redis_ok else "disconnected",
         version=settings.API_VERSION,
-        environment=settings.ENVIRONMENT,
-        services={
-            "mongodb": mongodb_ok,
-            "redis": redis_ok,
-            "ai_model": ai_model_ok
-        }
+        timestamp=datetime.utcnow()
     )
 
 

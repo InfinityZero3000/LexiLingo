@@ -1,313 +1,353 @@
 # LexiLingo
 
-> AI-Powered Language Learning Platform with Personalized Vocabulary Management
+**Intelligent Language Learning Platform with AI-Powered Assessment and Personalized Learning Paths**
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.24.0-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.8.1-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey?style=flat-square)
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)
-![Code Coverage](https://img.shields.io/badge/coverage-80%25-yellowgreen?style=flat-square)
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Development Workflow](#development-workflow)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
+[![Build](https://img.shields.io/badge/build-passing-success)](https://github.com/InfinityZero3000/LexiLingo)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey)](https://github.com/InfinityZero3000/LexiLingo)
+[![API](https://img.shields.io/badge/API-REST%20%7C%20WebSocket-informational)](https://github.com/InfinityZero3000/LexiLingo)
 
 ---
 
 ## Overview
 
-LexiLingo is a modern language learning application that combines artificial intelligence tutoring with personalized vocabulary management. Built with Flutter and following Clean Architecture principles, the app provides an intuitive and efficient learning experience across multiple platforms.
+LexiLingo is an enterprise-grade language learning platform that leverages artificial intelligence and machine learning to provide personalized, adaptive learning experiences. The system employs a microservices architecture with specialized services for assessment, recommendation, and real-time interaction.
 
-The application leverages Google's Gemini AI for intelligent conversation practice and implements a comprehensive vocabulary system that adapts to individual learning patterns.
-
-### Design Philosophy
-
-- **Clean Architecture**: Separation of concerns with clear dependency rules
-- **SOLID Principles**: Maintainable and scalable codebase
-- **Test-Driven Development**: High code coverage with unit and widget tests
-- **Enterprise-Grade**: Production-ready code following industry best practices
+**Key Capabilities:**
+- AI-driven language proficiency assessment (CEFR-aligned)
+- Deep learning models for fluency, vocabulary, and grammatical analysis
+- Adaptive learning paths with real-time progress tracking
+- Gamified learning experience with achievement systems
+- Multi-platform support (iOS, Android, Web)
 
 ---
 
-## Key Features
+## System Architecture
 
-### AI Chat Tutor
-Engage in natural conversations with an AI tutor powered by Google Gemini. Practice language skills through contextual dialogue and receive instant feedback.
+LexiLingo implements a **microservices architecture** with clear separation of concerns:
 
-### Vocabulary Management
-- Personal vocabulary library with search functionality
-- Word of the Day feature
-- Progress tracking and learning analytics
-- Categorized word collections
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Layer                             │
+│              (Flutter - iOS / Android / Web)                    │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      API Gateway Layer                          │
+│                   (Load Balancing / Routing)                    │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           ↓               ↓               ↓
+    ┌──────────┐    ┌──────────┐    ┌──────────┐
+    │ Backend  │    │    AI    │    │   DL     │
+    │ Service  │    │ Service  │    │  Model   │
+    └────┬─────┘    └────┬─────┘    └────┬─────┘
+         │               │               │
+         └───────────────┴───────────────┘
+                         │
+              ┌──────────┴──────────┐
+              ↓                     ↓
+        ┌──────────┐          ┌──────────┐
+        │PostgreSQL│          │  Redis   │
+        │          │          │  Cache   │
+        └──────────┘          └──────────┘
+```
 
-### Structured Learning
-- Multiple course levels (Beginner, Intermediate, Advanced)
-- Progress tracking across courses
-- Personalized learning paths
-- Achievement system
+### Service Components
 
-### User Experience
-- Google Sign-In authentication
-- Cross-platform synchronization
-- Offline mode support
-- Push notifications for learning reminders
-- Dark mode support
+**Backend Service (FastAPI)**
+- User authentication and authorization (JWT)
+- Course management and curriculum delivery
+- Progress tracking and analytics
+- Gamification engine (XP, achievements, leaderboards)
+
+**AI Service (FastAPI)**
+- Language assessment engine
+- Conversational AI integration (Google Gemini)
+- Speech-to-Text and Text-to-Speech processing
+- Real-time feedback generation
+
+**DL Model Service**
+- Fine-tuned Qwen 2.5 model for language analysis
+- Fluency scoring algorithms
+- Vocabulary complexity assessment
+- Grammatical error detection
+
+**Client Application (Flutter)**
+- Cross-platform native experience
+- Offline-first architecture
+- Real-time synchronization
+- Responsive UI/UX design
 
 ---
 
-## Architecture
+## Core Features
 
-The application follows **Clean Architecture** with three distinct layers:
+### Intelligent Assessment System
+- **CEFR-aligned Proficiency Testing**: Automated language level assessment (A1-C2)
+- **Multi-dimensional Analysis**: Fluency, vocabulary, grammar, and pronunciation scoring
+- **Adaptive Question Generation**: Dynamic difficulty adjustment based on performance
+- **Real-time Feedback**: Instant error detection and correction suggestions
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Presentation Layer                    │
-│              (UI, Widgets, State Management)            │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ↓
-┌─────────────────────────────────────────────────────────┐
-│                    Domain Layer                         │
-│        (Entities, Use Cases, Repository Interfaces)     │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ↓
-┌─────────────────────────────────────────────────────────┐
-│                     Data Layer                          │
-│    (Repository Implementations, Data Sources, Models)   │
-└─────────────────────────────────────────────────────────┘
-```
+### Personalized Learning Engine
+- **AI-driven Learning Paths**: Customized curriculum based on proficiency and goals
+- **Spaced Repetition System**: Optimized vocabulary retention algorithms
+- **Progress Analytics**: Comprehensive learning metrics and insights
+- **Adaptive Content Delivery**: Dynamic lesson difficulty and pacing
 
-### Layer Responsibilities
+### Gamification Framework
+- **Experience Points (XP)**: Progress-based reward system
+- **Achievement Badges**: Milestone recognition and motivation
+- **Streak Tracking**: Daily engagement monitoring
+- **Leaderboards**: Competitive learning environment
 
-**Presentation Layer**
-- UI components and screens
-- State management (Provider)
-- User interaction handling
+### Interactive Learning
+- **Conversational AI**: Practice with AI tutors powered by large language models
+- **Speech Recognition**: Real-time pronunciation assessment
+- **Interactive Exercises**: Multiple question types and formats
+- **Multimedia Content**: Audio, visual, and text-based learning materials
 
-**Domain Layer**
-- Business logic and rules
-- Entity definitions
-- Use case implementations
-- Repository contracts
-
-**Data Layer**
-- API integrations
-- Local database operations
-- Data transformation (Models)
-- Repository implementations
-
-### Dependency Injection
-
-Dependencies are managed using **GetIt** service locator, providing:
-- Loose coupling between layers
-- Easy testing and mocking
-- Centralized dependency management
-- Lifecycle management
+### Enterprise Capabilities
+- **Multi-tenant Architecture**: Scalable for institutions and organizations
+- **REST & WebSocket APIs**: Real-time data synchronization
+- **Offline Support**: Local caching and background sync
+- **Analytics Dashboard**: Detailed learning insights and reporting
 
 ---
 
 ## Technology Stack
 
-### Core Technologies
+### Backend Services
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| API Framework | FastAPI | High-performance async APIs |
+| Database | PostgreSQL 14+ | Relational data storage |
+| Cache Layer | Redis | Session management and caching |
+| Authentication | JWT | Secure token-based auth |
+| ORM | SQLAlchemy | Database abstraction |
+| Migration | Alembic | Schema version control |
 
+### AI & Machine Learning
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| LLM | Qwen 2.5 (Fine-tuned) | Language analysis and generation |
+| Framework | Unsloth | Efficient model training |
+| Inference | llama.cpp (GGUF) | Optimized model serving |
+| Conversational AI | Google Gemini API | Interactive tutoring |
+| Speech Processing | Whisper / TTS APIs | Voice interaction |
+
+### Frontend Application
 | Component | Technology | Version |
 |-----------|-----------|---------|
-| Framework | Flutter | 3.24.0 |
-| Language | Dart | 3.8.1 |
-| State Management | Provider | 6.1.5 |
-| Dependency Injection | GetIt | 8.0.3 |
-| Functional Programming | Dartz | 0.10.1 |
+| Framework | Flutter | 3.24+ |
+| Language | Dart | 3.8+ |
+| State Management | Provider | 6.1+ |
+| Dependency Injection | GetIt | 8.0+ |
+| Local Storage | SQLite | Latest |
+| HTTP Client | Dio | 5.0+ |
 
-### Backend & Services
-
-| Service | Technology | Purpose |
-|---------|-----------|---------|
-| AI Integration | Google Gemini API | Conversational AI |
-| Authentication | Google Sign-In | User authentication |
-| Local Database | SQLite | Offline data storage |
-| Notifications | Flutter Local Notifications | Push notifications |
-
-### Development Tools
-
-- **Git Flow**: Branching strategy
-- **Conventional Commits**: Commit message standard
-- **GitHub Actions**: CI/CD pipeline
-- **Flutter Analyze**: Static code analysis
-- **Flutter Test**: Unit and widget testing
+### Infrastructure & DevOps
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Containerization | Docker | Service deployment |
+| Orchestration | Docker Compose | Multi-service management |
+| CI/CD | GitHub Actions | Automated testing and deployment |
+| API Documentation | OpenAPI/Swagger | Interactive API docs |
 
 ---
 
-## Getting Started
+## Project Structure
+
+```
+LexiLingo/
+├── backend-service/          # Core backend API service
+│   ├── app/
+│   │   ├── core/            # Configuration and security
+│   │   ├── models/          # SQLAlchemy ORM models
+│   │   ├── routes/          # API endpoints
+│   │   ├── schemas/         # Pydantic schemas
+│   │   └── crud/            # Database operations
+│   ├── alembic/             # Database migrations
+│   └── tests/               # Backend test suite
+│
+├── ai-service/              # AI and ML service
+│   ├── api/                 # FastAPI application
+│   ├── models/              # ML model artifacts
+│   ├── config/              # Service configuration
+│   └── scripts/             # Utility scripts
+│
+├── flutter-app/             # Cross-platform client
+│   ├── lib/
+│   │   ├── core/           # Core utilities and DI
+│   │   ├── features/       # Feature modules
+│   │   │   ├── auth/       # Authentication
+│   │   │   ├── learning/   # Learning sessions
+│   │   │   ├── course/     # Course management
+│   │   │   └── user/       # User profile
+│   │   └── main.dart       # Application entry
+│   └── test/               # Flutter test suite
+│
+├── DL-Model-Support/        # Deep learning pipeline
+│   ├── datasets/           # Training datasets
+│   ├── scripts/            # Training scripts
+│   ├── export/             # Model export utilities
+│   └── docs/               # Model documentation
+│
+├── scripts/                # Development scripts
+│   ├── setup-all.sh       # Environment setup
+│   ├── start-all.sh       # Start all services
+│   └── stop-all.sh        # Stop all services
+│
+└── docs/                   # System documentation
+    ├── architecture.md     # Architecture overview
+    ├── api/               # API documentation
+    └── guides/            # Development guides
+```
+
+---
+
+## Quick Start
 
 ### Prerequisites
+- Python 3.11+
+- Flutter SDK 3.24+
+- PostgreSQL 14+
+- Docker & Docker Compose (optional)
+
+### Local Development
 
 ```bash
-Flutter SDK: 3.24.0 or higher
-Dart SDK: 3.8.1 or higher
-iOS: 13.0+
-Android: API 24+ (Android 7.0)
-```
-
-### Installation
-
-1. Clone the repository
-```bash
+# Clone repository
 git clone https://github.com/InfinityZero3000/LexiLingo.git
-cd LexiLingo/flutter-app
+cd LexiLingo
+
+# Setup all services
+bash scripts/setup-all.sh
+
+# Start all services
+bash scripts/start-all.sh
 ```
 
-2. Install dependencies
-```bash
-flutter pub get
-```
+### Service Endpoints
 
-3. Run the application
-```bash
-flutter run
-```
+| Service | URL | Documentation |
+|---------|-----|---------------|
+| Backend API | http://localhost:8000 | http://localhost:8000/docs |
+| AI Service | http://localhost:8001 | http://localhost:8001/docs |
+| Flutter Web | http://localhost:8080 | - |
 
-### Configuration
-
-Create a `.env` file for environment variables:
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
-### Build for Production
+### Docker Deployment
 
 ```bash
-# iOS
-flutter build ios --release
+# Build and start all services
+docker-compose up -d
 
-# Android APK
-flutter build apk --release
+# View logs
+docker-compose logs -f
 
-# Android App Bundle
-flutter build appbundle --release
+# Stop services
+docker-compose down
 ```
 
-### Branch Naming Convention
+---
 
-```bash
-feature/LEXI-123-add-vocabulary-search
-bugfix/LEXI-456-fix-login-crash
-hotfix/LEXI-789-critical-security-fix
-release/v1.0.0
+## API Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+- **Backend API**: http://localhost:8000/docs
+- **AI Service**: http://localhost:8001/docs
+
+### Key Endpoints
+
+**Authentication**
+```
+POST   /auth/register          Register new user
+POST   /auth/login            User login
+POST   /auth/refresh          Refresh access token
+GET    /auth/me               Get current user
 ```
 
-### Commit Message Format
-
-Following Conventional Commits:
-
-```bash
-feat(vocabulary): add word search functionality
-fix(auth): resolve token refresh issue
-docs(readme): update installation guide
-refactor(core): apply clean architecture
-test(chat): add unit tests for message service
+**Learning**
+```
+GET    /courses               List available courses
+POST   /learning/lessons/{id}/start     Start lesson
+POST   /learning/attempts/{id}/answer   Submit answer
+POST   /learning/attempts/{id}/complete Complete lesson
+GET    /learning/courses/{id}/roadmap   Get progress
 ```
 
-### Pull Request Process
+**Assessment**
+```
+POST   /ai/assess/fluency     Analyze fluency
+POST   /ai/assess/vocabulary  Assess vocabulary level
+POST   /ai/chat              Conversational interaction
+```
 
-1. Create feature branch from `develop`
-2. Implement changes following coding standards
-3. Write/update tests
-4. Ensure all tests pass
-5. Create Pull Request using template
-6. Address review comments
-7. Merge after approval
+---
+
+## Development
+
+### Architecture Principles
+
+The system follows industry best practices:
+
+- **Clean Architecture**: Clear separation of concerns
+- **Domain-Driven Design**: Business logic isolation
+- **SOLID Principles**: Maintainable and extensible code
+- **Repository Pattern**: Data access abstraction
+- **Dependency Injection**: Loose coupling
+
+### Code Quality
+
+- **Static Analysis**: Automated code quality checks
+- **Unit Testing**: Comprehensive test coverage
+- **Integration Testing**: End-to-end API testing
+- **Code Reviews**: Mandatory peer reviews
+- **CI/CD Pipeline**: Automated testing and deployment
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and coding standards.
 
 ---
 
 ## Documentation
 
-Comprehensive documentation is available:
-
-| Document | Description | Link |
-|----------|-------------|------|
-| Quick Start | 5-minute setup guide | [QUICKSTART.md](QUICKSTART.md) |
-| Technical Docs | Architecture & setup | [flutter-app/README.md](flutter-app/README.md) |
-| Contributing | Coding standards & guidelines | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Git Workflow | Complete workflow guide | [GIT_WORKFLOW.md](GIT_WORKFLOW.md) |
-| Git Reference | Command cheat sheet | [GIT_QUICK_REFERENCE.md](GIT_QUICK_REFERENCE.md) |
-| Git Examples | Real-world scenarios | [GIT_EXAMPLES.md](GIT_EXAMPLES.md) |
-| Requirements | Software specifications | [SRS.md](SRS.md) |
-
----
-
-## Contributing
-
-We welcome contributions from the community! Here's how to get started:
-
-### For New Contributors
-
-1. Read [QUICKSTART.md](QUICKSTART.md) for quick setup
-2. Review [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
-3. Check [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for workflow guidelines
-4. Look for issues labeled `good first issue`
-
-### Contribution Guidelines
-
-- Follow Clean Architecture principles
-- Write tests for new features
-- Update documentation as needed
-- Use Conventional Commits format
-- Ensure CI checks pass
-- Request review from maintainers
-
-## Support
-
-### Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/InfinityZero3000/LexiLingo/issues) for bugs and features
-- **Discussions**: [GitHub Discussions](https://github.com/InfinityZero3000/LexiLingo/discussions) for questions
-- **Documentation**: Check relevant docs in the table above
-
-### Reporting Bugs
-
-When reporting bugs, include:
-- Device and OS version
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots if applicable
-- Relevant logs
+| Document | Description |
+|----------|-------------|
+| [Architecture](architecture.md) | System architecture and design |
+| [API Reference](docs/api/) | Complete API documentation |
+| [Development Guide](QUICKSTART.md) | Setup and development workflow |
+| [Git Workflow](GIT_WORKFLOW.md) | Git branching and commit standards |
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## Acknowledgments
+## Contact & Support
 
-- Flutter team for the excellent framework
-- Google AI for Gemini API
-- Open source community for valuable packages
-- Contributors who help improve this project
+- **Issues**: [GitHub Issues](https://github.com/InfinityZero3000/LexiLingo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/InfinityZero3000/LexiLingo/discussions)
+- **Documentation**: [Project Wiki](https://github.com/InfinityZero3000/LexiLingo/wiki)
 
 ---
 
 <div align="center">
 
-**Built with Flutter**
+**LexiLingo** - Intelligent Language Learning Platform
 
-[Report Bug](https://github.com/InfinityZero3000/LexiLingo/issues) • [Request Feature](https://github.com/InfinityZero3000/LexiLingo/issues) • [Documentation](flutter-app/README.md)
+[Documentation](https://github.com/InfinityZero3000/LexiLingo/wiki) • [API Reference](http://localhost:8000/docs) • [Report Issue](https://github.com/InfinityZero3000/LexiLingo/issues)
 
 </div>

@@ -1,322 +1,143 @@
-# LexiLingo Backend Service
+# Backend Service
 
-FastAPI backend service for user management, courses, vocabulary, and progress tracking.
+> RESTful API for user management, courses, vocabulary, and progress tracking.
 
-## 🏗 Architecture
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
+
+---
+
+## Features
+
+### 🔐 Authentication
+- JWT-based authentication với access/refresh tokens
+- Firebase ID token verification (optional)
+- Password hashing với bcrypt
+- Token rotation & revocation
+
+### 👤 User Management
+- User registration & profile management
+- Learning preferences (native/target language, level)
+- User statistics & public profiles
+
+### 📚 Courses & Learning
+- Course catalog với multi-level structure (A1→C2)
+- Lessons với vocabulary & exercises
+- Enrollment management
+- Learning sessions tracking
+
+### 📈 Progress Tracking
+- XP & streak tracking
+- Lesson completion progress
+- Daily goals & study time
+
+### 🏆 Achievements & Notifications
+- Achievement system với categories
+- Push notification support via FCM
+- Device token registration
+
+### 📖 Vocabulary
+- Personal vocabulary library
+- Word collections & categories
+- Review status tracking
+
+---
+
+## API Endpoints
+
+```
+/api/v1
+├── /auth
+│   ├── POST /register     — User registration
+│   ├── POST /login        — Login with credentials
+│   └── POST /refresh      — Refresh access token
+│
+├── /users
+│   ├── GET /me            — Current user profile
+│   ├── GET /me/stats      — Learning statistics
+│   ├── PATCH /me/preferences — Update preferences
+│   └── GET /{id}/public   — Public profile
+│
+├── /courses
+│   ├── GET /              — List courses
+│   ├── GET /{id}          — Course details
+│   └── GET /{id}/lessons  — Course lessons
+│
+├── /progress
+│   └── POST /sessions     — Record learning session
+│
+├── /vocabulary
+│   ├── GET /              — User's vocabulary
+│   ├── POST /             — Add word
+│   └── PATCH /{id}        — Update word
+│
+├── /achievements
+│   ├── GET /              — All achievements
+│   └── GET /me            — User's achievements
+│
+├── /notifications
+│   ├── POST /register-device — Register FCM token
+│   ├── GET /              — List notifications
+│   └── PATCH /{id}/read   — Mark as read
+│
+└── /health                — Service health check
+```
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Framework | FastAPI 0.128+ |
+| Database | PostgreSQL 16+ |
+| ORM | SQLAlchemy 2.0 (Async) |
+| Auth | JWT + bcrypt |
+| Validation | Pydantic 2.0+ |
+
+---
+
+## Project Structure
 
 ```
 backend-service/
 ├── app/
-│   ├── core/              # Core configuration
-│   │   ├── config.py      # Settings
-│   │   ├── database.py    # PostgreSQL connection
-│   │   ├── security.py    # JWT & password hashing
-│   │   └── dependencies.py # FastAPI dependencies
+│   ├── core/              # Config, database, security
 │   ├── models/            # SQLAlchemy models
-│   │   ├── user.py
-│   │   ├── course.py
-│   │   ├── vocabulary.py
-│   │   └── progress.py
 │   ├── schemas/           # Pydantic schemas
-│   │   ├── user.py
-│   │   ├── auth.py
-│   │   ├── course.py
-│   │   └── common.py
 │   ├── routes/            # API endpoints
-│   │   ├── auth.py        # Authentication
-│   │   ├── users.py       # User management
-│   │   └── courses.py     # Course management
-│   └── main.py            # FastAPI application
+│   └── main.py           
 ├── alembic/               # Database migrations
 ├── tests/                 # Unit tests
-├── .env                   # Environment variables
-├── requirements.txt       # Python dependencies
-├── Dockerfile
-└── docker-compose.yml
+├── requirements.txt
+└── Dockerfile
 ```
 
-## 🚀 Quick Start
+---
 
-### 1. Local Development (Docker Compose)
+## Configuration
 
-```bash
-# Create .env file
-cp .env.example .env
+Required environment variables:
 
-# Edit .env with your settings (especially SECRET_KEY)
-
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f backend-app
-
-# Stop services
-docker-compose down
-```
-
-Services will be available at:
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **PostgreSQL**: localhost:5432
-
-## 🔑 Firebase Auth (optional)
-
-If the mobile app signs in with Firebase Auth, the backend can verify Firebase ID tokens and map them to local users.
-
-- Create a Firebase project and download a **Service Account JSON**.
-- Set env vars (choose one way to provide credentials):
-  - `FIREBASE_PROJECT_ID=<your-project-id>`
-  - `FIREBASE_CREDENTIALS_JSON=<paste JSON string>` **or** `FIREBASE_CREDENTIALS_FILE=/absolute/path/to/service_account.json`
-- For Docker Compose, add these vars to `.env` so `backend-app` picks them up.
-- Clients should send `Authorization: Bearer <firebase_id_token>`; the backend will create the user automatically on first request.
-
-### 2. Local Development (Without Docker)
-
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup PostgreSQL (install locally or use Docker)
-docker run -d \
-  --name lexilingo-postgres \
-  -e POSTGRES_USER=lexilingo \
-  -e POSTGRES_PASSWORD=lexilingo_pass \
-  -e POSTGRES_DB=lexilingo \
-  -p 5432:5432 \
-  postgres:16-alpine
-
-# Create .env file
-cp .env.example .env
-
-# Run database migrations
-alembic upgrade head
-
-# Start development server
-uvicorn app.main:app --reload --port 8000
-```
-
-## 📚 API Documentation
-
-### Interactive Docs
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### Key Endpoints
-
-#### Authentication
-```bash
-# Register
-POST /api/v1/auth/register
-{
-  "email": "user@example.com",
-  "username": "john_doe",
-  "password": "securePassword123"
-}
-
-# Login
-POST /api/v1/auth/login
-{
-  "email": "user@example.com",
-  "password": "securePassword123"
-}
-
-# Response
-{
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "user_id": "uuid",
-  "username": "john_doe",
-  "email": "user@example.com"
-}
-
-# Refresh token
-POST /api/v1/auth/refresh
-{
-  "refresh_token": "eyJ..."
-}
-```
-
-#### Users
-```bash
-# Get current user profile
-GET /api/v1/users/me
-Authorization: Bearer <token>
-
-# Update profile
-PUT /api/v1/users/me
-Authorization: Bearer <token>
-{
-  "display_name": "John Doe",
-  "level": "intermediate"
-}
-```
-
-#### Courses
-```bash
-# Get all courses
-GET /api/v1/courses?language=en&level=A2
-Authorization: Bearer <token>
-
-# Get course by ID
-GET /api/v1/courses/{course_id}
-Authorization: Bearer <token>
-
-# Get course lessons
-GET /api/v1/courses/{course_id}/lessons
-Authorization: Bearer <token>
-```
-
-## 🗄 Database Migrations
-
-Using Alembic for database version control:
-
-```bash
-# Create a new migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback one version
-alembic downgrade -1
-
-# View migration history
-alembic history
-
-# View current version
-alembic current
-```
-
-## 🔐 Security
-
-### JWT Tokens
-- Access token expires in 30 minutes
-- Refresh token expires in 7 days
-- Passwords hashed with bcrypt
-
-### Generate SECRET_KEY
-```bash
-openssl rand -hex 32
-```
-
-Add to `.env`:
-```
-SECRET_KEY=your-generated-secret-key-here
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app tests/
-
-# Run specific test file
-pytest tests/test_auth.py
-
-# Run with verbose output
-pytest -v
-```
-
-## 📦 Deployment
-
-### Docker (Production)
-
-```bash
-# Build image
-docker build -t lexilingo-backend-app:latest .
-
-# Run container
-docker run -d \
-  --name lexilingo-backend-app \
-  -p 8000:8000 \
-  --env-file .env \
-  lexilingo-backend-app:latest
-```
-
-### Railway / Render / Fly.io
-
-1. Connect GitHub repository
-2. Set environment variables:
-   - `DATABASE_URL` (PostgreSQL connection string)
-   - `SECRET_KEY`
-   - `ALLOWED_ORIGINS`
-3. Deploy!
-
-### Environment Variables
-
-Required:
-- `DATABASE_URL` - PostgreSQL connection string
-- `SECRET_KEY` - JWT secret key
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SECRET_KEY` | JWT secret key |
 
 Optional:
-- `DEBUG` - Debug mode (default: False)
-- `ALLOWED_ORIGINS` - CORS origins (default: localhost)
-- `LOG_LEVEL` - Logging level (default: INFO)
+- `AI_SERVICE_URL` — AI service endpoint
+- `ALLOWED_ORIGINS` — CORS origins
+- `FIREBASE_PROJECT_ID` — Firebase project for auth
 
-## 🔗 Integration with Flutter
+---
 
-### API Client Setup
+## Related Services
 
-```dart
-// lib/core/network/backend_api_client.dart
-class BackendApiClient extends Dio {
-  BackendApiClient() : super(BaseOptions(
-    baseUrl: 'http://localhost:8000/api/v1',
-    connectTimeout: Duration(seconds: 30),
-    receiveTimeout: Duration(seconds: 30),
-  )) {
-    interceptors.add(AuthInterceptor());
-    interceptors.add(LoggingInterceptor());
-  }
-}
-```
+- **AI Service** — AI chat & analytics at port 8001
+- **Flutter App** — Mobile/Web frontend
 
-### Example Usage
+---
 
-```dart
-// Login
-final response = await apiClient.post('/auth/login', data: {
-  'email': 'user@example.com',
-  'password': 'password123',
-});
+## License
 
-// Get courses
-final courses = await apiClient.get('/courses', 
-  options: Options(headers: {
-    'Authorization': 'Bearer $token',
-  })
-);
-```
-
-## 📊 Tech Stack
-
-- **Framework**: FastAPI 0.109+
-- **Database**: PostgreSQL 16+
-- **ORM**: SQLAlchemy 2.0+ (Async)
-- **Migrations**: Alembic
-- **Auth**: JWT (python-jose) + bcrypt
-- **Validation**: Pydantic 2.0+
-- **Testing**: pytest + pytest-asyncio
-
-## 🤝 Related Services
-
-- **Backend AI**: AI chat, pronunciation analysis (MongoDB)
-- **Flutter App**: Mobile/Web frontend
-
-## 📝 License
-
-MIT License - see LICENSE file
-
-## 🆘 Support
-
-- **Issues**: GitHub Issues
-- **Docs**: `/docs` endpoint
-- **Contact**: support@lexilingo.com
+MIT License

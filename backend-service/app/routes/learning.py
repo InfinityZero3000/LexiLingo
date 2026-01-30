@@ -32,7 +32,9 @@ from app.schemas.progress import (
     UnitProgressRoadmap,
     LessonProgressItem,
 )
+from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
+from app.services import check_achievements_for_user
 
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
@@ -110,6 +112,144 @@ async def start_lesson(
     )
 
 
+@router.get("/lessons/{lesson_id}/content", response_model=ApiResponse[LessonContentResponse])
+async def get_lesson_content(
+    lesson_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get lesson content with exercises for learning session"""
+    
+    # Get lesson
+    result = await db.execute(select(Lesson).where(Lesson.id == lesson_id))
+    lesson = result.scalar_one_or_none()
+    
+    if not lesson:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
+    
+    # Parse exercises from lesson.content (JSON field)
+    exercises = []
+    if lesson.content and isinstance(lesson.content, dict):
+        raw_exercises = lesson.content.get('exercises', [])
+        for idx, ex in enumerate(raw_exercises):
+            # Parse options if present
+            options = None
+            if 'options' in ex and ex['options']:
+                options = [
+                    ExerciseOption(
+                        id=str(i),
+                        text=opt if isinstance(opt, str) else opt.get('text', ''),
+                        is_correct=(opt == ex.get('correct_answer')) if isinstance(opt, str) else opt.get('is_correct', False)
+                    )
+                    for i, opt in enumerate(ex['options'])
+                ]
+            
+            exercises.append(Exercise(
+                id=ex.get('id', str(idx + 1)),
+                type=ex.get('type', 'multiple_choice'),
+                question=ex.get('question', ''),
+                options=options,
+                correct_answer=str(ex.get('correct_answer', '')),
+                explanation=ex.get('explanation'),
+                hint=ex.get('hint'),
+                audio_url=ex.get('audio_url'),
+                image_url=ex.get('image_url'),
+                difficulty=ex.get('difficulty', 1),
+                points=ex.get('points', 10)
+            ))
+    
+    # If no exercises in DB, generate default exercises for demo
+    if not exercises:
+        exercises = _generate_demo_exercises(lesson.title)
+    
+    return ApiResponse(
+        success=True,
+        message="Lesson content retrieved",
+        data=LessonContentResponse(
+            id=lesson.id,
+            title=lesson.title,
+            description=lesson.description,
+            lesson_type=lesson.lesson_type,
+            order_index=lesson.order_index,
+            xp_reward=lesson.xp_reward,
+            pass_threshold=lesson.pass_threshold,
+            estimated_minutes=lesson.estimated_minutes,
+            total_exercises=len(exercises),
+            exercises=exercises
+        )
+    )
+
+
+def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
+    """Generate demo exercises when DB content is empty"""
+    return [
+        Exercise(
+            id="1",
+            type="multiple_choice",
+            question=f"What is the main topic of '{lesson_title}'?",
+            options=[
+                ExerciseOption(id="a", text="Grammar fundamentals", is_correct=True),
+                ExerciseOption(id="b", text="Advanced vocabulary", is_correct=False),
+                ExerciseOption(id="c", text="Pronunciation tips", is_correct=False),
+                ExerciseOption(id="d", text="Cultural insights", is_correct=False)
+            ],
+            correct_answer="Grammar fundamentals",
+            explanation="This lesson focuses on grammar fundamentals.",
+            hint="Think about the lesson title.",
+            difficulty=1,
+            points=10
+        ),
+        Exercise(
+            id="2",
+            type="true_false",
+            question="English is one of the most widely spoken languages in the world.",
+            options=[
+                ExerciseOption(id="true", text="True", is_correct=True),
+                ExerciseOption(id="false", text="False", is_correct=False)
+            ],
+            correct_answer="True",
+            explanation="English is indeed one of the most widely spoken languages globally.",
+            difficulty=1,
+            points=10
+        ),
+        Exercise(
+            id="3",
+            type="fill_blank",
+            question="Complete the sentence: 'I ___ learning English every day.'",
+            correct_answer="am",
+            explanation="'am' is the correct form of 'to be' for first person singular.",
+            hint="Use the present continuous tense.",
+            difficulty=2,
+            points=15
+        ),
+        Exercise(
+            id="4",
+            type="translate",
+            question="Translate to English: 'Xin chào'",
+            correct_answer="Hello",
+            explanation="'Xin chào' is the Vietnamese word for 'Hello'.",
+            hint="This is a common greeting.",
+            difficulty=1,
+            points=10
+        ),
+        Exercise(
+            id="5",
+            type="multiple_choice",
+            question="Which sentence is grammatically correct?",
+            options=[
+                ExerciseOption(id="a", text="She go to school.", is_correct=False),
+                ExerciseOption(id="b", text="She goes to school.", is_correct=True),
+                ExerciseOption(id="c", text="She going to school.", is_correct=False),
+                ExerciseOption(id="d", text="She gone to school.", is_correct=False)
+            ],
+            correct_answer="She goes to school.",
+            explanation="Third person singular uses 'goes' in simple present tense.",
+            difficulty=2,
+            points=15
+        )
+    ]
+
+
 @router.post("/attempts/{attempt_id}/answer", response_model=ApiResponse[AnswerSubmitResponse])
 async def submit_answer(
     attempt_id: UUID,
@@ -135,11 +275,25 @@ async def submit_answer(
     if attempt.finished_at is not None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Lesson completed")
     
-    # TODO: Validate answer
-    is_correct = True  # Mock
+    # Get lesson to validate answer
+    lesson_result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))
+    lesson = lesson_result.scalar_one_or_none()
+    
+    # Validate answer against lesson content
+    is_correct, correct_answer, explanation = await _validate_answer(
+        lesson=lesson,
+        question_id=str(request.question_id),
+        question_type=request.question_type.value,
+        user_answer=request.user_answer
+    )
+    
+    # Calculate XP based on correctness, hint usage, and time
     xp = 10 if is_correct else 0
     if request.hint_used:
         xp = max(0, xp - 3)
+    # Bonus XP for fast answers (under 10 seconds)
+    if is_correct and request.time_spent_ms < 10000:
+        xp += 2
     
     # Record question attempt
     import json
@@ -173,18 +327,90 @@ async def submit_answer(
     
     return ApiResponse(
         success=True,
-        message="Answer submitted",
+        message="Correct! Well done!" if is_correct else "Incorrect. Keep trying!",
         data=AnswerSubmitResponse(
             question_attempt_id=qa.id,
             is_correct=is_correct,
-            correct_answer="Sample answer" if not is_correct else None,
-            explanation="Great!" if is_correct else "Try again",
+            correct_answer=correct_answer if not is_correct else None,
+            explanation=explanation,
             xp_earned=xp,
             lives_remaining=attempt.lives_remaining,
             hints_remaining=max(0, 3 - attempt.hints_used),
             current_score=float(attempt.score)
         )
     )
+
+
+async def _validate_answer(
+    lesson: Optional[Lesson],
+    question_id: str,
+    question_type: str,
+    user_answer: any
+) -> tuple[bool, str, str]:
+    """
+    Validate user answer against lesson content.
+    Returns (is_correct, correct_answer, explanation)
+    """
+    correct_answer = ""
+    explanation = "Keep practicing!"
+    
+    # Try to find the exercise in lesson content
+    if lesson and lesson.content and isinstance(lesson.content, dict):
+        exercises = lesson.content.get('exercises', [])
+        for ex in exercises:
+            if str(ex.get('id', '')) == question_id:
+                correct_answer = str(ex.get('correct_answer', ''))
+                explanation = ex.get('explanation', 'Check the correct answer and try again.')
+                
+                # Normalize answers for comparison
+                user_ans_normalized = _normalize_answer(user_answer, question_type)
+                correct_ans_normalized = _normalize_answer(correct_answer, question_type)
+                
+                is_correct = user_ans_normalized == correct_ans_normalized
+                return is_correct, correct_answer, explanation
+    
+    # Fallback: Check demo exercises
+    demo_exercises = {
+        "1": ("Grammar fundamentals", "This lesson focuses on grammar fundamentals."),
+        "2": ("True", "English is indeed one of the most widely spoken languages globally."),
+        "3": ("am", "'am' is the correct form of 'to be' for first person singular."),
+        "4": ("Hello", "'Xin chào' is the Vietnamese word for 'Hello'."),
+        "5": ("She goes to school.", "Third person singular uses 'goes' in simple present tense."),
+    }
+    
+    if question_id in demo_exercises:
+        correct_answer, explanation = demo_exercises[question_id]
+        user_ans_normalized = _normalize_answer(user_answer, question_type)
+        correct_ans_normalized = _normalize_answer(correct_answer, question_type)
+        is_correct = user_ans_normalized == correct_ans_normalized
+        return is_correct, correct_answer, explanation
+    
+    # If no match found, compare directly
+    is_correct = _normalize_answer(user_answer, question_type) == _normalize_answer(correct_answer, question_type)
+    return is_correct, correct_answer, explanation
+
+
+def _normalize_answer(answer: any, question_type: str) -> str:
+    """Normalize answer for comparison"""
+    if answer is None:
+        return ""
+    
+    # Convert to string
+    ans_str = str(answer).strip().lower()
+    
+    # Remove punctuation for certain types
+    if question_type in ['fill_blank', 'translate']:
+        import re
+        ans_str = re.sub(r'[^\w\s]', '', ans_str)
+    
+    # Handle boolean types
+    if question_type == 'true_false':
+        if ans_str in ['true', 'yes', '1', 'đúng']:
+            return 'true'
+        elif ans_str in ['false', 'no', '0', 'sai']:
+            return 'false'
+    
+    return ans_str
 
 
 @router.post("/attempts/{attempt_id}/complete", response_model=ApiResponse[LessonCompleteResponse])
@@ -264,11 +490,33 @@ async def complete_lesson(
     # Update streak
     await _update_streak(db, current_user.id)
     
-    await db.commit()
+    # Check achievements after lesson completion
+    unlocked_achievements = []
+    try:
+        unlocked_achievements = await check_achievements_for_user(
+            db, current_user.id, "lesson_complete"
+        )
+        # Also check XP-based achievements
+        xp_achievements = await check_achievements_for_user(
+            db, current_user.id, "xp_earned"
+        )
+        unlocked_achievements.extend(xp_achievements)
+        
+        # Check for perfect score achievements
+        if attempt.score == 100:
+            perfect_achievements = await check_achievements_for_user(
+                db, current_user.id, "quiz_complete"
+            )
+            unlocked_achievements.extend(perfect_achievements)
+    except Exception as e:
+        # Don't fail the lesson completion if achievement check fails
+        print(f"Achievement check error: {e}")
     
+    await db.commit()
+
     time_sec = attempt.time_spent_ms // 1000
     accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
-    
+
     return ApiResponse(
         success=True,
         message="Congratulations!" if attempt.passed else "Keep practicing!",
@@ -281,7 +529,7 @@ async def complete_lesson(
             accuracy=accuracy,
             stars_earned=stars,
             next_lesson_unlocked=None,  # TODO
-            achievements_unlocked=[],  # TODO
+            achievements_unlocked=unlocked_achievements,
             total_questions=attempt.total_questions,
             correct_answers=attempt.correct_answers,
             wrong_answers=attempt.total_questions - attempt.correct_answers,

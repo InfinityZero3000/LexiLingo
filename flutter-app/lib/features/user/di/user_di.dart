@@ -25,6 +25,7 @@ import 'package:lexilingo_app/features/user/domain/usecases/get_current_streak_u
 import 'package:lexilingo_app/features/user/domain/usecases/get_goal_history_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_settings_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_today_goal_usecase.dart';
+import 'package:lexilingo_app/features/user/domain/usecases/set_daily_goal_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_user_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_daily_progress_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_settings_usecase.dart';
@@ -61,17 +62,21 @@ void registerUserModule({required bool skipDatabase}) {
     );
   }
 
-  sl.registerLazySingleton<UserFirestoreDataSource>(
-    () => UserFirestoreDataSourceImpl(firestoreService: sl<FirestoreService>()),
-  );
-  sl.registerLazySingleton<ProgressFirestoreDataSource>(
-    () => ProgressFirestoreDataSourceImpl(firestoreService: sl<FirestoreService>()),
-  );
+  // Only register Firestore data sources if FirestoreService is available
+  final firestoreService = sl<FirestoreService>();
+  if (firestoreService.isAvailable) {
+    sl.registerLazySingleton<UserFirestoreDataSource>(
+      () => UserFirestoreDataSourceImpl(firestoreService: firestoreService),
+    );
+    sl.registerLazySingleton<ProgressFirestoreDataSource>(
+      () => ProgressFirestoreDataSourceImpl(firestoreService: firestoreService),
+    );
+  }
 
   sl.registerLazySingleton<UserRepository>(
     () => UserRepositoryImpl(
       localDataSource: sl(),
-      firestoreDataSource: sl(),
+      firestoreDataSource: sl.isRegistered<UserFirestoreDataSource>() ? sl() : null,
     ),
   );
   sl.registerLazySingleton<SettingsRepository>(
@@ -91,6 +96,7 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => GetSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetTodayGoalUseCase(repository: sl()));
+  sl.registerLazySingleton(() => SetDailyGoalUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateDailyProgressUseCase(
         dailyGoalRepository: sl(),
         userRepository: sl(),
@@ -106,17 +112,21 @@ void registerUserModule({required bool skipDatabase}) {
       getSettingsUseCase: sl(),
       updateSettingsUseCase: sl(),
       getTodayGoalUseCase: sl(),
+      setDailyGoalUseCase: sl(),
       updateDailyProgressUseCase: sl(),
       getCurrentStreakUseCase: sl(),
     ),
   );
 
-  sl.registerLazySingleton<ProgressSyncService>(
-    () => ProgressSyncService(
-      userLocalDataSource: sl(),
-      userFirestoreDataSource: sl(),
-      progressFirestoreDataSource: sl(),
-      firestoreService: sl(),
-    ),
-  );
+  // Only register ProgressSyncService if Firestore data sources are available
+  if (sl.isRegistered<UserFirestoreDataSource>() && sl.isRegistered<ProgressFirestoreDataSource>()) {
+    sl.registerLazySingleton<ProgressSyncService>(
+      () => ProgressSyncService(
+        userLocalDataSource: sl(),
+        userFirestoreDataSource: sl(),
+        progressFirestoreDataSource: sl(),
+        firestoreService: sl(),
+      ),
+    );
+  }
 }

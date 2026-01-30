@@ -244,6 +244,17 @@ class LessonCRUD:
         lesson_dict = lesson.model_dump()
         prerequisites = lesson_dict.pop('prerequisites', [])
         
+        # Lesson model requires course_id (NOT NULL), but LessonCreate only has unit_id
+        # So we need to get the course_id from the unit
+        unit_id = lesson_dict.get('unit_id')
+        if unit_id:
+            from sqlalchemy import select
+            from app.models.course import Unit as UnitModel
+            result = await db.execute(select(UnitModel).where(UnitModel.id == unit_id))
+            unit = result.scalar_one_or_none()
+            if unit:
+                lesson_dict['course_id'] = unit.course_id
+        
         db_lesson = Lesson(**lesson_dict)
         if prerequisites:
             db_lesson.prerequisites = prerequisites

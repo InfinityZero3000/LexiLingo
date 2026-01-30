@@ -41,5 +41,35 @@ class RefreshTokenRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     """Change password request."""
-    old_password: str
+    current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
+
+
+# ===== New schemas for missing endpoints =====
+
+class GoogleLoginRequest(BaseModel):
+    """Google OAuth login request."""
+    id_token: str = Field(..., description="Google ID token from client")
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password with token."""
+    token: str = Field(..., description="Password reset token from email")
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+
+class VerifyEmailRequest(BaseModel):
+    """Verify email with token."""
+    token: str = Field(..., description="Email verification token")
+
+
+class VerifyEmailResponse(BaseModel):
+    """Verify email response."""
+    verified: bool
+    message: str
+

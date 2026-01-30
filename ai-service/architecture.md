@@ -41,10 +41,10 @@
 |-----------|------------|------|---------|
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
-| NLP (English) | Qwen2.5-1.5B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
-| NLP (Vietnamese) | LLaMA3-8B-VI (lazy) | 8GB | 200ms |
-| Knowledge Graph | NetworkX / KuzuDB | <50MB | <5ms |
-| Pronunciation | HuBERT-large | 960MB | 100-200ms |
+| NLP (English) | **Qwen3-1.7B** + Unified LoRA | 1.7GB + 80MB | 100-150ms |
+| NLP (Vietnamese) | **LLaMA3-3B** (Q4, lazy) | 4GB | 200-500ms |
+| Knowledge Graph | KuzuDB | <50MB | <5ms |
+| Pronunciation | HuBERT-large (lazy) | 2GB | 100-200ms |
 | TTS | Piper VITS | 30-60MB | 100-300ms |
 | Cache | Redis | - | <5ms |
 | **Logging DB** | **MongoDB** | **-** | **<10ms** |
@@ -132,29 +132,64 @@
         │ Context Vector + Learner Profile
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR (CORE ENGINE)                    │
+│              GRAPHCAG - LangGraph Orchestration                  │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Central Coordinator: Điều phối toàn bộ AI pipeline              │
+│  **LangGraph StateGraph Architecture**                           │
+│  Replaces custom orchestrator with graph-based workflow          │
 │                                                                  │
+│  Core Technology:                                                │
+│  • LangGraph StateGraph (typed state machine)                    │
+│  • KuzuDB Knowledge Graph (concept expansion)                    │
+│  • Conditional edges (intelligent routing)                       │
+│  • Streaming support (real-time updates)                         │
+│                                                                  │
+│  Pipeline Flow:                                                  │
+│  ┌─────────┐   ┌──────────┐   ┌───────────┐                      │
+│  │  INPUT  │──▶│ KG_EXPAND│──▶│ DIAGNOSE  │                      │
+│  └─────────┘   └──────────┘   └─────┬─────┘                      │
+│                                      │                           │
+│       ┌──────────────────────────────┼──────────┐                │
+│       ▼                              ▼          ▼                │
+│  ┌─────────┐   ┌──────────┐   ┌───────────┐                      │
+│  │ASK_CLAR │   │VIETNAMESE│   │  RETRIEVE │                      │
+│  └────┬────┘   └────┬─────┘   └─────┬─────┘                      │
+│       │             └───────────────┤                            │
+│       │                             ▼                            │
+│       │                      ┌───────────┐                       │
+│       └─────────────────────▶│ GENERATE  │                       │
+│                              └─────┬─────┘                       │
+│                                    │                             │
+│                          ┌────────┴────────┐                     │
+│                          ▼                 ▼                     │
+│                    ┌───────┐          ┌────────┐                 │
+│                    │  TTS  │──▶END    │  END   │                 │
+│                    └───────┘          └────────┘                 │
+│                                                                  │
+│  Node Descriptions:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 1: Task Analysis                                    │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  Input: User text + context + learner profile              │  │
-│  │                                                            │  │
-│  │  Analysis:                                                 │  │
-│  │  • Detect task type: fluency/grammar/vocab/dialogue        │  │
-│  │  • Assess complexity: simple/medium/complex                │  │
-│  │  • Check learner level: A2/B1/B2                           │  │
-│  │  • Identify required components                            │  │
-│  │                                                            │  │
-│  │  Output: Execution plan                                    │  │
-│  │    {                                                       │  │
-│  │      "primary_tasks": ["grammar", "fluency"],              │  │
-│  │      "parallel_tasks": ["pronunciation"],                  │  │
-│  │      "need_vietnamese": false,                             │  │
-│  │      "strategy": "socratic_questioning"                    │  │
-│  │    }                                                       │  │
+│  │ INPUT       : Parse input, load learner profile, history   │  │
+│  │ KG_EXPAND   : Query KuzuDB, expand related concepts        │  │
+│  │ DIAGNOSE    : Grammar analysis, intent detection           │  │
+│  │ VIETNAMESE  : Vietnamese explanation (A1/A2 levels)        │  │
+│  │ ASK_CLARIFY : Request clarification (low confidence)       │  │
+│  │ RETRIEVE    : Vector + KG hybrid retrieval                 │  │
+│  │ GENERATE    : Tutor response generation                    │  │
+│  │ TTS         : Text-to-Speech via Piper                     │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  State Schema (TypedDict):                                       │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ GraphCAGState:                                             │  │
+│  │   user_input: str                                          │  │
+│  │   session_id: str                                          │  │
+│  │   learner_profile: LearnerProfile                          │  │
+│  │   kg_seed_concepts: List[str]                              │  │
+│  │   kg_expanded_nodes: List[KGExpandedNode]                  │  │
+│  │   diagnosis_errors: List[DiagnosisError]                   │  │
+│  │   tutor_response: str                                      │  │
+│  │   models_used: List[str] (accumulator)                     │  │
+│  │   latency_ms: int                                          │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │

@@ -26,14 +26,14 @@ from app.schemas.common import ApiResponse, PaginatedResponse, PaginationMeta
 import uuid
 from datetime import datetime
 
-router = APIRouter(prefix="/courses", tags=["courses"])
+router = APIRouter(tags=["courses"])
 
 
 # =====================
 # Course Browsing (Public/Authenticated)
 # =====================
 
-@router.get("", response_model=PaginatedResponse[list[CourseListItem]])
+@router.get("", response_model=PaginatedResponse[CourseListItem])
 async def get_courses(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -65,7 +65,21 @@ async def get_courses(
     # Convert to response models
     course_items = []
     for course in courses:
-        item = CourseListItem.model_validate(course)
+        item_dict = {
+            "id": course.id,
+            "title": course.title,
+            "description": course.description,
+            "language": course.language,
+            "level": course.level,
+            "tags": course.tags or [],
+            "thumbnail_url": course.thumbnail_url,
+            "total_lessons": course.total_lessons,
+            "total_xp": course.total_xp,
+            "estimated_duration": course.estimated_duration,
+            "is_enrolled": None
+        }
+        
+        item = CourseListItem(**item_dict)
         
         # Add enrollment status if user is authenticated
         if current_user:
