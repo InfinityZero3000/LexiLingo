@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -137,7 +138,15 @@ class ProfilePage extends StatelessWidget {
                  _buildStatCard(context, Icons.local_fire_department, Colors.orange, "Streak", "15 Days", "+2 today"),
                  _buildStatCard(context, Icons.menu_book, Colors.blue, "Words", "840", "+45 new"),
                  _buildStatCard(context, Icons.smart_toy, Colors.purple, "AI Talk", "120 min", "+10 min"),
-                 _buildStatCard(context, Icons.stars, Colors.amber, "Badges", "12", "View all", isAction: true),
+                 GestureDetector(
+                   onTap: () {
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+                     );
+                   },
+                   child: _buildStatCard(context, Icons.stars, Colors.amber, "Badges", "12", "View all", isAction: true),
+                 ),
               ],
             ),
 
@@ -178,7 +187,21 @@ class ProfilePage extends StatelessWidget {
             // Recent Badges
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(children: [Text('Recent Badges', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))]),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Recent Badges', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+                      );
+                    },
+                    child: const Text('View All'),
+                  ),
+                ],
+              ),
             ),
             SizedBox(
               height: 100,

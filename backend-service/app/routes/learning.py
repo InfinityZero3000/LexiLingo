@@ -34,6 +34,7 @@ from app.schemas.progress import (
 )
 from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
+from app.services import check_achievements_for_user
 
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
@@ -489,11 +490,33 @@ async def complete_lesson(
     # Update streak
     await _update_streak(db, current_user.id)
     
-    await db.commit()
+    # Check achievements after lesson completion
+    unlocked_achievements = []
+    try:
+        unlocked_achievements = await check_achievements_for_user(
+            db, current_user.id, "lesson_complete"
+        )
+        # Also check XP-based achievements
+        xp_achievements = await check_achievements_for_user(
+            db, current_user.id, "xp_earned"
+        )
+        unlocked_achievements.extend(xp_achievements)
+        
+        # Check for perfect score achievements
+        if attempt.score == 100:
+            perfect_achievements = await check_achievements_for_user(
+                db, current_user.id, "quiz_complete"
+            )
+            unlocked_achievements.extend(perfect_achievements)
+    except Exception as e:
+        # Don't fail the lesson completion if achievement check fails
+        print(f"Achievement check error: {e}")
     
+    await db.commit()
+
     time_sec = attempt.time_spent_ms // 1000
     accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
-    
+
     return ApiResponse(
         success=True,
         message="Congratulations!" if attempt.passed else "Keep practicing!",
@@ -506,7 +529,7 @@ async def complete_lesson(
             accuracy=accuracy,
             stars_earned=stars,
             next_lesson_unlocked=None,  # TODO
-            achievements_unlocked=[],  # TODO
+            achievements_unlocked=unlocked_achievements,
             total_questions=attempt.total_questions,
             correct_answers=attempt.correct_answers,
             wrong_answers=attempt.total_questions - attempt.correct_answers,
