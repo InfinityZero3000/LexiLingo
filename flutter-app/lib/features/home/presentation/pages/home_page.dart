@@ -7,6 +7,8 @@ import 'package:lexilingo_app/features/user/presentation/providers/user_provider
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -142,84 +144,187 @@ class _HomePageNewState extends State<HomePageNew> {
   }
 
   Widget _buildStreakCard(BuildContext context, HomeProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFfef9c3), Color(0xFFdcfce7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.green.shade100),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DAILY MOMENTUM',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green.shade800,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
+    return Consumer<StreakProvider>(
+      builder: (context, streakProvider, child) {
+        final streak = streakProvider.streak;
+        final currentStreak = streak?.currentStreak ?? provider.streakDays;
+        final isActiveToday = streak?.isActiveToday ?? false;
+        final streakAtRisk = streak?.streakAtRisk ?? false;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: GestureDetector(
+            onTap: () {
+              if (streak != null) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => StreakDetailsSheet(streak: streak),
+                );
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: streakAtRisk
+                      ? [const Color(0xFFFEF3C7), const Color(0xFFFED7AA)]
+                      : [const Color(0xFFfef9c3), const Color(0xFFdcfce7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: streakAtRisk ? Colors.orange.shade200 : Colors.green.shade100,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'DAILY MOMENTUM',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: streakAtRisk 
+                                            ? Colors.orange.shade800 
+                                            : Colors.green.shade800,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                      ),
+                                ),
+                                if (streakAtRisk) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '⚠️ AT RISK',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.orange.shade800,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$currentStreak Day Streak',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    color: AppColors.textDark,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1,
+                                  ),
+                            ),
+                            if (isActiveToday) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Done for today!',
+                                    style: TextStyle(
+                                      color: Colors.green.shade700,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: currentStreak > 0 
+                                  ? const Color(0xFFFACC15) 
+                                  : Colors.grey.shade400,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              streak?.streakEmoji ?? '🔥',
+                              style: const TextStyle(fontSize: 24),
+                            ),
                           ),
+                          if (streak != null && streak.longestStreak > 0) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              '🏆 ${streak.longestStreak}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${provider.streakDays} Day Streak',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: AppColors.textDark,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(
+                        7,
+                        (index) => _buildDayItem(
+                          ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
+                          index < provider.weekProgress.length && provider.weekProgress[index],
+                          isCurrent: index == 3,
+                          isFuture: index > 3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Freeze info
+                  if (streak != null && streak.freezeCount > 0) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🧊', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${streak.freezeCount} streak freeze${streak.freezeCount > 1 ? 's' : ''} available',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFACC15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  7,
-                  (index) => _buildDayItem(
-                    ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
-                    index < provider.weekProgress.length && provider.weekProgress[index],
-                    isCurrent: index == 3,
-                    isFuture: index > 3,
-                  ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

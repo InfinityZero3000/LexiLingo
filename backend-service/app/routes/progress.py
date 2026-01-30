@@ -2,7 +2,9 @@
 Progress Routes
 API endpoints for tracking user progress
 """
+from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -18,6 +20,7 @@ from app.schemas.progress import (
 )
 from app.schemas.response import ApiResponse
 from app.models.user import User
+from app.models.progress import Streak
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 
@@ -250,4 +253,245 @@ async def get_total_xp(
         success=True,
         message="Total XP retrieved successfully",
         data={'total_xp': total_xp}
+    )
+
+
+# ============================================================================
+# Streak Endpoints
+# ============================================================================
+
+@router.get("/streak", response_model=ApiResponse[dict])
+async def get_my_streak(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current user's streak information
+    
+    Returns:
+    - current_streak: Current consecutive days
+    - longest_streak: Best streak ever achieved
+    - total_days_active: Total days with learning activity
+    - last_activity_date: Last date of learning activity
+    - freeze_count: Available streak freezes
+    - is_active_today: Whether user has learned today
+    - streak_at_risk: Whether streak will be lost if no activity today
+    """
+    result = await db.execute(
+        select(Streak).where(Streak.user_id == current_user.id)
+    )
+    streak = result.scalar_one_or_none()
+    
+    today = date.today()
+    
+    if not streak:
+        # Create new streak record for user
+        streak = Streak(
+            user_id=current_user.id,
+            current_streak=0,
+            longest_streak=0,
+            total_days_active=0,
+            freeze_count=0
+        )
+        db.add(streak)
+        await db.commit()
+        await db.refresh(streak)
+    
+    # Determine if active today and if streak is at risk
+    is_active_today = streak.last_activity_date == today if streak.last_activity_date else False
+    
+    # Streak is at risk if last activity was yesterday and no activity today
+    streak_at_risk = False
+    if streak.last_activity_date and not is_active_today:
+        yesterday = today - timedelta(days=1)
+        streak_at_risk = streak.last_activity_date == yesterday
+    
+    response_data = {
+        'current_streak': streak.current_streak,
+        'longest_streak': streak.longest_streak,
+        'total_days_active': streak.total_days_active,
+        'last_activity_date': streak.last_activity_date.isoformat() if streak.last_activity_date else None,
+        'freeze_count': streak.freeze_count,
+        'is_active_today': is_active_today,
+        'streak_at_risk': streak_at_risk and streak.current_streak > 0,
+    }
+    
+    return ApiResponse(
+        success=True,
+        message="Streak retrieved successfully",
+        data=response_data
+    )
+
+
+@router.post("/streak/update", response_model=ApiResponse[dict])
+async def update_streak(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update user's streak after learning activity
+    
+    Called when user completes a lesson or review session.
+    Automatically handles:
+    - Creating streak if first time
+    - Incrementing streak for consecutive days
+    - Resetting streak if gap > 1 day
+    - Using streak freeze if available
+    - Updating longest streak
+    
+    Returns:
+    - Updated streak information
+    - streak_increased: Whether streak went up
+    - streak_saved: Whether freeze was used
+    """
+    result = await db.execute(
+        select(Streak).where(Streak.user_id == current_user.id)
+    )
+    streak = result.scalar_one_or_none()
+    
+    today = date.today()
+    streak_increased = False
+    streak_saved = False
+    
+    if not streak:
+        # Create new streak
+        streak = Streak(
+            user_id=current_user.id,
+            current_streak=1,
+            longest_streak=1,
+            last_activity_date=today,
+            total_days_active=1,
+            freeze_count=0
+        )
+        db.add(streak)
+        streak_increased = True
+    else:
+        last_date = streak.last_activity_date
+        
+        if last_date == today:
+            # Already active today, no change
+            pass
+        elif last_date == today - timedelta(days=1):
+            # Consecutive day - increment streak
+            streak.current_streak += 1
+            streak.total_days_active += 1
+            streak.last_activity_date = today
+            streak_increased = True
+            
+            if streak.current_streak > streak.longest_streak:
+                streak.longest_streak = streak.current_streak
+        elif last_date and last_date < today - timedelta(days=1):
+            # Gap in activity
+            days_missed = (today - last_date).days - 1
+            
+            if streak.freeze_count > 0 and days_missed == 1:
+                # Use freeze to save streak
+                streak.freeze_count -= 1
+                streak.current_streak += 1
+                streak.total_days_active += 1
+                streak.last_activity_date = today
+                streak_saved = True
+                streak_increased = True
+                
+                if streak.current_streak > streak.longest_streak:
+                    streak.longest_streak = streak.current_streak
+            else:
+                # Reset streak
+                streak.current_streak = 1
+                streak.total_days_active += 1
+                streak.last_activity_date = today
+                streak_increased = True
+        else:
+            # First activity ever
+            streak.current_streak = 1
+            streak.total_days_active = 1
+            streak.last_activity_date = today
+            streak_increased = True
+            
+            if streak.current_streak > streak.longest_streak:
+                streak.longest_streak = streak.current_streak
+    
+    await db.commit()
+    await db.refresh(streak)
+    
+    message = "Streak updated"
+    if streak_saved:
+        message = "Streak freeze used! Your streak is saved 🧊"
+    elif streak_increased:
+        message = f"🔥 {streak.current_streak} day streak!"
+    
+    response_data = {
+        'current_streak': streak.current_streak,
+        'longest_streak': streak.longest_streak,
+        'total_days_active': streak.total_days_active,
+        'freeze_count': streak.freeze_count,
+        'streak_increased': streak_increased,
+        'streak_saved': streak_saved,
+    }
+    
+    return ApiResponse(
+        success=True,
+        message=message,
+        data=response_data
+    )
+
+
+@router.post("/streak/freeze", response_model=ApiResponse[dict])
+async def use_streak_freeze(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Use a streak freeze to protect current streak
+    
+    Streak freezes prevent streak loss when missing a day.
+    Can only be used if:
+    - User has streak freezes available
+    - Streak is at risk (no activity today, had activity yesterday)
+    
+    Returns:
+    - Success/failure status
+    - Remaining freeze count
+    """
+    result = await db.execute(
+        select(Streak).where(Streak.user_id == current_user.id)
+    )
+    streak = result.scalar_one_or_none()
+    
+    if not streak:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No streak record found"
+        )
+    
+    if streak.freeze_count <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No streak freezes available. Purchase from shop."
+        )
+    
+    today = date.today()
+    
+    # Check if freeze is needed
+    if streak.last_activity_date == today:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Streak is already active today, no freeze needed"
+        )
+    
+    # Use the freeze
+    streak.freeze_count -= 1
+    streak.last_activity_date = today  # Mark as "covered" for today
+    
+    await db.commit()
+    await db.refresh(streak)
+    
+    return ApiResponse(
+        success=True,
+        message=f"Streak freeze activated! 🧊 {streak.freeze_count} freezes remaining",
+        data={
+            'current_streak': streak.current_streak,
+            'freeze_count': streak.freeze_count,
+            'freeze_used': True
+        }
     )

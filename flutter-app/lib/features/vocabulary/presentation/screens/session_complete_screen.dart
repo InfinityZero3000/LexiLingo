@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 
 /// Session Complete Screen (Presentation Layer)
 /// Shows review session results with celebration animation
@@ -29,6 +31,11 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
     // Start confetti animation
     Future.delayed(const Duration(milliseconds: 500), () {
       _confettiController.play();
+    });
+    
+    // Update streak after review session complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StreakProvider>().updateStreak();
     });
   }
 

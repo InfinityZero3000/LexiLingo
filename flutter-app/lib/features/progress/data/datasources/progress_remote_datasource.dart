@@ -1,5 +1,6 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/progress/data/models/progress_model.dart';
+import 'package:lexilingo_app/features/progress/data/models/streak_model.dart';
 
 /// Progress Remote Data Source Interface
 abstract class ProgressRemoteDataSource {
@@ -10,6 +11,11 @@ abstract class ProgressRemoteDataSource {
     required double score,
   });
   Future<int> getTotalXp();
+  
+  // Streak methods
+  Future<StreakModel> getMyStreak();
+  Future<StreakUpdateResultModel> updateStreak();
+  Future<Map<String, dynamic>> useStreakFreeze();
 }
 
 /// Progress Remote Data Source Implementation
@@ -62,6 +68,40 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     try {
       final response = await apiClient.get('/progress/xp');
       return response['total_xp'] ?? 0;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ============================================================================
+  // Streak Methods
+  // ============================================================================
+
+  @override
+  Future<StreakModel> getMyStreak() async {
+    try {
+      final response = await apiClient.get('/progress/streak');
+      return StreakModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<StreakUpdateResultModel> updateStreak() async {
+    try {
+      final response = await apiClient.post('/progress/streak/update', body: {});
+      return StreakUpdateResultModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> useStreakFreeze() async {
+    try {
+      final response = await apiClient.post('/progress/streak/freeze', body: {});
+      return response;
     } catch (e) {
       rethrow;
     }
