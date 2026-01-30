@@ -69,13 +69,13 @@ class StreakEntity extends Equatable {
     return 'Starting';
   }
 
-  /// Get streak emoji based on current streak
-  String get streakEmoji {
-    if (currentStreak >= 100) return '🏆';
-    if (currentStreak >= 30) return '🔥';
-    if (currentStreak >= 7) return '⚡';
-    if (currentStreak >= 1) return '✨';
-    return '💫';
+  /// Get streak icon identifier based on current streak
+  String get streakIcon {
+    if (currentStreak >= 100) return 'trophy';
+    if (currentStreak >= 30) return 'fire';
+    if (currentStreak >= 7) return 'bolt';
+    if (currentStreak >= 1) return 'star';
+    return 'sparkles';
   }
 
   @override

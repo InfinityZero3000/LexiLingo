@@ -68,7 +68,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                           color: Colors.purple.shade100,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('🎯', style: TextStyle(fontSize: 20)),
+                        child: Icon(
+                          Icons.star,
+                          color: Colors.purple.shade700,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -103,7 +107,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('⭐', style: TextStyle(fontSize: 12)),
+                            Icon(
+                              Icons.star,
+                              size: 12,
+                              color: Colors.amber.shade800,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '+${provider.xpEarned} XP',
@@ -127,9 +135,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       value: provider.progress,
                       backgroundColor: Colors.grey.shade200,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        provider.allCompleted
-                            ? Colors.green
-                            : Colors.purple,
+                        provider.allCompleted ? Colors.green : Colors.purple,
                       ),
                       minHeight: 8,
                     ),
@@ -148,7 +154,8 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   if (provider.challenges.length > 3)
                     Center(
                       child: TextButton(
-                        onPressed: () => _showChallengesSheet(context, provider),
+                        onPressed: () =>
+                            _showChallengesSheet(context, provider),
                         child: Text(
                           'View all ${provider.challenges.length} challenges',
                           style: TextStyle(color: Colors.purple.shade600),
@@ -177,10 +184,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
           child: Text(
             challenge.title,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  decoration:
-                      challenge.isCompleted ? TextDecoration.lineThrough : null,
-                  color: challenge.isCompleted ? Colors.grey : null,
-                ),
+              decoration: challenge.isCompleted
+                  ? TextDecoration.lineThrough
+                  : null,
+              color: challenge.isCompleted ? Colors.grey : null,
+            ),
           ),
         ),
         if (challenge.isCompleted)
@@ -188,9 +196,9 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
         else
           Text(
             '${challenge.current}/${challenge.target}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
           ),
       ],
     );
@@ -245,7 +253,7 @@ class DailyChallengesSheet extends StatelessWidget {
           // Header
           Row(
             children: [
-              const Text('🎯', style: TextStyle(fontSize: 28)),
+              Icon(Icons.star, size: 28, color: Colors.purple),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -327,7 +335,11 @@ class DailyChallengesSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Text('🏆', style: TextStyle(fontSize: 32)),
+                  Icon(
+                    Icons.emoji_events,
+                    size: 32,
+                    color: Colors.amber.shade800,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -393,9 +405,7 @@ class _ChallengeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: challenge.isCompleted
-            ? Colors.green.shade50
-            : theme.cardColor,
+        color: challenge.isCompleted ? Colors.green.shade50 : theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: challenge.isCompleted
@@ -410,14 +420,13 @@ class _ChallengeCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _getCategoryColor(challenge.category).withValues(alpha: 0.2),
+              color: _getCategoryColor(
+                challenge.category,
+              ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: Text(
-                challenge.icon,
-                style: const TextStyle(fontSize: 24),
-              ),
+              child: Text(challenge.icon, style: const TextStyle(fontSize: 24)),
             ),
           ),
           const SizedBox(width: 12),
@@ -431,8 +440,9 @@ class _ChallengeCard extends StatelessWidget {
                   challenge.title,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    decoration:
-                        challenge.isCompleted ? TextDecoration.lineThrough : null,
+                    decoration: challenge.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -485,9 +495,10 @@ class _ChallengeCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('⭐', style: TextStyle(fontSize: 12)),
+                    Icon(Icons.star, size: 12, color: Colors.amber.shade800),
+                    const SizedBox(width: 2),
                     Text(
-                      ' ${challenge.xpReward}',
+                      '${challenge.xpReward}',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

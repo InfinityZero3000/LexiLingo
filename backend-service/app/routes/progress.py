@@ -21,6 +21,7 @@ from app.schemas.progress import (
 from app.schemas.response import ApiResponse
 from app.models.user import User
 from app.models.progress import Streak
+from app.services import check_achievements_for_user
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 
@@ -414,11 +415,20 @@ async def update_streak(
     await db.commit()
     await db.refresh(streak)
     
+    # Check streak-based achievements
+    unlocked_achievements = []
+    try:
+        unlocked_achievements = await check_achievements_for_user(
+            db, current_user.id, "streak_update"
+        )
+    except Exception as e:
+        print(f"Achievement check error: {e}")
+    
     message = "Streak updated"
     if streak_saved:
-        message = "Streak freeze used! Your streak is saved 🧊"
+        message = "Streak freeze used! Your streak is saved"
     elif streak_increased:
-        message = f"🔥 {streak.current_streak} day streak!"
+        message = f"{streak.current_streak} day streak!"
     
     response_data = {
         'current_streak': streak.current_streak,
@@ -427,6 +437,7 @@ async def update_streak(
         'freeze_count': streak.freeze_count,
         'streak_increased': streak_increased,
         'streak_saved': streak_saved,
+        'achievements_unlocked': unlocked_achievements,
     }
     
     return ApiResponse(
@@ -488,7 +499,7 @@ async def use_streak_freeze(
     
     return ApiResponse(
         success=True,
-        message=f"Streak freeze activated! 🧊 {streak.freeze_count} freezes remaining",
+        message=f"Streak freeze activated! {streak.freeze_count} freezes remaining",
         data={
             'current_streak': streak.current_streak,
             'freeze_count': streak.freeze_count,

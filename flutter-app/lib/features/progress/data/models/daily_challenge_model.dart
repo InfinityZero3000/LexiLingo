@@ -21,7 +21,7 @@ class DailyChallengeModel extends DailyChallengeEntity {
       id: json['id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      icon: json['icon'] ?? '🎯',
+      icon: json['icon'] ?? 'target',
       category: json['category'] ?? 'other',
       target: json['target'] ?? 1,
       current: json['current'] ?? 0,

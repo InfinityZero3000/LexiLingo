@@ -3,6 +3,24 @@ import 'package:provider/provider.dart';
 import '../providers/streak_provider.dart';
 import '../../domain/entities/streak_entity.dart';
 
+/// Helper function to get icon from streak identifier
+IconData _getStreakIcon(String identifier) {
+  switch (identifier) {
+    case 'trophy':
+      return Icons.emoji_events;
+    case 'fire':
+      return Icons.local_fire_department;
+    case 'bolt':
+      return Icons.bolt;
+    case 'star':
+      return Icons.star;
+    case 'sparkles':
+      return Icons.auto_awesome;
+    default:
+      return Icons.local_fire_department;
+  }
+}
+
 /// Streak Display Widget
 /// Shows current streak with fire animation
 /// Clean Architecture: Presentation layer UI component
@@ -10,18 +28,14 @@ class StreakWidget extends StatelessWidget {
   final bool showDetails;
   final VoidCallback? onTap;
 
-  const StreakWidget({
-    super.key,
-    this.showDetails = false,
-    this.onTap,
-  });
+  const StreakWidget({super.key, this.showDetails = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<StreakProvider>(
       builder: (context, provider, child) {
         final streak = provider.streak;
-        
+
         if (provider.isLoading && streak == null) {
           return const SizedBox(
             width: 40,
@@ -54,9 +68,10 @@ class StreakWidget extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  streak.streakEmoji,
-                  style: const TextStyle(fontSize: 18),
+                Icon(
+                  _getStreakIcon(streak.streakIcon),
+                  color: Colors.white,
+                  size: 18,
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -101,9 +116,7 @@ class StreakWidget extends StatelessWidget {
         colors: [Color(0xFFFFCC00), Color(0xFFFF8C00)],
       );
     }
-    return LinearGradient(
-      colors: [Colors.grey.shade400, Colors.grey.shade500],
-    );
+    return LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500]);
   }
 
   void _showStreakDetails(BuildContext context, StreakEntity streak) {
@@ -124,11 +137,11 @@ class StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Consumer<StreakProvider>(
       builder: (context, provider, child) {
         final streak = provider.streak;
-        
+
         if (streak == null) {
           return Card(
             child: Padding(
@@ -175,13 +188,14 @@ class StreakCard extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          streak.streakEmoji,
-                          style: const TextStyle(fontSize: 24),
+                        child: Icon(
+                          _getStreakIcon(streak.streakIcon),
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      
+
                       // Streak Info
                       Expanded(
                         child: Column(
@@ -219,26 +233,39 @@ class StreakCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              streak.isActiveToday
-                                  ? '✅ Done for today!'
-                                  : 'Practice now to keep your streak!',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: streak.isActiveToday
-                                    ? Colors.green
-                                    : Colors.grey,
-                              ),
+                            Row(
+                              children: [
+                                if (streak.isActiveToday)
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 14,
+                                    color: Colors.green,
+                                  ),
+                                if (streak.isActiveToday)
+                                  const SizedBox(width: 4),
+                                Text(
+                                  streak.isActiveToday
+                                      ? 'Done for today!'
+                                      : 'Practice now to keep your streak!',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: streak.isActiveToday
+                                        ? Colors.green
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      
+
                       // Best streak
                       Column(
                         children: [
-                          Text(
-                            '🏆',
-                            style: const TextStyle(fontSize: 16),
+                          Icon(
+                            Icons.emoji_events,
+                            color: Colors.amber,
+                            size: 16,
                           ),
                           Text(
                             '${streak.longestStreak}',
@@ -257,13 +284,13 @@ class StreakCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   // Freeze count
                   if (streak.freezeCount > 0) ...[
                     const Divider(height: 24),
                     Row(
                       children: [
-                        const Text('🧊', style: TextStyle(fontSize: 16)),
+                        Icon(Icons.ac_unit, size: 16, color: Colors.cyan),
                         const SizedBox(width: 8),
                         Text(
                           '${streak.freezeCount} Streak Freeze${streak.freezeCount > 1 ? 's' : ''} available',
@@ -300,7 +327,7 @@ class StreakDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -320,11 +347,12 @@ class StreakDetailsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Big streak display
-          Text(
-            streak.streakEmoji,
-            style: const TextStyle(fontSize: 64),
+          Icon(
+            _getStreakIcon(streak.streakIcon),
+            color: Colors.orange,
+            size: 64,
           ),
           const SizedBox(height: 8),
           Text(
@@ -336,40 +364,38 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             streak.streakLevel,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.orange,
-            ),
+            style: theme.textTheme.titleMedium?.copyWith(color: Colors.orange),
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Stats row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStat(
+              _buildStatIcon(
                 context,
-                '🏆',
+                Icons.emoji_events,
                 '${streak.longestStreak}',
                 'Best Streak',
               ),
-              _buildStat(
+              _buildStatIcon(
                 context,
-                '📅',
+                Icons.calendar_today,
                 '${streak.totalDaysActive}',
                 'Total Days',
               ),
-              _buildStat(
+              _buildStatIcon(
                 context,
-                '🧊',
+                Icons.ac_unit,
                 '${streak.freezeCount}',
                 'Freezes',
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Status message
           Container(
             padding: const EdgeInsets.all(16),
@@ -377,8 +403,8 @@ class StreakDetailsSheet extends StatelessWidget {
               color: streak.isActiveToday
                   ? Colors.green.shade50
                   : streak.streakAtRisk
-                      ? Colors.orange.shade50
-                      : Colors.grey.shade100,
+                  ? Colors.orange.shade50
+                  : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -387,13 +413,13 @@ class StreakDetailsSheet extends StatelessWidget {
                   streak.isActiveToday
                       ? Icons.check_circle
                       : streak.streakAtRisk
-                          ? Icons.warning_rounded
-                          : Icons.info_outline,
+                      ? Icons.warning_rounded
+                      : Icons.info_outline,
                   color: streak.isActiveToday
                       ? Colors.green
                       : streak.streakAtRisk
-                          ? Colors.orange
-                          : Colors.grey,
+                      ? Colors.orange
+                      : Colors.grey,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -401,19 +427,21 @@ class StreakDetailsSheet extends StatelessWidget {
                     streak.isActiveToday
                         ? "Great job! You've practiced today. 🎉"
                         : streak.streakAtRisk
-                            ? 'Practice now to save your streak!'
-                            : 'Keep learning to build your streak!',
+                        ? 'Practice now to save your streak!'
+                        : 'Keep learning to build your streak!',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Use freeze button (if at risk and has freezes)
-          if (streak.streakAtRisk && streak.freezeCount > 0 && !streak.isActiveToday)
+          if (streak.streakAtRisk &&
+              streak.freezeCount > 0 &&
+              !streak.isActiveToday)
             Consumer<StreakProvider>(
               builder: (context, provider, child) {
                 return SizedBox(
@@ -427,13 +455,13 @@ class StreakDetailsSheet extends StatelessWidget {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Streak freeze activated! 🧊'),
+                                  content: Text('Streak freeze activated!'),
                                   backgroundColor: Colors.blue,
                                 ),
                               );
                             }
                           },
-                    icon: const Text('🧊', style: TextStyle(fontSize: 18)),
+                    icon: Icon(Icons.ac_unit, size: 18, color: Colors.cyan),
                     label: const Text('Use Streak Freeze'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -444,23 +472,23 @@ class StreakDetailsSheet extends StatelessWidget {
                 );
               },
             ),
-          
+
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildStat(
+  Widget _buildStatIcon(
     BuildContext context,
-    String emoji,
+    IconData icon,
     String value,
     String label,
   ) {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 24)),
+        Icon(icon, size: 24, color: Colors.orange),
         const SizedBox(height: 4),
         Text(
           value,
@@ -470,9 +498,7 @@ class StreakDetailsSheet extends StatelessWidget {
         ),
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.grey,
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
         ),
       ],
     );
@@ -492,7 +518,7 @@ class StreakBadge extends StatelessWidget {
         }
 
         final streak = provider.streak!;
-        
+
         return Tooltip(
           message: '${streak.currentStreak} day streak',
           child: Container(
@@ -506,9 +532,12 @@ class StreakBadge extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  streak.streakEmoji,
-                  style: const TextStyle(fontSize: 14),
+                Icon(
+                  _getStreakIcon(streak.streakIcon),
+                  color: streak.currentStreak > 0
+                      ? Colors.orange.shade800
+                      : Colors.grey.shade600,
+                  size: 14,
                 ),
                 const SizedBox(width: 2),
                 Text(
