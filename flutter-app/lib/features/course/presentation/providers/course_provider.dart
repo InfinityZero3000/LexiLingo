@@ -148,6 +148,88 @@ class CourseProvider with ChangeNotifier {
     await loadCourses(page: 1);
   }
 
+  /// Group courses by category (level)
+  /// Returns a map with category names as keys and list of courses as values
+  Map<String, List<CourseEntity>> get coursesByCategory {
+    final Map<String, List<CourseEntity>> grouped = {};
+    
+    // Define category order
+    const categoryOrder = ['Beginner', 'Intermediate', 'Advanced'];
+    
+    // Initialize categories
+    for (final category in categoryOrder) {
+      grouped[category] = [];
+    }
+    
+    // Group courses by level
+    for (final course in _courses) {
+      final category = course.level;
+      if (grouped.containsKey(category)) {
+        grouped[category]!.add(course);
+      } else {
+        // For any other levels, add to a separate category
+        grouped[category] = [course];
+      }
+    }
+    
+    // Remove empty categories
+    grouped.removeWhere((key, value) => value.isEmpty);
+    
+    return grouped;
+  }
+
+  /// Group courses by language
+  Map<String, List<CourseEntity>> get coursesByLanguage {
+    final Map<String, List<CourseEntity>> grouped = {};
+    
+    for (final course in _courses) {
+      final language = course.language;
+      if (grouped.containsKey(language)) {
+        grouped[language]!.add(course);
+      } else {
+        grouped[language] = [course];
+      }
+    }
+    
+    return grouped;
+  }
+
+  /// Group courses by first tag (if available)
+  Map<String, List<CourseEntity>> get coursesByTopic {
+    final Map<String, List<CourseEntity>> grouped = {};
+    
+    for (final course in _courses) {
+      // Use first tag as topic, or "General" if no tags
+      final topic = course.tags.isNotEmpty ? course.tags.first : 'General';
+      if (grouped.containsKey(topic)) {
+        grouped[topic]!.add(course);
+      } else {
+        grouped[topic] = [course];
+      }
+    }
+    
+    return grouped;
+  }
+
+  /// Get all unique categories/levels from courses
+  List<String> get availableCategories {
+    return _courses.map((c) => c.level).toSet().toList();
+  }
+
+  /// Get all unique languages from courses  
+  List<String> get availableLanguages {
+    return _courses.map((c) => c.language).toSet().toList();
+  }
+
+  /// Get all unique topics (tags) from courses
+  List<String> get availableTopics {
+    final topics = <String>{};
+    for (final course in _courses) {
+      topics.addAll(course.tags);
+    }
+    return topics.toList();
+  }
+
   /// Load course detail with roadmap
   Future<void> loadCourseDetail(String courseId) async {
     _isLoadingDetail = true;

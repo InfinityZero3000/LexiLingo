@@ -6,7 +6,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_detail
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 
 /// Course List Screen
-/// Displays all available courses with filters and pagination
+/// Displays courses in horizontal scrolling sections grouped by category
 class CourseListScreen extends StatefulWidget {
   const CourseListScreen({Key? key}) : super(key: key);
 
@@ -76,15 +76,19 @@ class _CourseListScreenState extends State<CourseListScreen> {
             );
           }
 
+          // Group courses by category (level)
+          final groupedCourses = provider.coursesByCategory;
+          final categories = groupedCourses.keys.toList();
+
           return RefreshIndicator(
             onRefresh: () => provider.refreshCourses(),
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.courses.length + 
-                         (provider.isLoadingCourses ? 1 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              itemCount: categories.length +
+                  (provider.isLoadingCourses ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index == provider.courses.length) {
+                if (index == categories.length) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
@@ -93,10 +97,14 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   );
                 }
 
-                final course = provider.courses[index];
-                return _CourseCard(
-                  course: course,
-                  onTap: () => _navigateToCourseDetail(context, course.id),
+                final category = categories[index];
+                final courses = groupedCourses[category]!;
+
+                return _CategorySection(
+                  title: category,
+                  courses: courses,
+                  onCourseTap: (courseId) =>
+                      _navigateToCourseDetail(context, courseId),
                 );
               },
             ),
@@ -123,12 +131,130 @@ class _CourseListScreenState extends State<CourseListScreen> {
   }
 }
 
-/// Course Card Widget
-class _CourseCard extends StatelessWidget {
+/// Category Section Widget
+/// Displays a category title with horizontally scrolling course cards
+class _CategorySection extends StatelessWidget {
+  final String title;
+  final List<CourseEntity> courses;
+  final Function(String courseId) onCourseTap;
+
+  const _CategorySection({
+    Key? key,
+    required this.title,
+    required this.courses,
+    required this.onCourseTap,
+  }) : super(key: key);
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'beginner':
+        return Icons.school_outlined;
+      case 'intermediate':
+        return Icons.trending_up;
+      case 'advanced':
+        return Icons.emoji_events_outlined;
+      default:
+        return Icons.book_outlined;
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'beginner':
+        return Colors.green;
+      case 'intermediate':
+        return Colors.orange;
+      case 'advanced':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categoryColor = _getCategoryColor(title);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Category Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: categoryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _getCategoryIcon(title),
+                  color: categoryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Text(
+                      '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // TODO: Navigate to full category view
+                },
+                child: const Text('See All'),
+              ),
+            ],
+          ),
+        ),
+
+        // Horizontal Course List
+        SizedBox(
+          height: 280,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: courses.length,
+            itemBuilder: (context, index) {
+              final course = courses[index];
+              return _HorizontalCourseCard(
+                course: course,
+                onTap: () => onCourseTap(course.id),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+/// Horizontal Course Card Widget
+/// Compact card design for horizontal scrolling
+class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseCard({
+  const _HorizontalCourseCard({
     Key? key,
     required this.course,
     required this.onTap,
@@ -136,147 +262,173 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail
-            if (course.thumbnailUrl != null)
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
                 child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.network(
-                    course.thumbnailUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.school, size: 64),
-                      );
-                    },
-                  ),
+                  aspectRatio: 16 / 10,
+                  child: course.thumbnailUrl != null
+                      ? Image.network(
+                          course.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildPlaceholderImage();
+                          },
+                        )
+                      : _buildPlaceholderImage(),
                 ),
               ),
 
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    course.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Description
-                  if (course.description != null)
-                    Text(
-                      course.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Tags
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _InfoChip(
-                        icon: Icons.language,
-                        label: course.language,
+                      // Title
+                      Text(
+                        course.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      _InfoChip(
-                        icon: Icons.bar_chart,
-                        label: course.level,
+
+                      const SizedBox(height: 4),
+
+                      // Language chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          course.language,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color:
+                                Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
                       ),
-                      _InfoChip(
-                        icon: Icons.star,
-                        label: '${course.totalXp} XP',
+
+                      const Spacer(),
+
+                      // Stats row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 14,
+                            color: Colors.amber[700],
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${course.totalXp} XP',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.book_outlined,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${course.totalLessons}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                      _InfoChip(
-                        icon: Icons.access_time,
-                        label: '${course.estimatedDuration} min',
-                      ),
-                      _InfoChip(
-                        icon: Icons.book,
-                        label: '${course.totalLessons} lessons',
-                      ),
+
+                      // Progress or Enroll indicator
+                      const SizedBox(height: 8),
+                      if (course.isEnrolled == true) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (course.userProgress ?? 0) / 100,
+                            backgroundColor: Colors.grey[300],
+                            minHeight: 4,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${course.userProgress?.toStringAsFixed(0) ?? '0'}% Complete',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Start Learning',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Enrollment status
-                  if (course.isEnrolled == true) ...[
-                    LinearProgressIndicator(
-                      value: (course.userProgress ?? 0) / 100,
-                      backgroundColor: Colors.grey[300],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${course.userProgress?.toStringAsFixed(0) ?? '0'}% Complete',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(
-                      width: double.infinity,
-                      child: Chip(
-                        label: Text('Start Learning'),
-                        avatar: Icon(Icons.play_arrow, size: 18),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-/// Info Chip Widget
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _InfoChip({
-    Key? key,
-    required this.icon,
-    required this.label,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
+  Widget _buildPlaceholderImage() {
+    return Container(
+      color: Colors.grey[200],
+      child: Center(
+        child: Icon(
+          Icons.school,
+          size: 40,
+          color: Colors.grey[400],
+        ),
+      ),
     );
   }
 }
