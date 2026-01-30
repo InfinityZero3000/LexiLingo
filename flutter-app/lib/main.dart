@@ -25,6 +25,7 @@ import 'package:lexilingo_app/features/user/presentation/providers/user_provider
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
@@ -108,6 +109,7 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<SpeechRecognitionProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<TtsSettingsProvider>()..init()),
         ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()..loadStreak()),
         ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges()),
