@@ -72,7 +72,7 @@
 ### 🟠 Nhóm 2: Voice Learning Module (Ưu tiên: CAO - High Impact)
 
 #### 2.1 Voice Service Core
-- [ ] **2.1.1** Tạo folder structure `features/voice/`
+- [x] **2.1.1** Tạo folder structure `features/voice/` ✅ (30/01/2026)
   ```
   voice/
   ├── data/
@@ -101,32 +101,32 @@
   └── di/
       └── voice_di.dart
   ```
-- [ ] **2.1.2** Thêm dependencies: `record`, `just_audio`, `permission_handler`
-- [ ] **2.1.3** Implement `VoiceRemoteDataSource` gọi `/stt/transcribe` và `/tts/synthesize`
+- [x] **2.1.2** Thêm dependencies: `record`, `just_audio`, `permission_handler` ✅ (30/01/2026)
+- [x] **2.1.3** Implement `VoiceRemoteDataSource` gọi `/stt/transcribe` và `/tts/synthesize` ✅ (30/01/2026)
 
 #### 2.2 Speech-to-Text (STT)
-- [ ] **2.2.1** Tạo `TranscribeAudioUseCase`
-- [ ] **2.2.2** Handle microphone permissions (iOS/Android)
-- [ ] **2.2.3** Implement audio recording với `record` package
-- [ ] **2.2.4** Upload audio file lên API
-- [ ] **2.2.5** Parse transcription response
+- [x] **2.2.1** Tạo `TranscribeAudioUseCase` ✅ (30/01/2026)
+- [x] **2.2.2** Handle microphone permissions (iOS/Android) ✅ (30/01/2026)
+- [x] **2.2.3** Implement audio recording với `record` package ✅ (30/01/2026)
+- [x] **2.2.4** Upload audio file lên API ✅ (30/01/2026)
+- [x] **2.2.5** Parse transcription response ✅ (30/01/2026)
 - [ ] **2.2.6** Hiển thị realtime transcription text
 
 #### 2.3 Text-to-Speech (TTS)
-- [ ] **2.3.1** Tạo `SynthesizeSpeechUseCase`
+- [x] **2.3.1** Tạo `SynthesizeSpeechUseCase` ✅ (30/01/2026)
 - [ ] **2.3.2** Cache audio files locally
-- [ ] **2.3.3** Implement playback với `just_audio`
+- [x] **2.3.3** Implement playback với `just_audio` ✅ (30/01/2026)
 - [ ] **2.3.4** Add speed controls (0.5x, 1x, 1.5x)
 - [ ] **2.3.5** Tích hợp vào Vocabulary cards (tap to pronounce)
 
 #### 2.4 Pronunciation Practice Screen
-- [ ] **2.4.1** Tạo `VoicePracticeScreen` UI
-- [ ] **2.4.2** Hiển thị từ/câu cần đọc
-- [ ] **2.4.3** Record user pronunciation
-- [ ] **2.4.4** So sánh với native pronunciation
+- [x] **2.4.1** Tạo `VoicePracticeScreen` UI ✅ (30/01/2026)
+- [x] **2.4.2** Hiển thị từ/câu cần đọc ✅ (30/01/2026)
+- [x] **2.4.3** Record user pronunciation ✅ (30/01/2026)
+- [x] **2.4.4** So sánh với native pronunciation ✅ (30/01/2026)
 - [ ] **2.4.5** Tích hợp AI Orchestrator để đánh giá
-- [ ] **2.4.6** Hiển thị pronunciation score (0-100)
-- [ ] **2.4.7** Highlight lỗi phát âm cụ thể
+- [x] **2.4.6** Hiển thị pronunciation score (0-100) ✅ (30/01/2026)
+- [x] **2.4.7** Highlight lỗi phát âm cụ thể ✅ (30/01/2026)
 
 #### 2.5 Voice Chat Integration
 - [ ] **2.5.1** Add voice input button vào ChatPage
