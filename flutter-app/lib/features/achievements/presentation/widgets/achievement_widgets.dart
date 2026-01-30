@@ -9,20 +9,84 @@ import 'package:lexilingo_app/features/achievements/data/models/achievement_mode
 IconData _getBadgeIcon(String? badgeIcon) {
   if (badgeIcon == null) return Icons.emoji_events;
 
-  switch (badgeIcon) {
+  switch (badgeIcon.toLowerCase()) {
+    // Trophy/Medal icons
     case 'trophy':
       return Icons.emoji_events;
-    case 'star':
-      return Icons.star;
-    case 'diamond':
-      return Icons.diamond;
     case 'medal':
       return Icons.military_tech;
+    case 'crown':
+      return Icons.workspace_premium;
+    case 'award':
+      return Icons.emoji_events_outlined;
+      
+    // Star icons
+    case 'star':
+      return Icons.star;
+    case 'star_gold':
+      return Icons.star_rate;
+    case 'stars':
+      return Icons.auto_awesome;
+      
+    // Fire/Energy icons
     case 'fire':
       return Icons.local_fire_department;
     case 'bolt':
+    case 'lightning':
       return Icons.bolt;
+    case 'flash':
+      return Icons.flash_on;
+      
+    // Education icons
+    case 'book':
+      return Icons.menu_book;
+    case 'library':
+      return Icons.local_library;
+    case 'dictionary':
+      return Icons.book;
+    case 'school':
+      return Icons.school;
+    case 'pencil':
+      return Icons.edit;
+      
+    // Target/Check icons
+    case 'target':
+      return Icons.track_changes;
+    case 'check':
+    case 'check_circle':
+      return Icons.check_circle;
+    case 'verified':
+      return Icons.verified;
+      
+    // Gem/Diamond icons
+    case 'diamond':
+      return Icons.diamond;
+    case 'gem':
+      return Icons.diamond_outlined;
+      
+    // Voice icons
+    case 'mic':
+    case 'microphone':
+      return Icons.mic;
+    case 'record':
+      return Icons.fiber_manual_record;
+    case 'speaker':
+      return Icons.volume_up;
+      
+    // Progress icons
+    case 'flag':
+      return Icons.flag;
+    case 'rocket':
+      return Icons.rocket_launch;
+    case 'trending':
+      return Icons.trending_up;
+      
+    // Default fallback
     default:
+      // Check if it's an emoji (fallback to trophy)
+      if (badgeIcon.length <= 2 || badgeIcon.contains(RegExp(r'[\u{1F000}-\u{1FFFF}]', unicode: true))) {
+        return Icons.emoji_events;
+      }
       return Icons.emoji_events;
   }
 }
