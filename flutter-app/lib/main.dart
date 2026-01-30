@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lexilingo_app/firebase_options.dart';
+import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Already disabled
@@ -48,6 +50,11 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint('Firebase initialized successfully');
+    
+    // Initialize Firebase Cloud Messaging
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await FirebaseMessagingService.instance.initialize();
+    debugPrint('Firebase Messaging initialized successfully');
   } catch (e) {
     debugPrint('Warning: Firebase initialization failed: $e');
   }
