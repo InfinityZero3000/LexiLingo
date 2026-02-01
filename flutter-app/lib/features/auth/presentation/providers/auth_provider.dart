@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   UserEntity? _user;
   bool _isLoading = false;
   bool _isCheckingAuth = true;
+  bool _isJustLoggedIn = false;
   String? _errorMessage;
 
   AuthProvider({
@@ -33,7 +34,14 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   bool get isCheckingAuth => _isCheckingAuth;
+  bool get isJustLoggedIn => _isJustLoggedIn;
   String? get errorMessage => _errorMessage;
+
+  // Clear just logged in flag (call after welcome screen)
+  void clearJustLoggedIn() {
+    _isJustLoggedIn = false;
+    notifyListeners();
+  }
 
   // Check current user on app start
   Future<void> _checkCurrentUser() async {
@@ -83,16 +91,19 @@ class AuthProvider extends ChangeNotifier {
         (failure) {
           _errorMessage = _getFailureMessage(failure);
           _user = null;
+          _isJustLoggedIn = false;
         },
         (user) {
           _user = user;
           _errorMessage = null;
+          _isJustLoggedIn = true;  // Set flag for welcome screen
         },
       );
     } catch (e) {
       debugPrint("Google sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
       _user = null;
+      _isJustLoggedIn = false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -117,16 +128,19 @@ class AuthProvider extends ChangeNotifier {
         (failure) {
           _errorMessage = _getFailureMessage(failure);
           _user = null;
+          _isJustLoggedIn = false;
         },
         (user) {
           _user = user;
           _errorMessage = null;
+          _isJustLoggedIn = true;  // Set flag for welcome screen
         },
       );
     } catch (e) {
       debugPrint("Email sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
       _user = null;
+      _isJustLoggedIn = false;
     } finally {
       _isLoading = false;
       notifyListeners();

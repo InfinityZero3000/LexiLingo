@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_detail_entity.dart';
+import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
+import 'package:lexilingo_app/features/learning/presentation/screens/learning_roadmap_screen.dart';
 
 /// Course Detail Screen
 /// Shows course roadmap with units and lessons
@@ -194,6 +196,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        // View Full Roadmap Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.account_tree_outlined),
+                            label: const Text('View Full Roadmap'),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LearningRoadmapScreen(
+                                    courseId: course.id,
+                                    courseTitle: course.title,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                         const SizedBox(height: 16),
                       ],
 
@@ -250,6 +272,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     return _UnitCard(
                       unit: unit,
                       unitNumber: index + 1,
+                      courseId: course.id,
                     );
                   },
                   childCount: course.units.length,
@@ -316,11 +339,13 @@ class _StatChip extends StatelessWidget {
 class _UnitCard extends StatelessWidget {
   final UnitWithLessonsEntity unit;
   final int unitNumber;
+  final String courseId;
 
   const _UnitCard({
     Key? key,
     required this.unit,
     required this.unitNumber,
+    required this.courseId,
   }) : super(key: key);
 
   @override
@@ -350,7 +375,10 @@ class _UnitCard extends StatelessWidget {
               )
             : null,
         children: unit.lessons.map((lesson) {
-          return _LessonTile(lesson: lesson);
+          return _LessonTile(
+            lesson: lesson,
+            courseId: courseId,
+          );
         }).toList(),
       ),
     );
@@ -371,10 +399,12 @@ class _UnitCard extends StatelessWidget {
 /// Lesson Tile Widget
 class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
+  final String courseId;
 
   const _LessonTile({
     Key? key,
     required this.lesson,
+    required this.courseId,
   }) : super(key: key);
 
   @override
@@ -411,14 +441,19 @@ class _LessonTile extends StatelessWidget {
             const Icon(Icons.play_circle_outline, color: Colors.blue),
         ],
       ),
-      onTap: isLocked ? null : () {
-        // TODO: Navigate to lesson
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Opening lesson: ${lesson.title}'),
-          ),
-        );
-      },
+      onTap: isLocked
+          ? null
+          : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LearningSessionScreen(
+                    lessonId: lesson.id,
+                    courseId: courseId,
+                  ),
+                ),
+              );
+            },
     );
   }
 

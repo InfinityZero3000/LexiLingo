@@ -15,12 +15,15 @@ class ChatApiDataSource {
       'user_id': userId,
       if (title != null && title.isNotEmpty) 'title': title,
     };
-    final json = await apiClient.post('/api/v1/chat/sessions', body: payload);
-    return _mapSession(json['data'] ?? json);
+    final json = await apiClient.post('/chat/sessions', body: payload);
+    print('[DEBUG] createSession response: $json');
+    final sessionData = json['data'] ?? json;
+    print('[DEBUG] sessionData: $sessionData');
+    return _mapSession(sessionData);
   }
 
   Future<List<ChatSessionModel>> getSessions(String userId) async {
-    final json = await apiClient.get('/api/v1/chat/sessions/user/$userId');
+    final json = await apiClient.get('/chat/sessions/user/$userId');
     final sessions = (json['data'] ?? json['sessions'] ?? json) as dynamic;
     if (sessions is List) {
       return sessions.map((e) => _mapSession(Map<String, dynamic>.from(e))).toList();
@@ -29,7 +32,12 @@ class ChatApiDataSource {
   }
 
   Future<List<ChatMessageModel>> getMessages(String sessionId) async {
-    final json = await apiClient.get('/api/v1/chat/sessions/$sessionId/messages');
+    // Guard against empty session ID
+    if (sessionId.isEmpty) {
+      print('[WARN] getMessages called with empty sessionId');
+      return [];
+    }
+    final json = await apiClient.get('/chat/sessions/$sessionId/messages');
     final messages = (json['data'] ?? json['messages'] ?? json) as dynamic;
     if (messages is List) {
       return messages.map((e) => _mapMessage(Map<String, dynamic>.from(e))).toList();
@@ -43,12 +51,16 @@ class ChatApiDataSource {
     required String sessionId,
     required String message,
   }) async {
+    // Guard against empty session ID
+    if (sessionId.isEmpty) {
+      throw ServerException('Cannot send message: session ID is empty');
+    }
     final payload = {
       'user_id': userId,
       'session_id': sessionId,
       'message': message,
     };
-    final json = await apiClient.post('/api/v1/chat/messages', body: payload);
+    final json = await apiClient.post('/chat/messages', body: payload);
     // Backend may return {data: {ai_response: '...'}} or {ai_response: '...'}
     final data = json['data'] ?? json;
     final response = data['ai_response'] ?? data['response'] ?? data['message'] ?? data['reply'];
@@ -59,13 +71,18 @@ class ChatApiDataSource {
   }
 
   ChatSessionModel _mapSession(Map<String, dynamic> json) {
-    // Accept both snake_case and camelCase
+    // Accept both snake_case and camelCase, including session_id from AI service
+    final id = json['id']?.toString() ?? 
+        json['session_id']?.toString() ?? 
+        json['sessionId']?.toString() ?? 
+        json['_id']?.toString() ?? '';
+    print('[DEBUG] _mapSession: json keys=${json.keys.toList()}, extracted id=$id');
     return ChatSessionModel(
-      id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+      id: id,
       userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Chat Session',
       createdAt: _parseDate(json['created_at'] ?? json['createdAt']),
-      lastMessageAt: _tryParseDate(json['last_message_at'] ?? json['lastMessageAt']),
+      lastMessageAt: _tryParseDate(json['last_message_at'] ?? json['lastMessageAt'] ?? json['last_activity']),
       messages: null,
     );
   }

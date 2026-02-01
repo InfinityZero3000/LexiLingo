@@ -224,23 +224,44 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   Widget _buildAvatar({required bool isAI}) {
-    return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isAI ? AppColors.accentYellow : AppColors.primary,
-        image: DecorationImage(
-          image: NetworkImage(
-            isAI
-                ? "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E"
-                : "https://lh3.googleusercontent.com/aida-public/AB6AXuAqMp7eP7f5P4Ys18yc-E2dnnaw5O7k3GdkVfBbgduka0-lSnnuafKYdSIhNa0ucEcwR8FYlqi4tGeY6zlKkeQfbHxK81S6DL8GCqzbfDuQuzCXfNDtFo2GQSlFA6shionhvtBJWYsfzD5pSUIGzGrkD-_RAWA4z9gv9LMJagNna4AXQLzAgzuR1rjoPZsJ9bLTf8lnpt2zqy0ci4DNsE-yENDdWJHqLksWIGdA1M8dWXyxE1WvgvCcG6q3vxMZsBhdKeNFw00UmXOK",
+    if (isAI) {
+      // AI Avatar with network image
+      return Container(
+        width: 32,
+        height: 32,
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.accentYellow,
+          image: const DecorationImage(
+            image: NetworkImage(
+              "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E",
+            ),
+            fit: BoxFit.cover,
           ),
-          fit: BoxFit.cover,
         ),
-      ),
-    );
+      );
+    } else {
+      // User Avatar - default icon like profile page
+      return Container(
+        width: 32,
+        height: 32,
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.primary.withValues(alpha: 0.15),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: const Icon(
+          Icons.person,
+          size: 18,
+          color: AppColors.primary,
+        ),
+      );
+    }
   }
 
   Widget _buildActionButton({

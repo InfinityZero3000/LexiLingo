@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
+import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/entities/user.dart';
 import 'package:lexilingo_app/features/user/domain/entities/daily_goal.dart';
 
@@ -8,15 +9,22 @@ import 'package:lexilingo_app/features/user/domain/entities/daily_goal.dart';
 /// Manages home screen state including featured courses and user dashboard data
 class HomeProvider with ChangeNotifier {
   final GetCoursesUseCase getCoursesUseCase;
+  final GetEnrolledCoursesUseCase getEnrolledCoursesUseCase;
 
   HomeProvider({
     required this.getCoursesUseCase,
+    required this.getEnrolledCoursesUseCase,
   });
 
   // State: Featured Courses
   List<CourseEntity> _featuredCourses = [];
   bool _isLoadingCourses = false;
   String? _coursesError;
+
+  // State: Enrolled Courses
+  List<CourseEntity> _enrolledCourses = [];
+  bool _isLoadingEnrolled = false;
+  String? _enrolledError;
 
   // State: User Dashboard
   User? _currentUser;
@@ -26,10 +34,12 @@ class HomeProvider with ChangeNotifier {
 
   // Getters
   List<CourseEntity> get featuredCourses => _featuredCourses;
-  List<CourseEntity> get enrolledCourses => []; // TODO: Implement enrolled courses
+  List<CourseEntity> get enrolledCourses => _enrolledCourses;
   bool get isLoadingCourses => _isLoadingCourses;
+  bool get isLoadingEnrolled => _isLoadingEnrolled;
   String? get coursesError => _coursesError;
-  String? get errorMessage => _coursesError ?? _dashboardError;
+  String? get enrolledError => _enrolledError;
+  String? get errorMessage => _coursesError ?? _dashboardError ?? _enrolledError;
   
   User? get currentUser => _currentUser;
   String get userName => _currentUser?.name ?? _currentUser?.email ?? 'User';
@@ -70,6 +80,33 @@ class HomeProvider with ChangeNotifier {
     );
 
     _isLoadingCourses = false;
+    notifyListeners();
+  }
+
+  /// Load enrolled courses for "Continue Learning" section
+  Future<void> loadEnrolledCourses() async {
+    _isLoadingEnrolled = true;
+    _enrolledError = null;
+    notifyListeners();
+
+    final result = await getEnrolledCoursesUseCase(
+      page: 1,
+      pageSize: 10,
+    );
+
+    result.fold(
+      (failure) {
+        _enrolledError = failure.message;
+        _enrolledCourses = [];
+      },
+      (data) {
+        final (courses, _) = data;
+        _enrolledCourses = courses;
+        _enrolledError = null;
+      },
+    );
+
+    _isLoadingEnrolled = false;
     notifyListeners();
   }
 
@@ -117,6 +154,7 @@ class HomeProvider with ChangeNotifier {
   Future<void> refreshData() async {
     await Future.wait([
       loadFeaturedCourses(),
+      loadEnrolledCourses(),
       if (_currentUser != null) loadDashboard(_currentUser!),
     ]);
   }
@@ -125,6 +163,7 @@ class HomeProvider with ChangeNotifier {
   Future<void> loadHomeData() async {
     await Future.wait([
       loadFeaturedCourses(),
+      loadEnrolledCourses(),
     ]);
   }
 

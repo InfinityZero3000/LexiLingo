@@ -48,7 +48,7 @@ class AuthBackendDataSource {
     required String email,
     required String password,
   }) async {
-    print('🔐 AuthBackendDataSource: Starting login for $email');
+    print('[AUTH] AuthBackendDataSource: Starting login for $email');
     
     final request = LoginRequest(
       email: email,
@@ -61,17 +61,17 @@ class AuthBackendDataSource {
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
-    print('🔐 AuthBackendDataSource: Login response received');
+    print('[AUTH] AuthBackendDataSource: Login response received');
     final loginResponse = LoginResponse.fromJson(envelope.data);
-    print('🔐 AuthBackendDataSource: Token parsed, length: ${loginResponse.tokens.accessToken.length}');
+    print('[AUTH] AuthBackendDataSource: Token parsed, length: ${loginResponse.tokens.accessToken.length}');
     
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
-    print('🔐 AuthBackendDataSource: Tokens saved, now registering device...');
+    print('[AUTH] AuthBackendDataSource: Tokens saved, now registering device...');
     
     // Register device with FCM token
     await _registerDevice();
-    print('🔐 AuthBackendDataSource: Login complete');
+    print('[AUTH] AuthBackendDataSource: Login complete');
 
     return loginResponse;
   }
@@ -127,12 +127,12 @@ class AuthBackendDataSource {
   /// Get current user profile
   /// GET /users/me
   Future<UserModel> getCurrentUser() async {
-    print('👤 AuthBackendDataSource: Getting current user...');
+    print('[USER] AuthBackendDataSource: Getting current user...');
     final envelope = await apiClient.getEnvelope<Map<String, dynamic>>(
       '/users/me',
       fromJson: (data) => data as Map<String, dynamic>,
     );
-    print('👤 AuthBackendDataSource: User received: ${envelope.data['email']}');
+    print('[USER] AuthBackendDataSource: User received: ${envelope.data['email']}');
 
     return UserModel.fromJson(envelope.data);
   }

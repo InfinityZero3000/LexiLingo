@@ -6,6 +6,9 @@ import 'package:lexilingo_app/features/course/domain/repositories/course_reposit
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_course_detail_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/enroll_in_course_usecase.dart';
+import 'package:lexilingo_app/features/course/domain/usecases/get_categories_usecase.dart';
+import 'package:lexilingo_app/features/course/domain/usecases/get_courses_by_category_usecase.dart';
+import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 
 /// Register Course Module
@@ -25,6 +28,9 @@ void registerCourseModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => GetCoursesUseCase(sl()));
   sl.registerLazySingleton(() => GetCourseDetailUseCase(sl()));
   sl.registerLazySingleton(() => EnrollInCourseUseCase(sl()));
+  sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
+  sl.registerLazySingleton(() => GetCoursesByCategoryUseCase(sl()));
+  sl.registerLazySingleton(() => GetEnrolledCoursesUseCase(sl()));
 
   // Providers
   sl.registerFactory(
@@ -32,6 +38,9 @@ void registerCourseModule({required bool skipDatabase}) {
       getCoursesUseCase: sl(),
       getCourseDetailUseCase: sl(),
       enrollInCourseUseCase: sl(),
+      getCategoriesUseCase: sl(),
+      getCoursesByCategoryUseCase: sl(),
+      getEnrolledCoursesUseCase: sl(),
     ),
   );
 }
