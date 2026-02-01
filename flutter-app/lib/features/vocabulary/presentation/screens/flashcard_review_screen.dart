@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard_widget.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_quality_buttons.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/session_header.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
+import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 
 /// Flashcard Review Screen (Presentation Layer)
 /// Interactive flashcard review with animations
@@ -100,21 +102,17 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
           ),
         ),
         centerTitle: true,
+        actions: const [
+          // TTS Speed Control Button
+          TtsSpeedButton(),
+          SizedBox(width: 8),
+        ],
       ),
       body: Consumer<FlashcardProvider>(
         builder: (context, provider, child) {
           // Loading state
           if (provider.isLoading && !provider.hasSession) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading vocabulary...'),
-                ],
-              ),
-            );
+            return const LoadingScreen(message: 'Loading vocabulary...');
           }
 
           // Error state

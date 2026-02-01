@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
@@ -56,16 +57,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Loading roadmap...'),
-        ],
-      ),
-    );
+    return const LoadingScreen(message: 'Loading roadmap...');
   }
 
   Widget _buildErrorState(String error, LearningProvider provider) {

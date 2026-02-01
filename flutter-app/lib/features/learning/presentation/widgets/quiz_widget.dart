@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
+import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -87,13 +88,27 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    widget.exercise.question,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.exercise.question,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // TTS Speak Button for question
+                      SpeakIconButton(
+                        text: widget.exercise.question,
+                        size: 24,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ],
                   ),
                   
                   // Show hint if available

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 
 /// Session Complete Screen (Presentation Layer)
 /// Shows review session results with celebration animation
@@ -30,6 +34,11 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
     Future.delayed(const Duration(milliseconds: 500), () {
       _confettiController.play();
     });
+    
+    // Update streak after review session complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StreakProvider>().updateStreak();
+    });
   }
 
   @override
@@ -48,7 +57,18 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Confetti animation
+          // Lottie confetti animation (background)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Lottie.asset(
+                'animation/Confetti.json',
+                fit: BoxFit.cover,
+                repeat: false,
+              ),
+            ),
+          ),
+          
+          // Confetti widget (additional particles)
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -83,10 +103,11 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                       color: AppColors.greenSuccess.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      size: 80,
-                      color: AppColors.greenSuccess,
+                    child: Center(
+                      child: AnimatedCheckmark(
+                        color: AppColors.greenSuccess,
+                        size: 70,
+                      ),
                     ),
                   ),
 
@@ -202,13 +223,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 
   String _getMotivationalMessage(double accuracy) {
     if (accuracy >= 90) {
-      return 'Excellent work! You\'re mastering these words! 🎉';
+      return 'Excellent work! You\'re mastering these words!';
     } else if (accuracy >= 70) {
-      return 'Great job! Keep up the good work! 👏';
+      return 'Great job! Keep up the good work!';
     } else if (accuracy >= 50) {
-      return 'Good effort! Practice makes perfect! 💪';
+      return 'Good effort! Practice makes perfect!';
     } else {
-      return 'Keep practicing! You\'re making progress! 🌟';
+      return 'Keep practicing! You\'re making progress!';
     }
   }
 

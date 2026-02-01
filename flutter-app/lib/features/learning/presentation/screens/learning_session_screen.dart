@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
 import '../widgets/lesson_content_widget.dart';
+import '../../../voice/presentation/widgets/tts_speed_selector.dart';
+import '../../../progress/presentation/providers/streak_provider.dart';
 
 /// Learning Session Screen
 /// Handles the lesson learning flow with interactive exercises
@@ -53,6 +57,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             },
           ),
           actions: [
+            // TTS Speed Control Button
+            const TtsSpeedButton(),
             Consumer<LearningProvider>(
               builder: (context, provider, child) {
                 if (provider.currentLesson == null) return const SizedBox.shrink();
@@ -75,7 +81,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         body: Consumer<LearningProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const LoadingScreen(message: 'Loading lesson...');
             }
 
             if (provider.error != null) {
@@ -216,109 +222,204 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final total = provider.totalExercises;
     final percentage = (score / total * 100).toInt();
     
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Trophy icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              percentage >= 80 ? Icons.emoji_events : Icons.check_circle,
-              size: 80,
-              color: percentage >= 80 ? Colors.amber : Colors.green,
+    // Update streak when lesson is completed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StreakProvider>().updateStreak();
+    });
+    
+    return Stack(
+      children: [
+        // Confetti animation
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Lottie.asset(
+              'animation/Confetti.json',
+              fit: BoxFit.cover,
+              repeat: false,
             ),
           ),
-          
-          const SizedBox(height: 24),
-          
-          // Title
-          Text(
-            percentage >= 80 ? 'Excellent!' : 'Well Done!',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+        ),
+        
+        // Content
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Trophy icon with glow effect
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: child,
+                  );
+                },
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: (percentage >= 80 ? Colors.amber : Colors.green).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (percentage >= 80 ? Colors.amber : Colors.green).withOpacity(0.3),
+                            blurRadius: 30,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (percentage >= 80)
+                      const LottieAnimationWidget(
+                        animation: LottieAnimation.starBurst,
+                        width: 120,
+                        height: 120,
+                        repeat: false,
+                      )
+                    else
+                      AnimatedCheckmark(
+                        color: Colors.green,
+                        size: 80,
+                      ),
+                  ],
                 ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Score
-          Text(
-            'You scored $score/$total ($percentage%)',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // XP earned
-          if (provider.xpEarned > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.stars, color: Colors.amber, size: 28),
-                  const SizedBox(width: 8),
-                  Text(
-                    '+${provider.xpEarned} XP',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+              
+              const SizedBox(height: 32),
+              
+              // Animated Title
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Text(
+                      percentage >= 80 ? '🎉 Excellent! 🎉' : '✨ Well Done! ✨',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'You scored $score/$total ($percentage%)',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // XP earned with animation
+              if (provider.xpEarned > 0)
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.bounceOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade400, Colors.orange.shade400],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.4),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.stars, color: Colors.white, size: 28),
+                        const SizedBox(width: 8),
+                        Text(
+                          '+${provider.xpEarned} XP',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+              
+              const SizedBox(height: 48),
+              
+              // Action buttons
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
-          
-          const SizedBox(height: 48),
-          
-          // Action buttons
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.green,
-              ),
-              child: const Text(
-                'Continue',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
+              
+              const SizedBox(height: 12),
+              
+              if (percentage < 80)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      provider.restartLesson();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Practice Again',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          
-          const SizedBox(height: 12),
-          
-          if (percentage < 80)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  provider.restartLesson();
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'Practice Again',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
