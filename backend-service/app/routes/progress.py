@@ -1,10 +1,15 @@
 """
 Progress Routes
 API endpoints for tracking user progress
+
+Following agent-skills/language-learning-patterns:
+- progress-learning-streaks: Robust streak system with protections (3-5x engagement)
+- gamification-achievement-badges: Meaningful achievements (25-40% engagement boost)
 """
-from datetime import date, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, and_
+from datetime import date, datetime, timedelta
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,7 +25,7 @@ from app.schemas.progress import (
 )
 from app.schemas.response import ApiResponse
 from app.models.user import User
-from app.models.progress import Streak
+from app.models.progress import Streak, DailyActivity
 from app.services import check_achievements_for_user
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
