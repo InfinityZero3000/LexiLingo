@@ -1,16 +1,25 @@
-// Firebase packages - temporarily disabled until Firebase is configured
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
-/// Stub FirestoreService when Firebase is not configured
-/// TODO: Enable Firebase imports when firebase_options.dart is generated
+/// FirestoreService - Centralized Firestore access with error handling
+/// Provides singleton access to Firestore collections and operations
 class FirestoreService {
   static FirestoreService? _instance;
-  static const bool _initialized = false;
+  static bool _initialized = false;
+  
+  late final FirebaseFirestore _firestore;
   
   FirestoreService._init() {
-    print('⚠️ FirestoreService: Firebase not configured - using stub');
+    try {
+      _firestore = FirebaseFirestore.instance;
+      _initialized = true;
+      debugPrint('[OK] FirestoreService: Initialized successfully');
+    } catch (e) {
+      debugPrint('[ERROR] FirestoreService: Failed to initialize: $e');
+      _initialized = false;
+    }
   }
   
   static FirestoreService get instance {
@@ -21,50 +30,96 @@ class FirestoreService {
   static bool get isInitialized => _initialized;
   
   /// Check if Firebase/Firestore is available for use
-  bool get isAvailable => false;
+  bool get isAvailable => _initialized && Firebase.apps.isNotEmpty;
 
-  // Get current user ID - returns null when Firebase not available
-  String? get currentUserId => null;
+  // Get current user ID from Firebase Auth
+  String? get currentUserId => firebase_auth.FirebaseAuth.instance.currentUser?.uid;
 
-  // Check connection - always false when Firebase not available
-  Future<bool> checkConnection() async => false;
+  // Check Firestore connection by attempting a simple read
+  Future<bool> checkConnection() async {
+    if (!isAvailable) return false;
+    try {
+      await _firestore.collection('_healthcheck').doc('ping').get();
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService: Connection check failed: $e');
+      return false;
+    }
+  }
 
-  // Stub methods that return null - these are only called when Firebase is available
-  // but we need them to compile. At runtime, code should check isAvailable first.
+  /// Get Firestore instance
+  FirebaseFirestore get firestore => _firestore;
+
+  // ========== Collection References ==========
+
+  /// Users collection
+  CollectionReference<Map<String, dynamic>> get usersCollection => 
+      _firestore.collection('users');
   
-  /// Get user document reference - returns null (stub)
-  dynamic getUserDocument(String? userId) => null;
+  /// Courses collection
+  CollectionReference<Map<String, dynamic>> get coursesCollection => 
+      _firestore.collection('courses');
   
-  /// Get user chat sessions collection - returns null (stub)
-  dynamic getUserChatSessions(String? userId) => null;
+  /// Leaderboard collection
+  CollectionReference<Map<String, dynamic>> get leaderboardCollection => 
+      _firestore.collection('leaderboard');
+
+  // ========== User Document & Subcollections ==========
+
+  /// Get user document reference
+  DocumentReference<Map<String, dynamic>>? getUserDocument(String? userId) {
+    final uid = userId ?? currentUserId;
+    if (uid == null) return null;
+    return usersCollection.doc(uid);
+  }
   
-  /// Get user enrollments collection - returns null (stub)
-  dynamic getUserEnrollments(String? userId) => null;
+  /// Get user chat sessions subcollection
+  CollectionReference<Map<String, dynamic>>? getUserChatSessions(String? userId) {
+    final userDoc = getUserDocument(userId);
+    if (userDoc == null) return null;
+    return userDoc.collection('chatSessions');
+  }
   
-  /// Get user achievements collection - returns null (stub)
-  dynamic getUserAchievements(String? userId) => null;
+  /// Get user enrollments subcollection
+  CollectionReference<Map<String, dynamic>>? getUserEnrollments(String? userId) {
+    final userDoc = getUserDocument(userId);
+    if (userDoc == null) return null;
+    return userDoc.collection('enrollments');
+  }
   
-  /// Get firestore instance - returns null (stub)
-  dynamic get firestore => null;
+  /// Get user achievements subcollection
+  CollectionReference<Map<String, dynamic>>? getUserAchievements(String? userId) {
+    final userDoc = getUserDocument(userId);
+    if (userDoc == null) return null;
+    return userDoc.collection('achievements');
+  }
+
+  // ========== Batch & Transaction Operations ==========
+
+  /// Create a new write batch
+  WriteBatch batch() => _firestore.batch();
   
-  /// Get users collection - returns null (stub)
-  dynamic get usersCollection => null;
-  
-  /// Get courses collection - returns null (stub)
-  dynamic get coursesCollection => null;
-  
-  /// Get leaderboard collection - returns null (stub)
-  dynamic get leaderboardCollection => null;
-  
-  /// Create batch - returns null (stub)
-  dynamic batch() => null;
-  
-  /// Run transaction - returns null (stub)
-  Future<T>? runTransaction<T>(
-    dynamic transactionHandler, {
+  /// Run a transaction
+  Future<T> runTransaction<T>(
+    TransactionHandler<T> transactionHandler, {
     Duration timeout = const Duration(seconds: 30),
-  }) => null;
-  
-  /// Enable persistence - no-op (stub)
-  Future<void> enablePersistence() async {}
+  }) {
+    return _firestore.runTransaction(transactionHandler, timeout: timeout);
+  }
+
+  // ========== Persistence Settings ==========
+
+  /// Enable offline persistence (call early in app startup)
+  Future<void> enablePersistence() async {
+    if (!isAvailable) return;
+    try {
+      _firestore.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+      debugPrint('FirestoreService: Offline persistence enabled');
+    } catch (e) {
+      debugPrint('FirestoreService: Could not enable persistence: $e');
+    }
+  }
 }

@@ -9,6 +9,8 @@ class AppColors {
   static const Color textGrey = Color(0xFF617589);
   static const Color accentYellow = Color(0xFFFFD644);
   static const Color greenSuccess = Color(0xFF078838);
+  static const Color grey200 = Color(0xFFEEEEEE);
+  static const Color grey300 = Color(0xFFE0E0E0);
 }
 
 class AppTheme {

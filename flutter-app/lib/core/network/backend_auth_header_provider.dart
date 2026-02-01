@@ -10,14 +10,14 @@ class BackendAuthHeaderProvider {
     try {
       final tokens = await tokenStorage.getTokens();
       if (tokens == null || tokens.accessToken.isEmpty) {
-        print('⚠️ BackendAuthHeaderProvider: No tokens available');
+        print('[WARN] BackendAuthHeaderProvider: No tokens available');
         return const {};
       }
 
-      print('🔑 BackendAuthHeaderProvider: Token available (length: ${tokens.accessToken.length})');
+      print('[DEBUG] BackendAuthHeaderProvider: Token available (length: ${tokens.accessToken.length})');
       return {'Authorization': 'Bearer ${tokens.accessToken}'};
     } catch (e) {
-      print('❌ BackendAuthHeaderProvider: Error getting tokens: $e');
+      print('[ERROR] BackendAuthHeaderProvider: Error getting tokens: $e');
       return const {};
     }
   }

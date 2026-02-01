@@ -1,13 +1,19 @@
 import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/features/achievements/di/achievement_di.dart';
 import 'package:lexilingo_app/features/auth/di/auth_di.dart';
 import 'package:lexilingo_app/features/chat/di/chat_di.dart';
 import 'package:lexilingo_app/features/course/di/course_di.dart';
 import 'package:lexilingo_app/features/home/di/home_di.dart';
 import 'package:lexilingo_app/features/learning/di/learning_di.dart';
+import 'package:lexilingo_app/features/level/di/level_di.dart';
+import 'package:lexilingo_app/features/notifications/di/notification_di.dart';
+import 'package:lexilingo_app/features/profile/di/profile_di.dart';
 import 'package:lexilingo_app/features/progress/di/progress_di.dart';
 import 'package:lexilingo_app/features/user/di/user_di.dart';
 import 'package:lexilingo_app/features/vocabulary/di/vocab_di.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart';
+import 'package:lexilingo_app/features/voice/di/voice_di.dart';
 
 export 'service_locator.dart';
 
@@ -24,5 +30,10 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerProgressModule();
   registerUserModule(skipDatabase: skipDatabase);
   registerHomeModule();
+  registerProfileModule();      // Profile stats system
+  registerAchievementModule();  // Achievement/Badge system
+  registerNotificationModule(); // Notification system
+  registerLevelModule();        // Level/XP system
+  initVoiceDependencies(sl);
 }
 
