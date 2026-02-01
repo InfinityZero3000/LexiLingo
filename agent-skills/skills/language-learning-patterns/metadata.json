@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "LexiLingo Team",
+  "date": "February 2026",
+  "abstract": "Best practices for building effective language learning applications, covering spaced repetition, content generation, progress tracking, adaptive learning, pronunciation analysis, and gamification patterns. Designed for AI agents building educational technology.",
+  "references": [
+    "https://www.supermemo.com/en/archives1990-2015/english/ol/sm2",
+    "https://www.coe.int/en/web/common-european-framework-reference-languages",
+    "https://blog.duolingo.com/research/",
+    "https://faqs.ankiweb.net/what-spaced-repetition-algorithm.html"
+  ]
+}
