@@ -1,8 +1,8 @@
 
-# LexiLingo AI Architecture v2.0
+# LexiLingo AI Architecture v4.0 - LangGraph + GraphCAG
 
 > **Document**: Kiến trúc hệ thống AI cho ứng dụng học tiếng Anh  
-> **Version**: 2.0 (Optimized)  
+> **Version**: 4.0 (LangGraph + GraphCAG Hybrid)  
 > **Last Updated**: January 2026
 
 ---
@@ -26,12 +26,28 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DESIGN PRINCIPLES                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  ✓ Hybrid Models: Qwen (English) + LLaMA3 (Vietnamese)          │
-│  ✓ Unified Adapter: 1 adapter xử lý 4 tasks (giảm latency 75%)  │
-│  ✓ Lazy Loading: LLaMA3-VI chỉ load khi cần giải thích VI       │
-│  ✓ Parallel Processing: Pronunciation analysis chạy song song   │
-│  ✓ Caching: Redis cho learner profiles + common responses       │
-│  ✓ Fallback: Error handling với graceful degradation            │
+│                                                                 │
+│  LAYER 1: LangGraph (Orchestration + Observer)                  │
+│  ─────────────────────────────────────────────                  │
+│  ✓ StateGraph: Typed state machine for conversation flow        │
+│  ✓ Observer: Track errors → Update KG → Queue background jobs   │
+│  ✓ Checkpointing: Resumable sessions, persistence               │
+│  ✓ Async Background: Exercise generation without blocking       │
+│                                                                 │
+│  LAYER 2: GraphCAG (Core AI Pipeline)                           │
+│  ─────────────────────────────────────                          │
+│  ✓ KG (KuzuDB): Concept expansion, mastery tracking             │
+│  ✓ CAG (Redis): Cache-Augmented Generation, response patterns   │
+│  ✓ Rule-first: Grammar check rule-based, LLM as fallback        │
+│  ✓ Ultra-low latency: <10ms cache hit, <180ms cache miss        │
+│                                                                 │
+│  LAYER 3: AI Models                                             │
+│  ──────────────────                                             │
+│  ✓ Qwen3-1.7B: English NLP (grammar, dialogue, analysis)        │
+│  ✓ LLaMA3-3B: Vietnamese explanations (lazy loaded)             │
+│  ✓ HuBERT: Pronunciation analysis (lazy loaded)                 │
+│  ✓ Piper: Text-to-Speech                                        │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -39,14 +55,15 @@
 
 | Component | Technology | Size | Latency |
 |-----------|------------|------|---------|
+| **Orchestration** | **LangGraph** | **-** | **<5ms** |
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
-| NLP (English) | Qwen2.5-1.5B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
-| NLP (Vietnamese) | LLaMA3-8B-VI (lazy) | 8GB | 200ms |
-| Knowledge Graph | NetworkX / KuzuDB | <50MB | <5ms |
-| Pronunciation | HuBERT-large | 960MB | 100-200ms |
+| NLP (English) | **Qwen3-1.7B** + Unified LoRA | 1.7GB + 80MB | 100-150ms |
+| NLP (Vietnamese) | **LLaMA3-3B** (Q4, lazy) | 4GB | 200-500ms |
+| Knowledge Graph | KuzuDB | <50MB | <5ms |
+| Pronunciation | HuBERT-large (lazy) | 2GB | 100-200ms |
 | TTS | Piper VITS | 30-60MB | 100-300ms |
-| Cache | Redis | - | <5ms |
+| Cache (CAG) | Redis | - | <5ms |
 | **Logging DB** | **MongoDB** | **-** | **<10ms** |
 
 ---
@@ -132,150 +149,146 @@
         │ Context Vector + Learner Profile
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR (CORE ENGINE)                    │
+│         LANGGRAPH + GRAPHCAG HYBRID ARCHITECTURE                 │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Central Coordinator: Điều phối toàn bộ AI pipeline              │
-│                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 1: Task Analysis                                    │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  Input: User text + context + learner profile              │  │
+│  │            LANGGRAPH LAYER (Orchestration)                 │  │
+│  ├────────────────────────────────────────────────────────────┤  │
 │  │                                                            │  │
-│  │  Analysis:                                                 │  │
-│  │  • Detect task type: fluency/grammar/vocab/dialogue        │  │
-│  │  • Assess complexity: simple/medium/complex                │  │
-│  │  • Check learner level: A2/B1/B2                           │  │
-│  │  • Identify required components                            │  │
+│  │  StateGraph: Typed state machine for conversation flow     │  │
 │  │                                                            │  │
-│  │  Output: Execution plan                                    │  │
-│  │    {                                                       │  │
-│  │      "primary_tasks": ["grammar", "fluency"],              │  │
-│  │      "parallel_tasks": ["pronunciation"],                  │  │
-│  │      "need_vietnamese": false,                             │  │
-│  │      "strategy": "socratic_questioning"                    │  │
-│  │    }                                                       │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 2: Resource Allocation                              │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  • Check GPU/CPU availability                              │  │
-│  │  • Load required models (lazy loading)                     │  │
-│  │  • Allocate memory budgets                                 │  │
-│  │  • Setup parallel executors                                │  │
+│  │  Responsibilities:                                         │  │
+│  │  • Track conversation state across turns                   │  │
+│  │  • Route to appropriate pipeline nodes                     │  │
+│  │  • Trigger Observer for error tracking (async)             │  │
+│  │  • Enable checkpointing for session persistence            │  │
 │  │                                                            │  │
-│  │  Resource Manager:                                         │  │
+│  │  Observer Pattern (async, non-blocking):                   │  │
 │  │  ┌──────────────────────────────────────────────────────┐  │  │
-│  │  │ Qwen Base: Always loaded (1.6GB)                     │  │  │
-│  │  │ Unified Adapter: Loaded on-demand (80MB)             │  │  │
-│  │  │ LLaMA3-VI: Lazy load if needed (8GB)                 │  │  │
-│  │  │ HuBERT: Load for voice input only (2GB)              │  │  │
+│  │  │ 1. Qwen detects errors (verb_tense, articles, etc)   │  │  │
+│  │  │ 2. Observer logs errors to KG (update mastery)       │  │  │
+│  │  │ 3. Queue background jobs for CAG exercise gen        │  │  │
+│  │  │ 4. Next session: personalized exercises ready        │  │  │
 │  │  └──────────────────────────────────────────────────────┘  │  │
+│  │                                                            │  │
 │  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
+│                              │                                   │
+│                              ▼                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 3: Execution Coordination                           │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  Sequential Tasks:                                         │  │
-│  │  1. Qwen Unified Adapter → Comprehensive analysis          │  │
-│  │    Knowledge Graph → Query related concepts (Graph RAG)    │  │
-│  │  •  - Fluency score                                        │  │
-│  │     - Grammar correction                                   │  │
-│  │     - Vocabulary level                                     │  │
-│  │     - Tutor response                                       │  │
+│  │            GRAPHCAG LAYER (Core AI Pipeline)               │  │
+│  ├────────────────────────────────────────────────────────────┤  │
 │  │                                                            │  │
-│  │  Parallel Tasks (async):                                   │  │
-│  │  • HuBERT → Pronunciation analysis (if voice input)        │  │
-│  │  • Cache lookup → Check for similar responses              │  │
-│  │  • Redis update → Save learner progress                    │  │
+│  │  GraphCAG = KG + Cache-Augmented Generation                │  │
+│  │  Ultra-low latency (<50ms) for real-time tutoring          │  │
 │  │                                                            │  │
-│  │  Conditional Tasks:                                        │  │
-│  │  • IF confidence < 0.8 OR level == "A2":                   │  │
-│  │    → Load LLaMA3-VI for Vietnamese explanation             │  │
+│  │  Core Principle:                                           │  │
+│  │  • Pre-cache KG knowledge into LLM KV Cache                │  │
+│  │  • Avoid retrieval on every query → reduce latency         │  │
+│  │  • Rule-first, LLM-fallback → predictable performance      │  │
 │  │                                                            │  │
-│  │  Execution Flow:                                           │  │
-│  │  ┌─────────────┐                                           │  │
-│  │  │   Start     │                                           │  │
-│  │  └──────┬──────┘                                           │  │
-│  │         ▼                                                  │  │
-│  │  ┌─────────────┐     ┌─────────────┐                       │  │
-│  │  │ Qwen        │────▶│  HuBERT     │ (parallel)            │  │
-│  │  │ Analysis    │     │ Phonemes    │                       │  │
-│  │  └──────┬──────┘     └──────┬──────┘                       │  │
-│  │         ▼                   ▼                              │  │
-│  │  ┌─────────────────────────────┐                           │  │
-│  │  │   Wait for all tasks        │                           │  │
-│  │  └──────────┬──────────────────┘                           │  │
-│  │             ▼                                              │  │
-│  │  ┌──────────────────┐                                      │  │
-│  │  │ IF need VI?      │                                      │  │
-│  │  └────┬─────────┬───┘                                      │  │
-│  │       Yes       No                                         │  │
-│  │       ▼         ▼                                          │  │
-│  │  ┌─────────┐  Skip                                         │  │
-│  │  │ LLaMA3  │                                               │  │
-│  │  └────┬────┘                                               │  │
-│  │       ▼                                                    │  │
-│  │  ┌──────────────────┐                                      │  │
-│  │  │ Fusion & Aggr.   │                                      │  │
-│  │  └────┬─────────────┘                                      │  │
-│  │       ▼                                                    │  │
-│  │  ┌──────────────────┐                                      │  │
-│  │  │   Response       │                                      │  │
-│  │  └──────────────────┘                                      │  │
+│  │  Technology:                                               │  │
+│  │  • KuzuDB: Concept relationships, prerequisites            │  │
+│  │  • Redis: Cache layer, learner profiles, responses         │  │
+│  │  • Qwen3: Generation with pre-cached context               │  │
+│  │                                                            │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
+│  Architecture Comparison:                                        │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 4: Error Handling & Fallback                        │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  Try-Catch Hierarchy:                                      │  │
-│  │                                                            │  │
-│  │  Level 1: Component Failure                                │  │
-│  │  • If Qwen fails → Use cached response or rule-based       │  │
-│  │  • If HuBERT fails → Skip pronunciation, continue          │  │
-│  │  • If LLaMA3-VI fails → Use English only                   │  │
-│  │                                                            │  │
-│  │  Level 2: Timeout Management                               │  │
-│  │  • Task timeout: 500ms per component                       │  │
-│  │  • Total timeout: 2s for full pipeline                     │  │
-│  │  • If timeout → Return partial results                     │  │
-│  │                                                            │  │
-│  │  Level 3: Resource Exhaustion                              │  │
-│  │  • GPU OOM → Offload to CPU, reduce batch size             │  │
-│  │  • CPU overload → Queue request, return cached             │  │
-│  │                                                            │  │
-│  │  Graceful Degradation:                                     │  │
-│  │  Full → Basic → Minimal                                    │  │
-│  │  ↓      ↓       ↓                                          │  │
-│  │  All   Only     Rule-based                                 │  │
-│  │  AI    Qwen     grammar check                              │  │
+│  │ RAG:     Query → Retrieve → Augment → Generate (200-500ms) │  │
+│  │ GraphCAG: Pre-cache → Query → Generate (<50ms) ⚡           │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
+│  Pipeline Flow:                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                                                             │ │
+│  │  ┌─────────────────────────────────────────────────────┐    │ │
+│  │  │         PHASE 1: WARM-UP (On Session Start)         │    │ │
+│  │  │                                                     │    │ │
+│  │  │  Load learner profile → Query KG prerequisites      │    │ │
+│  │  │  → Pre-cache concepts into LLM KV Cache             │    │ │
+│  │  │                                                     │    │ │
+│  │  │  ┌──────────┐   ┌──────────┐   ┌──────────────┐     │    │ │
+│  │  │  │  Redis   │──▶│  KuzuDB  │──▶│  LLM Cache   │     │    │ │
+│  │  │  │(Profile) │   │ (KG)     │   │ (KV Warmup)  │     │    │ │
+│  │  │  └──────────┘   └──────────┘   └──────────────┘     │    │ │
+│  │  │                                                     │    │ │
+│  │  └─────────────────────────────────────────────────────┘    │ │
+│  │                          │                                  │ │
+│  │                          ▼                                  │ │
+│  │  ┌─────────────────────────────────────────────────────┐    │ │
+│  │  │         PHASE 2: QUERY (Per User Message)           │    │ │
+│  │  │                                                     │    │ │
+│  │  │  User Input                                         │    │ │
+│  │  │      │                                              │    │ │
+│  │  │      ▼                                              │    │ │
+│  │  │  ┌──────────────┐                                   │    │ │
+│  │  │  │ Cache Lookup │◄── Redis: Check cached response   │    │ │
+│  │  │  └──────┬───────┘                                   │    │ │
+│  │  │         │                                           │    │ │
+│  │  │    ┌────┴────┐                                      │    │ │
+│  │  │    │Cache Hit?│                                     │    │ │
+│  │  │    └────┬────┘                                      │    │ │
+│  │  │    Yes  │  No                                       │    │ │
+│  │  │     │   └──────────────────────┐                    │    │ │
+│  │  │     ▼                          ▼                    │    │ │
+│  │  │  ┌────────┐            ┌──────────────┐             │    │ │
+│  │  │  │ Return │            │ KG Expansion │             │    │ │
+│  │  │  │ Cached │            │ (Linked      │             │    │ │
+│  │  │  │Response│            │  Concepts)   │             │    │ │
+│  │  │  └────────┘            └──────┬───────┘             │    │ │
+│  │  │      ▲                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      │                │  Diagnose    │              │    │ │
+│  │  │      │                │ (Rule-based) │              │    │ │
+│  │  │      │                └──────┬───────┘              │    │ │
+│  │  │      │                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      │                │   Generate   │              │    │ │
+│  │  │      │                │ (LLM/Rules)  │              │    │ │
+│  │  │      │                └──────┬───────┘              │    │ │
+│  │  │      │                       │                      │    │ │
+│  │  │      │                       ▼                      │    │ │
+│  │  │      │                ┌──────────────┐              │    │ │
+│  │  │      └────────────────│ Cache Update │              │    │ │
+│  │  │                       └──────────────┘              │    │ │
+│  │  │                                                     │    │ │
+│  │  └─────────────────────────────────────────────────────┘    │ │
+│  │                                                             │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  Component Details:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Phase 5: State Management                                 │  │
-│  │  ────────────────────────────────────────────────────────  │  │
-│  │  Conversation State:                                       │  │
-│  │  • session_id: Unique per conversation                     │  │
-│  │  • turn_count: Number of exchanges                         │  │
-│  │  • topic_context: Current discussion topic                 │  │
-│  │  • error_history: Recent mistakes for tracking             │  │
-│  │                                                            │  │
-│  │  Model State:                                              │  │
-│  │  • loaded_models: ["qwen", "hubert"]                       │  │
-│  │  • active_adapter: "unified"                               │  │
-│  │  • memory_usage: 3.2GB / 8GB                               │  │
-│  │                                                            │  │
-│  │  Cache State:                                              │  │
-│  │  • cache_hits: 12 / 20 requests (60%)                      │  │
-│  │  • recent_responses: Last 10 cached                        │  │
+│  │ Cache Lookup  : Redis query for similar input patterns     │  │
+│  │ KG Expansion  : KuzuDB graph traversal (1-2 hops)          │  │
+│  │ Diagnose      : Rule-based grammar check → concept mapping │  │
+│  │ Generate      : LLM with KV-cached context (fast)          │  │
+│  │ Cache Update  : Store response pattern for future use      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Monitoring & Logging:                                           │
-│  • Latency per component (STT: 80ms, Qwen: 120ms...)             │
-│  • Resource usage (GPU: 45%, RAM: 4.2GB)                         │
-│  • Error rates by component                                      │
-│  • Cache hit rates                                               │
+│  Latency Breakdown:                                              │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ Component        │ Cache Hit │ Cache Miss │                │  │
+│  │──────────────────┼───────────┼────────────│                │  │
+│  │ Redis Lookup     │   <5ms    │    <5ms    │                │  │
+│  │ KG Expansion     │   skip    │   <10ms    │                │  │
+│  │ Diagnose         │   skip    │   <10ms    │                │  │
+│  │ LLM Generate     │   skip    │  100-150ms │                │  │
+│  │ Cache Update     │   skip    │    <5ms    │                │  │
+│  │──────────────────┼───────────┼────────────│                │  │
+│  │ TOTAL            │  <10ms ⚡  │  <180ms    │                │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  Background Observer (LangGraph, async):                          │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  1. Track detected errors from Diagnose step              │  │
+│  │  2. Update mastery scores in KG (async)                   │  │
+│  │  3. Queue background jobs for CAG exercise generation     │  │
+│  │  4. Next session: personalized exercises ready            │  │
+│  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
         │
@@ -494,368 +507,52 @@
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Orchestrator Implementation
+### 3.2 LangGraph + GraphCAG Pipeline
 
-```python
-class AIOrchestrator:
-    """
-    Central coordinator for the entire AI pipeline.
-    Manages task routing, resource allocation, parallel execution,
-    error handling, and state management.
-    """
-    
-    def __init__(self):
-        # Core components
-        self.qwen_engine = QwenUnifiedEngine()
-        self.llama_engine = None  # Lazy loaded
-        self.hubert_engine = None  # Lazy loaded
-        self.context_manager = ContextManager()
-        self.resource_manager = ResourceManager()
-        self.cache = RedisCache()
-        
-        # State tracking
-        self.session_state = {}
-        self.loaded_models = {"qwen": True}
-        self.execution_stats = {
-            "total_requests": 0,
-            "cache_hits": 0,
-            "avg_latency": 0
-        }
-    
-    async def process_input(self, user_input: str, 
-                           session_id: str,
-                           input_type: str = "text") -> Dict:
-        """
-        Main entry point for processing user input.
-        
-        Args:
-            user_input: Text from STT or keyboard
-            session_id: Unique conversation identifier
-            input_type: "text" or "voice"
-            
-        Returns:
-            Complete response with analysis, feedback, and audio
-        """
-        
-        # Phase 1: Task Analysis
-        execution_plan = self._analyze_task(
-            user_input, session_id, input_type
-        )
-        
-        # Phase 2: Resource Allocation
-        await self._allocate_resources(execution_plan)
-        
-        # Phase 3: Execution Coordination
-        try:
-            results = await self._execute_pipeline(
-                user_input, session_id, execution_plan
-            )
-            
-            # Phase 4: Result Aggregation
-            response = self._aggregate_results(
-                results, execution_plan
-            )
-            
-            # Phase 5: State Update
-            self._update_state(session_id, response)
-            
-            return response
-            
-        except Exception as e:
-            # Error handling & fallback
-            return self._handle_error(e, user_input, session_id)
-    
-    def _analyze_task(self, text: str, session_id: str, 
-                      input_type: str) -> Dict:
-        """
-        Analyze input to create execution plan.
-        """
-        # Get learner profile
-        profile = self.cache.get(f"learner:{session_id}:profile")
-        level = profile.get("level", "B1")
-        
-        # Get conversation context
-        history = self.context_manager.get_history(session_id)
-        
-        # Determine required tasks
-        plan = {
-            "primary_tasks": ["comprehensive_analysis"],  # Always run Qwen
-            "parallel_tasks": [],
-            "conditional_tasks": [],
-            "strategy": "scaffolding"  # Default
-        }
-        
-        # Add pronunciation if voice input
-        if input_type == "voice":
-            plan["parallel_tasks"].append("pronunciation")
-        
-        # Add Vietnamese if A2 or low confidence expected
-        if level == "A2" or self._is_complex(text):
-            plan["conditional_tasks"].append("vietnamese_explanation")
-        
-        # Select tutoring strategy based on history
-        error_count = self._count_recent_errors(history)
-        if error_count == 0:
-            plan["strategy"] = "praise"
-        elif error_count <= 2:
-            plan["strategy"] = "positive_feedback"
-        elif error_count <= 4:
-            plan["strategy"] = "socratic_questioning"
-        else:
-            plan["strategy"] = "scaffolding"
-        
-        return plan
-    
-    async def _allocate_resources(self, plan: Dict):
-        """
-        Load required models based on execution plan.
-        """
-        # Qwen is always loaded
-        
-        # Load HuBERT if needed
-        if "pronunciation" in plan["parallel_tasks"]:
-            if not self.loaded_models.get("hubert"):
-                self.hubert_engine = await self._lazy_load_hubert()
-                self.loaded_models["hubert"] = True
-        
-        # Load LLaMA3-VI if needed
-        if "vietnamese_explanation" in plan["conditional_tasks"]:
-            if not self.loaded_models.get("llama"):
-                # Check memory availability
-                if self.resource_manager.can_load_llama():
-                    self.llama_engine = await self._lazy_load_llama()
-                    self.loaded_models["llama"] = True
-                else:
-                    # Remove from plan if insufficient memory
-                    plan["conditional_tasks"].remove("vietnamese_explanation")
-    
-    async def _execute_pipeline(self, text: str, 
-                                session_id: str,
-                                plan: Dict) -> Dict:
-        """
-        Execute all tasks according to plan with proper coordination.
-        """
-        results = {}
-        
-        # Check cache first
-        cache_key = self.cache.hash(text)
-        cached = self.cache.get(f"response:{cache_key}")
-        if cached:
-            self.execution_stats["cache_hits"] += 1
-            return cached
-        
-        # Create tasks for parallel execution
-        tasks = []
-        
-        # Primary task: Qwen analysis (always runs)
-        context = self.context_manager.get_context(session_id)
-        tasks.append(
-            self._run_qwen_analysis(text, context, plan["strategy"])
-        )
-        
-        # Parallel tasks
-        if "pronunciation" in plan["parallel_tasks"]:
-            audio = self._get_audio(session_id)  # From STT module
-            tasks.append(
-                self._run_pronunciation_analysis(audio)
-            )
-        
-        # Execute all parallel tasks
-        completed = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Process results
-        results["qwen"] = completed[0] if not isinstance(completed[0], Exception) else None
-        if len(completed) > 1:
-            results["pronunciation"] = completed[1] if not isinstance(completed[1], Exception) else None
-        
-        # Conditional tasks (run after primary)
-        if "vietnamese_explanation" in plan["conditional_tasks"]:
-            if results["qwen"] and results["qwen"]["confidence"] < 0.8:
-                results["vietnamese"] = await self._run_vietnamese_explanation(
-                    text, results["qwen"]
-                )
-        
-        return results
-    
-    async def _run_qwen_analysis(self, text: str, 
-                                 context: Dict,
-                                 strategy: str) -> Dict:
-        """
-        Run comprehensive analysis with Qwen + Unified adapter.
-        """
-        prompt = self._build_qwen_prompt(text, context, strategy)
-        
-        # Set timeout
-        try:
-            result = await asyncio.wait_for(
-                self.qwen_engine.generate(prompt),
-                timeout=0.5  # 500ms timeout
-            )
-            return result
-        except asyncio.TimeoutError:
-            raise TimeoutError("Qwen inference timeout")
-    
-    async def _run_pronunciation_analysis(self, audio: np.ndarray) -> Dict:
-        """
-        Run pronunciation analysis with HuBERT.
-        """
-        try:
-            result = await asyncio.wait_for(
-                self.hubert_engine.analyze(audio),
-                timeout=0.3  # 300ms timeout
-            )
-            return result
-        except asyncio.TimeoutError:
-            # Non-critical, can skip
-            return None
-    
-    def _aggregate_results(self, results: Dict, plan: Dict) -> Dict:
-        """
-        Combine all results into final response.
-        """
-        qwen_result = results.get("qwen", {})
-        pronunciation = results.get("pronunciation")
-        vietnamese = results.get("vietnamese")
-        
-        # Base response from Qwen
-        response = {
-            "text": qwen_result.get("response", ""),
-            "analysis": {
-                "fluency": qwen_result.get("fluency_score", 0.0),
-                "grammar": qwen_result.get("grammar", {}),
-                "vocabulary": qwen_result.get("vocabulary_level", "B1")
-            },
-            "score": {},
-            "strategy": plan["strategy"]
-        }
-        
-        # Add pronunciation if available
-        if pronunciation:
-            response["analysis"]["pronunciation"] = pronunciation
-            response["pronunciation_tip"] = self._generate_tip(pronunciation)
-        
-        # Add Vietnamese if available
-        if vietnamese:
-            response["vietnamese_hint"] = vietnamese["explanation"]
-        
-        # Calculate overall score
-        response["score"] = self._calculate_scores(response["analysis"])
-        
-        return response
-    
-    def _handle_error(self, error: Exception, 
-                     text: str, session_id: str) -> Dict:
-        """
-        Graceful degradation when errors occur.
-        """
-        # Log error
-        logger.error(f"Orchestrator error: {error}")
-        
-        # Try cache fallback
-        similar = self.cache.get_similar(text)
-        if similar:
-            return similar
-        
-        # Fallback to rule-based
-        from .fallback import RuleBasedChecker
-        checker = RuleBasedChecker()
-        
-        return {
-            "text": "I see. Let me help you with that.",
-            "analysis": checker.check_grammar(text),
-            "fallback": True,
-            "error": str(error)
-        }
-    
-    def _update_state(self, session_id: str, response: Dict):
-        """
-        Update session state and cache.
-        """
-        # Update conversation history
-        self.context_manager.add_turn(session_id, response)
-        
-        # Update learner profile
-        errors = response["analysis"].get("grammar", {}).get("errors", [])
-        if errors:
-            self.cache.append(
-                f"learner:{session_id}:errors",
-                [e["type"] for e in errors]
-            )
-        
-        # Update stats
-        self.execution_stats["total_requests"] += 1
-        
-        # Cache response for future
-        cache_key = self.cache.hash(response["text"])
-        self.cache.set(f"response:{cache_key}", response, ttl=7*24*3600)
-```
-
-### 3.3 Orchestrator Benefits & Metrics
+> **Note**: The old `AIOrchestrator` class has been replaced by the LangGraph + GraphCAG hybrid architecture.
+> See `api/services/graph_cag/` for the new implementation.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│              WHY ORCHESTRATOR IS ESSENTIAL                       │
+│              LANGGRAPH + GRAPHCAG PIPELINE                       │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Problem Without Orchestrator:                                   │
+│  Implementation: api/services/graph_cag/                         │
+│                                                                  │
+│  Files:                                                          │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  ❌ Tight coupling between components                       │  │
-│  │  ❌ No centralized error handling                           │  │
-│  │  ❌ Inefficient resource usage (all models always loaded)   │  │
-│  │  ❌ No task prioritization                                  │  │
-│  │  ❌ Difficult to add new features                           │  │
-│  │  ❌ No visibility into pipeline performance                 │  │
-│  │  ❌ Hard to test individual components                      │  │
+│  │  graph.py    : StateGraph definition, compiled pipeline    │  │
+│  │  nodes.py    : Node functions (diagnose, generate, etc)    │  │
+│  │  edges.py    : Routing logic (cache hit/miss, VI needed)   │  │
+│  │  state.py    : TypedDict schema for state management       │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Solutions With Orchestrator:                                    │
+│  Key Advantages over old AIOrchestrator:                         │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  ✅ Single responsibility principle                         │  │
-│  │  ✅ Centralized error handling & fallback                   │  │
-│  │  ✅ Lazy loading - 60% memory savings                       │  │
-│  │  ✅ Intelligent task routing                                │  │
-│  │  ✅ Easy to extend (add new adapters/models)                │  │
-│  │  ✅ Built-in monitoring & telemetry                         │  │
-│  │  ✅ Testable components in isolation                        │  │
+│  │  Ultra-low latency (<50ms cache hit)                       │  │
+│  │  Built-in checkpointing (LangGraph)                        │  │
+│  │  Async Observer pattern (non-blocking)                     │  │
+│  │  Typed state management (TypedDict)                        │  │
+│  │  KG-integrated (KuzuDB concepts)                           │  │
+│  │  Cache-augmented (Redis response patterns)                 │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Performance Improvements:                                       │
+│  Performance Comparison:                                         │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Metric              │ Before    │ After     │ Improvement │  │
-│  │  ───────────────────────────────────────────────────────   │  │
-│  │  Avg Latency         │ 800ms     │ 350ms     │ -56%        │  │
-│  │  Memory Usage        │ 12GB      │ 4.8GB     │ -60%        │  │
-│  │  Cache Hit Rate      │ N/A       │ 45%       │ +45%        │  │
-│  │  Error Recovery      │ Manual    │ Auto      │ 100%        │  │
-│  │  Parallel Execution  │ No        │ Yes       │ 2x faster   │  │
-│  │  Code Maintainability│ Complex   │ Clean     │ +70%        │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  Key Architectural Benefits:                                     │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  1. Separation of Concerns                                 │  │
-│  │     • Orchestrator handles WHAT to run                     │  │
-│  │     • Components handle HOW to run                         │  │
-│  │                                                            │  │
-│  │  2. Flexibility                                            │  │
-│  │     • Easy to swap models (e.g., Qwen → GPT-4)             │  │
-│  │     • Add new tasks without changing core logic            │  │
-│  │                                                            │  │
-│  │  3. Observability                                          │  │
-│  │     • Track latency per component                          │  │
-│  │     • Monitor resource usage                               │  │
-│  │     • Analyze failure patterns                             │  │
-│  │                                                            │  │
-│  │  4. Scalability                                            │  │
-│  │     • Queue long-running tasks                             │  │
-│  │     • Load balancing across GPUs                           │  │
-│  │     • Horizontal scaling ready                             │  │
+│  │  Metric            │ Old Orchestrator │ LangGraph+GraphCAG │  │
+│  │  ──────────────────┼──────────────────┼────────────────────│  │
+│  │  Cache Hit Latency │ N/A              │ <10ms ⚡            │  │
+│  │  Cache Miss Latency│ 350ms            │ <180ms             │  │
+│  │  State Persistence │ Manual           │ Built-in           │  │
+│  │  Error Tracking    │ Logged only      │ KG-integrated      │  │
+│  │  Exercise Gen      │ N/A              │ Background CAG     │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.4 Caching Architecture
+
+### 3.3 Caching Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1599,6 +1296,6 @@ common_voice = load_dataset("mozilla-foundation/common_voice_13_0", "en")
 
 ---
 
-> **Document Version**: 5.2
+> **Document Version**: 4.0 (LangGraph + GraphCAG Hybrid)  
 > **Last Updated**: January 2026  
 > **Author**: Nguyen Huu Thang  

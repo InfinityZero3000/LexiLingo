@@ -1,5 +1,5 @@
 """
-Qwen2.5-1.5B Engine with Unified LoRA Adapter
+Qwen3-1.7B Engine with Unified LoRA Adapter
 
 This engine handles comprehensive English analysis tasks:
 1. Fluency scoring
@@ -9,7 +9,7 @@ This engine handles comprehensive English analysis tasks:
 5. Comprehensive analysis (all tasks combined)
 
 Architecture:
-- Base Model: Qwen/Qwen2.5-1.5B-Instruct (1.5GB)
+- Base Model: Qwen/Qwen3-1.7B (1.7GB)
 - LoRA Adapter: Unified adapter for all tasks (80MB)
 - Inference: CPU/GPU with quantization support
 - Output: Structured JSON responses
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class QwenEngine:
     """
-    Qwen2.5-1.5B inference engine with LoRA adapter support.
+    Qwen3-1.7B inference engine with LoRA adapter support.
     
     Supports two modes:
     1. Base model only (without fine-tuning)
@@ -36,13 +36,13 @@ class QwenEngine:
     
     Performance targets:
     - Latency: 100-150ms per request
-    - Memory: ~1.6GB (base) + 80MB (adapter)
+    - Memory: ~3.5GB (base) + 80MB (adapter)
     - Quality: 95-97% of specialized adapters
     """
     
     def __init__(
         self,
-        model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
+        model_name: str = "Qwen/Qwen3-1.7B",
         adapter_path: Optional[str] = None,
         device: str = "auto",
         load_in_8bit: bool = False,
@@ -230,12 +230,13 @@ Respond in JSON format:
         
         elif task == "dialogue_response":
             strategy_desc = strategy or "positive_feedback"
+            history_section = f"Conversation History:\n{history}" if history else ""
             prompt = f"""Task: dialogue_response
 User Message: {text}
 Learner Level: {level}
 Strategy: {strategy_desc}
 
-{f"Conversation History:\\n{history}" if history else ""}
+{history_section}
 
 You are an AI English tutor. Respond to the learner's message using the {strategy_desc} strategy.
 
@@ -253,11 +254,12 @@ Respond in JSON format:
 }}"""
         
         elif task == "comprehensive_analysis":
+            history_section = f"Conversation History:\n{history}" if history else ""
             prompt = f"""Task: comprehensive_analysis
 Text: {text}
 Learner Level: {level}
 
-{f"Conversation History:\\n{history}" if history else ""}
+{history_section}
 
 Perform comprehensive analysis of this English text, including:
 1. Fluency scoring (0.0-1.0)
@@ -424,7 +426,7 @@ async def get_qwen_engine() -> QwenEngine:
         # TODO: Load config from settings
         from api.core.config import settings
         
-        model_name = getattr(settings, "QWEN_MODEL_NAME", "Qwen/Qwen2.5-1.5B-Instruct")
+        model_name = getattr(settings, "QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
         adapter_path = getattr(settings, "QWEN_ADAPTER_PATH", None)
         device = getattr(settings, "QWEN_DEVICE", "auto")
         load_in_8bit = getattr(settings, "QWEN_LOAD_IN_8BIT", False)
