@@ -80,6 +80,40 @@ class WeeklyActivityResponse(BaseModel):
     total_study_time: int
 
 
+class WeeklyProgressData(BaseModel):
+    """
+    Weekly progress data for home page chart.
+    
+    Following agent-skills/language-learning-patterns:
+    - progress-learning-streaks: Visual progress improves engagement 3-5x
+    """
+    day: str = Field(..., description="Day of week (Mon, Tue, Wed, Thu, Fri, Sat, Sun)")
+    date: str = Field(..., description="ISO date string (YYYY-MM-DD)")
+    xp_earned: int = Field(default=0, description="XP earned on this day")
+    lessons_completed: int = Field(default=0, description="Lessons completed")
+    study_time_minutes: int = Field(default=0, description="Study time in minutes")
+    vocabulary_reviewed: int = Field(default=0, description="Vocabulary items reviewed")
+    goal_met: bool = Field(default=False, description="Whether daily goal was met")
+    is_today: bool = Field(default=False, description="Whether this is today")
+
+
+class WeeklyProgressResponse(BaseModel):
+    """
+    Weekly progress response for home page.
+    
+    Provides 7-day activity summary with totals and streak info.
+    Used for the week progress chart on home page.
+    """
+    week_progress: list[WeeklyProgressData] = Field(..., description="7-day activity data")
+    total_xp: int = Field(default=0, description="Total XP earned this week")
+    total_lessons: int = Field(default=0, description="Total lessons completed this week")
+    total_study_time: int = Field(default=0, description="Total study time in minutes")
+    days_active: int = Field(default=0, description="Number of active days this week")
+    current_streak: int = Field(default=0, description="Current streak count")
+    longest_streak: int = Field(default=0, description="Longest streak ever")
+    week_goal_progress: float = Field(default=0.0, ge=0, le=100, description="Weekly goal progress percentage")
+
+
 # =====================
 # XP & Level Operations
 # =====================
