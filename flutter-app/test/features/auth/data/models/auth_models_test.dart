@@ -57,11 +57,9 @@ void main() {
           'access_token': 'access_token_value',
           'refresh_token': 'refresh_token_value',
           'token_type': 'bearer',
-          'user': {
-            'id': 'user-id',
-            'email': 'test@example.com',
-            'username': 'testuser',
-          },
+          'user_id': 'user-id',
+          'email': 'test@example.com',
+          'username': 'testuser',
         };
 
         // Act
@@ -70,7 +68,9 @@ void main() {
         // Assert
         expect(response.tokens.accessToken, 'access_token_value');
         expect(response.tokens.refreshToken, 'refresh_token_value');
-        expect(response.user, isA<Map<String, dynamic>>());
+        expect(response.userId, 'user-id');
+        expect(response.email, 'test@example.com');
+        expect(response.username, 'testuser');
       });
     });
 
