@@ -5,6 +5,7 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -62,12 +63,11 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings, color: AppColors.primary),
-            onPressed: () async {
-               if (authProvider.isAuthenticated) {
-                 await authProvider.signOut();
-               } else {
-                 await authProvider.signInWithGoogle();
-               }
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
             },
           )
         ],
@@ -579,49 +579,108 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildRecentBadges(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Recent Badges',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const AchievementsScreen()),
-                  );
-                },
-                child: const Text('View All'),
+    return Consumer<ProfileProvider>(
+      builder: (context, provider, child) {
+        final badges = provider.recentBadges;
+        final isLoading = provider.isLoadingBadges;
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Recent Badges',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AchievementsScreen()),
+                      );
+                    },
+                    child: const Text('View All'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: 100,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _buildBadgeItem(Icons.workspace_premium, Colors.orange, 'Early Bird'),
-              const SizedBox(width: 16),
-              _buildBadgeItem(Icons.forum, AppColors.primary, 'Chatterbox'),
-              const SizedBox(width: 16),
-              _buildBadgeItem(Icons.school, Colors.green, '100 Words'),
-              const SizedBox(width: 16),
-              _buildBadgeItem(Icons.lock, Colors.grey, 'Locked', isLocked: true),
-            ],
-          ),
-        ),
-      ],
+            ),
+            SizedBox(
+              height: 100,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : badges.isEmpty
+                      ? _buildEmptyBadges()
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: badges.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            final badge = badges[index];
+                            return _buildBadgeItemFromEntity(badge);
+                          },
+                        ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  /// Build empty badges placeholder
+  Widget _buildEmptyBadges() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.emoji_events_outlined, size: 40, color: Colors.grey[400]),
+          const SizedBox(height: 8),
+          Text(
+            'Complete lessons to earn badges!',
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build badge item from UserAchievementEntity
+  Widget _buildBadgeItemFromEntity(dynamic badge) {
+    final achievement = badge.achievement;
+    final color = Color(achievement.rarityColorValue);
+    final icon = _getBadgeIcon(achievement.category);
+    
+    return Tooltip(
+      message: '${achievement.name}\n${badge.unlockedTimeAgo}',
+      child: _buildBadgeItem(icon, color, achievement.name),
+    );
+  }
+
+  /// Get icon for badge category
+  IconData _getBadgeIcon(String category) {
+    switch (category) {
+      case 'lessons':
+        return Icons.school;
+      case 'streak':
+        return Icons.local_fire_department;
+      case 'vocabulary':
+        return Icons.translate;
+      case 'xp':
+        return Icons.star;
+      case 'quiz':
+        return Icons.quiz;
+      case 'course':
+        return Icons.workspace_premium;
+      case 'voice':
+        return Icons.mic;
+      default:
+        return Icons.emoji_events;
+    }
   }
 
   Widget _buildStatCard(BuildContext context, IconData icon, Color color, String title, String value, String subLabel, {bool isAction = false}) {

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 
-/// Animated Notification Badge
+/// Animated Notification Badge with bounce effect
 /// Shows a pulsing badge when there are unread notifications
-class AnimatedNotificationBadge extends StatelessWidget {
+/// Bounces when new notifications arrive
+/// 
+/// Following agent-skills/language-learning-patterns:
+/// - Visual feedback for engagement and user awareness
+class AnimatedNotificationBadge extends StatefulWidget {
   final int count;
   final Widget child;
   final Color badgeColor;
@@ -18,60 +22,129 @@ class AnimatedNotificationBadge extends StatelessWidget {
   });
 
   @override
+  State<AnimatedNotificationBadge> createState() => _AnimatedNotificationBadgeState();
+}
+
+class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+  int _previousCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousCount = widget.count;
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _bounceAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.3)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.3, end: 0.9)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.9, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 30,
+      ),
+    ]).animate(_bounceController);
+  }
+
+  @override
+  void didUpdateWidget(AnimatedNotificationBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Trigger bounce animation when count increases (new notification)
+    if (widget.count > _previousCount && widget.count > 0) {
+      _bounceController.forward(from: 0.0);
+    }
+    _previousCount = widget.count;
+  }
+
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (count <= 0) {
-      return child;
+    if (widget.count <= 0) {
+      return widget.child;
     }
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        child,
+        widget.child,
         Positioned(
           right: -4,
           top: -4,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Pulse animation behind badge
-              if (showPulse && count > 0)
-                PulseAnimation(
-                  color: badgeColor.withOpacity(0.5),
-                  maxRadius: 12,
-                  duration: const Duration(milliseconds: 1500),
-                  child: const SizedBox(width: 24, height: 24),
-                ),
-              // Badge count
-              Container(
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  shape: count > 9 ? BoxShape.rectangle : BoxShape.circle,
-                  borderRadius: count > 9 ? BorderRadius.circular(9) : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: badgeColor.withOpacity(0.4),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+          child: AnimatedBuilder(
+            animation: _bounceAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _bounceAnimation.value,
+                child: child,
+              );
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Pulse animation behind badge
+                if (widget.showPulse && widget.count > 0)
+                  PulseAnimation(
+                    color: widget.badgeColor.withOpacity(0.5),
+                    maxRadius: 12,
+                    duration: const Duration(milliseconds: 1500),
+                    child: const SizedBox(width: 24, height: 24),
+                  ),
+                // Badge count with shadow and gradient
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        widget.badgeColor.withOpacity(0.9),
+                        widget.badgeColor,
+                      ],
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    count > 99 ? '99+' : count.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                    shape: widget.count > 9 ? BoxShape.rectangle : BoxShape.circle,
+                    borderRadius: widget.count > 9 ? BorderRadius.circular(9) : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.badgeColor.withOpacity(0.5),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      widget.count > 99 ? '99+' : widget.count.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

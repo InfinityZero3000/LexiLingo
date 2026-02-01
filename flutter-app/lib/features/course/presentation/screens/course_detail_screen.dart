@@ -66,7 +66,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           return CustomScrollView(
             slivers: [
-              // App Bar with Course Header
+              // App Bar with Course Header and Hero animation
               SliverAppBar(
                 expandedHeight: 250,
                 pinned: true,
@@ -83,38 +83,41 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ],
                     ),
                   ),
-                  background: course.thumbnailUrl != null
-                      ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.network(
-                              course.thumbnailUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.school, size: 64),
-                                );
-                              },
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.7),
-                                  ],
+                  background: Hero(
+                    tag: 'course-image-${widget.courseId}',
+                    child: course.thumbnailUrl != null
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                course.thumbnailUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.school, size: 64),
+                                  );
+                                },
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.7),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
-                      : Container(
-                          color: Theme.of(context).primaryColor,
-                          child: const Icon(Icons.school, size: 64, color: Colors.white),
-                        ),
+                            ],
+                          )
+                        : Container(
+                            color: Theme.of(context).primaryColor,
+                            child: const Icon(Icons.school, size: 64, color: Colors.white),
+                          ),
+                  ),
                 ),
               ),
 

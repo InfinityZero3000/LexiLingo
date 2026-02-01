@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import '../entities/settings.dart';
 import '../repositories/settings_repository.dart';
 
@@ -6,7 +8,7 @@ class GetSettingsUseCase {
 
   GetSettingsUseCase({required this.repository});
 
-  Future<Settings?> call(String userId) async {
+  Future<Either<Failure, Settings>> call(String userId) async {
     return await repository.getSettings(userId);
   }
 }

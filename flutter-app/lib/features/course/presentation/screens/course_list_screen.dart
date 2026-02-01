@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
@@ -331,7 +332,7 @@ class _CategorySection extends StatelessWidget {
           ),
         ),
 
-        // Horizontal Course List
+        // Horizontal Course List with staggered animation
         SizedBox(
           height: 280,
           child: ListView.builder(
@@ -340,9 +341,14 @@ class _CategorySection extends StatelessWidget {
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
-              return _HorizontalCourseCard(
-                course: course,
-                onTap: () => onCourseTap(course.id),
+              return AnimatedListItem(
+                index: index,
+                duration: const Duration(milliseconds: 300),
+                delayPerItem: const Duration(milliseconds: 80),
+                child: _HorizontalCourseCard(
+                  course: course,
+                  onTap: () => onCourseTap(course.id),
+                ),
               );
             },
           ),
@@ -382,21 +388,24 @@ class _HorizontalCourseCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Thumbnail
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-                child: AspectRatio(
-                  aspectRatio: 16 / 10,
-                  child: course.thumbnailUrl != null
-                      ? Image.network(
-                          course.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderImage();
-                          },
-                        )
-                      : _buildPlaceholderImage(),
+              // Thumbnail with Hero animation
+              Hero(
+                tag: 'course-image-${course.id}',
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 10,
+                    child: course.thumbnailUrl != null
+                        ? Image.network(
+                            course.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholderImage();
+                            },
+                          )
+                        : _buildPlaceholderImage(),
+                  ),
                 ),
               ),
 

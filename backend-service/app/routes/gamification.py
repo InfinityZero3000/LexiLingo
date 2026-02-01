@@ -89,6 +89,46 @@ async def get_my_achievements(
     )
 
 
+@router.get("/achievements/recent", response_model=ApiResponse[List[UserAchievementResponse]])
+async def get_recent_achievements(
+    limit: int = Query(4, ge=1, le=10, description="Number of recent badges to return"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get user's most recently earned achievements.
+    
+    Following agent-skills/language-learning-patterns:
+    - gamification-achievement-badges: Display recent badges for engagement (25-40% boost)
+    
+    Returns badges sorted by unlocked_at DESC, limited to specified count.
+    Used for profile page "Recent Badges" section.
+    """
+    user_achievements = await AchievementCRUD.get_user_achievements(
+        db, current_user.id, 
+        order_by_recent=True, 
+        limit=limit
+    )
+    
+    response_data = []
+    for ua in user_achievements:
+        achievement = await AchievementCRUD.get_achievement(db, ua.achievement_id)
+        if achievement:
+            response_data.append({
+                "id": ua.id,
+                "achievement": AchievementResponse.model_validate(achievement),
+                "unlocked_at": ua.unlocked_at,
+                "progress": ua.progress,
+                "is_showcased": ua.is_showcased
+            })
+    
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(response_data)} recent badges",
+        data=response_data
+    )
+
+
 @router.post("/achievements/check", response_model=ApiResponse[List[dict]])
 async def check_all_achievements(
     db: AsyncSession = Depends(get_db),

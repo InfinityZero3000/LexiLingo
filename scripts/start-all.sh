@@ -170,10 +170,13 @@ if [ ! -d "$AI_VENV" ]; then
     exit 1
 fi
 
-# Set Gemini API key if not already set
+# Check if Gemini API key is set
 if [ -z "$GEMINI_API_KEY" ]; then
-    export GEMINI_API_KEY="AIzaSyAdneokZf4BO1wEEfarOIHlFCN0TJJdlbM"
-    echo -e "   ${YELLOW}Using default GEMINI_API_KEY${NC}"
+    echo -e "   ${RED}❌ GEMINI_API_KEY environment variable not set${NC}"
+    echo -e "   ${YELLOW}Please set it before running:${NC}"
+    echo -e "   ${YELLOW}export GEMINI_API_KEY='your-api-key-here'${NC}"
+    echo -e "   ${YELLOW}or add it to your ~/.bashrc or ~/.zshrc${NC}"
+    exit 1
 fi
 
 # Clear old logs

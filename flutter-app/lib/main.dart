@@ -23,6 +23,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/progress_
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
@@ -118,6 +119,7 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<LevelProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<SettingsProvider>()),
       ],
       child: MaterialApp(
         title: 'LexiLingo',

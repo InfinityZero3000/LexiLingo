@@ -40,13 +40,33 @@ class AchievementCRUD:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_user_achievements(db: AsyncSession, user_id: UUID) -> List[UserAchievement]:
-        """Get all achievements unlocked by user"""
-        result = await db.execute(
-            select(UserAchievement)
-            .where(UserAchievement.user_id == user_id)
-            .order_by(desc(UserAchievement.unlocked_at))
-        )
+    async def get_user_achievements(
+        db: AsyncSession, 
+        user_id: UUID,
+        order_by_recent: bool = True,
+        limit: Optional[int] = None
+    ) -> List[UserAchievement]:
+        """
+        Get achievements unlocked by user.
+        
+        Args:
+            db: Database session
+            user_id: User's UUID
+            order_by_recent: If True, order by most recently unlocked first
+            limit: Maximum number of results to return (None = all)
+            
+        Returns:
+            List of UserAchievement records
+        """
+        query = select(UserAchievement).where(UserAchievement.user_id == user_id)
+        
+        if order_by_recent:
+            query = query.order_by(desc(UserAchievement.unlocked_at))
+        
+        if limit:
+            query = query.limit(limit)
+            
+        result = await db.execute(query)
         return list(result.scalars().all())
     
     @staticmethod

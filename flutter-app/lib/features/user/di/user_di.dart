@@ -35,6 +35,7 @@ import 'package:lexilingo_app/features/user/domain/usecases/update_daily_progres
 import 'package:lexilingo_app/features/user/domain/usecases/update_settings_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_user_stats_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_user_usecase.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 
 void registerUserModule({required bool skipDatabase}) {
@@ -128,6 +129,11 @@ void registerUserModule({required bool skipDatabase}) {
       updateDailyProgressUseCase: sl(),
       getCurrentStreakUseCase: sl(),
     ),
+  );
+
+  // Register SettingsProvider for Task 4.5 (Language preferences & Daily goal)
+  sl.registerFactory<SettingsProvider>(
+    () => SettingsProvider(repository: sl<SettingsRepository>()),
   );
 
   // Only register ProgressSyncService if Firestore data sources are available

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
@@ -595,99 +597,124 @@ class _HomePageNewState extends State<HomePageNew> {
         itemCount: provider.enrolledCourses.length,
         itemBuilder: (context, index) {
           final course = provider.enrolledCourses[index];
-          return _buildEnrolledCourseCard(context, course);
+          // Staggered animation for enrolled courses
+          return AnimatedListItem(
+            index: index,
+            duration: const Duration(milliseconds: 300),
+            delayPerItem: const Duration(milliseconds: 80),
+            child: _buildEnrolledCourseCard(context, course),
+          );
         },
       ),
     );
   }
 
   Widget _buildEnrolledCourseCard(BuildContext context, CourseEntity course) {
-    return Container(
-      width: 320,
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CourseDetailScreen(courseId: course.id),
           ),
-        ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+        );
+      },
+      child: Container(
+        width: 320,
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${course.totalLessons} lessons • ${course.level}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGrey,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${course.totalLessons} lessons • ${course.level}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textGrey,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Navigate to course detail
-                  },
-                  icon: const Icon(Icons.play_arrow, size: 20),
-                  label: const Text('Continue'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CourseDetailScreen(courseId: course.id),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.play_arrow, size: 20),
+                    label: const Text('Continue'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 1,
-            child: Container(
-              height: 120,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.shade200,
-                image: course.thumbnailUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(course.thumbnailUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+                ],
               ),
-              child: course.thumbnailUrl == null
-                  ? const Icon(Icons.image, size: 48, color: Colors.grey)
-                  : null,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Hero animation for enrolled course thumbnail
+            Expanded(
+              flex: 1,
+              child: Hero(
+                tag: 'course-image-${course.id}',
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.shade200,
+                    image: course.thumbnailUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(course.thumbnailUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: course.thumbnailUrl == null
+                      ? const Icon(Icons.image, size: 48, color: Colors.grey)
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -701,7 +728,13 @@ class _HomePageNewState extends State<HomePageNew> {
         itemCount: provider.featuredCourses.length,
         itemBuilder: (context, index) {
           final course = provider.featuredCourses[index];
-          return _buildCourseCard(context, course, provider);
+          // Staggered animation for featured courses
+          return AnimatedListItem(
+            index: index,
+            duration: const Duration(milliseconds: 350),
+            delayPerItem: const Duration(milliseconds: 100),
+            child: _buildCourseCard(context, course, provider),
+          );
         },
       ),
     );
@@ -712,69 +745,82 @@ class _HomePageNewState extends State<HomePageNew> {
     CourseEntity course,
     HomeProvider provider,
   ) {
-    return Container(
-      width: 260,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CourseDetailScreen(courseId: course.id),
           ),
-        ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 140,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              color: Colors.grey.shade200,
-              image: course.thumbnailUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(course.thumbnailUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
+        );
+      },
+      child: Container(
+        width: 260,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Stack(
-              children: [
-                if (course.thumbnailUrl == null)
-                  const Center(
-                    child: Icon(Icons.school, size: 48, color: Colors.grey),
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero animation for course thumbnail
+            Hero(
+              tag: 'course-image-${course.id}',
+              child: Container(
+                height: 140,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
                   ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      course.level,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade200,
+                  image: course.thumbnailUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(course.thumbnailUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: Stack(
+                  children: [
+                    if (course.thumbnailUrl == null)
+                      const Center(
+                        child: Icon(Icons.school, size: 48, color: Colors.grey),
+                      ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          course.level,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -846,6 +892,7 @@ class _HomePageNewState extends State<HomePageNew> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

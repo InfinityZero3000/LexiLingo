@@ -10,6 +10,11 @@ abstract class AchievementRepository {
   /// Get current user's unlocked achievements
   Future<List<UserAchievementEntity>> getMyAchievements();
 
+  /// Get recently earned badges (sorted by unlocked_at DESC)
+  /// Following agent-skills/gamification-achievement-badges pattern:
+  /// Display recent badges for engagement boost (25-40%)
+  Future<List<UserAchievementEntity>> getRecentBadges({int limit = 4});
+
   /// Force check all achievements
   Future<List<UnlockedAchievementModel>> checkAllAchievements();
 }

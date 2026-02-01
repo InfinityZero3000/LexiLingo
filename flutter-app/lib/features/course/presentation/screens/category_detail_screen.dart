@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 
+/// Sort options for courses
+enum CourseSortOption {
+  newest('Newest First', Icons.access_time),
+  popular('Most Popular', Icons.trending_up),
+  alphabetical('A-Z', Icons.sort_by_alpha),
+  level('By Level', Icons.signal_cellular_alt);
+
+  const CourseSortOption(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
 /// Category Detail Screen
-/// Displays all courses within a specific category
+/// Displays all courses within a specific category with view toggle and sort options
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
 
@@ -20,6 +33,9 @@ class CategoryDetailScreen extends StatefulWidget {
 }
 
 class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
+  bool _isGridView = false;
+  CourseSortOption _sortOption = CourseSortOption.newest;
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +43,37 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CourseProvider>().loadCoursesByCategory(widget.categoryId);
     });
+  }
+
+  /// Sort courses based on selected option
+  List<CourseEntity> _sortCourses(List<CourseEntity> courses) {
+    final sorted = List<CourseEntity>.from(courses);
+    switch (_sortOption) {
+      case CourseSortOption.newest:
+        sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case CourseSortOption.popular:
+        sorted.sort((a, b) => b.totalXp.compareTo(a.totalXp));
+        break;
+      case CourseSortOption.alphabetical:
+        sorted.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        break;
+      case CourseSortOption.level:
+        sorted.sort((a, b) => _levelOrder(a.level).compareTo(_levelOrder(b.level)));
+        break;
+    }
+    return sorted;
+  }
+
+  int _levelOrder(String level) {
+    switch (level.toLowerCase()) {
+      case 'beginner': return 0;
+      case 'elementary': return 1;
+      case 'intermediate': return 2;
+      case 'advanced': return 3;
+      case 'expert': return 4;
+      default: return 5;
+    }
   }
 
   @override
@@ -88,15 +135,63 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ),
 
-              // Course count info
+              // Course count info with view toggle and sort
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                        ),
+                      ),
+                      // Sort dropdown
+                      PopupMenuButton<CourseSortOption>(
+                        icon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_sortOption.icon, size: 18, color: Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Icon(Icons.arrow_drop_down, size: 18, color: Colors.grey[600]),
+                          ],
+                        ),
+                        onSelected: (option) {
+                          setState(() => _sortOption = option);
+                        },
+                        itemBuilder: (context) => CourseSortOption.values.map((option) {
+                          return PopupMenuItem(
+                            value: option,
+                            child: Row(
+                              children: [
+                                Icon(option.icon, size: 18),
+                                const SizedBox(width: 8),
+                                Text(option.label),
+                                if (option == _sortOption) ...[
+                                  const Spacer(),
+                                  const Icon(Icons.check, size: 18, color: Colors.green),
+                                ],
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(width: 8),
+                      // View toggle
+                      IconButton(
+                        icon: Icon(
+                          _isGridView ? Icons.view_list : Icons.grid_view,
                           color: Colors.grey[600],
                         ),
+                        onPressed: () {
+                          setState(() => _isGridView = !_isGridView);
+                        },
+                        tooltip: _isGridView ? 'List view' : 'Grid view',
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -139,24 +234,67 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                 )
               else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final course = categoryCourses[index];
-                        return _CourseCard(
-                          course: course,
-                          onTap: () => _navigateToCourseDetail(context, course.id),
-                        );
-                      },
-                      childCount: categoryCourses.length,
-                    ),
-                  ),
-                ),
+                // Grid or List view with sorted courses and staggered animation
+                _isGridView
+                    ? _buildCourseGrid(_sortCourses(categoryCourses))
+                    : _buildCourseList(_sortCourses(categoryCourses)),
             ],
           );
         },
+      ),
+    );
+  }
+
+  /// Build list view of courses
+  Widget _buildCourseList(List<CourseEntity> courses) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final course = courses[index];
+            return AnimatedListItem(
+              index: index,
+              duration: const Duration(milliseconds: 300),
+              delayPerItem: const Duration(milliseconds: 50),
+              child: _CourseCard(
+                course: course,
+                onTap: () => _navigateToCourseDetail(context, course.id),
+              ),
+            );
+          },
+          childCount: courses.length,
+        ),
+      ),
+    );
+  }
+
+  /// Build grid view of courses
+  Widget _buildCourseGrid(List<CourseEntity> courses) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final course = courses[index];
+            return AnimatedListItem(
+              index: index,
+              duration: const Duration(milliseconds: 300),
+              delayPerItem: const Duration(milliseconds: 50),
+              child: _CourseGridCard(
+                course: course,
+                onTap: () => _navigateToCourseDetail(context, course.id),
+              ),
+            );
+          },
+          childCount: courses.length,
+        ),
       ),
     );
   }
@@ -323,6 +461,123 @@ class _CourseCard extends StatelessWidget {
         Icons.book,
         size: 40,
         color: Colors.grey[400],
+      ),
+    );
+  }
+
+  Color _getLevelColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'beginner':
+      case 'a1':
+      case 'a2':
+        return Colors.green;
+      case 'intermediate':
+      case 'b1':
+      case 'b2':
+        return Colors.orange;
+      case 'advanced':
+      case 'c1':
+      case 'c2':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
+  }
+}
+
+/// Compact Course Card Widget for grid view
+class _CourseGridCard extends StatelessWidget {
+  final CourseEntity course;
+  final VoidCallback onTap;
+
+  const _CourseGridCard({
+    Key? key,
+    required this.course,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            Expanded(
+              flex: 3,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: course.thumbnailUrl != null
+                      ? Image.network(
+                          course.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                        )
+                      : _buildPlaceholderImage(),
+                ),
+              ),
+            ),
+            // Content
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      course.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    // Level badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _getLevelColor(course.level).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        course.level,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: _getLevelColor(course.level),
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      color: Colors.grey[200],
+      child: Center(
+        child: Icon(
+          Icons.book,
+          size: 40,
+          color: Colors.grey[400],
+        ),
       ),
     );
   }
