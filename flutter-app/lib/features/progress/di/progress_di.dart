@@ -6,6 +6,8 @@ import 'package:lexilingo_app/features/progress/domain/usecases/complete_lesson_
 import 'package:lexilingo_app/features/progress/domain/usecases/get_course_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_my_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
 /// Registers all progress-related dependencies
 void registerProgressModule() {
@@ -16,6 +18,16 @@ void registerProgressModule() {
       getCourseProgressUseCase: sl(),
       completeLessonUseCase: sl(),
     ),
+  );
+
+  // Streak Provider (singleton to maintain streak state)
+  sl.registerLazySingleton<StreakProvider>(
+    () => StreakProvider(repository: sl()),
+  );
+
+  // Daily Challenges Provider
+  sl.registerLazySingleton<DailyChallengesProvider>(
+    () => DailyChallengesProvider(repository: sl()),
   );
 
   // Use cases

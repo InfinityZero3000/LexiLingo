@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
@@ -32,7 +33,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
       body: Consumer<ProgressProvider>(
         builder: (context, progressProvider, child) {
           if (progressProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingScreen(message: 'Loading progress...');
           }
 
           if (progressProvider.errorMessage != null) {
