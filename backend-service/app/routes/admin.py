@@ -334,29 +334,34 @@ async def list_vocabulary(
 @router.post("/vocabulary", response_model=ApiResponse[dict])
 async def create_vocabulary(
     word: str,
+    definition: str,
     translation: str,
     part_of_speech: str = "noun",
     pronunciation: Optional[str] = None,
-    example_sentence: Optional[str] = None,
-    difficulty_level: str = "beginner",
-    topic: Optional[str] = None,
+    difficulty_level: str = "A1",
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
     """
     Create a new vocabulary item.
     
+    Args:
+        word: The vocabulary word
+        definition: English definition
+        translation: Vietnamese translation
+        part_of_speech: Part of speech (noun, verb, adjective, etc.)
+        pronunciation: IPA pronunciation
+        difficulty_level: CEFR level (A1, A2, B1, B2, C1, C2)
+    
     Admin only endpoint.
     """
     vocab = VocabularyItem(
         word=word,
-        translation=translation,
+        definition=definition,
+        translation={"vi": translation},  # JSON format as per model
         part_of_speech=part_of_speech,
         pronunciation=pronunciation,
-        example_sentence=example_sentence,
-        difficulty_level=difficulty_level,
-        topic=topic,
-        status="active"
+        difficulty_level=difficulty_level
     )
     db.add(vocab)
     await db.commit()
@@ -368,6 +373,7 @@ async def create_vocabulary(
         data={
             "id": str(vocab.id),
             "word": vocab.word,
+            "definition": vocab.definition,
             "translation": vocab.translation
         }
     )

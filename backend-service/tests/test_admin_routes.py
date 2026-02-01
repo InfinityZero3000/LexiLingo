@@ -185,7 +185,7 @@ class TestAdminLessons:
             "title": "Test Lesson",
             "unit_id": str(unit.id),
             "order_index": 1,
-            "lesson_type": "vocabulary",
+            "lesson_type": "lesson",
             "xp_reward": 10
         }
         
@@ -232,6 +232,7 @@ class TestAdminVocabulary:
             headers=auth_headers,
             params={
                 "word": "test",
+                "definition": "a test word",
                 "translation": "thử nghiệm",
                 "part_of_speech": "noun"
             }

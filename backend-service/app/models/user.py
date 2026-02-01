@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -37,7 +37,8 @@ class User(Base):
     # Learning preferences
     native_language: Mapped[str] = mapped_column(String(10), default="vi")
     target_language: Mapped[str] = mapped_column(String(10), default="en")
-    level: Mapped[str] = mapped_column(String(20), default="beginner")  # A1, A2, B1, B2, C1, C2
+    level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
+    total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     
     # Status & Verification (Phase 1 requirements)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

@@ -146,7 +146,7 @@ async def test_unit(db_session: AsyncSession, test_course: Course) -> Unit:
 
 @pytest.fixture
 async def test_lesson(db_session: AsyncSession, test_unit: Unit, test_course: Course) -> Lesson:
-    """Create a test lesson"""
+    """Create a test lesson with exercises for testing answer submission"""
     lesson = Lesson(
         course_id=test_course.id,
         unit_id=test_unit.id,
@@ -156,7 +156,25 @@ async def test_lesson(db_session: AsyncSession, test_unit: Unit, test_course: Co
         lesson_type="vocabulary",
         xp_reward=50,
         pass_threshold=70,
-        content={"questions": []}
+        content={
+            "exercises": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "type": "multiple_choice",
+                    "question": "What is the main topic?",
+                    "options": ["Grammar fundamentals", "Advanced vocabulary", "Pronunciation"],
+                    "correct_answer": "Grammar fundamentals",
+                    "explanation": "This lesson covers grammar fundamentals."
+                },
+                {
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "type": "fill_blank",
+                    "question": "Complete: I ___ learning.",
+                    "correct_answer": "am",
+                    "explanation": "Use 'am' for first person singular."
+                }
+            ]
+        }
     )
     
     db_session.add(lesson)
@@ -245,13 +263,11 @@ async def test_vocabulary(db_session: AsyncSession) -> VocabularyItem:
     """Create test vocabulary"""
     vocab = VocabularyItem(
         word="hello",
-        translation="xin chào",
+        definition="A greeting or expression of goodwill",
+        translation={"vi": "xin chào", "examples": ["Hello, how are you?"]},
         part_of_speech="interjection",
         pronunciation="həˈləʊ",
-        example_sentence="Hello, how are you?",
-        difficulty_level="beginner",
-        topic="greetings",
-        status="active"
+        difficulty_level="A1"
     )
     
     db_session.add(vocab)

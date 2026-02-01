@@ -100,3 +100,106 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         return payload
     except JWTError:
         return None
+
+
+def create_verification_token(data: Dict[str, Any], expires_minutes: int = 60) -> str:
+    """
+    Create a verification token (for email verification, password reset).
+    
+    Args:
+        data: Payload data (usually {"sub": user_id, "purpose": "email_verify"})
+        expires_minutes: Token expiration time in minutes
+        
+    Returns:
+        Encoded JWT token
+    """
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
+    
+    to_encode.update({
+        "exp": expire,
+        "iat": datetime.utcnow(),
+        "type": "verification"
+    })
+    
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+    
+    return encoded_jwt
+
+
+def decode_verification_token(token: str, purpose: str) -> Optional[str]:
+    """
+    Decode and verify a verification token.
+    
+    Args:
+        token: JWT token string
+        purpose: Expected purpose ("email_verify", "password_reset")
+        
+    Returns:
+        User ID if valid, None otherwise
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        
+        # Verify token type
+        if payload.get("type") != "verification":
+            return None
+        
+        # Verify purpose
+        if payload.get("purpose") != purpose:
+            return None
+        
+        return payload.get("sub")
+    except JWTError:
+        return None
+
+
+async def verify_google_token(id_token: str) -> Optional[Dict[str, Any]]:
+    """
+    Verify Google OAuth ID token.
+    
+    Args:
+        id_token: Google ID token from client
+        
+    Returns:
+        User info dict with email, name, picture, or None if invalid
+        
+    Note:
+        Requires google-auth library. Falls back to mock for development.
+    """
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests
+        
+        # Verify the token
+        idinfo = google_id_token.verify_oauth2_token(
+            id_token,
+            requests.Request(),
+            audience=settings.GOOGLE_CLIENT_ID if hasattr(settings, 'GOOGLE_CLIENT_ID') else None
+        )
+        
+        return {
+            "email": idinfo.get("email"),
+            "name": idinfo.get("name"),
+            "picture": idinfo.get("picture"),
+            "google_id": idinfo.get("sub"),
+            "email_verified": idinfo.get("email_verified", False)
+        }
+    except ImportError:
+        # google-auth not installed, log warning
+        import logging
+        logging.warning("google-auth not installed. Google OAuth will not work.")
+        return None
+    except Exception as e:
+        import logging
+        logging.error(f"Google token verification failed: {e}")
+        return None
+
