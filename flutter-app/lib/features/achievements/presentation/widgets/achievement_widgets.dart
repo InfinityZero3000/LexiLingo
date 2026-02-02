@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
+import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -92,11 +93,13 @@ IconData _getBadgeIcon(String? badgeIcon) {
 }
 
 /// Badge widget - displays a single achievement badge
+/// Now uses the new GeneratedBadge with custom painting for professional look
 class AchievementBadge extends StatelessWidget {
   final AchievementEntity achievement;
   final bool isUnlocked;
   final VoidCallback? onTap;
   final double size;
+  final bool useNewStyle; // Toggle between old and new style
 
   const AchievementBadge({
     super.key,
@@ -104,10 +107,33 @@ class AchievementBadge extends StatelessWidget {
     this.isUnlocked = false,
     this.onTap,
     this.size = 80,
+    this.useNewStyle = true, // Default to new style
   });
 
   @override
   Widget build(BuildContext context) {
+    if (useNewStyle) {
+      return _buildNewStyleBadge();
+    }
+    return _buildClassicBadge();
+  }
+
+  /// New generated badge with custom painting
+  Widget _buildNewStyleBadge() {
+    return SmartAchievementBadge(
+      category: achievement.category,
+      badgeIcon: achievement.badgeIcon,
+      badgeColor: achievement.badgeColor,
+      rarity: achievement.rarity,
+      conditionValue: achievement.conditionValue,
+      isUnlocked: isUnlocked,
+      size: size,
+      onTap: onTap,
+    );
+  }
+
+  /// Classic badge style (fallback)
+  Widget _buildClassicBadge() {
     final Color badgeColor = achievement.badgeColor != null
         ? Color(
             int.parse(
