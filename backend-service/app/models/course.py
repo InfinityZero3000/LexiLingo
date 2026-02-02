@@ -32,6 +32,14 @@ class Course(Base):
     language: Mapped[str] = mapped_column(String(10), nullable=False)  # en, vi
     level: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # A1, A2, B1, B2, C1, C2
     
+    # Category relationship
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("course_categories.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+    
     # Phase 2: Enhanced metadata
     tags: Mapped[dict] = mapped_column(JSON, nullable=True)  # ["grammar", "vocabulary", "business"]
     total_xp: Mapped[int] = mapped_column(Integer, default=0)
@@ -51,6 +59,7 @@ class Course(Base):
     )
     
     # Relationships
+    category: Mapped["CourseCategory"] = relationship("CourseCategory", foreign_keys=[category_id])
     units: Mapped[List["Unit"]] = relationship("Unit", back_populates="course", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:

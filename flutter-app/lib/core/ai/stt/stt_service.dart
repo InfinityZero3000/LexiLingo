@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../../utils/app_logger.dart';
 
 /// Speech-to-Text service interface
 /// Implementation should use Faster-Whisper v3 for optimal performance
@@ -113,7 +114,7 @@ class MockSTTService implements STTService {
     // Simulate model loading
     await Future.delayed(const Duration(milliseconds: 500));
     _isInitialized = true;
-    print('[MockSTT] Initialized (Faster-Whisper v3 - Mock)');
+    logDebug('[MockSTT] Initialized (Faster-Whisper v3 - Mock)');
   }
 
   @override
@@ -195,6 +196,6 @@ class MockSTTService implements STTService {
   @override
   Future<void> dispose() async {
     _isInitialized = false;
-    print('[MockSTT] Disposed');
+    logDebug('[MockSTT] Disposed');
   }
 }

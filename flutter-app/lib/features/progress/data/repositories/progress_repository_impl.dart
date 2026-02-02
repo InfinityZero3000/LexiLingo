@@ -5,9 +5,13 @@ import 'package:lexilingo_app/features/progress/data/datasources/progress_remote
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 
 /// Progress Repository Implementation
+/// 
+/// Following agent-skills/language-learning-patterns:
+/// - progress-learning-streaks: Robust streak system (3-5x engagement)
 class ProgressRepositoryImpl implements ProgressRepository {
   final ProgressRemoteDataSource remoteDataSource;
 
@@ -73,6 +77,26 @@ class ProgressRepositoryImpl implements ProgressRepository {
   Future<Either<Failure, int>> getTotalXp() async {
     try {
       final result = await remoteDataSource.getTotalXp();
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  // ============================================================================
+  // Weekly Progress Operations (Task 1.3)
+  // ============================================================================
+
+  @override
+  Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress() async {
+    try {
+      final result = await remoteDataSource.getWeeklyProgress();
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

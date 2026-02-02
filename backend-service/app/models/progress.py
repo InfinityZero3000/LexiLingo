@@ -386,8 +386,61 @@ class Streak(Base):
         return f"<Streak user={self.user_id} current={self.current_streak}>"
 
 
+class DailyActivity(Base):
+    """
+    Daily activity tracking for weekly progress charts.
+    
+    Following agent-skills/language-learning-patterns:
+    - progress-learning-streaks: Track daily XP, lessons, study time
+    - Enables weekly progress visualization (3-5x engagement boost)
+    """
+    
+    __tablename__ = "daily_activities"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    activity_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    
+    # Daily metrics
+    xp_earned: Mapped[int] = mapped_column(Integer, default=0)
+    lessons_completed: Mapped[int] = mapped_column(Integer, default=0)
+    study_time_minutes: Mapped[int] = mapped_column(Integer, default=0)
+    vocabulary_reviewed: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Goal tracking
+    daily_goal_met: Mapped[bool] = mapped_column(Boolean, default=False)
+    daily_goal_xp: Mapped[int] = mapped_column(Integer, default=20)  # Target XP for the day
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+    
+    # Unique constraint: one record per user per day
+    __table_args__ = (
+        Index('idx_daily_activity_user_date', 'user_id', 'activity_date', unique=True),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<DailyActivity user={self.user_id} date={self.activity_date} xp={self.xp_earned}>"
+
+
 # Create composite indexes for efficient queries
 Index('idx_lesson_attempt_user_lesson', LessonAttempt.user_id, LessonAttempt.lesson_id)
 Index('idx_question_attempt_lesson', QuestionAttempt.lesson_attempt_id, QuestionAttempt.question_id)
 Index('idx_vocab_knowledge_user_next_review', UserVocabKnowledge.user_id, UserVocabKnowledge.next_review_date)
 Index('idx_daily_review_user_date', DailyReviewSession.user_id, DailyReviewSession.review_date)
+Index('idx_daily_activity_week', DailyActivity.user_id, DailyActivity.activity_date)

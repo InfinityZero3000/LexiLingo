@@ -1,0 +1,36 @@
+{
+  "name": "@lexilingo/agent-skills",
+  "version": "1.0.0",
+  "description": "AI agent skills for building effective language learning applications",
+  "main": "index.js",
+  "scripts": {
+    "build": "python3 build.py",
+    "build:skill": "python3 build.py",
+    "validate": "python3 validate.py",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "ai-agents",
+    "language-learning",
+    "education",
+    "speech-processing",
+    "gamification",
+    "skills",
+    "copilot",
+    "claude"
+  ],
+  "author": "LexiLingo Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InfinityZero3000/LexiLingo.git",
+    "directory": "agent-skills"
+  },
+  "bugs": {
+    "url": "https://github.com/InfinityZero3000/LexiLingo/issues"
+  },
+  "homepage": "https://github.com/InfinityZero3000/LexiLingo/tree/main/agent-skills#readme",
+  "engines": {
+    "python": ">=3.8"
+  }
+}

@@ -24,8 +24,8 @@ echo ""
 # ================================================
 echo -e "${YELLOW}📋 Checking prerequisites...${NC}"
 
-command -v python3 >/dev/null 2>&1 || { echo -e "${RED}❌ Python 3 is required${NC}"; exit 1; }
-command -v flutter >/dev/null 2>&1 || { echo -e "${RED}❌ Flutter is required${NC}"; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo -e "${RED}Python 3 is required${NC}"; exit 1; }
+command -v flutter >/dev/null 2>&1 || { echo -e "${RED}Flutter is required${NC}"; exit 1; }
 command -v psql >/dev/null 2>&1 || { echo -e "${RED}❌ PostgreSQL is required${NC}"; exit 1; }
 
 echo -e "${GREEN}✅ All prerequisites met${NC}"

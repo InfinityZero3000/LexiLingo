@@ -12,6 +12,10 @@ abstract class AchievementRemoteDataSource {
   /// Get current user's unlocked achievements
   Future<List<UserAchievementModel>> getMyAchievements();
 
+  /// Get recently earned badges (for profile display)
+  /// Following agent-skills/gamification-achievement-badges pattern
+  Future<List<UserAchievementModel>> getRecentBadges({int limit = 4});
+
   /// Force check all achievements for current user
   Future<List<UnlockedAchievementModel>> checkAllAchievements();
 }
@@ -53,6 +57,25 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
       return [];
     } catch (e) {
       debugPrint('Error fetching my achievements: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<UserAchievementModel>> getRecentBadges({int limit = 4}) async {
+    try {
+      // Uses new /gamification/achievements/recent endpoint
+      final data = await apiClient.get('/gamification/achievements/recent?limit=$limit');
+
+      if (data['success'] == true && data['data'] != null) {
+        final List<dynamic> badgesList = data['data'];
+        return badgesList
+            .map((json) => UserAchievementModel.fromJson(json))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching recent badges: $e');
       return [];
     }
   }

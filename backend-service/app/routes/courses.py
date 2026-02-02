@@ -103,6 +103,88 @@ async def get_courses(
     )
 
 
+# =====================
+# Enrolled Courses (Must be before /{course_id} to avoid route conflict)
+# =====================
+
+@router.get("/enrolled", response_model=PaginatedResponse[CourseListItem])
+async def get_enrolled_courses(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all courses the current user is enrolled in.
+    
+    - **page**: Page number (default: 1)
+    - **page_size**: Items per page (default: 20, max: 100)
+    
+    Returns courses with progress information.
+    """
+    from sqlalchemy import select, func
+    from app.models.course import Course
+    
+    # Query for enrolled courses with progress
+    skip = (page - 1) * page_size
+    
+    # Get total count
+    count_query = select(func.count(UserCourseProgress.id)).where(
+        UserCourseProgress.user_id == current_user.id
+    )
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+    
+    # Get enrolled courses
+    query = (
+        select(Course, UserCourseProgress)
+        .join(UserCourseProgress, Course.id == UserCourseProgress.course_id)
+        .where(
+            UserCourseProgress.user_id == current_user.id,
+            Course.is_published == True
+        )
+        .order_by(UserCourseProgress.last_accessed.desc())
+        .offset(skip)
+        .limit(page_size)
+    )
+    
+    result = await db.execute(query)
+    rows = result.all()
+    
+    # Convert to response models
+    course_items = []
+    for course, progress in rows:
+        item_dict = {
+            "id": course.id,
+            "title": course.title,
+            "description": course.description,
+            "language": course.language,
+            "level": course.level,
+            "tags": course.tags or [],
+            "thumbnail_url": course.thumbnail_url,
+            "total_lessons": course.total_lessons,
+            "total_xp": course.total_xp,
+            "estimated_duration": course.estimated_duration,
+            "is_enrolled": True
+        }
+        
+        item = CourseListItem(**item_dict)
+        course_items.append(item)
+    
+    # Calculate pagination
+    total_pages = (total + page_size - 1) // page_size
+    
+    return PaginatedResponse(
+        data=course_items,
+        pagination=PaginationMeta(
+            page=page,
+            page_size=page_size,
+            total=total,
+            total_pages=total_pages
+        )
+    )
+
+
 @router.get("/{course_id}", response_model=ApiResponse[CourseDetailResponse])
 async def get_course(
     course_id: uuid.UUID,

@@ -1,4 +1,5 @@
 import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/progress_firestore_data_source.dart';
@@ -9,6 +10,7 @@ import 'package:lexilingo_app/features/user/data/datasources/settings_local_data
 import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source_web.dart';
+import 'package:lexilingo_app/features/user/data/datasources/user_backend_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/user_firestore_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/user_local_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/user_local_data_source_web.dart';
@@ -25,12 +27,15 @@ import 'package:lexilingo_app/features/user/domain/usecases/get_current_streak_u
 import 'package:lexilingo_app/features/user/domain/usecases/get_goal_history_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_settings_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_today_goal_usecase.dart';
+import 'package:lexilingo_app/features/user/domain/usecases/get_user_stats_usecase.dart';
+import 'package:lexilingo_app/features/user/domain/usecases/get_weekly_activity_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/set_daily_goal_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/get_user_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_daily_progress_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_settings_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_user_stats_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/usecases/update_user_usecase.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 
 void registerUserModule({required bool skipDatabase}) {
@@ -73,10 +78,16 @@ void registerUserModule({required bool skipDatabase}) {
     );
   }
 
+  // Register Backend Data Source
+  sl.registerLazySingleton<UserBackendDataSource>(
+    () => UserBackendDataSourceImpl(apiClient: sl<ApiClient>()),
+  );
+
   sl.registerLazySingleton<UserRepository>(
     () => UserRepositoryImpl(
       localDataSource: sl(),
       firestoreDataSource: sl.isRegistered<UserFirestoreDataSource>() ? sl() : null,
+      backendDataSource: sl<UserBackendDataSource>(),
     ),
   );
   sl.registerLazySingleton<SettingsRepository>(
@@ -93,6 +104,8 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => CreateUserUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateUserUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateUserStatsUseCase(repository: sl()));
+  sl.registerLazySingleton(() => GetUserStatsUseCase(sl<UserRepository>()));
+  sl.registerLazySingleton(() => GetWeeklyActivityUseCase(sl<UserRepository>()));
   sl.registerLazySingleton(() => GetSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetTodayGoalUseCase(repository: sl()));
@@ -116,6 +129,11 @@ void registerUserModule({required bool skipDatabase}) {
       updateDailyProgressUseCase: sl(),
       getCurrentStreakUseCase: sl(),
     ),
+  );
+
+  // Register SettingsProvider for Task 4.5 (Language preferences & Daily goal)
+  sl.registerFactory<SettingsProvider>(
+    () => SettingsProvider(repository: sl<SettingsRepository>()),
   );
 
   // Only register ProgressSyncService if Firestore data sources are available

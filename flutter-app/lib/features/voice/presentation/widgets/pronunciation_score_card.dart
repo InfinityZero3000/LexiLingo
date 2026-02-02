@@ -32,7 +32,7 @@ class PronunciationScoreCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -269,7 +269,7 @@ class _WordChip extends StatelessWidget {
           color: _getColor(context),
           borderRadius: BorderRadius.circular(16),
           border: wordScore.hasIssue
-              ? Border.all(color: _getTextColor().withOpacity(0.5))
+              ? Border.all(color: _getTextColor().withValues(alpha: 0.5))
               : null,
         ),
         child: Row(

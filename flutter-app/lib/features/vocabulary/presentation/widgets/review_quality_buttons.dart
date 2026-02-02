@@ -25,7 +25,7 @@ class ReviewQualityButtons extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -91,7 +91,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'Blackout (0)',
                   style: TextStyle(
-                    color: AppColors.textGrey.withOpacity(0.7),
+                    color: AppColors.textGrey.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -103,7 +103,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'Perfect (5)',
                   style: TextStyle(
-                    color: AppColors.textGrey.withOpacity(0.7),
+                    color: AppColors.textGrey.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -143,10 +143,10 @@ class _QualityButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -164,7 +164,7 @@ class _QualityButton extends StatelessWidget {
               Text(
                 subLabel,
                 style: TextStyle(
-                  color: color.withOpacity(0.7),
+                  color: color.withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
               ),

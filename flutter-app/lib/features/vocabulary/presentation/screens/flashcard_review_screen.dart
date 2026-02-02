@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard_widget.dart';
@@ -111,16 +112,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
         builder: (context, provider, child) {
           // Loading state
           if (provider.isLoading && !provider.hasSession) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading vocabulary...'),
-                ],
-              ),
-            );
+            return const LoadingScreen(message: 'Loading vocabulary...');
           }
 
           // Error state

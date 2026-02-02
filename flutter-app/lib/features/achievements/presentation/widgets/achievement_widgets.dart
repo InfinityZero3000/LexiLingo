@@ -4,40 +4,102 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
+import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
   if (badgeIcon == null) return Icons.emoji_events;
 
-  switch (badgeIcon) {
+  switch (badgeIcon.toLowerCase()) {
+    // Trophy/Medal icons
     case 'trophy':
-    case '🏆':
       return Icons.emoji_events;
-    case 'star':
-    case '⭐':
-      return Icons.star;
-    case 'diamond':
-    case '💎':
-      return Icons.diamond;
     case 'medal':
       return Icons.military_tech;
+    case 'crown':
+      return Icons.workspace_premium;
+    case 'award':
+      return Icons.emoji_events_outlined;
+      
+    // Star icons
+    case 'star':
+      return Icons.star;
+    case 'star_gold':
+      return Icons.star_rate;
+    case 'stars':
+      return Icons.auto_awesome;
+      
+    // Fire/Energy icons
     case 'fire':
-    case '🔥':
       return Icons.local_fire_department;
     case 'bolt':
-    case '⚡':
+    case 'lightning':
       return Icons.bolt;
+    case 'flash':
+      return Icons.flash_on;
+      
+    // Education icons
+    case 'book':
+      return Icons.menu_book;
+    case 'library':
+      return Icons.local_library;
+    case 'dictionary':
+      return Icons.book;
+    case 'school':
+      return Icons.school;
+    case 'pencil':
+      return Icons.edit;
+      
+    // Target/Check icons
+    case 'target':
+      return Icons.track_changes;
+    case 'check':
+    case 'check_circle':
+      return Icons.check_circle;
+    case 'verified':
+      return Icons.verified;
+      
+    // Gem/Diamond icons
+    case 'diamond':
+      return Icons.diamond;
+    case 'gem':
+      return Icons.diamond_outlined;
+      
+    // Voice icons
+    case 'mic':
+    case 'microphone':
+      return Icons.mic;
+    case 'record':
+      return Icons.fiber_manual_record;
+    case 'speaker':
+      return Icons.volume_up;
+      
+    // Progress icons
+    case 'flag':
+      return Icons.flag;
+    case 'rocket':
+      return Icons.rocket_launch;
+    case 'trending':
+      return Icons.trending_up;
+      
+    // Default fallback
     default:
+      // Check if it's an emoji (fallback to trophy)
+      if (badgeIcon.length <= 2 || badgeIcon.contains(RegExp(r'[\u{1F000}-\u{1FFFF}]', unicode: true))) {
+        return Icons.emoji_events;
+      }
       return Icons.emoji_events;
   }
 }
 
 /// Badge widget - displays a single achievement badge
+/// Now uses the new GeneratedBadge with custom painting for professional look
 class AchievementBadge extends StatelessWidget {
   final AchievementEntity achievement;
   final bool isUnlocked;
   final VoidCallback? onTap;
   final double size;
+  final bool useNewStyle; // Toggle between old and new style
 
   const AchievementBadge({
     super.key,
@@ -45,10 +107,33 @@ class AchievementBadge extends StatelessWidget {
     this.isUnlocked = false,
     this.onTap,
     this.size = 80,
+    this.useNewStyle = true, // Default to new style
   });
 
   @override
   Widget build(BuildContext context) {
+    if (useNewStyle) {
+      return _buildNewStyleBadge();
+    }
+    return _buildClassicBadge();
+  }
+
+  /// New generated badge with custom painting
+  Widget _buildNewStyleBadge() {
+    return SmartAchievementBadge(
+      category: achievement.category,
+      badgeIcon: achievement.badgeIcon,
+      badgeColor: achievement.badgeColor,
+      rarity: achievement.rarity,
+      conditionValue: achievement.conditionValue,
+      isUnlocked: isUnlocked,
+      size: size,
+      onTap: onTap,
+    );
+  }
+
+  /// Classic badge style (fallback)
+  Widget _buildClassicBadge() {
     final Color badgeColor = achievement.badgeColor != null
         ? Color(
             int.parse(
@@ -127,38 +212,42 @@ class AchievementCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               AchievementBadge(
                 achievement: achievement,
                 isUnlocked: isUnlocked,
-                size: 60,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                achievement.name,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isUnlocked ? null : Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                size: 50,
               ),
               const SizedBox(height: 4),
+              Flexible(
+                child: Text(
+                  achievement.name,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isUnlocked ? null : Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 2),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: rarityColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   achievement.rarityDisplayName,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: rarityColor,
                     fontWeight: FontWeight.bold,
+                    fontSize: 10,
                   ),
                 ),
               ),
@@ -260,7 +349,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
               children: [
                 // Header
                 Text(
-                  '🎉 Achievement Unlocked!',
+                  'Achievement Unlocked!',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: badgeColor,

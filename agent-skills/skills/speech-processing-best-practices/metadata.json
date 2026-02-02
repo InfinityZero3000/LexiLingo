@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "LexiLingo Team",
+  "date": "February 2026",
+  "abstract": "Technical best practices for implementing high-quality speech features in language learning applications. Covers STT/TTS optimization, audio processing, pronunciation scoring, and real-time voice interaction.",
+  "references": [
+    "https://cloud.google.com/speech-to-text/docs",
+    "https://cloud.google.com/text-to-speech/docs",
+    "https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API",
+    "https://www.w3.org/TR/speech-synthesis11/"
+  ]
+}

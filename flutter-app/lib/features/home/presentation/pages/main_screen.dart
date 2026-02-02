@@ -35,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
           border: Border(
             top: BorderSide(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withOpacity(0.1)
+                  ? Colors.white.withValues(alpha: 0.1)
                   : const Color(0xFFF0F2F4),
             ),
           ),

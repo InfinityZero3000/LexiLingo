@@ -378,7 +378,7 @@ class DailyChallengesSheet extends StatelessWidget {
     if (success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 Reward claimed!'),
+          content: Text('Reward claimed successfully!'),
           backgroundColor: Colors.green,
         ),
       );

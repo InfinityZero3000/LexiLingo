@@ -365,6 +365,43 @@ class UserInventory(Base):
         return f"<UserInventory user={self.user_id} item={self.shop_item_id} qty={self.quantity}>"
 
 
+class ChallengeRewardClaim(Base):
+    """
+    Track daily challenge reward claims.
+    Phase 4: Prevents duplicate claims and records reward history.
+    """
+    
+    __tablename__ = "challenge_reward_claims"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    challenge_id: Mapped[str] = mapped_column(String(100), nullable=False)  # Challenge template ID
+    claim_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)  # Date of claim (for daily reset)
+    
+    xp_reward: Mapped[int] = mapped_column(Integer, default=0)
+    gems_reward: Mapped[int] = mapped_column(Integer, default=0)
+    
+    claimed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        Index('idx_challenge_claim_user_date', 'user_id', 'challenge_id', 'claim_date', unique=True),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<ChallengeRewardClaim user={self.user_id} challenge={self.challenge_id}>"
+
+
 # Create composite indexes for efficient queries
 Index('idx_user_achievement_unique', UserAchievement.user_id, UserAchievement.achievement_id, unique=True)
 Index('idx_leaderboard_week_league', LeaderboardEntry.week_start, LeaderboardEntry.league)

@@ -97,7 +97,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -140,7 +140,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               filled: true,
               fillColor: widget.isAnswered
                   ? (widget.isCorrect! ? Colors.green : Colors.red)
-                      .withOpacity(0.1)
+                      .withValues(alpha: 0.1)
                   : Colors.grey[50],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -217,8 +217,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
             const SizedBox(height: 24),
             Card(
               color: widget.isCorrect! 
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.orange.withOpacity(0.1),
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.orange.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(

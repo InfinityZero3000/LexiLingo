@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -10,6 +11,8 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/session_list_drawer.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/audio_waveform.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/chat_ui_components.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 
 class ChatPage extends StatefulWidget {
@@ -229,12 +232,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -308,18 +305,10 @@ class _ChatPageState extends State<ChatPage> {
         },
       ),
       appBar: AppBar(
-        title: Column(
-          children: [
-            const Text('AI Tutor', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                const SizedBox(width: 4),
-                Text('Online | Learning Guide', style: TextStyle(color: AppColors.textDark.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.normal)),
-              ],
-            )
-          ],
+        title: AITutorMoodIndicator(
+          mood: chatProvider.isSending ? AIMood.thinking : AIMood.helpful,
+          isOnline: true,
+          currentTopic: 'Daily Habits',
         ),
         centerTitle: true,
         backgroundColor: AppColors.accentYellow,
@@ -330,7 +319,7 @@ class _ChatPageState extends State<ChatPage> {
             },
             child: Container(
               margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
               child: const Icon(Icons.menu, color: AppColors.textDark, size: 18),
             ),
           ),
@@ -339,7 +328,7 @@ class _ChatPageState extends State<ChatPage> {
           Container(
             margin: const EdgeInsets.all(8),
             width: 40,
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: const Icon(Icons.info_outline, color: AppColors.textDark),
           )
         ],
@@ -372,7 +361,7 @@ class _ChatPageState extends State<ChatPage> {
                       child: Text(
                         'Đã tải hết tin nhắn',
                         style: TextStyle(
-                          color: AppColors.textGrey.withOpacity(0.7),
+                          color: AppColors.textGrey.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
@@ -431,10 +420,7 @@ class _ChatPageState extends State<ChatPage> {
                 }),
 
                 if (chatProvider.isSending)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                  _buildTypingIndicator(),
               ],
             ),
           ),
@@ -450,7 +436,12 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 // Voice Recording Indicator
                 if (_isRecording || _isProcessingVoice) ...[
-                  _buildVoiceRecordingUI(),
+                  VoiceRecordingIndicator(
+                    isRecording: _isRecording,
+                    isProcessing: _isProcessingVoice,
+                    recordingDuration: _recordingDuration,
+                    onCancel: _cancelRecording,
+                  ),
                   const SizedBox(height: 16),
                 ] else ...[
                   // Quick Replies
@@ -566,6 +557,54 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// Typing indicator with animated dots
+  Widget _buildTypingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // AI Avatar
+          Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.accentYellow,
+              image: DecorationImage(
+                image: NetworkImage(
+                  "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E",
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Typing bubble
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : const Color(0xFFF0F2F4),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(0),
+              ),
+            ),
+            child: const TypingIndicator(
+              color: AppColors.primary,
+              dotSize: 8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWelcomeMessage(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -611,7 +650,7 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                   child: Text(
-                    "Hello! 👋 Let's practice English together. What is the first thing you usually do when you wake up in the morning?",
+                    "Hello!  Let's practice English together. What is the first thing you usually do when you wake up in the morning?",
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -623,79 +662,27 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildVoiceRecordingUI() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _isRecording 
-            ? Colors.red.withValues(alpha: 0.1) 
-            : Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          // Recording indicator
-          if (_isRecording) ...[
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _formatDuration(_recordingDuration),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-              ),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: _cancelRecording,
-              icon: const Icon(Icons.close, color: Colors.red),
-              label: const Text('Cancel', style: TextStyle(color: Colors.red)),
-            ),
-          ] else if (_isProcessingVoice) ...[
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Processing your voice...',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickReply(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.3))
+    return GestureDetector(
+      onTap: () {
+        _controller.text = text;
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3))
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: Text(
+            text, 
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textGrey),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textGrey)),
     );
   }
 }

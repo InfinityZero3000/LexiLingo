@@ -21,6 +21,11 @@ class AchievementRepositoryImpl implements AchievementRepository {
   }
 
   @override
+  Future<List<UserAchievementEntity>> getRecentBadges({int limit = 4}) async {
+    return await remoteDataSource.getRecentBadges(limit: limit);
+  }
+
+  @override
   Future<List<UnlockedAchievementModel>> checkAllAchievements() async {
     return await remoteDataSource.checkAllAchievements();
   }

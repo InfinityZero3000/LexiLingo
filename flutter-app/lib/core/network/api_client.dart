@@ -16,6 +16,7 @@ class ApiClient {
   final List<ApiInterceptor> _interceptors;
   final NetworkInfo _networkInfo;
   final Future<Map<String, String>> Function()? _authHeaderProvider;
+  final Future<bool> Function()? _onUnauthorized;
 
   ApiClient({
     http.Client? client,
@@ -24,6 +25,7 @@ class ApiClient {
     NetworkInfo? networkInfo,
     bool enableLogging = true,
     Future<Map<String, String>> Function()? authHeaderProvider,
+    Future<bool> Function()? onUnauthorized,
   })  : _client = client ?? http.Client(),
         _baseUrl = (baseUrl ?? ApiConfig.baseUrl).replaceAll(RegExp(r'/+$'), ''),
         _interceptors = [
@@ -31,7 +33,8 @@ class ApiClient {
           ...?interceptors,
         ],
         _networkInfo = networkInfo ?? NetworkInfoImpl(),
-        _authHeaderProvider = authHeaderProvider;
+        _authHeaderProvider = authHeaderProvider,
+        _onUnauthorized = onUnauthorized;
 
   Future<Map<String, String>> _buildHeaders(Map<String, String>? headers) async {
     final built = <String, String>{
@@ -61,9 +64,9 @@ class ApiClient {
   }
 
   /// GET request returning unwrapped data
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers}) async {
+  Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers, Duration? timeout}) async {
     final uri = _resolve(path);
-    return _send('GET', uri, headers: headers);
+    return _send('GET', uri, headers: headers, timeout: timeout);
   }
 
   /// POST request returning unwrapped data
@@ -71,9 +74,10 @@ class ApiClient {
     String path, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
     final uri = _resolve(path);
-    return _send('POST', uri, headers: headers, body: body);
+    return _send('POST', uri, headers: headers, body: body, timeout: timeout);
   }
 
   /// GET request returning full ApiResponseEnvelope
@@ -84,7 +88,7 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     final response = await _sendRaw('GET', uri, headers: headers);
-    return _parseResponseEnvelope<T>(response, fromJson);
+    return await _parseResponseEnvelope<T>(response, fromJson);
   }
 
   /// POST request returning full ApiResponseEnvelope
@@ -96,7 +100,7 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     final response = await _sendRaw('POST', uri, headers: headers, body: body);
-    return _parseResponseEnvelope<T>(response, fromJson);
+    return await _parseResponseEnvelope<T>(response, fromJson);
   }
   /// PUT request returning full ApiResponseEnvelope
   Future<ApiResponseEnvelope<T>> putEnvelope<T>(
@@ -107,7 +111,7 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     final response = await _sendRaw('PUT', uri, headers: headers, body: body);
-    return _parseResponseEnvelope<T>(response, fromJson);
+    return await _parseResponseEnvelope<T>(response, fromJson);
   }
   /// GET request returning PaginatedResponseEnvelope
   Future<PaginatedResponseEnvelope<T>> getPaginated<T>(
@@ -117,7 +121,7 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     final response = await _sendRaw('GET', uri, headers: headers);
-    return _parsePaginatedResponse<T>(response, fromJson);
+    return await _parsePaginatedResponse<T>(response, fromJson);
   }
 
   /// Internal method: sends request and returns unwrapped data
@@ -126,9 +130,10 @@ class ApiClient {
     Uri uri, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
-    final response = await _sendRaw(method, uri, headers: headers, body: body);
-    return _handleResponse(response);
+    final response = await _sendRaw(method, uri, headers: headers, body: body, timeout: timeout);
+    return await _handleResponse(response);
   }
 
   /// Internal method: sends request and returns raw ApiResponse
@@ -137,6 +142,7 @@ class ApiClient {
     Uri uri, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
     if (!await _networkInfo.isConnected) {
       throw ServerException('No network connection');
@@ -155,7 +161,7 @@ class ApiClient {
 
     try {
       final response = await _dispatch(method, uri, req.headers, body)
-          .timeout(ApiConfig.receiveTimeout);
+          .timeout(timeout ?? ApiConfig.receiveTimeout);
       final apiResponse = ApiResponse(
         statusCode: response.statusCode,
         uri: uri,
@@ -196,12 +202,12 @@ class ApiClient {
     }
   }
 
-  Map<String, dynamic> _handleResponse(ApiResponse response) {
+  Future<Map<String, dynamic>> _handleResponse(ApiResponse response) async {
     final statusCode = response.statusCode;
     
     // Check for error status codes
     if (statusCode < 200 || statusCode >= 300) {
-      _handleErrorResponse(response);
+      await _handleErrorResponse(response);
     }
     
     if (response.body.isEmpty) return <String, dynamic>{};
@@ -226,10 +232,18 @@ class ApiClient {
   }
 
   /// Parse error response and throw ApiErrorException
-  void _handleErrorResponse(ApiResponse response) {
-    // Handle 401 Unauthorized - throw AuthException
+  Future<void> _handleErrorResponse(ApiResponse response) async {
+    // Handle 401 Unauthorized
     if (response.statusCode == 401) {
-      throw AuthException('Unauthorized');
+      // Try to refresh token if callback is provided
+      if (_onUnauthorized != null) {
+        final refreshed = await _onUnauthorized!();
+        if (refreshed) {
+          // Token was refreshed, caller should retry
+          throw TokenRefreshedException();
+        }
+      }
+      throw UnauthorizedException('Unauthorized');
     }
 
     if (response.body.isEmpty) {
@@ -246,7 +260,8 @@ class ApiClient {
       }
     } catch (e) {
       if (e is ApiErrorException) rethrow;
-      if (e is AuthException) rethrow;
+      if (e is UnauthorizedException) rethrow;
+      if (e is TokenRefreshedException) rethrow;
       // If parsing fails, throw generic error
     }
 
@@ -256,14 +271,14 @@ class ApiClient {
   }
 
   /// Parse ApiResponseEnvelope from response
-  ApiResponseEnvelope<T> _parseResponseEnvelope<T>(
+  Future<ApiResponseEnvelope<T>> _parseResponseEnvelope<T>(
     ApiResponse response,
     T Function(dynamic) fromJson,
-  ) {
+  ) async {
     final statusCode = response.statusCode;
     
     if (statusCode < 200 || statusCode >= 300) {
-      _handleErrorResponse(response);
+      await _handleErrorResponse(response);
     }
 
     if (response.body.isEmpty) {
@@ -275,14 +290,14 @@ class ApiClient {
   }
 
   /// Parse PaginatedResponseEnvelope from response
-  PaginatedResponseEnvelope<T> _parsePaginatedResponse<T>(
+  Future<PaginatedResponseEnvelope<T>> _parsePaginatedResponse<T>(
     ApiResponse response,
     T Function(Map<String, dynamic>) fromJson,
-  ) {
+  ) async {
     final statusCode = response.statusCode;
     
     if (statusCode < 200 || statusCode >= 300) {
-      _handleErrorResponse(response);
+      await _handleErrorResponse(response);
     }
 
     if (response.body.isEmpty) {

@@ -14,15 +14,23 @@ class SettingsModel extends Settings {
 
   factory SettingsModel.fromJson(Map<String, dynamic> json) {
     return SettingsModel(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       userId: json['userId'] as String,
-      notificationEnabled: (json['notificationEnabled'] as int?) == 1,
+      notificationEnabled: _parseBool(json['notificationEnabled']),
       notificationTime: json['notificationTime'] as String? ?? "09:00",
       theme: json['theme'] as String? ?? "system",
       language: json['language'] as String? ?? "en",
-      soundEnabled: (json['soundEnabled'] as int?) == 1,
+      soundEnabled: _parseBool(json['soundEnabled']),
       dailyGoalXP: json['dailyGoalXP'] as int? ?? 50,
     );
+  }
+
+  /// Helper to parse bool from int or bool
+  static bool _parseBool(dynamic value) {
+    if (value == null) return true;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    return true;
   }
 
   Map<String, dynamic> toJson() {

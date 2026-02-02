@@ -1,10 +1,15 @@
 """
 Progress Routes
 API endpoints for tracking user progress
+
+Following agent-skills/language-learning-patterns:
+- progress-learning-streaks: Robust streak system with protections (3-5x engagement)
+- gamification-achievement-badges: Meaningful achievements (25-40% engagement boost)
 """
-from datetime import date, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, and_
+from datetime import date, datetime, timedelta
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,7 +25,7 @@ from app.schemas.progress import (
 )
 from app.schemas.response import ApiResponse
 from app.models.user import User
-from app.models.progress import Streak
+from app.models.progress import Streak, DailyActivity
 from app.services import check_achievements_for_user
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
@@ -254,6 +259,99 @@ async def get_total_xp(
         success=True,
         message="Total XP retrieved successfully",
         data={'total_xp': total_xp}
+    )
+
+
+# ============================================================================
+# Weekly Progress Endpoints (Task 1.3)
+# ============================================================================
+
+@router.get("/weekly", response_model=ApiResponse[dict])
+async def get_weekly_progress(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get user's weekly progress for the last 7 days
+    
+    Returns:
+    - days: List of daily activity data for last 7 days
+    - total_xp: Total XP earned this week
+    - average_xp: Average XP per day
+    - best_day: Day with highest XP
+    
+    Used for weekly progress visualization in Flutter app.
+    """
+    today = date.today()
+    week_start = today - timedelta(days=6)  # Last 7 days including today
+    
+    # Query daily activities for the week
+    result = await db.execute(
+        select(DailyActivity)
+        .where(
+            and_(
+                DailyActivity.user_id == current_user.id,
+                DailyActivity.activity_date >= week_start,
+                DailyActivity.activity_date <= today
+            )
+        )
+        .order_by(DailyActivity.activity_date)
+    )
+    activities = result.scalars().all()
+    
+    # Create a map for quick lookup
+    activity_map = {a.activity_date: a for a in activities}
+    
+    # Build response for each day of the week
+    days = []
+    day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    
+    total_xp = 0
+    best_day = None
+    best_xp = 0
+    
+    for i in range(7):
+        day_date = week_start + timedelta(days=i)
+        activity = activity_map.get(day_date)
+        
+        xp = activity.xp_earned if activity else 0
+        lessons = activity.lessons_completed if activity else 0
+        minutes = activity.study_time_minutes if activity else 0
+        goal_met = activity.daily_goal_met if activity else False
+        
+        total_xp += xp
+        if xp > best_xp:
+            best_xp = xp
+            best_day = day_names[day_date.weekday()]
+        
+        days.append({
+            'date': day_date.isoformat(),
+            'day_name': day_names[day_date.weekday()],
+            'xp_earned': xp,
+            'lessons_completed': lessons,
+            'study_time_minutes': minutes,
+            'daily_goal_met': goal_met,
+            'is_today': day_date == today,
+        })
+    
+    # Calculate stats
+    days_with_activity = len([d for d in days if d['xp_earned'] > 0])
+    average_xp = round(total_xp / 7, 1) if total_xp > 0 else 0
+    
+    response_data = {
+        'days': days,
+        'total_xp': total_xp,
+        'average_xp': average_xp,
+        'best_day': best_day,
+        'days_active': days_with_activity,
+        'week_start': week_start.isoformat(),
+        'week_end': today.isoformat(),
+    }
+    
+    return ApiResponse(
+        success=True,
+        message="Weekly progress retrieved successfully",
+        data=response_data
     )
 
 

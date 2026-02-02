@@ -1,16 +1,24 @@
+import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/error/exceptions.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/entities/user_stats_entity.dart';
+import '../../domain/entities/weekly_activity_entity.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../datasources/user_local_data_source.dart';
 import '../datasources/user_firestore_data_source.dart';
+import '../datasources/user_backend_data_source.dart';
 import '../models/user_model.dart';
 
 class UserRepositoryImpl implements UserRepository {
   final UserLocalDataSource localDataSource;
   final UserFirestoreDataSource? firestoreDataSource;
+  final UserBackendDataSource? backendDataSource;
 
   UserRepositoryImpl({
     required this.localDataSource,
     this.firestoreDataSource,
+    this.backendDataSource,
   });
 
   @override
@@ -118,6 +126,38 @@ class UserRepositoryImpl implements UserRepository {
       } catch (e) {
         // Sync failed
       }
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserStatsEntity>> getUserStats() async {
+    if (backendDataSource == null) {
+      return Left(ServerFailure('Backend data source not available'));
+    }
+
+    try {
+      final stats = await backendDataSource!.getUserStats();
+      return Right(stats);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Failed to get user stats: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<WeeklyActivityEntity>>> getWeeklyActivity() async {
+    if (backendDataSource == null) {
+      return Left(ServerFailure('Backend data source not available'));
+    }
+
+    try {
+      final activities = await backendDataSource!.getWeeklyActivity();
+      return Right(activities);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Failed to get weekly activity: $e'));
     }
   }
 }

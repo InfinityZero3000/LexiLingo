@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
@@ -56,16 +57,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Loading roadmap...'),
-        ],
-      ),
-    );
+    return const LoadingScreen(message: 'Loading roadmap...');
   }
 
   Widget _buildErrorState(String error, LearningProvider provider) {
@@ -184,7 +176,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
             gradient: LinearGradient(
               colors: [
                 _parseColor(unit.backgroundColor),
-                _parseColor(unit.backgroundColor).withOpacity(0.7),
+                _parseColor(unit.backgroundColor).withValues(alpha: 0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -192,7 +184,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: _parseColor(unit.backgroundColor).withOpacity(0.3),
+                color: _parseColor(unit.backgroundColor).withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -204,7 +196,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -237,7 +229,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
                         unit.description!,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -280,7 +272,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
           CircularProgressIndicator(
             value: unit.completionPercentage / 100,
             strokeWidth: 4,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
           Text(

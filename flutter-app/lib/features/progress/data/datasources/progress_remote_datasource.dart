@@ -2,8 +2,13 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/progress/data/models/progress_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/streak_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/daily_challenge_model.dart';
+import 'package:lexilingo_app/features/progress/data/models/weekly_progress_model.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 
 /// Progress Remote Data Source Interface
+/// 
+/// Following agent-skills/language-learning-patterns:
+/// - progress-learning-streaks: Visual progress tracking (3-5x engagement)
 abstract class ProgressRemoteDataSource {
   Future<ProgressStatsModel> getMyProgress();
   Future<CourseProgressWithUnitsModel> getCourseProgress(String courseId);
@@ -12,6 +17,9 @@ abstract class ProgressRemoteDataSource {
     required double score,
   });
   Future<int> getTotalXp();
+  
+  // Weekly progress (Task 1.3)
+  Future<WeeklyProgressEntity> getWeeklyProgress();
   
   // Streak methods
   Future<StreakModel> getMyStreak();
@@ -75,6 +83,21 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
       return response['total_xp'] ?? 0;
     } catch (e) {
       rethrow;
+    }
+  }
+
+  // ============================================================================
+  // Weekly Progress Methods (Task 1.3)
+  // ============================================================================
+
+  @override
+  Future<WeeklyProgressEntity> getWeeklyProgress() async {
+    try {
+      final response = await apiClient.get('/progress/weekly');
+      return WeeklyProgressModel.fromJson(response);
+    } catch (e) {
+      // Return empty data if API fails (graceful degradation)
+      return WeeklyProgressEntity.empty();
     }
   }
 

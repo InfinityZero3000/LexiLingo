@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_session.dart';
 import '../../domain/entities/ai_analysis_result.dart';
@@ -11,6 +12,8 @@ import '../datasources/chat_api_data_source.dart';
 import '../datasources/chat_remote_data_source.dart';
 import '../models/chat_message_model.dart';
 import '../models/chat_session_model.dart';
+
+const _tag = 'ChatRepositoryImpl';
 
 /// Implementation of ChatRepository
 /// Connects local and remote data sources
@@ -40,7 +43,7 @@ class ChatRepositoryImpl implements ChatRepository {
           return Right(session.toEntity());
         } catch (e) {
           // If API fails (e.g., 404), fallback to local
-          print('⚠️ Chat API not available, creating local session: $e');
+          logWarn(_tag, ' Chat API not available, creating local session: $e');
         }
       }
 
@@ -75,7 +78,7 @@ class ChatRepositoryImpl implements ChatRepository {
           return Right(sessions.map((s) => s.toEntity()).toList());
         } catch (e) {
           // If API fails (e.g., 404), fallback to local
-          print('⚠️ Chat API not available, using local storage: $e');
+          logWarn(_tag, ' Chat API not available, using local storage: $e');
         }
       }
 

@@ -32,7 +32,8 @@ from api.services.background_jobs_v3 import BackgroundJobsV3
 from api.services.diagnoser_v3 import DiagnoserV3
 from api.services.grounded_response_v3 import GroundedResponseV3
 from api.services.kg_service_v3 import KnowledgeGraphServiceV3
-from api.services.retrieval_service_v3 import RetrievalServiceV3
+from api.services.retrieval_service_v3 import RetrievalConfig, RetrievalServiceV3
+from api.services.graph_analytics import get_graph_analytics
 
 
 class V3Pipeline:
@@ -205,6 +206,15 @@ class V3Pipeline:
             )
 
         return response
+
+    def get_graph_analytics_summary(self) -> Dict[str, Any]:
+        """
+        Get graph analytics summary for debugging/monitoring.
+        
+        Returns:
+            Dict with centrality scores, communities, and top concepts
+        """
+        return self.retrieval.get_analytics_summary()
 
 
 _v3_pipeline: Optional[V3Pipeline] = None

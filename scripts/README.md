@@ -59,7 +59,7 @@ Kiểm tra trạng thái của tất cả services.
 
 **Hiển thị:**
 - ✅ Services đang chạy (với PID)
-- ❌ Services đã dừng
+- Services đã dừng
 - 🗄️ Trạng thái PostgreSQL database
 
 ## 🚀 Quick Start

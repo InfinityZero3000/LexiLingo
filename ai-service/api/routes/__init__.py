@@ -12,6 +12,8 @@ from api.routes.training import router as training_router
 from api.routes.cag import router as cag_router
 from api.routes.stt import router as stt_router
 from api.routes.tts import router as tts_router
+from api.routes.topic_chat import router as topic_chat_router
+from api.routes.websocket_stream import router as websocket_stream_router
 
 __all__ = [
     "health_router",
@@ -22,4 +24,7 @@ __all__ = [
     "cag_router",
     "stt_router",
     "tts_router",
+    "topic_chat_router",
+    "websocket_stream_router",
 ]
+

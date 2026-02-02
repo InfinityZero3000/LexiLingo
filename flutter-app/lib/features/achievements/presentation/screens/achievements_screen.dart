@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
@@ -46,7 +47,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       body: Consumer<AchievementProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingScreen(message: 'Loading achievements...');
           }
 
           if (provider.error != null) {
@@ -147,30 +148,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                 ],
               ),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 70,
-                    height: 70,
-                    child: CircularProgressIndicator(
-                      value: percentage / 100,
-                      strokeWidth: 8,
-                      backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
-                    ),
+              AnimatedProgressRing(
+                progress: percentage / 100,
+                size: 70,
+                strokeWidth: 8,
+                backgroundColor: Colors.white24,
+                progressColor: Colors.white,
+                child: Text(
+                  '${percentage.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  Text(
-                    '${percentage.toStringAsFixed(0)}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -217,7 +208,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            childAspectRatio: 0.85,
+            childAspectRatio: 0.75,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),

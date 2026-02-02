@@ -38,6 +38,8 @@ from app.routes.learning import router as learning_router
 from app.routes.admin import router as admin_router
 from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
+from app.routes.course_categories import router as course_categories_router
+from app.routes.proficiency import router as proficiency_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -163,6 +165,7 @@ app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(courses_router, prefix=f"{settings.API_V1_PREFIX}/courses", tags=["Courses"])
+app.include_router(course_categories_router, prefix=f"{settings.API_V1_PREFIX}/categories", tags=["Course Categories"])
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
@@ -170,6 +173,7 @@ app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
+app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
 
 
 @app.get("/")

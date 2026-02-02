@@ -117,7 +117,7 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -157,16 +157,16 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
             
             if (showResult) {
               if (isCorrectAnswer) {
-                backgroundColor = Colors.green.withOpacity(0.1);
+                backgroundColor = Colors.green.withValues(alpha: 0.1);
                 borderColor = Colors.green;
                 icon = Icons.check_circle;
               } else if (isSelected && !isCorrectAnswer) {
-                backgroundColor = Colors.red.withOpacity(0.1);
+                backgroundColor = Colors.red.withValues(alpha: 0.1);
                 borderColor = Colors.red;
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
-              backgroundColor = Theme.of(context).primaryColor.withOpacity(0.1);
+              backgroundColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
               borderColor = Theme.of(context).primaryColor;
             }
             
@@ -221,8 +221,8 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
               opacity: _animation,
               child: Card(
                 color: widget.isCorrect! 
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.orange.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
