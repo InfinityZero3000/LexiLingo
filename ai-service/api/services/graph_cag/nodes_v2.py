@@ -437,18 +437,21 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
                 f"- '{e.get('span', '')}' should be '{e.get('correction', '')}' ({e.get('explanation', '')})"
                 for e in errors[:3]
             ])
+        # Build grammar issues text (avoiding backslash in f-string)
+        grammar_section = f"Grammar issues found:\n{errors_text}" if errors_text else "No grammar issues found!"
+        correction_instruction = "Gently corrects the errors with clear explanations" if errors else "Praises their good work"
         
         generation_prompt = f"""You are a friendly English tutor helping a {level} level learner.
 
 Student said: "{user_input}"
 
-{f"Grammar issues found:\n{errors_text}" if errors_text else "No grammar issues found!"}
+{grammar_section}
 
 Context: {context if context else "General conversation practice"}
 
 Task: Generate a helpful, encouraging response that:
 1. Acknowledges their effort
-2. {"Gently corrects the errors with clear explanations" if errors else "Praises their good work"}
+2. {correction_instruction}
 3. Provides a corrected version if needed
 4. Suggests what to practice next
 5. Uses simple language appropriate for {level} level

@@ -29,7 +29,7 @@ from api.services.graph_cag.edges import (
     route_after_diagnosis,
     should_generate_tts,
 )
-from api.services.model_gateway import get_gateway, initialize_gateway
+from api.services.model_gateway import get_gateway
 
 logger = logging.getLogger(__name__)
 
