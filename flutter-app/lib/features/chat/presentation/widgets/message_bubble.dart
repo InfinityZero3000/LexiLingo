@@ -5,6 +5,14 @@ import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/markdown_message_content.dart';
 import 'package:intl/intl.dart';
 
+/// Message Reaction data
+class MessageReaction {
+  final String emoji;
+  final String label;
+  
+  const MessageReaction({required this.emoji, required this.label});
+}
+
 /// A reusable message bubble widget for chat interface
 /// Supports both user and AI messages with different styling
 class MessageBubble extends StatefulWidget {
@@ -12,6 +20,7 @@ class MessageBubble extends StatefulWidget {
   final bool showAvatar;
   final bool showTimestamp;
   final VoidCallback? onRetry;
+  final Function(String reaction)? onReaction;
 
   const MessageBubble({
     super.key,
@@ -19,14 +28,97 @@ class MessageBubble extends StatefulWidget {
     this.showAvatar = true,
     this.showTimestamp = true,
     this.onRetry,
+    this.onReaction,
   });
 
   @override
   State<MessageBubble> createState() => _MessageBubbleState();
 }
 
-class _MessageBubbleState extends State<MessageBubble> {
+class _MessageBubbleState extends State<MessageBubble> with SingleTickerProviderStateMixin {
   bool _showActions = false;
+  bool _showReactions = false;
+  String? _selectedReaction;
+  late AnimationController _reactionController;
+  late Animation<double> _reactionScaleAnimation;
+
+  static const List<MessageReaction> _reactions = [
+    MessageReaction(emoji: 'thumb_up', label: 'Helpful'),
+    MessageReaction(emoji: 'favorite', label: 'Love'),
+    MessageReaction(emoji: 'lightbulb', label: 'Insightful'),
+    MessageReaction(emoji: 'target', label: 'Perfect'),
+    MessageReaction(emoji: 'help', label: 'Need more'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _reactionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _reactionScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _reactionController, curve: Curves.elasticOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _reactionController.dispose();
+    super.dispose();
+  }
+
+  void _toggleReactions() {
+    setState(() {
+      _showReactions = !_showReactions;
+      if (_showReactions) {
+        _reactionController.forward(from: 0);
+      }
+    });
+  }
+
+  void _selectReaction(String emoji) {
+    setState(() {
+      _selectedReaction = emoji;
+      _showReactions = false;
+    });
+    widget.onReaction?.call(emoji);
+    HapticFeedback.lightImpact();
+  }
+
+  IconData _getReactionIcon(String iconName) {
+    switch (iconName) {
+      case 'thumb_up':
+        return Icons.thumb_up;
+      case 'favorite':
+        return Icons.favorite;
+      case 'lightbulb':
+        return Icons.lightbulb;
+      case 'target':
+        return Icons.gps_fixed;
+      case 'help':
+        return Icons.help_outline;
+      default:
+        return Icons.star;
+    }
+  }
+
+  Color _getReactionColor(String iconName) {
+    switch (iconName) {
+      case 'thumb_up':
+        return Colors.blue;
+      case 'favorite':
+        return Colors.red;
+      case 'lightbulb':
+        return Colors.amber;
+      case 'target':
+        return Colors.green;
+      case 'help':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +141,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                   _showActions = !_showActions;
                 });
               },
+              onDoubleTap: !widget.message.isUserMessage ? () {
+                _toggleReactions();
+                HapticFeedback.mediumImpact();
+              } : null,
               child: Column(
                 crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
@@ -115,7 +211,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: isUser 
-                                          ? Colors.white.withOpacity(0.7)
+                                          ? Colors.white.withValues(alpha: 0.7)
                                           : AppColors.textGrey,
                                     ),
                                   ),
@@ -142,7 +238,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                   Icon(
                                     Icons.check,
                                     size: 14,
-                                    color: Colors.white.withOpacity(0.7),
+                                    color: Colors.white.withValues(alpha: 0.7),
                                   ),
                               ],
                             ),
@@ -155,7 +251,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                   if (widget.message.hasError && widget.message.error != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
@@ -164,26 +261,91 @@ class _MessageBubbleState extends State<MessageBubble> {
                               fontSize: 11,
                               color: Colors.red[700],
                             ),
+                            softWrap: true,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
-                          if (widget.onRetry != null) ...[
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: widget.onRetry,
-                              child: Text(
-                                'Retry',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
+                          if (widget.onRetry != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: GestureDetector(
+                                onTap: widget.onRetry,
+                                child: Text(
+                                  'Retry',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ),
                   
-                  // Action buttons (copy)
+                  // Selected Reaction Display
+                  if (_selectedReaction != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getReactionColor(_selectedReaction!).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _getReactionColor(_selectedReaction!).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Icon(
+                          _getReactionIcon(_selectedReaction!),
+                          size: 18,
+                          color: _getReactionColor(_selectedReaction!),
+                        ),
+                      ),
+                    ),
+
+                  // Reaction Picker (for AI messages only)
+                  if (_showReactions && !widget.message.isUserMessage)
+                    ScaleTransition(
+                      scale: _reactionScaleAnimation,
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: _reactions.map((reaction) {
+                            return GestureDetector(
+                              onTap: () => _selectReaction(reaction.emoji),
+                              child: Tooltip(
+                                message: reaction.label,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Icon(
+                                    _getReactionIcon(reaction.emoji),
+                                    size: 24,
+                                    color: _getReactionColor(reaction.emoji),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  
+                  // Action buttons (copy, react)
                   if (_showActions)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -208,6 +370,17 @@ class _MessageBubbleState extends State<MessageBubble> {
                               });
                             },
                           ),
+                          // Reaction button for AI messages
+                          if (!widget.message.isUserMessage) ...[
+                            const SizedBox(width: 8),
+                            _buildActionButton(
+                              icon: _selectedReaction != null 
+                                  ? Icons.emoji_emotions 
+                                  : Icons.emoji_emotions_outlined,
+                              label: 'React',
+                              onTap: _toggleReactions,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -274,7 +447,7 @@ class _MessageBubbleState extends State<MessageBubble> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

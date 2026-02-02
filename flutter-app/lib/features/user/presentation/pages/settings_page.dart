@@ -154,7 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: AppColors.primary, size: 24),
@@ -195,16 +195,17 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                  colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  Icon(
                     settings.currentGoalIcon,
-                    style: const TextStyle(fontSize: 32),
+                    size: 32,
+                    color: Colors.white,
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -220,7 +221,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         settings.currentGoalLabel,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -246,8 +247,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withOpacity(0.1)
-                            : Colors.grey.withOpacity(0.05),
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : Colors.grey.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected ? AppColors.primary : Colors.grey.shade300,
@@ -256,7 +257,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: Row(
                         children: [
-                          Text(goal['icon'] as String, style: const TextStyle(fontSize: 24)),
+                          Icon(
+                            goal['icon'] as IconData,
+                            size: 24,
+                            color: isSelected ? AppColors.primary : Colors.grey[600],
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -326,7 +331,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary.withOpacity(0.1)
+                          ? AppColors.primary.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: isSelected
@@ -375,7 +380,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 Switch(
                   value: settings.notificationEnabled,
                   onChanged: (value) => settings.updateNotificationSettings(enabled: value),
-                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                  thumbColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppColors.primary;
+                    }
+                    return null;
+                  }),
                 ),
               ],
             ),
@@ -445,7 +456,13 @@ class _SettingsPageState extends State<SettingsPage> {
             Switch(
               value: settings.soundEnabled,
               onChanged: settings.updateSoundEnabled,
-              activeColor: AppColors.primary,
+              activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+              thumbColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primary;
+                }
+                return null;
+              }),
             ),
           ],
         ),
@@ -475,7 +492,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                  color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
                   borderRadius: BorderRadius.circular(12),
                   border: isSelected
                       ? Border.all(color: AppColors.primary, width: 2)

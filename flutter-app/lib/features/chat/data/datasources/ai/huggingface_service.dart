@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../../core/services/ai_service.dart';
+import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// HuggingFace Inference API Service

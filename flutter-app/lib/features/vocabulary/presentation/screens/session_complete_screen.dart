@@ -100,7 +100,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.greenSuccess.withOpacity(0.2),
+                      color: AppColors.greenSuccess.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -266,7 +266,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -278,7 +278,7 @@ class _StatCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -314,7 +314,7 @@ class _StatCard extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textGrey.withOpacity(0.7),
+                      color: AppColors.textGrey.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

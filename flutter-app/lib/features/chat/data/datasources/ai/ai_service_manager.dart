@@ -1,4 +1,5 @@
 import '../../../../../core/services/ai_service.dart';
+import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// Manages multiple AI services and provides fallback logic

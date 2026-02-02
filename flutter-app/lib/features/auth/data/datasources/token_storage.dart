@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
+
+const _tag = 'TokenStorage';
 
 /// Secure storage for authentication tokens
 /// Uses flutter_secure_storage for encrypted storage
@@ -52,17 +55,17 @@ class TokenStorage {
 
   /// Save authentication tokens securely
   Future<void> saveTokens(AuthTokens tokens) async {
-    print('[DEBUG] TokenStorage: Saving tokens... (isWeb: $kIsWeb)');
-    print('[DEBUG] TokenStorage: Access token length: ${tokens.accessToken.length}');
+    logDebug(_tag, 'Saving tokens... (isWeb: $kIsWeb)');
+    logDebug(_tag, 'Access token length: ${tokens.accessToken.length}');
     try {
       await Future.wait([
         _write(_accessTokenKey, tokens.accessToken),
         _write(_refreshTokenKey, tokens.refreshToken),
         _write(_tokenTypeKey, tokens.tokenType),
       ]);
-      print('[OK] TokenStorage: Tokens saved successfully');
+      logInfo(_tag, 'Tokens saved successfully');
     } catch (e) {
-      print('[ERROR] TokenStorage: Error saving tokens: $e');
+      logError(_tag, 'Error saving tokens', e);
       rethrow;
     }
   }
@@ -79,17 +82,17 @@ class TokenStorage {
 
   /// Get complete stored tokens
   Future<AuthTokens?> getTokens() async {
-    print('[DEBUG] TokenStorage: Getting tokens...');
+    logDebug(_tag, 'Getting tokens...');
     try {
       final accessToken = await getAccessToken();
       final refreshToken = await getRefreshToken();
       final tokenType = await _storage.read(key: _tokenTypeKey);
 
-      print('[DEBUG] TokenStorage: accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}');
-      print('[DEBUG] TokenStorage: refreshToken=${refreshToken != null ? "found" : "null"}');
+      logDebug(_tag, 'accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}');
+      logDebug(_tag, 'refreshToken=${refreshToken != null ? "found" : "null"}');
 
       if (accessToken == null || refreshToken == null) {
-        print('[WARN] TokenStorage: Tokens not found');
+        logWarn(_tag, 'Tokens not found');
         return null;
       }
 
@@ -99,7 +102,7 @@ class TokenStorage {
         tokenType: tokenType ?? 'bearer',
       );
     } catch (e) {
-      print('[ERROR] TokenStorage: Error getting tokens: $e');
+      logError(_tag, 'Error getting tokens', e);
       return null;
     }
   }

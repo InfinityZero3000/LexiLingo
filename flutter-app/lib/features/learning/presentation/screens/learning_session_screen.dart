@@ -179,7 +179,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -264,11 +264,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: (percentage >= 80 ? Colors.amber : Colors.green).withOpacity(0.2),
+                        color: (percentage >= 80 ? Colors.amber : Colors.green).withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: (percentage >= 80 ? Colors.amber : Colors.green).withOpacity(0.3),
+                            color: (percentage >= 80 ? Colors.amber : Colors.green).withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
                           ),
@@ -309,11 +309,28 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 },
                 child: Column(
                   children: [
-                    Text(
-                      percentage >= 80 ? '🎉 Excellent! 🎉' : '✨ Well Done! ✨',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          percentage >= 80 ? Icons.celebration : Icons.auto_awesome,
+                          color: percentage >= 80 ? Colors.amber : Colors.purple,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          percentage >= 80 ? 'Excellent!' : 'Well Done!',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          percentage >= 80 ? Icons.celebration : Icons.auto_awesome,
+                          color: percentage >= 80 ? Colors.amber : Colors.purple,
+                          size: 28,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -349,7 +366,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.amber.withOpacity(0.4),
+                          color: Colors.amber.withValues(alpha: 0.4),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),

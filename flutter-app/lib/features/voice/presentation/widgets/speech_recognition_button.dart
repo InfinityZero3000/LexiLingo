@@ -145,7 +145,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                       boxShadow: [
                         BoxShadow(
                           color: (provider.isListening ? Colors.red : Theme.of(context).primaryColor)
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           blurRadius: provider.isListening ? 20 : 10,
                           spreadRadius: provider.isListening ? 5 : 2,
                         ),

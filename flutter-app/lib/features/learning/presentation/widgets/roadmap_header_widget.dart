@@ -22,7 +22,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             theme.primaryColor,
-            theme.primaryColor.withOpacity(0.8),
+            theme.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -123,7 +123,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: roadmap.completionPercentage / 100,
                       minHeight: 8,
-                      backgroundColor: Colors.white.withOpacity(0.3),
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
                       valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
@@ -169,7 +169,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.2),
+        color: badgeColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: badgeColor, width: 1),
       ),
@@ -195,7 +195,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 24),
@@ -213,7 +213,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ],

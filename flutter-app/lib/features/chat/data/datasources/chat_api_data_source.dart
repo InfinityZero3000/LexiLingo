@@ -1,8 +1,12 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/utils/app_logger.dart';
+import 'package:lexilingo_app/core/utils/constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/chat_session_model.dart';
 import '../models/chat_message_model.dart';
 import '../../domain/entities/chat_message.dart';
+
+const _tag = 'ChatApiDataSource';
 
 /// Remote data source that talks to the FastAPI backend for chat.
 class ChatApiDataSource {
@@ -16,9 +20,9 @@ class ChatApiDataSource {
       if (title != null && title.isNotEmpty) 'title': title,
     };
     final json = await apiClient.post('/chat/sessions', body: payload);
-    print('[DEBUG] createSession response: $json');
+    logDebug(_tag, 'createSession response: $json');
     final sessionData = json['data'] ?? json;
-    print('[DEBUG] sessionData: $sessionData');
+    logDebug(_tag, 'sessionData: $sessionData');
     return _mapSession(sessionData);
   }
 
@@ -34,7 +38,7 @@ class ChatApiDataSource {
   Future<List<ChatMessageModel>> getMessages(String sessionId) async {
     // Guard against empty session ID
     if (sessionId.isEmpty) {
-      print('[WARN] getMessages called with empty sessionId');
+      logWarn(_tag, 'getMessages called with empty sessionId');
       return [];
     }
     final json = await apiClient.get('/chat/sessions/$sessionId/messages');
@@ -60,7 +64,11 @@ class ChatApiDataSource {
       'session_id': sessionId,
       'message': message,
     };
-    final json = await apiClient.post('/chat/messages', body: payload);
+    final json = await apiClient.post(
+      '/chat/messages',
+      body: payload,
+      timeout: AppConstants.aiOperationTimeout,
+    );
     // Backend may return {data: {ai_response: '...'}} or {ai_response: '...'}
     final data = json['data'] ?? json;
     final response = data['ai_response'] ?? data['response'] ?? data['message'] ?? data['reply'];
@@ -76,7 +84,7 @@ class ChatApiDataSource {
         json['session_id']?.toString() ?? 
         json['sessionId']?.toString() ?? 
         json['_id']?.toString() ?? '';
-    print('[DEBUG] _mapSession: json keys=${json.keys.toList()}, extracted id=$id');
+    logDebug(_tag, '_mapSession: json keys=${json.keys.toList()}, extracted id=$id');
     return ChatSessionModel(
       id: id,
       userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',

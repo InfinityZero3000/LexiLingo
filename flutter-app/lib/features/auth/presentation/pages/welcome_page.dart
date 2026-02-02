@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import '../widgets/auth_gradient_background.dart';
 
 /// Welcome page shown after successful login
 /// Displays a welcome animation before navigating to the main screen
@@ -53,30 +54,8 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF16213E),
-                    const Color(0xFF0F3460),
-                  ]
-                : [
-                    const Color(0xFFF8F9FF),
-                    const Color(0xFFE8EFFF),
-                    const Color(0xFFD1E3FF),
-                  ],
-          ),
-        ),
+      body: AuthGradientBackground(
         child: SafeArea(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -277,31 +256,46 @@ class _WelcomePageState extends State<WelcomePage>
   Widget _buildContinueButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: ElevatedButton(
-        onPressed: widget.onComplete,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4FC3F7), Color(0xFF81C784)],
           ),
-          elevation: 4,
-          shadowColor: AppColors.primary.withValues(alpha: 0.4),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Let\'s Start',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4FC3F7).withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_rounded),
           ],
+        ),
+        child: ElevatedButton(
+          onPressed: widget.onComplete,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Let\'s Start',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, color: Colors.white),
+            ],
+          ),
         ),
       ),
     );

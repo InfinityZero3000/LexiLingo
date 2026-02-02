@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/transcription.dart';
 

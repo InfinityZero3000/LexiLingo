@@ -9,10 +9,12 @@ import 'package:lexilingo_app/features/learning/presentation/screens/learning_ro
 /// Shows course roadmap with units and lessons
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
+  final String? heroTag;
 
   const CourseDetailScreen({
     Key? key,
     required this.courseId,
+    this.heroTag,
   }) : super(key: key);
 
   @override
@@ -83,41 +85,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ],
                     ),
                   ),
-                  background: Hero(
-                    tag: 'course-image-${widget.courseId}',
-                    child: course.thumbnailUrl != null
-                        ? Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.network(
-                                course.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.school, size: 64),
-                                  );
-                                },
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.black.withOpacity(0.7),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : Container(
-                            color: Theme.of(context).primaryColor,
-                            child: const Icon(Icons.school, size: 64, color: Colors.white),
-                          ),
-                  ),
+                  background: widget.heroTag != null
+                      ? Hero(
+                          tag: widget.heroTag!,
+                          child: _buildCourseBackground(context, course),
+                        )
+                      : _buildCourseBackground(context, course),
                 ),
               ),
 
@@ -315,6 +288,42 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildCourseBackground(BuildContext context, CourseDetailEntity course) {
+    if (course.thumbnailUrl != null) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            course.thumbnailUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.school, size: 64),
+              );
+            },
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return Container(
+      color: Theme.of(context).primaryColor,
+      child: const Icon(Icons.school, size: 64, color: Colors.white),
+    );
   }
 }
 

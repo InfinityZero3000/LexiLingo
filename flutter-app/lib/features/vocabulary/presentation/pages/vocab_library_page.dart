@@ -62,7 +62,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2)
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)
                 ],
               ),
               child: Row(
@@ -108,7 +108,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                Text('RECENT WORDS', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.textDark.withOpacity(0.6))),
+                Text('RECENT WORDS', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.textDark.withValues(alpha: 0.6))),
               ],
             ),
           ),
@@ -150,8 +150,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       decoration: BoxDecoration(
         color: isSelected ? AppColors.primary : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white),
         borderRadius: BorderRadius.circular(18),
-        border: isSelected ? null : Border.all(color: AppColors.primary.withOpacity(0.1)),
-        boxShadow: [if(!isSelected) BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2)]
+        border: isSelected ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        boxShadow: [if(!isSelected) BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)]
       ),
       child: Row(
         children: [
@@ -191,7 +191,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       decoration: BoxDecoration(
          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white,
          borderRadius: BorderRadius.circular(12),
-         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
+         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))],
          border: Border.all(color: Colors.transparent),
       ),
       child: Row(
@@ -203,7 +203,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 Container(
                   width: 48, height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.menu_book, color: AppColors.primary),
@@ -219,7 +219,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         children: [
                           Text(word, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                           const SizedBox(width: 8),
-                          Text(ipa, style: TextStyle(color: AppColors.primary.withOpacity(0.7), fontSize: 12)),
+                          Text(ipa, style: TextStyle(color: AppColors.primary.withValues(alpha: 0.7), fontSize: 12)),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -235,7 +235,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.volume_up, color: AppColors.primary, size: 20),

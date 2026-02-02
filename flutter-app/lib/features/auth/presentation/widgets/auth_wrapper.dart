@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../pages/login_page.dart';
@@ -31,6 +32,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Detect when user just logged in
     if (authProvider.isAuthenticated && !_wasAuthenticated) {
       _wasAuthenticated = true;
+      // Load user settings when authenticated
+      final userId = authProvider.currentUser?.id;
+      if (userId != null) {
+        context.read<SettingsProvider>().loadSettings(userId);
+      }
       // Only show welcome for fresh logins (not app restarts with existing session)
       if (authProvider.isJustLoggedIn) {
         _showWelcome = true;
@@ -43,9 +49,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _showWelcome = false;
     }
 
-    // Show welcome page after login
+    // Determine which page to show
+    Widget currentPage;
     if (authProvider.isAuthenticated && _showWelcome) {
-      return WelcomePage(
+      currentPage = WelcomePage(
         userName: authProvider.currentUser?.displayName ?? 
                   authProvider.currentUser?.username,
         onComplete: () {
@@ -56,11 +63,62 @@ class _AuthWrapperState extends State<AuthWrapper> {
           authProvider.clearJustLoggedIn();
         },
       );
+    } else if (authProvider.isAuthenticated) {
+      currentPage = const MainScreen();
+    } else {
+      currentPage = const LoginPage();
     }
 
-    // Show main screen if authenticated, otherwise show login
-    return authProvider.isAuthenticated 
-        ? const MainScreen() 
-        : const LoginPage();
+    // Use AnimatedSwitcher for smooth transitions between pages
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 600),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        // Fade + Scale + Slide transition
+        final fadeAnimation = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOut,
+        ));
+
+        final scaleAnimation = Tween<double>(
+          begin: 0.95,
+          end: 1.0,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        ));
+
+        final slideAnimation = Tween<Offset>(
+          begin: const Offset(0.0, 0.05),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        ));
+
+        return FadeTransition(
+          opacity: fadeAnimation,
+          child: ScaleTransition(
+            scale: scaleAnimation,
+            child: SlideTransition(
+              position: slideAnimation,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<String>(
+          authProvider.isAuthenticated 
+              ? (_showWelcome ? 'welcome' : 'main') 
+              : 'login'
+        ),
+        child: currentPage,
+      ),
+    );
   }
 }

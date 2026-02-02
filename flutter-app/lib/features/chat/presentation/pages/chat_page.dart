@@ -11,6 +11,8 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/session_list_drawer.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/audio_waveform.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/chat_ui_components.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 
 class ChatPage extends StatefulWidget {
@@ -230,12 +232,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -309,18 +305,10 @@ class _ChatPageState extends State<ChatPage> {
         },
       ),
       appBar: AppBar(
-        title: Column(
-          children: [
-            const Text('AI Tutor', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold, fontSize: 18)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                const SizedBox(width: 4),
-                Text('Online | Learning Guide', style: TextStyle(color: AppColors.textDark.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.normal)),
-              ],
-            )
-          ],
+        title: AITutorMoodIndicator(
+          mood: chatProvider.isSending ? AIMood.thinking : AIMood.helpful,
+          isOnline: true,
+          currentTopic: 'Daily Habits',
         ),
         centerTitle: true,
         backgroundColor: AppColors.accentYellow,
@@ -331,7 +319,7 @@ class _ChatPageState extends State<ChatPage> {
             },
             child: Container(
               margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
               child: const Icon(Icons.menu, color: AppColors.textDark, size: 18),
             ),
           ),
@@ -340,7 +328,7 @@ class _ChatPageState extends State<ChatPage> {
           Container(
             margin: const EdgeInsets.all(8),
             width: 40,
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: const Icon(Icons.info_outline, color: AppColors.textDark),
           )
         ],
@@ -373,7 +361,7 @@ class _ChatPageState extends State<ChatPage> {
                       child: Text(
                         'Đã tải hết tin nhắn',
                         style: TextStyle(
-                          color: AppColors.textGrey.withOpacity(0.7),
+                          color: AppColors.textGrey.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
@@ -448,7 +436,12 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 // Voice Recording Indicator
                 if (_isRecording || _isProcessingVoice) ...[
-                  _buildVoiceRecordingUI(),
+                  VoiceRecordingIndicator(
+                    isRecording: _isRecording,
+                    isProcessing: _isProcessingVoice,
+                    recordingDuration: _recordingDuration,
+                    onCancel: _cancelRecording,
+                  ),
                   const SizedBox(height: 16),
                 ] else ...[
                   // Quick Replies
@@ -664,70 +657,6 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVoiceRecordingUI() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _isRecording 
-            ? Colors.red.withValues(alpha: 0.1) 
-            : Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          // Recording indicator
-          if (_isRecording) ...[
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _formatDuration(_recordingDuration),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-              ),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: _cancelRecording,
-              icon: const Icon(Icons.close, color: Colors.red),
-              label: const Text('Cancel', style: TextStyle(color: Colors.red)),
-            ),
-          ] else if (_isProcessingVoice) ...[
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Processing your voice...',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-          ],
         ],
       ),
     );

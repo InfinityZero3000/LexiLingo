@@ -59,7 +59,7 @@ class MarkdownMessageContent extends StatelessWidget {
         
         // Blockquote
         blockquoteDecoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(4),
           border: Border(
             left: BorderSide(

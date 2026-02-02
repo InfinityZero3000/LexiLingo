@@ -62,7 +62,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -75,7 +75,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -114,7 +114,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                             ? '$_dueCount words waiting'
                             : 'All caught up!',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),

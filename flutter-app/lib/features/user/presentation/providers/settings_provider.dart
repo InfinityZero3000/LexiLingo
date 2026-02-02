@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
@@ -25,7 +25,7 @@ class SettingsProvider extends ChangeNotifier {
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
 
-  /// Available languages
+  /// Available languages with emoji flags
   static const List<Map<String, String>> availableLanguages = [
     {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
     {'code': 'vi', 'name': 'Tiếng Việt', 'flag': '🇻🇳'},
@@ -37,13 +37,13 @@ class SettingsProvider extends ChangeNotifier {
     {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
   ];
 
-  /// Daily goal presets
-  static const List<Map<String, dynamic>> dailyGoalPresets = [
-    {'xp': 10, 'label': 'Casual', 'description': '5 minutes/day', 'icon': '🌱'},
-    {'xp': 30, 'label': 'Regular', 'description': '10 minutes/day', 'icon': '📚'},
-    {'xp': 50, 'label': 'Serious', 'description': '15 minutes/day', 'icon': '🔥'},
-    {'xp': 100, 'label': 'Intense', 'description': '30 minutes/day', 'icon': '💪'},
-    {'xp': 200, 'label': 'Insane', 'description': '1 hour/day', 'icon': '🏆'},
+  /// Daily goal presets with IconData
+  static final List<Map<String, dynamic>> dailyGoalPresets = [
+    {'xp': 10, 'label': 'Casual', 'description': '5 minutes/day', 'icon': Icons.eco},
+    {'xp': 30, 'label': 'Regular', 'description': '10 minutes/day', 'icon': Icons.menu_book},
+    {'xp': 50, 'label': 'Serious', 'description': '15 minutes/day', 'icon': Icons.local_fire_department},
+    {'xp': 100, 'label': 'Intense', 'description': '30 minutes/day', 'icon': Icons.fitness_center},
+    {'xp': 200, 'label': 'Insane', 'description': '1 hour/day', 'icon': Icons.emoji_events},
   ];
 
   /// Load settings for user
@@ -234,13 +234,13 @@ class SettingsProvider extends ChangeNotifier {
     return lang['name'] ?? 'English';
   }
 
-  /// Get current language flag
+  /// Get current language flag (country code)
   String get currentLanguageFlag {
     final lang = availableLanguages.firstWhere(
       (l) => l['code'] == language,
       orElse: () => availableLanguages.first,
     );
-    return lang['flag'] ?? '🇺🇸';
+    return lang['flag'] ?? 'US';
   }
 
   /// Get current goal label
@@ -253,11 +253,23 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   /// Get current goal icon
-  String get currentGoalIcon {
+  IconData get currentGoalIcon {
     final goal = dailyGoalPresets.firstWhere(
       (g) => g['xp'] == dailyGoalXP,
       orElse: () => dailyGoalPresets[2],
     );
-    return goal['icon'] as String;
+    return goal['icon'] as IconData;
+  }
+
+  /// Get ThemeMode from settings
+  ThemeMode get themeMode {
+    switch (theme) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
   }
 }
