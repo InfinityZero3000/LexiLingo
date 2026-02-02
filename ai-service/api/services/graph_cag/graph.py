@@ -12,7 +12,8 @@ from typing import Optional, Dict, Any
 from langgraph.graph import StateGraph, END
 
 from api.services.graph_cag.state import GraphCAGState, create_initial_state
-from api.services.graph_cag.nodes import (
+# Using nodes_v2 with ModelGateway for lazy loading
+from api.services.graph_cag.nodes_v2 import (
     input_node,
     kg_expand_node,
     diagnose_node,
@@ -21,11 +22,14 @@ from api.services.graph_cag.nodes import (
     vietnamese_node,
     tts_node,
     ask_clarify_node,
+    stt_node,
+    pronunciation_node,
 )
 from api.services.graph_cag.edges import (
     route_after_diagnosis,
     should_generate_tts,
 )
+from api.services.model_gateway import get_gateway
 
 logger = logging.getLogger(__name__)
 

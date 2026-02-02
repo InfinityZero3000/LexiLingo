@@ -22,7 +22,7 @@ class SessionHeader extends StatelessWidget {
             : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -39,7 +39,7 @@ class SessionHeader extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: session.progress,
                     minHeight: 8,
-                    backgroundColor: AppColors.textGrey.withOpacity(0.2),
+                    backgroundColor: AppColors.textGrey.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       AppColors.primary,
                     ),
@@ -127,7 +127,7 @@ class _StatItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textGrey.withOpacity(0.7),
+            color: AppColors.textGrey.withValues(alpha: 0.7),
           ),
         ),
       ],

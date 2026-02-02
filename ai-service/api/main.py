@@ -26,6 +26,8 @@ from api.routes import (
     cag_router,
     stt_router,
     tts_router,
+    topic_chat_router,
+    websocket_stream_router,
 )
 
 # Import core
@@ -225,6 +227,16 @@ app.include_router(
     tts_router,
     prefix="/api/v1/tts",
     tags=["Text-to-Speech (TTS)"]
+)
+app.include_router(
+    topic_chat_router,
+    prefix="/api/v1/topics",
+    tags=["Topic-Based Conversation"]
+)
+app.include_router(
+    websocket_stream_router,
+    prefix="/api/v1",
+    tags=["Dual-Stream Conversation (WebSocket)"]
 )
 
 

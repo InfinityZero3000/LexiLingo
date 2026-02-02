@@ -27,7 +27,7 @@ if lsof -ti:8000 > /dev/null 2>&1; then
         echo -e "   ${YELLOW}⚠️  PORT IN USE${NC} but not responding (PID: $PID)"
     fi
 else
-    echo -e "   ${RED}❌ STOPPED${NC}"
+    echo -e "   ${RED}STOPPED${NC}"
 fi
 echo ""
 
@@ -42,7 +42,7 @@ if lsof -ti:8001 > /dev/null 2>&1; then
         echo -e "   ${YELLOW}⚠️  PORT IN USE${NC} but not responding (PID: $PID)"
     fi
 else
-    echo -e "   ${RED}❌ STOPPED${NC}"
+    echo -e "   ${RED}STOPPED${NC}"
 fi
 echo ""
 
@@ -53,7 +53,7 @@ if lsof -ti:8080 > /dev/null 2>&1; then
     echo -e "   ${GREEN}✅ RUNNING${NC} (PID: $PID)"
     echo -e "   URL: http://localhost:8080"
 else
-    echo -e "   ${RED}❌ STOPPED${NC}"
+    echo -e "   ${RED}STOPPED${NC}"
 fi
 echo ""
 
@@ -67,7 +67,7 @@ if pg_isready > /dev/null 2>&1; then
         echo -e "   Database 'lexilingo': ${RED}NOT FOUND${NC}"
     fi
 else
-    echo -e "   ${RED}❌ NOT RUNNING${NC}"
+    echo -e "   ${RED}NOT RUNNING${NC}"
 fi
 echo ""
 
@@ -84,7 +84,7 @@ pg_isready > /dev/null 2>&1 && ((RUNNING_COUNT++))
 if [ $RUNNING_COUNT -eq $TOTAL_COUNT ]; then
     echo -e "${GREEN}✅ All services are running ($RUNNING_COUNT/$TOTAL_COUNT)${NC}"
 elif [ $RUNNING_COUNT -eq 0 ]; then
-    echo -e "${RED}❌ No services running ($RUNNING_COUNT/$TOTAL_COUNT)${NC}"
+    echo -e "${RED}No services running ($RUNNING_COUNT/$TOTAL_COUNT)${NC}"
     echo -e "\n${YELLOW}Run: ./scripts/start-all.sh to start all services${NC}"
 else
     echo -e "${YELLOW}⚠️  Some services running ($RUNNING_COUNT/$TOTAL_COUNT)${NC}"

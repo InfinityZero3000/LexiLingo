@@ -135,6 +135,101 @@ async def graph_cag_health():
         )
 
 
+@router.get(
+    "/graph-analytics",
+    summary="Get Graph Analytics data",
+    description="""
+    Returns centrality analysis and community detection data.
+    
+    **Centrality Types:**
+    - Degree: Concepts with many connections (foundational)
+    - Betweenness: Bridge concepts between different areas
+    - PageRank: Concepts that important concepts point to
+    
+    **Community Detection:**
+    - Groups related concepts together
+    - Helps with curriculum planning and lesson grouping
+    
+    **Memory Optimization:**
+    - Shows how pruning reduces output size
+    - Identifies which concepts can be filtered out
+    """
+)
+async def get_graph_analytics():
+    """
+    Get comprehensive graph analytics data.
+    
+    Includes:
+    - Top concepts ranked by centrality
+    - Community groupings
+    - Memory optimization stats
+    """
+    try:
+        pipeline = await get_v3_pipeline()
+        analytics = pipeline.get_graph_analytics_summary()
+        
+        return {
+            "status": "success",
+            "analytics": analytics,
+            "optimization": {
+                "centrality_enabled": True,
+                "community_detection_enabled": True,
+                "pruning_enabled": True,
+                "max_output_concepts": 5,
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get graph analytics: {str(e)}"
+        )
+
+
+@router.get(
+    "/graph-analytics/communities/{community_id}",
+    summary="Get concepts in a specific community"
+)
+async def get_community_concepts(community_id: int):
+    """Get all concepts belonging to a specific community."""
+    try:
+        from api.services.graph_analytics import get_graph_analytics
+        from api.services.kg_service_v3 import KnowledgeGraphServiceV3
+        
+        kg = KnowledgeGraphServiceV3()
+        analytics = get_graph_analytics(kg)
+        
+        concepts = analytics.get_community_concepts(community_id)
+        communities = analytics.get_communities()
+        
+        community_info = next(
+            (c for c in communities if c.community_id == community_id),
+            None
+        )
+        
+        if not community_info:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Community {community_id} not found"
+            )
+        
+        return {
+            "community_id": community_id,
+            "name": community_info.name,
+            "central_concept": community_info.central_concept,
+            "concepts": concepts,
+            "keywords": community_info.keywords,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get community concepts: {str(e)}"
+        )
+
+
 # ============================================================
 # MONITORING & TELEMETRY ENDPOINTS (NEW)
 # ===========================================================

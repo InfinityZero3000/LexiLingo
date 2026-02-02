@@ -65,6 +65,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
         children: [
           // Header
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 24),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -89,7 +90,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                   '${widget.sessions.length} conversations',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -218,7 +219,7 @@ class _SessionListItemState extends State<SessionListItem> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: widget.isActive
-            ? AppColors.primary.withOpacity(0.1)
+            ? AppColors.primary.withValues(alpha: 0.1)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: widget.isActive

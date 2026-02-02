@@ -161,7 +161,7 @@ Examples:
     #     all_courses.extend(engvid_courses)
     
     if not all_courses:
-        print("\n❌ No courses were crawled!")
+        print("\nNo courses were crawled!")
         return 1
     
     # Process and export
@@ -189,10 +189,10 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print("\n\n❌ Interrupted by user")
+        print("\n\nInterrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n❌ Error: {e}")
+        print(f"\n\nError: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

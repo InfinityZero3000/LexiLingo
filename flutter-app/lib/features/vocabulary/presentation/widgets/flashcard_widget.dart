@@ -106,7 +106,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -121,7 +121,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: _getDifficultyColor(vocabulary.difficultyLevel)
-                  .withOpacity(0.2),
+                  .withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -193,13 +193,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               Icon(
                 Icons.touch_app,
                 size: 20,
-                color: AppColors.textGrey.withOpacity(0.5),
+                color: AppColors.textGrey.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 8),
               Text(
                 'Tap to reveal',
                 style: TextStyle(
-                  color: AppColors.textGrey.withOpacity(0.7),
+                  color: AppColors.textGrey.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -227,7 +227,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -329,7 +329,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               child: Text(
                 'How well did you know this word?',
                 style: TextStyle(
-                  color: AppColors.textGrey.withOpacity(0.7),
+                  color: AppColors.textGrey.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),

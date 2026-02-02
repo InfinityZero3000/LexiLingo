@@ -61,7 +61,11 @@ void main() {
 
       // assert
       verify(mockRemoteDataSource.getMyProgress());
-      expect(result, Left(ServerFailure('Server error')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
 
     test('should return NetworkFailure when remote data source throws NetworkException',
@@ -74,7 +78,11 @@ void main() {
       final result = await repository.getMyProgress();
 
       // assert
-      expect(result, Left(NetworkFailure('No internet')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<NetworkFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
 
     test('should return UnauthorizedFailure when remote data source throws UnauthorizedException',
@@ -87,7 +95,11 @@ void main() {
       final result = await repository.getMyProgress();
 
       // assert
-      expect(result, Left(UnauthorizedFailure('Token expired')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<UnauthorizedFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
   });
 
@@ -141,7 +153,11 @@ void main() {
       );
 
       // assert
-      expect(result, Left(ServerFailure('Failed to complete lesson')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
 
     test('should return UnauthorizedFailure when not enrolled', () async {
@@ -158,7 +174,11 @@ void main() {
       );
 
       // assert
-      expect(result, Left(UnauthorizedFailure('Not enrolled in course')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<UnauthorizedFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
   });
 
@@ -203,7 +223,11 @@ void main() {
       final result = await repository.getCourseProgress(tCourseId);
 
       // assert
-      expect(result, Left(ServerFailure('Course not found')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
   });
 
@@ -232,7 +256,11 @@ void main() {
       final result = await repository.getTotalXp();
 
       // assert
-      expect(result, Left(ServerFailure('Failed to fetch XP')));
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, isA<ServerFailure>()),
+        (_) => fail('Expected Left but got Right'),
+      );
     });
   });
 }

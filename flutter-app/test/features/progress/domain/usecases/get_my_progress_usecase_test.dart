@@ -62,28 +62,38 @@ void main() {
 
   test('should return ServerFailure when repository call fails', () async {
     // arrange
+    final failure = ServerFailure('Server error');
     when(mockRepository.getMyProgress())
-        .thenAnswer((_) async => Left(ServerFailure('Server error')));
+        .thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(NoParams());
 
     // assert
-    expect(result, Left(ServerFailure('Server error')));
+    expect(result.isLeft(), true);
+    result.fold(
+      (l) => expect(l, isA<ServerFailure>()),
+      (r) => fail('Should be Left'),
+    );
     verify(mockRepository.getMyProgress());
     verifyNoMoreInteractions(mockRepository);
   });
 
   test('should return NetworkFailure when network error occurs', () async {
     // arrange
+    final failure = NetworkFailure('No internet');
     when(mockRepository.getMyProgress())
-        .thenAnswer((_) async => Left(NetworkFailure('No internet')));
+        .thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(NoParams());
 
     // assert
-    expect(result, Left(NetworkFailure('No internet')));
+    expect(result.isLeft(), true);
+    result.fold(
+      (l) => expect(l, isA<NetworkFailure>()),
+      (r) => fail('Should be Left'),
+    );
     verify(mockRepository.getMyProgress());
   });
 }

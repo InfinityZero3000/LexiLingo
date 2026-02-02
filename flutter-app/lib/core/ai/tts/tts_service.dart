@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../../utils/app_logger.dart';
 
 /// Text-to-Speech service interface
 /// Implementation should use Piper VITS for natural, offline TTS
@@ -82,7 +83,7 @@ class MockTTSService implements TTSService {
     // Simulate model loading
     await Future.delayed(const Duration(milliseconds: 300));
     _isInitialized = true;
-    print('[MockTTS] Initialized (Piper VITS - Mock)');
+    logDebug('[MockTTS] Initialized (Piper VITS - Mock)');
     
     // Pre-generate common phrases
     await preGenerateCommonPhrases();
@@ -100,7 +101,7 @@ class MockTTSService implements TTSService {
 
     // Check cache first
     if (cacheKey != null && _cache.containsKey(cacheKey)) {
-      print('[MockTTS] Using cached audio for: "$cacheKey"');
+      logDebug('[MockTTS] Using cached audio for: "$cacheKey"');
       return _cache[cacheKey]!;
     }
 
@@ -118,7 +119,7 @@ class MockTTSService implements TTSService {
       _cache[cacheKey] = audioData;
     }
 
-    print('[MockTTS] Synthesized: "$text" (${latency}ms, speed: ${speed}x)');
+    logDebug('[MockTTS] Synthesized: "$text" (${latency}ms, speed: ${speed}x)');
     return audioData;
   }
 
@@ -129,13 +130,13 @@ class MockTTSService implements TTSService {
 
   @override
   Future<void> preGenerateCommonPhrases() async {
-    print('[MockTTS] Pre-generating ${_commonPhrases.length} common phrases...');
+    logDebug('[MockTTS] Pre-generating ${_commonPhrases.length} common phrases...');
     
     for (final phrase in _commonPhrases) {
       await synthesize(text: phrase, cacheKey: phrase);
     }
     
-    print('[MockTTS] Pre-generation complete. Cache size: ${_cache.length}');
+    logDebug('[MockTTS] Pre-generation complete. Cache size: ${_cache.length}');
   }
 
   @override
@@ -153,6 +154,6 @@ class MockTTSService implements TTSService {
   Future<void> dispose() async {
     _cache.clear();
     _isInitialized = false;
-    print('[MockTTS] Disposed');
+    logDebug('[MockTTS] Disposed');
   }
 }

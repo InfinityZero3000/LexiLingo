@@ -111,3 +111,12 @@ keystore.properties
 *.bak
 *.backup
 .venv/bin/
+
+# logs
+logs/
+*.log
+*.log.*
+
+# firebase
+firebase-debug.log
+firebase.json

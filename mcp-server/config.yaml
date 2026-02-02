@@ -1,0 +1,73 @@
+server:
+  name: "lexilingo-mcp"
+  version: "1.0.0"
+  transport: "stdio"  # or "http" for HTTP transport
+  host: "0.0.0.0"
+  port: 8001
+
+models:
+  qwen:
+    name: "Qwen/Qwen2.5-1.5B"
+    device: "cuda"  # or "cpu" if no GPU
+    load_in_4bit: true
+    lazy_load: false
+    max_new_tokens: 512
+    temperature: 0.7
+    
+  llama3:
+    name: "meta-llama/Llama-3.1-3B"
+    device: "cuda"
+    load_in_4bit: true
+    lazy_load: true  # Only load for Vietnamese explanations
+    max_new_tokens: 512
+    temperature: 0.7
+    
+  whisper:
+    model: "small"  # tiny, base, small, medium, large
+    device: "cuda"
+    compute_type: "int8"
+    lazy_load: false
+    language: "en"
+    
+  hubert:
+    name: "facebook/hubert-large-ls960-ft"
+    device: "cuda"
+    lazy_load: true  # Load on first pronunciation request
+    
+  piper:
+    voice: "en_US-lessac-medium"
+    lazy_load: false
+    
+  gemini:
+    api_key: "${GEMINI_API_KEY}"  # From environment variable
+    model: "gemini-1.5-flash"
+
+storage:
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: null
+    
+  kuzu:
+    path: "./data/knowledge_graph.db"
+    
+  mongodb:
+    uri: "mongodb://localhost:27017"
+    database: "lexilingo"
+    collection_logs: "mcp_logs"
+    collection_metrics: "mcp_metrics"
+
+features:
+  enable_cache: true
+  enable_logging: true
+  enable_metrics: true
+  max_context_length: 2048
+  cache_ttl: 3600  # seconds
+  
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/mcp_server.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5

@@ -425,7 +425,7 @@ class StreakDetailsSheet extends StatelessWidget {
                 Expanded(
                   child: Text(
                     streak.isActiveToday
-                        ? "Great job! You've practiced today. 🎉"
+                        ? "Great job! You've practiced today."
                         : streak.streakAtRisk
                         ? 'Practice now to save your streak!'
                         : 'Keep learning to build your streak!',

@@ -97,7 +97,7 @@ class _RecordButtonState extends State<RecordButton>
                         color: (widget.isRecording
                                 ? Colors.red
                                 : AppColors.primary)
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),

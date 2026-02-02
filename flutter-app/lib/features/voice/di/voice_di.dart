@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/voice/domain/usecases/synthesize_speech_u
 import 'package:lexilingo_app/features/voice/domain/usecases/transcribe_audio_usecase.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 
 /// Voice Feature Dependency Injection
 /// Registers all voice-related dependencies
@@ -18,6 +19,11 @@ void initVoiceDependencies(GetIt sl) {
       synthesizeSpeechUseCase: sl(),
       assessPronunciationUseCase: sl(),
     ),
+  );
+  
+  // Speech Recognition Provider (for Web Speech API)
+  sl.registerFactory<SpeechRecognitionProvider>(
+    () => SpeechRecognitionProvider(),
   );
   
   // TTS Settings Provider (Singleton - persists settings)

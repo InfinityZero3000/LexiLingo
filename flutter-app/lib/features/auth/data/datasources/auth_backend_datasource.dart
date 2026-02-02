@@ -1,8 +1,11 @@
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 import '../models/user_model.dart';
 import 'device_manager.dart';
 import 'token_storage.dart';
+
+const _tag = 'AuthBackendDataSource';
 
 /// Auth remote datasource using backend API
 /// Replaces Firebase auth with custom backend authentication
@@ -48,7 +51,7 @@ class AuthBackendDataSource {
     required String email,
     required String password,
   }) async {
-    print('🔐 AuthBackendDataSource: Starting login for $email');
+    logDebug(_tag, 'Starting login for $email');
     
     final request = LoginRequest(
       email: email,
@@ -61,17 +64,17 @@ class AuthBackendDataSource {
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
-    print('🔐 AuthBackendDataSource: Login response received');
+    logDebug(_tag, 'Login response received');
     final loginResponse = LoginResponse.fromJson(envelope.data);
-    print('🔐 AuthBackendDataSource: Token parsed, length: ${loginResponse.tokens.accessToken.length}');
+    logDebug(_tag, 'Token parsed, length: ${loginResponse.tokens.accessToken.length}');
     
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
-    print('🔐 AuthBackendDataSource: Tokens saved, now registering device...');
+    logDebug(_tag, 'Tokens saved, now registering device...');
     
     // Register device with FCM token
     await _registerDevice();
-    print('🔐 AuthBackendDataSource: Login complete');
+    logInfo(_tag, 'Login complete');
 
     return loginResponse;
   }
@@ -127,12 +130,12 @@ class AuthBackendDataSource {
   /// Get current user profile
   /// GET /users/me
   Future<UserModel> getCurrentUser() async {
-    print('👤 AuthBackendDataSource: Getting current user...');
+    logDebug(_tag, 'Getting current user...');
     final envelope = await apiClient.getEnvelope<Map<String, dynamic>>(
       '/users/me',
       fromJson: (data) => data as Map<String, dynamic>,
     );
-    print('👤 AuthBackendDataSource: User received: ${envelope.data['email']}');
+    logDebug(_tag, 'User received: ${envelope.data['email']}');
 
     return UserModel.fromJson(envelope.data);
   }
@@ -163,7 +166,7 @@ class AuthBackendDataSource {
       await apiClient.post('/devices', body: deviceInfo.toJson());
     } catch (e) {
       // Device registration is not critical, log but don't fail
-      print('Device registration failed: $e');
+      logWarn(_tag, 'Device registration failed: $e');
     }
   }
 
@@ -177,7 +180,7 @@ class AuthBackendDataSource {
         body: {'fcm_token': fcmToken},
       );
     } catch (e) {
-      print('FCM token update failed: $e');
+      logWarn(_tag, 'FCM token update failed: $e');
     }
   }
 

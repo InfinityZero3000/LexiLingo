@@ -391,13 +391,13 @@ def main():
             elif choice == "4":
                 show_system_info()
             elif choice == "5":
-                print("\n👋 Goodbye! Đã thoát chương trình.")
+                print("\n Goodbye! Đã thoát chương trình.")
                 break
             else:
                 print("❌ Lựa chọn không hợp lệ. Vui lòng chọn 1-5.")
                 
         except KeyboardInterrupt:
-            print("\n\n👋 Goodbye! Đã thoát chương trình.")
+            print("\n\n Goodbye! Đã thoát chương trình.")
             break
         except Exception as e:
             print(f"\n❌ Unexpected error: {e}")
