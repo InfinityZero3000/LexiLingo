@@ -50,7 +50,8 @@ class HomeProvider with ChangeNotifier {
   bool get isLoadingEnrolled => _isLoadingEnrolled;
   String? get coursesError => _coursesError;
   String? get enrolledError => _enrolledError;
-  String? get errorMessage => _coursesError ?? _dashboardError ?? _enrolledError;
+  // Only show critical errors (courses/dashboard), not enrolled error which is secondary
+  String? get errorMessage => _coursesError ?? _dashboardError;
   
   User? get currentUser => _currentUser;
   String get userName => _currentUser?.name ?? _currentUser?.email ?? 'User';

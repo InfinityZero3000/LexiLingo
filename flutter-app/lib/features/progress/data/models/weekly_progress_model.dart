@@ -21,13 +21,13 @@ class DailyProgressModel extends DailyProgressEntity {
 
   factory DailyProgressModel.fromJson(Map<String, dynamic> json) {
     return DailyProgressModel(
-      day: json['day'] as String? ?? '',
+      day: json['day_name'] as String? ?? json['day'] as String? ?? '',
       date: DateTime.parse(json['date'] as String),
       xpEarned: json['xp_earned'] as int? ?? 0,
       lessonsCompleted: json['lessons_completed'] as int? ?? 0,
       studyTimeMinutes: json['study_time_minutes'] as int? ?? 0,
       vocabularyReviewed: json['vocabulary_reviewed'] as int? ?? 0,
-      goalMet: json['goal_met'] as bool? ?? false,
+      goalMet: json['daily_goal_met'] as bool? ?? json['goal_met'] as bool? ?? false,
       isToday: json['is_today'] as bool? ?? false,
     );
   }
@@ -75,7 +75,9 @@ class WeeklyProgressModel extends WeeklyProgressEntity {
   }) : super(weekProgress: weekProgress);
 
   factory WeeklyProgressModel.fromJson(Map<String, dynamic> json) {
-    final weekProgressJson = json['week_progress'] as List<dynamic>? ?? [];
+    // Support both 'days' (new API) and 'week_progress' (legacy) format
+    final weekProgressJson = json['days'] as List<dynamic>? ?? 
+                              json['week_progress'] as List<dynamic>? ?? [];
     
     return WeeklyProgressModel(
       weekProgress: weekProgressJson

@@ -1,36 +1,36 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
 import 'dart:async';
-import 'dart:js' as js;
 import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 
 /// Web Speech Recognition Service
 /// Uses browser's native SpeechRecognition API for STT on web platform
 class WebSpeechRecognition {
-  dynamic _recognition;
+  web.SpeechRecognition? _recognition;
   StreamController<WebSpeechResult>? _resultController;
   StreamController<String>? _errorController;
   bool _isListening = false;
 
   /// Check if Web Speech API is available
   static bool get isSupported {
-    return js.context.hasProperty('SpeechRecognition') ||
-        js.context.hasProperty('webkitSpeechRecognition');
+    try {
+      // Try to create a SpeechRecognition instance to check support
+      web.SpeechRecognition();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  /// Get the SpeechRecognition constructor
-  dynamic _createRecognition() {
+  /// Create the SpeechRecognition instance
+  web.SpeechRecognition? _createRecognition() {
     try {
-      // Try standard API first, then webkit prefix (for Chrome/Safari)
-      if (js.context.hasProperty('SpeechRecognition')) {
-        return js.JsObject(js.context['SpeechRecognition'] as js.JsFunction);
-      } else if (js.context.hasProperty('webkitSpeechRecognition')) {
-        return js.JsObject(js.context['webkitSpeechRecognition'] as js.JsFunction);
-      }
+      return web.SpeechRecognition();
     } catch (e) {
       print('Failed to create SpeechRecognition: $e');
+      return null;
     }
-    return null;
   }
 
   /// Initialize the speech recognition
@@ -44,10 +44,10 @@ class WebSpeechRecognition {
       return false;
     }
 
-    _recognition['lang'] = language;
-    _recognition['continuous'] = continuous;
-    _recognition['interimResults'] = interimResults;
-    _recognition['maxAlternatives'] = 3;
+    _recognition!.lang = language;
+    _recognition!.continuous = continuous;
+    _recognition!.interimResults = interimResults;
+    _recognition!.maxAlternatives = 3;
 
     return true;
   }
@@ -67,25 +67,25 @@ class WebSpeechRecognition {
       return _resultController!.stream;
     }
 
-    // Set up event handlers using dart:js for proper callback handling
-    _recognition['onresult'] = js.allowInterop((event) {
+    // Set up event handlers
+    _recognition!.onresult = (web.SpeechRecognitionEvent event) {
       _handleResult(event);
-    });
+    }.toJS;
 
-    _recognition['onerror'] = js.allowInterop((event) {
+    _recognition!.onerror = (web.SpeechRecognitionErrorEvent event) {
       _handleError(event);
-    });
+    }.toJS;
 
-    _recognition['onend'] = js.allowInterop((event) {
+    _recognition!.onend = (web.Event event) {
       _handleEnd();
-    });
+    }.toJS;
 
-    _recognition['onstart'] = js.allowInterop((event) {
+    _recognition!.onstart = (web.Event event) {
       _isListening = true;
-    });
+    }.toJS;
 
     try {
-      _recognition.callMethod('start');
+      _recognition!.start();
     } catch (e) {
       _resultController!.addError('Failed to start speech recognition: $e');
     }
@@ -94,18 +94,19 @@ class WebSpeechRecognition {
   }
 
   /// Handle speech recognition results
-  void _handleResult(dynamic event) {
+  void _handleResult(web.SpeechRecognitionEvent event) {
     try {
-      final results = event['results'];
-      final resultIndex = event['resultIndex'] ?? 0;
+      final results = event.results;
+      final resultIndex = event.resultIndex;
       
-      for (int i = resultIndex; i < results['length']; i++) {
-        final result = results[i];
-        final alternative = result[0];
+      for (int i = resultIndex; i < results.length; i++) {
+        final result = results.item(i);
         
-        final transcript = alternative['transcript'] as String? ?? '';
-        final confidence = (alternative['confidence'] as num?)?.toDouble() ?? 0.0;
-        final isFinal = result['isFinal'] as bool? ?? false;
+        final alternative = result.item(0);
+        
+        final transcript = alternative.transcript;
+        final confidence = alternative.confidence;
+        final isFinal = result.isFinal;
 
         _resultController?.add(WebSpeechResult(
           transcript: transcript,
@@ -119,8 +120,8 @@ class WebSpeechRecognition {
   }
 
   /// Handle speech recognition errors
-  void _handleError(dynamic event) {
-    final error = event['error'] as String? ?? 'unknown';
+  void _handleError(web.SpeechRecognitionErrorEvent event) {
+    final error = event.error;
     String errorMessage;
     
     switch (error) {
@@ -158,7 +159,7 @@ class WebSpeechRecognition {
   /// Stop listening
   void stopListening() {
     try {
-      _recognition?.callMethod('stop');
+      _recognition?.stop();
     } catch (e) {
       print('Error stopping recognition: $e');
     }
@@ -168,7 +169,7 @@ class WebSpeechRecognition {
   /// Abort recognition
   void abort() {
     try {
-      _recognition?.callMethod('abort');
+      _recognition?.abort();
     } catch (e) {
       print('Error aborting recognition: $e');
     }

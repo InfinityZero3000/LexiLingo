@@ -32,3 +32,8 @@ class BadRequestException implements Exception {
   final String message;
   const BadRequestException([this.message = 'Bad Request']);
 }
+
+/// Thrown when token was successfully refreshed and request should be retried
+class TokenRefreshedException implements Exception {
+  const TokenRefreshedException();
+}

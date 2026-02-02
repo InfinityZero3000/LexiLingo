@@ -94,6 +94,9 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await backendDataSource.getCurrentUser();
       return Right(user);
+    } on UnauthorizedException catch (_) {
+      // User not logged in - this is expected, not an error
+      return Left(AuthFailure('Not authenticated'));
     } on AuthException catch (_) {
       return Left(AuthFailure('Not authenticated'));
     } on ApiErrorException catch (e) {
