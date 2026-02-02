@@ -44,6 +44,16 @@ from app.models.gamification import (
     UserInventory,
 )
 
+# Proficiency Assessment models
+from app.models.proficiency import (
+    SkillType,
+    UserProficiencyProfile,
+    UserSkillScore,
+    UserLevelHistory,
+    ExerciseAttempt,
+    LevelAssessmentTest,
+)
+
 __all__ = [
     # User (Phase 1)
     "User",
@@ -78,4 +88,11 @@ __all__ = [
     "ActivityFeed",
     "ShopItem",
     "UserInventory",
+    # Proficiency Assessment
+    "SkillType",
+    "UserProficiencyProfile",
+    "UserSkillScore",
+    "UserLevelHistory",
+    "ExerciseAttempt",
+    "LevelAssessmentTest",
 ]

@@ -397,6 +397,97 @@ async def get_my_inventory(
     )
 
 
+@router.post("/inventory/use", response_model=ApiResponse[UseItemResponse])
+async def use_inventory_item(
+    request: UseItemRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Use an item from inventory.
+    
+    Activates the item's effect (e.g., double XP, streak freeze).
+    Decrements quantity and marks activation time if applicable.
+    
+    Item types and effects:
+    - streak_freeze: Adds freeze protection to user's streak
+    - double_xp: Activates 2x XP multiplier for specified duration
+    - hint_pack: Adds hints to user's account
+    - heart_refill: Restores lives/hearts to maximum
+    """
+    from app.services.item_effects_service import ItemEffectsService
+    
+    effects_service = ItemEffectsService(db)
+    success, message, effects = await effects_service.use_item(
+        current_user.id, request.inventory_id
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    return ApiResponse(
+        success=True,
+        message=message,
+        data=UseItemResponse(
+            success=True,
+            effects_applied=effects,
+            message=message
+        )
+    )
+
+
+@router.get("/boosts/active", response_model=ApiResponse[List[dict]])
+async def get_active_boosts(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all currently active boosts for the user.
+    
+    Returns active boosts with their effects and remaining time.
+    Useful for displaying active buffs in the UI.
+    """
+    from app.services.item_effects_service import ItemEffectsService
+    
+    effects_service = ItemEffectsService(db)
+    active_boosts = await effects_service.get_active_boosts(current_user.id)
+    
+    return ApiResponse(
+        success=True,
+        message=f"Found {len(active_boosts)} active boosts",
+        data=active_boosts
+    )
+
+
+@router.get("/boosts/xp-multiplier", response_model=ApiResponse[dict])
+async def get_xp_multiplier(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current XP multiplier for the user.
+    
+    Checks for active double_xp boosts and returns the multiplier.
+    Returns 1.0 if no boost is active.
+    """
+    from app.services.item_effects_service import ItemEffectsService
+    
+    effects_service = ItemEffectsService(db)
+    multiplier = await effects_service.get_xp_multiplier(current_user.id)
+    
+    return ApiResponse(
+        success=True,
+        message="XP multiplier retrieved",
+        data={
+            "multiplier": multiplier,
+            "has_boost": multiplier > 1.0
+        }
+    )
+
+
 # ============================================================================
 # Social Endpoints
 # ============================================================================

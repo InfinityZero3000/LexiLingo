@@ -319,9 +319,21 @@ async def award_xp(
     
     This endpoint is typically called by other services after completing actions.
     Returns level up information if user leveled up.
+    
+    Automatically applies active XP boosts (double_xp) if any.
     """
+    from app.services.item_effects_service import ItemEffectsService
+    
+    # Check for active XP boosts
+    effects_service = ItemEffectsService(db)
+    multiplier = await effects_service.get_xp_multiplier(current_user.id)
+    
+    # Apply multiplier to XP amount
+    base_amount = xp_data.amount
+    boosted_amount = int(base_amount * multiplier)
+    
     old_xp = current_user.total_xp
-    new_xp = old_xp + xp_data.amount
+    new_xp = old_xp + boosted_amount
     
     # Check if user leveled up
     leveled_up, previous_tier = LevelService.check_level_up(old_xp, new_xp)
@@ -338,14 +350,21 @@ async def award_xp(
     # Calculate new level status
     level_status = LevelService.calculate_level_status(new_xp)
     
+    # Build message including boost info
+    message = f"Awarded {boosted_amount} XP"
+    if multiplier > 1.0:
+        message = f"Awarded {boosted_amount} XP ({base_amount} × {multiplier}x boost)"
+    if leveled_up:
+        message += " - Level Up!"
+    
     return ApiResponse(
         success=True,
         data=XPAwardResponse(
             total_xp=new_xp,
-            xp_gained=xp_data.amount,
+            xp_gained=boosted_amount,
             new_level=level_status,
             level_up=leveled_up,
             previous_tier=previous_tier
         ),
-        message=f"Awarded {xp_data.amount} XP" + (" - Level Up!" if leveled_up else "")
+        message=message
     )
