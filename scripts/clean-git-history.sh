@@ -25,7 +25,7 @@ if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
 fi
 
 # API key to remove
-API_KEY="***REMOVED***"
+API_KEY="AIzaSyAdneokZf4BO1wEEfarOIHlFCN0TJJdlbM"
 
 echo -e "${YELLOW}🧹 Step 1: Creating backup...${NC}"
 BACKUP_DIR="../LexiLingo-backup-$(date +%Y%m%d-%H%M%S)"

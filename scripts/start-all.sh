@@ -15,6 +15,12 @@ LOG_DIR="$PROJECT_ROOT/logs"
 PID_DIR="$PROJECT_ROOT/.pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
+# Load environment variables from .env if exists
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+    echo -e "${GREEN}✅ Loaded environment from .env${NC}"
+fi
+
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║   LexiLingo - Starting All Services    ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
