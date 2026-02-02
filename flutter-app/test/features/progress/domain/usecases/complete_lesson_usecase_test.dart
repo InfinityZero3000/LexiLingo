@@ -92,16 +92,21 @@ void main() {
 
   test('should return ServerFailure when repository call fails', () async {
     // arrange
+    final failure = ServerFailure('Server error');
     when(mockRepository.completeLesson(
       lessonId: anyNamed('lessonId'),
       score: anyNamed('score'),
-    )).thenAnswer((_) async => Left(ServerFailure('Server error')));
+    )).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(tParams);
 
     // assert
-    expect(result, Left(ServerFailure('Server error')));
+    expect(result.isLeft(), true);
+    result.fold(
+      (l) => expect(l, isA<ServerFailure>()),
+      (r) => fail('Should be Left'),
+    );
     verify(mockRepository.completeLesson(
       lessonId: tLessonId,
       score: tScore,
@@ -110,18 +115,21 @@ void main() {
 
   test('should return UnauthorizedFailure when not enrolled', () async {
     // arrange
+    final failure = UnauthorizedFailure('Not enrolled in course');
     when(mockRepository.completeLesson(
       lessonId: anyNamed('lessonId'),
       score: anyNamed('score'),
-    )).thenAnswer(
-      (_) async => Left(UnauthorizedFailure('Not enrolled in course')),
-    );
+    )).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(tParams);
 
     // assert
-    expect(result, Left(UnauthorizedFailure('Not enrolled in course')));
+    expect(result.isLeft(), true);
+    result.fold(
+      (l) => expect(l, isA<UnauthorizedFailure>()),
+      (r) => fail('Should be Left'),
+    );
   });
 
   group('CompleteLessonParams', () {
