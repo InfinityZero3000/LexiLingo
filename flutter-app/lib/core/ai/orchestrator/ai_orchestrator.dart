@@ -5,6 +5,7 @@ import '../context/context_manager.dart';
 import '../stt/stt_service.dart';
 import '../tts/tts_service.dart';
 import '../pronunciation/pronunciation_service.dart';
+import '../../utils/app_logger.dart';
 
 /// AI Orchestrator - Central coordinator for the AI pipeline
 /// 
@@ -38,7 +39,7 @@ class AIOrchestrator {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    print('[Orchestrator] Initializing AI pipeline...');
+    logDebug('[Orchestrator] Initializing AI pipeline...');
     final startTime = DateTime.now();
 
     try {
@@ -62,9 +63,9 @@ class AIOrchestrator {
 
       _isInitialized = true;
       final totalTime = DateTime.now().difference(startTime).inMilliseconds;
-      print('[Orchestrator] Initialized in ${totalTime}ms');
+      logDebug('[Orchestrator] Initialized in ${totalTime}ms');
     } catch (e) {
-      print('[Orchestrator] Initialization failed: $e');
+      logDebug('[Orchestrator] Initialization failed: $e');
       rethrow;
     }
   }
@@ -73,9 +74,9 @@ class AIOrchestrator {
     try {
       await init();
       _loadedModels.add(name);
-      print('[Orchestrator] ✓ $name service ready');
+      logDebug('[Orchestrator] ✓ $name service ready');
     } catch (e) {
-      print('[Orchestrator] ✗ $name service failed: $e');
+      logDebug('[Orchestrator] ✗ $name service failed: $e');
     }
   }
 
@@ -95,7 +96,7 @@ class AIOrchestrator {
       throw StateError('Orchestrator not initialized. Call initialize() first.');
     }
 
-    print('[Orchestrator] Processing text: "$userText"');
+    logDebug('[Orchestrator] Processing text: "$userText"');
     final pipelineStart = DateTime.now();
 
     try {
@@ -104,7 +105,7 @@ class AIOrchestrator {
         userText: userText,
         hasAudio: false,
       );
-      print('[Orchestrator] Task analysis: $taskAnalysis');
+      logDebug('[Orchestrator] Task analysis: $taskAnalysis');
 
       // Phase 2: Context Retrieval
       final contextSummary = contextManager.getContextSummary();
@@ -157,8 +158,8 @@ class AIOrchestrator {
         ),
       );
     } catch (e, stackTrace) {
-      print('[Orchestrator] Error processing text: $e');
-      print(stackTrace);
+      logDebug('[Orchestrator] Error processing text: $e');
+      logDebug(stackTrace.toString());
       return _handleError(e);
     }
   }
@@ -186,7 +187,7 @@ class AIOrchestrator {
       throw StateError('Audio processing requires STT and Pronunciation services');
     }
 
-    print('[Orchestrator] Processing audio (${audioBytes.length} bytes)');
+    logDebug('[Orchestrator] Processing audio (${audioBytes.length} bytes)');
     final pipelineStart = DateTime.now();
 
     try {
@@ -195,7 +196,7 @@ class AIOrchestrator {
         audioBytes: audioBytes,
         withTimestamps: true,
       );
-      print('[Orchestrator] Transcribed: "${transcription.text}"');
+      logDebug('[Orchestrator] Transcribed: "${transcription.text}"');
 
       // Step 2: Task analysis
       final taskAnalysis = _analyzeTask(
@@ -271,8 +272,8 @@ class AIOrchestrator {
         ),
       );
     } catch (e, stackTrace) {
-      print('[Orchestrator] Error processing audio: $e');
-      print(stackTrace);
+      logDebug('[Orchestrator] Error processing audio: $e');
+      logDebug(stackTrace.toString());
       return _handleError(e);
     }
   }
@@ -366,7 +367,7 @@ class AIOrchestrator {
     // Mock vocabulary level
     final vocabularyLevel = learnerLevel.displayName;
 
-    print('[Orchestrator] Grammar analysis: ${errors.length} errors, fluency: $fluencyScore');
+    logDebug('[Orchestrator] Grammar analysis: ${errors.length} errors, fluency: $fluencyScore');
 
     return AnalysisResult(
       fluencyScore: fluencyScore,
@@ -453,7 +454,7 @@ class AIOrchestrator {
 
   /// Error handling with graceful degradation
   AIResponse _handleError(Object error) {
-    print('[Orchestrator] Handling error with fallback...');
+    logDebug('[Orchestrator] Handling error with fallback...');
 
     // Fallback response
     return AIResponse(
@@ -489,7 +490,7 @@ class AIOrchestrator {
 
   /// Clean up all resources
   Future<void> dispose() async {
-    print('[Orchestrator] Disposing...');
+    logDebug('[Orchestrator] Disposing...');
     
     await Future.wait([
       if (sttService != null) sttService!.dispose(),
@@ -501,6 +502,6 @@ class AIOrchestrator {
     _performanceMetrics.clear();
     _isInitialized = false;
     
-    print('[Orchestrator] Disposed');
+    logDebug('[Orchestrator] Disposed');
   }
 }

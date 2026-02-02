@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import '../models/ai_response.dart';
+import '../../utils/app_logger.dart';
 
 /// Pronunciation analysis service
 /// Implementation should use HuBERT-large for phoneme recognition
@@ -82,7 +83,7 @@ class MockPronunciationService implements PronunciationService {
     // Simulate model loading (HuBERT is large)
     await Future.delayed(const Duration(seconds: 2));
     _isInitialized = true;
-    print('[MockPronunciation] Initialized (HuBERT-large - Mock)');
+    logDebug('[MockPronunciation] Initialized (HuBERT-large - Mock)');
   }
 
   @override
@@ -125,7 +126,7 @@ class MockPronunciationService implements PronunciationService {
     // Mock prosody score
     final prosodyScore = 0.78;
 
-    print('[MockPronunciation] Analyzed: accuracy=$accuracy, errors=${errors.length}, prosody=$prosodyScore');
+    logDebug('[MockPronunciation] Analyzed: accuracy=$accuracy, errors=${errors.length}, prosody=$prosodyScore');
 
     return PronunciationResult(
       accuracy: accuracy,
@@ -178,6 +179,6 @@ class MockPronunciationService implements PronunciationService {
   @override
   Future<void> dispose() async {
     _isInitialized = false;
-    print('[MockPronunciation] Disposed');
+    logDebug('[MockPronunciation] Disposed');
   }
 }

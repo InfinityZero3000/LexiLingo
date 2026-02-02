@@ -64,9 +64,9 @@ class ApiClient {
   }
 
   /// GET request returning unwrapped data
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers}) async {
+  Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers, Duration? timeout}) async {
     final uri = _resolve(path);
-    return _send('GET', uri, headers: headers);
+    return _send('GET', uri, headers: headers, timeout: timeout);
   }
 
   /// POST request returning unwrapped data
@@ -74,9 +74,10 @@ class ApiClient {
     String path, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
     final uri = _resolve(path);
-    return _send('POST', uri, headers: headers, body: body);
+    return _send('POST', uri, headers: headers, body: body, timeout: timeout);
   }
 
   /// GET request returning full ApiResponseEnvelope
@@ -129,8 +130,9 @@ class ApiClient {
     Uri uri, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
-    final response = await _sendRaw(method, uri, headers: headers, body: body);
+    final response = await _sendRaw(method, uri, headers: headers, body: body, timeout: timeout);
     return await _handleResponse(response);
   }
 
@@ -140,6 +142,7 @@ class ApiClient {
     Uri uri, {
     Map<String, String>? headers,
     Object? body,
+    Duration? timeout,
   }) async {
     if (!await _networkInfo.isConnected) {
       throw ServerException('No network connection');
@@ -158,7 +161,7 @@ class ApiClient {
 
     try {
       final response = await _dispatch(method, uri, req.headers, body)
-          .timeout(ApiConfig.receiveTimeout);
+          .timeout(timeout ?? ApiConfig.receiveTimeout);
       final apiResponse = ApiResponse(
         statusCode: response.statusCode,
         uri: uri,

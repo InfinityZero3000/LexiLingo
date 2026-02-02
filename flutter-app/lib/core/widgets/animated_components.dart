@@ -144,7 +144,7 @@ class _StarPainter extends CustomPainter {
 
     // Draw unfilled star
     final unfilledPaint = Paint()
-      ..color = unfilledColor.withOpacity(0.3)
+      ..color = unfilledColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, unfilledPaint);
 
@@ -533,7 +533,7 @@ class _CountdownTimerState extends State<CountdownTimer>
                 size: Size(widget.size, widget.size),
                 painter: _CountdownPainter(
                   progress: 1 - _controller.value,
-                  backgroundColor: widget.backgroundColor.withOpacity(0.3),
+                  backgroundColor: widget.backgroundColor.withValues(alpha: 0.3),
                   progressColor: widget.progressColor,
                   strokeWidth: widget.strokeWidth,
                 ),

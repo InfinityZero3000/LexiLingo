@@ -101,7 +101,7 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                 // Pulse animation behind badge
                 if (widget.showPulse && widget.count > 0)
                   PulseAnimation(
-                    color: widget.badgeColor.withOpacity(0.5),
+                    color: widget.badgeColor.withValues(alpha: 0.5),
                     maxRadius: 12,
                     duration: const Duration(milliseconds: 1500),
                     child: const SizedBox(width: 24, height: 24),
@@ -118,7 +118,7 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        widget.badgeColor.withOpacity(0.9),
+                        widget.badgeColor.withValues(alpha: 0.9),
                         widget.badgeColor,
                       ],
                     ),
@@ -126,7 +126,7 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                     borderRadius: widget.count > 9 ? BorderRadius.circular(9) : null,
                     boxShadow: [
                       BoxShadow(
-                        color: widget.badgeColor.withOpacity(0.5),
+                        color: widget.badgeColor.withValues(alpha: 0.5),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -297,7 +297,7 @@ class _AnimatedActionButtonState extends State<AnimatedActionButton> {
                   width: widget.size,
                   height: widget.size,
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.1),
+                    color: widget.color.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

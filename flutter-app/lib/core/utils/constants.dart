@@ -17,4 +17,7 @@ class AppConstants {
   
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
+  
+  // Extended timeout for AI operations (chat, STT, TTS)
+  static const Duration aiOperationTimeout = Duration(seconds: 120);
 }

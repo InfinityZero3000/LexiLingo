@@ -1,3 +1,6 @@
+// ignore_for_file: avoid_print
+// This file is an example/demo file, print statements are intentional for demonstration
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../context/context_manager.dart';
@@ -25,7 +28,7 @@ void main() async {
   // ============================================================
   // STEP 1: Initialize AI Components
   // ============================================================
-  print('📦 Initializing AI components...\n');
+  print('[INIT] Initializing AI components...\n');
 
   final contextManager = ContextManager();
   final orchestrator = AIOrchestrator(

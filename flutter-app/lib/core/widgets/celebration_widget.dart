@@ -172,7 +172,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  theme.primaryColor.withOpacity(0.1),
+                  theme.primaryColor.withValues(alpha: 0.1),
                   theme.scaffoldBackgroundColor,
                 ],
               ),
@@ -218,11 +218,11 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: widget.iconColor.withOpacity(0.2),
+                        color: widget.iconColor.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: widget.iconColor.withOpacity(0.3),
+                            color: widget.iconColor.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
                           ),
@@ -333,7 +333,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withOpacity(0.4),
+            color: Colors.amber.withValues(alpha: 0.4),
             blurRadius: 15,
             spreadRadius: 2,
           ),

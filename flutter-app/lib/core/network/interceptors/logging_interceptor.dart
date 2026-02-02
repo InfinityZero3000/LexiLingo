@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'api_interceptor.dart';
 import '../models.dart';
 
@@ -12,21 +13,21 @@ class LoggingInterceptor implements ApiInterceptor {
   @override
   void onRequest(ApiRequest request) {
     if (!enabled) return;
-    print('[$tag][REQ] ${request.method} ${request.uri}');
+    logDebug(tag, '[REQ] ${request.method} ${request.uri}');
     log('[REQ] ${request.method} ${request.uri} headers=${request.headers} body=${request.body}', name: tag);
   }
 
   @override
   void onResponse(ApiResponse response) {
     if (!enabled) return;
-    print('[$tag][RES] ${response.statusCode} ${response.uri}');
+    logDebug(tag, '[RES] ${response.statusCode} ${response.uri}');
     log('[RES] ${response.statusCode} ${response.uri} body=${response.bodyPreview}', name: tag);
   }
 
   @override
   void onError(ApiError error) {
     if (!enabled) return;
-    print('[$tag][ERR] ${error.method} ${error.uri} ${error.message}');
+    logError(tag, '[ERR] ${error.method} ${error.uri} ${error.message}');
     log('[ERR] ${error.method} ${error.uri} ${error.message}', name: tag, error: error.cause);
   }
 }

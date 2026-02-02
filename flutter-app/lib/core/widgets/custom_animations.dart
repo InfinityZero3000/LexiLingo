@@ -527,7 +527,7 @@ class _ProgressRingPainter extends CustomPainter {
     
     // Background circle
     final bgPaint = Paint()
-      ..color = backgroundColor.withOpacity(0.2)
+      ..color = backgroundColor.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -1014,7 +1014,7 @@ class _CheckmarkPainter extends CustomPainter {
     // Circle background
     final circleProgress = (progress * 2).clamp(0.0, 1.0);
     final circlePaint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius * circleProgress, circlePaint);
     

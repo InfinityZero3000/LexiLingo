@@ -4,6 +4,7 @@ import '../../features/user/data/datasources/user_firestore_data_source.dart';
 import '../../features/user/data/models/user_model.dart';
 import 'progress_firestore_data_source.dart';
 import 'firestore_service.dart';
+import '../utils/app_logger.dart';
 
 /// Service for syncing local SQLite data to Firestore
 class ProgressSyncService {

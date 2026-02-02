@@ -1,4 +1,7 @@
 import '../../features/auth/data/datasources/token_storage.dart';
+import '../utils/app_logger.dart';
+
+const _tag = 'BackendAuthHeaderProvider';
 
 /// Provides Authorization header using backend JWT token
 class BackendAuthHeaderProvider {
@@ -10,14 +13,14 @@ class BackendAuthHeaderProvider {
     try {
       final tokens = await tokenStorage.getTokens();
       if (tokens == null || tokens.accessToken.isEmpty) {
-        print('[WARN] BackendAuthHeaderProvider: No tokens available');
+        logWarn(_tag, 'No tokens available');
         return const {};
       }
 
-      print('[DEBUG] BackendAuthHeaderProvider: Token available (length: ${tokens.accessToken.length})');
+      logDebug(_tag, 'Token available (length: ${tokens.accessToken.length})');
       return {'Authorization': 'Bearer ${tokens.accessToken}'};
     } catch (e) {
-      print('[ERROR] BackendAuthHeaderProvider: Error getting tokens: $e');
+      logError(_tag, 'Error getting tokens: $e');
       return const {};
     }
   }
