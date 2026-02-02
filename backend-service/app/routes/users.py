@@ -164,31 +164,31 @@ async def get_user_stats(
     
     completed_query = select(func.count(UserProgress.id)).where(
         UserProgress.user_id == current_user.id,
-        UserProgress.completion_percentage == 100
+        UserProgress.status == "completed"
     )
     courses_completed = (await db.execute(completed_query)).scalar() or 0
     
     # Get lesson stats
     lessons_query = select(func.count(LessonAttempt.id)).where(
         LessonAttempt.user_id == current_user.id,
-        LessonAttempt.is_completed == True
+        LessonAttempt.passed == True
     )
     lessons_completed = (await db.execute(lessons_query)).scalar() or 0
     
-    # Get study time (sum of all lesson attempts)
-    study_time_query = select(func.sum(LessonAttempt.time_spent)).where(
+    # Get study time (sum of all lesson attempts in ms, convert to minutes)
+    study_time_query = select(func.sum(LessonAttempt.time_spent_ms)).where(
         LessonAttempt.user_id == current_user.id
     )
     total_study_time = (await db.execute(study_time_query)).scalar() or 0
-    total_study_time = int(total_study_time / 60) if total_study_time else 0  # Convert to minutes
+    total_study_time = int(total_study_time / 60000) if total_study_time else 0  # ms to minutes
     
     # Get streak info
     streak_query = select(Streak).where(Streak.user_id == current_user.id)
     streak_result = await db.execute(streak_query)
     streak = streak_result.scalar_one_or_none()
     
-    current_streak = streak.current_count if streak else 0
-    longest_streak = streak.longest_count if streak else 0
+    current_streak = streak.current_streak if streak else 0
+    longest_streak = streak.longest_streak if streak else 0
     
     # Get vocabulary stats
     vocab_learned_query = select(func.count(UserVocabulary.id)).where(
@@ -267,20 +267,20 @@ async def get_weekly_activity(
         lessons_query = select(
             func.count(LessonAttempt.id).label('count'),
             func.coalesce(func.sum(LessonAttempt.xp_earned), 0).label('xp'),
-            func.coalesce(func.sum(LessonAttempt.time_spent), 0).label('time')
+            func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0).label('time')
         ).where(
             LessonAttempt.user_id == current_user.id,
-            LessonAttempt.completed_at >= day_start,
-            LessonAttempt.completed_at <= day_end,
-            LessonAttempt.is_completed == True
+            LessonAttempt.finished_at >= day_start,
+            LessonAttempt.finished_at <= day_end,
+            LessonAttempt.passed == True
         )
         
         result = await db.execute(lessons_query)
         row = result.first()
         
-        lessons = row.count if row else 0
+        lessons_count = int(row.count) if row and row.count else 0
         xp = int(row.xp) if row and row.xp else 0
-        time = int(row.time / 60) if row and row.time else 0  # Convert to minutes
+        time = int(row.time / 60000) if row and row.time else 0  # Convert ms to minutes
         
         # Get day of week name
         day_name = days[day_date.weekday()]
@@ -288,12 +288,12 @@ async def get_weekly_activity(
         week_data.append(WeeklyActivityData(
             day=day_name,
             xp=xp,
-            lessons=lessons,
+            lessons=lessons_count,
             study_time=time
         ))
         
         total_xp += xp
-        total_lessons += lessons
+        total_lessons += lessons_count
         total_study_time += time
     
     return ApiResponse(
