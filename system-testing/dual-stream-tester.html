@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiLingo Dual-Stream Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #e0f2fe;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .config-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-connect {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-connect:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-disconnect {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-disconnect:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-record {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-record:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-stop {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .status-value.connected {
+            color: #10b981;
+        }
+
+        .status-value.recording {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .messages-section {
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .msg-system {
+            background: #374151;
+            color: #9ca3af;
+        }
+
+        .msg-transcript {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .msg-response {
+            background: #10b981;
+            color: white;
+        }
+
+        .msg-error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .msg-thinking {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-right: 8px;
+        }
+
+        .audio-visualizer {
+            background: #f3f4f6;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+
+        .wave {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 50px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .transcript-section {
+            background: #ffffff;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 120px;
+        }
+
+        .transcript-section h3 {
+            color: #0369a1;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .transcript-content {
+            color: #1e293b;
+            font-size: 18px;
+            line-height: 1.6;
+            min-height: 60px;
+        }
+
+        .transcript-empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .transcript-label {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #dbeafe;
+            color: #0369a1;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LexiLingo Dual-Stream Tester</h1>
+        <p class="subtitle">Test WebSocket-based real-time streaming STT/TTS with interruption handling</p>
+        
+        <!-- Mock Mode Warning -->
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: #92400e; font-weight: 600; margin-bottom: 8px;">⚠️ MOCK MODE - STT Service Not Connected</div>
+            <div style="color: #78350f; font-size: 14px; line-height: 1.5;">
+                Your audio IS being captured and sent to the server, but the Speech-to-Text (STT) service is not yet implemented. 
+                The transcripts shown are simulated responses. Check "Audio Sent" stats to confirm your audio is being recorded.
+            </div>
+        </div>
+
+        <!-- Transcript Display -->
+        <div class="transcript-section">
+            <h3>Transcript</h3>
+            <div class="transcript-content" id="transcriptDisplay">
+                <span class="transcript-empty">Transcript will appear here...</span>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="config-section">
+            <h3>Connection Settings</h3>
+            <div class="input-group">
+                <label for="wsUrl">WebSocket URL</label>
+                <input type="text" id="wsUrl" value="ws://localhost:8001/ws/conversation/stream" placeholder="ws://localhost:8001/ws/conversation/stream">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label for="sessionId">Session ID</label>
+                    <input type="text" id="sessionId" value="test-session-001" placeholder="test-session-001">
+                </div>
+                <div class="input-group">
+                    <label for="userId">User ID</label>
+                    <input type="text" id="userId" value="test-user-001" placeholder="test-user-001">
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Controls -->
+        <div class="button-group">
+            <button class="btn-connect" id="btnConnect">
+                Connect
+            </button>
+            <button class="btn-disconnect" id="btnDisconnect" disabled>
+                Disconnect
+            </button>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">Connection</div>
+                <div class="status-value" id="statusConnection">Disconnected</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Recording</div>
+                <div class="status-value" id="statusRecording">Idle</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Latency</div>
+                <div class="status-value" id="statusLatency">-- ms</div>
+            </div>
+        </div>
+
+        <!-- Audio Controls -->
+        <div class="button-group">
+            <button class="btn-record" id="btnRecord" disabled>
+                Start Recording
+            </button>
+            <button class="btn-stop" id="btnStop" disabled>
+                Stop Recording
+            </button>
+        </div>
+
+        <!-- Audio Visualizer -->
+        <div class="audio-visualizer" id="visualizer" style="display: none;">
+            <div class="wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+        </div>
+
+        <!-- Messages Log -->
+        <div class="messages-section" id="messagesLog">
+            <div class="message msg-system">
+                <span class="timestamp">[System]</span>
+                <span>Ready to connect. Click "Connect" button.</span>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Audio Sent</div>
+                <div class="stat-value" id="statAudioSent">0 KB</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Messages Received</div>
+                <div class="stat-value" id="statReceived">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Latency</div>
+                <div class="stat-value" id="statAvgLatency">-- ms</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let mediaRecorder = null;
+        let audioContext = null;
+        let audioStream = null;
+
+        let currentTranscript = {
+            partial: '',
+            final: ''
+        };
+
+        let stats = {
+            sent: 0,
+            received: 0,
+            latencies: [],
+            lastSendTime: 0,
+            totalAudioBytes: 0,
+            audioChunks: 0
+        };
+
+        // DOM elements
+        const btnConnect = document.getElementById('btnConnect');
+        const btnDisconnect = document.getElementById('btnDisconnect');
+        const btnRecord = document.getElementById('btnRecord');
+        const btnStop = document.getElementById('btnStop');
+        const messagesLog = document.getElementById('messagesLog');
+        const statusConnection = document.getElementById('statusConnection');
+        const statusRecording = document.getElementById('statusRecording');
+        const statusLatency = document.getElementById('statusLatency');
+        const visualizer = document.getElementById('visualizer');
+
+        // Add message to log
+        function addMessage(type, content) {
+            const msg = document.createElement('div');
+            msg.className = `message msg-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            msg.innerHTML = `<span class="timestamp">[${timestamp}]</span><span class="log-entry">${content}</span>`;
+            
+            messagesLog.appendChild(msg);
+            messagesLog.scrollTop = messagesLog.scrollHeight;
+
+            // Keep only last 100 messages
+            while (messagesLog.children.length > 100) {
+                messagesLog.removeChild(messagesLog.firstChild);
+            }
+        }
+
+        // Update transcript display
+        function updateTranscript() {
+            const transcriptDisplay = document.getElementById('transcriptDisplay');
+            
+            if (!currentTranscript.final && !currentTranscript.partial) {
+                transcriptDisplay.innerHTML = '<span class="transcript-empty">Waiting for audio input... (Speak into your microphone)</span>';
+                return;
+            }
+            
+            let html = '';
+            
+            // Check if it's mock data
+            const isMock = currentTranscript.final && (
+                currentTranscript.final.includes('[Mock]') || 
+                currentTranscript.final === 'Hello, I would like to practice English'
+            );
+            
+            if (isMock) {
+                html += '<div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; color: #92400e;">';
+                html += '⚠️ <strong>MOCK MODE:</strong> Audio is being received but STT service is not connected. Showing simulated transcription.';
+                html += '</div>';
+            }
+            
+            if (currentTranscript.final) {
+                const label = isMock ? 'Final (Mock)' : 'Final';
+                html += `<div style="margin-bottom: 10px;">
+                    <span class="transcript-label">${label}</span>
+                    <div style="color: #0f172a; font-weight: 500;">${currentTranscript.final}</div>
+                </div>`;
+            }
+            
+            if (currentTranscript.partial) {
+                html += `<div>
+                    <span class="transcript-label">Partial</span>
+                    <div style="color: #64748b;">${currentTranscript.partial}</div>
+                </div>`;
+            }
+            
+            transcriptDisplay.innerHTML = html;
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('statAudioSent').textContent = `${(stats.totalAudioBytes/1024).toFixed(1)} KB`;
+            document.getElementById('statReceived').textContent = stats.received;
+            
+            if (stats.latencies.length > 0) {
+                const avg = stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length;
+                document.getElementById('statAvgLatency').textContent = `${avg.toFixed(0)} ms`;
+                statusLatency.textContent = `${stats.latencies[stats.latencies.length - 1].toFixed(0)} ms`;
+            }
+        }
+
+        // Connect to WebSocket
+        async function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            const sessionId = document.getElementById('sessionId').value;
+            const userId = document.getElementById('userId').value;
+
+            const fullUrl = `${wsUrl}?session_id=${sessionId}&user_id=${userId}`;
+
+            try {
+                addMessage('system', `Connecting to ${fullUrl}...`);
+                ws = new WebSocket(fullUrl);
+
+                ws.onopen = () => {
+                    addMessage('system', 'Connected to server');
+                    statusConnection.textContent = 'Connected';
+                    statusConnection.classList.add('connected');
+                    btnConnect.disabled = true;
+                    btnDisconnect.disabled = false;
+                    btnRecord.disabled = false;
+                };
+
+                ws.onmessage = async (event) => {
+                    stats.received++;
+                    
+                    if (event.data instanceof Blob) {
+                        // Binary audio data
+                        addMessage('response', `Received audio chunk (${event.data.size} bytes)`);
+                        
+                        // Play audio (chỉ khi có proper format)
+                        if (event.data.size > 100) {  // Skip mock data
+                            const arrayBuffer = await event.data.arrayBuffer();
+                            const audioBlob = new Blob([arrayBuffer], { type: 'audio/wav' });
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            const audio = new Audio(audioUrl);
+                            audio.play().catch(e => {
+                                // Chỉ log error nếu không phải mock data
+                                addMessage('error', `Audio play error: ${e.message}`);
+                            });
+                        }
+                    } else {
+                        // JSON message
+                        try {
+                            const data = JSON.parse(event.data);
+                            handleJsonMessage(data);
+                        } catch (e) {
+                            addMessage('error', `JSON parse error: ${e.message}`);
+                        }
+                    }
+                    
+                    // Calculate latency
+                    if (stats.lastSendTime > 0) {
+                        const latency = Date.now() - stats.lastSendTime;
+                        stats.latencies.push(latency);
+                        if (stats.latencies.length > 20) stats.latencies.shift();
+                    }
+                    
+                    updateStats();
+                };
+
+                ws.onerror = (error) => {
+                    addMessage('error', `WebSocket error: ${error.message || 'Unknown error'}`);
+                };
+
+                ws.onclose = () => {
+                    addMessage('system', 'Disconnected from server');
+                    statusConnection.textContent = 'Disconnected';
+                    statusConnection.classList.remove('connected');
+                    btnConnect.disabled = false;
+                    btnDisconnect.disabled = true;
+                    btnRecord.disabled = true;
+                    btnStop.disabled = true;
+                };
+
+            } catch (error) {
+                addMessage('error', `Connection failed: ${error.message}`);
+            }
+        }
+
+        function handleJsonMessage(data) {
+            const msgType = data.type;
+            
+            switch (msgType) {
+                case 'connected':
+                    addMessage('system', `Session established: ${data.session_id}`);
+                    break;
+                
+                case 'stt_partial':
+                case 'transcript_partial':
+                    currentTranscript.partial = data.text;
+                    updateTranscript();
+                    addMessage('transcript', `[Partial] ${data.text}`);
+                    break;
+                
+                case 'stt_processing':
+                    // Show model loading status
+                    const isLoading = data.message.includes('Loading');
+                    if (isLoading) {
+                        addMessage('thinking', `⏳ ${data.message}`);
+                    } else {
+                        addMessage('system', `Processing: ${data.message}`);
+                    }
+                    break;
+                
+                case 'stt_final':
+                case 'transcript_final':
+                    currentTranscript.final = data.text;
+                    currentTranscript.partial = '';
+                    updateTranscript();
+                    
+                    // Check if it's mock or real
+                    const isRealSTT = data.is_real === true;
+                    const isMockSTT = data.is_mock === true || data.text.includes('[Mock]');
+                    
+                    let sttLabel = '';
+                    if (isRealSTT) {
+                        sttLabel = '✓ [Real STT]';
+                    } else if (isMockSTT) {
+                        sttLabel = '⚠ [Mock - STT Failed]';
+                        if (data.error) {
+                            addMessage('error', `STT Error: ${data.error}`);
+                        }
+                    } else {
+                        sttLabel = '[Final]';
+                    }
+                    
+                    addMessage('transcript', `${sttLabel} ${data.text}`);
+                    break;
+                
+                case 'ai_thinking':
+                case 'thinking_start':
+                    addMessage('thinking', `AI started thinking...`);
+                    break;
+                
+                case 'thinking_stop':
+                    addMessage('thinking', `AI stopped (${data.reason || 'unknown'})`);
+                    break;
+                
+                case 'ai_response':
+                case 'response_text':
+                    addMessage('response', `Response: ${data.text}`);
+                    break;
+                
+                case 'tts_start':
+                case 'response_audio_start':
+                    addMessage('response', `Audio streaming started`);
+                    break;
+                
+                case 'tts_end':
+                case 'response_audio_end':
+                    addMessage('response', `Audio streaming complete`);
+                    break;
+                
+                case 'tts_chunk':
+                case 'audio_chunk':
+                    addMessage('system', `Audio chunk ${data.chunk_index + 1}/${data.total_chunks}`);
+                    break;
+                
+                case 'audio_start':
+                    addMessage('system', `Server received audio start`);
+                    break;
+                
+                case 'audio_stop':
+                    addMessage('system', `Server received audio stop`);
+                    break;
+                
+                case 'error':
+                    addMessage('error', `Error: ${data.message}`);
+                    break;
+                
+                default:
+                    addMessage('system', `${msgType}: ${JSON.stringify(data)}`);
+            }
+        }
+
+        // Disconnect
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            // Reset transcript
+            currentTranscript.partial = '';
+            currentTranscript.final = '';
+            updateTranscript();
+            // Reset audio stats
+            stats.totalAudioBytes = 0;
+            stats.audioChunks = 0;
+            updateStats();
+        }
+
+        // Start recording
+        async function startRecording() {
+            try {
+                addMessage('system', 'Requesting microphone access...');
+                
+                audioStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+                
+                addMessage('system', '✅ Microphone access granted');
+                addMessage('system', `Audio tracks: ${audioStream.getAudioTracks().length}`);
+
+                mediaRecorder = new MediaRecorder(audioStream, {
+                    mimeType: 'audio/webm'
+                });
+                
+                addMessage('system', `MediaRecorder created: ${mediaRecorder.mimeType}`);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(event.data);
+                        stats.sent++;
+                        stats.audioChunks++;
+                        stats.totalAudioBytes += event.data.size;
+                        stats.lastSendTime = Date.now();
+                        addMessage('system', `📤 Sent audio chunk #${stats.audioChunks}: ${event.data.size} bytes (total: ${(stats.totalAudioBytes/1024).toFixed(1)}KB)`);
+                        updateStats();
+                    } else {
+                        addMessage('error', `Cannot send: size=${event.data.size}, ws=${!!ws}, state=${ws?.readyState}`);
+                    }
+                };
+                
+                mediaRecorder.onstart = () => {
+                    addMessage('system', '✅ MediaRecorder started');
+                };
+                
+                mediaRecorder.onstop = () => {
+                    addMessage('system', '✅ MediaRecorder stopped');
+                };
+                
+                mediaRecorder.onerror = (error) => {
+                    addMessage('error', `MediaRecorder error: ${error}`);
+                };
+
+                mediaRecorder.start(1000); // Send chunks every 1 second (giảm spam)
+
+                addMessage('system', 'Recording started');
+                
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    addMessage('error', '⚠️ Warning: WebSocket not connected!');
+                }
+                
+                statusRecording.textContent = 'Recording';
+                statusRecording.classList.add('recording');
+                visualizer.style.display = 'flex';
+                btnRecord.disabled = true;
+                btnStop.disabled = false;
+
+            } catch (error) {
+                addMessage('error', `Microphone access denied: ${error.message}`);
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                audioStream.getTracks().forEach(track => track.stop());
+                
+                // Gửi control message để server biết đã stop
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'stop_recording' }));
+                }
+                
+                addMessage('system', 'Recording stopped');
+                statusRecording.textContent = 'Idle';
+                statusRecording.classList.remove('recording');
+                visualizer.style.display = 'none';
+                btnRecord.disabled = false;
+                btnStop.disabled = true;
+            }
+        }
+
+        // Event listeners
+        btnConnect.addEventListener('click', connect);
+        btnDisconnect.addEventListener('click', disconnect);
+        btnRecord.addEventListener('click', startRecording);
+        btnStop.addEventListener('click', stopRecording);
+
+        // Initial stats
+        updateStats();
+    </script>
+</body>
+</html>
