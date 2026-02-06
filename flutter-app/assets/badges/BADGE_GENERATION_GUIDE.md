@@ -13,6 +13,12 @@ LexiLingo cần 26 badge icons cho hệ thống achievements. Có nhiều cách 
 A beautiful gaming achievement badge, shield shape, fire and flame theme, 
 [RARITY] border glow, number "[DAYS]" in center, gradient orange to red,
 game UI style, 3D render, transparent background, 256x256px
+
+**Illustration prompt (flat style):**
+```
+A flat vector illustration badge, shield shape, fire and flame theme,
+[RARITY] border, number "[DAYS]" in center, gradient orange to red,
+minimal UI icon style, clean lines, transparent background, 256x256px
 ```
 
 - 3 days: common (gray border)
@@ -36,9 +42,21 @@ game UI achievement style, 3D render, transparent background, 256x256px
 
 #### XP Badges (Star/Energy theme)
 ```
-A beautiful gaming achievement badge, star shape, golden star and sparkle theme,
-[RARITY] glow, energy particles, gradient gold to orange,
+A beautiful gaming achievement illustration badge, star shape, golden star and sparkle theme,
+[RARITY] glow, energy particles, number "[XP]" in center, gradient gold to orange,
 game achievement icon style, 3D render, transparent background, 256x256px
+
+Ví dụ:
+- 25 XP: common (gray border)
+- 50 XP: common (gray border)
+- 100 XP: rare (blue border)
+- 150 XP: rare (blue border)
+- 200 XP: epic (purple border)
+- 300 XP: epic (purple border)
+- 500 XP: legendary (gold border, extra glow)
+- 700 XP: legendary (gold border, extra glow)
+- 800 XP: legendary (gold border, extra glow)
+- 1000 XP: legendary (gold border, extra glow)
 ```
 
 #### Voice Badges (Microphone theme)
