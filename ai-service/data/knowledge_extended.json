@@ -1,0 +1,271 @@
+{
+  "version": "1.0.0",
+  "description": "Extended knowledge base for LexiLingo English Tutor",
+  "concepts": [
+    {
+      "id": "concept:vocab.travel",
+      "title": "Travel Vocabulary",
+      "keywords": "travel trip journey vacation holiday flight airport hotel booking passport visa luggage baggage destination tourism tourist sightseeing"
+    },
+    {
+      "id": "concept:vocab.technology",
+      "title": "Technology Vocabulary",
+      "keywords": "technology computer software hardware internet digital app application website browser download upload stream device smartphone tablet laptop screen keyboard mouse"
+    },
+    {
+      "id": "concept:vocab.health",
+      "title": "Health & Medicine Vocabulary",
+      "keywords": "health medicine doctor hospital sick illness disease symptom treatment cure prescription pharmacy appointment checkup fever headache pain"
+    },
+    {
+      "id": "concept:vocab.environment",
+      "title": "Environment & Nature Vocabulary",
+      "keywords": "environment nature climate change pollution recycling sustainable green energy renewable forest ocean wildlife ecosystem carbon footprint"
+    },
+    {
+      "id": "concept:vocab.food",
+      "title": "Food & Cooking Vocabulary",
+      "keywords": "food cook cooking recipe ingredient meal breakfast lunch dinner restaurant menu order chef kitchen bake fry boil grill taste delicious"
+    },
+    {
+      "id": "concept:vocab.shopping",
+      "title": "Shopping Vocabulary",
+      "keywords": "shopping shop store mall buy purchase price discount sale bargain expensive cheap receipt payment cash credit card checkout"
+    },
+    {
+      "id": "concept:vocab.education",
+      "title": "Education Vocabulary",
+      "keywords": "education school university college student teacher professor class lesson lecture exam test homework assignment grade degree diploma certificate"
+    },
+    {
+      "id": "concept:vocab.sports",
+      "title": "Sports Vocabulary",
+      "keywords": "sport sports game play player team match competition win lose score goal football soccer basketball tennis swimming running exercise"
+    },
+    {
+      "id": "concept:vocab.entertainment",
+      "title": "Entertainment Vocabulary",
+      "keywords": "entertainment movie film cinema theater concert music song singer actor actress show series episode watch listen performance"
+    },
+    {
+      "id": "concept:vocab.weather",
+      "title": "Weather Vocabulary",
+      "keywords": "weather forecast rain sunny cloudy storm wind temperature hot cold warm cool humid dry snow ice fog"
+    },
+    {
+      "id": "concept:idiom.break_the_ice",
+      "title": "Break the Ice",
+      "keywords": "break ice idiom conversation starter social awkward introduce meeting first time"
+    },
+    {
+      "id": "concept:idiom.piece_of_cake",
+      "title": "Piece of Cake",
+      "keywords": "piece cake idiom easy simple effortless no problem straightforward"
+    },
+    {
+      "id": "concept:idiom.hit_the_nail",
+      "title": "Hit the Nail on the Head",
+      "keywords": "hit nail head idiom exactly right correct accurate precise"
+    },
+    {
+      "id": "concept:idiom.under_weather",
+      "title": "Under the Weather",
+      "keywords": "under weather idiom sick ill unwell not feeling good tired exhausted"
+    },
+    {
+      "id": "concept:idiom.cost_arm_leg",
+      "title": "Cost an Arm and a Leg",
+      "keywords": "cost arm leg idiom expensive expensive very costly pricey"
+    },
+    {
+      "id": "concept:idiom.spill_beans",
+      "title": "Spill the Beans",
+      "keywords": "spill beans idiom reveal secret tell disclose leak share"
+    },
+    {
+      "id": "concept:idiom.once_blue_moon",
+      "title": "Once in a Blue Moon",
+      "keywords": "once blue moon idiom rarely seldom infrequently uncommon occasional"
+    },
+    {
+      "id": "concept:idiom.raining_cats_dogs",
+      "title": "Raining Cats and Dogs",
+      "keywords": "raining cats dogs idiom heavy rain pour downpour storm"
+    },
+    {
+      "id": "concept:phrasal.look_up",
+      "title": "Look Up (Phrasal Verb)",
+      "keywords": "look up phrasal verb search find dictionary reference check information"
+    },
+    {
+      "id": "concept:phrasal.give_up",
+      "title": "Give Up (Phrasal Verb)",
+      "keywords": "give up phrasal verb quit stop surrender abandon discontinue"
+    },
+    {
+      "id": "concept:phrasal.turn_on_off",
+      "title": "Turn On/Off (Phrasal Verb)",
+      "keywords": "turn on off phrasal verb switch activate deactivate start stop power"
+    },
+    {
+      "id": "concept:phrasal.pick_up",
+      "title": "Pick Up (Phrasal Verb)",
+      "keywords": "pick up phrasal verb collect lift learn acquire improve get"
+    },
+    {
+      "id": "concept:phrasal.put_off",
+      "title": "Put Off (Phrasal Verb)",
+      "keywords": "put off phrasal verb postpone delay defer reschedule procrastinate"
+    },
+    {
+      "id": "concept:phrasal.come_across",
+      "title": "Come Across (Phrasal Verb)",
+      "keywords": "come across phrasal verb find encounter discover stumble upon meet"
+    },
+    {
+      "id": "concept:phrasal.figure_out",
+      "title": "Figure Out (Phrasal Verb)",
+      "keywords": "figure out phrasal verb understand solve realize discover learn comprehend"
+    },
+    {
+      "id": "concept:phrasal.run_out",
+      "title": "Run Out (Phrasal Verb)",
+      "keywords": "run out phrasal verb exhaust deplete finish use up empty shortage"
+    },
+    {
+      "id": "concept:conversation.greeting",
+      "title": "Greetings & Introductions",
+      "keywords": "greeting hello hi hey good morning afternoon evening introduce introduction nice meet name"
+    },
+    {
+      "id": "concept:conversation.asking_directions",
+      "title": "Asking for Directions",
+      "keywords": "direction directions where how get to location place go turn left right straight near far"
+    },
+    {
+      "id": "concept:conversation.ordering_food",
+      "title": "Ordering Food",
+      "keywords": "order food restaurant menu waiter waitress like have want please bill check tip"
+    },
+    {
+      "id": "concept:conversation.making_appointments",
+      "title": "Making Appointments",
+      "keywords": "appointment book schedule meeting available time date when free reschedule cancel confirm"
+    },
+    {
+      "id": "concept:conversation.expressing_opinions",
+      "title": "Expressing Opinions",
+      "keywords": "opinion think believe feel view perspective agree disagree suggest recommend"
+    },
+    {
+      "id": "concept:conversation.small_talk",
+      "title": "Small Talk",
+      "keywords": "small talk casual conversation weather weekend plans work how are you doing"
+    },
+    {
+      "id": "concept:grammar.gerund_infinitive",
+      "title": "Gerund vs Infinitive",
+      "keywords": "gerund infinitive verb ing to do doing enjoy like want need prefer remember forget stop"
+    },
+    {
+      "id": "concept:grammar.prepositions_time",
+      "title": "Prepositions of Time",
+      "keywords": "preposition time at on in morning afternoon evening night monday january 2024"
+    },
+    {
+      "id": "concept:grammar.prepositions_place",
+      "title": "Prepositions of Place",
+      "keywords": "preposition place at on in under above below beside next between behind front"
+    },
+    {
+      "id": "concept:grammar.quantifiers",
+      "title": "Quantifiers",
+      "keywords": "quantifier much many some any few little lot enough plenty several"
+    },
+    {
+      "id": "concept:grammar.tag_questions",
+      "title": "Tag Questions",
+      "keywords": "tag question isn't aren't haven't don't didn't won't right confirmation"
+    },
+    {
+      "id": "concept:grammar.conjunctions",
+      "title": "Conjunctions",
+      "keywords": "conjunction and but or so because although however therefore moreover furthermore"
+    },
+    {
+      "id": "concept:grammar.word_order",
+      "title": "Word Order",
+      "keywords": "word order sentence structure subject verb object adjective adverb position"
+    },
+    {
+      "id": "concept:pronunciation.vowel_sounds",
+      "title": "Vowel Sounds",
+      "keywords": "pronunciation vowel sound short long a e i o u phonics"
+    },
+    {
+      "id": "concept:pronunciation.consonant_clusters",
+      "title": "Consonant Clusters",
+      "keywords": "pronunciation consonant cluster blend str bl cr dr fl gr pl pr sc sk sl sm sn sp st sw tr tw"
+    },
+    {
+      "id": "concept:pronunciation.silent_letters",
+      "title": "Silent Letters",
+      "keywords": "pronunciation silent letter know knife write wrong hour honest"
+    },
+    {
+      "id": "concept:pronunciation.word_stress",
+      "title": "Word Stress",
+      "keywords": "pronunciation stress syllable emphasis accent intonation pattern"
+    },
+    {
+      "id": "concept:error.double_negative",
+      "title": "Double Negative Error",
+      "keywords": "double negative error don't have no nobody nothing nowhere neither"
+    },
+    {
+      "id": "concept:error.run_on_sentence",
+      "title": "Run-on Sentence Error",
+      "keywords": "run on sentence error comma splice period conjunction"
+    },
+    {
+      "id": "concept:error.wrong_word_form",
+      "title": "Wrong Word Form Error",
+      "keywords": "word form error noun adjective adverb verb suffix prefix"
+    },
+    {
+      "id": "concept:error.misplaced_modifier",
+      "title": "Misplaced Modifier Error",
+      "keywords": "misplaced modifier error dangling adjective adverb position"
+    }
+  ],
+  "edges": [
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.travel", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.food", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.shopping", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.health", "relation": "related_to"},
+    {"from": "concept:vocab.work_business", "to": "concept:vocab.technology", "relation": "related_to"},
+    {"from": "concept:vocab.academic", "to": "concept:vocab.education", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.weather", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.entertainment", "relation": "related_to"},
+    {"from": "concept:vocab.daily_life", "to": "concept:vocab.sports", "relation": "related_to"},
+    {"from": "concept:vocab.environment", "to": "concept:vocab.weather", "relation": "related_to"},
+    {"from": "concept:grammar.present_simple", "to": "concept:grammar.gerund_infinitive", "relation": "prerequisite_of"},
+    {"from": "concept:grammar.articles_a_an", "to": "concept:grammar.quantifiers", "relation": "related_to"},
+    {"from": "concept:grammar.present_simple", "to": "concept:grammar.prepositions_time", "relation": "related_to"},
+    {"from": "concept:grammar.present_simple", "to": "concept:grammar.prepositions_place", "relation": "related_to"},
+    {"from": "concept:grammar.present_simple", "to": "concept:grammar.conjunctions", "relation": "related_to"},
+    {"from": "concept:grammar.present_simple", "to": "concept:grammar.word_order", "relation": "related_to"},
+    {"from": "concept:grammar.subject_verb_agreement", "to": "concept:grammar.tag_questions", "relation": "prerequisite_of"},
+    {"from": "concept:conversation.greeting", "to": "concept:idiom.break_the_ice", "relation": "related_to"},
+    {"from": "concept:conversation.small_talk", "to": "concept:vocab.weather", "relation": "related_to"},
+    {"from": "concept:conversation.ordering_food", "to": "concept:vocab.food", "relation": "related_to"},
+    {"from": "concept:conversation.asking_directions", "to": "concept:vocab.travel", "relation": "related_to"},
+    {"from": "concept:error.article_omission", "to": "concept:grammar.articles_a_an", "relation": "related_to"},
+    {"from": "concept:error.tense_confusion", "to": "concept:grammar.past_simple", "relation": "related_to"},
+    {"from": "concept:error.tense_confusion", "to": "concept:grammar.present_perfect", "relation": "related_to"},
+    {"from": "concept:error.double_negative", "to": "concept:grammar.quantifiers", "relation": "related_to"},
+    {"from": "concept:error.wrong_word_form", "to": "concept:grammar.gerund_infinitive", "relation": "related_to"},
+    {"from": "concept:pronunciation.vowel_sounds", "to": "concept:pronunciation.word_stress", "relation": "related_to"},
+    {"from": "concept:pronunciation.consonant_clusters", "to": "concept:pronunciation.silent_letters", "relation": "related_to"}
+  ]
+}

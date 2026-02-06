@@ -1,0 +1,600 @@
+{
+  "stories": [
+    {
+      "story_id": "story_airport_checkin",
+      "title": {
+        "en": "Airport Check-In Adventure",
+        "vi": "Phiêu lưu tại quầy check-in sân bay"
+      },
+      "difficulty_level": "A2",
+      "category": "travel",
+      "estimated_minutes": 15,
+      "cover_image_url": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400",
+      "context_description": {
+        "setting": "International airport check-in counter at departure terminal",
+        "scenario": "A traveler arrives at the airport check-in counter to get their boarding pass for an international flight. The check-in agent helps with luggage, seat selection, and provides important flight information.",
+        "objectives": [
+          "Practice travel vocabulary (boarding pass, luggage, gate, departure)",
+          "Use polite request forms (Could I..., Would you mind...)",
+          "Practice present simple for schedules",
+          "Learn airport-specific phrases"
+        ]
+      },
+      "role_persona": {
+        "name": "Sarah",
+        "role": "Airport Check-In Agent",
+        "personality": "Friendly, professional, patient, helpful",
+        "speaking_style": "Clear and polite, uses professional airport terminology, speaks at a moderate pace for non-native speakers",
+        "background": "Sarah has worked at the international airport for 5 years and loves helping travelers from around the world."
+      },
+      "vocabulary_list": [
+        {
+          "term": "boarding pass",
+          "definition": "A document that allows you to board an airplane",
+          "example_in_story": "Here's your boarding pass. Please keep it safe.",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈbɔːdɪŋ pæs/"
+        },
+        {
+          "term": "check-in",
+          "definition": "The process of registering for a flight and getting your boarding pass",
+          "example_in_story": "Welcome to the check-in counter!",
+          "part_of_speech": "noun/verb",
+          "phonetic": "/ˈtʃek ɪn/"
+        },
+        {
+          "term": "luggage",
+          "definition": "Bags and suitcases you take when traveling",
+          "example_in_story": "Do you have any luggage to check in?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈlʌɡɪdʒ/"
+        },
+        {
+          "term": "departure gate",
+          "definition": "The area where you wait before boarding your flight",
+          "example_in_story": "Your departure gate is B12.",
+          "part_of_speech": "noun",
+          "phonetic": "/dɪˈpɑːtʃə ɡeɪt/"
+        },
+        {
+          "term": "window seat",
+          "definition": "A seat next to the airplane window",
+          "example_in_story": "Would you prefer a window seat or an aisle seat?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈwɪndəʊ siːt/"
+        },
+        {
+          "term": "aisle seat",
+          "definition": "A seat next to the walking path in the airplane",
+          "example_in_story": "I have an aisle seat available in row 15.",
+          "part_of_speech": "noun",
+          "phonetic": "/aɪl siːt/"
+        },
+        {
+          "term": "passport",
+          "definition": "Official document for international travel",
+          "example_in_story": "May I see your passport, please?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈpɑːspɔːt/"
+        },
+        {
+          "term": "flight",
+          "definition": "A journey by airplane",
+          "example_in_story": "Your flight departs at 3:00 PM.",
+          "part_of_speech": "noun",
+          "phonetic": "/flaɪt/"
+        }
+      ],
+      "grammar_points": [
+        {
+          "grammar_structure": "Present Simple for Schedules",
+          "explanation": "Use present simple tense for timetables, schedules, and fixed events",
+          "usage_in_story": "Your flight departs at 3 PM. The gate opens at 2:30 PM.",
+          "examples": [
+            "The plane leaves at 5 o'clock.",
+            "Boarding starts in 30 minutes.",
+            "The gate closes at 2:45 PM."
+          ]
+        },
+        {
+          "grammar_structure": "Polite Requests with 'Could' and 'Would'",
+          "explanation": "Use 'Could I...' or 'Would you...' for polite requests",
+          "usage_in_story": "Could I see your passport? Would you prefer a window seat?",
+          "examples": [
+            "Could I have a window seat, please?",
+            "Would you mind checking my luggage?",
+            "Could you tell me the gate number?"
+          ]
+        }
+      ],
+      "conversation_flow": {
+        "opening_prompt": "Good morning! Welcome to Global Airways. How may I help you today?",
+        "key_milestones": [
+          "Greet and ask for booking reference/passport",
+          "Ask about luggage",
+          "Offer seat preferences",
+          "Provide boarding pass and gate information",
+          "Wish safe travels"
+        ],
+        "closing_scenarios": [
+          "Have a pleasant flight! Your gate is B12.",
+          "You're all set! Don't forget to be at the gate 30 minutes before departure.",
+          "Safe travels! If you have any questions, our staff at the gate can help."
+        ]
+      },
+      "is_published": true,
+      "tags": ["travel", "airport", "beginner-friendly", "A2", "check-in", "vocabulary"]
+    },
+    {
+      "story_id": "story_job_interview",
+      "title": {
+        "en": "Job Interview Success",
+        "vi": "Phỏng vấn xin việc thành công"
+      },
+      "difficulty_level": "B1",
+      "category": "business",
+      "estimated_minutes": 20,
+      "cover_image_url": "https://images.unsplash.com/photo-1565688534245-05d6b5be184a?w=400",
+      "context_description": {
+        "setting": "Modern office meeting room for a job interview",
+        "scenario": "A candidate is being interviewed for a marketing position at a tech company. The HR manager asks about experience, skills, and motivation while the candidate demonstrates their qualifications.",
+        "objectives": [
+          "Practice past tenses for describing work experience",
+          "Use present perfect for achievements",
+          "Learn job interview vocabulary",
+          "Practice formal business English"
+        ]
+      },
+      "role_persona": {
+        "name": "Michael Chen",
+        "role": "HR Manager at TechVision Inc.",
+        "personality": "Professional, curious, encouraging, fair",
+        "speaking_style": "Clear business English, asks follow-up questions, gives candidate time to think",
+        "background": "Michael has 10 years of experience in HR and enjoys finding talented people who fit the company culture."
+      },
+      "vocabulary_list": [
+        {
+          "term": "resume",
+          "definition": "A document listing your education, work experience, and skills",
+          "example_in_story": "I've reviewed your resume and I'm impressed with your experience.",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈrezjuːmeɪ/"
+        },
+        {
+          "term": "qualifications",
+          "definition": "Skills, knowledge, or achievements that make you suitable for a job",
+          "example_in_story": "What qualifications do you have for this position?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˌkwɒlɪfɪˈkeɪʃnz/"
+        },
+        {
+          "term": "team player",
+          "definition": "Someone who works well with others in a group",
+          "example_in_story": "I consider myself a team player.",
+          "part_of_speech": "noun",
+          "phonetic": "/tiːm ˈpleɪə/"
+        },
+        {
+          "term": "deadline",
+          "definition": "The latest time by which something must be completed",
+          "example_in_story": "How do you handle tight deadlines?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈdedlaɪn/"
+        },
+        {
+          "term": "salary expectations",
+          "definition": "The amount of money you expect to be paid",
+          "example_in_story": "What are your salary expectations?",
+          "part_of_speech": "noun phrase",
+          "phonetic": "/ˈsæləri ˌekspekˈteɪʃnz/"
+        },
+        {
+          "term": "weakness",
+          "definition": "An area where you need improvement",
+          "example_in_story": "What would you say is your biggest weakness?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈwiːknəs/"
+        }
+      ],
+      "grammar_points": [
+        {
+          "grammar_structure": "Present Perfect for Achievements",
+          "explanation": "Use 'have/has + past participle' to talk about achievements and experiences",
+          "usage_in_story": "I have worked in marketing for 5 years. I have led several successful campaigns.",
+          "examples": [
+            "I have managed a team of 10 people.",
+            "I have completed several certifications.",
+            "I have worked with international clients."
+          ]
+        },
+        {
+          "grammar_structure": "Past Simple for Specific Experiences",
+          "explanation": "Use past simple for completed actions at a specific time",
+          "usage_in_story": "In my previous role, I increased sales by 25%.",
+          "examples": [
+            "I graduated from university in 2020.",
+            "I worked at Company X for three years.",
+            "I led a project that saved $50,000."
+          ]
+        },
+        {
+          "grammar_structure": "Conditional for Hypotheticals",
+          "explanation": "Use 'would' for hypothetical situations and future plans",
+          "usage_in_story": "How would you handle a difficult client?",
+          "examples": [
+            "I would approach the problem systematically.",
+            "If I got this position, I would focus on...",
+            "I would be happy to take on new challenges."
+          ]
+        }
+      ],
+      "conversation_flow": {
+        "opening_prompt": "Hello! Thank you for coming in today. I'm Michael Chen, the HR Manager. Please, have a seat. How are you doing today?",
+        "key_milestones": [
+          "Initial greeting and small talk",
+          "Ask about background and experience",
+          "Discuss skills and achievements",
+          "Ask situational/behavioral questions",
+          "Discuss salary and next steps"
+        ],
+        "closing_scenarios": [
+          "Thank you for your time. We'll be in touch within a week.",
+          "I'm impressed with your qualifications. HR will contact you soon.",
+          "Do you have any questions for me before we wrap up?"
+        ]
+      },
+      "is_published": true,
+      "tags": ["business", "interview", "formal", "B1", "career", "professional"]
+    },
+    {
+      "story_id": "story_restaurant_order",
+      "title": {
+        "en": "Dining at a Restaurant",
+        "vi": "Dùng bữa tại nhà hàng"
+      },
+      "difficulty_level": "A1",
+      "category": "food",
+      "estimated_minutes": 12,
+      "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400",
+      "context_description": {
+        "setting": "A cozy Italian restaurant in the city center",
+        "scenario": "A customer visits a restaurant for dinner. The waiter takes their order, recommends dishes, and ensures they have a pleasant dining experience.",
+        "objectives": [
+          "Practice ordering food and drinks",
+          "Learn food and restaurant vocabulary",
+          "Use 'would like' for polite requests",
+          "Practice countable and uncountable nouns"
+        ]
+      },
+      "role_persona": {
+        "name": "Marco",
+        "role": "Friendly Italian Restaurant Waiter",
+        "personality": "Warm, attentive, passionate about food, enthusiastic",
+        "speaking_style": "Friendly and welcoming, makes food recommendations, speaks clearly and not too fast",
+        "background": "Marco has worked at his family's restaurant for 8 years and loves sharing authentic Italian cuisine with guests."
+      },
+      "vocabulary_list": [
+        {
+          "term": "menu",
+          "definition": "A list of food and drinks available at a restaurant",
+          "example_in_story": "Here's your menu. Take your time to decide.",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈmenjuː/"
+        },
+        {
+          "term": "appetizer",
+          "definition": "A small dish served before the main course",
+          "example_in_story": "Would you like to start with an appetizer?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈæpɪtaɪzə/"
+        },
+        {
+          "term": "main course",
+          "definition": "The largest and most important dish of a meal",
+          "example_in_story": "For your main course, I recommend the pasta.",
+          "part_of_speech": "noun",
+          "phonetic": "/meɪn kɔːs/"
+        },
+        {
+          "term": "dessert",
+          "definition": "A sweet dish eaten at the end of a meal",
+          "example_in_story": "Would you like to see the dessert menu?",
+          "part_of_speech": "noun",
+          "phonetic": "/dɪˈzɜːt/"
+        },
+        {
+          "term": "bill",
+          "definition": "The paper showing how much you need to pay (also: check)",
+          "example_in_story": "Can I get the bill, please?",
+          "part_of_speech": "noun",
+          "phonetic": "/bɪl/"
+        },
+        {
+          "term": "tip",
+          "definition": "Extra money given to show appreciation for service",
+          "example_in_story": "Service was great, I'll leave a tip.",
+          "part_of_speech": "noun",
+          "phonetic": "/tɪp/"
+        }
+      ],
+      "grammar_points": [
+        {
+          "grammar_structure": "Would like for Polite Requests",
+          "explanation": "Use 'would like' instead of 'want' for polite orders",
+          "usage_in_story": "I would like the pasta, please. Would you like something to drink?",
+          "examples": [
+            "I would like a glass of water, please.",
+            "Would you like to see the dessert menu?",
+            "I'd like the steak, medium rare."
+          ]
+        },
+        {
+          "grammar_structure": "Some/Any with Countable and Uncountable",
+          "explanation": "Use 'some' in positive sentences, 'any' in questions and negatives",
+          "usage_in_story": "Would you like some bread? We don't have any fish today.",
+          "examples": [
+            "Can I have some water?",
+            "Do you have any vegetarian options?",
+            "I don't want any dessert, thank you."
+          ]
+        }
+      ],
+      "conversation_flow": {
+        "opening_prompt": "Buonasera! Good evening and welcome to Trattoria Marco! My name is Marco, and I'll be your waiter tonight. Here's your menu. Can I start you off with something to drink?",
+        "key_milestones": [
+          "Welcome guests and offer drinks",
+          "Take appetizer orders",
+          "Take main course orders with recommendations",
+          "Check on the meal",
+          "Offer dessert and provide bill"
+        ],
+        "closing_scenarios": [
+          "I hope you enjoyed your meal! Grazie and please come again!",
+          "Here's your bill. It was a pleasure serving you tonight!",
+          "Thank you for dining with us! Have a wonderful evening!"
+        ]
+      },
+      "is_published": true,
+      "tags": ["food", "restaurant", "beginner", "A1", "dining", "ordering"]
+    },
+    {
+      "story_id": "story_shopping_clothes",
+      "title": {
+        "en": "Shopping for Clothes",
+        "vi": "Mua sắm quần áo"
+      },
+      "difficulty_level": "A2",
+      "category": "shopping",
+      "estimated_minutes": 15,
+      "cover_image_url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+      "context_description": {
+        "setting": "A modern clothing store in a shopping mall",
+        "scenario": "A customer is looking for clothes for a special occasion. The sales assistant helps them find the right size, style, and tries to understand their preferences.",
+        "objectives": [
+          "Practice shopping vocabulary (size, color, style)",
+          "Use comparative and superlative adjectives",
+          "Learn how to ask for help and express preferences",
+          "Practice trying on clothes phrases"
+        ]
+      },
+      "role_persona": {
+        "name": "Emma",
+        "role": "Fashion Sales Assistant",
+        "personality": "Stylish, helpful, enthusiastic about fashion, patient",
+        "speaking_style": "Friendly and encouraging, gives honest fashion advice, uses size and color vocabulary naturally",
+        "background": "Emma studied fashion design and loves helping customers find outfits that make them feel confident."
+      },
+      "vocabulary_list": [
+        {
+          "term": "fitting room",
+          "definition": "A private room where you try on clothes before buying",
+          "example_in_story": "The fitting rooms are just over there.",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈfɪtɪŋ ruːm/"
+        },
+        {
+          "term": "size",
+          "definition": "How big or small clothes are (small, medium, large)",
+          "example_in_story": "What size are you looking for?",
+          "part_of_speech": "noun",
+          "phonetic": "/saɪz/"
+        },
+        {
+          "term": "discount",
+          "definition": "A reduction in the usual price",
+          "example_in_story": "This dress is 20% off today!",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈdɪskaʊnt/"
+        },
+        {
+          "term": "try on",
+          "definition": "To put on clothes to see if they fit",
+          "example_in_story": "Would you like to try it on?",
+          "part_of_speech": "phrasal verb",
+          "phonetic": "/traɪ ɒn/"
+        },
+        {
+          "term": "fit",
+          "definition": "To be the right size",
+          "example_in_story": "Does it fit well?",
+          "part_of_speech": "verb",
+          "phonetic": "/fɪt/"
+        },
+        {
+          "term": "receipt",
+          "definition": "A paper showing what you bought and how much you paid",
+          "example_in_story": "Here's your receipt. Keep it for returns.",
+          "part_of_speech": "noun",
+          "phonetic": "/rɪˈsiːt/"
+        }
+      ],
+      "grammar_points": [
+        {
+          "grammar_structure": "Comparatives and Superlatives",
+          "explanation": "Use comparatives (-er/more) to compare two things, superlatives (-est/most) for the best/worst",
+          "usage_in_story": "This one is smaller. That's the nicest dress we have.",
+          "examples": [
+            "This jacket is bigger than that one.",
+            "The blue dress looks nicer on you.",
+            "This is the most popular style this season."
+          ]
+        },
+        {
+          "grammar_structure": "Phrasal Verbs for Shopping",
+          "explanation": "Common phrasal verbs: try on, put on, take off",
+          "usage_in_story": "You can try it on in the fitting room.",
+          "examples": [
+            "Can I try this on?",
+            "I'll take it off and get a bigger size.",
+            "Put on this jacket - it looks great!"
+          ]
+        }
+      ],
+      "conversation_flow": {
+        "opening_prompt": "Hi there! Welcome to StyleHub! I'm Emma. Are you looking for something special today, or just browsing?",
+        "key_milestones": [
+          "Greet and ask what customer is looking for",
+          "Help find right size and style",
+          "Suggest trying on items",
+          "Give fashion advice",
+          "Process purchase or help find alternatives"
+        ],
+        "closing_scenarios": [
+          "Great choice! You look amazing in that! Ready to check out?",
+          "Let me know if you need anything else. The fitting rooms are on your left.",
+          "Thank you for shopping with us! Enjoy your new outfit!"
+        ]
+      },
+      "is_published": true,
+      "tags": ["shopping", "clothes", "fashion", "A2", "retail", "vocabulary"]
+    },
+    {
+      "story_id": "story_doctor_visit",
+      "title": {
+        "en": "At the Doctor's Office",
+        "vi": "Tại phòng khám bác sĩ"
+      },
+      "difficulty_level": "B1",
+      "category": "health",
+      "estimated_minutes": 18,
+      "cover_image_url": "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=400",
+      "context_description": {
+        "setting": "A modern medical clinic with a friendly doctor",
+        "scenario": "A patient visits the doctor with common symptoms. The doctor asks about symptoms, gives a diagnosis, and provides treatment advice.",
+        "objectives": [
+          "Practice describing health symptoms",
+          "Learn medical vocabulary (symptoms, medicine, treatment)",
+          "Use present perfect continuous for duration",
+          "Practice giving health history"
+        ]
+      },
+      "role_persona": {
+        "name": "Dr. Lisa Park",
+        "role": "General Practitioner / Family Doctor",
+        "personality": "Caring, thorough, reassuring, professional",
+        "speaking_style": "Clear medical explanations simplified for patients, asks clarifying questions, provides reassurance",
+        "background": "Dr. Park has been a family doctor for 12 years and specializes in making patients feel comfortable and understood."
+      },
+      "vocabulary_list": [
+        {
+          "term": "symptom",
+          "definition": "A sign of illness in your body (fever, headache, etc.)",
+          "example_in_story": "Can you describe your symptoms?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈsɪmptəm/"
+        },
+        {
+          "term": "fever",
+          "definition": "A body temperature higher than normal",
+          "example_in_story": "Do you have a fever?",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈfiːvə/"
+        },
+        {
+          "term": "prescription",
+          "definition": "A doctor's written order for medicine",
+          "example_in_story": "I'll write you a prescription for some medicine.",
+          "part_of_speech": "noun",
+          "phonetic": "/prɪˈskrɪpʃn/"
+        },
+        {
+          "term": "medicine",
+          "definition": "A substance used to treat illness",
+          "example_in_story": "Take this medicine twice a day.",
+          "part_of_speech": "noun",
+          "phonetic": "/ˈmedsn/"
+        },
+        {
+          "term": "sore throat",
+          "definition": "Pain or discomfort in the throat",
+          "example_in_story": "I have a sore throat and it hurts to swallow.",
+          "part_of_speech": "noun",
+          "phonetic": "/sɔː θrəʊt/"
+        },
+        {
+          "term": "rest",
+          "definition": "To relax and not be active",
+          "example_in_story": "You should get plenty of rest.",
+          "part_of_speech": "noun/verb",
+          "phonetic": "/rest/"
+        },
+        {
+          "term": "allergic",
+          "definition": "Having a bad reaction to certain substances",
+          "example_in_story": "Are you allergic to any medications?",
+          "part_of_speech": "adjective",
+          "phonetic": "/əˈlɜːdʒɪk/"
+        }
+      ],
+      "grammar_points": [
+        {
+          "grammar_structure": "Present Perfect Continuous for Duration",
+          "explanation": "Use 'have been + -ing' to talk about situations that started in the past and continue",
+          "usage_in_story": "How long have you been feeling this way?",
+          "examples": [
+            "I have been coughing for three days.",
+            "I have been having headaches since Monday.",
+            "Have you been taking any medication?"
+          ]
+        },
+        {
+          "grammar_structure": "Should for Medical Advice",
+          "explanation": "Use 'should' to give recommendations and advice",
+          "usage_in_story": "You should take this medicine twice a day.",
+          "examples": [
+            "You should drink lots of fluids.",
+            "You shouldn't go to work until the fever is gone.",
+            "You should come back if symptoms don't improve."
+          ]
+        },
+        {
+          "grammar_structure": "Present Simple for Habits and Routines",
+          "explanation": "Use present simple to describe regular habits",
+          "usage_in_story": "Do you smoke? How often do you exercise?",
+          "examples": [
+            "I exercise three times a week.",
+            "I don't smoke.",
+            "I take vitamins every morning."
+          ]
+        }
+      ],
+      "conversation_flow": {
+        "opening_prompt": "Good morning! I'm Dr. Lisa Park. Please, have a seat. What brings you in to see me today?",
+        "key_milestones": [
+          "Initial greeting and ask about symptoms",
+          "Ask follow-up questions about duration and severity",
+          "Ask about medical history and allergies",
+          "Provide diagnosis and explanation",
+          "Give treatment advice and prescriptions"
+        ],
+        "closing_scenarios": [
+          "Take this medicine as directed. You should feel better in a few days.",
+          "Come back if your symptoms don't improve in a week.",
+          "Get plenty of rest and drink lots of fluids. Feel better soon!"
+        ]
+      },
+      "is_published": true,
+      "tags": ["health", "medical", "doctor", "B1", "symptoms", "vocabulary"]
+    }
+  ]
+}
