@@ -5,6 +5,7 @@ import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
+import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -93,13 +94,14 @@ IconData _getBadgeIcon(String? badgeIcon) {
 }
 
 /// Badge widget - displays a single achievement badge
-/// Now uses the new GeneratedBadge with custom painting for professional look
+/// Now supports both custom painted badges AND image assets
 class AchievementBadge extends StatelessWidget {
   final AchievementEntity achievement;
   final bool isUnlocked;
   final VoidCallback? onTap;
   final double size;
   final bool useNewStyle; // Toggle between old and new style
+  final bool preferImageAsset; // Prefer image asset over generated badge
 
   const AchievementBadge({
     super.key,
@@ -108,14 +110,80 @@ class AchievementBadge extends StatelessWidget {
     this.onTap,
     this.size = 80,
     this.useNewStyle = true, // Default to new style
+    this.preferImageAsset = true, // Default to prefer image assets
   });
 
   @override
   Widget build(BuildContext context) {
+    // Try to get image asset first if preferImageAsset is true
+    if (preferImageAsset) {
+      final assetPath = BadgeAssetMapper.getBadgeAsset(achievement.id);
+      if (assetPath != null) {
+        return _buildImageAssetBadge(assetPath);
+      }
+    }
+
+    // Fall back to generated badge
     if (useNewStyle) {
       return _buildNewStyleBadge();
     }
     return _buildClassicBadge();
+  }
+
+  /// Build badge from image asset
+  Widget _buildImageAssetBadge(String assetPath) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: isUnlocked
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Badge image
+            ClipOval(
+              child: Image.asset(
+                assetPath,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to generated badge if image fails to load
+                  return _buildNewStyleBadge();
+                },
+              ),
+            ),
+            // Lock overlay if not unlocked
+            if (!isUnlocked)
+              Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withValues(alpha: 0.6),
+                ),
+                child: Icon(
+                  Icons.lock,
+                  size: size * 0.4,
+                  color: Colors.white,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// New generated badge with custom painting

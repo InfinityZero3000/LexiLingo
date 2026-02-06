@@ -12,46 +12,50 @@ class BadgeAssetMapper {
   static const String _basePath = 'assets/badges';
   
   /// Map achievement IDs to their badge image files
+  /// ✅ = File exists, ❌ = Need to create
   static const Map<String, String> _badgeAssets = {
-    // Lesson achievements
-    'first_steps': 'lesson_first_steps.png',
-    'dedicated_learner': 'lesson_dedicated.png',
-    'knowledge_seeker': 'lesson_knowledge.png',
-    'scholar': 'lesson_scholar.png',
-    'professor': 'lesson_professor.png',
+    // Lesson achievements (4/5 available)
+    'first_steps': 'common-lesson.png',        // ✅ Common
+    'dedicated_learner': 'common-lesson.png',  // ✅ Common  
+    'knowledge_seeker': 'rare-lesson.png',     // ✅ Rare
+    'scholar': 'epic-lesson.png',              // ✅ Epic
+    'professor': 'legendary-lesson.png',       // ✅ Legendary
     
-    // Streak achievements
-    'getting_started': 'streak_3days.png',
-    'week_warrior': 'streak_7days.png',
-    'two_weeks_strong': 'streak_14days.png',
-    'month_master': 'streak_30days.png',
-    'quarterly_champion': 'streak_90days.png',
-    'year_legend': 'streak_365days.png',
+    // Streak achievements (4/6 available)
+    'getting_started': 'streak3.png',          // ✅ 3 days
+    'week_warrior': 'streak7.png',             // ✅ 7 days
+    'two_weeks_strong': 'streak14.png',        // ❌ Need to create
+    'month_master': 'streak30.png',            // ✅ 30 days
+    'quarterly_champion': 'streak90.png',      // ❌ Need to create
+    'year_legend': 'streak365.png',            // ✅ 365 days
     
-    // Vocabulary achievements
-    'word_collector': 'vocab_10words.png',
-    'vocab_builder': 'vocab_50words.png',
-    'vocab_master': 'vocab_100words.png',
-    'walking_dictionary': 'vocab_500words.png',
+    // Vocabulary achievements (4/4 available)
+    'word_collector': 'common-vocabulary.png',      // ✅ Common
+    'vocab_builder': 'rare-vocabulary.png',         // ✅ Rare
+    'vocab_master': 'epic-vocabulary.png',          // ✅ Epic
+    'walking_dictionary': 'legendary-vocabulary.png', // ✅ Legendary
     
-    // XP achievements
-    'xp_hunter': 'xp_100.png',
-    'xp_warrior': 'xp_500.png',
-    'xp_champion': 'xp_1000.png',
-    'xp_legend': 'xp_5000.png',
+    // XP achievements (0/4 - Need to create)
+    'xp_hunter': 'xp-100.png',         // ❌ 100 XP
+    'xp_warrior': 'xp-500.png',        // ❌ 500 XP
+    'xp_champion': 'xp-1000.png',      // ❌ 1000 XP
+    'xp_legend': 'xp-5000.png',        // ❌ 5000 XP
     
-    // Quiz achievements
-    'perfectionist': 'quiz_perfect_1.png',
-    'perfect_10': 'quiz_perfect_10.png',
-    'flawless': 'quiz_perfect_50.png',
+    // Quiz achievements (Perfect Score - 1/3 available)
+    'perfectionist': '100%.png',       // ✅ Perfect Score
+    'perfect_10': 'perfect-10.png',    // ❌ Need to create
+    'flawless': 'perfect-50.png',      // ❌ Need to create
     
-    // Course achievements
-    'graduate': 'course_1.png',
-    'multi_course_master': 'course_5.png',
+    // Course achievements (0/2 - Need to create)
+    'graduate': 'course-graduate.png',  // ❌ Complete 1 course
+    'multi_course_master': 'course-master.png', // ❌ Complete 5 courses
     
-    // Voice achievements
-    'voice_starter': 'voice_10.png',
-    'voice_pro': 'voice_100.png',
+    // Voice achievements (0/2 - Need to create)
+    'voice_starter': 'voice-starter.png',  // ❌ 10 recordings
+    'voice_pro': 'voice-pro.png',          // ❌ 100 recordings
+    
+    // Special badges (1 available)
+    'night_owl': 'moon.png',           // ✅ Night study badge
   };
   
   /// Get badge asset path for an achievement
