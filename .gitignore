@@ -101,4 +101,4 @@ DL-Model-Support/
 logs/*.txt
 temp/
 tmp/
-*_log.txt
+*_log.txtsha256-*

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiLingo GraphCAG + LangGraph + MCP Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #11998e;
+            margin-bottom: 10px;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #11998e;
+            border-bottom-color: #11998e;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .panel h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .result-box {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #11998e;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #11998e;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .metric-value {
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .json-key {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .json-string {
+            color: #10b981;
+        }
+
+        .json-number {
+            color: #3b82f6;
+        }
+
+        .json-boolean {
+            color: #f59e0b;
+        }
+
+        .flow-diagram {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #11998e;
+        }
+
+        .flow-step-number {
+            width: 30px;
+            height: 30px;
+            background: #11998e;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 15px;
+        }
+
+        .flow-step-content {
+            flex: 1;
+        }
+
+        .flow-step-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .flow-step-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span></span> GraphCAG + LangGraph + MCP Tester
+        </h1>
+        <p class="subtitle">Test knowledge graph queries, cache performance, and LangGraph orchestration</p>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="statRequests">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Cache Hits</div>
+                <div class="stat-value" id="statCacheHits">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Latency</div>
+                <div class="stat-value" id="statLatency">-- ms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Success Rate</div>
+                <div class="stat-value" id="statSuccess">--%</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="graphcag">GraphCAG Pipeline</button>
+            <button class="tab" data-tab="kg">Knowledge Graph</button>
+            <button class="tab" data-tab="cache">Cache Testing</button>
+            <button class="tab" data-tab="langgraph">LangGraph Flow</button>
+        </div>
+
+        <!-- Tab 1: GraphCAG Pipeline -->
+        <div class="tab-content active" id="tab-graphcag">
+            <div class="grid-2">
+                <div class="panel">
+                    <h3>📝 Input Configuration</h3>
+                    
+                    <div class="input-group">
+                        <label>API Base URL</label>
+                        <input type="text" id="apiUrl" value="http://localhost:8001">
+                    </div>
+
+                    <div class="input-group">
+                        <label>User Input (Student text)</label>
+                        <textarea id="userInput" placeholder="Enter student's answer or question...">I think the correct answer is 'go' because it's present tense.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Topic</label>
+                        <input type="text" id="topic" value="English Grammar - Present Tense" placeholder="Learning topic">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Difficulty Level</label>
+                        <select id="difficulty">
+                            <option value="beginner">Beginner (A1-A2)</option>
+                            <option value="intermediate" selected>Intermediate (B1-B2)</option>
+                            <option value="advanced">Advanced (C1-C2)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-primary" onclick="testGraphCAG()">
+                        <span>🚀</span> Run GraphCAG Pipeline
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 Pipeline Response</h3>
+                    <div class="result-box" id="graphcagResult">
+                        {
+                          "status": "waiting",
+                          "message": "Click 'Run GraphCAG Pipeline' to start"
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow Diagram -->
+            <div class="flow-diagram">
+                <h3 style="margin-bottom: 15px;">GraphCAG Processing Flow</h3>
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-content">
+                        <div class="flow-step-title">Knowledge Graph Query</div>
+                        <div class="flow-step-desc">Retrieve relevant nodes from KuzuDB (concepts, examples, rules)</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-content">
+                        <div class="flow-step-title">Cache Lookup</div>
+                        <div class="flow-step-desc">Check Redis for cached similar queries (semantic similarity)</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-content">
+                        <div class="flow-step-title">Context Assembly</div>
+                        <div class="flow-step-desc">Merge KG data + cached responses into prompt context</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-content">
+                        <div class="flow-step-title">LLM Generation</div>
+                        <div class="flow-step-desc">Qwen/LLaMA generates personalized feedback</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <div class="flow-step-content">
+                        <div class="flow-step-title">Cache Update</div>
+                        <div class="flow-step-desc">Store new response in Redis for future fast retrieval</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Knowledge Graph -->
+        <div class="tab-content" id="tab-kg">
+            <div class="grid-2">
+                <div class="panel">
+                    <h3>🗺️ Knowledge Graph Query</h3>
+                    
+                    <div class="input-group">
+                        <label>Query Type</label>
+                        <select id="kgQueryType">
+                            <option value="concept">Get Concept</option>
+                            <option value="related">Get Related Concepts</option>
+                            <option value="examples">Get Examples</option>
+                            <option value="path">Find Learning Path</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Concept Name</label>
+                        <input type="text" id="kgConcept" value="present_simple" placeholder="e.g., present_simple, past_tense">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Max Depth (for related queries)</label>
+                        <input type="number" id="kgDepth" value="2" min="1" max="5">
+                    </div>
+
+                    <button class="btn-primary" onclick="testKnowledgeGraph()">
+                        <span>🔍</span> Query Knowledge Graph
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 Query Results</h3>
+                    <div class="result-box" id="kgResult">
+                        {
+                          "status": "waiting",
+                          "message": "Select query type and click 'Query'"
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Cache Testing -->
+        <div class="tab-content" id="tab-cache">
+            <div class="grid-2">
+                <div class="panel">
+                    <h3>💾 Cache Operations</h3>
+                    
+                    <div class="input-group">
+                        <label>Cache Key</label>
+                        <input type="text" id="cacheKey" value="test_query_001" placeholder="Unique cache key">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Cache Value (JSON)</label>
+                        <textarea id="cacheValue" placeholder='{"response": "Example cached response"}'>{
+  "response": "The present simple tense is used for habits and facts.",
+  "examples": ["I go to school", "She likes coffee"],
+  "cached_at": "2026-02-03T10:30:00Z"
+}</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>TTL (seconds)</label>
+                        <input type="number" id="cacheTTL" value="3600" placeholder="Cache expiry time">
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-primary" onclick="cacheSet()">
+                            <span>💾</span> Set Cache
+                        </button>
+                        <button class="btn-secondary" onclick="cacheGet()">
+                            <span>🔍</span> Get Cache
+                        </button>
+                        <button class="btn-danger" onclick="cacheDelete()">
+                            <span>🗑️</span> Delete
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 Cache Response</h3>
+                    <div class="result-box" id="cacheResult">
+                        {
+                          "status": "waiting",
+                          "message": "Perform cache operation"
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cache Stats -->
+            <div class="panel" style="margin-top: 20px;">
+                <h3>📈 Cache Performance Metrics</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Hit Rate</span>
+                    <span class="metric-value" id="cacheHitRate">--%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Average Lookup Time</span>
+                    <span class="metric-value" id="cacheLookupTime">-- ms</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Keys</span>
+                    <span class="metric-value" id="cacheTotalKeys">--</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Memory Used</span>
+                    <span class="metric-value" id="cacheMemory">-- MB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: LangGraph Flow -->
+        <div class="tab-content" id="tab-langgraph">
+            <div class="grid-2">
+                <div class="panel">
+                    <h3>🔄 LangGraph Workflow Test</h3>
+                    
+                    <div class="input-group">
+                        <label>Workflow Type</label>
+                        <select id="workflowType">
+                            <option value="analyze">Analyze Student Input</option>
+                            <option value="diagnose">Diagnose Errors</option>
+                            <option value="feedback">Generate Feedback</option>
+                            <option value="full">Full Pipeline (All Nodes)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Student Input</label>
+                        <textarea id="workflowInput" placeholder="Enter student text...">He go to the store yesterday.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Context (optional)</label>
+                        <textarea id="workflowContext" placeholder='{"topic": "past_tense", "level": "intermediate"}'>{
+  "topic": "past_tense",
+  "level": "intermediate",
+  "learning_goal": "Use past simple correctly"
+}</textarea>
+                    </div>
+
+                    <button class="btn-primary" onclick="testLangGraph()">
+                        <span>▶️</span> Execute Workflow
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 Workflow Trace</h3>
+                    <div class="result-box" id="langgraphResult">
+                        {
+                          "status": "waiting",
+                          "message": "Select workflow and click 'Execute'"
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Node Execution Timeline -->
+            <div class="panel" style="margin-top: 20px;">
+                <h3>⏱️ Node Execution Timeline</h3>
+                <div id="nodeTimeline">
+                    <p style="color: #6b7280; text-align: center; padding: 20px;">
+                        Timeline will appear here after workflow execution
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stats = {
+            totalRequests: 0,
+            cacheHits: 0,
+            successes: 0,
+            latencies: []
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        function updateStats() {
+            document.getElementById('statRequests').textContent = stats.totalRequests;
+            document.getElementById('statCacheHits').textContent = stats.cacheHits;
+            
+            if (stats.latencies.length > 0) {
+                const avg = stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length;
+                document.getElementById('statLatency').textContent = `${avg.toFixed(0)} ms`;
+            }
+            
+            if (stats.totalRequests > 0) {
+                const successRate = (stats.successes / stats.totalRequests * 100).toFixed(1);
+                document.getElementById('statSuccess').textContent = `${successRate}%`;
+            }
+        }
+
+        function formatJson(obj) {
+            return JSON.stringify(obj, null, 2)
+                .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+                .replace(/: "([^"]+)"/g, ': <span class="json-string">"$1"</span>')
+                .replace(/: (\d+)/g, ': <span class="json-number">$1</span>')
+                .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>');
+        }
+
+        async function makeRequest(url, options = {}) {
+            const startTime = Date.now();
+            stats.totalRequests++;
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                const latency = Date.now() - startTime;
+                stats.latencies.push(latency);
+                if (stats.latencies.length > 20) stats.latencies.shift();
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    stats.successes++;
+                    if (data.cache_hit) stats.cacheHits++;
+                }
+                
+                updateStats();
+                
+                return { success: response.ok, data, latency };
+                
+            } catch (error) {
+                const latency = Date.now() - startTime;
+                stats.latencies.push(latency);
+                updateStats();
+                
+                return { 
+                    success: false, 
+                    data: { error: error.message }, 
+                    latency 
+                };
+            }
+        }
+
+        async function testGraphCAG() {
+            const resultBox = document.getElementById('graphcagResult');
+            resultBox.innerHTML = '<div class="loading"></div> Processing...';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const userInput = document.getElementById('userInput').value;
+            const topic = document.getElementById('topic').value;
+            const difficulty = document.getElementById('difficulty').value;
+            
+            const result = await makeRequest(`${apiUrl}/ai/analyze`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    text: userInput,
+                    topic: topic,
+                    difficulty: difficulty,
+                    user_id: 'test-user',
+                    session_id: 'test-session'
+                })
+            });
+            
+            resultBox.innerHTML = formatJson({
+                ...result.data,
+                latency_ms: result.latency,
+                success: result.success
+            });
+        }
+
+        async function testKnowledgeGraph() {
+            const resultBox = document.getElementById('kgResult');
+            resultBox.innerHTML = '<div class="loading"></div> Querying...';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const queryType = document.getElementById('kgQueryType').value;
+            const concept = document.getElementById('kgConcept').value;
+            const depth = document.getElementById('kgDepth').value;
+            
+            const result = await makeRequest(`${apiUrl}/ai/kg/${queryType}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    concept: concept,
+                    depth: parseInt(depth)
+                })
+            });
+            
+            resultBox.innerHTML = formatJson(result.data);
+        }
+
+        async function cacheSet() {
+            const resultBox = document.getElementById('cacheResult');
+            resultBox.innerHTML = '<div class="loading"></div> Setting cache...';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const key = document.getElementById('cacheKey').value;
+            const value = document.getElementById('cacheValue').value;
+            const ttl = document.getElementById('cacheTTL').value;
+            
+            try {
+                const valueObj = JSON.parse(value);
+                const result = await makeRequest(`${apiUrl}/ai/cache/set`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        key: key,
+                        value: valueObj,
+                        ttl: parseInt(ttl)
+                    })
+                });
+                
+                resultBox.innerHTML = formatJson(result.data);
+            } catch (error) {
+                resultBox.innerHTML = formatJson({ error: 'Invalid JSON value' });
+            }
+        }
+
+        async function cacheGet() {
+            const resultBox = document.getElementById('cacheResult');
+            resultBox.innerHTML = '<div class="loading"></div> Getting cache...';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const key = document.getElementById('cacheKey').value;
+            
+            const result = await makeRequest(`${apiUrl}/ai/cache/get?key=${key}`);
+            resultBox.innerHTML = formatJson(result.data);
+        }
+
+        async function cacheDelete() {
+            const resultBox = document.getElementById('cacheResult');
+            resultBox.innerHTML = '<div class="loading"></div> Deleting...';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const key = document.getElementById('cacheKey').value;
+            
+            const result = await makeRequest(`${apiUrl}/ai/cache/delete?key=${key}`, {
+                method: 'DELETE'
+            });
+            
+            resultBox.innerHTML = formatJson(result.data);
+        }
+
+        async function testLangGraph() {
+            const resultBox = document.getElementById('langgraphResult');
+            const timelineBox = document.getElementById('nodeTimeline');
+            
+            resultBox.innerHTML = '<div class="loading"></div> Executing workflow...';
+            timelineBox.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">Processing...</p>';
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const workflowType = document.getElementById('workflowType').value;
+            const input = document.getElementById('workflowInput').value;
+            const contextStr = document.getElementById('workflowContext').value;
+            
+            try {
+                const context = JSON.parse(contextStr);
+                
+                const result = await makeRequest(`${apiUrl}/ai/workflow/${workflowType}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        input: input,
+                        context: context
+                    })
+                });
+                
+                resultBox.innerHTML = formatJson(result.data);
+                
+                // Generate timeline
+                if (result.data.trace && Array.isArray(result.data.trace)) {
+                    let timeline = '';
+                    result.data.trace.forEach((node, idx) => {
+                        timeline += `
+                            <div class="flow-step">
+                                <div class="flow-step-number">${idx + 1}</div>
+                                <div class="flow-step-content">
+                                    <div class="flow-step-title">${node.name || 'Node ' + idx}</div>
+                                    <div class="flow-step-desc">
+                                        ${node.duration_ms}ms | ${node.status || 'completed'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    timelineBox.innerHTML = timeline;
+                }
+                
+            } catch (error) {
+                resultBox.innerHTML = formatJson({ error: error.message });
+            }
+        }
+
+        // Initial stats
+        updateStats();
+    </script>
+</body>
+</html>
