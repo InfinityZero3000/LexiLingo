@@ -1,0 +1,197 @@
+{
+  "version": "1.0",
+  "title": "English Proficiency Placement Test",
+  "description": "Assess your current English level with 20 questions covering grammar, vocabulary, and reading comprehension.",
+  "total_questions": 20,
+  "time_limit_minutes": 15,
+  "questions": [
+    {
+      "id": "q1",
+      "level": "A1",
+      "points": 5,
+      "skill": "grammar",
+      "question": "She ___ a teacher.",
+      "options": ["am", "is", "are", "be"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q2",
+      "level": "A1",
+      "points": 5,
+      "skill": "grammar",
+      "question": "I ___ to school every day.",
+      "options": ["goes", "go", "going", "gone"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q3",
+      "level": "A1",
+      "points": 5,
+      "skill": "vocabulary",
+      "question": "What is the opposite of 'hot'?",
+      "options": ["warm", "cold", "cool", "freezing"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q4",
+      "level": "A1",
+      "points": 5,
+      "skill": "grammar",
+      "question": "___ you like coffee?",
+      "options": ["Does", "Do", "Is", "Are"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q5",
+      "level": "A2",
+      "points": 10,
+      "skill": "grammar",
+      "question": "I ___ my homework yesterday.",
+      "options": ["do", "does", "did", "done"],
+      "correct_answer": 2
+    },
+    {
+      "id": "q6",
+      "level": "A2",
+      "points": 10,
+      "skill": "vocabulary",
+      "question": "Which word means 'very big'?",
+      "options": ["tiny", "huge", "small", "average"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q7",
+      "level": "A2",
+      "points": 10,
+      "skill": "grammar",
+      "question": "She ___ swimming when it started to rain.",
+      "options": ["was", "were", "is", "are"],
+      "correct_answer": 0
+    },
+    {
+      "id": "q8",
+      "level": "A2",
+      "points": 10,
+      "skill": "reading",
+      "question": "The restaurant is ___ the bank and the hospital.",
+      "options": ["among", "between", "through", "across"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q9",
+      "level": "B1",
+      "points": 15,
+      "skill": "grammar",
+      "question": "If I ___ rich, I would travel the world.",
+      "options": ["am", "was", "were", "be"],
+      "correct_answer": 2
+    },
+    {
+      "id": "q10",
+      "level": "B1",
+      "points": 15,
+      "skill": "vocabulary",
+      "question": "The meeting has been ___ until next week.",
+      "options": ["declined", "postponed", "rejected", "refused"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q11",
+      "level": "B1",
+      "points": 15,
+      "skill": "grammar",
+      "question": "By this time tomorrow, I ___ my exam.",
+      "options": ["finish", "finished", "will finish", "will have finished"],
+      "correct_answer": 3
+    },
+    {
+      "id": "q12",
+      "level": "B1",
+      "points": 15,
+      "skill": "reading",
+      "question": "Despite ___ tired, she continued working.",
+      "options": ["being", "be", "been", "was"],
+      "correct_answer": 0
+    },
+    {
+      "id": "q13",
+      "level": "B2",
+      "points": 20,
+      "skill": "grammar",
+      "question": "Not only ___ late, but he also forgot the documents.",
+      "options": ["he was", "was he", "he is", "is he"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q14",
+      "level": "B2",
+      "points": 20,
+      "skill": "vocabulary",
+      "question": "The company's profits have ___ dramatically this quarter.",
+      "options": ["risen", "raised", "arose", "risen up"],
+      "correct_answer": 0
+    },
+    {
+      "id": "q15",
+      "level": "B2",
+      "points": 20,
+      "skill": "grammar",
+      "question": "Had I known about the problem, I ___ you earlier.",
+      "options": ["will tell", "would tell", "would have told", "had told"],
+      "correct_answer": 2
+    },
+    {
+      "id": "q16",
+      "level": "B2",
+      "points": 20,
+      "skill": "reading",
+      "question": "The experiment yielded ___ results than expected.",
+      "options": ["more conclusive", "conclusiver", "most conclusive", "conclusive more"],
+      "correct_answer": 0
+    },
+    {
+      "id": "q17",
+      "level": "C1",
+      "points": 25,
+      "skill": "grammar",
+      "question": "Seldom ___ such a remarkable achievement in our field.",
+      "options": ["we have seen", "have we seen", "we saw", "did we saw"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q18",
+      "level": "C1",
+      "points": 25,
+      "skill": "vocabulary",
+      "question": "The critics' ___ of the novel was overwhelmingly positive.",
+      "options": ["accolade", "assessment", "appraisal", "acclaim"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q19",
+      "level": "C1",
+      "points": 25,
+      "skill": "grammar",
+      "question": "The proposal, ___ merits are questionable, was nonetheless approved.",
+      "options": ["which", "whose", "that", "whom"],
+      "correct_answer": 1
+    },
+    {
+      "id": "q20",
+      "level": "C2",
+      "points": 30,
+      "skill": "vocabulary",
+      "question": "His ___ remarks during the meeting alienated many colleagues.",
+      "options": ["perspicacious", "perfunctory", "pernicious", "peripheral"],
+      "correct_answer": 2
+    }
+  ],
+  "scoring": {
+    "A1": {"min_score": 0, "max_score": 40},
+    "A2": {"min_score": 41, "max_score": 80},
+    "B1": {"min_score": 81, "max_score": 140},
+    "B2": {"min_score": 141, "max_score": 220},
+    "C1": {"min_score": 221, "max_score": 290},
+    "C2": {"min_score": 291, "max_score": 300}
+  }
+}
