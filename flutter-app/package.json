@@ -1,0 +1,7 @@
+{
+  "name": "lexilingo-flutter-app",
+  "version": "1.0.0",
+  "scripts": {
+    "vercel-build": "echo 'Flutter web already built in build/web directory'"
+  }
+}
