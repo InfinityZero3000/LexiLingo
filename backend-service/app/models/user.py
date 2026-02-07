@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, Integer
+from sqlalchemy import String, Boolean, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -39,11 +39,46 @@ class User(Base):
     target_language: Mapped[str] = mapped_column(String(10), default="en")
     level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
+    numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
+    rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, diamond, master
+    
+    # RBAC
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("roles.id", ondelete="SET NULL"),
+        nullable=True,  # null = default 'user' role (backward compatible)
+        index=True,
+    )
     
     # Status & Verification (Phase 1 requirements)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     provider: Mapped[str] = mapped_column(String(20), default="local")  # local, google, facebook
+    
+    # Relationships
+    role = relationship("Role", back_populates="users", lazy="selectin")
+    
+    @property
+    def role_slug(self) -> str:
+        """Return role slug for API serialization."""
+        if self.role and hasattr(self.role, "slug"):
+            return self.role.slug
+        return "user"  # default
+    
+    @property
+    def role_level(self) -> int:
+        """Return role level for permission checks."""
+        if self.role and hasattr(self.role, "level"):
+            return self.role.level
+        return 0
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role_level >= 1
+
+    @property
+    def is_super_admin(self) -> bool:
+        return self.role_level >= 2
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

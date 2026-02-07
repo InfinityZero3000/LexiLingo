@@ -51,9 +51,16 @@ class Settings(BaseSettings):
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
 
-    # Firebase (optional, for ID token verification)
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_ADMIN_CLIENT_ID: str | None = None
+
+    # Firebase (optional, for ID token verification from Flutter app)
     FIREBASE_PROJECT_ID: str | None = None
+    # Option 1: Paste JSON directly (escape quotes/newlines)
     FIREBASE_CREDENTIALS_JSON: str | None = None
+    # Option 2: Path to service account JSON file (recommended)
+    FIREBASE_CREDENTIALS_FILE: str | None = None
     
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),

@@ -138,3 +138,19 @@ class LevelInfoResponse(BaseModel):
     """Detailed level information."""
     all_tiers: list[LevelTier]
     current_level: LevelStatus
+
+
+class LevelFullResponse(BaseModel):
+    """Full level info including numeric level, rank, and proficiency."""
+    numeric_level: int = Field(..., description="Gamification level (1, 2, 3...)")
+    current_xp_in_level: int = Field(..., description="XP progress within current numeric level")
+    xp_for_next_level: int = Field(..., description="XP required to reach next numeric level")
+    level_progress_percent: float = Field(..., ge=0, le=100, description="Progress to next level")
+    total_xp: int = Field(..., description="Total XP earned")
+    proficiency_level: str = Field(..., description="CEFR proficiency code (A1-C2)")
+    proficiency_name: str = Field(..., description="Proficiency name (e.g., 'Beginner')")
+    rank: str = Field(..., description="Rank tier (bronze, silver, gold, platinum, diamond, master)")
+    rank_name: str = Field(..., description="Rank display name")
+    rank_score: float = Field(..., description="Weighted rank score (0-100)")
+    rank_color: str = Field(default="#CD7F32", description="Rank color hex code")
+    rank_icon: str = Field(default="🥉", description="Rank icon emoji")

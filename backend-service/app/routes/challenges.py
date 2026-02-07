@@ -14,8 +14,9 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.progress import Streak, LessonCompletion
+from app.models.progress import Streak, LessonCompletion, LessonAttempt, DailyActivity
 from app.models.gamification import ChallengeRewardClaim
+from app.models.vocabulary import VocabularyReview, UserVocabulary
 from app.schemas.response import ApiResponse
 from app.crud.gamification import WalletCRUD
 
@@ -61,7 +62,7 @@ DAILY_CHALLENGE_TEMPLATES = [
         "id": "complete_lessons",
         "title": "Lesson Master",
         "description": "Complete {target} lesson(s) today",
-        "icon": "book",
+        "icon": "📖",
         "category": "lesson",
         "targets": [1, 2, 3],  # Easy, Medium, Hard
         "xp_rewards": [20, 40, 60],
@@ -70,7 +71,7 @@ DAILY_CHALLENGE_TEMPLATES = [
         "id": "review_vocab",
         "title": "Vocabulary Review",
         "description": "Review {target} vocabulary words",
-        "icon": "cards",
+        "icon": "🃏",
         "category": "vocabulary",
         "targets": [5, 10, 20],
         "xp_rewards": [15, 30, 50],
@@ -79,7 +80,7 @@ DAILY_CHALLENGE_TEMPLATES = [
         "id": "earn_xp",
         "title": "XP Hunter",
         "description": "Earn {target} XP today",
-        "icon": "star",
+        "icon": "⭐",
         "category": "xp",
         "targets": [30, 50, 100],
         "xp_rewards": [10, 25, 45],
@@ -88,7 +89,7 @@ DAILY_CHALLENGE_TEMPLATES = [
         "id": "perfect_lesson",
         "title": "Perfectionist",
         "description": "Get 100% on {target} lesson(s)",
-        "icon": "target",
+        "icon": "🎯",
         "category": "lesson",
         "targets": [1, 2, 3],
         "xp_rewards": [25, 50, 75],
@@ -97,10 +98,83 @@ DAILY_CHALLENGE_TEMPLATES = [
         "id": "maintain_streak",
         "title": "Keep the Fire",
         "description": "Maintain your learning streak",
-        "icon": "fire",
+        "icon": "🔥",
         "category": "streak",
         "targets": [1, 1, 1],
         "xp_rewards": [15, 15, 15],
+    },
+    # ==================== NEW TEMPLATES ====================
+    {
+        "id": "review_flashcards",
+        "title": "Flashcard Frenzy",
+        "description": "Review {target} flashcards",
+        "icon": "🗂️",
+        "category": "vocabulary",
+        "targets": [10, 20, 30],
+        "xp_rewards": [15, 35, 55],
+    },
+    {
+        "id": "chat_practice",
+        "title": "Conversation Starter",
+        "description": "Complete {target} chat conversation(s)",
+        "icon": "💬",
+        "category": "social",
+        "targets": [1, 2, 3],
+        "xp_rewards": [20, 40, 60],
+    },
+    {
+        "id": "voice_practice",
+        "title": "Voice Training",
+        "description": "Do {target} pronunciation practice(s)",
+        "icon": "🎤",
+        "category": "voice",
+        "targets": [2, 5, 10],
+        "xp_rewards": [20, 40, 65],
+    },
+    {
+        "id": "quiz_accuracy",
+        "title": "Sharp Shooter",
+        "description": "Score 80%+ on {target} quiz(zes)",
+        "icon": "🏹",
+        "category": "lesson",
+        "targets": [1, 3, 5],
+        "xp_rewards": [15, 35, 60],
+    },
+    {
+        "id": "time_spent",
+        "title": "Dedicated Student",
+        "description": "Study for {target} minute(s)",
+        "icon": "⏱️",
+        "category": "xp",
+        "targets": [10, 20, 30],
+        "xp_rewards": [15, 30, 50],
+    },
+    {
+        "id": "new_words",
+        "title": "Word Explorer",
+        "description": "Learn {target} new word(s)",
+        "icon": "📝",
+        "category": "vocabulary",
+        "targets": [3, 5, 10],
+        "xp_rewards": [15, 30, 50],
+    },
+    {
+        "id": "grammar_drill",
+        "title": "Grammar Guru",
+        "description": "Complete {target} grammar exercise(s)",
+        "icon": "📐",
+        "category": "lesson",
+        "targets": [2, 4, 6],
+        "xp_rewards": [20, 40, 60],
+    },
+    {
+        "id": "listening_drill",
+        "title": "Active Listener",
+        "description": "Complete {target} listening exercise(s)",
+        "icon": "🎧",
+        "category": "lesson",
+        "targets": [1, 3, 5],
+        "xp_rewards": [20, 40, 65],
     },
 ]
 
@@ -116,8 +190,9 @@ def get_challenges_for_user(user_id: UUID, date_seed: date) -> List[dict]:
     seed = int(date_seed.strftime("%Y%m%d")) + sum(user_id.bytes)
     random.seed(seed)
     
-    # Select 3-4 challenges for the day
-    num_challenges = random.randint(3, 4)
+    # Select 4-5 challenges for the day (increased from 3-4)
+    num_challenges = random.randint(4, 5)
+    num_challenges = min(num_challenges, len(DAILY_CHALLENGE_TEMPLATES))
     selected_templates = random.sample(DAILY_CHALLENGE_TEMPLATES, num_challenges)
     
     challenges = []
@@ -180,26 +255,88 @@ async def calculate_challenge_progress(
                 )
             )
             return result.scalar() or 0
+        
+        elif challenge["id"] == "quiz_accuracy":
+            # Count quizzes with score >= 80 today
+            result = await db.execute(
+                select(func.count(LessonCompletion.id)).where(
+                    and_(
+                        LessonCompletion.user_id == user_id,
+                        LessonCompletion.completed_at >= today_start,
+                        LessonCompletion.completed_at < today_end,
+                        LessonCompletion.best_score >= 80,
+                    )
+                )
+            )
+            return result.scalar() or 0
+        
+        elif challenge["id"] in ("grammar_drill", "listening_drill"):
+            # Fallback to total lesson completions today
+            result = await db.execute(
+                select(func.count(LessonCompletion.id)).where(
+                    and_(
+                        LessonCompletion.user_id == user_id,
+                        LessonCompletion.completed_at >= today_start,
+                        LessonCompletion.completed_at < today_end,
+                    )
+                )
+            )
+            return result.scalar() or 0
     
     elif challenge["category"] == "vocabulary":
-        # For now, return a placeholder (would need VocabularyReview model)
-        # In production, query actual vocabulary review count
-        return 0
-    
-    elif challenge["category"] == "xp":
-        # Sum XP earned today (from lesson completions)
-        # Simplified: count lessons * avg XP
+        if challenge["id"] == "new_words":
+            # Count newly added vocabulary today
+            result = await db.execute(
+                select(func.count(UserVocabulary.id)).where(
+                    and_(
+                        UserVocabulary.user_id == user_id,
+                        UserVocabulary.created_at >= today_start,
+                        UserVocabulary.created_at < today_end,
+                    )
+                )
+            )
+            return result.scalar() or 0
+        
+        # review_vocab and review_flashcards both use vocabulary reviews
         result = await db.execute(
-            select(func.count(LessonCompletion.id)).where(
+            select(func.count(VocabularyReview.id)).join(
+                UserVocabulary,
+                VocabularyReview.user_vocabulary_id == UserVocabulary.id
+            ).where(
                 and_(
-                    LessonCompletion.user_id == user_id,
-                    LessonCompletion.completed_at >= today_start,
-                    LessonCompletion.completed_at < today_end,
+                    UserVocabulary.user_id == user_id,
+                    VocabularyReview.reviewed_at >= today_start,
+                    VocabularyReview.reviewed_at < today_end,
                 )
             )
         )
-        lessons_today = result.scalar() or 0
-        return lessons_today * 15  # Avg 15 XP per lesson
+        return result.scalar() or 0
+    
+    elif challenge["category"] == "xp":
+        # Query actual XP earned today from DailyActivity
+        result = await db.execute(
+            select(DailyActivity.xp_earned).where(
+                and_(
+                    DailyActivity.user_id == user_id,
+                    DailyActivity.activity_date == today,
+                )
+            )
+        )
+        daily_xp = result.scalar()
+        if daily_xp is not None:
+            return daily_xp
+        
+        # Fallback: sum XP from lesson attempts today
+        result = await db.execute(
+            select(func.coalesce(func.sum(LessonAttempt.xp_earned), 0)).where(
+                and_(
+                    LessonAttempt.user_id == user_id,
+                    LessonAttempt.completed_at >= today_start,
+                    LessonAttempt.completed_at < today_end,
+                )
+            )
+        )
+        return result.scalar() or 0
     
     elif challenge["category"] == "streak":
         # Check if user has been active today
@@ -209,6 +346,14 @@ async def calculate_challenge_progress(
         streak = result.scalar_one_or_none()
         if streak and streak.last_activity_date == today:
             return 1
+        return 0
+    
+    elif challenge["category"] == "voice":
+        # Voice practice — not tracked separately yet
+        return 0
+    
+    elif challenge["category"] == "social":
+        # Social interactions — not tracked separately yet
         return 0
     
     return 0
@@ -359,8 +504,14 @@ async def claim_challenge_reward(
     multiplier = await effects_service.get_xp_multiplier(current_user.id)
     boosted_xp = int(xp_reward * multiplier)
     
-    # Award XP
+    # Award XP and update numeric level/rank
+    from app.services.level_service import calculate_numeric_level
+    from app.services.rank_service import calculate_rank as calc_rank
+    
     current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
+    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
+    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
+    current_user.rank = new_rank_info.rank.value
     
     # Award gems if any
     if gems_reward > 0:
@@ -382,6 +533,11 @@ async def claim_challenge_reward(
     )
     db.add(claim)
     await db.commit()
+    
+    # --- Check achievements after claiming challenge ---
+    from app.services import check_achievements_for_user
+    await check_achievements_for_user(db, current_user.id, "daily_challenge")
+    await check_achievements_for_user(db, current_user.id, "xp_earned")
     
     message = f"Challenge completed! +{boosted_xp} XP"
     if multiplier > 1.0:
@@ -458,8 +614,14 @@ async def claim_daily_bonus(
     multiplier = await effects_service.get_xp_multiplier(current_user.id)
     boosted_xp = int(bonus_xp * multiplier)
     
-    # Award XP
+    # Award XP and update numeric level/rank
+    from app.services.level_service import calculate_numeric_level
+    from app.services.rank_service import calculate_rank as calc_rank
+    
     current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
+    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
+    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
+    current_user.rank = new_rank_info.rank.value
     
     # Award gems
     await WalletCRUD.add_gems(

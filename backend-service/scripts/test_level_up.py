@@ -20,10 +20,13 @@ async def test_level_up():
             "SELECT total_xp, numeric_level, rank FROM users WHERE id = :uid"
         ), {'uid': user_id})
         row = result.fetchone()
-        print(f"Updated user:")
-        print(f"  Total XP: {row[0]}")
-        print(f"  Numeric Level: {row[1]}")
-        print(f"  Rank: {row[2]}")
+        if row:
+            print(f"Updated user:")
+            print(f"  Total XP: {row[0]}")
+            print(f"  Numeric Level: {row[1]}")
+            print(f"  Rank: {row[2]}")
+        else:
+            print("User not found")
 
 if __name__ == "__main__":
     import os

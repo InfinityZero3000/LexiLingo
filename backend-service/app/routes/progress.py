@@ -27,6 +27,11 @@ from app.schemas.response import ApiResponse
 from app.models.user import User
 from app.models.progress import Streak, DailyActivity
 from app.services import check_achievements_for_user
+from app.services.level_service import (
+    LevelService, calculate_numeric_level, get_numeric_level_progress,
+    check_numeric_level_up
+)
+from app.services.rank_service import calculate_rank as calc_rank, check_rank_up
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 
@@ -202,8 +207,86 @@ async def complete_lesson(
             xp_earned
         )
         
+        # --- Update User.total_xp and numeric_level ---
+        level_up = False
+        new_level = None
+        rank_up = False
+        new_rank = None
+        
+        if xp_earned > 0:
+            old_xp = current_user.total_xp or 0
+            old_numeric_level = current_user.numeric_level or 1
+            old_proficiency = current_user.level or "A1"
+            
+            new_xp = old_xp + xp_earned
+            current_user.total_xp = new_xp
+            
+            # Update numeric level
+            new_numeric_level = calculate_numeric_level(new_xp)
+            current_user.numeric_level = new_numeric_level
+            
+            # Check CEFR tier change
+            tier_up, _ = LevelService.check_level_up(old_xp, new_xp)
+            if tier_up:
+                cefr_status = LevelService.calculate_level_status(new_xp)
+                current_user.level = cefr_status.current_tier.code
+            
+            # Check numeric level up
+            leveled, _, _ = check_numeric_level_up(old_xp, new_xp)
+            if leveled:
+                level_up = True
+                new_level = new_numeric_level
+            
+            # Check rank change
+            new_rank_info = calc_rank(new_numeric_level, current_user.level)
+            if current_user.rank != new_rank_info.rank.value:
+                rank_up = True
+                new_rank = new_rank_info.rank.value
+                current_user.rank = new_rank_info.rank.value
+            
+            # --- Update DailyActivity ---
+            from datetime import date as date_type
+            today = date_type.today()
+            daily_result = await db.execute(
+                select(DailyActivity).where(
+                    and_(
+                        DailyActivity.user_id == current_user.id,
+                        DailyActivity.activity_date == today,
+                    )
+                )
+            )
+            daily_activity = daily_result.scalar_one_or_none()
+            
+            if daily_activity:
+                daily_activity.xp_earned = (daily_activity.xp_earned or 0) + xp_earned
+                daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
+            else:
+                daily_activity = DailyActivity(
+                    user_id=current_user.id,
+                    activity_date=today,
+                    xp_earned=xp_earned,
+                    lessons_completed=1,
+                )
+                db.add(daily_activity)
+        
+        await db.commit()
+        
+        # --- Check achievements after lesson completion ---
+        unlocked_from_lesson = await check_achievements_for_user(
+            db, current_user.id, "lesson_complete"
+        )
+        unlocked_from_xp = await check_achievements_for_user(
+            db, current_user.id, "xp_earned"
+        )
+        all_unlocked = unlocked_from_lesson + unlocked_from_xp
+        if completion.score >= 100:
+            perfect_unlocked = await check_achievements_for_user(
+                db, current_user.id, "quiz_complete"
+            )
+            all_unlocked += perfect_unlocked
+        
         # Get user's total XP
-        total_xp = await ProgressCRUD.get_user_total_xp(db, str(current_user.id))
+        total_xp = current_user.total_xp
         
         message = "Lesson completed successfully"
         if xp_earned > 0:
@@ -221,6 +304,11 @@ async def complete_lesson(
             'xp_earned': xp_earned,
             'total_xp': total_xp,
             'course_progress': new_progress,
+            'level_up': level_up,
+            'new_level': new_level,
+            'rank_up': rank_up,
+            'new_rank': new_rank,
+            'achievements_unlocked': all_unlocked,
             'message': message
         }
         

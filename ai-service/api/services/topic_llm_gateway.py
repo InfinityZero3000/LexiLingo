@@ -19,7 +19,10 @@ from typing import Optional, Dict, List, Literal
 from dataclasses import dataclass
 from enum import Enum
 
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None  # type: ignore
 
 from api.core.config import settings
 from api.services.ollama_service import OllamaService
@@ -93,9 +96,12 @@ class TopicLLMGateway:
         
         # Initialize Gemini
         self.gemini_model = None
-        if settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel('gemini-pro')
+        if genai and settings.GEMINI_API_KEY:
+            try:
+                genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore[attr-defined]
+                self.gemini_model = genai.GenerativeModel('gemini-pro')  # type: ignore[attr-defined]
+            except Exception as e:
+                logger.warning(f"Failed to configure Gemini: {e}")
         
         logger.info(
             f"TopicLLMGateway initialized: "
@@ -257,14 +263,11 @@ class TopicLLMGateway:
 Respond as your character. Include [💡 Tip] or [📘] notes if the user made errors or asked about vocabulary."""
         
         # Generate
-        generation_config = genai.types.GenerationConfig(
-            max_output_tokens=max_tokens,
-            temperature=self.gemini_temperature,
-        )
+        gen_config: dict = {"max_output_tokens": max_tokens, "temperature": self.gemini_temperature}
         
         response = self.gemini_model.generate_content(
             full_prompt,
-            generation_config=generation_config
+            generation_config=gen_config  # type: ignore[arg-type]
         )
         
         latency_ms = int((time.time() - start_time) * 1000)

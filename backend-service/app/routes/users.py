@@ -17,13 +17,15 @@ from app.schemas.user import UserResponse, UserUpdate
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
     LevelInfoResponse,
+    LevelFullResponse,
     UserStatsResponse,
     WeeklyActivityResponse,
     WeeklyActivityData,
     XPAwardRequest,
     XPAwardResponse
 )
-from app.services.level_service import LevelService
+from app.services.level_service import LevelService, get_numeric_level_progress
+from app.services.rank_service import calculate_rank as calc_rank
 
 router = APIRouter()
 
@@ -134,6 +136,50 @@ async def get_user_level(
             current_level=level_status
         ),
         message="Level information retrieved successfully"
+    )
+
+
+@router.get("/me/level-full", response_model=ApiResponse[LevelFullResponse])
+async def get_user_level_full(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get full level info including numeric level, rank, and proficiency.
+    
+    Returns:
+    - Numeric level with XP progress to next level
+    - CEFR proficiency level
+    - Rank tier with weighted score
+    """
+    # Numeric level info
+    level_info = get_numeric_level_progress(current_user.total_xp)
+    
+    # CEFR proficiency
+    proficiency_status = LevelService.calculate_level_status(current_user.total_xp)
+    
+    # Rank info
+    rank_info = calc_rank(
+        numeric_level=level_info.numeric_level,
+        proficiency_level=current_user.level
+    )
+    
+    return ApiResponse(
+        success=True,
+        data=LevelFullResponse(
+            numeric_level=level_info.numeric_level,
+            current_xp_in_level=level_info.current_xp_in_level,
+            xp_for_next_level=level_info.xp_for_next_level,
+            level_progress_percent=level_info.level_progress_percent,
+            total_xp=current_user.total_xp,
+            proficiency_level=proficiency_status.current_tier.code,
+            proficiency_name=proficiency_status.current_tier.name,
+            rank=rank_info.rank.value,
+            rank_name=rank_info.name,
+            rank_score=round(rank_info.score, 2),
+            rank_color=rank_info.color,
+            rank_icon=rank_info.icon,
+        ),
+        message="Full level information retrieved successfully"
     )
 
 

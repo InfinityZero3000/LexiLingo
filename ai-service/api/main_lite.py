@@ -79,6 +79,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:8080",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
@@ -88,6 +89,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ============================================================
+# Include Topic Chat Router
+# ============================================================
+try:
+    import importlib, types, sys, os
+    # Pre-register a stub package for api.routes to prevent __init__.py from 
+    # loading all heavy route modules (ai.py → v3_pipeline → sentence_transformers)
+    if "api.routes" not in sys.modules:
+        _stub = types.ModuleType("api.routes")
+        _stub.__path__ = [os.path.join(os.path.dirname(__file__), "routes")]
+        _stub.__package__ = "api.routes"
+        sys.modules["api.routes"] = _stub
+    _topic_module = importlib.import_module("api.routes.topic_chat")
+    topic_chat_router = _topic_module.router
+    app.include_router(
+        topic_chat_router,
+        prefix="/api/v1/topics",
+        tags=["Topic-Based Conversation"],
+    )
+    logger.info("✓ Topic Chat routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register topic chat routes: {e}")
 
 
 # ============================================================

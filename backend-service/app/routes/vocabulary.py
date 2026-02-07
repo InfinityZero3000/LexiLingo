@@ -345,6 +345,10 @@ async def submit_review(
     xp_awarded = 5 + (review.quality * 2) + min(updated_vocab.streak // 5, 10)
     streak_bonus = updated_vocab.streak >= 5
     
+    # --- Check vocabulary achievements ---
+    from app.services import check_achievements_for_user
+    await check_achievements_for_user(db, current_user.id, "vocab_review")
+    
     # Generate message
     messages = {
         5: "Perfect! 🎉",

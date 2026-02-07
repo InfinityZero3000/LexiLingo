@@ -12,20 +12,31 @@ from datetime import datetime
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.gamification import Achievement, UserAchievement
-from app.models.progress import UserCourseProgress, LessonCompletion, Streak
+from app.models.gamification import Achievement, UserAchievement, ChallengeRewardClaim
+from app.models.progress import UserCourseProgress, LessonCompletion, Streak, DailyActivity
 from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
 
 
 # Mapping of triggers to achievement condition types
 TRIGGER_CONDITIONS = {
-    "lesson_complete": ["lesson_complete", "xp_earned", "course_complete"],
-    "streak_update": ["reach_streak"],
+    "lesson_complete": [
+        "lesson_complete", "xp_earned", "course_complete",
+        "numeric_level", "speed_lesson",
+    ],
+    "streak_update": ["reach_streak", "comeback"],
     "vocab_review": ["vocab_mastered", "vocab_reviewed"],
-    "quiz_complete": ["perfect_score", "quiz_complete"],
+    "quiz_complete": ["perfect_score", "quiz_complete", "first_perfect"],
     "voice_practice": ["voice_practice"],
-    "xp_earned": ["xp_earned"],
+    "xp_earned": ["xp_earned", "numeric_level"],
+    "study_session": ["study_time_night", "study_time_morning"],
+    "grammar_complete": ["grammar_mastered"],
+    "culture_complete": ["culture_lesson"],
+    "writing_complete": ["writing_complete"],
+    "listening_complete": ["listening_complete"],
+    "social_action": ["social_interaction", "help_others"],
+    "chat_complete": ["chat_complete"],
+    "daily_challenge": ["daily_challenge_complete"],
 }
 
 
@@ -137,11 +148,16 @@ class AchievementCheckerService:
         # Determine which stats to fetch
         fetch_all = condition_types is None
         need_lessons = fetch_all or "lesson_complete" in condition_types or "course_complete" in condition_types
-        need_streak = fetch_all or "reach_streak" in condition_types
+        need_streak = fetch_all or "reach_streak" in condition_types or "comeback" in condition_types
         need_vocab = fetch_all or "vocab_mastered" in condition_types or "vocab_reviewed" in condition_types
-        need_xp = fetch_all or "xp_earned" in condition_types
-        need_quiz = fetch_all or "perfect_score" in condition_types or "quiz_complete" in condition_types
+        need_xp = fetch_all or "xp_earned" in condition_types or "numeric_level" in condition_types
+        need_quiz = fetch_all or "perfect_score" in condition_types or "quiz_complete" in condition_types or "first_perfect" in condition_types
         need_voice = fetch_all or "voice_practice" in condition_types
+        need_level = fetch_all or "numeric_level" in condition_types
+        need_time = fetch_all or "study_time_night" in condition_types or "study_time_morning" in condition_types or "speed_lesson" in condition_types
+        need_skills = fetch_all or any(ct in (condition_types or []) for ct in ["grammar_mastered", "culture_lesson", "writing_complete", "listening_complete"])
+        need_social = fetch_all or any(ct in (condition_types or []) for ct in ["social_interaction", "chat_complete", "help_others"])
+        need_challenges = fetch_all or "daily_challenge_complete" in condition_types
         
         # Fetch lesson completion count
         if need_lessons:
@@ -238,6 +254,55 @@ class AchievementCheckerService:
         if need_voice:
             stats["voice_practices"] = 0
         
+        # Fetch numeric level from User model
+        if need_level:
+            result = await self.db.execute(
+                select(User.numeric_level).where(User.id == user_id)
+            )
+            stats["numeric_level"] = result.scalar() or 0
+        
+        # Fetch time-based study stats from DailyActivity
+        if need_time:
+            # Count night study sessions (activities with night hours)
+            # We approximate by counting daily activities — actual hour tracking
+            # would need additional logging. For now count total daily activities.
+            result = await self.db.execute(
+                select(func.count(DailyActivity.id)).where(
+                    DailyActivity.user_id == user_id
+                )
+            )
+            total_activities = result.scalar() or 0
+            stats["night_study_sessions"] = 0  # Placeholder: needs hour tracking
+            stats["morning_study_sessions"] = 0  # Placeholder: needs hour tracking
+            stats["speed_lessons"] = 0  # Placeholder: needs lesson duration tracking
+        
+        # Fetch skill-based stats (grammar, culture, writing, listening)
+        if need_skills:
+            # These are placeholders — actual implementation needs
+            # tagged lesson categories in the database
+            stats["grammar_mastered"] = 0
+            stats["culture_lessons"] = 0
+            stats["writing_completed"] = 0
+            stats["listening_completed"] = 0
+        
+        # Fetch social stats
+        if need_social:
+            stats["social_interactions"] = 0  # Placeholder
+            stats["chats_completed"] = 0  # Placeholder
+            stats["help_others_count"] = 0  # Placeholder
+        
+        # Fetch daily challenge completions
+        if need_challenges:
+            result = await self.db.execute(
+                select(func.count(ChallengeRewardClaim.id)).where(
+                    and_(
+                        ChallengeRewardClaim.user_id == user_id,
+                        ChallengeRewardClaim.challenge_id != "daily_bonus"
+                    )
+                )
+            )
+            stats["daily_challenges_completed"] = result.scalar() or 0
+        
         return stats
     
     async def _evaluate_condition(
@@ -269,6 +334,21 @@ class AchievementCheckerService:
             "quiz_complete": lambda: user_stats.get("quiz_completed", 0) >= condition_value,
             "voice_practice": lambda: user_stats.get("voice_practices", 0) >= condition_value,
             "course_complete": lambda: user_stats.get("courses_completed", 0) >= condition_value,
+            # ---- New condition evaluators ----
+            "numeric_level": lambda: user_stats.get("numeric_level", 0) >= condition_value,
+            "study_time_night": lambda: user_stats.get("night_study_sessions", 0) >= condition_value,
+            "study_time_morning": lambda: user_stats.get("morning_study_sessions", 0) >= condition_value,
+            "speed_lesson": lambda: user_stats.get("speed_lessons", 0) >= condition_value,
+            "first_perfect": lambda: user_stats.get("perfect_scores", 0) >= 1 and condition_value <= 1,
+            "grammar_mastered": lambda: user_stats.get("grammar_mastered", 0) >= condition_value,
+            "culture_lesson": lambda: user_stats.get("culture_lessons", 0) >= condition_value,
+            "writing_complete": lambda: user_stats.get("writing_completed", 0) >= condition_value,
+            "listening_complete": lambda: user_stats.get("listening_completed", 0) >= condition_value,
+            "social_interaction": lambda: user_stats.get("social_interactions", 0) >= condition_value,
+            "chat_complete": lambda: user_stats.get("chats_completed", 0) >= condition_value,
+            "help_others": lambda: user_stats.get("help_others_count", 0) >= condition_value,
+            "daily_challenge_complete": lambda: user_stats.get("daily_challenges_completed", 0) >= condition_value,
+            "comeback": lambda: False,  # Special: checked contextually at login
         }
         
         evaluator = condition_evaluators.get(condition_type)

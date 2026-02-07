@@ -27,6 +27,7 @@ class Achievement(Base):
     )
     
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    slug: Mapped[str] = mapped_column(String(100), nullable=True, unique=True)  # Stable ID for Flutter badge mapping
     description: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Achievement criteria

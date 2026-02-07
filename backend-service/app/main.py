@@ -40,6 +40,9 @@ from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
 from app.routes.proficiency import router as proficiency_router
+from app.routes.rbac import router as rbac_router
+from app.routes.analytics import router as analytics_router
+from app.routes.user_management import router as user_management_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -174,6 +177,9 @@ app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=[
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
+app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
+app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])
+app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
 
 
 @app.get("/")

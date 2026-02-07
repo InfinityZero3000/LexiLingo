@@ -9,7 +9,7 @@ Replace internals with KuzuDB/Neo4j/NetworkX later.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import os
 
 import kuzu
@@ -333,8 +333,8 @@ class KnowledgeGraphServiceV3:
         concepts: Dict[str, Dict[str, str]] = {}
         try:
             result = self._conn.execute("MATCH (c:Concept) RETURN c.id, c.title, c.keywords")
-            while result.has_next():
-                row = result.get_next()
+            while result.has_next():  # type: ignore[union-attr]
+                row: list = result.get_next()  # type: ignore[union-attr]
                 concepts[row[0]] = {
                     "title": row[1],
                     "keywords": row[2] or "",
@@ -357,10 +357,10 @@ class KnowledgeGraphServiceV3:
                     "WHERE a.id = $seed RETURN b.id, e.relation",
                     {"seed": seed},
                 )
-                while result.has_next():
-                    row = result.get_next()
-                    expanded_nodes.append(KGExpandedNode(id=row[0], relation=row[1]))
-                    paths.append(KGPath(from_id=seed, to_id=row[0], hops=1))
+                while result.has_next():  # type: ignore[union-attr]
+                    row: list = result.get_next()  # type: ignore[union-attr]
+                    expanded_nodes.append(KGExpandedNode(id=row[0], type=row[1], properties={"relation": row[1]}))
+                    paths.append(KGPath(nodes=[seed, row[0]], edges=[row[1]]))
         except Exception:
             return KGHits(seed_nodes=seed_nodes, expanded_nodes=[], paths=[])
 
@@ -420,8 +420,8 @@ class KnowledgeGraphServiceV3:
                 "WHERE u.id = $uid RETURN c.id, m.score",
                 {"uid": user_id},
             )
-            while result.has_next():
-                row = result.get_next()
+            while result.has_next():  # type: ignore[union-attr]
+                row: list = result.get_next()  # type: ignore[union-attr]
                 mastery[row[0]] = row[1]
         except Exception:
             pass
@@ -443,8 +443,6 @@ class KnowledgeGraphServiceV3:
         Returns:
             List of recommended concept dicts with id, title, reason
         """
-        from typing import Any
-        
         recommendations: List[Dict[str, Any]] = []
         level_order = ["A1", "A2", "B1", "B2", "C1", "C2"]
         
@@ -505,8 +503,8 @@ class KnowledgeGraphServiceV3:
                 "RETURN a.id",
                 {"cid": concept_id},
             )
-            while result.has_next():
-                row = result.get_next()
+            while result.has_next():  # type: ignore[union-attr]
+                row: list = result.get_next()  # type: ignore[union-attr]
                 prerequisites.append(row[0])
         except Exception:
             pass
@@ -529,8 +527,8 @@ class KnowledgeGraphServiceV3:
                 "RETURN b.id",
                 {"cid": concept_id},
             )
-            while result.has_next():
-                row = result.get_next()
+            while result.has_next():  # type: ignore[union-attr]
+                row: list = result.get_next()  # type: ignore[union-attr]
                 next_concepts.append(row[0])
         except Exception:
             pass
@@ -541,8 +539,8 @@ class KnowledgeGraphServiceV3:
         """Get total number of concepts in the graph."""
         try:
             result = self._conn.execute("MATCH (c:Concept) RETURN count(c)")
-            if result.has_next():
-                return result.get_next()[0]
+            if result.has_next():  # type: ignore[union-attr]
+                return result.get_next()[0]  # type: ignore[union-attr]
         except Exception:
             pass
         return 0

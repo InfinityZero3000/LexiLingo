@@ -162,12 +162,13 @@ def decode_verification_token(token: str, purpose: str) -> Optional[str]:
         return None
 
 
-async def verify_google_token(id_token: str) -> Optional[Dict[str, Any]]:
+async def verify_google_token(id_token: str, audience: str | None = None) -> Optional[Dict[str, Any]]:
     """
     Verify Google OAuth ID token.
     
     Args:
         id_token: Google ID token from client
+        audience: Expected client ID (audience) to validate against
         
     Returns:
         User info dict with email, name, picture, or None if invalid
@@ -183,7 +184,7 @@ async def verify_google_token(id_token: str) -> Optional[Dict[str, Any]]:
         idinfo = google_id_token.verify_oauth2_token(
             id_token,
             requests.Request(),
-            audience=settings.GOOGLE_CLIENT_ID if hasattr(settings, 'GOOGLE_CLIENT_ID') else None
+            audience=audience
         )
         
         return {

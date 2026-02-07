@@ -32,6 +32,10 @@ venv/
 ENV/
 env/
 
+# Firebase Service Account (sensitive credentials)
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
 # IDE
 .vscode/
 .idea/

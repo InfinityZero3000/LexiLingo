@@ -99,7 +99,7 @@ def import_knowledge(json_path: str, db_path: str, clear_existing: bool = False)
         try:
             # Check if exists
             result = conn.execute(f"MATCH (c:Concept) WHERE c.id = '{concept_id}' RETURN c.id")
-            exists = len(result.get_as_df()) > 0 if hasattr(result, 'get_as_df') else False
+            exists = len(result.get_as_df()) > 0 if hasattr(result, 'get_as_df') else False  # type: ignore[union-attr]
             
             if exists:
                 # Update existing
@@ -139,8 +139,8 @@ def import_knowledge(json_path: str, db_path: str, clear_existing: bool = False)
             from_result = conn.execute(f"MATCH (c:Concept) WHERE c.id = '{from_id}' RETURN c.id")
             to_result = conn.execute(f"MATCH (c:Concept) WHERE c.id = '{to_id}' RETURN c.id")
             
-            from_exists = len(from_result.get_as_df()) > 0 if hasattr(from_result, 'get_as_df') else False
-            to_exists = len(to_result.get_as_df()) > 0 if hasattr(to_result, 'get_as_df') else False
+            from_exists = len(from_result.get_as_df()) > 0 if hasattr(from_result, 'get_as_df') else False  # type: ignore[union-attr]
+            to_exists = len(to_result.get_as_df()) > 0 if hasattr(to_result, 'get_as_df') else False  # type: ignore[union-attr]
             
             if not from_exists or not to_exists:
                 logger.warning(f"Skipping edge {from_id} -> {to_id}: node(s) not found")
@@ -153,7 +153,7 @@ def import_knowledge(json_path: str, db_path: str, clear_existing: bool = False)
                 WHERE a.id = '{from_id}' AND b.id = '{to_id}' 
                 RETURN e.relation
             """)
-            edge_exists = len(edge_result.get_as_df()) > 0 if hasattr(edge_result, 'get_as_df') else False
+            edge_exists = len(edge_result.get_as_df()) > 0 if hasattr(edge_result, 'get_as_df') else False  # type: ignore[union-attr]
             
             if edge_exists:
                 stats["edges_skipped"] += 1

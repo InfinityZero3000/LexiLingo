@@ -49,7 +49,7 @@ class MongoDBManager:
             from pymongo.server_api import ServerApi
             
             # Create async client with Atlas support
-            connection_kwargs = {
+            connection_kwargs: dict = {
                 "maxPoolSize": settings.MONGODB_MAX_POOL_SIZE,
                 "minPoolSize": settings.MONGODB_MIN_POOL_SIZE,
                 "serverSelectionTimeoutMS": 10000,

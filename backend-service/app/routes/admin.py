@@ -1,21 +1,23 @@
 """
 Admin API Routes
 Admin-only endpoints for content management (Courses, Units, Lessons, Vocabulary).
-Requires admin role (TODO: implement role-based access control).
+Requires admin or super_admin role via RBAC system.
 """
 
 from typing import Optional, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
+from app.models.rbac import Role
 from app.models.course import Course, Unit, Lesson
 from app.models.vocabulary import VocabularyItem
 from app.models.gamification import Achievement, ShopItem
+from app.models.content import GrammarItem, QuestionItem, TestExam
 from app.crud.course import CourseCRUD, UnitCRUD, LessonCRUD
 from app.schemas.course import (
     CourseCreate, CourseUpdate, CourseResponse,
@@ -23,27 +25,23 @@ from app.schemas.course import (
     LessonCreate, LessonUpdate, LessonResponse
 )
 from app.schemas.response import ApiResponse
+from app.schemas.content import (
+    GrammarCreate, GrammarUpdate, GrammarResponse,
+    QuestionCreate, QuestionUpdate, QuestionResponse,
+    TestExamCreate, TestExamUpdate, TestExamResponse
+)
+from app.schemas.user import AdminUserUpdate, AdminUserListItem
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 # ============================================================================
-# Helper: Admin Check (TODO: Implement proper RBAC)
+# RBAC: Admin guard — requires role.level >= 1 (admin or super_admin)
+# Imported from app.core.dependencies.get_current_admin
 # ============================================================================
 
-async def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """
-    Check if current user is admin.
-    TODO: Add is_admin field to User model and check it here.
-    For now, allows all authenticated users (development mode).
-    """
-    # TODO: Uncomment when is_admin field is added
-    # if not current_user.is_admin:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Admin access required"
-    #     )
-    return current_user
+# Alias for backward compatibility in this file
+require_admin = get_current_admin
 
 
 # ============================================================================
@@ -685,6 +683,246 @@ async def delete_shop_item(
 
 
 # ============================================================================
+# Grammar Admin CRUD
+# ============================================================================
+
+@router.get("/grammar", response_model=ApiResponse[List[GrammarResponse]])
+async def list_grammar_admin(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(
+        select(GrammarItem).order_by(GrammarItem.created_at.desc()).limit(limit).offset(offset)
+    )
+    items = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(items)} grammar items",
+        data=[GrammarResponse.model_validate(item) for item in items]
+    )
+
+
+@router.post("/grammar", response_model=ApiResponse[GrammarResponse])
+async def create_grammar_admin(
+    payload: GrammarCreate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    item = GrammarItem(
+        title=payload.title,
+        level=payload.level,
+        topic=payload.topic,
+        summary=payload.summary,
+        content=payload.content,
+        examples=payload.examples,
+        tags=payload.tags,
+        is_active=payload.is_active,
+    )
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Grammar created", data=GrammarResponse.model_validate(item))
+
+
+@router.put("/grammar/{grammar_id}", response_model=ApiResponse[GrammarResponse])
+async def update_grammar_admin(
+    grammar_id: UUID,
+    payload: GrammarUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(GrammarItem).where(GrammarItem.id == grammar_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Grammar item not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Grammar updated", data=GrammarResponse.model_validate(item))
+
+
+@router.delete("/grammar/{grammar_id}", response_model=ApiResponse[dict])
+async def delete_grammar_admin(
+    grammar_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(GrammarItem).where(GrammarItem.id == grammar_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Grammar item not found")
+    await db.delete(item)
+    await db.commit()
+    return ApiResponse(success=True, message="Grammar deleted", data={"deleted": True, "grammar_id": str(grammar_id)})
+
+
+# ============================================================================
+# Question Bank Admin CRUD
+# ============================================================================
+
+@router.get("/questions", response_model=ApiResponse[List[QuestionResponse]])
+async def list_questions_admin(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(
+        select(QuestionItem).order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
+    )
+    items = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(items)} questions",
+        data=[QuestionResponse.model_validate(item) for item in items]
+    )
+
+
+@router.post("/questions", response_model=ApiResponse[QuestionResponse])
+async def create_question_admin(
+    payload: QuestionCreate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    item = QuestionItem(
+        prompt=payload.prompt,
+        question_type=payload.question_type,
+        options=payload.options,
+        answer=payload.answer,
+        explanation=payload.explanation,
+        difficulty_level=payload.difficulty_level,
+        tags=payload.tags,
+        grammar_id=payload.grammar_id,
+        is_active=payload.is_active,
+    )
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Question created", data=QuestionResponse.model_validate(item))
+
+
+@router.put("/questions/{question_id}", response_model=ApiResponse[QuestionResponse])
+async def update_question_admin(
+    question_id: UUID,
+    payload: QuestionUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(QuestionItem).where(QuestionItem.id == question_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Question updated", data=QuestionResponse.model_validate(item))
+
+
+@router.delete("/questions/{question_id}", response_model=ApiResponse[dict])
+async def delete_question_admin(
+    question_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(QuestionItem).where(QuestionItem.id == question_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Question not found")
+    await db.delete(item)
+    await db.commit()
+    return ApiResponse(success=True, message="Question deleted", data={"deleted": True, "question_id": str(question_id)})
+
+
+# ============================================================================
+# Test Exam Admin CRUD
+# ============================================================================
+
+@router.get("/test-exams", response_model=ApiResponse[List[TestExamResponse]])
+async def list_test_exams_admin(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(
+        select(TestExam).order_by(TestExam.created_at.desc()).limit(limit).offset(offset)
+    )
+    items = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(items)} test exams",
+        data=[TestExamResponse.model_validate(item) for item in items]
+    )
+
+
+@router.post("/test-exams", response_model=ApiResponse[TestExamResponse])
+async def create_test_exam_admin(
+    payload: TestExamCreate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    item = TestExam(
+        title=payload.title,
+        description=payload.description,
+        level=payload.level,
+        duration_minutes=payload.duration_minutes,
+        passing_score=payload.passing_score,
+        question_ids=[str(q) for q in payload.question_ids] if payload.question_ids else None,
+        is_published=payload.is_published,
+    )
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Test exam created", data=TestExamResponse.model_validate(item))
+
+
+@router.put("/test-exams/{test_exam_id}", response_model=ApiResponse[TestExamResponse])
+async def update_test_exam_admin(
+    test_exam_id: UUID,
+    payload: TestExamUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(TestExam).where(TestExam.id == test_exam_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Test exam not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "question_ids" in update_data and update_data["question_ids"] is not None:
+        update_data["question_ids"] = [str(q) for q in update_data["question_ids"]]
+    for field, value in update_data.items():
+        setattr(item, field, value)
+
+    await db.commit()
+    await db.refresh(item)
+    return ApiResponse(success=True, message="Test exam updated", data=TestExamResponse.model_validate(item))
+
+
+@router.delete("/test-exams/{test_exam_id}", response_model=ApiResponse[dict])
+async def delete_test_exam_admin(
+    test_exam_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    result = await db.execute(select(TestExam).where(TestExam.id == test_exam_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Test exam not found")
+    await db.delete(item)
+    await db.commit()
+    return ApiResponse(success=True, message="Test exam deleted", data={"deleted": True, "test_exam_id": str(test_exam_id)})
+
+
+# ============================================================================
 # Seed Data Endpoint (Development Only)
 # ============================================================================
 
@@ -755,4 +993,87 @@ async def seed_sample_data(
         success=True,
         message=f"Seed data created: {created['achievements']} achievements, {created['shop_items']} shop items",
         data=created
+    )
+
+
+# ============================================================================
+# User Admin (RBAC)
+# ============================================================================
+
+@router.get("/users", response_model=ApiResponse[List[AdminUserListItem]])
+async def list_users_admin(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    search: Optional[str] = Query(None, description="Search by email/username"),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """List users for admin dashboard."""
+    query = select(User)
+    if search:
+        like = f"%{search}%"
+        query = query.where(or_(User.email.ilike(like), User.username.ilike(like)))
+    query = query.order_by(User.created_at.desc()).limit(limit).offset(offset)
+
+    result = await db.execute(query)
+    users = result.scalars().all()
+
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(users)} users",
+        data=[AdminUserListItem.model_validate(u) for u in users]
+    )
+
+
+@router.get("/roles", response_model=ApiResponse[List[dict]])
+async def list_roles_admin(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """List available roles."""
+    result = await db.execute(select(Role).order_by(Role.level))
+    roles = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(roles)} roles",
+        data=[{"id": str(r.id), "name": r.name, "slug": r.slug, "level": r.level} for r in roles]
+    )
+
+
+@router.patch("/users/{user_id}", response_model=ApiResponse[AdminUserListItem])
+async def update_user_admin(
+    user_id: UUID,
+    payload: AdminUserUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Update user status/role (role changes require super admin)."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if payload.role_slug:
+        # Only super admin can change roles
+        if not admin_user.is_super_admin:
+            raise HTTPException(status_code=403, detail="Super admin required to change roles")
+        role_result = await db.execute(select(Role).where(Role.slug == payload.role_slug))
+        role = role_result.scalar_one_or_none()
+        if not role:
+            raise HTTPException(status_code=400, detail="Invalid role slug")
+        user.role_id = role.id
+
+    if payload.is_active is not None:
+        user.is_active = payload.is_active
+
+    if payload.display_name is not None:
+        user.display_name = payload.display_name
+
+    await db.commit()
+    await db.refresh(user)
+
+    return ApiResponse(
+        success=True,
+        message="User updated",
+        data=AdminUserListItem.model_validate(user)
     )

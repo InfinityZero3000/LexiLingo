@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.models.user import User
+from app.models.rbac import Role
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
     ChangePasswordRequest, GoogleLoginRequest, ForgotPasswordRequest, 
@@ -55,11 +56,18 @@ async def register(
         )
     
     # Create new user
+    role_id = None
+    result = await db.execute(select(Role).where(Role.slug == "user"))
+    role = result.scalar_one_or_none()
+    if role:
+        role_id = role.id
+
     user = User(
         email=request.email,
         username=request.username,
         hashed_password=get_password_hash(request.password),
         display_name=request.display_name or request.username,
+        role_id=role_id,
     )
     
     db.add(user)
@@ -112,7 +120,8 @@ async def login(
         token_type="bearer",
         user_id=str(user.id),
         username=user.username,
-        email=user.email
+        email=user.email,
+        role=user.role_slug if hasattr(user, 'role_slug') else "user",
     )
 
 
@@ -212,9 +221,21 @@ async def google_login(
     - Returns JWT tokens
     """
     from app.core.security import verify_google_token
+    from app.core.config import settings
     
-    # Verify Google token
-    google_info = await verify_google_token(request.id_token)
+    # Select the correct Client ID based on source
+    if request.source == "admin":
+        audience = settings.GOOGLE_ADMIN_CLIENT_ID
+        if not audience:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Admin Google OAuth not configured"
+            )
+    else:
+        audience = settings.GOOGLE_CLIENT_ID
+    
+    # Verify Google token with the correct audience
+    google_info = await verify_google_token(request.id_token, audience=audience)
     if not google_info:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -289,7 +310,8 @@ async def google_login(
         token_type="bearer",
         user_id=str(user.id),
         username=user.username,
-        email=user.email
+        email=user.email,
+        role=user.role_slug if hasattr(user, 'role_slug') else "user",
     )
 
 
@@ -464,4 +486,3 @@ async def verify_email(
         verified=True,
         message="Email verified successfully"
     )
-
