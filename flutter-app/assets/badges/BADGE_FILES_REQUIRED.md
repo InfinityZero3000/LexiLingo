@@ -50,30 +50,30 @@ Dùng prompt từ BADGE_GENERATION_GUIDE.md - **Streak Badges (Fire/Flame theme)
 ### 2. XP Badges (4 files)
 Dùng prompt từ BADGE_GENERATION_GUIDE.md - **XP Badges (Star/Energy theme)**
 
-- ❌ `xp-100.png` - XP Hunter (100 XP)
+- ❌ `xp-hunter.png` - XP Hunter (100 XP) - Common (grey)
   ```
-  A cute gaming achievement badge, star shape, golden star and sparkle theme,
-  common border, energy particles, number "100" in center, gradient gold to orange,
+  A cute gaming achievement badge, star shape with 5 points, grey and silver theme,
+  common border, subtle sparkles, number "100" in center, gradient grey to silver,
   playful cartoon style, bright colors, cheerful design, transparent background, 256x256px
   ```
 
-- ❌ `xp-500.png` - XP Warrior (500 XP)
+- ❌ `xp-warrior.png` - XP Warrior (500 XP) - Rare (blue)
   ```
-  A cute gaming achievement badge, star shape, golden star and sparkle theme,
-  rare border glow, energy particles, number "500" in center, gradient gold to orange,
+  A cute gaming achievement badge, star shape with 5 points, blue energy theme,
+  rare border glow, energy particles, number "500" in center, gradient blue to cyan,
   playful cartoon style, bright colors, cheerful design, transparent background, 256x256px
   ```
 
-- ❌ `xp-1000.png` - XP Champion (1000 XP)
+- ❌ `xp-champion.png` - XP Champion (1000 XP) - Epic (purple)
   ```
-  A cute gaming achievement badge, star shape, golden star and sparkle theme,
-  epic border glow, energy particles, number "1000" in center, gradient gold to orange,
+  A cute gaming achievement badge, star shape with 5 points, purple and violet theme,
+  epic border glow, energy particles, number "1000" in center, gradient purple to magenta,
   playful cartoon style, bright colors, more sparkles, cheerful design, transparent background, 256x256px
   ```
 
-- ❌ `xp-5000.png` - XP Legend (5000 XP)
+- ❌ `xp-legend.png` - XP Legend (5000 XP) - Legendary (gold)
   ```
-  A cute gaming achievement badge, star shape, golden star and sparkle theme,
+  A cute gaming achievement badge, star shape with 5 points, golden and yellow theme,
   legendary border glow, energy particles, number "5000" in center, gradient gold to orange,
   playful cartoon style, bright colors, extra glow and sparkles, cheerful design, transparent background, 256x256px
   ```

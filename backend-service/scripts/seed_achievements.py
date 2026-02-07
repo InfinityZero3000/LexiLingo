@@ -31,6 +31,10 @@ BADGE_ASSETS = {
     "vocab_builder": "rare-vocabulary.png",
     "vocab_master": "epic-vocabulary.png",
     "walking_dictionary": "legendary-vocabulary.png",
+    "xp_hunter": "xp-hunter.png",  # XP Hunter - Common (grey)
+    "xp_warrior": "xp-warrior.png",  # XP Warrior - Rare (blue)
+    "xp_champion": "xp-champion.png",  # XP Champion - Epic (purple)
+    "xp_legend": "xp-legend.png",  # XP Legend - Legendary (gold)
     "perfectionist": "100%.png",
     "first_perfect_score": "first-perfect.png",
     "accuracy_master": "perfect-10.png",
@@ -87,10 +91,10 @@ ACHIEVEMENTS = [
     {"slug": "walking_dictionary", "name": "Walking Dictionary", "description": "Master 500 vocabulary words", "condition_type": "vocab_mastered", "condition_value": 500, "badge_color": "#1976D2", "category": "vocabulary", "xp_reward": 400, "gems_reward": 200, "rarity": "legendary"},
 
     # ========== XP ACHIEVEMENTS (4) ==========
-    {"slug": "xp_hunter", "name": "XP Hunter", "description": "Earn 100 XP total", "condition_type": "xp_earned", "condition_value": 100, "badge_color": "#FFC107", "category": "xp", "xp_reward": 10, "gems_reward": 5, "rarity": "common"},
-    {"slug": "xp_warrior", "name": "XP Warrior", "description": "Earn 500 XP total", "condition_type": "xp_earned", "condition_value": 500, "badge_color": "#FF9800", "category": "xp", "xp_reward": 50, "gems_reward": 25, "rarity": "rare"},
-    {"slug": "xp_champion", "name": "XP Champion", "description": "Earn 1,000 XP total", "condition_type": "xp_earned", "condition_value": 1000, "badge_color": "#FF5722", "category": "xp", "xp_reward": 100, "gems_reward": 50, "rarity": "epic"},
-    {"slug": "xp_legend", "name": "XP Legend", "description": "Earn 5,000 XP total", "condition_type": "xp_earned", "condition_value": 5000, "badge_color": "#9C27B0", "category": "xp", "xp_reward": 250, "gems_reward": 125, "rarity": "legendary"},
+    {"slug": "xp_hunter", "name": "XP Hunter", "description": "Earn 100 XP total", "condition_type": "xp_earned", "condition_value": 100, "badge_color": "#9E9E9E", "category": "xp", "xp_reward": 10, "gems_reward": 5, "rarity": "common"},
+    {"slug": "xp_warrior", "name": "XP Warrior", "description": "Earn 500 XP total", "condition_type": "xp_earned", "condition_value": 500, "badge_color": "#2196F3", "category": "xp", "xp_reward": 50, "gems_reward": 25, "rarity": "rare"},
+    {"slug": "xp_champion", "name": "XP Champion", "description": "Earn 1,000 XP total", "condition_type": "xp_earned", "condition_value": 1000, "badge_color": "#9C27B0", "category": "xp", "xp_reward": 100, "gems_reward": 50, "rarity": "epic"},
+    {"slug": "xp_legend", "name": "XP Legend", "description": "Earn 5,000 XP total", "condition_type": "xp_earned", "condition_value": 5000, "badge_color": "#FFD700", "category": "xp", "xp_reward": 250, "gems_reward": 125, "rarity": "legendary"},
 
     # ========== QUIZ / PERFECT SCORE (5) ==========
     {"slug": "perfectionist", "name": "Perfectionist", "description": "Get a perfect score on any quiz", "condition_type": "perfect_score", "condition_value": 1, "badge_color": "#4CAF50", "category": "quiz", "xp_reward": 25, "gems_reward": 15, "rarity": "common"},

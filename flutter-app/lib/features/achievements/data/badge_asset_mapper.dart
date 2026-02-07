@@ -33,6 +33,12 @@ class BadgeAssetMapper {
     'vocab_master': 'epic-vocabulary.png',
     'walking_dictionary': 'legendary-vocabulary.png',
 
+    // ===================== XP ACHIEVEMENTS =========================
+    'xp_hunter': 'xp-hunter.png',        // XP Hunter - Common (grey)
+    'xp_warrior': 'xp-warrior.png',      // XP Warrior - Rare (blue)
+    'xp_champion': 'xp-champion.png',    // XP Champion - Epic (purple)
+    'xp_legend': 'xp-legend.png',        // XP Legend - Legendary (gold)
+
     // ===================== QUIZ / PERFECT SCORE ====================
     'perfectionist': '100%.png',
     'first_perfect_score': 'first-perfect.png',
