@@ -23,7 +23,7 @@ except:
 print("\n[2/8] Admin Login...")
 try:
     r = requests.post(f"{url}/api/v1/auth/login", 
-                     json={"email": "admin@lexilingo.com", "password": "admin123"})
+                     json={"email": "thefirestar312@gmail.com", "password": "admin123"})
     token = r.json()["access_token"]
     print(f"✓ PASS - Token: {token[:30]}...")
 except:

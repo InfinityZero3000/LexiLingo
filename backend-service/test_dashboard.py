@@ -30,7 +30,7 @@ except Exception as e:
 # 2. Login
 try:
     r = requests.post(f"{BASE}/auth/login", 
-                     json={"email":"admin@lexilingo.com","password":"admin123"}, 
+                     json={"email":"thefirestar312@gmail.com","password":"admin123"}, 
                      timeout=5)
     test("Admin login", r.status_code == 200)
     token = r.json().get("access_token") if r.status_code == 200 else None

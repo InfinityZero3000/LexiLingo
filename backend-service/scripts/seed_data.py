@@ -10,7 +10,6 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import engine, AsyncSessionLocal
-from app.core.security import get_password_hash
 from app.models import *
 
 
@@ -170,75 +169,22 @@ async def seed_permissions(db: AsyncSession, roles: dict):
 
 
 async def seed_users(db: AsyncSession, roles: dict = None):
-    """Create sample users with role assignments."""
-    print("🔧 Creating users...")
+    """Create sample users with role assignments.
     
-    # Get role IDs
-    user_role_id = roles["user"].id if roles and "user" in roles else None
-    admin_role_id = roles["admin"].id if roles and "admin" in roles else None
-    super_admin_role_id = roles["super_admin"].id if roles and "super_admin" in roles else None
-    
-    users_data = [
-        {
-            "email": "admin@lexilingo.com",
-            "username": "admin",
-            "password": "admin123",
-            "display_name": "Admin User",
-            "level": "advanced",
-            "is_verified": True,
-            "_role_id": super_admin_role_id,
-        },
-        {
-            "email": "john@example.com",
-            "username": "john_doe",
-            "password": "password123",
-            "display_name": "John Doe",
-            "level": "beginner",
-            "is_verified": True,
-            "_role_id": user_role_id,
-        },
-        {
-            "email": "mary@example.com",
-            "username": "mary_smith",
-            "password": "password123",
-            "display_name": "Mary Smith",
-            "level": "intermediate",
-            "is_verified": True,
-            "_role_id": admin_role_id,
-        },
-    ]
+    NOTE: Admin accounts login via Google OAuth only (no password).
+    Users are created automatically on first Google login.
+    This function is kept for backward compatibility but creates no users.
+    """
+    print("🔧 Skipping user creation (OAuth only)...")
+    print("ℹ️  Admin users will be created on first Google OAuth login")
     
     created_users = []
-    for user_data in users_data:
-        # Check if user exists
-        result = await db.execute(
-            select(User).where(User.email == user_data["email"])
-        )
-        existing_user = result.scalar_one_or_none()
-        
-        if not existing_user:
-            password = user_data.pop("password")
-            role_id = user_data.pop("_role_id", None)
-            user = User(
-                **user_data,
-                hashed_password=get_password_hash(password),
-                role_id=role_id,
-            )
-            db.add(user)
-            created_users.append(user)
-            print(f"  ✅ Created user: {user.username} (role_id={role_id})")
-        else:
-            # Update role if not set
-            role_id = user_data.get("_role_id")
-            if role_id and not existing_user.role_id:
-                existing_user.role_id = role_id
-                print(f"  🔄 Updated role for: {existing_user.username}")
-            else:
-                print(f"  ⏭️  User already exists: {existing_user.username}")
-            created_users.append(existing_user)
+    
+    # No users created - admin will login via Google OAuth
+    # Users are auto-created on first OAuth login in auth routes
     
     await db.commit()
-    print(f"✅ Users created: {len(created_users)}\n")
+    print(f"✅ No users seeded (OAuth mode)\n")
     return created_users
 
 

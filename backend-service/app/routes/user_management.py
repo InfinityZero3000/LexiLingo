@@ -7,13 +7,15 @@ from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func, or_, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_admin, get_current_super_admin
+from app.schemas.response import ApiResponse
+from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
+from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
 
 
@@ -28,14 +30,14 @@ class UserListResponse(BaseModel):
     """User list response with metadata"""
     id: str
     email: str
+    username: str
     display_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    level: int
     is_active: bool
+    is_verified: bool
+    role_slug: str  # user, admin, super_admin
+    role_level: int  # 0, 1, 2
     created_at: datetime
-    last_sign_in: Optional[datetime] = None
-    total_xp: int = 0
-    streak_days: int = 0
+    last_login: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -45,17 +47,17 @@ class UserDetailResponse(BaseModel):
     """Detailed user information"""
     id: str
     email: str
+    username: str
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
-    level: int
     is_active: bool
+    is_verified: bool
+    role_slug: str  # user, admin, super_admin
+    role_level: int  # 0, 1, 2
+    provider: str  # local, google, facebook
     created_at: datetime
-    last_sign_in: Optional[datetime] = None
+    last_login: Optional[datetime] = None
     total_xp: int = 0
-    streak_days: int = 0
-    bio: Optional[str] = None
-    language_preference: Optional[str] = None
-    notification_enabled: bool = True
     
     # Stats
     courses_enrolled: int = 0
@@ -70,8 +72,6 @@ class UserDetailResponse(BaseModel):
 class UserUpdateRequest(BaseModel):
     """Admin can update user information"""
     display_name: Optional[str] = Field(None, max_length=100)
-    bio: Optional[str] = Field(None, max_length=500)
-    level: Optional[int] = Field(None, ge=0, le=2)
     is_active: Optional[bool] = None
 
 
@@ -115,15 +115,15 @@ class PaginatedUsersResponse(BaseModel):
 # User List & Search
 # ============================================================================
 
-@router.get("", response_model=PaginatedUsersResponse)
+@router.get("", response_model=ApiResponse[PaginatedUsersResponse])
 async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = Query(None, description="Search by name or email"),
     role: Optional[int] = Query(None, ge=0, le=2, description="Filter by role level"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    sort_by: str = Query("created_at", regex="^(created_at|last_sign_in|email|level|total_xp)$"),
-    order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("created_at", pattern="^(created_at|last_login|email|role|total_xp)$"),
+    order: str = Query("desc", pattern="^(asc|desc)$"),
     admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -136,10 +136,10 @@ async def list_users(
     - is_active: true/false
     
     **Sort options:**
-    - created_at, last_sign_in, email, level, total_xp
+    - created_at, last_login, email, role, total_xp
     """
-    # Build query
-    query = select(User)
+    # Build query with Role join for filtering/sorting
+    query = select(User).join(User.role)
     
     # Apply filters
     filters = []
@@ -153,7 +153,7 @@ async def list_users(
         )
     
     if role is not None:
-        filters.append(User.level == role)
+        filters.append(Role.level == role)
     
     if is_active is not None:
         filters.append(User.is_active == is_active)
@@ -162,7 +162,11 @@ async def list_users(
         query = query.where(and_(*filters))
     
     # Apply sorting
-    sort_column = getattr(User, sort_by)
+    if sort_by == "role":
+        sort_column = Role.level
+    else:
+        sort_column = getattr(User, sort_by)
+    
     if order == "desc":
         query = query.order_by(desc(sort_column))
     else:
@@ -181,30 +185,34 @@ async def list_users(
     users = result.scalars().all()
     
     # Convert to response model
-    user_list = [
+    users_list = [
         UserListResponse(
             id=str(user.id),
             email=user.email,
-            display_name=user.display_name,
-            avatar_url=user.avatar_url,
-            level=user.level,
+            username=user.username,
+            display_name=user.display_name or user.username,
             is_active=user.is_active,
+            is_verified=user.is_verified,
+            role_slug=user.role_slug,
+            role_level=user.role_level,
             created_at=user.created_at,
-            last_sign_in=user.last_sign_in,
-            total_xp=user.total_xp,
-            streak_days=user.streak_days,
+            last_login=user.last_login,
         )
         for user in users
     ]
     
     total_pages = (total + page_size - 1) // page_size
     
-    return PaginatedUsersResponse(
-        users=user_list,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=total_pages,
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(users_list)} users",
+        data=PaginatedUsersResponse(
+            users=users_list,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
     )
 
 
@@ -212,7 +220,7 @@ async def list_users(
 # User Detail
 # ============================================================================
 
-@router.get("/{user_id}", response_model=UserDetailResponse)
+@router.get("/{user_id}", response_model=ApiResponse[UserDetailResponse])
 async def get_user_detail(
     user_id: UUID,
     admin: User = Depends(get_current_admin),
@@ -259,24 +267,28 @@ async def get_user_detail(
         .where(DailyActivity.user_id == user_id)
     ) or 0
     
-    return UserDetailResponse(
-        id=str(user.id),
-        email=user.email,
-        display_name=user.display_name,
-        avatar_url=user.avatar_url,
-        level=user.level,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        last_sign_in=user.last_sign_in,
-        total_xp=user.total_xp,
-        streak_days=user.streak_days,
-        bio=user.bio,
-        language_preference=user.language_preference,
-        notification_enabled=user.notification_enabled,
-        courses_enrolled=courses_enrolled,
-        courses_completed=courses_completed,
-        lessons_completed=lessons_completed,
-        daily_activities=daily_activities,
+    return ApiResponse(
+        success=True,
+        message="User details retrieved successfully",
+        data=UserDetailResponse(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            display_name=user.display_name or user.username,
+            avatar_url=user.avatar_url,
+            is_active=user.is_active,
+            is_verified=user.is_verified,
+            role_slug=user.role_slug,
+            role_level=user.role_level,
+            provider=user.provider,
+            created_at=user.created_at,
+            last_login=user.last_login,
+            total_xp=user.total_xp,
+            courses_enrolled=courses_enrolled,
+            courses_completed=courses_completed,
+            lessons_completed=lessons_completed,
+            daily_activities=daily_activities,
+        )
     )
 
 
@@ -284,7 +296,7 @@ async def get_user_detail(
 # User Update
 # ============================================================================
 
-@router.put("/{user_id}", response_model=UserDetailResponse)
+@router.put("/{user_id}", response_model=ApiResponse[UserDetailResponse])
 async def update_user(
     user_id: UUID,
     data: UserUpdateRequest,
@@ -292,11 +304,11 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Update user information.
+    Update user information (basic profile fields).
     
     **Permissions:**
     - Admins can update basic info and activate/deactivate
-    - Only super_admins can change user roles (level)
+    - Use separate endpoint to change user roles
     """
     # Get user
     result = await db.execute(
@@ -310,22 +322,9 @@ async def update_user(
             detail="User not found"
         )
     
-    # Check permissions for role changes
-    if data.level is not None and admin.level < 2:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only super_admins can change user roles"
-        )
-    
     # Update fields
     if data.display_name is not None:
         user.display_name = data.display_name
-    
-    if data.bio is not None:
-        user.bio = data.bio
-    
-    if data.level is not None:
-        user.level = data.level
     
     if data.is_active is not None:
         user.is_active = data.is_active
@@ -359,24 +358,28 @@ async def update_user(
         .where(DailyActivity.user_id == user_id)
     ) or 0
     
-    return UserDetailResponse(
-        id=str(user.id),
-        email=user.email,
-        display_name=user.display_name,
-        avatar_url=user.avatar_url,
-        level=user.level,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        last_sign_in=user.last_sign_in,
-        total_xp=user.total_xp,
-        streak_days=user.streak_days,
-        bio=user.bio,
-        language_preference=user.language_preference,
-        notification_enabled=user.notification_enabled,
-        courses_enrolled=courses_enrolled,
-        courses_completed=courses_completed,
-        lessons_completed=lessons_completed,
-        daily_activities=daily_activities,
+    return ApiResponse(
+        success=True,
+        message="User updated successfully",
+        data=UserDetailResponse(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            display_name=user.display_name or user.username,
+            avatar_url=user.avatar_url,
+            is_active=user.is_active,
+            is_verified=user.is_verified,
+            role_slug=user.role_slug,
+            role_level=user.role_level,
+            provider=user.provider,
+            created_at=user.created_at,
+            last_login=user.last_login,
+            total_xp=user.total_xp,
+            courses_enrolled=courses_enrolled,
+            courses_completed=courses_completed,
+            lessons_completed=lessons_completed,
+            daily_activities=daily_activities,
+        )
     )
 
 
@@ -412,20 +415,37 @@ async def update_user_role(
         )
     
     # Prevent self-demotion
-    if user.id == admin.id and data.level < admin.level:
+    if user.id == admin.id and data.level < admin.role_level:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot demote yourself"
         )
     
-    user.level = data.level
-    await db.commit()
+    # Find role by level
+    role_result = await db.execute(
+        select(Role).where(Role.level == data.level)
+    )
+    new_role = role_result.scalar_one_or_none()
     
-    return {
-        "message": "User role updated successfully",
-        "user_id": str(user.id),
-        "new_level": data.level
-    }
+    if not new_role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role with level {data.level} not found"
+        )
+    
+    user.role_id = new_role.id
+    await db.commit()
+    await db.refresh(user)
+    
+    return ApiResponse(
+        success=True,
+        message="User role updated successfully",
+        data={
+            "user_id": str(user.id),
+            "new_level": data.level,
+            "new_role": user.role_slug
+        }
+    )
 
 
 # ============================================================================
@@ -464,18 +484,21 @@ async def update_user_status(
     user.is_active = data.is_active
     await db.commit()
     
-    return {
-        "message": f"User {'activated' if data.is_active else 'deactivated'} successfully",
-        "user_id": str(user.id),
-        "is_active": data.is_active
-    }
+    return ApiResponse(
+        success=True,
+        message=f"User {'activated' if data.is_active else 'deactivated'} successfully",
+        data={
+            "user_id": str(user.id),
+            "is_active": data.is_active
+        }
+    )
 
 
 # ============================================================================
 # User Activity Timeline
 # ============================================================================
 
-@router.get("/{user_id}/activity", response_model=List[ActivityLogResponse])
+@router.get("/{user_id}/activity", response_model=ApiResponse[List[ActivityLogResponse]])
 async def get_user_activity(
     user_id: UUID,
     days: int = Query(30, ge=1, le=365),
@@ -558,7 +581,11 @@ async def get_user_activity(
     # Sort by date descending
     activity_log.sort(key=lambda x: x.activity_date, reverse=True)
     
-    return activity_log
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(activity_log)} activity logs",
+        data=activity_log
+    )
 
 
 # ============================================================================
@@ -628,7 +655,7 @@ async def bulk_user_action(
     
     elif data.action == "delete":
         # Require super_admin for deletion
-        if admin.level < 2:
+        if admin.role_level < 2:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only super_admins can delete users"
@@ -647,8 +674,11 @@ async def bulk_user_action(
     
     await db.commit()
     
-    return {
-        "message": f"Bulk {data.action} completed",
-        "updated_count": updated_count,
-        "requested_count": len(data.user_ids)
-    }
+    return ApiResponse(
+        success=True,
+        message=f"Bulk {data.action} completed",
+        data={
+            "updated_count": updated_count,
+            "requested_count": len(data.user_ids)
+        }
+    )
