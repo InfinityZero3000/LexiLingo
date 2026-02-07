@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "lexilingo-app",
   "builds": [
     {
       "src": "package.json",
@@ -10,25 +9,6 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "BACKEND_API_URL": "https://lexilingo-backend.onrender.com",
-    "AI_SERVICE_URL": "https://your-tunnel-url.trycloudflare.com"
-  },
-  "build": {
-    "env": {
-      "FLUTTER_VERSION": "3.24.0"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
