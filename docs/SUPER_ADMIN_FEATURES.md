@@ -36,19 +36,24 @@ PATCH /api/v1/admin/users/{id}/status
 - ✅ Điều chỉnh temperature (0-2) với slider
 - ✅ Cấu hình max_tokens (512-8192)
 - ✅ Top P / Top K parameters
+- ✅ **Gemini API Key Configuration** (mới thêm)
+  - Input field với Show/Hide password
+  - Lưu trữ an toàn
+  - Fallback to environment variable nếu để trống
 - ✅ Feature toggles (toggle switches):
   - Voice support (STT/TTS)
   - Grammar check
   - Topic analysis
   - MongoDB integration
 - ✅ Chat memory turns (số tin nhắn ghi nhớ)
-- ✅ Cảnh báo API key (read-only)
+
 
 **API cần implement:**
 ```typescript
 GET /api/v1/admin/config  // hoặc AI service: /api/v1/ai/config
 PUT /api/v1/admin/config
     Body: {
+      gemini_api_key?: string,     // NEW: Có thể null/empty fallback to env
       gemini_model: string,
       temperature: number,
       max_tokens: number,
@@ -127,6 +132,7 @@ Level 2: super_admin (siêu quản trị)
    - ✅ Bulk operations trên users
 
 3. **System Configuration:**
+   - ✅ **Quản lý Gemini API Key** (có thể thay đổi từ UI)
    - ✅ Cấu hình AI Chat (Gemini model, parameters)
    - ✅ Quản lý AI Models (load/unload, config)
    - ✅ Truy cập Database trực tiếp
@@ -194,7 +200,7 @@ PATCH /api/v1/admin/users/{id}/status
 # AI Configuration (Super Admin only)
 GET /api/v1/admin/config
     → Lấy cấu hình AI hiện tại
-    → Response: {
+    → Response:api_key?: string,     # Masked (e.g. "AIza***...***xyz")
         gemini_model: string,
         temperature: float,
         max_tokens: int,
@@ -209,6 +215,8 @@ GET /api/v1/admin/config
 
 PUT /api/v1/admin/config
     → Cập nhật cấu hình AI
+    → Body: AiChatConfig (như trên)
+    → Note: gemini_api_key có thể null/empty → fallback to GEMINI_API_KEY env var
     → Body: AiChatConfig (như trên)
     → Response: { success: true, data: AiChatConfig }
 ```

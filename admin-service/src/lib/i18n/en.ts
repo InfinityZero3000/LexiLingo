@@ -609,8 +609,12 @@ const en: Translations = {
     mongodbDesc: "Store chat history",
     chatMemory: "Chat Memory (turns)",
     chatMemoryHint: "Number of messages to keep in context",
-    apiKeyWarning: "⚠️ API Key Warning",
-    apiKeyWarningDesc: "Gemini API Key is configured via GEMINI_API_KEY environment variable on the server. Cannot be changed from this interface.",
+    apiKeyConfig: "API Key Configuration",
+    geminiApiKey: "Gemini API Key",
+    apiKeyHint: "API key for accessing Gemini AI (starts with AIza...)",
+    apiKeyNote: "API key will be stored securely. If left empty, system will use environment variable.",
+    show: "Show",
+    hide: "Hide",
   },
 };
 

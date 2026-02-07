@@ -596,8 +596,12 @@ const vi = {
     mongodbDesc: "Lưu trữ lịch sử chat",
     chatMemory: "Bộ nhớ chat (turns)",
     chatMemoryHint: "Số lượng tin nhắn ghi nhớ trong ngữ cảnh",
-    apiKeyWarning: "⚠️ Cảnh báo API Key",
-    apiKeyWarningDesc: "Gemini API Key được cấu hình qua biến môi trường GEMINI_API_KEY trên server. Không thể thay đổi từ giao diện này.",
+    apiKeyConfig: "Cấu hình API Key",
+    geminiApiKey: "Gemini API Key",
+    apiKeyHint: "API key để truy cập Gemini AI (bắt đầu với AIza...)",
+    apiKeyNote: "API key sẽ được lưu trữ an toàn. Nếu để trống, hệ thống sẽ dùng key từ biến môi trường.",
+    show: "Hiện",
+    hide: "Ẩn",
   },
 
   // ============== Error Pages ==============

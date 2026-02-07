@@ -24,6 +24,7 @@ export const AiChatSettingsPage = () => {
   const [config, setConfig] = useState<AiChatConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     fetchConfig();
@@ -288,16 +289,40 @@ export const AiChatSettingsPage = () => {
         </div>
       </div>
 
-      {/* API Key Warning */}
-      <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <Key size={20} style={{ color: "#C2410C", marginTop: 2 }} />
-          <div>
-            <h4 style={{ margin: "0 0 4px", color: "#C2410C" }}>{t.aiChat.apiKeyWarning}</h4>
-            <p style={{ margin: 0, fontSize: 14, color: "#9A3412" }}>
-              {t.aiChat.apiKeyWarningDesc}
-            </p>
+      {/* API Key Configuration */}
+      <div className="panel">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Key size={20} style={{ color: "var(--accent)" }} />
+          <h3 style={{ margin: 0 }}>{t.aiChat.apiKeyConfig}</h3>
+        </div>
+        
+        <div className="form-field">
+          <label>{t.aiChat.geminiApiKey}</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type={showApiKey ? "text" : "password"}
+              value={config.gemini_api_key || ""}
+              onChange={(e) => updateConfig("gemini_api_key", e.target.value)}
+              placeholder="AIza..." 
+              className="input"
+              style={{ flex: 1 }}
+            />
+            <button 
+              type="button"
+              onClick={() => setShowApiKey(!showApiKey)}
+              className="btn-secondary"
+              style={{ minWidth: 100 }}
+            >
+              {showApiKey ? t.aiChat.hide : t.aiChat.show}
+            </button>
           </div>
+          <small style={{ color: "var(--muted)" }}>{t.aiChat.apiKeyHint}</small>
+        </div>
+
+        <div className="panel" style={{ padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", marginTop: 12 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "#1E40AF" }}>
+            💡 {t.aiChat.apiKeyNote}
+          </p>
         </div>
       </div>
     </div>
