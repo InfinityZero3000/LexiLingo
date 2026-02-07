@@ -16,28 +16,34 @@ import { VocabularyPage } from "./pages/VocabularyPage";
 import { AchievementsPage } from "./pages/AchievementsPage";
 import { ShopPage } from "./pages/ShopPage";
 import { UsersPage } from "./pages/UsersPage";
+import UserManagementPage from "./pages/UserManagementPage";
 import { AdsPage } from "./pages/AdsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { MonitoringPage } from "./pages/MonitoringPage";
 import { ContentLabPage } from "./pages/ContentLabPage";
 import { DatabasePage } from "./pages/DatabasePage";
 import { AiModelsPage } from "./pages/AiModelsPage";
+import { ContentAnalyticsPage } from "./pages/ContentAnalyticsPage";
+import { SystemSettingsPage } from "./pages/SystemSettingsPage";
 import { NoAccessPage } from "./pages/NoAccessPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 const adminNav: NavItem[] = [
   { to: "/admin", label: "Dashboard" },
+  { to: "/admin/user-management", label: "User Management" },
   { to: "/admin/courses", label: "Khóa học" },
   { to: "/admin/units", label: "Units" },
   { to: "/admin/lessons", label: "Lessons" },
   { to: "/admin/content-lab", label: "Ngữ pháp & Test" },
+  { to: "/admin/content-analytics", label: "Content Analytics" },
   { to: "/admin/vocabulary", label: "Từ vựng" },
   { to: "/admin/achievements", label: "Achievements" },
   { to: "/admin/shop", label: "Shop" },
   { to: "/admin/users", label: "Users" },
   { to: "/admin/ads", label: "Banner & Ads" },
   { to: "/admin/logs", label: "Logs" },
-  { to: "/admin/monitoring", label: "Monitoring" }
+  { to: "/admin/monitoring", label: "Monitoring" },
+  { to: "/admin/settings", label: "Cài đặt" }
 ];
 
 const superNav: NavItem[] = [
@@ -60,10 +66,14 @@ const App = () => {
           <Route element={<RequireRole allowed={["admin", "super_admin"]} />}>
             <Route element={<AppShell title="Admin Dashboard" role="admin" navItems={adminNav} />}>
               <Route path="/admin" element={<EnhancedAdminDashboard />} />
+              <Route path="/admin/user-management" element={<UserManagementPage />} />
               <Route path="/admin/courses" element={<CoursesPage />} />
+              <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
+              <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
               <Route path="/admin/units" element={<UnitsPage />} />
               <Route path="/admin/lessons" element={<LessonsPage />} />
               <Route path="/admin/content-lab" element={<ContentLabPage />} />
+              <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />
               <Route path="/admin/shop" element={<ShopPage />} />
@@ -71,6 +81,7 @@ const App = () => {
               <Route path="/admin/ads" element={<AdsPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/monitoring" element={<MonitoringPage />} />
+              <Route path="/admin/settings" element={<SystemSettingsPage />} />
             </Route>
           </Route>
 

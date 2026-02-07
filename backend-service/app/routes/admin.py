@@ -6,9 +6,9 @@ Requires admin or super_admin role via RBAC system.
 
 from typing import Optional, List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func, desc
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin, get_current_super_admin
@@ -47,6 +47,92 @@ require_admin = get_current_admin
 # ============================================================================
 # Course Admin CRUD
 # ============================================================================
+
+@router.get("/courses", response_model=ApiResponse[dict])
+async def list_courses_admin(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    level: Optional[str] = Query(None),
+    is_published: Optional[bool] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """List all courses (including unpublished) for admin management."""
+    query = select(Course)
+    filters = []
+    if search:
+        pattern = f"%{search}%"
+        filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern)))
+    if level:
+        filters.append(Course.level == level)
+    if is_published is not None:
+        filters.append(Course.is_published == is_published)
+    if filters:
+        from sqlalchemy import and_
+        query = query.where(and_(*filters))
+    
+    count_q = select(func.count()).select_from(query.subquery())
+    total = await db.scalar(count_q) or 0
+    
+    query = query.order_by(desc(Course.updated_at))
+    offset = (page - 1) * page_size
+    result = await db.execute(query.offset(offset).limit(page_size))
+    courses = result.scalars().all()
+    
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(courses)} courses",
+        data={
+            "courses": [CourseResponse.model_validate(c).model_dump() for c in courses],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size,
+        }
+    )
+
+
+@router.get("/units", response_model=ApiResponse[List[dict]])
+async def list_units_admin(
+    course_id: UUID = Query(..., description="Filter units by course"),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """List all units for a course."""
+    result = await db.execute(
+        select(Unit).where(Unit.course_id == course_id).order_by(Unit.order_index)
+    )
+    units = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(units)} units",
+        data=[UnitResponse.model_validate(u).model_dump() for u in units]
+    )
+
+
+@router.get("/lessons", response_model=ApiResponse[List[dict]])
+async def list_lessons_admin(
+    unit_id: Optional[UUID] = Query(None, description="Filter by unit"),
+    course_id: Optional[UUID] = Query(None, description="Filter by course"),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """List lessons filtered by unit or course."""
+    query = select(Lesson)
+    if unit_id:
+        query = query.where(Lesson.unit_id == unit_id)
+    elif course_id:
+        query = query.where(Lesson.course_id == course_id)
+    query = query.order_by(Lesson.order_index)
+    result = await db.execute(query)
+    lessons = result.scalars().all()
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(lessons)} lessons",
+        data=[LessonResponse.model_validate(l).model_dump() for l in lessons]
+    )
+
 
 @router.post("/courses", response_model=ApiResponse[CourseResponse])
 async def create_course(
@@ -321,10 +407,11 @@ async def list_vocabulary(
         data=[{
             "id": str(item.id),
             "word": item.word,
+            "definition": getattr(item, "definition", None),
             "translation": item.translation,
             "part_of_speech": item.part_of_speech,
+            "pronunciation": getattr(item, "pronunciation", None),
             "difficulty_level": item.difficulty_level,
-            "status": item.status
         } for item in items]
     )
 
@@ -409,6 +496,120 @@ async def delete_vocabulary(
     )
 
 
+@router.put("/vocabulary/{vocab_id}", response_model=ApiResponse[dict])
+async def update_vocabulary(
+    vocab_id: UUID,
+    word: Optional[str] = None,
+    definition: Optional[str] = None,
+    translation: Optional[str] = None,
+    part_of_speech: Optional[str] = None,
+    pronunciation: Optional[str] = None,
+    difficulty_level: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Update a vocabulary item."""
+    result = await db.execute(
+        select(VocabularyItem).where(VocabularyItem.id == vocab_id)
+    )
+    vocab = result.scalar_one_or_none()
+    if not vocab:
+        raise HTTPException(status_code=404, detail="Vocabulary not found")
+    
+    if word is not None: vocab.word = word
+    if definition is not None: vocab.definition = definition
+    if translation is not None: vocab.translation = {"vi": translation}
+    if part_of_speech is not None: vocab.part_of_speech = part_of_speech
+    if pronunciation is not None: vocab.pronunciation = pronunciation
+    if difficulty_level is not None: vocab.difficulty_level = difficulty_level
+    
+    await db.commit()
+    await db.refresh(vocab)
+    
+    return ApiResponse(
+        success=True,
+        message="Vocabulary updated successfully",
+        data={
+            "id": str(vocab.id),
+            "word": vocab.word,
+            "definition": vocab.definition,
+            "translation": vocab.translation,
+            "part_of_speech": vocab.part_of_speech,
+            "difficulty_level": vocab.difficulty_level,
+        }
+    )
+
+
+@router.post("/vocabulary/bulk-import", response_model=ApiResponse[dict])
+async def bulk_import_vocabulary(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """
+    Bulk import vocabulary from CSV file.
+    
+    CSV format: word,definition,translation,part_of_speech,pronunciation,difficulty_level
+    First row must be headers.
+    """
+    import csv
+    import io
+    
+    if not file.filename or not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    
+    content = await file.read()
+    text = content.decode("utf-8-sig")  # Handle BOM
+    reader = csv.DictReader(io.StringIO(text))
+    
+    created = 0
+    skipped = 0
+    errors = []
+    
+    for row_num, row in enumerate(reader, start=2):
+        word = row.get("word", "").strip()
+        definition = row.get("definition", "").strip()
+        translation = row.get("translation", "").strip()
+        
+        if not word:
+            skipped += 1
+            continue
+        
+        # Check duplicate
+        existing = await db.scalar(
+            select(func.count()).where(VocabularyItem.word == word)
+        )
+        if existing:
+            skipped += 1
+            continue
+        
+        try:
+            vocab = VocabularyItem(
+                word=word,
+                definition=definition or word,
+                translation={"vi": translation} if translation else {},
+                part_of_speech=row.get("part_of_speech", "noun").strip() or "noun",
+                pronunciation=row.get("pronunciation", "").strip() or None,
+                difficulty_level=row.get("difficulty_level", "A1").strip() or "A1",
+            )
+            db.add(vocab)
+            created += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+    
+    await db.commit()
+    
+    return ApiResponse(
+        success=True,
+        message=f"Imported {created} words, skipped {skipped} duplicates",
+        data={
+            "created": created,
+            "skipped": skipped,
+            "errors": errors[:10],  # Limit error list
+        }
+    )
+
+
 # ============================================================================
 # Achievement Admin CRUD
 # ============================================================================
@@ -485,6 +686,55 @@ async def create_achievement(
             "id": str(achievement.id),
             "name": achievement.name,
             "category": achievement.category
+        }
+    )
+
+
+@router.put("/achievements/{achievement_id}", response_model=ApiResponse[dict])
+async def update_achievement(
+    achievement_id: UUID,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    condition_type: Optional[str] = None,
+    condition_value: Optional[int] = None,
+    category: Optional[str] = None,
+    rarity: Optional[str] = None,
+    xp_reward: Optional[int] = None,
+    gems_reward: Optional[int] = None,
+    is_hidden: Optional[bool] = None,
+    badge_icon: Optional[str] = None,
+    badge_color: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Update an achievement. Admin only."""
+    result = await db.execute(
+        select(Achievement).where(Achievement.id == achievement_id)
+    )
+    achievement = result.scalar_one_or_none()
+    if not achievement:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
+
+    for field, value in {
+        "name": name, "description": description, "condition_type": condition_type,
+        "condition_value": condition_value, "category": category, "rarity": rarity,
+        "xp_reward": xp_reward, "gems_reward": gems_reward, "is_hidden": is_hidden,
+        "badge_icon": badge_icon, "badge_color": badge_color,
+    }.items():
+        if value is not None:
+            setattr(achievement, field, value)
+
+    await db.commit()
+    await db.refresh(achievement)
+
+    return ApiResponse(
+        success=True,
+        message="Achievement updated successfully",
+        data={
+            "id": str(achievement.id),
+            "name": achievement.name,
+            "category": achievement.category,
+            "rarity": achievement.rarity,
         }
     )
 
@@ -997,83 +1247,50 @@ async def seed_sample_data(
 
 
 # ============================================================================
-# User Admin (RBAC)
+# System Settings / Info
 # ============================================================================
 
-@router.get("/users", response_model=ApiResponse[List[AdminUserListItem]])
-async def list_users_admin(
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
-    search: Optional[str] = Query(None, description="Search by email/username"),
+@router.get("/system-info", response_model=ApiResponse[dict])
+async def get_system_info(
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
-    """List users for admin dashboard."""
-    query = select(User)
-    if search:
-        like = f"%{search}%"
-        query = query.where(or_(User.email.ilike(like), User.username.ilike(like)))
-    query = query.order_by(User.created_at.desc()).limit(limit).offset(offset)
+    """Get system configuration and stats. Admin only."""
+    from app.core.config import settings as app_settings
+    from app.models.user import User as UserModel
 
-    result = await db.execute(query)
-    users = result.scalars().all()
-
-    return ApiResponse(
-        success=True,
-        message=f"Retrieved {len(users)} users",
-        data=[AdminUserListItem.model_validate(u) for u in users]
-    )
-
-
-@router.get("/roles", response_model=ApiResponse[List[dict]])
-async def list_roles_admin(
-    db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
-):
-    """List available roles."""
-    result = await db.execute(select(Role).order_by(Role.level))
-    roles = result.scalars().all()
-    return ApiResponse(
-        success=True,
-        message=f"Retrieved {len(roles)} roles",
-        data=[{"id": str(r.id), "name": r.name, "slug": r.slug, "level": r.level} for r in roles]
-    )
-
-
-@router.patch("/users/{user_id}", response_model=ApiResponse[AdminUserListItem])
-async def update_user_admin(
-    user_id: UUID,
-    payload: AdminUserUpdate,
-    db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
-):
-    """Update user status/role (role changes require super admin)."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if payload.role_slug:
-        # Only super admin can change roles
-        if not admin_user.is_super_admin:
-            raise HTTPException(status_code=403, detail="Super admin required to change roles")
-        role_result = await db.execute(select(Role).where(Role.slug == payload.role_slug))
-        role = role_result.scalar_one_or_none()
-        if not role:
-            raise HTTPException(status_code=400, detail="Invalid role slug")
-        user.role_id = role.id
-
-    if payload.is_active is not None:
-        user.is_active = payload.is_active
-
-    if payload.display_name is not None:
-        user.display_name = payload.display_name
-
-    await db.commit()
-    await db.refresh(user)
+    # Count totals
+    user_count = (await db.execute(select(func.count(UserModel.id)))).scalar() or 0
+    course_count = (await db.execute(select(func.count(Course.id)))).scalar() or 0
+    vocab_count = (await db.execute(select(func.count(VocabularyItem.id)))).scalar() or 0
+    achievement_count = (await db.execute(select(func.count(Achievement.id)))).scalar() or 0
 
     return ApiResponse(
         success=True,
-        message="User updated",
-        data=AdminUserListItem.model_validate(user)
+        message="System info",
+        data={
+            "app_name": app_settings.APP_NAME,
+            "app_env": app_settings.APP_ENV,
+            "debug": app_settings.DEBUG,
+            "api_prefix": app_settings.API_V1_PREFIX,
+            "log_level": app_settings.LOG_LEVEL,
+            "token_expire_minutes": app_settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            "refresh_token_days": app_settings.REFRESH_TOKEN_EXPIRE_DAYS,
+            "cors_origins": app_settings.cors_origins,
+            "ai_service_url": app_settings.AI_SERVICE_URL,
+            "google_oauth": bool(app_settings.GOOGLE_CLIENT_ID),
+            "firebase": bool(app_settings.FIREBASE_PROJECT_ID),
+            "totals": {
+                "users": user_count,
+                "courses": course_count,
+                "vocabulary": vocab_count,
+                "achievements": achievement_count,
+            }
+        }
     )
+
+
+# ============================================================================
+# User Admin (RBAC) - MOVED TO app/routes/user_management.py
+# ============================================================================
+# Legacy routes removed - use /api/v1/admin/users/* endpoints from user_management.py
