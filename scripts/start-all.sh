@@ -52,6 +52,7 @@ cleanup() {
     # Kill processes on ports
     lsof -ti :8000 | xargs kill -9 2>/dev/null || true
     lsof -ti :8001 | xargs kill -9 2>/dev/null || true
+    lsof -ti :5176 | xargs kill -9 2>/dev/null || true
     lsof -ti :8080 | xargs kill -9 2>/dev/null || true
     
     echo -e "${GREEN}[OK] All services stopped${NC}"
@@ -91,29 +92,14 @@ kill_port() {
     return 0
 }
 
-# Check all required ports
-echo -e "${YELLOW}[CHECK] Checking port availability...${NC}"
-PORTS_OK=true
-
-for port_info in "8000:Backend" "8001:AI Service" "8080:Flutter"; do
-    port=${port_info%%:*}
-    service=${port_info#*:}
-    if ! check_port $port "$service"; then
-        PORTS_OK=false
-    fi
-done
-
-if [ "$PORTS_OK" = false ]; then
-    echo ""
-    echo -e "${YELLOW}[CLEANUP] Cleaning up occupied ports...${NC}"
-    kill_port 8000 "Backend"
-    kill_port 8001 "AI Service"
-    kill_port 8080 "Flutter"
-    echo ""
-else
-    echo -e "${GREEN}[OK] All ports available${NC}"
-    echo ""
-fi
+# Always cleanup ports before starting
+echo -e "${YELLOW}[CLEANUP] Stopping any existing services on ports...${NC}"
+kill_port 8000 "Backend"
+kill_port 8001 "AI Service"
+kill_port 5176 "Admin Dashboard"
+kill_port 8080 "Flutter"
+echo -e "${GREEN}[OK] All ports cleared${NC}"
+echo ""
 
 # Clean up old PID files
 rm -f "$PID_DIR"/*.pid
@@ -236,6 +222,57 @@ for i in {1..30}; do
     sleep 1
 done
 
+# ============ Admin Dashboard ============
+echo -e "${BLUE}[START] Starting Admin Dashboard (port 5176)...${NC}"
+
+ADMIN_DIR="$PROJECT_ROOT/admin-service"
+
+# Check if node_modules exists
+if [ ! -d "$ADMIN_DIR/node_modules" ]; then
+    echo -e "   ${YELLOW}[SETUP] Installing admin dependencies...${NC}"
+    (cd "$ADMIN_DIR" && npm install >> "$LOG_DIR/admin.log" 2>&1)
+fi
+
+# Clear old logs
+> "$LOG_DIR/admin.log"
+
+# Start admin dashboard
+(
+    cd "$ADMIN_DIR"
+    echo "$(date): Starting Admin Dashboard on port 5176" >> "$LOG_DIR/admin.log"
+    npx vite --port 5176 >> "$LOG_DIR/admin.log" 2>&1
+) &
+ADMIN_PID=$!
+echo $ADMIN_PID > "$PID_DIR/admin.pid"
+echo -e "${GREEN}[OK] Admin Dashboard started (PID: $ADMIN_PID)${NC}"
+
+# Wait for admin
+echo -n "   Waiting for admin dashboard"
+for i in {1..30}; do
+    if lsof -Pi :5176 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo -e " ${GREEN}Ready!${NC}"
+        break
+    fi
+
+    # Check if process still running
+    if ! kill -0 "$ADMIN_PID" 2>/dev/null; then
+        echo -e " ${RED}Failed!${NC}"
+        echo -e "   ${RED}[ERROR] Admin Dashboard process died. Check logs:${NC}"
+        echo -e "   ${YELLOW}tail -30 $LOG_DIR/admin.log${NC}"
+        tail -20 "$LOG_DIR/admin.log"
+        cleanup
+    fi
+
+    if [ $i -eq 30 ]; then
+        echo -e " ${RED}Timeout!${NC}"
+        echo -e "   ${YELLOW}Check logs: tail -f $LOG_DIR/admin.log${NC}"
+        tail -20 "$LOG_DIR/admin.log"
+        cleanup
+    fi
+    echo -n "."
+    sleep 1
+done
+
 # ============ Flutter Web ============
 echo -e "${BLUE}[START] Starting Flutter Web (port 8080)...${NC}"
 cd "$PROJECT_ROOT/flutter-app"
@@ -246,18 +283,20 @@ rm -rf .dart_tool/chrome-device 2>/dev/null || true
 # Summary before Flutter starts
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║    Backend Services Started!           ║${NC}"
+echo -e "${GREEN}║    All Services Started!               ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}[URLS]${NC}"
 echo -e "  Backend:    ${YELLOW}http://localhost:8000${NC}"
 echo -e "  API Docs:   ${YELLOW}http://localhost:8000/docs${NC}"
 echo -e "  AI Service: ${YELLOW}http://localhost:8001${NC}"
+echo -e "  Admin:      ${YELLOW}http://localhost:5176${NC}"
 echo -e "  Flutter:    ${YELLOW}http://localhost:8080${NC} (starting...)"
 echo ""
 echo -e "${BLUE}[LOGS]${NC}"
 echo -e "  Backend:    ${YELLOW}tail -f $LOG_DIR/backend.log${NC}"
 echo -e "  AI:         ${YELLOW}tail -f $LOG_DIR/ai-service.log${NC}"
+echo -e "  Admin:      ${YELLOW}tail -f $LOG_DIR/admin.log${NC}"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 echo ""

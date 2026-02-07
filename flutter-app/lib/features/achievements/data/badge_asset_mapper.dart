@@ -99,25 +99,23 @@ class BadgeAssetMapper {
   }
 }
 
-/// Badge image URLs for achievements (can use network images)
-/// Use this if you want to host images externally
+/// Badge image URLs for achievements (CDN-hosted)
+/// Loads badges from jsdelivr CDN for better performance
 class BadgeNetworkImages {
   BadgeNetworkImages._();
   
-  static const String _baseUrl = 'https://your-cdn.com/badges';
+  static const String _baseUrl = 'https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges';
   
-  /// Get badge URL for an achievement category
-  static String getCategoryBadgeUrl(String category, String rarity) {
-    return '$_baseUrl/${category}_$rarity.png';
+  /// Get badge URL for an achievement from CDN
+  /// Returns null if no badge mapping exists
+  static String? getBadgeUrl(String achievementId) {
+    final filename = BadgeAssetMapper._badgeAssets[achievementId.toLowerCase()];
+    if (filename == null) return null;
+    return '$_baseUrl/$filename';
   }
   
-  /// Map of achievement IDs to their badge image URLs
-  static const Map<String, String> badgeUrls = {
-    // Add URLs when hosting is set up
-    // 'first_steps': 'https://your-cdn.com/badges/first_steps.png',
-  };
-  
-  static String? getBadgeUrl(String achievementId) {
-    return badgeUrls[achievementId.toLowerCase()];
+  /// Check if achievement has a CDN badge URL
+  static bool hasCdnBadge(String achievementId) {
+    return BadgeAssetMapper._badgeAssets.containsKey(achievementId.toLowerCase());
   }
 }
