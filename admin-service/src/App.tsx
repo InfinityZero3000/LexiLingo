@@ -31,6 +31,8 @@ import { DatabasePage } from "./pages/DatabasePage";
 import { AiModelsPage } from "./pages/AiModelsPage";
 import { ContentAnalyticsPage } from "./pages/ContentAnalyticsPage";
 import { SystemSettingsPage } from "./pages/SystemSettingsPage";
+import { AdminManagementPage } from "./pages/AdminManagementPage";
+import { AiChatSettingsPage } from "./pages/AiChatSettingsPage";
 import { NoAccessPage } from "./pages/NoAccessPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
@@ -56,6 +58,8 @@ const AppRoutes = () => {
 
   const superNav: NavItem[] = [
     { to: "/super", label: t.nav.superDashboard, icon: <Shield size={18} /> },
+    { to: "/super/admins", label: "Admin Management", icon: <Users size={18} /> },
+    { to: "/super/ai-chat", label: "AI Chat Config", icon: <Bot size={18} /> },
     { to: "/super/db", label: t.nav.database, icon: <Database size={18} /> },
     { to: "/super/ai-models", label: t.nav.aiModels, icon: <Bot size={18} /> },
     { to: "/admin", label: t.nav.adminZone, icon: <ArrowRight size={18} /> },
@@ -93,6 +97,8 @@ const AppRoutes = () => {
         <Route element={<RequireRole allowed={["super_admin"]} />}>
           <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
             <Route path="/super" element={<SuperAdminDashboard />} />
+            <Route path="/super/admins" element={<AdminManagementPage />} />
+            <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
             <Route path="/super/db" element={<DatabasePage />} />
             <Route path="/super/ai-models" element={<AiModelsPage />} />
           </Route>

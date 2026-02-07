@@ -554,6 +554,52 @@ const vi = {
     loadAvg: "Load Average",
   },
 
+  // ============== Admin Management ==============
+  adminManagement: {
+    title: "Quản lý Admin",
+    description: "Quản lý quyền truy cập Admin và Super Admin",
+    addAdmin: "Thêm Admin",
+    addAdminDesc: "Cấp quyền admin cho người dùng hiện có",
+    email: "Email",
+    displayName: "Tên hiển thị",
+    role: "Vai trò",
+    provider: "Nhà cung cấp",
+    status: "Trạng thái",
+    lastLogin: "Đăng nhập cuối",
+    admin: "Admin",
+    superAdmin: "Super Admin",
+    activate: "Kích hoạt",
+    deactivate: "Vô hiệu hóa",
+    emailHint: "Email của người dùng đã tồn tại trong hệ thống",
+  },
+
+  // ============== AI Chat Settings ==============
+  aiChat: {
+    title: "Cấu hình AI Chat",
+    description: "Thiết lập Gemini API và các tính năng AI",
+    model: "Mô hình",
+    temperature: "Temperature",
+    creativity: "Sáng tạo",
+    maxTokens: "Max Tokens",
+    responseLength: "Độ dài phản hồi",
+    features: "Tính năng",
+    modulesEnabled: "modules đang bật",
+    modelSettings: "Cấu hình mô hình",
+    temperatureHint: "0 = chính xác, 2 = sáng tạo",
+    voiceSupport: "Hỗ trợ Voice",
+    voiceDesc: "STT & TTS cho AI chat",
+    grammarCheck: "Kiểm tra ngữ pháp",
+    grammarDesc: "Tự động phân tích lỗi ngữ pháp",
+    topicAnalysis: "Phân tích chủ đề",
+    topicDesc: "Xác định chủ đề hội thoại",
+    mongodb: "MongoDB",
+    mongodbDesc: "Lưu trữ lịch sử chat",
+    chatMemory: "Bộ nhớ chat (turns)",
+    chatMemoryHint: "Số lượng tin nhắn ghi nhớ trong ngữ cảnh",
+    apiKeyWarning: "⚠️ Cảnh báo API Key",
+    apiKeyWarningDesc: "Gemini API Key được cấu hình qua biến môi trường GEMINI_API_KEY trên server. Không thể thay đổi từ giao diện này.",
+  },
+
   // ============== Error Pages ==============
   errorPages: {
     noAccess: "Không có quyền truy cập",

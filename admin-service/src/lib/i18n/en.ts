@@ -567,4 +567,51 @@ const en: Translations = {
   },
 };
 
+  // ============== Admin Management ==============
+  adminManagement: {
+    title: "Admin Management",
+    description: "Manage Admin and Super Admin access",
+    addAdmin: "Add Admin",
+    addAdminDesc: "Grant admin privileges to existing user",
+    email: "Email",
+    displayName: "Display Name",
+    role: "Role",
+    provider: "Provider",
+    status: "Status",
+    lastLogin: "Last Login",
+    admin: "Admin",
+    superAdmin: "Super Admin",
+    activate: "Activate",
+    deactivate: "Deactivate",
+    emailHint: "Email of an existing user in the system",
+  },
+
+  // ============== AI Chat Settings ==============
+  aiChat: {
+    title: "AI Chat Configuration",
+    description: "Configure Gemini API and AI features",
+    model: "Model",
+    temperature: "Temperature",
+    creativity: "Creativity",
+    maxTokens: "Max Tokens",
+    responseLength: "Response length",
+    features: "Features",
+    modulesEnabled: "modules enabled",
+    modelSettings: "Model Settings",
+    temperatureHint: "0 = precise, 2 = creative",
+    voiceSupport: "Voice Support",
+    voiceDesc: "STT & TTS for AI chat",
+    grammarCheck: "Grammar Check",
+    grammarDesc: "Auto-analyze grammar errors",
+    topicAnalysis: "Topic Analysis",
+    topicDesc: "Identify conversation topics",
+    mongodb: "MongoDB",
+    mongodbDesc: "Store chat history",
+    chatMemory: "Chat Memory (turns)",
+    chatMemoryHint: "Number of messages to keep in context",
+    apiKeyWarning: "⚠️ API Key Warning",
+    apiKeyWarningDesc: "Gemini API Key is configured via GEMINI_API_KEY environment variable on the server. Cannot be changed from this interface.",
+  },
+};
+
 export default en;
