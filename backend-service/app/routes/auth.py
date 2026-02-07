@@ -256,7 +256,14 @@ async def google_login(
     user = result.scalar_one_or_none()
     
     if not user:
-        # Create new user from Google info
+        # For admin source, do not create new users - must be existing admin
+        if request.source == "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No admin account found with this email. Only existing admins can login."
+            )
+        
+        # Create new user from Google info (app source only)
         username = email.split("@")[0]
         
         # Ensure unique username
@@ -271,6 +278,13 @@ async def google_login(
             username = f"{base_username}{counter}"
             counter += 1
         
+        # Get default "user" role
+        role_id = None
+        result = await db.execute(select(Role).where(Role.slug == "user"))
+        role = result.scalar_one_or_none()
+        if role:
+            role_id = role.id
+        
         user = User(
             email=email,
             username=username,
@@ -278,7 +292,8 @@ async def google_login(
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
             provider="google",
-            is_verified=google_info.get("email_verified", False)
+            is_verified=google_info.get("email_verified", False),
+            role_id=role_id  # Assign default user role
         )
         db.add(user)
         await db.commit()
@@ -289,6 +304,18 @@ async def google_login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered with email/password. Please login with password."
         )
+    
+    # For admin source, verify user has admin or super_admin role
+    if request.source == "admin":
+        # Load user with role relationship to get role_slug
+        await db.refresh(user, ["role"])
+        user_role = user.role.slug if user.role else None
+        
+        if user_role not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Admin privileges required."
+            )
     
     if not user.is_active:
         raise HTTPException(
