@@ -275,10 +275,66 @@ done
 
 # ============ Flutter Web ============
 echo -e "${BLUE}[START] Starting Flutter Web (port 8080)...${NC}"
+
+# Check if Flutter is already running
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║    All Services Ready!                 ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BLUE}[URLS]${NC}"
+    echo -e "  Backend:    ${YELLOW}http://localhost:8000${NC}"
+    echo -e "  API Docs:   ${YELLOW}http://localhost:8000/docs${NC}"
+    echo -e "  AI Service: ${YELLOW}http://localhost:8001${NC}"
+    echo -e "  Admin:      ${YELLOW}http://localhost:5176${NC}"
+    echo -e "  Flutter:    ${YELLOW}http://localhost:8080${NC}"
+    echo ""
+    echo -e "${BLUE}[LOGS]${NC}"
+    echo -e "  Backend:    ${YELLOW}tail -f $LOG_DIR/backend.log${NC}"
+    echo -e "  AI:         ${YELLOW}tail -f $LOG_DIR/ai-service.log${NC}"
+    echo -e "  Admin:      ${YELLOW}tail -f $LOG_DIR/admin.log${NC}"
+    echo ""
+    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
+    echo ""
+    wait
+    exit 0
+fi
+
 cd "$PROJECT_ROOT/flutter-app"
 
 # Clean Chrome cache
 rm -rf .dart_tool/chrome-device 2>/dev/null || true
+
+# Check if flutter command exists
+if ! command -v flutter &> /dev/null; then
+    echo ""
+    echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║    Backend Services Ready!             ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BLUE}[URLS]${NC}"
+    echo -e "  Backend:    ${YELLOW}http://localhost:8000${NC}"
+    echo -e "  API Docs:   ${YELLOW}http://localhost:8000/docs${NC}"
+    echo -e "  AI Service: ${YELLOW}http://localhost:8001${NC}"
+    echo -e "  Admin:      ${YELLOW}http://localhost:5176${NC}"
+    echo ""
+    echo -e "${YELLOW}[FLUTTER] Flutter CLI not found in PATH${NC}"
+    echo -e "${YELLOW}To start Flutter manually:${NC}"
+    echo -e "  cd flutter-app"
+    echo -e "  flutter run -d chrome --web-port=8080"
+    echo ""
+    echo -e "${BLUE}[LOGS]${NC}"
+    echo -e "  Backend:    ${YELLOW}tail -f $LOG_DIR/backend.log${NC}"
+    echo -e "  AI:         ${YELLOW}tail -f $LOG_DIR/ai-service.log${NC}"
+    echo -e "  Admin:      ${YELLOW}tail -f $LOG_DIR/admin.log${NC}"
+    echo ""
+    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
+    echo ""
+    wait
+    exit 0
+fi
 
 # Summary before Flutter starts
 echo ""
