@@ -1,0 +1,49 @@
+{
+  "version": 2,
+  "name": "lexilingo-app",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build/web"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "BACKEND_API_URL": "https://lexilingo-backend.onrender.com",
+    "AI_SERVICE_URL": "https://your-tunnel-url.trycloudflare.com"
+  },
+  "build": {
+    "env": {
+      "FLUTTER_VERSION": "3.24.0"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}

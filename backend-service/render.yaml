@@ -1,0 +1,79 @@
+# Render.com deployment configuration for LexiLingo Backend
+# Docs: https://render.com/docs/infrastructure-as-code
+
+services:
+  # Backend API Service
+  - type: web
+    name: lexilingo-backend
+    env: python
+    region: singapore  # Closest to Vietnam
+    plan: free  # 750 hours/month free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    
+    # Auto-deploy on git push
+    autoDeploy: true
+    branch: main
+    
+    # Environment variables
+    envVars:
+      # Database (từ Supabase)
+      - key: DATABASE_URL
+        sync: false  # Nhập manual: postgresql://user:pass@host:5432/db
+      
+      # AI Service (từ local machine qua tunnel)
+      - key: AI_SERVICE_URL
+        value: https://your-tunnel-url.trycloudflare.com
+        # UPDATE THIS sau khi setup tunnel!
+      
+      # JWT Secret
+      - key: JWT_SECRET_KEY
+        generateValue: true  # Auto-generate random secret
+      
+      - key: JWT_ALGORITHM
+        value: HS256
+      
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      
+      # Firebase (copy content từ firebase-service-account.json)
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false  # Paste JSON content manually
+      
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      
+      # CORS Origins
+      - key: ALLOWED_ORIGINS
+        value: https://your-app.vercel.app,https://your-admin.netlify.app
+        # UPDATE sau khi deploy frontend!
+      
+      # Environment
+      - key: ENVIRONMENT
+        value: production
+      
+      - key: LOG_LEVEL
+        value: INFO
+      
+      # Redis (optional - dùng Upstash free tier)
+      - key: REDIS_URL
+        sync: false  # redis://default:pass@host:port
+      
+    # Health check settings
+    healthCheck:
+      path: /health
+      interval: 30s
+      timeout: 10s
+      unhealthyThreshold: 3
+
+# Note: After deployment, update these URLs:
+# 1. AI_SERVICE_URL: URL từ cloudflare tunnel
+# 2. ALLOWED_ORIGINS: URL của Vercel (frontend) và Netlify (admin)
+# 3. DATABASE_URL: Connection string từ Supabase
+# 4. FIREBASE_SERVICE_ACCOUNT: Content của firebase-service-account.json

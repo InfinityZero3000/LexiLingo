@@ -1,0 +1,83 @@
+# Docker Compose for running AI Service locally
+# This file is optimized for local development and hybrid deployment
+
+version: '3.8'
+
+services:
+  # AI Service - runs on local machine
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-ai-local
+    ports:
+      - "8001:8001"
+    environment:
+      # Gemini API Key for conversational AI
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      
+      # Model cache directory
+      - MODEL_CACHE_DIR=/app/models
+      
+      # Environment
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      
+      # Performance tuning
+      - WORKERS=1
+      - TIMEOUT=300
+      
+    volumes:
+      # Cache downloaded models to avoid re-downloading
+      - ./ai-service/models:/app/models
+      - ./ai-service/data:/app/data
+      - ./logs:/app/logs
+      
+    restart: unless-stopped
+    
+    # Resource limits (adjust based on your machine)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Use 2 CPU cores
+          memory: 4G       # Max 4GB RAM
+        reservations:
+          cpus: '1.0'
+          memory: 2G       # Reserve 2GB RAM
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    networks:
+      - lexilingo-network
+
+  # Redis cache (optional - for caching AI responses)
+  redis:
+    image: redis:7-alpine
+    container_name: lexilingo-redis-local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - lexilingo-network
+
+networks:
+  lexilingo-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+
+# Usage:
+# 1. Set GEMINI_API_KEY in .env file
+# 2. Run: docker-compose -f docker-compose.local.yml up -d
+# 3. Check logs: docker-compose -f docker-compose.local.yml logs -f ai-service
+# 4. Stop: docker-compose -f docker-compose.local.yml down
