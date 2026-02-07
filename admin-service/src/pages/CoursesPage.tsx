@@ -11,16 +11,20 @@ import {
   deleteCourse,
   type CourseItem,
 } from "../lib/adminApi";
+import { CourseImportModal } from "../components/CourseImportModal";
+import { useI18n } from "../lib/i18n";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export const CoursesPage = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
   const [filterPublished, setFilterPublished] = useState<string>("");
@@ -61,7 +65,7 @@ export const CoursesPage = () => {
         setTotal(data.total || 0);
       }
     } catch (err: any) {
-      setError(err?.message || "Không tải được danh sách khóa học");
+      setError(err?.message || t.courses.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -107,27 +111,27 @@ export const CoursesPage = () => {
       setShowForm(false);
       await loadCourses();
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại");
+      setError(err?.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa khóa học này?")) return;
+    if (!confirm(t.courses.deleteCourse)) return;
     try {
       await deleteCourse(id);
       await loadCourses();
     } catch (err: any) {
-      setError(err?.message || "Xóa thất bại");
+      setError(err?.message || t.common.deleteFailed);
     }
   };
 
   return (
     <div className="stack">
       <SectionHeader
-        title="Quản lý Khóa học"
-        description={`${total} khóa học • Tạo, chỉnh sửa, quản lý nội dung khóa học`}
+        title={t.courses.title}
+        description={`${total} ${t.courses.description}`}
       />
 
       {error && <div className="form-error">{error}</div>}
@@ -137,27 +141,33 @@ export const CoursesPage = () => {
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flex: 1, minWidth: 200 }}>
             <input
-              placeholder="Tìm kiếm khóa học..."
+              placeholder={t.courses.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ flex: 1 }}
             />
-            <button className="ghost-button" type="submit">Tìm</button>
+            <button className="ghost-button" type="submit">{t.common.search}</button>
           </form>
           <select value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
-            <option value="">Tất cả level</option>
+            <option value="">{t.courses.allLevels}</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
           <select value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="true">Đã xuất bản</option>
-            <option value="false">Bản nháp</option>
+            <option value="">{t.courses.allStatus}</option>
+            <option value="true">{t.common.published}</option>
+            <option value="false">{t.common.draft}</option>
           </select>
+          <button
+            className="ghost-button"
+            onClick={() => setShowImport(true)}
+          >
+            {t.courses.importData}
+          </button>
           <button
             className="primary-button"
             onClick={() => { resetForm(); setShowForm(true); }}
           >
-            + Tạo khóa học
+            {t.courses.createCourse}
           </button>
         </div>
       </div>
@@ -165,15 +175,15 @@ export const CoursesPage = () => {
       {/* Course list */}
       <div className="panel">
         {loading ? (
-          <div className="loading">Đang tải...</div>
+          <div className="loading">{t.common.loading}</div>
         ) : courses.length === 0 ? (
-          <EmptyState title="Chưa có khóa học" description="Hãy tạo khóa học mới." />
+          <EmptyState title={t.courses.noCourses} description={t.courses.noCoursesDesc} />
         ) : (
           <>
             <DataTable
               columns={[
                 {
-                  header: "Khóa học",
+                  header: t.courses.course,
                   render: (row) => (
                     <div>
                       <div className="table-title" style={{ cursor: "pointer", color: "var(--accent)" }}
@@ -185,39 +195,39 @@ export const CoursesPage = () => {
                   ),
                 },
                 {
-                  header: "Level",
+                  header: t.courses.level,
                   render: (row) => <StatusPill tone="info" label={row.level} />,
                   align: "center",
                 },
                 {
-                  header: "Lessons",
+                  header: t.courses.lessons,
                   render: (row) => <span className="table-meta">{row.total_lessons}</span>,
                   align: "center",
                 },
                 {
-                  header: "XP",
+                  header: t.courses.xp,
                   render: (row) => <span className="table-meta">{row.total_xp}</span>,
                   align: "center",
                 },
                 {
-                  header: "Trạng thái",
+                  header: t.common.status,
                   render: (row) => (
                     <StatusPill
                       tone={row.is_published ? "success" : "warning"}
-                      label={row.is_published ? "Published" : "Draft"}
+                      label={row.is_published ? t.common.published : t.common.draft}
                     />
                   ),
                   align: "center",
                 },
                 {
-                  header: "Hành động",
+                  header: t.common.actions,
                   render: (row) => (
                     <div className="table-actions">
                       <button className="ghost-button small" onClick={() => navigate(`/admin/courses/${row.id}/units`)}>
-                        Units
+                        {t.courses.units}
                       </button>
-                      <button className="ghost-button small" onClick={() => handleEdit(row)}>Sửa</button>
-                      <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>Xóa</button>
+                      <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
+                      <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                     </div>
                   ),
                   align: "right",
@@ -228,66 +238,72 @@ export const CoursesPage = () => {
             {/* Pagination */}
             <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
               <button className="ghost-button small" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                ← Trước
+                {t.courses.prev}
               </button>
               <span className="table-meta" style={{ padding: "6px 12px" }}>
-                Trang {page} / {Math.ceil(total / 20) || 1}
+                {t.common.page} {page} {t.common.of} {Math.ceil(total / 20) || 1}
               </span>
               <button className="ghost-button small" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
-                Sau →
+                {t.courses.next}
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}</h3>
+            <h3>{editingId ? t.courses.editCourse : t.courses.createNew}</h3>
             <form className="form" onSubmit={handleSave}>
               <label>
-                Tiêu đề *
+                {t.courses.courseTitle}
                 <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
               </label>
               <label>
-                Mô tả
+                {t.common.description}
                 <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </label>
               <div className="form-row">
                 <label>
-                  Ngôn ngữ
+                  {t.courses.language}
                   <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
                 </label>
                 <label>
-                  Level
+                  {t.courses.level}
                   <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
                     {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </label>
               </div>
               <label>
-                Tags (cách bởi dấu phẩy)
+                {t.courses.tags}
                 <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
               </label>
               <label>
-                Thumbnail URL
+                {t.courses.thumbnailUrl}
                 <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
               </label>
               <label className="checkbox">
                 <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-                Xuất bản ngay
+                {t.courses.publishNow}
               </label>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>Hủy</button>
+                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Tạo"}
+                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <CourseImportModal
+          onClose={() => setShowImport(false)}
+          onImported={() => { void loadCourses(); }}
+        />
       )}
     </div>
   );

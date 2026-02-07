@@ -8,8 +8,10 @@ import { CoursePopularityChart } from "../components/dashboard/CoursePopularityC
 import { CompletionFunnelChart } from "../components/dashboard/CompletionFunnelChart";
 import { getDashboardKPIs, getUserGrowth, getEngagement, getCoursePopularity, getCompletionFunnel } from "../lib/analyticsApi";
 import { getDashboardStats } from "../lib/rbacApi";
+import { useI18n } from "../lib/i18n";
 
 export const EnhancedAdminDashboard = () => {
+  const { t } = useI18n();
   // Parallel data fetching - applying async-parallel pattern from React best practices
   const { data: kpisData, isLoading: kpisLoading, error: kpisError } = useQuery({
     queryKey: ["dashboard", "kpis"],
@@ -56,27 +58,27 @@ export const EnhancedAdminDashboard = () => {
       {/* KPI Cards */}
       <div className="card-grid">
         <StatCard
-          label="Tổng người dùng"
+          label={t.dashboard.totalUsers}
           value={kpisLoading ? "--" : (kpis?.total_users?.toLocaleString() ?? "--")}
-          trend={kpisLoading ? undefined : `${kpis?.active_users_7d ?? 0} hoạt động (7 ngày)`}
-          note={kpisError ? "Không tải được" : undefined}
+          trend={kpisLoading ? undefined : `${kpis?.active_users_7d ?? 0} ${t.dashboard.activeUsers}`}
+          note={kpisError ? t.common.loadFailed : undefined}
         />
         <StatCard
-          label="Khóa học"
+          label={t.dashboard.courses}
           value={kpisLoading ? "--" : String(kpis?.total_courses ?? "--")}
-          trend={kpisLoading ? undefined : `${kpis?.total_lessons_completed_today ?? 0} bài hoàn thành hôm nay`}
+          trend={kpisLoading ? undefined : `${kpis?.total_lessons_completed_today ?? 0} ${t.dashboard.lessonsCompletedToday}`}
           accent="teal"
         />
         <StatCard
-          label="Avg DAU (30 ngày)"
+          label={t.dashboard.avgDau}
           value={kpisLoading ? "--" : (kpis?.avg_dau_30d?.toFixed(0) ?? "--")}
-          trend="Người dùng hoạt động hàng ngày"
+          trend={t.dashboard.dauDescription}
           accent="berry"
         />
         <StatCard
-          label="Achievements"
+          label={t.dashboard.achievements}
           value={statsLoading ? "--" : String(stats?.total_achievements ?? "--")}
-          trend={statsLoading ? undefined : `${stats?.total_unlocks ?? 0} lượt mở khóa`}
+          trend={statsLoading ? undefined : `${stats?.total_unlocks ?? 0} ${t.dashboard.unlocked}`}
           accent="orange"
         />
       </div>
@@ -85,8 +87,8 @@ export const EnhancedAdminDashboard = () => {
       <div className="grid-2">
         <div className="panel">
           <SectionHeader
-            title="Tăng trưởng người dùng (30 ngày)"
-            description="Người dùng mới và tổng người dùng theo ngày"
+            title={t.dashboard.userGrowth}
+            description={t.dashboard.userGrowthDesc}
           />
           <UserGrowthChart 
             data={userGrowthData?.data ?? []} 
@@ -96,8 +98,8 @@ export const EnhancedAdminDashboard = () => {
 
         <div className="panel">
           <SectionHeader
-            title="Mức độ tương tác"
-            description="DAU, WAU, MAU theo tuần"
+            title={t.dashboard.engagement}
+            description={t.dashboard.engagementDesc}
           />
           <EngagementChart 
             data={engagementData?.data ?? []} 
@@ -110,8 +112,8 @@ export const EnhancedAdminDashboard = () => {
       <div className="grid-2">
         <div className="panel">
           <SectionHeader
-            title="Khóa học phổ biến"
-            description="Phân bố đăng ký theo khóa học"
+            title={t.dashboard.popularCourses}
+            description={t.dashboard.popularCoursesDesc}
           />
           <CoursePopularityChart 
             data={popularityData?.data ?? []} 
@@ -121,8 +123,8 @@ export const EnhancedAdminDashboard = () => {
 
         <div className="panel">
           <SectionHeader
-            title="Funnel hoàn thành khóa học"
-            description="Từ đăng ký đến hoàn thành"
+            title={t.dashboard.courseFunnel}
+            description={t.dashboard.courseFunnelDesc}
           />
           <CompletionFunnelChart 
             data={funnelData?.data ?? []} 
@@ -135,8 +137,8 @@ export const EnhancedAdminDashboard = () => {
       {stats && stats.recent_actions.length > 0 && (
         <div className="panel">
           <SectionHeader
-            title="Hoạt động Admin gần đây"
-            description="Audit trail từ hệ thống RBAC"
+            title={t.dashboard.recentActivity}
+            description={t.dashboard.recentActivityDesc}
           />
           <div className="pill-grid">
             {stats.recent_actions.slice(0, 10).map((a, i) => {

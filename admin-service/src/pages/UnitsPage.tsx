@@ -5,23 +5,34 @@ import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
 import {
   listUnitsAdmin,
+  listCoursesAdmin,
   createUnit,
   updateUnit,
   deleteUnit,
   type UnitItem,
+  type CourseItem,
 } from "../lib/adminApi";
+import { useI18n } from "../lib/i18n";
 
 export const UnitsPage = () => {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { courseId: paramCourseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Course filter (standalone mode)
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const isStandalone = !paramCourseId;
+  const activeCourseId = paramCourseId || selectedCourseId || undefined;
 
   // Form
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formCourseId, setFormCourseId] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -35,21 +46,35 @@ export const UnitsPage = () => {
     setEditingId(null);
   };
 
+  // Load courses list for filter dropdown
+  const loadCourses = async () => {
+    try {
+      const res = await listCoursesAdmin({ page_size: 100 });
+      setCourses(res.data?.courses || []);
+    } catch {}
+  };
+
   const loadUnits = async () => {
-    if (!courseId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await listUnitsAdmin(courseId);
+      const res = await listUnitsAdmin(activeCourseId);
       setUnits(res.data || []);
     } catch (err: any) {
-      setError(err?.message || "Lỗi tải units");
+      setError(err?.message || t.units.loadFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { void loadUnits(); }, [courseId]);
+  useEffect(() => {
+    if (isStandalone) loadCourses();
+  }, []);
+
+  useEffect(() => { void loadUnits(); }, [paramCourseId, selectedCourseId]);
+
+  // Build course name lookup
+  const courseMap = new Map(courses.map(c => [c.id, c.title]));
 
   const handleEdit = (unit: UnitItem) => {
     setEditingId(unit.id);
@@ -65,60 +90,69 @@ export const UnitsPage = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseId) return;
+    const targetCourseId = activeCourseId || formCourseId;
+    if (!targetCourseId) return;
     setSaving(true);
     setError(null);
     try {
       if (editingId) {
         await updateUnit(editingId, form);
       } else {
-        await createUnit({ ...form, course_id: courseId, order_index: form.order_index || units.length });
+        await createUnit({ ...form, course_id: targetCourseId, order_index: form.order_index || units.length });
       }
       resetForm();
       setShowForm(false);
+      setFormCourseId("");
       await loadUnits();
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại");
+      setError(err?.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa unit này? Tất cả lessons trong unit cũng sẽ bị xóa.")) return;
+    if (!confirm(t.units.deleteUnit)) return;
     try {
       await deleteUnit(id);
       await loadUnits();
     } catch (err: any) {
-      setError(err?.message || "Xóa thất bại");
+      setError(err?.message || t.common.deleteFailed);
     }
   };
 
   return (
     <div className="stack">
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button className="ghost-button small" onClick={() => navigate("/admin/courses")}>← Khóa học</button>
-        <SectionHeader
-          title={`Quản lý Units`}
-          description={`${units.length} units trong khóa học`}
-        />
-      </div>
+      <SectionHeader
+        title={t.units.title}
+        description={`${units.length} ${t.units.description}`}
+      />
 
       {error && <div className="form-error">{error}</div>}
 
       <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          {isStandalone && (
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              style={{ minWidth: 220, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
+            >
+              <option value="">-- Tất cả khóa học --</option>
+              {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+          )}
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
-            + Thêm Unit
+            {t.units.createUnit}
           </button>
         </div>
       </div>
 
       <div className="panel">
         {loading ? (
-          <div className="loading">Đang tải...</div>
+          <div className="loading">{t.common.loading}</div>
         ) : units.length === 0 ? (
-          <EmptyState title="Chưa có unit" description="Tạo unit mới cho khóa học này." />
+          <EmptyState title={t.units.noUnits} description={t.units.noUnitsDesc} />
         ) : (
           <DataTable
             columns={[
@@ -127,14 +161,22 @@ export const UnitsPage = () => {
                 render: (row) => <span className="table-meta">{row.order_index}</span>,
                 align: "center",
               },
+              ...(isStandalone ? [{
+                header: "Khóa học",
+                render: (row: UnitItem) => (
+                  <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
+                    {courseMap.get(row.course_id) || row.course_id.slice(0, 8)}
+                  </span>
+                ),
+              }] : []),
               {
-                header: "Unit",
-                render: (row) => (
+                header: t.units.unit,
+                render: (row: UnitItem) => (
                   <div>
                     <div
                       className="table-title"
                       style={{ cursor: "pointer", color: "var(--accent)" }}
-                      onClick={() => navigate(`/admin/courses/${courseId}/units/${row.id}/lessons`)}
+                      onClick={() => navigate(`/admin/courses/${row.course_id}/units/${row.id}/lessons`)}
                     >
                       {row.title}
                     </div>
@@ -143,13 +185,13 @@ export const UnitsPage = () => {
                 ),
               },
               {
-                header: "Lessons",
-                render: (row) => <span className="table-meta">{row.total_lessons}</span>,
+                header: "Bài học",
+                render: (row: UnitItem) => <span className="table-meta">{row.total_lessons}</span>,
                 align: "center",
               },
               {
                 header: "Màu",
-                render: (row) =>
+                render: (row: UnitItem) =>
                   row.background_color ? (
                     <div
                       style={{
@@ -157,7 +199,7 @@ export const UnitsPage = () => {
                         height: 24,
                         borderRadius: 4,
                         background: row.background_color,
-                        border: "1px solid var(--border)",
+                        border: "1px solid var(--line)",
                         margin: "0 auto",
                       }}
                     />
@@ -167,17 +209,17 @@ export const UnitsPage = () => {
                 align: "center",
               },
               {
-                header: "Hành động",
-                render: (row) => (
+                header: t.common.actions,
+                render: (row: UnitItem) => (
                   <div className="table-actions">
                     <button
                       className="ghost-button small"
-                      onClick={() => navigate(`/admin/courses/${courseId}/units/${row.id}/lessons`)}
+                      onClick={() => navigate(`/admin/courses/${row.course_id}/units/${row.id}/lessons`)}
                     >
-                      Lessons
+                      {t.nav.lessons}
                     </button>
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>Sửa</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>Xóa</button>
+                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",
@@ -192,19 +234,32 @@ export const UnitsPage = () => {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <h3>{editingId ? "Chỉnh sửa Unit" : "Tạo Unit mới"}</h3>
+            <h3>{editingId ? t.units.editUnit : t.units.createNew}</h3>
             <form className="form" onSubmit={handleSave}>
+              {isStandalone && !editingId && (
+                <label>
+                  Khóa học *
+                  <select
+                    value={formCourseId}
+                    onChange={(e) => setFormCourseId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Chọn khóa học --</option>
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                </label>
+              )}
               <label>
-                Tiêu đề *
+                {t.units.unitTitle}
                 <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
               </label>
               <label>
-                Mô tả
+                {t.common.description}
                 <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </label>
               <div className="form-row">
                 <label>
-                  Thứ tự
+                  {t.units.order}
                   <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
                 </label>
                 <label>
@@ -217,9 +272,9 @@ export const UnitsPage = () => {
                 <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
               </label>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>Hủy</button>
+                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Tạo"}
+                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
                 </button>
               </div>
             </form>

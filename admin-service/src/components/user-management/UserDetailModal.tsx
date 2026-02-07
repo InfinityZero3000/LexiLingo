@@ -79,10 +79,10 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading user details...</p>
+      <div className="modal-overlay">
+        <div className="modal-content" style={{ maxWidth: 400, textAlign: 'center' }}>
+          <div className="spinner" style={{ width: 44, height: 44, margin: '0 auto' }}></div>
+          <p style={{ marginTop: 16, color: 'var(--muted)' }}>Đang tải thông tin...</p>
         </div>
       </div>
     );
@@ -93,196 +93,184 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   }
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" style={{ maxWidth: 720 }}>
         {/* Header */}
-        <div className="px-6 py-4 border-b flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             {user.avatar_url ? (
-              <img src={user.avatar_url} alt="" className="w-16 h-16 rounded-full" />
+              <img src={user.avatar_url} alt="" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-600 text-2xl">{user.email[0].toUpperCase()}</span>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 22 }}>
+                {user.email[0].toUpperCase()}
               </div>
             )}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {user.display_name || 'No Name'}
-              </h2>
-              <p className="text-gray-600">{user.email}</p>
+              <h3 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>
+                {user.display_name || user.email.split('@')[0]}
+              </h3>
+              <span className="table-sub">{user.email}</span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
-          >
-            ×
+          <button onClick={onClose} className="icon-button" style={{ width: 36, height: 36 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
         
         {/* Tabs */}
-        <div className="flex border-b px-6">
+        <div className="tab-row" style={{ marginBottom: 20 }}>
           <button
             onClick={() => setActiveTab('info')}
-            className={`px-4 py-2 font-medium ${
-              activeTab === 'info'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`tab ${activeTab === 'info' ? 'active' : ''}`}
           >
-            Information
+            Thông tin
           </button>
           <button
             onClick={() => setActiveTab('activity')}
-            className={`px-4 py-2 font-medium ${
-              activeTab === 'activity'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`tab ${activeTab === 'activity' ? 'active' : ''}`}
           >
-            Activity
+            Hoạt động
           </button>
         </div>
         
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
           {activeTab === 'info' ? (
-            <div className="space-y-6">
+            <div className="stack">
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-blue-600 font-medium">Total XP</p>
-                  <p className="text-2xl font-bold text-blue-900">{user.total_xp.toLocaleString()}</p>
+              <div className="card-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+                <div className="panel-inner" style={{ textAlign: 'center' }}>
+                  <div className="stat-label">Total XP</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{user.total_xp.toLocaleString()}</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <p className="text-sm text-green-600 font-medium">Streak</p>
-                  <p className="text-2xl font-bold text-green-900">🔥 {user.streak_days}</p>
+                <div className="panel-inner" style={{ textAlign: 'center' }}>
+                  <div className="stat-label">Streak</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-2)' }}>0 days</div>
+                  <div className="table-sub" style={{ fontSize: 10 }}>Coming soon</div>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-sm text-purple-600 font-medium">Courses</p>
-                  <p className="text-2xl font-bold text-purple-900">
+                <div className="panel-inner" style={{ textAlign: 'center' }}>
+                  <div className="stat-label">Khóa học</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-3)' }}>
                     {user.courses_completed}/{user.courses_enrolled}
-                  </p>
+                  </div>
                 </div>
-                <div className="bg-orange-50 rounded-lg p-4">
-                  <p className="text-sm text-orange-600 font-medium">Lessons</p>
-                  <p className="text-2xl font-bold text-orange-900">{user.lessons_completed}</p>
+                <div className="panel-inner" style={{ textAlign: 'center' }}>
+                  <div className="stat-label">Bài học</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-4)' }}>{user.lessons_completed}</div>
                 </div>
               </div>
               
               {/* User Info */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                <h3 className="font-semibold text-gray-900">User Information</h3>
+              <div className="panel-inner">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Thông tin cá nhân</h4>
+                  {!isEditing && (
+                    <button onClick={handleEdit} className="ghost-button small">Chỉnh sửa</button>
+                  )}
+                </div>
                 
                 {isEditing ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Display Name
-                      </label>
+                  <div className="form">
+                    <label>
+                      Tên hiển thị
                       <input
                         type="text"
                         value={formData.display_name || ''}
                         onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bio
-                      </label>
+                    </label>
+                    <label>
+                      Giới thiệu
                       <textarea
                         value={formData.bio || ''}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       />
+                    </label>
+                    <div className="inline-actions" style={{ justifyContent: 'flex-end' }}>
+                      <button onClick={() => setIsEditing(false)} className="ghost-button small">Hủy</button>
+                      <button onClick={handleSave} disabled={updateMutation.isPending} className="primary-button" style={{ fontSize: 13, padding: '8px 16px', minHeight: 34 }}>
+                        {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Display Name:</span>
-                      <span className="font-medium">{user.display_name || 'Not set'}</span>
+                  <div className="mini-list">
+                    <div className="pill-item">
+                      <span className="table-sub">Tên hiển thị</span>
+                      <span className="pill-title" style={{ fontSize: 13 }}>{user.display_name || 'Chưa đặt'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Bio:</span>
-                      <span className="font-medium">{user.bio || 'Not set'}</span>
+                    <div className="pill-item">
+                      <span className="table-sub">Giới thiệu</span>
+                      <span className="pill-title" style={{ fontSize: 13 }}>{user.bio || 'Chưa đặt'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Language:</span>
-                      <span className="font-medium">{user.language_preference || 'Not set'}</span>
+                    <div className="pill-item">
+                      <span className="table-sub">Ngôn ngữ</span>
+                      <span className="pill-title" style={{ fontSize: 13 }}>{user.language_preference || 'Chưa đặt'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Notifications:</span>
-                      <span className="font-medium">{user.notification_enabled ? 'Enabled' : 'Disabled'}</span>
+                    <div className="pill-item">
+                      <span className="table-sub">Thông báo</span>
+                      <span className={`status-pill ${user.notification_enabled ? 'success' : 'neutral'}`}>
+                        {user.notification_enabled ? 'Bật' : 'Tắt'}
+                      </span>
                     </div>
                   </div>
                 )}
               </div>
               
               {/* Role Management */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                <h3 className="font-semibold text-gray-900">Role & Status</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Current Role:</span>
-                    <span
-                      className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                        user.level === 2
-                          ? 'bg-red-100 text-red-800'
-                          : user.level === 1
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {getRoleLabel(user.level)}
+              <div className="panel-inner">
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Vai trò & Trạng thái</h4>
+                <div className="mini-list">
+                  <div className="pill-item">
+                    <span className="table-sub">Vai trò</span>
+                    <span className={`status-pill ${user.role_level === 2 ? 'danger' : user.role_level === 1 ? 'warning' : 'info'}`}>
+                      {getRoleLabel(user.role_level)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Status:</span>
-                    <span
-                      className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                        user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {user.is_active ? 'Active' : 'Inactive'}
+                  <div className="pill-item">
+                    <span className="table-sub">Trạng thái</span>
+                    <span className={`status-pill ${user.is_active ? 'success' : 'neutral'}`}>
+                      {user.is_active ? 'Hoạt động' : 'Tạm dừng'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Joined:</span>
-                    <span className="font-medium">{new Date(user.created_at).toLocaleDateString()}</span>
+                  <div className="pill-item">
+                    <span className="table-sub">Ngày tham gia</span>
+                    <span className="pill-title" style={{ fontSize: 13 }}>{new Date(user.created_at).toLocaleDateString('vi-VN')}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Last Sign In:</span>
-                    <span className="font-medium">
-                      {user.last_sign_in ? new Date(user.last_sign_in).toLocaleDateString() : 'Never'}
+                  <div className="pill-item">
+                    <span className="table-sub">Đăng nhập cuối</span>
+                    <span className="pill-title" style={{ fontSize: 13 }}>
+                      {user.last_login ? new Date(user.last_login).toLocaleDateString('vi-VN') : 'Chưa đăng nhập'}
                     </span>
                   </div>
                 </div>
                 
-                {/* Role Change Buttons (Super Admin only) */}
-                <div className="pt-3 border-t">
-                  <p className="text-sm text-gray-600 mb-2">Change Role (Super Admin only):</p>
-                  <div className="flex gap-2">
+                {/* Role Change */}
+                <div style={{ paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+                  <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>Thay đổi vai trò:</p>
+                  <div className="action-group">
                     <button
                       onClick={() => handleRoleChange(0)}
-                      disabled={user.level === 0 || roleChangeMutation.isPending}
-                      className="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 disabled:opacity-50 text-sm"
+                      disabled={user.role_level === 0 || roleChangeMutation.isPending}
+                      className="mini-btn"
+                      style={{ opacity: user.role_level === 0 ? 0.4 : 1 }}
                     >
                       User
                     </button>
                     <button
                       onClick={() => handleRoleChange(1)}
-                      disabled={user.level === 1 || roleChangeMutation.isPending}
-                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 disabled:opacity-50 text-sm"
+                      disabled={user.role_level === 1 || roleChangeMutation.isPending}
+                      className="mini-btn"
+                      style={{ opacity: user.role_level === 1 ? 0.4 : 1 }}
                     >
                       Admin
                     </button>
                     <button
                       onClick={() => handleRoleChange(2)}
-                      disabled={user.level === 2 || roleChangeMutation.isPending}
-                      className="px-3 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 disabled:opacity-50 text-sm"
+                      disabled={user.role_level === 2 || roleChangeMutation.isPending}
+                      className="mini-btn"
+                      style={{ opacity: user.role_level === 2 ? 0.4 : 1 }}
                     >
                       Super Admin
                     </button>
@@ -292,31 +280,30 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
             </div>
           ) : (
             // Activity Timeline
-            <div className="space-y-4">
+            <div className="stack" style={{ gap: 0 }}>
               {activities && activities.length > 0 ? (
                 activities.map((activity, index) => (
-                  <div key={index} className="flex gap-4 pb-4 border-b last:border-0">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-blue-600 text-sm">
-                          {activity.activity_type === 'lesson_completed' ? '📚' : '✨'}
-                        </span>
-                      </div>
+                  <div key={index} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: index < activities.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--panel-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--line)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+                        {activity.activity_type === 'lesson_completed' ? 'L' : 'A'}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{activity.description}</p>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                        <span>{new Date(activity.activity_date).toLocaleDateString()}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="table-title" style={{ fontSize: 13 }}>{activity.description}</div>
+                      <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
+                        <span>{new Date(activity.activity_date).toLocaleDateString('vi-VN')}</span>
                         {activity.xp_earned > 0 && (
-                          <span className="text-blue-600 font-medium">+{activity.xp_earned} XP</span>
+                          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>+{activity.xp_earned} XP</span>
                         )}
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  No activity recorded
+                <div className="empty-state">
+                  <div className="empty-title">Chưa có hoạt động</div>
+                  <div className="empty-description">Người dùng chưa có hoạt động nào được ghi nhận</div>
                 </div>
               )}
             </div>
@@ -324,40 +311,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
         </div>
         
         {/* Footer */}
-        {activeTab === 'info' && (
-          <div className="px-6 py-4 border-t flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-            >
-              Close
-            </button>
-            {isEditing ? (
-              <>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={updateMutation.isPending}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Edit User
-              </button>
-            )}
-          </div>
-        )}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
+          <button onClick={onClose} className="ghost-button small">Đóng</button>
+        </div>
       </div>
     </div>
   );

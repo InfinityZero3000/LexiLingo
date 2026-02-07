@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthProvider";
 import { ENV } from "../lib/env";
+import { useI18n } from "../lib/i18n";
 
 export const LoginPage = () => {
   const { signInWithGoogle, loading } = useAuth();
@@ -9,6 +10,7 @@ export const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [gsiReady, setGsiReady] = useState(false);
+  const { t } = useI18n();
 
   const handleGoogleCallback = useCallback(
     async (response: CredentialResponse) => {
@@ -19,11 +21,11 @@ export const LoginPage = () => {
       } catch (err: any) {
         const msg = err?.message || "";
         if (msg.includes("quyền") || msg.includes("admin") || msg.includes("Admin")) {
-          setError("Tài khoản Google này không có quyền Admin. Liên hệ Super Admin để được cấp quyền.");
+          setError(t.login.noPermission);
         } else if (msg.includes("inactive")) {
-          setError("Tài khoản đã bị vô hiệu hóa.");
+          setError(t.login.accountDisabled);
         } else {
-          setError(msg || "Đăng nhập thất bại. Vui lòng thử lại.");
+          setError(msg || t.login.loginFailed);
         }
       }
     },
@@ -33,7 +35,7 @@ export const LoginPage = () => {
   useEffect(() => {
     const clientId = ENV.googleClientId;
     if (!clientId) {
-      setError("Chưa cấu hình VITE_GOOGLE_CLIENT_ID. Vui lòng thiết lập trong file ");
+      setError(t.login.missingClientId);
       return;
     }
 
@@ -69,7 +71,7 @@ export const LoginPage = () => {
       }, 200);
       const timeout = setTimeout(() => {
         clearInterval(interval);
-        if (!gsiReady) setError("Không thể tải Google Sign-In. Kiểm tra kết nối mạng.");
+        if (!gsiReady) setError(t.login.googleLoadFailed);
       }, 10000);
       return () => {
         clearInterval(interval);
@@ -103,9 +105,9 @@ export const LoginPage = () => {
         </div>
 
         <div className="login-body">
-          <h1 className="login-title">Chào mừng trở lại</h1>
+          <h1 className="login-title">{t.login.welcome}</h1>
           <p className="login-subtitle">
-            Đăng nhập bằng tài khoản Google được cấp quyền Admin
+            {t.login.loginWithGoogle}
           </p>
 
           {/* Google Sign-In button rendered by GSI */}
@@ -113,7 +115,7 @@ export const LoginPage = () => {
             {loading ? (
               <div className="login-loading">
                 <span className="login-spinner" />
-                <span>Đang xác thực...</span>
+                <span>{t.login.authenticating}</span>
               </div>
             ) : (
               <div ref={googleBtnRef} className="google-btn-container" />
@@ -138,14 +140,14 @@ export const LoginPage = () => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              <span>Xác thực Google OAuth 2.0</span>
+              <span>{t.login.googleOAuth}</span>
             </div>
             <div className="security-badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              <span>Chỉ Admin được phép truy cập</span>
+              <span>{t.login.adminOnly}</span>
             </div>
           </div>
         </div>

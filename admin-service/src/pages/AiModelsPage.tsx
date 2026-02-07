@@ -5,6 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { DataTable } from "../components/DataTable";
 import { getMonitoringDashboard, type MonitoringDashboard } from "../lib/aiApi";
 import { ENV } from "../lib/env";
+import { useI18n } from "../lib/i18n";
 
 type AiHealth = {
   status?: string;
@@ -30,6 +31,7 @@ export const AiModelsPage = () => {
   const [monitor, setMonitor] = useState<MonitoringDashboard | null>(null);
   const [health, setHealth] = useState<AiHealth | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     setLoading(true);
@@ -46,7 +48,7 @@ export const AiModelsPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Đang tải thông tin AI...</div>;
+  if (loading) return <div className="loading">{t.common.loading}</div>;
 
   const sys = monitor?.system;
   const proc = monitor?.process;
@@ -56,30 +58,30 @@ export const AiModelsPage = () => {
   return (
     <div className="stack">
       <SectionHeader
-        title="AI Models & Pipelines"
-        description="Giám sát model, tài nguyên hệ thống và pipeline xử lý"
+        title={t.aiModelsPage.title}
+        description={t.aiModelsPage.description}
       />
 
       {/* System Resource Cards */}
       <div className="card-grid">
         <StatCard
-          label="AI Service"
-          value={aiOk ? "Online" : "Offline"}
+          label={t.aiModelsPage.aiService}
+          value={aiOk ? t.common.online : t.common.offline}
           accent={aiOk ? "teal" : "orange"}
-          note={health?.status || "Unknown"}
+          note={health?.status || t.common.unknown}
         />
         <StatCard
-          label="CPU Usage"
+          label={t.aiModelsPage.cpuUsage}
           value={sys?.cpu_percent != null ? `${sys.cpu_percent.toFixed(1)}%` : "--"}
           accent={sys?.cpu_percent && sys.cpu_percent > 80 ? "orange" : "teal"}
         />
         <StatCard
-          label="Memory"
+          label={t.aiModelsPage.memory}
           value={sys?.memory_percent != null ? `${sys.memory_percent.toFixed(1)}%` : "--"}
           accent={sys?.memory_percent && sys.memory_percent > 80 ? "orange" : "berry"}
         />
         <StatCard
-          label="Disk"
+          label={t.aiModelsPage.disk}
           value={sys?.disk_percent != null ? `${sys.disk_percent.toFixed(1)}%` : "--"}
           accent={sys?.disk_percent && sys.disk_percent > 90 ? "orange" : "ink"}
         />
@@ -88,7 +90,7 @@ export const AiModelsPage = () => {
       {/* Warnings */}
       {warnings.length > 0 && (
         <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>⚠️ Cảnh báo ({warnings.length})</h4>
+          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
           {warnings.map((w, i) => (
             <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w}</p>
           ))}
@@ -98,7 +100,7 @@ export const AiModelsPage = () => {
       {/* Service Connections */}
       {health?.services && (
         <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>Kết nối dịch vụ</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{t.aiModelsPage.serviceConns}</h3>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               {Object.entries(health.services).map(([svc, status]) => (
@@ -119,19 +121,19 @@ export const AiModelsPage = () => {
 
       {/* AI Models */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>AI Models</h3>
+        <h3 style={{ padding: "16px 16px 0" }}>{t.aiModelsPage.aiModelsTitle}</h3>
         <DataTable
           columns={[
-            { header: "Model", render: (r) => <span className="table-title">{r.name}</span> },
-            { header: "Loại", render: (r) => <StatusPill tone="info" label={r.type} /> },
-            { header: "Provider", render: (r) => <span className="table-meta">{r.provider}</span> },
-            { header: "Mode", render: (r) => (
+            { header: t.aiModelsPage.model, render: (r) => <span className="table-title">{r.name}</span> },
+            { header: t.aiModelsPage.typeCol, render: (r) => <StatusPill tone="info" label={r.type} /> },
+            { header: t.aiModelsPage.provider, render: (r) => <span className="table-meta">{r.provider}</span> },
+            { header: t.aiModelsPage.mode, render: (r) => (
               <StatusPill
                 tone={r.mode.includes("Cloud") ? "warning" : "success"}
                 label={r.mode}
               />
             ), align: "center" },
-            { header: "Sử dụng cho", render: (r) => <span className="table-meta" style={{ fontSize: 13 }}>{r.usage}</span> },
+            { header: t.aiModelsPage.usedFor, render: (r) => <span className="table-meta" style={{ fontSize: 13 }}>{r.usage}</span> },
           ]}
           rows={AI_MODELS}
         />
@@ -139,14 +141,14 @@ export const AiModelsPage = () => {
 
       {/* Pipelines */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Processing Pipelines</h3>
+        <h3 style={{ padding: "16px 16px 0" }}>{t.aiModelsPage.processingPipelines}</h3>
         <DataTable
           columns={[
-            { header: "Pipeline", render: (r) => <span className="table-title">{r.name}</span> },
-            { header: "Components", render: (r) => (
+            { header: t.aiModelsPage.pipeline, render: (r) => <span className="table-title">{r.name}</span> },
+            { header: t.aiModelsPage.components, render: (r) => (
               <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
             ) },
-            { header: "Trạng thái", render: (r) => <StatusPill tone="success" label="Active" />, align: "center" },
+            { header: t.aiModelsPage.pipelineStatus, render: (r) => <StatusPill tone="success" label={t.common.active} />, align: "center" },
           ]}
           rows={PIPELINES}
         />
@@ -155,24 +157,24 @@ export const AiModelsPage = () => {
       {/* Process Info */}
       {proc && (
         <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>Process Info</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{t.aiModelsPage.processInfo}</h3>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>Process Memory</td>
+                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.processMemory}</td>
                 <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>
                   {proc.memory_percent != null ? `${proc.memory_percent.toFixed(2)}%` : "N/A"}
                 </td>
               </tr>
               <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>Threads</td>
+                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.threads}</td>
                 <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>
                   {proc.num_threads ?? "N/A"}
                 </td>
               </tr>
               {sys?.load_avg && (
                 <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                  <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>Load Average</td>
+                  <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.loadAvg}</td>
                   <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14, fontFamily: "monospace" }}>
                     {sys.load_avg.map((l) => l.toFixed(2)).join(" / ")}
                   </td>

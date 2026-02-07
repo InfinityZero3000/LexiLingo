@@ -14,8 +14,7 @@ import {
   type UserFilters,
   type UserListItem,
 } from '../lib/userManagementApi';
-import UserDetailModal from '../components/user-management/UserDetailModal';
-import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
 
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
@@ -110,165 +109,238 @@ export default function UserManagementPage() {
   // Render
   if (error) {
     return (
-      <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-semibold">Error Loading Users</h3>
-          <p className="text-red-600">{error instanceof Error ? error.message : 'Unknown error'}</p>
+      <div className="stack" style={{ padding: 32 }}>
+        <div className="form-error" style={{ padding: 20 }}>
+          <h3 style={{ margin: '0 0 8px', fontWeight: 600 }}>Lỗi tải dữ liệu</h3>
+          <p style={{ margin: 0, fontSize: 14 }}>{error instanceof Error ? error.message : 'Lỗi không xác định'}</p>
         </div>
       </div>
     );
   }
   
+  // Calculate stats
+  const activeUsers = data?.users.filter(u => u.is_active).length || 0;
+  const inactiveUsers = data?.users.filter(u => !u.is_active).length || 0;
+  const totalXP = data?.users.reduce((sum, u) => sum + (u.total_xp || 0), 0) || 0;
+  const avgXP = data?.users.length ? Math.round(totalXP / data.users.length) : 0;
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="stack">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage users, roles, and permissions</p>
-        </div>
+      <div className="cluster" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SectionHeader title="Quản lý Người dùng" description="Quản lý người dùng, vai trò và quyền hạn" />
         
         {selectedUsers.size > 0 && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{selectedUsers.size} selected</span>
+          <div className="cluster" style={{ gap: 12, alignItems: 'center', padding: '12px 16px', background: 'var(--panel)', borderRadius: 12, border: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{selectedUsers.size} đã chọn</span>
             <button
               onClick={() => handleBulkAction('activate')}
               disabled={bulkActionMutation.isPending}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              className="btn-secondary"
+              style={{ minWidth: 100 }}
             >
-              Activate
+              Kích hoạt
             </button>
             <button
               onClick={() => handleBulkAction('deactivate')}
               disabled={bulkActionMutation.isPending}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              className="ghost-button"
+              style={{ minWidth: 100 }}
             >
-              Deactivate
+              Hủy kích hoạt
             </button>
           </div>
         )}
       </div>
       
-      {/* Filters */}
-      <UserFiltersPanel filters={filters} onFilterChange={handleFilterChange} />
-      
-      {/* Stats */}
+      {/* Stats Cards */}
       {data && (
-        <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Total Users</p>
-            <p className="text-2xl font-bold text-gray-900">{data.total}</p>
+        <div className="card-grid">
+          <div className="stat-card">
+            <div className="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div>
+              <div className="stat-label">Tổng người dùng</div>
+              <div className="stat-value">{data.total.toLocaleString()}</div>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Current Page</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {data.page} / {data.total_pages}
-            </p>
+          
+          <div className="stat-card">
+            <div className="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <div>
+              <div className="stat-label">Đang hoạt động</div>
+              <div className="stat-value">{activeUsers}</div>
+              <div className="stat-meta">{data.total > 0 ? Math.round((activeUsers / data.total) * 100) : 0}% tổng số</div>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div>
+              <div className="stat-label">Ngừng hoạt động</div>
+              <div className="stat-value">{inactiveUsers}</div>
+              <div className="stat-meta">{data.total > 0 ? Math.round((inactiveUsers / data.total) * 100) : 0}% tổng số</div>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div>
+              <div className="stat-label">Trung bình XP</div>
+              <div className="stat-value">{avgXP.toLocaleString()}</div>
+              <div className="stat-meta">Tổng: {totalXP.toLocaleString()} XP</div>
+            </div>
           </div>
         </div>
       )}
       
+      {/* Filters */}
+      <UserFiltersPanel filters={filters} onFilterChange={handleFilterChange} />
+      
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         {isLoading ? (
-          <div className="p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Loading users...</p>
+          <div style={{ padding: '64px 32px', textAlign: 'center' }}>
+            <div className="spinner" style={{ width: 48, height: 48, margin: '0 auto' }}></div>
+            <p style={{ marginTop: 16, color: 'var(--muted)' }}>Đang tải người dùng...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--panel-soft)', borderBottom: '1px solid var(--line)' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', width: 40 }}>
                     <input
                       type="checkbox"
                       checked={data?.users && selectedUsers.size === data.users.length}
                       onChange={handleSelectAll}
-                      className="rounded"
+                      style={{ cursor: 'pointer' }}
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">XP</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Streak</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="table-header">Người dùng</th>
+                  <th className="table-header">Role</th>
+                  <th className="table-header">Tiến trình</th>
+                  <th className="table-header">Trạng thái</th>
+                  <th className="table-header">Tham gia</th>
+                  <th className="table-header" style={{ textAlign: 'right', paddingRight: 16 }}>Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {data?.users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                  <tr key={user.id} style={{ borderBottom: '1px solid var(--line)', transition: 'background 0.15s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--panel-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '16px', width: 40 }}>
                       <input
                         type="checkbox"
                         checked={selectedUsers.has(user.id)}
                         onChange={() => handleToggleSelect(user.id)}
-                        className="rounded"
+                        style={{ cursor: 'pointer' }}
                       />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                    <td style={{ padding: '16px' }}>
+                      <div className="cluster" style={{ gap: 12, alignItems: 'center' }}>
                         {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-8 h-8 rounded-full" />
+                          <img src={user.avatar_url} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-600 text-sm">{user.email[0].toUpperCase()}</span>
+                          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
+                            {user.email[0].toUpperCase()}
                           </div>
                         )}
-                        <span className="text-sm text-gray-900">{user.email}</span>
+                        <div>
+                          <div className="table-title">{user.display_name || user.email.split('@')[0]}</div>
+                          <div className="table-sub">{user.email}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {user.display_name || <span className="text-gray-400">No name</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.level === 2
-                            ? 'bg-red-100 text-red-800'
-                            : user.level === 1
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {getRoleLabel(user.level)}
+                    <td style={{ padding: '16px' }}>
+                      <span className="badge" style={{ 
+                        background: user.role_level === 2 ? 'rgba(239, 68, 68, 0.1)' : user.role_level === 1 ? 'rgba(255, 77, 0, 0.1)' : 'var(--panel-soft)',
+                        color: user.role_level === 2 ? '#dc2626' : user.role_level === 1 ? 'var(--accent)' : 'var(--muted)'
+                      }}>
+                        {getRoleLabel(user.role_level)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {user.is_active ? 'Active' : 'Inactive'}
+                    <td style={{ padding: '16px' }}>
+                      <div className="stack" style={{ gap: 6 }}>
+                        <div className="cluster" style={{ gap: 8, alignItems: 'center' }}>
+                          <div style={{ flex: 1, height: 6, background: 'var(--panel-soft)', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, (user.total_xp || 0) / 100)}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent), #fbbf24)', borderRadius: 3, transition: 'width 0.3s' }}></div>
+                          </div>
+                          <span className="table-meta" style={{ minWidth: 60 }}>{(user.total_xp || 0).toLocaleString()} XP</span>
+                        </div>
+                        <span className="table-meta">
+                          Streak: {user.streak_days || 0} days
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <span className="badge" style={{ 
+                        background: user.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(156, 163, 175, 0.1)',
+                        color: user.is_active ? '#16a34a' : '#6b7280'
+                      }}>
+                        {user.is_active ? 'Hoạt động' : 'Tạm dừng'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{user.total_xp.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <span className="inline-flex items-center gap-1">
-                        🔥 {user.streak_days}
-                      </span>
+                    <td style={{ padding: '16px' }}>
+                      <div className="stack" style={{ gap: 4 }}>
+                        <div className="table-meta">{new Date(user.created_at).toLocaleDateString('vi-VN')}</div>
+                        <div className="table-sub" style={{ fontSize: 11 }}>
+                          {user.last_login ? `Đăng nhập: ${new Date(user.last_login).toLocaleDateString('vi-VN')}` : 'Chưa đăng nhập'}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div className="cluster" style={{ gap: 6, justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => handleViewDetail(user.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="icon-button"
+                          title="Xem chi tiết"
+                          style={{ width: 32, height: 32 }}
                         >
-                          View
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleToggleStatus(user.id, user.is_active)}
                           disabled={statusMutation.isPending}
-                          className="text-orange-600 hover:text-orange-800 text-sm font-medium disabled:opacity-50"
+                          className="icon-button"
+                          title={user.is_active ? 'Hủy kích hoạt' : 'Kích hoạt'}
+                          style={{ width: 32, height: 32, opacity: statusMutation.isPending ? 0.5 : 1 }}
                         >
-                          {user.is_active ? 'Deactivate' : 'Activate'}
+                          {user.is_active ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="15" y1="9" x2="9" y2="15"/>
+                              <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                              <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </td>
@@ -278,8 +350,9 @@ export default function UserManagementPage() {
             </table>
             
             {data?.users.length === 0 && (
-              <div className="p-12 text-center">
-                <p className="text-gray-500">No users found</p>
+              <div className="empty-state" style={{ margin: 32, border: 'none' }}>
+                <div className="empty-title">Không tìm thấy người dùng</div>
+                <div className="empty-description">Thử thay đổi bộ lọc của bạn</div>
               </div>
             )}
           </div>
@@ -288,41 +361,68 @@ export default function UserManagementPage() {
       
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
-          <button
-            onClick={() => handlePageChange(filters.page! - 1)}
-            disabled={filters.page === 1}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          
-          <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(5, data.total_pages) }, (_, i) => {
-              const page = i + 1;
-              return (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 rounded ${
-                    filters.page === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {page}
-                </button>
-              );
-            })}
+        <div className="panel" style={{ padding: 16 }}>
+          <div className="cluster" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              onClick={() => handlePageChange(filters.page! - 1)}
+              disabled={filters.page === 1}
+              className="btn-secondary"
+              style={{ minWidth: 100, opacity: filters.page === 1 ? 0.4 : 1 }}
+            >
+              ← Trước
+            </button>
+            
+            <div className="cluster" style={{ gap: 6 }}>
+              {Array.from({ length: data.total_pages }, (_, i) => {
+                const page = i + 1;
+                const isCurrentPage = filters.page === page;
+                const showPage = page === 1 || page === data.total_pages || Math.abs(page - (filters.page || 1)) <= 2;
+                const showEllipsis = (page === 2 && (filters.page || 1) > 4) || (page === data.total_pages - 1 && (filters.page || 1) < data.total_pages - 3);
+                
+                if (showEllipsis) {
+                  return <span key={page} style={{ padding: '0 4px', color: 'var(--muted)' }}>...</span>;
+                }
+                
+                if (!showPage) return null;
+                
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    style={{
+                      minWidth: 36,
+                      height: 36,
+                      padding: '0 12px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: isCurrentPage ? 'var(--accent)' : 'var(--panel-soft)',
+                      color: isCurrentPage ? 'white' : 'var(--text)',
+                      fontWeight: isCurrentPage ? 600 : 500,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => !isCurrentPage && (e.currentTarget.style.background = 'var(--line)')}
+                    onMouseLeave={(e) => !isCurrentPage && (e.currentTarget.style.background = 'var(--panel-soft)')}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => handlePageChange(filters.page! + 1)}
+              disabled={filters.page === data.total_pages}
+              className="btn-secondary"
+              style={{ minWidth: 100, opacity: filters.page === data.total_pages ? 0.4 : 1 }}
+            >
+              Sau →
+            </button>
           </div>
-          
-          <button
-            onClick={() => handlePageChange(filters.page! + 1)}
-            disabled={filters.page === data.total_pages}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <span className="table-meta">Trang {filters.page} / {data.total_pages} • Tổng {data.total} người dùng</span>
+          </div>
         </div>
       )}
       

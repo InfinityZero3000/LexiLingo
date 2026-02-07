@@ -2,39 +2,41 @@ import React, { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
+import { useI18n } from "../lib/i18n";
 
 export const MonitoringPage = () => {
+  const { t } = useI18n();
   const [monitor, setMonitor] = useState<MonitoringDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getMonitoringDashboard()
       .then(setMonitor)
-      .catch((err) => setError(err?.message || "Không lấy được dữ liệu monitoring"));
+      .catch((err) => setError(err?.message || t.monitoring.loadFailed));
   }, []);
 
   return (
-    <div className="panel">
-      <SectionHeader title="System Monitoring" description="AI service /api/v1/ai/monitoring" />
+    <div className="stack">
+      <SectionHeader title={t.monitoring.title} description={t.monitoring.description} />
       {error && <div className="form-error">{error}</div>}
       <div className="card-grid">
         <StatCard
-          label="CPU"
+          label={t.monitoring.cpu}
           value={monitor?.system?.cpu_percent ? `${monitor.system.cpu_percent.toFixed(1)}%` : "--"}
         />
         <StatCard
-          label="Memory"
+          label={t.monitoring.memory}
           value={monitor?.system?.memory_percent ? `${monitor.system.memory_percent.toFixed(1)}%` : "--"}
           accent="teal"
         />
         <StatCard
-          label="Disk"
+          label={t.monitoring.disk}
           value={monitor?.system?.disk_percent ? `${monitor.system.disk_percent.toFixed(1)}%` : "--"}
           accent="berry"
         />
         <StatCard
-          label="Health"
-          value={monitor?.health?.healthy === undefined ? "--" : monitor.health.healthy ? "Healthy" : "Warning"}
+          label={t.monitoring.backendStatus}
+          value={monitor?.health?.healthy === undefined ? "--" : monitor.health.healthy ? t.common.healthy : t.common.warning}
           accent={monitor?.health?.healthy ? "teal" : "orange"}
         />
       </div>

@@ -5,6 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { DataTable } from "../components/DataTable";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
 import { ENV } from "../lib/env";
+import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status: string; message?: string; version?: string };
 
@@ -23,6 +24,7 @@ export const DatabasePage = () => {
   const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
   const [aiHealth, setAiHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     setLoading(true);
@@ -42,13 +44,13 @@ export const DatabasePage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Đang tải thông tin database...</div>;
+  if (loading) return <div className="loading">{t.common.loading}</div>;
 
   const tables = [
-    { name: "users", label: "Người dùng", count: info?.totals.users || 0, icon: "👤" },
-    { name: "courses", label: "Khóa học", count: info?.totals.courses || 0, icon: "📚" },
-    { name: "vocabulary_items", label: "Từ vựng", count: info?.totals.vocabulary || 0, icon: "📝" },
-    { name: "achievements", label: "Thành tựu", count: info?.totals.achievements || 0, icon: "🏆" },
+    { name: "users", label: t.database.users, count: info?.totals.users || 0 },
+    { name: "courses", label: t.database.coursesLabel, count: info?.totals.courses || 0 },
+    { name: "vocabulary_items", label: t.database.vocabLabel, count: info?.totals.vocabulary || 0 },
+    { name: "achievements", label: t.database.achievementsLabel, count: info?.totals.achievements || 0 },
   ];
 
   const totalRecords = tables.reduce((s, t) => s + t.count, 0);
@@ -58,46 +60,46 @@ export const DatabasePage = () => {
   return (
     <div className="stack">
       <SectionHeader
-        title="Database Console"
-        description="Tổng quan kết nối, dữ liệu và lịch sử migration"
+        title={t.database.title}
+        description={t.database.description}
       />
 
       {/* Connection Status Cards */}
       <div className="card-grid">
-        <StatCard label="PostgreSQL" value={beOk ? "Connected" : "Lỗi"} accent={beOk ? "teal" : "orange"} note="Backend Service" />
-        <StatCard label="MongoDB" value={aiOk ? "Connected" : "Lỗi"} accent={aiOk ? "teal" : "orange"} note="AI Service" />
-        <StatCard label="Tổng bản ghi" value={totalRecords.toLocaleString()} accent="berry" />
-        <StatCard label="Migrations" value={String(MIGRATIONS.length)} accent="ink" note="Đã áp dụng" />
+        <StatCard label="PostgreSQL" value={beOk ? t.common.connected : t.common.error} accent={beOk ? "teal" : "orange"} note="Backend Service" />
+        <StatCard label="MongoDB" value={aiOk ? t.common.connected : t.common.error} accent={aiOk ? "teal" : "orange"} note="AI Service" />
+        <StatCard label={t.database.totalRecords} value={totalRecords.toLocaleString()} accent="berry" />
+        <StatCard label="Migrations" value={String(MIGRATIONS.length)} accent="ink" note={t.database.applied} />
       </div>
 
       {/* Connection Details */}
       <div className="grid-2">
         <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>Backend Database (PostgreSQL)</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{t.database.backendDb}</h3>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
-              <ConfigRow label="Trạng thái" value={<StatusPill tone={beOk ? "success" : "danger"} label={beOk ? "Healthy" : "Unavailable"} />} />
-              <ConfigRow label="Version" value={backendHealth?.version || "N/A"} />
-              <ConfigRow label="Môi trường" value={info?.app_env || "N/A"} />
-              <ConfigRow label="Engine" value="SQLAlchemy 2.0 Async" />
-              <ConfigRow label="Migration Tool" value="Alembic" />
+              <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={beOk ? "success" : "danger"} label={beOk ? t.common.healthy : t.common.offline} />} />
+              <ConfigRow label={t.database.version} value={backendHealth?.version || "N/A"} />
+              <ConfigRow label={t.database.environment} value={info?.app_env || "N/A"} />
+              <ConfigRow label={t.database.engine} value="SQLAlchemy 2.0 Async" />
+              <ConfigRow label={t.database.migrationTool} value="Alembic" />
             </tbody>
           </table>
         </div>
 
         <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>AI Database (MongoDB)</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{t.database.aiDb}</h3>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
-              <ConfigRow label="Trạng thái" value={<StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? "Connected" : "Unavailable"} />} />
+              <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.connected : t.common.offline} />} />
               <ConfigRow label="Redis Cache" value={
                 <StatusPill
                   tone={aiHealth?.services?.redis === "connected" ? "success" : "warning"}
                   label={aiHealth?.services?.redis || "Unknown"}
                 />
               } />
-              <ConfigRow label="Driver" value="Motor (async)" />
-              <ConfigRow label="Usage" value="GraphCAG, Chat History, Analytics" />
+              <ConfigRow label={t.database.driver} value="Motor (async)" />
+              <ConfigRow label={t.database.usageLabel} value="GraphCAG, Chat History, Analytics" />
             </tbody>
           </table>
         </div>
@@ -105,13 +107,12 @@ export const DatabasePage = () => {
 
       {/* Table Overview */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Thống kê bảng dữ liệu</h3>
+        <h3 style={{ padding: "16px 16px 0" }}>{t.database.tableOverview}</h3>
         <DataTable
           columns={[
-            { header: "", render: (r) => <span style={{ fontSize: 20 }}>{r.icon}</span>, align: "center" },
-            { header: "Bảng", render: (r) => <span className="table-title">{r.name}</span> },
-            { header: "Mô tả", render: (r) => <span className="table-meta">{r.label}</span> },
-            { header: "Số bản ghi", render: (r) => <span style={{ fontWeight: 600 }}>{r.count.toLocaleString()}</span>, align: "center" },
+            { header: t.database.tableCol, render: (r) => <span className="table-title">{r.name}</span> },
+            { header: t.database.descriptionCol, render: (r) => <span className="table-meta">{r.label}</span> },
+            { header: t.database.recordCount, render: (r) => <span style={{ fontWeight: 600 }}>{r.count.toLocaleString()}</span>, align: "center" },
           ]}
           rows={tables}
         />
@@ -119,13 +120,13 @@ export const DatabasePage = () => {
 
       {/* Migration History */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Lịch sử Migration (Alembic)</h3>
+        <h3 style={{ padding: "16px 16px 0" }}>{t.database.migrationHistory}</h3>
         <DataTable
           columns={[
             { header: "#", render: (r) => <span className="table-meta">{r.id}</span>, align: "center" },
-            { header: "Migration", render: (r) => <span className="table-title" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.name}</span> },
-            { header: "Mô tả", render: (r) => <span className="table-meta">{r.description}</span> },
-            { header: "Trạng thái", render: (r) => <StatusPill tone="success" label="Applied" />, align: "center" },
+            { header: t.database.migrationCol, render: (r) => <span className="table-title" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.name}</span> },
+            { header: t.database.descriptionCol, render: (r) => <span className="table-meta">{r.description}</span> },
+            { header: t.database.migrationStatus, render: (r) => <StatusPill tone="success" label={t.database.applied} />, align: "center" },
           ]}
           rows={MIGRATIONS}
         />

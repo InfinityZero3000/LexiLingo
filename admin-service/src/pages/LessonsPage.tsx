@@ -6,32 +6,50 @@ import { EmptyState } from "../components/EmptyState";
 import { StatusPill } from "../components/StatusPill";
 import {
   listLessonsAdmin,
+  listCoursesAdmin,
+  listUnitsAdmin,
   createLesson,
   updateLesson,
   deleteLesson,
   type LessonItem,
+  type CourseItem,
+  type UnitItem,
 } from "../lib/adminApi";
+import { useI18n } from "../lib/i18n";
 
-const LESSON_TYPES = ["lesson", "practice", "review", "test"];
+const LESSON_TYPES = ["lesson", "practice", "review", "test", "vocabulary", "grammar"];
 
 const typeColors: Record<string, "info" | "success" | "warning" | "danger"> = {
   lesson: "info",
   practice: "success",
   review: "warning",
   test: "danger",
+  vocabulary: "info",
+  grammar: "warning",
 };
 
 export const LessonsPage = () => {
-  const { courseId, unitId } = useParams<{ courseId: string; unitId: string }>();
+  const { courseId: paramCourseId, unitId: paramUnitId } = useParams<{ courseId: string; unitId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [lessons, setLessons] = useState<LessonItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Course & Unit filter (standalone mode)
+  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [units, setUnits] = useState<UnitItem[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+  const isStandalone = !paramUnitId;
+  const activeUnitId = paramUnitId || selectedUnitId || undefined;
+  const activeCourseId = paramCourseId || selectedCourseId || undefined;
 
   // Form
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formUnitId, setFormUnitId] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -53,21 +71,61 @@ export const LessonsPage = () => {
     setEditingId(null);
   };
 
+  // Load courses for filter
+  const loadCourses = async () => {
+    try {
+      const res = await listCoursesAdmin({ page_size: 100 });
+      setCourses(res.data?.courses || []);
+    } catch {}
+  };
+
+  // Load units for selected course
+  const loadUnits = async (cId?: string) => {
+    try {
+      const res = await listUnitsAdmin(cId);
+      setUnits(res.data || []);
+    } catch {}
+  };
+
   const loadLessons = async () => {
-    if (!unitId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await listLessonsAdmin({ unit_id: unitId });
+      const params: { unit_id?: string; course_id?: string } = {};
+      if (activeUnitId) params.unit_id = activeUnitId;
+      else if (activeCourseId) params.course_id = activeCourseId;
+      const res = await listLessonsAdmin(params);
       setLessons(res.data || []);
     } catch (err: any) {
-      setError(err?.message || "Lỗi tải lessons");
+      setError(err?.message || t.lessons.loadFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { void loadLessons(); }, [unitId]);
+  useEffect(() => {
+    if (isStandalone) {
+      loadCourses();
+      loadUnits();
+    }
+  }, []);
+
+  // When course filter changes, reload units
+  useEffect(() => {
+    if (isStandalone && selectedCourseId) {
+      loadUnits(selectedCourseId);
+      setSelectedUnitId("");
+    } else if (isStandalone && !selectedCourseId) {
+      loadUnits();
+      setSelectedUnitId("");
+    }
+  }, [selectedCourseId]);
+
+  useEffect(() => { void loadLessons(); }, [paramUnitId, selectedUnitId, selectedCourseId]);
+
+  // Build lookup maps
+  const unitMap = new Map(units.map(u => [u.id, u.title]));
+  const courseMap = new Map(courses.map(c => [c.id, c.title]));
 
   const handleEdit = (lesson: LessonItem) => {
     setEditingId(lesson.id);
@@ -84,7 +142,8 @@ export const LessonsPage = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!unitId) return;
+    const targetUnitId = activeUnitId || formUnitId;
+    if (!targetUnitId) return;
     setSaving(true);
     setError(null);
     try {
@@ -93,68 +152,92 @@ export const LessonsPage = () => {
       } else {
         await createLesson({
           ...form,
-          unit_id: unitId,
+          unit_id: targetUnitId,
           order_index: form.order_index || lessons.length,
         });
       }
       resetForm();
       setShowForm(false);
+      setFormUnitId("");
       await loadLessons();
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại");
+      setError(err?.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa lesson này?")) return;
+    if (!confirm(t.lessons.deleteLesson)) return;
     try {
       await deleteLesson(id);
       await loadLessons();
     } catch (err: any) {
-      setError(err?.message || "Xóa thất bại");
+      setError(err?.message || t.common.deleteFailed);
     }
   };
 
   return (
     <div className="stack">
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button className="ghost-button small" onClick={() => navigate(`/admin/courses/${courseId}/units`)}>
-          ← Units
-        </button>
-        <SectionHeader
-          title="Quản lý Lessons"
-          description={`${lessons.length} bài học trong unit`}
-        />
-      </div>
+      <SectionHeader
+        title={t.lessons.title}
+        description={`${lessons.length} ${t.lessons.description}`}
+      />
 
       {error && <div className="form-error">{error}</div>}
 
       <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          {isStandalone && (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <select
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                style={{ minWidth: 200, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
+              >
+                <option value="">-- Tất cả khóa học --</option>
+                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+              <select
+                value={selectedUnitId}
+                onChange={(e) => setSelectedUnitId(e.target.value)}
+                style={{ minWidth: 200, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
+              >
+                <option value="">-- Tất cả chương --</option>
+                {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
+              </select>
+            </div>
+          )}
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
-            + Thêm Lesson
+            {t.lessons.createLesson}
           </button>
         </div>
       </div>
 
       <div className="panel">
         {loading ? (
-          <div className="loading">Đang tải...</div>
+          <div className="loading">{t.common.loading}</div>
         ) : lessons.length === 0 ? (
-          <EmptyState title="Chưa có lesson" description="Tạo lesson mới cho unit này." />
+          <EmptyState title={t.lessons.noLessons} description={t.lessons.noLessonsDesc} />
         ) : (
           <DataTable
             columns={[
               {
                 header: "#",
-                render: (row) => <span className="table-meta">{row.order_index}</span>,
+                render: (row: LessonItem) => <span className="table-meta">{row.order_index}</span>,
                 align: "center",
               },
+              ...(isStandalone ? [{
+                header: "Chương",
+                render: (row: LessonItem) => (
+                  <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
+                    {unitMap.get(row.unit_id) || row.unit_id.slice(0, 8)}
+                  </span>
+                ),
+              }] : []),
               {
-                header: "Bài học",
-                render: (row) => (
+                header: t.lessons.lesson,
+                render: (row: LessonItem) => (
                   <div>
                     <div className="table-title">{row.title}</div>
                     <div className="table-sub">{row.description || "—"}</div>
@@ -162,33 +245,33 @@ export const LessonsPage = () => {
                 ),
               },
               {
-                header: "Loại",
-                render: (row) => (
+                header: t.lessons.type,
+                render: (row: LessonItem) => (
                   <StatusPill tone={typeColors[row.lesson_type] || "info"} label={row.lesson_type} />
                 ),
                 align: "center",
               },
               {
                 header: "XP",
-                render: (row) => <span className="table-meta">{row.xp_reward}</span>,
+                render: (row: LessonItem) => <span className="table-meta">{row.xp_reward}</span>,
                 align: "center",
               },
               {
                 header: "Ngưỡng đạt",
-                render: (row) => <span className="table-meta">{row.pass_threshold}%</span>,
+                render: (row: LessonItem) => <span className="table-meta">{row.pass_threshold}%</span>,
                 align: "center",
               },
               {
                 header: "Bài tập",
-                render: (row) => <span className="table-meta">{row.total_exercises}</span>,
+                render: (row: LessonItem) => <span className="table-meta">{row.total_exercises}</span>,
                 align: "center",
               },
               {
-                header: "Hành động",
-                render: (row) => (
+                header: t.common.actions,
+                render: (row: LessonItem) => (
                   <div className="table-actions">
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>Sửa</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>Xóa</button>
+                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",
@@ -203,8 +286,21 @@ export const LessonsPage = () => {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? "Chỉnh sửa Lesson" : "Tạo Lesson mới"}</h3>
+            <h3>{editingId ? t.lessons.editLesson : t.lessons.createNew}</h3>
             <form className="form" onSubmit={handleSave}>
+              {isStandalone && !editingId && (
+                <label>
+                  Chương *
+                  <select
+                    value={formUnitId}
+                    onChange={(e) => setFormUnitId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Chọn chương --</option>
+                    {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
+                  </select>
+                </label>
+              )}
               <label>
                 Tiêu đề *
                 <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
@@ -236,9 +332,9 @@ export const LessonsPage = () => {
                 </label>
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>Hủy</button>
+                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Tạo"}
+                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
                 </button>
               </div>
             </form>

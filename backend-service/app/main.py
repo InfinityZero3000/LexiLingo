@@ -12,10 +12,12 @@ Architecture: Clean Architecture
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
@@ -162,6 +164,11 @@ app.add_middleware(
     requests_per_hour=1000
 )
 
+
+# Mount static files for badge images
+_static_dir = Path(__file__).resolve().parent.parent / "static"
+if _static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 # Include routers
 app.include_router(health_router, tags=["Health"])

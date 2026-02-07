@@ -11,6 +11,7 @@ import {
   bulkImportVocabulary,
   type VocabItem,
 } from "../lib/adminApi";
+import { useI18n } from "../lib/i18n";
 
 const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "pronoun", "preposition", "conjunction", "interjection"];
 const LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -25,6 +26,7 @@ const levelColor: Record<string, "info" | "success" | "warning" | "danger"> = {
 };
 
 export const VocabularyPage = () => {
+  const { t } = useI18n();
   const [items, setItems] = useState<VocabItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export const VocabularyPage = () => {
       const res = await listVocabulary(200, 0);
       setItems(res.data || []);
     } catch (err: any) {
-      setError(err?.message || "Lỗi tải từ vựng");
+      setError(err?.message || t.vocabulary.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -95,19 +97,19 @@ export const VocabularyPage = () => {
       setShowForm(false);
       await loadItems();
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại");
+      setError(err?.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa từ này?")) return;
+    if (!confirm(t.vocabulary.deleteWord)) return;
     try {
       await deleteVocabulary(id);
       await loadItems();
     } catch (err: any) {
-      setError(err?.message || "Xóa thất bại");
+      setError(err?.message || t.common.deleteFailed);
     }
   };
 
@@ -140,7 +142,7 @@ export const VocabularyPage = () => {
 
   return (
     <div className="stack">
-      <SectionHeader title="Quản lý Từ vựng" description={`${items.length} từ vựng`} />
+      <SectionHeader title={t.vocabulary.title} description={`${items.length} ${t.vocabulary.description}`} />
 
       {error && <div className="form-error">{error}</div>}
 
@@ -159,31 +161,31 @@ export const VocabularyPage = () => {
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <input
             className="form-input"
-            placeholder="Tìm từ..."
+            placeholder={t.vocabulary.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, minWidth: 200 }}
           />
           <input type="file" accept=".csv" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
           <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>
-            {importing ? "Đang import..." : "📥 Import CSV"}
+            {importing ? "Đang import..." : "Import CSV"}
           </button>
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
-            + Thêm từ
+            {t.vocabulary.createWord}
           </button>
         </div>
       </div>
 
       <div className="panel">
         {loading ? (
-          <div className="loading">Đang tải...</div>
+          <div className="loading">{t.common.loading}</div>
         ) : filtered.length === 0 ? (
-          <EmptyState title="Chưa có từ vựng" description="Thêm từ mới hoặc import CSV." />
+          <EmptyState title={t.vocabulary.noWords} description={t.vocabulary.noWordsDesc} />
         ) : (
           <DataTable
             columns={[
               {
-                header: "Từ",
+                header: t.vocabulary.word,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.word}</div>
@@ -219,11 +221,11 @@ export const VocabularyPage = () => {
                 align: "center",
               },
               {
-                header: "Hành động",
+                header: t.common.actions,
                 render: (row) => (
                   <div className="table-actions">
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>Sửa</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>Xóa</button>
+                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",
@@ -238,7 +240,7 @@ export const VocabularyPage = () => {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? "Chỉnh sửa từ vựng" : "Thêm từ mới"}</h3>
+            <h3>{editingId ? t.vocabulary.editWord : t.vocabulary.createNew}</h3>
             <form className="form" onSubmit={handleSave}>
               <label>
                 Từ *
@@ -271,9 +273,9 @@ export const VocabularyPage = () => {
                 </label>
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>Hủy</button>
+                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Tạo"}
+                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
                 </button>
               </div>
             </form>

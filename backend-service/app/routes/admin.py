@@ -95,14 +95,16 @@ async def list_courses_admin(
 
 @router.get("/units", response_model=ApiResponse[List[dict]])
 async def list_units_admin(
-    course_id: UUID = Query(..., description="Filter units by course"),
+    course_id: Optional[UUID] = Query(None, description="Filter units by course"),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
-    """List all units for a course."""
-    result = await db.execute(
-        select(Unit).where(Unit.course_id == course_id).order_by(Unit.order_index)
-    )
+    """List all units, optionally filtered by course."""
+    query = select(Unit)
+    if course_id:
+        query = query.where(Unit.course_id == course_id)
+    query = query.order_by(Unit.order_index)
+    result = await db.execute(query)
     units = result.scalars().all()
     return ApiResponse(
         success=True,
@@ -611,6 +613,69 @@ async def bulk_import_vocabulary(
 
 
 # ============================================================================
+# Badge Image Upload
+# ============================================================================
+
+@router.post("/upload/badge", response_model=ApiResponse[dict])
+async def upload_badge_image(
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_admin)
+):
+    """
+    Upload a badge image. Returns the URL path to the uploaded file.
+    Accepts PNG, JPG, WEBP images up to 2MB.
+    """
+    import os
+    from pathlib import Path
+
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type: {file.content_type}. Allowed: {', '.join(allowed_types)}"
+        )
+
+    # Read file and check size (2MB limit)
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum 2MB allowed."
+        )
+
+    # Save to static/badges/
+    static_dir = Path(__file__).resolve().parent.parent.parent / "static" / "badges"
+    static_dir.mkdir(parents=True, exist_ok=True)
+
+    # Sanitize filename
+    import re
+    safe_name = re.sub(r'[^\w\-.]', '_', file.filename or "badge.png")
+    filepath = static_dir / safe_name
+
+    # Avoid overwriting — add suffix if exists
+    counter = 1
+    original_stem = filepath.stem
+    while filepath.exists():
+        filepath = static_dir / f"{original_stem}_{counter}{filepath.suffix}"
+        counter += 1
+
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    badge_url = f"/static/badges/{filepath.name}"
+
+    return ApiResponse(
+        success=True,
+        message="Badge image uploaded successfully",
+        data={
+            "url": badge_url,
+            "filename": filepath.name,
+        }
+    )
+
+
+# ============================================================================
 # Achievement Admin CRUD
 # ============================================================================
 
@@ -634,8 +699,13 @@ async def list_achievements_admin(
         message=f"Retrieved {len(achievements)} achievements",
         data=[{
             "id": str(a.id),
+            "slug": a.slug,
             "name": a.name,
             "description": a.description,
+            "badge_icon": a.badge_icon,
+            "badge_color": a.badge_color,
+            "condition_type": a.condition_type,
+            "condition_value": a.condition_value,
             "category": a.category,
             "rarity": a.rarity,
             "xp_reward": a.xp_reward,
@@ -656,6 +726,9 @@ async def create_achievement(
     xp_reward: int = 0,
     gems_reward: int = 0,
     is_hidden: bool = False,
+    badge_icon: Optional[str] = None,
+    badge_color: Optional[str] = None,
+    slug: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
@@ -666,6 +739,7 @@ async def create_achievement(
     """
     achievement = Achievement(
         name=name,
+        slug=slug,
         description=description,
         condition_type=condition_type,
         condition_value=condition_value,
@@ -673,7 +747,9 @@ async def create_achievement(
         rarity=rarity,
         xp_reward=xp_reward,
         gems_reward=gems_reward,
-        is_hidden=is_hidden
+        is_hidden=is_hidden,
+        badge_icon=badge_icon,
+        badge_color=badge_color
     )
     db.add(achievement)
     await db.commit()
@@ -704,6 +780,7 @@ async def update_achievement(
     is_hidden: Optional[bool] = None,
     badge_icon: Optional[str] = None,
     badge_color: Optional[str] = None,
+    slug: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
@@ -719,7 +796,7 @@ async def update_achievement(
         "name": name, "description": description, "condition_type": condition_type,
         "condition_value": condition_value, "category": category, "rarity": rarity,
         "xp_reward": xp_reward, "gems_reward": gems_reward, "is_hidden": is_hidden,
-        "badge_icon": badge_icon, "badge_color": badge_color,
+        "badge_icon": badge_icon, "badge_color": badge_color, "slug": slug,
     }.items():
         if value is not None:
             setattr(achievement, field, value)

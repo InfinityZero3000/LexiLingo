@@ -10,10 +10,12 @@ import {
   deleteShopItem,
   type ShopItemType,
 } from "../lib/adminApi";
+import { useI18n } from "../lib/i18n";
 
 const ITEM_TYPES = ["streak_freeze", "double_xp", "hint_pack", "cosmetic", "power_up", "time_boost"];
 
 export const ShopPage = () => {
+  const { t } = useI18n();
   const [items, setItems] = useState<ShopItemType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export const ShopPage = () => {
       const res = await listShopItems(true);
       setItems(res.data || []);
     } catch (err: any) {
-      setError(err?.message || "Lỗi tải shop items");
+      setError(err?.message || t.shop.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -84,19 +86,19 @@ export const ShopPage = () => {
       setShowForm(false);
       await loadItems();
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại");
+      setError(err?.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa item này?")) return;
+    if (!confirm(t.shop.deleteConfirm)) return;
     try {
       await deleteShopItem(id);
       await loadItems();
     } catch (err: any) {
-      setError(err?.message || "Xóa thất bại");
+      setError(err?.message || t.common.deleteFailed);
     }
   };
 
@@ -105,34 +107,34 @@ export const ShopPage = () => {
       await updateShopItem(item.id, { is_available: !item.is_available });
       await loadItems();
     } catch (err: any) {
-      setError(err?.message || "Cập nhật thất bại");
+      setError(err?.message || t.shop.updateFailed);
     }
   };
 
   return (
     <div className="stack">
-      <SectionHeader title="Quản lý Shop" description={`${items.length} sản phẩm`} />
+      <SectionHeader title={t.shop.title} description={`${items.length} ${t.shop.description}`} />
 
       {error && <div className="form-error">{error}</div>}
 
       <div className="panel" style={{ padding: "12px 16px" }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
-            + Thêm Item
+            {t.shop.createItem}
           </button>
         </div>
       </div>
 
       <div className="panel">
         {loading ? (
-          <div className="loading">Đang tải...</div>
+          <div className="loading">{t.common.loading}</div>
         ) : items.length === 0 ? (
-          <EmptyState title="Chưa có item" description="Tạo sản phẩm mới cho shop." />
+          <EmptyState title={t.shop.noItems} description={t.shop.noItemsDesc} />
         ) : (
           <DataTable
             columns={[
               {
-                header: "Sản phẩm",
+                header: t.shop.item,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.name}</div>
@@ -141,17 +143,17 @@ export const ShopPage = () => {
                 ),
               },
               {
-                header: "Loại",
+                header: t.shop.type,
                 render: (row) => <span className="table-meta">{row.item_type}</span>,
                 align: "center",
               },
               {
-                header: "Giá",
-                render: (row) => <span className="table-meta">{row.price_gems} 💎</span>,
+                header: t.shop.price,
+                render: (row) => <span className="table-meta">{row.price_gems} Gems</span>,
                 align: "center",
               },
               {
-                header: "Kho",
+                header: t.shop.stock,
                 render: (row) => (
                   <span className="table-meta">
                     {row.stock_quantity === null || row.stock_quantity === undefined ? "∞" : row.stock_quantity}
@@ -160,28 +162,28 @@ export const ShopPage = () => {
                 align: "center",
               },
               {
-                header: "Trạng thái",
+                header: t.common.status,
                 render: (row) => (
                   <StatusPill
                     tone={row.is_available ? "success" : "danger"}
-                    label={row.is_available ? "Đang bán" : "Ẩn"}
+                    label={row.is_available ? t.shop.onSale : t.shop.hidden}
                   />
                 ),
                 align: "center",
               },
               {
-                header: "Hành động",
+                header: t.common.actions,
                 render: (row) => (
                   <div className="table-actions">
                     <button
                       className="ghost-button small"
                       onClick={() => handleToggle(row)}
-                      title={row.is_available ? "Ẩn" : "Hiện"}
+                      title={row.is_available ? t.shop.hide : t.shop.show}
                     >
-                      {row.is_available ? "Ẩn" : "Hiện"}
+                      {row.is_available ? t.shop.hide : t.shop.show}
                     </button>
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>Sửa</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>Xóa</button>
+                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",
@@ -196,35 +198,35 @@ export const ShopPage = () => {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? "Chỉnh sửa Item" : "Tạo Item mới"}</h3>
+            <h3>{editingId ? t.shop.editItem : t.shop.createNew}</h3>
             <form className="form" onSubmit={handleSave}>
               <label>
-                Tên *
+                {t.shop.nameRequired}
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               </label>
               <label>
-                Mô tả *
+                {t.shop.descriptionRequired}
                 <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
               </label>
               <div className="form-row">
                 <label>
-                  Loại item *
+                  {t.shop.itemTypeRequired}
                   <select value={form.item_type} onChange={(e) => setForm({ ...form, item_type: e.target.value })}>
-                    {ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    {ITEM_TYPES.map((it) => <option key={it} value={it}>{it}</option>)}
                   </select>
                 </label>
                 <label>
-                  Giá (Gems) *
+                  {t.shop.priceRequired}
                   <input type="number" min={0} value={form.price_gems} onChange={(e) => setForm({ ...form, price_gems: Number(e.target.value) })} required />
                 </label>
               </div>
               <div className="form-row">
                 <label>
-                  Số lượng kho
+                  {t.shop.stockQuantity}
                   <input
                     type="number"
                     min={0}
-                    placeholder="Để trống = vô hạn"
+                    placeholder={t.shop.unlimitedPlaceholder}
                     value={form.stock_quantity ?? ""}
                     onChange={(e) => setForm({ ...form, stock_quantity: e.target.value ? Number(e.target.value) : undefined })}
                   />
@@ -235,13 +237,13 @@ export const ShopPage = () => {
                     checked={form.is_available}
                     onChange={(e) => setForm({ ...form, is_available: e.target.checked })}
                   />
-                  Đang bán
+                  {t.shop.onSale}
                 </label>
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>Hủy</button>
+                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Tạo"}
+                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
                 </button>
               </div>
             </form>

@@ -5,6 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
 import { ENV } from "../lib/env";
+import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status?: string; message?: string; version?: string; services?: Record<string, string> };
 
@@ -14,6 +15,7 @@ export const SuperAdminDashboard = () => {
   const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
   const [aiHealth, setAiHealth] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     setLoading(true);
@@ -42,68 +44,68 @@ export const SuperAdminDashboard = () => {
   const warnCount = monitor?.health?.warning_count || 0;
   const critCount = monitor?.health?.critical_count || 0;
 
-  if (loading) return <div className="loading">Đang tải dashboard...</div>;
+  if (loading) return <div className="loading">{t.superDashboard.loadingDashboard}</div>;
 
   return (
     <div className="stack">
-      <SectionHeader title="Super Admin Dashboard" description="Tổng quan hệ thống, tài nguyên và dịch vụ" />
+      <SectionHeader title={t.superDashboard.title} description={t.superDashboard.subtitle} />
 
       {/* Primary Stats */}
       <div className="card-grid">
         <StatCard
-          label="Người dùng"
+          label={t.superDashboard.users}
           value={String(sysInfo?.totals.users || 0)}
-          note={`${sysInfo?.totals.courses || 0} khóa học`}
+          note={`${sysInfo?.totals.courses || 0} ${t.superDashboard.coursesCount}`}
           accent="orange"
         />
         <StatCard
-          label="CPU / Memory"
+          label={t.superDashboard.cpuMemory}
           value={sys ? `${sys.cpu_percent?.toFixed(0)}% / ${sys.memory_percent?.toFixed(0)}%` : "--"}
           accent={sys?.cpu_percent && sys.cpu_percent > 80 ? "orange" : "teal"}
         />
         <StatCard
-          label="Disk Usage"
+          label={t.superDashboard.diskUsage}
           value={sys?.disk_percent != null ? `${sys.disk_percent.toFixed(1)}%` : "--"}
           accent={sys?.disk_percent && sys.disk_percent > 90 ? "orange" : "berry"}
         />
         <StatCard
-          label="System Health"
-          value={healthy === undefined ? "--" : healthy ? "Ổn định" : `${critCount} lỗi`}
+          label={t.superDashboard.systemHealth}
+          value={healthy === undefined ? "--" : healthy ? t.common.healthy : `${critCount} ${t.superDashboard.errors}`}
           accent={healthy ? "teal" : "orange"}
-          note={warnCount > 0 ? `${warnCount} cảnh báo` : undefined}
+          note={warnCount > 0 ? `${warnCount} ${t.superDashboard.warnings}` : undefined}
         />
       </div>
 
       <div className="grid-2">
         {/* Service Status */}
         <div className="panel">
-          <SectionHeader title="Trạng thái dịch vụ" description="Kết nối các service trong hệ thống" />
+          <SectionHeader title={t.superDashboard.serviceStatus} description={t.superDashboard.serviceStatusDesc} />
           <div className="pill-grid">
             <div className="pill-item">
               <div>
-                <div className="pill-title">Backend API</div>
+                <div className="pill-title">{t.superDashboard.backendApi}</div>
                 <div className="pill-desc">FastAPI • {backendHealth?.version || "v?"}</div>
               </div>
-              <StatusPill tone={beOk ? "success" : "danger"} label={beOk ? "Healthy" : "Down"} />
+              <StatusPill tone={beOk ? "success" : "danger"} label={beOk ? t.common.healthy : t.common.offline} />
             </div>
             <div className="pill-item">
               <div>
-                <div className="pill-title">AI Service</div>
+                <div className="pill-title">{t.superDashboard.aiService}</div>
                 <div className="pill-desc">FastAPI • Gemini + Voice</div>
               </div>
-              <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? "Online" : "Down"} />
+              <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.online : t.common.offline} />
             </div>
             <div className="pill-item">
               <div>
-                <div className="pill-title">PostgreSQL</div>
-                <div className="pill-desc">Backend database</div>
+                <div className="pill-title">{t.superDashboard.postgresql}</div>
+                <div className="pill-desc">{t.superDashboard.backendDatabase}</div>
               </div>
-              <StatusPill tone={beOk ? "success" : "warning"} label={beOk ? "Connected" : "Unknown"} />
+              <StatusPill tone={beOk ? "success" : "warning"} label={beOk ? t.common.connected : t.common.unknown} />
             </div>
             <div className="pill-item">
               <div>
-                <div className="pill-title">MongoDB</div>
-                <div className="pill-desc">AI data store</div>
+                <div className="pill-title">{t.superDashboard.mongodb}</div>
+                <div className="pill-desc">{t.superDashboard.aiDataStore}</div>
               </div>
               <StatusPill
                 tone={aiHealth?.services?.mongodb === "connected" ? "success" : "warning"}
@@ -113,8 +115,8 @@ export const SuperAdminDashboard = () => {
             {aiHealth?.services?.redis && (
               <div className="pill-item">
                 <div>
-                  <div className="pill-title">Redis</div>
-                  <div className="pill-desc">Cache layer</div>
+                  <div className="pill-title">{t.superDashboard.redis}</div>
+                  <div className="pill-desc">{t.superDashboard.cacheLayer}</div>
                 </div>
                 <StatusPill
                   tone={aiHealth.services.redis === "connected" ? "success" : "warning"}
@@ -127,7 +129,7 @@ export const SuperAdminDashboard = () => {
 
         {/* AI Models */}
         <div className="panel">
-          <SectionHeader title="AI Models" description="Model đang hoạt động trong hệ thống" />
+          <SectionHeader title={t.superDashboard.aiModels} description={t.superDashboard.aiModelsDesc} />
           <div className="mini-list">
             <div>
               <div className="mini-title">Gemini 2.0 Flash</div>
@@ -152,14 +154,14 @@ export const SuperAdminDashboard = () => {
       {/* System Config Quick View */}
       {sysInfo && (
         <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>Cấu hình nhanh</h3>
+          <h3 style={{ margin: "0 0 16px" }}>{t.superDashboard.quickConfig}</h3>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <ConfigChip label="Env" value={sysInfo.app_env} />
             <ConfigChip label="Debug" value={sysInfo.debug ? "ON" : "OFF"} />
             <ConfigChip label="Log" value={sysInfo.log_level} />
             <ConfigChip label="Token" value={`${sysInfo.token_expire_minutes}m`} />
-            <ConfigChip label="OAuth" value={sysInfo.google_oauth ? "✓" : "✗"} />
-            <ConfigChip label="Firebase" value={sysInfo.firebase ? "✓" : "✗"} />
+            <ConfigChip label="OAuth" value={sysInfo.google_oauth ? "YES" : "NO"} />
+            <ConfigChip label="Firebase" value={sysInfo.firebase ? "YES" : "NO"} />
           </div>
         </div>
       )}
@@ -167,7 +169,7 @@ export const SuperAdminDashboard = () => {
       {/* System Warnings */}
       {monitor?.health?.warnings && monitor.health.warnings.length > 0 && (
         <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>⚠️ Cảnh báo hệ thống</h4>
+          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.superDashboard.systemWarnings}</h4>
           {monitor.health.warnings.map((w, i) => (
             <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w}</p>
           ))}

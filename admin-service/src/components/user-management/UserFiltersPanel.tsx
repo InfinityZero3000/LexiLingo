@@ -32,108 +32,86 @@ export default function UserFiltersPanel({ filters, onFilterChange }: UserFilter
   const hasActiveFilters = filters.search || filters.role !== undefined || filters.is_active !== undefined;
   
   return (
-    <div className="bg-white rounded-lg shadow p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+    <div className="panel" style={{ padding: 20, gap: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Bộ lọc</h3>
         {hasActiveFilters && (
-          <button
-            onClick={handleClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Clear all
-          </button>
+          <button onClick={handleClearFilters} className="ghost-button small">Xóa bộ lọc</button>
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="form">
         {/* Search */}
-        <form onSubmit={handleSearchSubmit} className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search
-          </label>
-          <div className="flex gap-2">
+        <form onSubmit={handleSearchSubmit}>
+          <label>Tìm kiếm</label>
+          <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by name or email..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Tìm theo tên hoặc email..."
+              style={{ flex: 1 }}
             />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Search
+            <button type="submit" className="primary-button" style={{ minWidth: 90, whiteSpace: 'nowrap' }}>
+              Tìm kiếm
             </button>
           </div>
         </form>
         
-        {/* Role Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Role
+        <div className="form-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          {/* Role Filter */}
+          <label>
+            Vai trò
+            <select
+              value={filters.role !== undefined ? filters.role : ''}
+              onChange={(e) => onFilterChange({ role: e.target.value ? Number(e.target.value) : undefined })}
+            >
+              <option value="">Tất cả vai trò</option>
+              <option value="0">User</option>
+              <option value="1">Admin</option>
+              <option value="2">Super Admin</option>
+            </select>
           </label>
-          <select
-            value={filters.role !== undefined ? filters.role : ''}
-            onChange={(e) => onFilterChange({ role: e.target.value ? Number(e.target.value) : undefined })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Roles</option>
-            <option value="0">User</option>
-            <option value="1">Admin</option>
-            <option value="2">Super Admin</option>
-          </select>
-        </div>
-        
-        {/* Status Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status
+          
+          {/* Status Filter */}
+          <label>
+            Trạng thái
+            <select
+              value={filters.is_active !== undefined ? (filters.is_active ? 'true' : 'false') : ''}
+              onChange={(e) => onFilterChange({ is_active: e.target.value ? e.target.value === 'true' : undefined })}
+            >
+              <option value="">Tất cả</option>
+              <option value="true">Hoạt động</option>
+              <option value="false">Tạm dừng</option>
+            </select>
           </label>
-          <select
-            value={filters.is_active !== undefined ? (filters.is_active ? 'true' : 'false') : ''}
-            onChange={(e) => onFilterChange({ is_active: e.target.value ? e.target.value === 'true' : undefined })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Status</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
-        {/* Sort By */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sort By
+          
+          {/* Sort By */}
+          <label>
+            Sắp xếp theo
+            <select
+              value={filters.sort_by || 'created_at'}
+              onChange={(e) => onFilterChange({ sort_by: e.target.value as any })}
+            >
+              <option value="created_at">Ngày tham gia</option>
+              <option value="last_sign_in">Đăng nhập cuối</option>
+              <option value="email">Email</option>
+              <option value="level">Vai trò</option>
+              <option value="total_xp">Tổng XP</option>
+            </select>
           </label>
-          <select
-            value={filters.sort_by || 'created_at'}
-            onChange={(e) => onFilterChange({ sort_by: e.target.value as any })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="created_at">Join Date</option>
-            <option value="last_sign_in">Last Sign In</option>
-            <option value="email">Email</option>
-            <option value="level">Role</option>
-            <option value="total_xp">Total XP</option>
-          </select>
-        </div>
-        
-        {/* Order */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Order
+          
+          {/* Order */}
+          <label>
+            Thứ tự
+            <select
+              value={filters.order || 'desc'}
+              onChange={(e) => onFilterChange({ order: e.target.value as 'asc' | 'desc' })}
+            >
+              <option value="asc">Tăng dần</option>
+              <option value="desc">Giảm dần</option>
+            </select>
           </label>
-          <select
-            value={filters.order || 'desc'}
-            onChange={(e) => onFilterChange({ order: e.target.value as 'asc' | 'desc' })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
         </div>
       </div>
     </div>

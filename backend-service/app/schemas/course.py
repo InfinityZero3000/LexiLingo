@@ -176,13 +176,13 @@ class LessonBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     order_index: int = Field(..., ge=0)
-    lesson_type: str = Field(..., description="lesson, practice, review, test")
+    lesson_type: str = Field(..., description="lesson, practice, review, test, vocabulary, grammar")
     xp_reward: int = Field(default=10, ge=0)
     pass_threshold: int = Field(default=80, ge=0, le=100)
     
     @validator('lesson_type')
     def validate_lesson_type(cls, v):
-        allowed_types = ['lesson', 'practice', 'review', 'test']
+        allowed_types = ['lesson', 'practice', 'review', 'test', 'vocabulary', 'grammar']
         if v not in allowed_types:
             raise ValueError(f'Lesson type must be one of {allowed_types}')
         return v
@@ -207,7 +207,7 @@ class LessonUpdate(BaseModel):
     @validator('lesson_type')
     def validate_lesson_type(cls, v):
         if v is not None:
-            allowed_types = ['lesson', 'practice', 'review', 'test']
+            allowed_types = ['lesson', 'practice', 'review', 'test', 'vocabulary', 'grammar']
             if v not in allowed_types:
                 raise ValueError(f'Lesson type must be one of {allowed_types}')
         return v

@@ -152,6 +152,7 @@ export const deleteTestExam = async (id: string) =>
 
 export type AchievementItem = {
   id: string;
+  slug?: string | null;
   name: string;
   description: string;
   condition_type: string;
@@ -178,6 +179,9 @@ export const createAchievement = async (params: {
   xp_reward?: number;
   gems_reward?: number;
   is_hidden?: boolean;
+  badge_icon?: string;
+  badge_color?: string;
+  slug?: string;
 }) => {
   const url = new URL(`${ENV.backendUrl}/admin/achievements`);
   Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
@@ -186,7 +190,7 @@ export const createAchievement = async (params: {
 
 export const updateAchievement = async (id: string, params: Partial<AchievementItem>) => {
   const url = new URL(`${ENV.backendUrl}/admin/achievements/${id}`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) url.searchParams.set(k, String(v)); });
   return apiFetch<AdminResponse<AchievementItem>>(url.toString(), { method: "PUT" });
 };
 
@@ -194,6 +198,19 @@ export const deleteAchievement = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/achievements/${id}`, {
     method: "DELETE",
   });
+
+export const uploadBadgeImage = async (file: File): Promise<AdminResponse<{ url: string; filename: string }>> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const token = localStorage.getItem("auth_token");
+  const res = await fetch(`${ENV.backendUrl}/admin/upload/badge`, {
+    method: "POST",
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  return res.json();
+};
 
 // ============================================================================
 // Shop Management
@@ -325,8 +342,11 @@ export type UnitItem = {
   updated_at: string;
 };
 
-export const listUnitsAdmin = async (courseId: string) =>
-  apiFetch<AdminResponse<UnitItem[]>>(`${ENV.backendUrl}/admin/units?course_id=${courseId}`);
+export const listUnitsAdmin = async (courseId?: string) => {
+  const url = new URL(`${ENV.backendUrl}/admin/units`);
+  if (courseId) url.searchParams.set("course_id", courseId);
+  return apiFetch<AdminResponse<UnitItem[]>>(url.toString());
+};
 
 export const createUnit = async (payload: {
   course_id: string;
