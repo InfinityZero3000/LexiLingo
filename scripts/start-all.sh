@@ -189,7 +189,7 @@ fi
     export USE_GRAPHCAG="${USE_GRAPHCAG:-true}"
     echo "$(date): Starting AI Service on port 8001" >> "$LOG_DIR/ai-service.log"
     echo "$(date): CHAT_MODEL=$CHAT_MODEL, OLLAMA_MODEL=$OLLAMA_MODEL, USE_GRAPHCAG=$USE_GRAPHCAG" >> "$LOG_DIR/ai-service.log"
-    python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
+    python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
 ) &
 AI_PID=$!
 echo $AI_PID > "$PID_DIR/ai-service.pid"

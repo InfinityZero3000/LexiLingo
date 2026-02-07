@@ -93,7 +93,7 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(request.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(request.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -235,8 +235,14 @@ async def google_login(
         audience = settings.GOOGLE_CLIENT_ID
     
     # Verify Google token with the correct audience
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Google login attempt: source={request.source}, audience={audience}")
+    logger.info(f"id_token length={len(request.id_token)}, first_50={request.id_token[:50]}...")
+    
     google_info = await verify_google_token(request.id_token, audience=audience)
     if not google_info:
+        logger.error(f"Google token verification returned None for source={request.source}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Google ID token"

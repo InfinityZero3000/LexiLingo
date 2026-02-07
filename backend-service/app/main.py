@@ -129,35 +129,41 @@ app = FastAPI(
 
 
 # ===== MIDDLEWARE CONFIGURATION =====
-# Order matters! Middleware is executed in reverse order of addition.
+# Order matters! Last added = outermost (executes first for requests).
+# 
+# Execution order (request): PNA → CORS → RequestID → Logging → ErrorHandler → App
+# Execution order (response): App → ErrorHandler → Logging → RequestID → CORS → PNA
+#
+# KEY: CORS must be OUTSIDE ErrorHandler so error 500 responses also get CORS headers.
+# PNA must be OUTSIDE CORS so it can add PNA headers to CORS preflight responses.
 
-# 1. CORS - Allow cross-origin requests
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Use property to parse string
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 1b. Private Network Access - Chrome CORS-RFC1918 compliance
-app.add_middleware(PrivateNetworkAccessMiddleware)
-
-# 2. Trusted Host - Security: Prevent Host header attacks
+# 1. Trusted Host - Security (innermost, closest to app)
 if not settings.is_development:
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS
     )
 
-# 3. Error Handler - Catch unhandled exceptions
+# 2. Error Handler - Catch unhandled exceptions
 app.add_middleware(ErrorHandlerMiddleware)
 
-# 4. Request Logging - Log all requests (Phase 5: Observability)
+# 3. Request Logging - Log all requests
 app.add_middleware(RequestLoggingMiddleware)
 
-# 5. Request ID - Add unique ID to each request
+# 4. Request ID - Add unique ID to each request
 app.add_middleware(RequestIDMiddleware)
+
+# 5. CORS - Must be OUTSIDE ErrorHandler so error responses get CORS headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 6. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
+app.add_middleware(PrivateNetworkAccessMiddleware)
 
 # 6. Rate Limiting - Prevent abuse (Phase 1: Security)
 app.add_middleware(

@@ -1,5 +1,6 @@
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/auth_backend_datasource.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/device_manager.dart';
@@ -36,6 +37,11 @@ void registerAuthModule() {
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
 
+  // Google Sign In Service
+  if (!sl.isRegistered<GoogleSignInService>()) {
+    sl.registerLazySingleton<GoogleSignInService>(() => GoogleSignInService());
+  }
+
   sl.registerFactory(
     () => AuthProvider(
       signInWithGoogleUseCase: sl(),
@@ -44,6 +50,7 @@ void registerAuthModule() {
       getCurrentUserUseCase: sl(),
       registerUseCase: sl(),
       authRepository: sl(),
+      googleSignInService: sl(),
     ),
   );
 }

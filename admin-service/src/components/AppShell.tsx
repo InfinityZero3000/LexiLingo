@@ -30,6 +30,10 @@ export const AppShell = ({
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  const formatRole = (role: Role) => {
+    return role === "super_admin" ? "Super Admin" : "Admin";
+  };
+
   return (
     <div className="app-shell">
       {/* Mobile Overlay */}
@@ -43,7 +47,7 @@ export const AppShell = ({
           <div className="brand-mark">LL</div>
           <div>
             <div className="brand-title">LexiLingo</div>
-            <div className="brand-sub">{role === "super_admin" ? t.appShell.superAdmin : t.appShell.adminConsole}</div>
+            <div className="brand-sub">{formatRole(role)}</div>
           </div>
         </div>
 
@@ -68,9 +72,9 @@ export const AppShell = ({
         <div className="sidebar-footer">
           <div className="user-card">
             <div className="user-avatar">{user?.username?.slice(0, 2).toUpperCase()}</div>
-            <div>
+            <div className="user-info">
               <div className="user-name">{user?.display_name || user?.username}</div>
-              <div className="user-card-email">{user?.email}</div>
+              <div className="user-email">{user?.email}</div>
             </div>
           </div>
           <button className="ghost-button" onClick={signOut}>

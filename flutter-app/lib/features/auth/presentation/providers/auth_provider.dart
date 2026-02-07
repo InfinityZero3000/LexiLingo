@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
@@ -16,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final RegisterUseCase registerUseCase;
   final AuthRepository authRepository;
+  final GoogleSignInService googleSignInService;
   
   UserEntity? _user;
   bool _isLoading = false;
@@ -30,6 +32,7 @@ class AuthProvider extends ChangeNotifier {
     required this.getCurrentUserUseCase,
     required this.registerUseCase,
     required this.authRepository,
+    required this.googleSignInService,
   }) {
     _checkCurrentUser();
   }
@@ -89,8 +92,19 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      // Get real ID token from Google Sign-In
+      final idToken = await googleSignInService.signIn();
+      if (idToken == null) {
+        _errorMessage = 'Google sign in was cancelled';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      debugPrint('Google ID token obtained (length: ${idToken.length})');
+
       final result = await signInWithGoogleUseCase(
-        SignInWithGoogleParams(idToken: ''),  // TODO: Get real idToken from GoogleSignIn
+        SignInWithGoogleParams(idToken: idToken),
       );
       
       result.fold(

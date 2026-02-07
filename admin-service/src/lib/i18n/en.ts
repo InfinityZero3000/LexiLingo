@@ -565,7 +565,6 @@ const en: Translations = {
     notFoundDesc: "The page you are looking for does not exist.",
     goHome: "Go Home",
   },
-};
 
   // ============== Admin Management ==============
   adminManagement: {

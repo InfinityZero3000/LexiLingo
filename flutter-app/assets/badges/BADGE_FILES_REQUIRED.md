@@ -1,6 +1,6 @@
 # Danh Sách File Huy Hiệu Cần Tạo
 
-## ✅ Đã Có (14 files)
+## ✅ Đã Có (43 files) - Cập nhật 2024
 
 ### Lesson Badges (4 files)
 - ✅ `common-lesson.png` - Common rarity lesson badge
@@ -14,23 +14,64 @@
 - ✅ `epic-vocabulary.png` - Epic rarity vocabulary badge
 - ✅ `legendary-vocabulary.png` - Legendary rarity vocabulary badge
 
-### Streak Badges (4 files)
+### Streak Badges (5 files)
 - ✅ `streak3.png` - 3 days streak
 - ✅ `streak7.png` - 7 days streak
 - ✅ `streak30.png` - 30 days streak
+- ✅ `streak90.png` - 90 days streak (Quarterly champion)
 - ✅ `streak365.png` - 365 days streak
 
-### Perfect Score Badge (1 file)
+### Perfect Score Badges (5 files)
 - ✅ `100%.png` - Perfect score badge
+- ✅ `first-perfect.png` - First perfect
+- ✅ `perfect-10.png` - Perfect 10 (10 perfect quizzes)
+- ✅ `perfect-50.png` - Flawless (50 perfect quizzes)
+- ✅ `quiz-champion.png` - Quiz Champion
 
-### Special Badge (1 file)
-- ✅ `moon.png` - Night Owl badge (study at night)
+### Level Milestones (7 files)
+- ✅ `lv25.png` - Rising Star (Level 25)
+- ✅ `lv50.png` - Half Century (Level 50)
+- ✅ `lv100.png` - Centurion (Level 100)
+- ✅ `lv150.png` - Veteran (Level 150)
+- ✅ `lv200.png` - Legend (Level 200)
+- ✅ `lv300.png` - Mythic (Level 300)
+- ✅ `lv500.png` - Immortal (Level 500)
+
+### Course Completion (2 files)
+- ✅ `course-graduate.png` - Graduate (first course)
+- ✅ `course-master.png` - Multi-Course Master
+
+### Voice/Pronunciation (3 files)
+- ✅ `voice-starter.png` - Voice Starter
+- ✅ `voice-pro.png` - Voice Talent
+- ✅ `pronunciation-pro.png` - Pronunciation Pro
+
+### Special Time-Based (3 files)
+- ✅ `moon.png` - Night Owl (study at night)
+- ✅ `early-bird.png` - Early Bird (study before 7 AM)
+- ✅ `speed-demon.png` - Speed Demon
+
+### Skill Mastery (4 files)
+- ✅ `grammar-guardian.png` - Grammar Guardian
+- ✅ `culture-explorer.png` - Culture Explorer
+- ✅ `writing-wizard.png` - Writing Wizard
+- ✅ `listening-legend.png` - Listening Legend
+
+### Social (3 files)
+- ✅ `social-butterfly.png` - Social Butterfly
+- ✅ `conversation-champion.png` - Conversation Champion
+- ✅ `feedback-friend.png` - Feedback Friend
+
+### Milestones (3 files)
+- ✅ `challenge-crusher.png` - Challenge Crusher
+- ✅ `milestone-maker.png` - Milestone Maker
+- ✅ `comeback-king.png` - Comeback King
 
 ---
 
-## ❌ Cần Tạo Thêm (13 files)
+## ❌ Cần Tạo Thêm (5 files) - **PRIORITY**
 
-### 1. Streak Badges (2 files)
+### 1. Streak Badge (1 file)
 Dùng prompt từ BADGE_GENERATION_GUIDE.md - **Streak Badges (Fire/Flame theme)**
 
 - ❌ `streak14.png` - Two weeks strong (14 days)
@@ -38,13 +79,6 @@ Dùng prompt từ BADGE_GENERATION_GUIDE.md - **Streak Badges (Fire/Flame theme)
   A cute gaming achievement badge, shield shape, fire and flame theme,
   rare border glow, number "14" in center, gradient orange to red,
   playful cartoon style, bright colors, cheerful design, transparent background, 256x256px
-  ```
-
-- ❌ `streak90.png` - Quarterly champion (90 days)
-  ```
-  A cute gaming achievement badge, shield shape, fire and flame theme,
-  legendary border glow, number "90" in center, gradient orange to gold,
-  playful cartoon style, bright colors, extra sparkles, cheerful design, transparent background, 256x256px
   ```
 
 ### 2. XP Badges (4 files)
@@ -77,6 +111,80 @@ Dùng prompt từ BADGE_GENERATION_GUIDE.md - **XP Badges (Star/Energy theme)**
   legendary border glow, energy particles, number "5000" in center, gradient gold to orange,
   playful cartoon style, bright colors, extra glow and sparkles, cheerful design, transparent background, 256x256px
   ```
+
+---
+
+## 📊 Tóm Tắt
+
+**Tổng số badge files:** 48  
+**Đã có:** 43 files (89.6% hoàn thành)  
+**Còn thiếu:** 5 files (10.4%)
+
+### Priority Actions:
+1. **Tạo 4 XP badges** (xp-hunter, xp-warrior, xp-champion, xp-legend)
+2. **Tạo 1 streak badge** (streak14)
+
+### Công Cụ Tạo Badge:
+- **AI Image Generators:** DALL-E 3, Midjourney, Stable Diffusion
+- **Size:** 256x256px
+- **Background:** Transparent (PNG)
+- **Style:** Playful cartoon, bright colors, cheerful design
+
+---
+
+## 🎨 Badge Design Guidelines
+
+### Rarity Colors:
+- **Common:** Grey/Silver (#9E9E9E)
+- **Rare:** Blue/Cyan (#2196F3)
+- **Epic:** Purple/Magenta (#9C27B0)
+- **Legendary:** Gold/Orange (#FFD700)
+
+### Design Requirements:
+- Size: 256x256px
+- Format: PNG with transparent background
+- Style: Playful cartoon, bright colors
+- Border: Rarity-appropriate glow
+- Center: Clear icon or number
+- Effects: Sparkles, particles, glow appropriate to rarity
+
+### Theme by Category:
+- **Lessons:** Book/scroll motif
+- **Vocabulary:** Dictionary/word theme
+- **Streaks:** Fire/flame theme
+- **XP:** Star/energy theme  
+- **Perfect Score:** Diamond/crystal theme
+- **Levels:** Shield/trophy theme
+- **Course:** Graduation cap theme
+- **Voice:** Microphone/sound wave theme
+
+---
+
+## 🔗 References
+- Full generation prompts: See BADGE_GENERATION_GUIDE.md
+- Badge asset mapper: flutter-app/lib/features/achievements/data/badge_asset_mapper.dart
+- Achievement database: backend-service/scripts/seed_achievements.py
+- CDN URLs: https://cdn.jsdelivr.net/gh/ThangSuperMan/LexiLingo@feature/achievements/flutter-app/assets/badges/
+
+---
+
+## 🚀 Next Steps
+
+1. **Generate missing badges using AI:**
+   - Use prompts above with DALL-E 3 or Midjourney
+   - Save as PNG, 256x256px, transparent background
+   - Name exactly as specified (case-sensitive)
+
+2. **Add to project:**
+   - Place in `flutter-app/assets/badges/`
+   - Commit to feature branch
+   - CDN will auto-update via jsdelivr
+
+3. **Test:**
+   - Run Flutter app
+   - Check AchievementBadge displays correctly
+   - Verify CDN URLs load properly
+   - Test in admin dashboard
 
 ### 3. Perfect Score Badges (2 files)
 Dùng prompt từ BADGE_GENERATION_GUIDE.md - **Perfect Score Badges (Diamond/Crystal theme)**

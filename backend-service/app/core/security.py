@@ -14,10 +14,16 @@ from app.core.config import settings
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify plain password against hashed password."""
-    return bcrypt.checkpw(
-        plain_password.encode('utf-8'),
-        hashed_password.encode('utf-8')
-    )
+    if not hashed_password:
+        return False
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'),
+            hashed_password.encode('utf-8')
+        )
+    except (ValueError, TypeError):
+        # Invalid salt or hash format (e.g., user registered via OAuth without password)
+        return False
 
 
 def get_password_hash(password: str) -> str:
@@ -176,6 +182,12 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
     Note:
         Requires google-auth library. Falls back to mock for development.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"verify_google_token called with audience={audience}")
+    logger.info(f"id_token length={len(id_token) if id_token else 0}, starts_with={id_token[:50] if id_token else 'None'}...")
+    
     try:
         from google.oauth2 import id_token as google_id_token
         from google.auth.transport import requests
@@ -187,6 +199,8 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
             audience=audience
         )
         
+        logger.info(f"Google token verified successfully for email={idinfo.get('email')}")
+        
         return {
             "email": idinfo.get("email"),
             "name": idinfo.get("name"),
@@ -195,12 +209,13 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
             "email_verified": idinfo.get("email_verified", False)
         }
     except ImportError:
-        # google-auth not installed, log warning
-        import logging
-        logging.warning("google-auth not installed. Google OAuth will not work.")
+        logger.warning("google-auth not installed. Google OAuth will not work.")
+        return None
+    except ValueError as e:
+        logger.error(f"Google token verification ValueError: {e}")
+        logger.error(f"This usually means: token expired, wrong audience, or malformed token")
         return None
     except Exception as e:
-        import logging
-        logging.error(f"Google token verification failed: {e}")
+        logger.error(f"Google token verification failed: {type(e).__name__}: {e}")
         return None
 

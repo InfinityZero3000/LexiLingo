@@ -208,22 +208,23 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
     """
-    Handle Chrome's Private Network Access (CORS-RFC1918) preflight requests.
+    Handle Chrome's Private Network Access (CORS-RFC1918) for all requests.
     
-    Chrome 94+ sends Access-Control-Request-Private-Network: true in CORS
-    preflight when a public/local page fetches a private/local resource.
-    The server must respond with Access-Control-Allow-Private-Network: true
-    or the browser blocks the request with 'Failed to fetch'.
+    Chrome 94+ requires Access-Control-Allow-Private-Network: true header
+    on BOTH the OPTIONS preflight AND the actual request response.
+    Without this header on the actual request, Chrome blocks it with 'Failed to fetch'.
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        if (
-            request.method == "OPTIONS"
-            and request.headers.get("access-control-request-private-network") == "true"
-        ):
-            response = await call_next(request)
-            response.headers["Access-Control-Allow-Private-Network"] = "true"
-            return response
-
+        # Check if this is a private network access request
+        has_pna_header = (
+            request.headers.get("access-control-request-private-network") == "true"
+        )
+        
         response = await call_next(request)
+        
+        # Add PNA header to response if request had it (for both OPTIONS and actual requests)
+        if has_pna_header or request.method == "OPTIONS":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        
         return response
