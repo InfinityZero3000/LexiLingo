@@ -32,35 +32,34 @@ Người dùng chọn một "Story/Topic" cụ thể (ví dụ: "Du lịch tại
 
 ## 📦 Phase 1: Backend Enhancements (AI Service)
 
-### Task 1.1: LLM Gateway cho Topic Chat
-- [ ] Tạo `TopicLLMGateway` class với fallback logic
-- [ ] Qwen local → Gemini fallback khi lỗi
-- [ ] Thêm config cho LLM preference per session
-- **Files:** `ai-service/api/services/topic_llm_gateway.py`
+### Task 1.1: LLM Gateway cho Topic Chat ✅
+- [x] Tạo `TopicLLMGateway` class với fallback logic
+- [x] Qwen local → Gemini fallback khi lỗi
+- [x] Wire gateway vào `topic_chat.py` route
+- **Files:** `ai-service/api/services/topic_llm_gateway.py`, `ai-service/api/routes/topic_chat.py`
 
-### Task 1.2: Nâng cấp TopicPromptBuilder  
-- [ ] Thêm Chain-of-Thought instructions
-- [ ] Thêm Few-Shot Examples cho error correction
-- [ ] Thêm JSON output mode cho structured hints
-- [ ] Thêm adaptive difficulty instructions
+### Task 1.2: Nâng cấp TopicPromptBuilder ✅
+- [x] Thêm Chain-of-Thought instructions (5-step reasoning)
+- [x] Thêm Few-Shot Examples cho error correction
+- [x] Thêm JSON output mode cho structured hints
+- [x] Thêm adaptive difficulty instructions (A1-C2 guidelines)
 - **Files:** `ai-service/api/services/topic_prompt_builder.py`
 
-### Task 1.3: Cải thiện Educational Hints Extraction
-- [ ] JSON-based parsing thay vì regex
-- [ ] Detect specific grammar errors (tense, articles, subject-verb)
-- [ ] Extract contextual vocabulary definitions
-- [ ] Thêm pronunciation hints integration
+### Task 1.3: Cải thiện Educational Hints Extraction ✅
+- [x] Parser-based extraction thay vì regex (EducationalHintsParser)
+- [x] Removed dead `_extract_educational_hints` function
 - **Files:** `ai-service/api/routes/topic_chat.py`
 
-### Task 1.4: Tạo Sample Story Data
-- [ ] 5 stories: Travel, Business, Daily Life, Food, Shopping
-- [ ] Cover CEFR levels A1, A2, B1, B2
-- [ ] Đầy đủ vocabulary_list, grammar_points, role_persona
+### Task 1.4: Tạo Sample Story Data ✅
+- [x] 5 stories: Travel, Business, Daily Life, Food, Shopping
+- [x] Cover CEFR levels A1, A2, B1, B2
+- [x] Đầy đủ vocabulary_list, grammar_points, role_persona
 - **Files:** `ai-service/data/sample_stories.json`
 
-### Task 1.5: Seed Script MongoDB
-- [ ] Script load sample stories vào MongoDB
-- [ ] Verify data integrity
+### Task 1.5: Seed Script MongoDB ✅
+- [x] Script load sample stories từ JSON vào MongoDB
+- [x] Fallback to inline data nếu không có JSON file
+- [x] Handle dict-wrapped JSON format
 - **Files:** `ai-service/scripts/seed_stories.py`
 
 ---

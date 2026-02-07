@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_use
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_password_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 
 void registerAuthModule() {
@@ -33,6 +34,7 @@ void registerAuthModule() {
   sl.registerLazySingleton(() => SignInWithEmailPasswordUseCase(sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+  sl.registerLazySingleton(() => RegisterUseCase(sl()));
 
   sl.registerFactory(
     () => AuthProvider(
@@ -40,6 +42,8 @@ void registerAuthModule() {
       signInWithEmailPasswordUseCase: sl(),
       signOutUseCase: sl(),
       getCurrentUserUseCase: sl(),
+      registerUseCase: sl(),
+      authRepository: sl(),
     ),
   );
 }

@@ -2,7 +2,6 @@
 /// Shows which badges have image files and which need to be created
 
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 
 class BadgeAssetDemoScreen extends StatelessWidget {
   const BadgeAssetDemoScreen({super.key});
@@ -24,11 +23,11 @@ class BadgeAssetDemoScreen extends StatelessWidget {
             context,
             '✅ Lesson Badges (4/4)',
             [
-              ('first_steps', 'First Steps', 'common-lesson.png'),
-              ('dedicated_learner', 'Dedicated Learner', 'common-lesson.png'),
-              ('knowledge_seeker', 'Knowledge Seeker', 'rare-lesson.png'),
-              ('scholar', 'Scholar', 'epic-lesson.png'),
-              ('professor', 'Professor', 'legendary-lesson.png'),
+              ('first_steps', 'First Steps', 'common-lesson.png', true),
+              ('dedicated_learner', 'Dedicated Learner', 'common-lesson.png', true),
+              ('knowledge_seeker', 'Knowledge Seeker', 'rare-lesson.png', true),
+              ('scholar', 'Scholar', 'epic-lesson.png', true),
+              ('professor', 'Professor', 'legendary-lesson.png', true),
             ],
           ),
           const SizedBox(height: 24),
@@ -36,10 +35,10 @@ class BadgeAssetDemoScreen extends StatelessWidget {
             context,
             '✅ Vocabulary Badges (4/4)',
             [
-              ('word_collector', 'Word Collector', 'common-vocabulary.png'),
-              ('vocab_builder', 'Vocab Builder', 'rare-vocabulary.png'),
-              ('vocab_master', 'Vocab Master', 'epic-vocabulary.png'),
-              ('walking_dictionary', 'Walking Dictionary', 'legendary-vocabulary.png'),
+              ('word_collector', 'Word Collector', 'common-vocabulary.png', true),
+              ('vocab_builder', 'Vocab Builder', 'rare-vocabulary.png', true),
+              ('vocab_master', 'Vocab Master', 'epic-vocabulary.png', true),
+              ('walking_dictionary', 'Walking Dictionary', 'legendary-vocabulary.png', true),
             ],
           ),
           const SizedBox(height: 24),
@@ -47,12 +46,12 @@ class BadgeAssetDemoScreen extends StatelessWidget {
             context,
             '⚠️ Streak Badges (4/6)',
             [
-              ('getting_started', '3 Days', 'streak3.png'),
-              ('week_warrior', '7 Days', 'streak7.png'),
+              ('getting_started', '3 Days', 'streak3.png', true),
+              ('week_warrior', '7 Days', 'streak7.png', true),
               ('two_weeks_strong', '14 Days', 'streak14.png', false),
-              ('month_master', '30 Days', 'streak30.png'),
+              ('month_master', '30 Days', 'streak30.png', true),
               ('quarterly_champion', '90 Days', 'streak90.png', false),
-              ('year_legend', '365 Days', 'streak365.png'),
+              ('year_legend', '365 Days', 'streak365.png', true),
             ],
           ),
           const SizedBox(height: 24),
@@ -71,7 +70,7 @@ class BadgeAssetDemoScreen extends StatelessWidget {
             context,
             '⚠️ Perfect Score (1/3)',
             [
-              ('perfectionist', 'Perfect Score', '100%.png'),
+              ('perfectionist', 'Perfect Score', '100%.png', true),
               ('perfect_10', 'Perfect 10', 'perfect-10.png', false),
               ('flawless', 'Flawless 50', 'perfect-50.png', false),
             ],
@@ -99,7 +98,7 @@ class BadgeAssetDemoScreen extends StatelessWidget {
             context,
             '✅ Special Badges (1/1)',
             [
-              ('night_owl', 'Night Owl', 'moon.png'),
+              ('night_owl', 'Night Owl', 'moon.png', true),
             ],
           ),
           const SizedBox(height: 40),
@@ -164,7 +163,7 @@ class BadgeAssetDemoScreen extends StatelessWidget {
   Widget _buildSection(
     BuildContext context,
     String title,
-    List<(String id, String name, String filename, [bool exists])> badges,
+    List<(String id, String name, String filename, bool exists)> badges,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,7 +184,7 @@ class BadgeAssetDemoScreen extends StatelessWidget {
                     badge.$1,
                     badge.$2,
                     badge.$3,
-                    badge.length > 3 ? badge.$4 : true,
+                    badge.$4,
                   ))
               .toList(),
         ),

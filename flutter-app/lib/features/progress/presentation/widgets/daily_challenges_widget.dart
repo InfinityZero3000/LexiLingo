@@ -542,6 +542,10 @@ class _ChallengeCard extends StatelessWidget {
         return Colors.orange;
       case 'xp':
         return Colors.amber;
+      case 'voice':
+        return Colors.pink;
+      case 'social':
+        return Colors.teal;
       default:
         return Colors.grey;
     }

@@ -54,7 +54,7 @@ class StoryApiDataSource {
       final storiesJson = json['stories'] as List<dynamic>? ?? [];
 
       return storiesJson
-          .map((e) => StoryListItem.fromJson(_snakeToCamel(e as Map<String, dynamic>)))
+          .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       logError(_tag, 'getStories error: $e');
@@ -78,7 +78,7 @@ class StoryApiDataSource {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return Story.fromJson(_snakeToCamel(json));
+      return Story.fromJson(json);
     } catch (e) {
       logError(_tag, 'getStoryDetails error: $e');
       rethrow;
@@ -139,7 +139,7 @@ class StoryApiDataSource {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return TopicSession.fromJson(_snakeToCamel(json));
+      return TopicSession.fromJson(json);
     } catch (e) {
       logError(_tag, 'startTopicSession error: $e');
       rethrow;
@@ -173,7 +173,7 @@ class StoryApiDataSource {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return TopicChatResponse.fromJson(_snakeToCamel(json));
+      return TopicChatResponse.fromJson(json);
     } catch (e) {
       logError(_tag, 'sendTopicMessage error: $e');
       rethrow;
@@ -196,7 +196,7 @@ class StoryApiDataSource {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return TopicSession.fromJson(_snakeToCamel(json));
+      return TopicSession.fromJson(json);
     } catch (e) {
       logError(_tag, 'getTopicSession error: $e');
       rethrow;
@@ -222,7 +222,7 @@ class StoryApiDataSource {
       final messagesJson = json['messages'] as List<dynamic>? ?? [];
 
       return messagesJson
-          .map((e) => TopicChatMessage.fromJson(_snakeToCamel(e as Map<String, dynamic>)))
+          .map((e) => TopicChatMessage.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       logError(_tag, 'getTopicMessages error: $e');
@@ -252,23 +252,4 @@ class StoryApiDataSource {
     }
   }
 
-  /// Convert snake_case to camelCase for JSON keys
-  Map<String, dynamic> _snakeToCamel(Map<String, dynamic> map) {
-    return map.map((key, value) {
-      final camelKey = key.replaceAllMapped(
-        RegExp(r'_([a-z])'),
-        (match) => match.group(1)!.toUpperCase(),
-      );
-
-      if (value is Map<String, dynamic>) {
-        return MapEntry(camelKey, _snakeToCamel(value));
-      } else if (value is List) {
-        return MapEntry(
-          camelKey,
-          value.map((e) => e is Map<String, dynamic> ? _snakeToCamel(e) : e).toList(),
-        );
-      }
-      return MapEntry(camelKey, value);
-    });
-  }
 }

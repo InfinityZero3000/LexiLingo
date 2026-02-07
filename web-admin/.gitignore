@@ -1,0 +1,91 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+*.DS_Store
+
+# Build outputs
+build/
+.gradle/
+.cxx/
+.externalNativeBuild/
+/local.properties
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.metadata
+pubspec.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+*.hprof
+logs/
+*.log.*
+
+# Process IDs
+.pids/
+*.pid
+
+# Other
+*.orig
+*.rej
+*.swp
+
+# Firebase & Google Services - SENSITIVE DATA
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_options.dart
+**/*firebase-adminsdk*.json
+flutter-app/lexilingo-88492-firebase-adminsdk-fbsvc-aa6640bef2.json
+
+# Keep template files
+!**/google-services.json.example
+!**/GoogleService-Info.plist.example
+!**/firebase_options.dart.example
+
+# Documentation & Model Support (not tracked)
+docs/cmd
+DL-Model-Support
+DL-Model-Support/
+
+
+# Environment variables
+.env
+*.env
+**/.env.firebase.local
+!.env.example
+
+# AI Models (too large for git)
+**/models/whisper/*.pt
+**/models/hubert/*.pt
+**/models/piper/*.onnx
+**/models/embeddings/*.bin
+
+# Logs and temporary files
+logs/*.txt
+temp/
+tmp/
+*_log.txtsha256-*
+node_modules/
+build/
+.packages

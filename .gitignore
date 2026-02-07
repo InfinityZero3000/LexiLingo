@@ -72,6 +72,7 @@ DL-Model-Support/
 # Environment variables
 .env
 *.env
+.env.*
 **/.env.firebase.local
 !.env.example
 
@@ -86,3 +87,4 @@ logs/*.txt
 temp/
 tmp/
 *_log.txtsha256-*
+

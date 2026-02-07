@@ -117,7 +117,9 @@ class AchievementBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     // Try to get image asset first if preferImageAsset is true
     if (preferImageAsset) {
-      final assetPath = BadgeAssetMapper.getBadgeAsset(achievement.id);
+      // Prefer slug (stable ID) over id (UUID) for badge asset lookup
+      final lookupKey = achievement.slug ?? achievement.id;
+      final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
       if (assetPath != null) {
         return _buildImageAssetBadge(assetPath);
       }

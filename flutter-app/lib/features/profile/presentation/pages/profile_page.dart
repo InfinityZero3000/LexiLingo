@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
+import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
+import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
@@ -460,6 +462,52 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Edit Profile Button
+                        GestureDetector(
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadData(); // Refresh after edit
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit, color: Colors.white, size: 14),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Edit Profile',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -958,54 +1006,24 @@ class _ProfilePageState extends State<ProfilePage> {
   /// Build badge item from UserAchievementEntity
   Widget _buildBadgeItemFromEntity(dynamic badge) {
     final achievement = badge.achievement;
-    final color = Color(achievement.rarityColorValue);
-    final icon = _getBadgeIcon(achievement.category);
-    
+
     return Tooltip(
       message: '${achievement.name}\n${badge.unlockedTimeAgo}',
-      child: _buildBadgeItem(icon, color, achievement.name),
+      child: Column(
+        children: [
+          AchievementBadge(
+            achievement: achievement,
+            isUnlocked: true,
+            size: 64,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            achievement.name,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
-  }
-
-  /// Get icon for badge category
-  IconData _getBadgeIcon(String category) {
-    switch (category) {
-      case 'lessons':
-        return Icons.school;
-      case 'streak':
-        return Icons.local_fire_department;
-      case 'vocabulary':
-        return Icons.translate;
-      case 'xp':
-        return Icons.star;
-      case 'quiz':
-        return Icons.quiz;
-      case 'course':
-        return Icons.workspace_premium;
-      case 'voice':
-        return Icons.mic;
-      default:
-        return Icons.emoji_events;
-    }
-  }
-
-  Widget _buildBadgeItem(IconData icon, Color color, String label, {bool isLocked = false}) {
-     return Column(
-       children: [
-         Container(
-           width: 64, height: 64,
-           decoration: BoxDecoration(
-             shape: BoxShape.circle,
-             gradient: isLocked ? null : LinearGradient(colors: [color.withValues(alpha: 0.6), color], begin: Alignment.bottomLeft, end: Alignment.topRight),
-             color: isLocked ? Colors.grey[200] : null,
-             border: isLocked ? Border.all(color: Colors.grey, width: 2, style: BorderStyle.solid) : null,
-             boxShadow: isLocked ? null : [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]
-           ),
-           child: Icon(icon, color: isLocked ? Colors.grey : Colors.white, size: 30),
-         ),
-         const SizedBox(height: 8),
-         Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
-       ],
-     );
   }
 }

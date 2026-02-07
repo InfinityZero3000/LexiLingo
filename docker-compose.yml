@@ -162,7 +162,7 @@ services:
     volumes:
       - ./ai-service/api:/app/api
       - ./ai-service/models:/app/models
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn api.main_lite:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - lexilingo-network
 

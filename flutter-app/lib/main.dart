@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/achievements/presentation/providers/achie
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
+import 'package:lexilingo_app/features/chat/presentation/providers/story_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
@@ -110,6 +111,7 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<HomeProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ProfileProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ChatProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<StoryProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<CourseProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<LearningProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ProgressProvider>()),

@@ -142,6 +142,7 @@ Rank Thresholds:
 - `flutter-app/lib/features/level/presentation/providers/level_provider.dart`
 - `flutter-app/lib/features/profile/presentation/pages/profile_page.dart`
 - `flutter-app/lib/features/gamification/presentation/widgets/rank_badge.dart` - NEW
+- `flutter-app/lib/features/gamification/presentation/widgets/level_rank_display.dart` - NEW
 - `flutter-app/lib/features/level/presentation/screens/placement_test_screen.dart` - NEW
 
 ---
@@ -193,8 +194,8 @@ All backend API tests PASSED:
 {
   "assessed_level": "A2",
   "total_score": 65,
-  "max_score": 305,
-  "score_percentage": 21.3,
+  "max_score": 310,
+  "score_percentage": 20.97,
   "correct_count": 8,
   "level_changed": true
 }

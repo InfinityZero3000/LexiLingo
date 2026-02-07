@@ -45,6 +45,8 @@ class TokenStorage {
     return await _storage.read(key: key);
   }
 
+  /// Delete a value from secure storage
+  // ignore: unused_element
   Future<void> _delete(String key) async {
     if (kIsWeb) {
       _memoryStorage.remove(key);

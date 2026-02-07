@@ -7,7 +7,7 @@ class DailyChallengeEntity extends Equatable {
   final String title;
   final String description;
   final String icon;
-  final String category; // lesson, vocabulary, streak, xp
+  final String category; // lesson, vocabulary, streak, xp, voice, social
   final int target;
   final int current;
   final int xpReward;

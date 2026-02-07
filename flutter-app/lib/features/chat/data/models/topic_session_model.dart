@@ -96,20 +96,23 @@ class TopicChatRequest {
 /// Response from AI in a topic session
 class TopicChatResponse {
   final String response;
+  final String? _messageId;
   final EducationalHints? educationalHints;
   final int? processingTimeMs;
   final LlmMetadata? llmMetadata;
 
   const TopicChatResponse({
     required this.response,
+    String? messageId,
     this.educationalHints,
     this.processingTimeMs,
     this.llmMetadata,
-  });
+  }) : _messageId = messageId;
 
   factory TopicChatResponse.fromJson(Map<String, dynamic> json) {
     return TopicChatResponse(
-      response: json['response'] as String? ?? '',
+      response: json['ai_response'] as String? ?? json['response'] as String? ?? '',
+      messageId: json['message_id'] as String? ?? json['messageId'] as String?,
       educationalHints: json['educational_hints'] != null
           ? EducationalHints.fromJson(json['educational_hints'] as Map<String, dynamic>)
           : json['educationalHints'] != null
@@ -135,7 +138,7 @@ class TopicChatResponse {
   bool get hasHints => educationalHints?.hasAnyHints ?? false;
   
   // Additional getters for compatibility
-  String get messageId => DateTime.now().millisecondsSinceEpoch.toString();
+  String get messageId => _messageId ?? DateTime.now().millisecondsSinceEpoch.toString();
   String get aiResponse => response;
   String get cleanResponse => response;
 }

@@ -3,7 +3,7 @@ Qwen Handler - Chat AI model
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class QwenHandler:
             logger.error(f"Failed to load Qwen: {e}")
             raise
     
-    async def chat(self, message: str, context: Dict[str, Any]) -> Dict[str, str]:
+    async def chat(self, message: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate chat response
         
