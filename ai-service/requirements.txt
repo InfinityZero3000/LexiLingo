@@ -43,10 +43,10 @@ faster-whisper>=1.1.0
 piper-tts>=1.2.0
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
-transformers==4.36.0
+transformers>=4.37.0
 accelerate>=0.25.0
-torch==2.1.1
-peft==0.7.1  # LoRA fine-tuning and adapter loading
+torch>=2.2.0
+peft>=0.8.0  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (GraphCAG Orchestration)
 langgraph>=0.0.66
