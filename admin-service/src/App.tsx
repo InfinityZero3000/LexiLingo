@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { I18nProvider, useI18n } from "./lib/i18n";
-import { AuthProvider } from "./components/AuthProvider";
+import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
 import { AppShell, NavItem } from "./components/AppShell";
@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
-  Shield, Database, Bot, ArrowRight
+  Shield, Database, Bot, ArrowRight, ArrowLeft
 } from "lucide-react";
 import { LoginPage } from "./pages/LoginPage";
 import { RoleRedirectPage } from "./pages/RoleRedirectPage";
@@ -38,6 +38,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 
 const AppRoutes = () => {
   const { t } = useI18n();
+  const { role } = useAuth();
 
   const adminNav: NavItem[] = [
     { to: "/admin", label: t.nav.dashboard, icon: <LayoutDashboard size={18} /> },
@@ -54,6 +55,8 @@ const AppRoutes = () => {
     { to: "/admin/logs", label: t.nav.logs, icon: <ScrollText size={18} /> },
     { to: "/admin/monitoring", label: t.nav.monitoring, icon: <Activity size={18} /> },
     { to: "/admin/settings", label: t.nav.settings, icon: <Settings size={18} /> },
+    // Conditionally add "Back to Super Admin" for super_admin users
+    ...(role === "super_admin" ? [{ to: "/super", label: t.nav.superDashboard, icon: <ArrowLeft size={18} /> }] : []),
   ];
 
   const superNav: NavItem[] = [
