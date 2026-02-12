@@ -86,6 +86,9 @@ dependencies:
   
   # Web platform support
   web: ^1.1.0
+  
+  # Localization
+  easy_localization: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -116,6 +119,7 @@ flutter:
     - .env
     - animation/
     - assets/badges/
+    - assets/i18n/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

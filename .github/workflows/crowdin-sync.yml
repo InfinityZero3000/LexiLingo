@@ -1,0 +1,121 @@
+# Crowdin Sync Workflow for LexiLingo
+# Automatically syncs translations between GitHub and Crowdin
+
+name: Crowdin Sync
+
+on:
+  # Trigger when source translations change
+  push:
+    branches: [main, feature]
+    paths:
+      - 'flutter-app/assets/i18n/vi.json'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'upload'
+        type: choice
+        options:
+          - upload
+          - download
+          - both
+
+jobs:
+  # Upload source strings to Crowdin when vi.json changes
+  upload-sources:
+    name: Upload Sources to Crowdin
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.action == 'upload' || github.event.inputs.action == 'both'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Upload to Crowdin
+        uses: crowdin/github-action@v1
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: false
+          
+          # Crowdin configuration
+          project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
+          token: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          
+          # File mappings
+          source: 'flutter-app/assets/i18n/vi.json'
+          translation: 'flutter-app/assets/i18n/%two_letters_code%.json'
+          
+          # Options
+          config: 'flutter-app/crowdin.yml'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Download translations from Crowdin (manual or scheduled)
+  download-translations:
+    name: Download Translations from Crowdin
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'download' || github.event.inputs.action == 'both'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download from Crowdin
+        uses: crowdin/github-action@v1
+        with:
+          upload_sources: false
+          upload_translations: false
+          download_translations: true
+          
+          # Crowdin configuration
+          project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
+          token: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          
+          # File mappings
+          source: 'flutter-app/assets/i18n/vi.json'
+          translation: 'flutter-app/assets/i18n/%two_letters_code%.json'
+          
+          # Pull request settings
+          localization_branch_name: l10n_crowdin_translations
+          create_pull_request: true
+          pull_request_title: '🌐 [Crowdin] New translations'
+          pull_request_body: |
+            New Crowdin translations by GitHub Action.
+            
+            **Changes:**
+            - Updated translation files from Crowdin
+            
+            **Review:**
+            - Please verify translations are correct
+            - Test the app with different locales
+          pull_request_labels: 'localization,automated'
+          
+          # Options
+          config: 'flutter-app/crowdin.yml'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Weekly scheduled download (optional - uncomment to enable)
+  # scheduled-download:
+  #   name: Weekly Translation Download
+  #   runs-on: ubuntu-latest
+  #   # Run every Monday at 9:00 AM UTC
+  #   # schedule:
+  #   #   - cron: '0 9 * * 1'
+  #   
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     
+  #     - name: Download from Crowdin
+  #       uses: crowdin/github-action@v1
+  #       with:
+  #         upload_sources: false
+  #         download_translations: true
+  #         create_pull_request: true
+  #         project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
+  #         token: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
