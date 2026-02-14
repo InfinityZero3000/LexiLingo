@@ -1,8 +1,8 @@
 """
-LexiLingo AI Service - Lite Version
+LexiLingo AI Service
 
-Simplified API for Chat, STT, TTS with ModelGateway for lazy loading.
-Supports Qwen (local) or Gemini (cloud) for chat.
+API for Chat, STT, TTS with ModelGateway for lazy loading.
+Supports Qwen (local), OpenRouter, or Gemini (cloud) for chat.
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Body, Request
@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
+from motor.motor_asyncio import AsyncIOMotorClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -29,28 +30,22 @@ class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
     """
     Middleware to handle Chrome's Private Network Access (CORS-RFC1918).
     
-    When Chrome makes a cross-origin request to a private network (localhost, 
-    192.168.x.x, etc.), it sends a preflight OPTIONS request with the header:
-    Access-Control-Request-Private-Network: true
-    
-    The server must respond with:
-    Access-Control-Allow-Private-Network: true
-    
-    Without this header, Chrome blocks all fetch() requests with:
-    "Failed to fetch" error.
+    Chrome 94+ requires Access-Control-Allow-Private-Network: true header
+    on BOTH the OPTIONS preflight AND the actual request response.
+    Without this header on the actual request, Chrome blocks it with 'Failed to fetch'.
     """
     async def dispatch(self, request: Request, call_next):
-        # For CORS preflight with PNA request
-        if (
-            request.method == "OPTIONS"
-            and request.headers.get("access-control-request-private-network") == "true"
-        ):
-            response = await call_next(request)
-            response.headers["Access-Control-Allow-Private-Network"] = "true"
-            return response
+        # Check if this is a private network access request
+        has_pna_header = (
+            request.headers.get("access-control-request-private-network") == "true"
+        )
         
-        # For regular requests
         response = await call_next(request)
+        
+        # Add PNA header to response if request had it (for both OPTIONS and actual requests)
+        if has_pna_header or request.method == "OPTIONS":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        
         return response
 
 
@@ -59,6 +54,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 USE_QWEN = os.getenv("USE_QWEN", "true").lower() == "true"
 QWEN_MODEL = os.getenv("QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://admin:lexilingo2026@localhost:27017/")
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # Global Qwen engine (legacy - for fallback if gateway not used)
 qwen_engine = None
@@ -66,13 +64,25 @@ qwen_engine = None
 # Gateway instance (lazy initialized)
 _gateway_initialized = False
 
+# MongoDB client (for admin config)
+_mongo_client: Optional[AsyncIOMotorClient] = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    global _gateway_initialized
+    global _gateway_initialized, _mongo_client
     
     # Startup
+    # Initialize MongoDB client
+    try:
+        _mongo_client = AsyncIOMotorClient(MONGODB_URI)
+        await _mongo_client.admin.command('ping')
+        logger.info("✓ MongoDB connected")
+    except Exception as e:
+        logger.warning(f"MongoDB connection failed: {e}")
+        _mongo_client = None
+    
     if USE_GATEWAY:
         try:
             from api.services.gateway_setup import setup_gateway
@@ -90,6 +100,10 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
+    if _mongo_client:
+        _mongo_client.close()
+        logger.info("MongoDB client closed")
+    
     if _gateway_initialized:
         try:
             from api.services.gateway_setup import shutdown_gateway
@@ -100,9 +114,9 @@ async def lifespan(app: FastAPI):
 
 # FastAPI App
 app = FastAPI(
-    title="LexiLingo AI Service (Lite)",
-    description="Simplified AI Service for Chat, STT, TTS with ModelGateway",
-    version="2.0.0-lite",
+    title="LexiLingo AI Service",
+    description="AI Service for Chat, STT, TTS with ModelGateway",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -150,6 +164,21 @@ try:
     logger.info("✓ Topic Chat routes registered")
 except Exception as e:
     logger.warning(f"Failed to register topic chat routes: {e}")
+
+# ============================================================
+# Include Admin Router
+# ============================================================
+try:
+    _admin_module = importlib.import_module("api.routes.admin")
+    admin_router = _admin_module.router
+    app.include_router(
+        admin_router,
+        prefix="/api/v1/admin",
+        tags=["Admin Configuration"],
+    )
+    logger.info("✓ Admin routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register admin routes: {e}")
 
 
 # ============================================================
@@ -200,6 +229,110 @@ class SendMessageResponse(BaseModel):
 sessions = {}
 messages = {}
 
+
+# ============================================================
+# Helper Functions
+# ============================================================
+
+async def get_active_gemini_key() -> Optional[str]:
+    """
+    Get active Gemini API key with priority:
+    1. Stored key from MongoDB (if exists)
+    2. Environment variable GEMINI_API_KEY
+    
+    Returns:
+        Active API key or None if not available
+    """
+    global _mongo_client
+    
+    # Try to get from database first
+    if _mongo_client:
+        try:
+            db = _mongo_client[MONGODB_DATABASE]
+            config = await db.admin_config.find_one({"_id": "ai_config"})
+            if config and config.get("gemini_api_key"):
+                logger.info("Using Gemini API key from database")
+                return config["gemini_api_key"]
+        except Exception as e:
+            logger.warning(f"Failed to fetch API key from database: {e}")
+    
+    # Fallback to environment variable
+    if GEMINI_API_KEY:
+        logger.info("Using Gemini API key from environment variable")
+        return GEMINI_API_KEY
+    
+    return None
+
+# ============================================================
+#  Get API Qwen3-next-80b-a3b-instruct:free
+# ============================================================
+async def get_openrouter_key() -> Optional[str]:
+    
+    global _mongo_client
+    
+    # Try to get OpenRouter API key from database first
+    if _mongo_client:
+        try:
+            db = _mongo_client[MONGODB_DATABASE]
+            config = await db.admin_config.find_one({"_id": "ai_config"})
+            if config and config.get("openrouter_api_key"):
+                logger.info("Using OpenRouter API key from database")
+                return config["openrouter_api_key"]
+        except Exception as e:
+            logger.warning(f"Failed to fetch OpenRouter API key from database: {e}")
+            
+    # Fallback to environment variable
+    if OPENROUTER_API_KEY:
+        logger.info("Using OpenRouter API key from environment variable")
+        return OPENROUTER_API_KEY
+    return None
+    
+
+# ============================================================
+#  API Qwen3-next-80b-a3b-instruct:free
+# ============================================================
+
+async def get_qwen3_response(message: str) -> Optional[str]:
+    """Get response from Qwen model via API of openrouter."""
+    active_api_key = await get_openrouter_key()
+    
+    if not active_api_key:
+        return None
+    
+    try:
+        import httpx
+        
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {active_api_key}",
+        }
+        payload = {
+            "model": "qwen3-next-80b-a3b-instruct:free",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": message,
+                }
+            ],
+            "max_tokens": 512,
+            "temperature": 0.7,
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                choices = data.get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "")
+            else:
+                logger.error(f"Qwen API error: {response.status_code} - {response.text}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Qwen API error: {e}")
+        return None
 
 # ============================================================
 # AI Response Helper (via ModelGateway)
@@ -311,7 +444,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "2.0.0-lite",
+        "version": "2.0.0",
         "gateway_enabled": USE_GATEWAY,
         "gateway_initialized": _gateway_initialized,
         "gateway_status": gateway_status,
@@ -324,7 +457,7 @@ async def ping():
 
 @app.get("/")
 async def root():
-    return {"message": "LexiLingo AI Service (Lite) with ModelGateway"}
+    return {"message": "LexiLingo AI Service with ModelGateway"}
 
 
 # ============================================================
@@ -358,6 +491,9 @@ async def send_message(request: SendMessageRequest) -> SendMessageResponse:
     
     logger.info(f"📨 Chat request received - session: {session_id[:8]}..., message: '{request.message[:50]}...'")
     
+    # Get active API key (stored in DB or env var)
+    active_api_key = await get_active_gemini_key()
+    
     # 1. Try ModelGateway first (handles all routing)
     logger.info("🔄 Attempting ModelGateway...")
     ai_response = await get_ai_response(request.message)
@@ -366,13 +502,13 @@ async def send_message(request: SendMessageRequest) -> SendMessageResponse:
         logger.info(f"✅ ModelGateway response received (length: {len(ai_response)} chars)")
     
     # 2. Fallback to direct Gemini API
-    if ai_response is None and GEMINI_API_KEY:
+    if ai_response is None and active_api_key:
         logger.info("🔄 Gateway failed, trying direct Gemini API...")
         try:
             import httpx
             
             # Gemini API endpoint (use gemini-2.0-flash)
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={active_api_key}"
             
             payload = {
                 "contents": [{
@@ -662,8 +798,8 @@ async def analyze_text(text: str = Body(..., embed=True)):
         "success": True,
         "data": {
             "text": text,
-            "fluency": 0.8,
-            "grammar_score": 0.9,
+            "fluency": 0.0,
+            "grammar_score": 0.0,
             "vocabulary_level": "intermediate",
             "suggestions": [],
         }
