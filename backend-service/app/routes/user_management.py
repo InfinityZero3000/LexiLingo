@@ -138,8 +138,9 @@ async def list_users(
     **Sort options:**
     - created_at, last_login, email, role, total_xp
     """
-    # Build query with Role join for filtering/sorting
-    query = select(User).join(User.role)
+    # Build query with Role outerjoin for filtering/sorting
+    # Use outerjoin so users without a role (role_id=NULL) are still included
+    query = select(User).outerjoin(User.role)
     
     # Apply filters
     filters = []
@@ -322,6 +323,14 @@ async def update_user(
             detail="User not found"
         )
     
+    # Prevent modifying users with equal or higher role level (unless you are super_admin)
+    if data.is_active is not None and not data.is_active:
+        if user.role_level >= admin.role_level and user.id != admin.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot deactivate users with equal or higher role level"
+            )
+    
     # Update fields
     if data.display_name is not None:
         user.display_name = data.display_name
@@ -479,6 +488,13 @@ async def update_user_status(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot deactivate your own account"
+        )
+    
+    # Prevent deactivating users with equal or higher role level
+    if not data.is_active and user.role_level >= admin.role_level and user.id != admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot modify status of users with equal or higher role level"
         )
     
     user.is_active = data.is_active
@@ -640,16 +656,25 @@ async def bulk_user_action(
             detail="No users found with provided IDs"
         )
     
+    # Filter out users with equal or higher role level (prevent privilege escalation)
+    actionable_users = []
+    skipped_count = 0
+    for user in users:
+        if user.role_level >= admin.role_level:
+            skipped_count += 1
+        else:
+            actionable_users.append(user)
+    
     # Perform action
     updated_count = 0
     
     if data.action == "activate":
-        for user in users:
+        for user in actionable_users:
             user.is_active = True
             updated_count += 1
     
     elif data.action == "deactivate":
-        for user in users:
+        for user in actionable_users:
             user.is_active = False
             updated_count += 1
     
@@ -661,7 +686,7 @@ async def bulk_user_action(
                 detail="Only super_admins can delete users"
             )
         
-        for user in users:
+        for user in actionable_users:
             user.is_active = False
             # In a real app, you might mark as deleted or actually delete
             updated_count += 1
