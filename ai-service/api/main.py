@@ -22,6 +22,10 @@ from motor.motor_asyncio import AsyncIOMotorClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # ============================================================
 # Private Network Access Middleware (Chrome CORS-RFC1918)
@@ -54,9 +58,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 USE_QWEN = os.getenv("USE_QWEN", "true").lower() == "true"
 QWEN_MODEL = os.getenv("QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://admin:lexilingo2026@localhost:27017/")
-MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", os.getenv("MONGODB_DB_NAME", "lexilingo"))
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+# Ollama config
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3")
+OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120"))
 
 # Global Qwen engine (legacy - for fallback if gateway not used)
 qwen_engine = None
@@ -308,7 +317,7 @@ async def get_qwen3_response(message: str) -> Optional[str]:
             "Authorization": f"Bearer {active_api_key}",
         }
         payload = {
-            "model": "qwen3-next-80b-a3b-instruct:free",
+            "model": "qwen/qwen3-next-80b-a3b-instruct:free",
             "messages": [
                 {
                     "role": "user",
@@ -335,48 +344,93 @@ async def get_qwen3_response(message: str) -> Optional[str]:
         return None
 
 # ============================================================
-# AI Response Helper (via ModelGateway)
+# Ollama Local Response Helper
+# ============================================================
+
+async def get_ollama_response(message: str) -> Optional[str]:
+    """Get response from local Ollama model (qwen3:4b)."""
+    try:
+        from api.services.ollama_service import OllamaService
+        
+        logger.info(f"  → Trying Ollama local ({OLLAMA_MODEL})...")
+        
+        ollama = OllamaService(
+            base_url=OLLAMA_BASE_URL,
+            model=OLLAMA_MODEL,
+            timeout=float(OLLAMA_TIMEOUT),
+        )
+        
+        # Check health first
+        is_healthy = await ollama.health_check()
+        if not is_healthy:
+            logger.warning("  → Ollama server not running")
+            await ollama.close()
+            return None
+        
+        result = await ollama.chat(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are LexiLingo, an AI English tutor helping ESL learners. "
+                               "Respond helpfully and encourage the user to practice English. "
+                               "Keep responses concise and friendly."
+                },
+                {"role": "user", "content": message},
+            ],
+            temperature=0.7,
+            max_tokens=512,
+        )
+        
+        await ollama.close()
+        
+        if isinstance(result, dict):
+            content = result.get("message", {}).get("content") or result.get("response")
+            if content:
+                logger.info(f"  → Ollama response OK (length: {len(content)} chars)")
+                return content
+        
+        return None
+        
+    except Exception as e:
+        logger.warning(f"  → Ollama error: {e}")
+        return None
+
+
+# ============================================================
+# AI Response Helper (via ModelGateway - legacy)
 # ============================================================
 
 async def get_ai_response(message: str) -> Optional[str]:
-    """Get response from AI model via ModelGateway."""
+    """Get response from AI model via ModelGateway (legacy)."""
     global _gateway_initialized
     
-    logger.info(f"  → get_ai_response: gateway_initialized={_gateway_initialized}")
+    if not _gateway_initialized:
+        return None
     
-    if _gateway_initialized:
-        try:
-            from api.services.gateway_setup import execute_task
-            
-            logger.info("  → Executing task via ModelGateway...")
-            result = await execute_task(
-                task_type="chat",
-                params={
-                    "text": message,
-                    "system_prompt": """You are LexiLingo, an AI English tutor helping ESL learners.
+    try:
+        from api.services.gateway_setup import execute_task
+        
+        result = await execute_task(
+            task_type="chat",
+            params={
+                "text": message,
+                "system_prompt": """You are LexiLingo, an AI English tutor helping ESL learners.
 Respond helpfully and encourage the user to practice English.
 Keep responses concise and friendly.""",
-                },
-                fallback=True,
-            )
-            
-            logger.info(f"  → Gateway result: success={result.get('success')}, model={result.get('model_used', 'unknown')}")
-            
-            if result.get("success"):
-                data = result.get("data", {})
-                response = data.get("response") or str(data)
-                logger.info(f"  → Gateway response OK (length: {len(response)} chars)")
-                return response
-            
-            logger.warning(f"  → Gateway response failed: {result.get('error')}")
-            return None
-            
-        except Exception as e:
-            logger.warning(f"  → Gateway error: {e}, falling back to legacy")
-    
-    # Fallback to legacy Qwen loading
-    logger.info("  → Trying legacy Qwen...")
-    return await get_qwen_response_legacy(message)
+            },
+            fallback=True,
+        )
+        
+        if result.get("success"):
+            data = result.get("data", {})
+            response = data.get("response") or str(data)
+            return response
+        
+        return None
+        
+    except Exception as e:
+        logger.warning(f"  → Gateway error: {e}")
+        return None
 
 
 async def get_qwen_response_legacy(message: str) -> Optional[str]:
@@ -484,73 +538,79 @@ async def create_session(request: CreateSessionRequest) -> CreateSessionResponse
 
 @app.post("/api/v1/chat/messages", response_model=SendMessageResponse)
 async def send_message(request: SendMessageRequest) -> SendMessageResponse:
-    """Send a message and get AI response."""
+    """Send a message and get AI response.
+    
+    Fallback chain:
+      1. OpenRouter API (qwen3-next-80b, free tier)
+      2. Gemini API (gemini-2.0-flash)
+      3. Ollama local (lexilingo-qwen3 / qwen3:4b)
+      4. Static fallback message
+    """
     session_id = request.session_id
     ai_response = None
     model_used = None
     
     logger.info(f"📨 Chat request received - session: {session_id[:8]}..., message: '{request.message[:50]}...'")
     
-    # Get active API key (stored in DB or env var)
-    active_api_key = await get_active_gemini_key()
-    
-    # 1. Try ModelGateway first (handles all routing)
-    logger.info("🔄 Attempting ModelGateway...")
-    ai_response = await get_ai_response(request.message)
+    # ── Step 1: OpenRouter API (free tier, best quality) ──
+    logger.info("🔄 [1/3] Trying OpenRouter (qwen3-next-80b free)...")
+    ai_response = await get_qwen3_response(request.message)
     if ai_response:
-        model_used = "gateway"
-        logger.info(f"✅ ModelGateway response received (length: {len(ai_response)} chars)")
+        model_used = "openrouter/qwen3-next-80b"
+        logger.info(f"✅ OpenRouter response received (length: {len(ai_response)} chars)")
     
-    # 2. Fallback to direct Gemini API
-    if ai_response is None and active_api_key:
-        logger.info("🔄 Gateway failed, trying direct Gemini API...")
-        try:
-            import httpx
-            
-            # Gemini API endpoint (use gemini-2.0-flash)
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={active_api_key}"
-            
-            payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": f"You are LexiLingo, an AI English tutor. Help the user learn English. User message: {request.message}"
-                    }]
-                }]
-            }
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, json=payload)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    # Extract text from Gemini response
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        content = candidates[0].get("content", {})
-                        parts = content.get("parts", [])
-                        if parts:
-                            ai_response = parts[0].get("text", "I couldn't generate a response.")
-                        else:
-                            ai_response = "I couldn't generate a response."
-                    else:
-                        ai_response = "I couldn't generate a response."
-                else:
-                    logger.error(f"❌ Gemini API error: {response.status_code} - {response.text}")
-                    ai_response = f"API error: {response.status_code}"
-            
-            if ai_response:
-                model_used = "gemini-2.0-flash"
-                logger.info(f"✅ Gemini response received (length: {len(ai_response)} chars)")
-                    
-        except Exception as e:
-            logger.error(f"❌ Gemini error: {e}")
-            ai_response = f"I apologize, but I'm having trouble processing your request. Error: {str(e)}"
-    
-    # 3. Final fallback if no model available
+    # ── Step 2: Gemini API (cloud fallback) ──
     if ai_response is None:
-        ai_response = "Hello! I'm LexiLingo AI. No AI model is available. Please configure Qwen or Gemini API."
+        active_api_key = await get_active_gemini_key()
+        if active_api_key:
+            logger.info("🔄 [2/3] OpenRouter failed, trying Gemini API...")
+            try:
+                import httpx
+                
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={active_api_key}"
+                
+                payload = {
+                    "contents": [{
+                        "parts": [{
+                            "text": f"You are LexiLingo, an AI English tutor. Help the user learn English. User message: {request.message}"
+                        }]
+                    }]
+                }
+                
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(url, json=payload)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            content = candidates[0].get("content", {})
+                            parts = content.get("parts", [])
+                            if parts:
+                                ai_response = parts[0].get("text", "")
+                    else:
+                        logger.error(f"❌ Gemini API error: {response.status_code} - {response.text}")
+                
+                if ai_response:
+                    model_used = "gemini-2.0-flash"
+                    logger.info(f"✅ Gemini response received (length: {len(ai_response)} chars)")
+                        
+            except Exception as e:
+                logger.error(f"❌ Gemini error: {e}")
+    
+    # ── Step 3: Ollama local (offline fallback) ──
+    if ai_response is None:
+        logger.info("🔄 [3/3] Cloud APIs failed, trying Ollama local...")
+        ai_response = await get_ollama_response(request.message)
+        if ai_response:
+            model_used = f"ollama/{OLLAMA_MODEL}"
+            logger.info(f"✅ Ollama response received (length: {len(ai_response)} chars)")
+    
+    # ── Step 4: Static fallback ──
+    if ai_response is None:
+        ai_response = "Hello! I'm LexiLingo AI. All AI providers are currently unavailable. Please check your configuration."
         model_used = "fallback"
-        logger.warning("⚠️ No AI model available, using fallback response")
+        logger.warning("⚠️ All AI providers failed, using static fallback")
     
     logger.info(f"🤖 Model used: {model_used}")
     
