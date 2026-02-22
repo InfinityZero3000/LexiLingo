@@ -187,7 +187,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
           if (shouldUseCategories) {
             final category = categories[index];
-            final categoryCourses = provider.courses;
+            final categoryCourses = provider.courses
+                .where((c) => 
+                  c.tags.contains(category.slug) || 
+                  c.tags.contains(category.name.toLowerCase()) ||
+                  // fallback: if course has no tags, don't show it here unless category is general
+                  (c.tags.isEmpty && category.slug == 'general'))
+                .toList();
             
             if (categoryCourses.isEmpty) {
               return const SizedBox.shrink();
