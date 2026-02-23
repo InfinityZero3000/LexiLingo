@@ -1,215 +1,305 @@
-# LexiLingo
+<div align="center">
 
-**Intelligent Language Learning Platform with AI-Powered Assessment and Personalized Learning Paths**
+<img src="flutter-app/assets/logo/logo.png" alt="LexiLingo Logo" width="120" />
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org)
-[![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-[![Build](https://img.shields.io/badge/build-passing-success)](https://github.com/InfinityZero3000/LexiLingo)
-[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-lightgrey)](https://github.com/InfinityZero3000/LexiLingo)
-[![API](https://img.shields.io/badge/API-REST%20%7C%20WebSocket-informational)](https://github.com/InfinityZero3000/LexiLingo)
+# LexiLingo — Your AI Language Learning Assistant
 
 ---
 
-## Overview
+[![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![License](https://img.shields.io/badge/License-MIT-22c55e.svg?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-8b5cf6?style=for-the-badge)](https://github.com/InfinityZero3000/LexiLingo)
 
-LexiLingo is an enterprise-grade language learning platform that leverages artificial intelligence and machine learning to provide personalized, adaptive learning experiences. The system employs a microservices architecture with specialized services for assessment, recommendation, and real-time interaction.
+LexiLingo is an enterprise-grade language learning platform that leverages artificial intelligence and machine learning to provide **personalized, adaptive learning experiences**. Powered by fine-tuned LLMs, knowledge graphs, and a real-time voice pipeline, LexiLingo helps learners master English through intelligent assessments, conversational AI tutors, and gamified learning paths.
 
-**Key Capabilities:**
-- AI-driven language proficiency assessment (CEFR-aligned)
-- Deep learning models for fluency, vocabulary, and grammatical analysis
-- Adaptive learning paths with real-time progress tracking
-- Gamified learning experience with achievement systems
-- Multi-platform support (iOS, Android, Web)
+</div>
+
+---
+
+## Key Highlights
+
+| Feature | Description |
+|---------|-------------|
+| **GraphCAG Pipeline** | **Graph** (Knowledge Graph) + **CAG** (Cache-Augmented Generation) orchestrated by LangGraph |
+| **Dual-Stream Voice** | Real-time concurrent STT → Thinking → TTS with interruption handling |
+| **Smart Model Router** | Automatic routing between local (Ollama) and cloud (Gemini) models |
+| **CEFR Assessment** | Automatic proficiency scoring from A1 to C2 with multi-dimensional analysis |
+| **Knowledge Graph** | KuzuDB-backed curriculum graph with mastery tracking and concept prerequisites |
+| **HuBERT Pronunciation** | Phoneme-level pronunciation feedback optimized for Vietnamese learners |
+| **SM-2 Spaced Repetition** | Optimal review scheduling based on SuperMemo 2 algorithm |
+| **Content Auto-Generation** | AI-generated exercises adapted to learner level, errors, and interests |
 
 ---
 
 ## System Architecture
 
-LexiLingo implements a **microservices architecture** with clear separation of concerns:
+LexiLingo implements a **microservices architecture** with three specialized backend services:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Client Layer                             │
 │              (Flutter - iOS / Android / Web)                    │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ↓
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API Gateway Layer                          │
 │                   (Load Balancing / Routing)                    │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-           ┌───────────────┼───────────────┐
-           ↓               ↓               ↓
-    ┌──────────┐    ┌──────────┐    ┌──────────┐
-    │ Backend  │    │    AI    │    │   DL     │
-    │ Service  │    │ Service  │    │  Model   │
-    └────┬─────┘    └────┬─────┘    └────┬─────┘
-         │               │               │
-         └───────────────┴───────────────┘
-                         │
-              ┌──────────┴──────────┐
-              ↓                     ↓
-        ┌──────────┐          ┌──────────┐
-        │PostgreSQL│          │  Redis   │
-        │          │          │  Cache   │
-        └──────────┘          └──────────┘
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+           ┌─────────────────────┼─────────────────────┐
+           ↓                     ↓                     ↓
+     ┌───────────┐         ┌───────────┐         ┌───────────┐
+     │  Backend  │         │    AI     │         │ DL Model  │
+     │  Service  │         │  Service  │         │  Service  │
+     └─────┬─────┘         └─────┬─────┘         └─────┬─────┘
+           │                     │                     │
+           └─────────────────────┴─────────────────────┘
+                                 │
+                      ┌──────────┴──────────┐
+                      ↓                     ↓
+                ┌──────────┐          ┌──────────┐
+                │PostgreSQL│          │  Redis   │
+                │ Database │          │  Cache   │
+                └──────────┘          └──────────┘
 ```
-
-### Service Components
-
-**Backend Service (FastAPI)**
-- User authentication and authorization (JWT)
-- Course management and curriculum delivery
-- Progress tracking and analytics
-- Gamification engine (XP, achievements, leaderboards)
-
-**AI Service (FastAPI)**
-- Language assessment engine
-- Conversational AI integration (Google Gemini)
-- Speech-to-Text and Text-to-Speech processing
-- Real-time feedback generation
-
-**DL Model Service**
-- Fine-tuned Qwen 2.5 model for language analysis
-- Fluency scoring algorithms
-- Vocabulary complexity assessment
-- Grammatical error detection
-
-**Client Application (Flutter)**
-- Cross-platform native experience
-- Offline-first architecture
-- Real-time synchronization
-- Responsive UI/UX design
 
 ---
 
-## Core Features
+## AI Architecture Deep Dive
 
-### Intelligent Assessment System
-- **CEFR-aligned Proficiency Testing**: Automated language level assessment (A1-C2)
-- **Multi-dimensional Analysis**: Fluency, vocabulary, grammar, and pronunciation scoring
-- **Adaptive Question Generation**: Dynamic difficulty adjustment based on performance
-- **Real-time Feedback**: Instant error detection and correction suggestions
+### GraphCAG Pipeline (LangGraph StateGraph)
 
-### Personalized Learning Engine
-- **AI-driven Learning Paths**: Customized curriculum based on proficiency and goals
-- **Spaced Repetition System**: Optimized vocabulary retention algorithms
-- **Progress Analytics**: Comprehensive learning metrics and insights
-- **Adaptive Content Delivery**: Dynamic lesson difficulty and pacing
+The core intelligence of LexiLingo is the **GraphCAG Pipeline** — a combination of **Graph** (Knowledge Graph via KuzuDB) and **CAG** (Cache-Augmented Generation), orchestrated by **LangGraph's StateGraph**.
 
-### Gamification Framework
-- **Experience Points (XP)**: Progress-based reward system
-- **Achievement Badges**: Milestone recognition and motivation
-- **Streak Tracking**: Daily engagement monitoring
-- **Leaderboards**: Competitive learning environment
+Unlike traditional RAG (Retrieval-Augmented Generation) that retrieves from documents, **CAG grounds LLM responses using cached learner context** (Redis: learner profiles, conversation history) and **structured knowledge** (KuzuDB: grammar concepts, prerequisite chains, mastery scores). This makes responses faster and more contextually relevant without redundant document retrieval.
 
-### Interactive Learning
-- **Conversational AI**: Practice with AI tutors powered by large language models
-- **Speech Recognition**: Real-time pronunciation assessment
-- **Interactive Exercises**: Multiple question types and formats
-- **Multimedia Content**: Audio, visual, and text-based learning materials
+```
+┌───────────┐   ┌───────────┐   ┌───────────┐
+│   INPUT   │──▶│ KG_EXPAND │──▶│ DIAGNOSE  │
+│  (Cache   │   │  (KuzuDB  │   │ (AI Error │
+│   Load)   │   │   Hops)   │   │  Detect)  │
+└───────────┘   └───────────┘   └─────┬─────┘
+                                      │
+           ┌──────────────────────────┼───────────────────┐
+           ▼                          ▼                   ▼
+    ┌────────────┐             ┌────────────┐      ┌────────────┐
+    │ASK_CLARIFY │             │ VIETNAMESE │      │  RETRIEVE  │
+    │(conf < 0.5)│             │ (A1/A2 +   │      │(KG + Vector│
+    └──────┬─────┘             │  errors)   │      │  Context)  │
+           │                   └──────┬─────┘      └──────┬─────┘
+           │                          │                   │
+           │                          └───────────────────┤
+           │                                              ▼
+           │                                       ┌────────────┐
+           └──────────────────────────────────────▶│  GENERATE  │
+                                                   └──────┬─────┘
+                                                ┌─────────┴─────────┐
+                                                ▼                   ▼
+                                          ┌───────────┐       ┌───────────┐
+                                          │    TTS    │       │    END    │
+                                          └─────┬─────┘       └───────────┘
+                                                │
+                                                ▼
+                                          ┌───────────┐
+                                          │    END    │
+                                          └───────────┘
+```
 
-### Enterprise Capabilities
-- **Multi-tenant Architecture**: Scalable for institutions and organizations
-- **REST & WebSocket APIs**: Real-time data synchronization
-- **Offline Support**: Local caching and background sync
-- **Analytics Dashboard**: Detailed learning insights and reporting
+**Pipeline flow (from actual LangGraph StateGraph):**
+
+1. **Input Node** — Loads learner profile and conversation history from **Redis cache** (CAG)
+2. **KG Expand Node** — Matches user input to curriculum concepts in **KuzuDB**, expands via graph hops to find related concepts (Graph)
+3. **Diagnose Node** — AI-powered grammar/fluency analysis via **ModelGateway** (Qwen/Gemini), maps errors to KG concept IDs
+4. **Conditional Routing** — LangGraph conditional edges:
+   - `confidence < 0.5` → **Ask Clarify** (request more info)
+   - `level A1/A2 + errors` → **Vietnamese Node** (explain in Vietnamese first) → Retrieve
+   - Otherwise → **Retrieve** (normal flow)
+5. **Retrieve Node** — Combines KG-expanded concepts + diagnosis root causes into a grounded context
+6. **Generate Node** — LLM generates a personalized tutor response using the cached context (CAG), grounded by KG concepts (Graph)
+7. **TTS Node** — Conditionally generates speech output via Piper TTS
+
+Each node updates the shared **`GraphCAGState`** (TypedDict), enabling stateful multi-turn conversations with full context preservation.
+
+---
+
+### Model Gateway & Smart Router
+
+LexiLingo uses a **unified Model Gateway** to manage all AI model lifecycles:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          MODEL GATEWAY                          │
+│                                                                 │
+│       ┌──────────┐   ┌──────────┐   ┌──────────┐                │
+│       │  Gemini  │   │  Ollama  │   │   Qwen   │                │
+│       │  (Cloud) │   │  (Local) │   │   (DL)   │                │
+│       └────┬─────┘   └────┬─────┘   └────┬─────┘                │
+│            │              │              │                      │
+│            └──────────────┼──────────────┘                      │
+│                           │                                     │
+│                 ┌─────────┴─────────┐                           │
+│                 │   Smart Router    │                           │
+│                 │   (Complexity     │                           │
+│                 │    Analysis)      │                           │
+│                 └───────────────────┘                           │
+│                                                                 │
+│  Features:                                                      │
+│  • Lazy loading — Models load on first request                  │
+│  • Auto unload — Free RAM after idle timeout                    │
+│  • Memory management — Track & cap usage (~8GB)                 │
+│  • Priority system — Critical > High > Normal > Low             │
+│  • Health monitoring — Background scheduler                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Smart Router** analyzes text complexity and routes to the optimal model:
+- **Simple greetings** → Local fast model (gemma2:2b, ~3s latency)
+- **Grammar analysis / technical** → Cloud model (Gemini, ~2s latency)
+- **Deep language analysis** → Local quality model (qwen3:4b-thinking, ~20s latency)
+
+**Multi-Provider Fallback Chain:** `OpenRouter → Gemini → Ollama (Local)`
+
+---
+
+### Dual-Stream Real-Time Voice
+
+LexiLingo implements a **Dual-Stream architecture** for real-time voice conversations with the AI tutor — three concurrent async streams running simultaneously:
+
+```
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│   LISTENING   │     │   THINKING    │     │   SPEAKING    │
+│    Stream     │────▶│    Stream     │────▶│    Stream     │
+│               │     │               │     │               │
+│ • VAD         │     │ • GraphCAG    │     │ • Chunked     │
+│ • STT         │     │ • LLM         │     │   TTS         │
+│ • Partial     │     │ • Thinking    │     │ • Audio       │
+│   transcripts │     │   Buffer      │     │   streaming   │
+└───────────────┘     └───────────────┘     └───────────────┘
+        │                                           │
+        │        ← INTERRUPTION HANDLING →          │
+        └───────────────────────────────────────────┘
+```
+
+**Key capabilities:**
+- **Voice Activity Detection (VAD)** — Detects when the user starts/stops speaking
+- **Streaming STT** — Real-time speech-to-text with partial transcript updates
+- **Thinking Buffer** — Merges rapid utterances with configurable pause/merge windows
+- **Interruption Handling** — User can interrupt the AI mid-sentence; TTS stops immediately
+- **Chunked TTS** — Text-to-speech in small chunks for low perceived latency
+
+---
+
+### Knowledge Graph (KuzuDB)
+
+A structured **curriculum Knowledge Graph** stored in KuzuDB manages concept relationships:
+
+- **Grammar Concepts** — From A1 basics to C2 advanced, organized by CEFR level
+- **Vocabulary Domains** — Topic-based vocabulary organization  
+- **Pronunciation Patterns** — Common error patterns for Vietnamese learners
+- **Prerequisite Chains** — "Past Simple → Past Perfect → Reported Speech"
+- **Mastery Tracking** — Per-user mastery scores updated after each interaction
+- **Smart Recommendations** — Suggests next concepts based on mastery gaps and prerequisites
+
+---
+
+### HuBERT Pronunciation Analysis
+
+Phoneme-level pronunciation feedback using **Facebook's HuBERT-large** model:
+
+- **IPA phoneme recognition** from audio waveforms (16kHz)
+- **Vietnamese-specific error patterns** (e.g., θ→t, ʃ→s, ð→d, v→b)
+- **Per-phoneme confidence scoring** with targeted improvement suggestions
+- **Lazy loading** — Model (~2GB) loads only when first audio is analyzed
+- Integrated into Model Gateway for automatic memory management
+
+---
+
+### CEFR Proficiency Assessment
+
+Automatic language level assessment aligned with **Common European Framework (A1-C2)**:
+
+| Dimension | Weight | Method |
+|-----------|--------|--------|
+| Grammar Accuracy | 40% | Error pattern analysis |
+| Vocabulary Complexity | 30% | Word-level CEFR classifier |
+| Fluency Score | 30% | Sentence structure analysis |
+
+- **Confidence scoring** — Assessment includes reliability metric
+- **Trend analysis** — Tracks improvement/decline over time
+- **Auto recommendations** — Generates areas to improve and next steps
+- **Level history** — Full audit trail of proficiency changes
+
+---
+
+### Spaced Repetition (SM-2)
+
+Implements the **SuperMemo 2 algorithm** for optimal review scheduling:
+
+- **Easiness Factor (EF)** — Adjusts per-concept based on response quality (0-5)
+- **Interval Progression** — `1 day → 6 days → EF * previous interval`
+- **Priority Queue** — Overdue items sorted by priority for daily review
+- **Mastery Score** — Combined metric from accuracy rate, EF, interval, and repetitions
+
+---
+
+### Content Auto-Generation (CAG)
+
+AI-generated exercises that adapt to each learner's profile:
+
+| Content Type | Personalization |
+|-------------|-----------------|
+| Vocabulary Exercises | Level-appropriate words with context sentences |
+| Grammar Drills | Targeted at user's specific error patterns |
+| Conversation Prompts | Scenario-based role-play adapted to interests |
+| Reading Passages | CEFR-level text with comprehension questions |
+| Writing Prompts | Genre-specific (essay, email, story) with guidelines |
+| Pronunciation Exercises | Focused on user's weak phonemes |
 
 ---
 
 ## Technology Stack
 
-### Backend Services
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| API Framework | FastAPI | High-performance async APIs |
-| Database | PostgreSQL 14+ | Relational data storage |
-| Cache Layer | Redis | Session management and caching |
-| Authentication | JWT | Secure token-based auth |
-| ORM | SQLAlchemy | Database abstraction |
-| Migration | Alembic | Schema version control |
-
 ### AI & Machine Learning
+
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| LLM | Qwen 2.5 (Fine-tuned) | Language analysis and generation |
-| Framework | Unsloth | Efficient model training |
-| Inference | llama.cpp (GGUF) | Optimized model serving |
-| Conversational AI | Google Gemini API | Interactive tutoring |
-| Speech Processing | Whisper / TTS APIs | Voice interaction |
+| Orchestration | **LangGraph** | Stateful multi-step AI pipeline |
+| LLM (Cloud) | **Google Gemini API** | High-quality language generation |
+| LLM (Local) | **Ollama** (gemma2, qwen3) | Privacy-first local inference |
+| DL Model | **Qwen3-1.7B + LoRA** | Fine-tuned ESL analysis engine |
+| Pronunciation | **HuBERT-large** | Phoneme-level pronunciation scoring |
+| STT | **Whisper** | Speech-to-text transcription |
+| TTS | **Piper** | Low-latency text-to-speech |
+| Knowledge Graph | **KuzuDB** | Curriculum graph with mastery tracking |
+| Vector Store | **Embedding Service** | Semantic search for learning context |
+| Smart Routing | **SmartRouter** | Complexity-based model selection |
 
-### Frontend Application
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| Framework | Flutter | 3.24+ |
-| Language | Dart | 3.8+ |
-| State Management | Provider | 6.1+ |
-| Dependency Injection | GetIt | 8.0+ |
-| Local Storage | SQLite | Latest |
-| HTTP Client | Dio | 5.0+ |
+### Backend & Infrastructure
 
-### Infrastructure & DevOps
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| Containerization | Docker | Service deployment |
-| Orchestration | Docker Compose | Multi-service management |
-| CI/CD | GitHub Actions | Automated testing and deployment |
-| API Documentation | OpenAPI/Swagger | Interactive API docs |
+| API Framework | **FastAPI** | High-performance async APIs |
+| Database | **PostgreSQL 14+** | Relational data storage |
+| Cache | **Redis** | Session management & caching |
+| Auth | **JWT** | Token-based authentication |
+| ORM | **SQLAlchemy** + Alembic | Database abstraction & migrations |
+| Containerization | **Docker Compose** | Multi-service orchestration |
+| MCP Server | **Model Context Protocol** | External tool integration |
 
----
+### Frontend
 
-## Project Structure
-
-```
-LexiLingo/
-├── backend-service/          # Core backend API service
-│   ├── app/
-│   │   ├── core/            # Configuration and security
-│   │   ├── models/          # SQLAlchemy ORM models
-│   │   ├── routes/          # API endpoints
-│   │   ├── schemas/         # Pydantic schemas
-│   │   └── crud/            # Database operations
-│   ├── alembic/             # Database migrations
-│   └── tests/               # Backend test suite
-│
-├── ai-service/              # AI and ML service
-│   ├── api/                 # FastAPI application
-│   ├── models/              # ML model artifacts
-│   ├── config/              # Service configuration
-│   └── scripts/             # Utility scripts
-│
-├── flutter-app/             # Cross-platform client
-│   ├── lib/
-│   │   ├── core/           # Core utilities and DI
-│   │   ├── features/       # Feature modules
-│   │   │   ├── auth/       # Authentication
-│   │   │   ├── learning/   # Learning sessions
-│   │   │   ├── course/     # Course management
-│   │   │   └── user/       # User profile
-│   │   └── main.dart       # Application entry
-│   └── test/               # Flutter test suite
-│
-├── DL-Model-Support/        # Deep learning pipeline
-│   ├── datasets/           # Training datasets
-│   ├── scripts/            # Training scripts
-│   ├── export/             # Model export utilities
-│   └── docs/               # Model documentation
-│
-├── scripts/                # Development scripts
-│   ├── setup-all.sh       # Environment setup
-│   ├── start-all.sh       # Start all services
-│   └── stop-all.sh        # Stop all services
-│
-└── docs/                   # System documentation
-    ├── architecture.md     # Architecture overview
-    ├── api/               # API documentation
-    └── guides/            # Development guides
-```
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Framework | **Flutter 3.24+** | Cross-platform (iOS, Android, Web) |
+| State | **Provider** | Reactive state management |
+| DI | **GetIt** | Dependency injection |
+| HTTP | **Dio** | REST API client |
+| WebSocket | **web_socket_channel** | Real-time voice streaming |
+| Local storage | **SQLite** | Offline-first data |
 
 ---
 
@@ -237,96 +327,19 @@ bash scripts/start-all.sh
 
 ### Service Endpoints
 
-| Service | URL | Documentation |
-|---------|-----|---------------|
-| Backend API | http://localhost:8000 | http://localhost:8000/docs |
-| AI Service | http://localhost:8001 | http://localhost:8001/docs |
-| Flutter Web | http://localhost:8080 | - |
+| Service | URL | Docs |
+|---------|-----|------|
+| Backend API | `http://localhost:8000` | [Swagger UI](http://localhost:8000/docs) |
+| AI Service | `http://localhost:8001` | [Swagger UI](http://localhost:8001/docs) |
+| Flutter Web | `http://localhost:8080` | — |
 
 ### Docker Deployment
 
 ```bash
-# Build and start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+docker-compose up -d        # Start all services
+docker-compose logs -f      # View logs
+docker-compose down         # Stop services
 ```
-
----
-
-## API Documentation
-
-Interactive API documentation is available via Swagger UI:
-
-- **Backend API**: http://localhost:8000/docs
-- **AI Service**: http://localhost:8001/docs
-
-### Key Endpoints
-
-**Authentication**
-```
-POST   /auth/register          Register new user
-POST   /auth/login            User login
-POST   /auth/refresh          Refresh access token
-GET    /auth/me               Get current user
-```
-
-**Learning**
-```
-GET    /courses               List available courses
-POST   /learning/lessons/{id}/start     Start lesson
-POST   /learning/attempts/{id}/answer   Submit answer
-POST   /learning/attempts/{id}/complete Complete lesson
-GET    /learning/courses/{id}/roadmap   Get progress
-```
-
-**Assessment**
-```
-POST   /ai/assess/fluency     Analyze fluency
-POST   /ai/assess/vocabulary  Assess vocabulary level
-POST   /ai/chat              Conversational interaction
-```
-
----
-
-## Development
-
-### Architecture Principles
-
-The system follows industry best practices:
-
-- **Clean Architecture**: Clear separation of concerns
-- **Domain-Driven Design**: Business logic isolation
-- **SOLID Principles**: Maintainable and extensible code
-- **Repository Pattern**: Data access abstraction
-- **Dependency Injection**: Loose coupling
-
-### Code Quality
-
-- **Static Analysis**: Automated code quality checks
-- **Unit Testing**: Comprehensive test coverage
-- **Integration Testing**: End-to-end API testing
-- **Code Reviews**: Mandatory peer reviews
-- **CI/CD Pipeline**: Automated testing and deployment
-
-### Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and coding standards.
-
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Architecture](architecture.md) | System architecture and design |
-| [API Reference](docs/api/) | Complete API documentation |
-| [Development Guide](QUICKSTART.md) | Setup and development workflow |
-| [Git Workflow](GIT_WORKFLOW.md) | Git branching and commit standards |
 
 ---
 
@@ -336,18 +349,10 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ---
 
-## Contact & Support
-
-- **Issues**: [GitHub Issues](https://github.com/InfinityZero3000/LexiLingo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/InfinityZero3000/LexiLingo/discussions)
-- **Documentation**: [Project Wiki](https://github.com/InfinityZero3000/LexiLingo/wiki)
-
----
-
 <div align="center">
 
-**LexiLingo** - Intelligent Language Learning Platform
+**LexiLingo** — Intelligent Language Learning, Powered by AI
 
-[Documentation](https://github.com/InfinityZero3000/LexiLingo/wiki) • [API Reference](http://localhost:8000/docs) • [Report Issue](https://github.com/InfinityZero3000/LexiLingo/issues)
+[Documentation](https://github.com/InfinityZero3000/LexiLingo/wiki) · [Report Issue](https://github.com/InfinityZero3000/LexiLingo/issues) · [Discussions](https://github.com/InfinityZero3000/LexiLingo/discussions)
 
 </div>
