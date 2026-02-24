@@ -208,7 +208,27 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 fontWeight: FontWeight.w700,
               ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        // CEFR level badge (skill: content-difficulty-levels)
+        if (widget.video.cefrLevel.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: _cefrColor(widget.video.cefrLevel),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              widget.video.cefrLevel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ] else
+          const SizedBox(height: 8),
         Row(
           children: [
             Container(
@@ -538,6 +558,19 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       return '${diff.inDays ~/ 365}y ago';
     } catch (_) {
       return '';
+    }
+  }
+
+  // CEFR color map (skill: content-difficulty-levels)
+  Color _cefrColor(String level) {
+    switch (level) {
+      case 'A1': return const Color(0xFF4CAF50);
+      case 'A2': return const Color(0xFF8BC34A);
+      case 'B1': return const Color(0xFFFFC107);
+      case 'B2': return const Color(0xFFFF9800);
+      case 'C1': return const Color(0xFFFF5722);
+      case 'C2': return const Color(0xFF9C27B0);
+      default:   return AppColors.primary;
     }
   }
 }

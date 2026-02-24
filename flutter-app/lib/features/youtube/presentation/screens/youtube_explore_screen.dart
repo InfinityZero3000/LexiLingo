@@ -478,6 +478,28 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         size: 48,
                       ),
                     ),
+                    // CEFR level badge (skill: content-difficulty-levels)
+                    if (video.cefrLevel.isNotEmpty)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: _cefrColor(video.cefrLevel),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            video.cefrLevel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -528,6 +550,19 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         return [const Color(0xFF00897B), const Color(0xFF26A69A)];
       default:
         return [const Color(0xFF137FEC), const Color(0xFF42A5F5)];
+    }
+  }
+
+  // CEFR color map (skill: content-difficulty-levels)
+  Color _cefrColor(String level) {
+    switch (level) {
+      case 'A1': return const Color(0xFF4CAF50);
+      case 'A2': return const Color(0xFF8BC34A);
+      case 'B1': return const Color(0xFFFFC107);
+      case 'B2': return const Color(0xFFFF9800);
+      case 'C1': return const Color(0xFFFF5722);
+      case 'C2': return const Color(0xFF9C27B0);
+      default:   return AppColors.primary;
     }
   }
 }

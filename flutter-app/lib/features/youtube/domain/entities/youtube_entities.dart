@@ -10,6 +10,7 @@ class YouTubeVideo {
   final String publishedAt;
   final String thumbnailUrl;
   final String thumbnailMedium;
+  final String cefrLevel; // e.g. 'A1', 'B1', 'C2'; empty if not yet graded
 
   const YouTubeVideo({
     required this.videoId,
@@ -20,6 +21,7 @@ class YouTubeVideo {
     required this.publishedAt,
     required this.thumbnailUrl,
     this.thumbnailMedium = '',
+    this.cefrLevel = '',
   });
 
   factory YouTubeVideo.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class YouTubeVideo {
       publishedAt: json['published_at'] as String? ?? '',
       thumbnailUrl: json['thumbnail_url'] as String? ?? '',
       thumbnailMedium: json['thumbnail_medium'] as String? ?? '',
+      cefrLevel: json['cefr_level'] as String? ?? '',
     );
   }
 
@@ -44,6 +47,7 @@ class YouTubeVideo {
         'published_at': publishedAt,
         'thumbnail_url': thumbnailUrl,
         'thumbnail_medium': thumbnailMedium,
+        'cefr_level': cefrLevel,
       };
 }
 
