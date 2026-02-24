@@ -1,7 +1,8 @@
 /// Game domain entities for the Games feature — XP System & mini-games.
 ///
 /// All entities are plain Dart classes with copyWith, fromJson, and toJson.
-/// No framework dependencies — pure domain layer.
+// ignore: depend_on_referenced_packages
+import 'package:flutter/material.dart';
 
 // ── Game Types ────────────────────────────────────────────────────────────────
 
@@ -31,13 +32,13 @@ enum GameType {
         GameType.hangman => 'Hangman',
       };
 
-  String get icon => switch (this) {
-        GameType.wordScramble => '🔤',
-        GameType.fillBlank => '📝',
-        GameType.matching => '🔗',
-        GameType.spellingBee => '🔊',
-        GameType.grammarQuiz => '📖',
-        GameType.hangman => '☠️',
+  IconData get icon => switch (this) {
+        GameType.wordScramble => Icons.sort_by_alpha_rounded,
+        GameType.fillBlank => Icons.edit_note_rounded,
+        GameType.matching => Icons.compare_arrows_rounded,
+        GameType.spellingBee => Icons.volume_up_rounded,
+        GameType.grammarQuiz => Icons.menu_book_rounded,
+        GameType.hangman => Icons.extension_rounded,
       };
 
   String get description => switch (this) {
