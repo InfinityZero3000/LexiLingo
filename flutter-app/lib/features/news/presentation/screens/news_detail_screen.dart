@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
-import '../providers/news_provider.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
