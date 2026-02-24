@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="flutter-app/assets/logo/logo.png" alt="LexiLingo Logo" width="120" />
+<img src="flutter-app/assets/logo/logo.png" alt="LexiLingo Logo" width="300" />
 
 # LexiLingo — Your AI Language Learning Assistant
 
