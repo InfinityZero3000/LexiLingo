@@ -76,6 +76,9 @@ from app.models.rbac import (
 # Notification model
 from app.models.notification import Notification
 
+# API Cache (Phase 0 — Infrastructure)
+from app.models.api_cache import APICacheEntry
+
 __all__ = [
     # User (Phase 1)
     "User",
@@ -132,4 +135,6 @@ __all__ = [
     "AuditLog",
     # Notification
     "Notification",
+    # API Cache (Phase 0)
+    "APICacheEntry",
 ]

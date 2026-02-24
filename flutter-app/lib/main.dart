@@ -35,6 +35,10 @@ import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
+import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_provider.dart';
+import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_explore_screen.dart';
+import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart';
+import 'package:lexilingo_app/features/youtube/domain/entities/youtube_entities.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,6 +132,8 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<SettingsProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<GamificationProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<SocialProvider>()),
+        // Phase 1: YouTube Video Integration
+        ChangeNotifierProvider(create: (_) => di.sl<YouTubeProvider>()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
@@ -155,6 +161,13 @@ class LexiLingoApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             home: const AuthWrapper(),
+            routes: {
+              '/youtube': (context) => const YouTubeExploreScreen(),
+              '/youtube/player': (context) {
+                final video = ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
+                return YouTubePlayerScreen(video: video);
+              },
+            },
           );
         },
       ),

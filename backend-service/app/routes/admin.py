@@ -1371,3 +1371,80 @@ async def get_system_info(
 # User Admin (RBAC) - MOVED TO app/routes/user_management.py
 # ============================================================================
 # Legacy routes removed - use /api/v1/admin/users/* endpoints from user_management.py
+
+
+# ============================================================================
+# API Quota Monitoring (Phase 0 Infrastructure)
+# ============================================================================
+
+@router.get("/quota-usage", response_model=ApiResponse[dict])
+async def get_quota_usage(
+    api_name: Optional[str] = Query(None, description="Specific API to check"),
+    admin_user: User = Depends(require_admin),
+):
+    """
+    Get current API quota usage for all APIs or a specific one.
+    
+    Returns usage stats including threshold status, remaining budget,
+    and time until daily reset.
+    """
+    from app.services.quota_manager import QuotaManager
+
+    if api_name:
+        if api_name not in QuotaManager.LIMITS:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Unknown API: {api_name}. "
+                       f"Available: {list(QuotaManager.LIMITS.keys())}",
+            )
+        usage = await QuotaManager.get_usage(api_name)
+        return ApiResponse(
+            success=True,
+            message=f"Quota usage for {api_name}",
+            data=usage,
+        )
+
+    all_usage = await QuotaManager.get_all_usage()
+    return ApiResponse(
+        success=True,
+        message=f"Quota usage for {len(all_usage)} APIs",
+        data={
+            "apis": all_usage,
+            "reset_in": QuotaManager.get_reset_time(),
+        },
+    )
+
+
+@router.post("/quota-reset/{api_name}", response_model=ApiResponse[dict])
+async def reset_quota(
+    api_name: str,
+    admin_user: User = Depends(require_admin),
+):
+    """
+    Manually reset quota counter for a specific API (emergency use).
+    
+    Use when: quota incorrectly tracked, or need to allow more requests
+    after investigating an issue.
+    """
+    from app.services.quota_manager import QuotaManager
+
+    if api_name not in QuotaManager.LIMITS:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown API: {api_name}. "
+                   f"Available: {list(QuotaManager.LIMITS.keys())}",
+        )
+
+    success = await QuotaManager.reset_quota(api_name)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Redis unavailable, cannot reset quota.",
+        )
+
+    return ApiResponse(
+        success=True,
+        message=f"Quota reset for {api_name}",
+        data=await QuotaManager.get_usage(api_name),
+    )
+

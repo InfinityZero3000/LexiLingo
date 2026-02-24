@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'local_cache_service.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -26,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path, 
-      version: 4, 
+      version: 5, 
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -58,6 +59,11 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE courses ADD COLUMN isEnrolled INTEGER DEFAULT 0');
       await db.execute('ALTER TABLE courses ADD COLUMN progress REAL DEFAULT 0.0');
     }
+
+    if (oldVersion < 5) {
+      // Phase 0: API cache table for offline-first content features
+      await LocalCacheService.createTable(db);
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -72,6 +78,9 @@ class DatabaseHelper {
     await _createLessonsTable(db);
     await _createUserProgressTable(db);
     await _createCourseEnrollmentsTable(db);
+
+    // Phase 0: API cache table
+    await LocalCacheService.createTable(db);
 
     // Seed initial data
     await _seedInitialData(db);
