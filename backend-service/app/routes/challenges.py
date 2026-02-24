@@ -290,8 +290,8 @@ async def calculate_challenge_progress(
                 select(func.count(UserVocabulary.id)).where(
                     and_(
                         UserVocabulary.user_id == user_id,
-                        UserVocabulary.created_at >= today_start,
-                        UserVocabulary.created_at < today_end,
+                        UserVocabulary.added_at >= today_start,
+                        UserVocabulary.added_at < today_end,
                     )
                 )
             )
@@ -331,8 +331,8 @@ async def calculate_challenge_progress(
             select(func.coalesce(func.sum(LessonAttempt.xp_earned), 0)).where(
                 and_(
                     LessonAttempt.user_id == user_id,
-                    LessonAttempt.completed_at >= today_start,
-                    LessonAttempt.completed_at < today_end,
+                    LessonAttempt.finished_at >= today_start,
+                    LessonAttempt.finished_at < today_end,
                 )
             )
         )
@@ -440,6 +440,101 @@ async def get_daily_challenges(
             bonus_xp=bonus_xp,
             bonus_claimed=bonus_claimed,
         )
+    )
+
+
+@router.post("/daily/bonus/claim", response_model=ApiResponse[dict])
+async def claim_daily_bonus(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Claim bonus reward for completing all daily challenges.
+
+    Requirements:
+    - All challenges must be completed
+    - Bonus can only be claimed once per day
+    """
+    from app.services.item_effects_service import ItemEffectsService
+
+    today = date.today()
+    today_start = datetime.combine(today, datetime.min.time())
+    challenges = get_challenges_for_user(current_user.id, today)
+
+    # Check if bonus already claimed
+    existing_claim = await db.execute(
+        select(ChallengeRewardClaim).where(
+            and_(
+                ChallengeRewardClaim.user_id == current_user.id,
+                ChallengeRewardClaim.challenge_id == "daily_bonus",
+                ChallengeRewardClaim.claim_date >= today_start
+            )
+        )
+    )
+    if existing_claim.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bonus already claimed today"
+        )
+
+    # Check all challenges completed
+    total_completed = 0
+    for challenge in challenges:
+        current = await calculate_challenge_progress(db, current_user.id, challenge, today)
+        if current >= challenge["target"]:
+            total_completed += 1
+
+    if total_completed < len(challenges):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Complete all challenges first. Progress: {total_completed}/{len(challenges)}"
+        )
+
+    bonus_xp = 50
+    bonus_gems = 10
+
+    # Apply XP boost
+    effects_service = ItemEffectsService(db)
+    multiplier = await effects_service.get_xp_multiplier(current_user.id)
+    boosted_xp = int(bonus_xp * multiplier)
+
+    # Award XP and update numeric level/rank
+    from app.services.level_service import calculate_numeric_level
+    from app.services.rank_service import calculate_rank as calc_rank
+
+    current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
+    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
+    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
+    current_user.rank = new_rank_info.rank.value
+
+    # Award gems
+    await WalletCRUD.add_gems(
+        db,
+        current_user.id,
+        bonus_gems,
+        source="daily_bonus",
+        description="All daily challenges completed!"
+    )
+
+    # Create claim record
+    claim = ChallengeRewardClaim(
+        user_id=current_user.id,
+        challenge_id="daily_bonus",
+        claim_date=today_start,
+        xp_reward=boosted_xp,
+        gems_reward=bonus_gems,
+    )
+    db.add(claim)
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message=f"Daily bonus claimed! +{boosted_xp} XP +{bonus_gems} gems",
+        data={
+            "xp_reward": boosted_xp,
+            "gems_reward": bonus_gems,
+            "claimed_at": datetime.utcnow().isoformat(),
+        }
     )
 
 
@@ -558,97 +653,3 @@ async def claim_challenge_reward(
         }
     )
 
-
-@router.post("/daily/bonus/claim", response_model=ApiResponse[dict])
-async def claim_daily_bonus(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Claim bonus reward for completing all daily challenges.
-    
-    Requirements:
-    - All challenges must be completed
-    - Bonus can only be claimed once per day
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
-    challenges = get_challenges_for_user(current_user.id, today)
-    
-    # Check if bonus already claimed
-    existing_claim = await db.execute(
-        select(ChallengeRewardClaim).where(
-            and_(
-                ChallengeRewardClaim.user_id == current_user.id,
-                ChallengeRewardClaim.challenge_id == "daily_bonus",
-                ChallengeRewardClaim.claim_date >= today_start
-            )
-        )
-    )
-    if existing_claim.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Bonus already claimed today"
-        )
-    
-    # Check all challenges completed
-    total_completed = 0
-    for challenge in challenges:
-        current = await calculate_challenge_progress(db, current_user.id, challenge, today)
-        if current >= challenge["target"]:
-            total_completed += 1
-    
-    if total_completed < len(challenges):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Complete all challenges first. Progress: {total_completed}/{len(challenges)}"
-        )
-    
-    bonus_xp = 50
-    bonus_gems = 10
-    
-    # Apply XP boost
-    effects_service = ItemEffectsService(db)
-    multiplier = await effects_service.get_xp_multiplier(current_user.id)
-    boosted_xp = int(bonus_xp * multiplier)
-    
-    # Award XP and update numeric level/rank
-    from app.services.level_service import calculate_numeric_level
-    from app.services.rank_service import calculate_rank as calc_rank
-    
-    current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
-    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
-    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
-    current_user.rank = new_rank_info.rank.value
-    
-    # Award gems
-    await WalletCRUD.add_gems(
-        db,
-        current_user.id,
-        bonus_gems,
-        source="daily_bonus",
-        description="All daily challenges completed!"
-    )
-    
-    # Create claim record
-    claim = ChallengeRewardClaim(
-        user_id=current_user.id,
-        challenge_id="daily_bonus",
-        claim_date=today_start,
-        xp_reward=boosted_xp,
-        gems_reward=bonus_gems,
-    )
-    db.add(claim)
-    await db.commit()
-    
-    return ApiResponse(
-        success=True,
-        message=f"Daily bonus claimed! +{boosted_xp} XP +{bonus_gems} gems",
-        data={
-            "xp_reward": boosted_xp,
-            "gems_reward": bonus_gems,
-            "claimed_at": datetime.utcnow().isoformat(),
-        }
-    )

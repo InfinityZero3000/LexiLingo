@@ -474,15 +474,15 @@ async def get_vocabulary_effectiveness(
 
     mastered_count = await db.scalar(
         select(func.count(UserVocabulary.id))
-        .where(UserVocabulary.mastery_level >= 3)
+        .where(UserVocabulary.status == 'mastered')
     ) or 0
 
     avg_mastery_rate = (mastered_count / total_user_vocab * 100) if total_user_vocab > 0 else 0
 
     # Average reviews to master
     avg_reviews = await db.scalar(
-        select(func.avg(UserVocabulary.review_count))
-        .where(UserVocabulary.mastery_level >= 3)
+        select(func.avg(UserVocabulary.total_reviews))
+        .where(UserVocabulary.status == 'mastered')
     ) or 0
 
     # Hardest words (lowest mastery rate)
@@ -491,13 +491,13 @@ async def get_vocabulary_effectiveness(
             VocabularyItem.word,
             func.count(UserVocabulary.id).label("total"),
             func.count(
-                case((UserVocabulary.mastery_level >= 3, 1))
+                case((UserVocabulary.status == 'mastered', 1))
             ).label("mastered")
         )
         .join(UserVocabulary, UserVocabulary.vocabulary_id == VocabularyItem.id)
         .group_by(VocabularyItem.id, VocabularyItem.word)
         .having(func.count(UserVocabulary.id) >= 5)  # At least 5 users
-        .order_by((func.count(case((UserVocabulary.mastery_level >= 3, 1))) / func.count(UserVocabulary.id)).asc())
+        .order_by((func.count(case((UserVocabulary.status == 'mastered', 1))) / func.count(UserVocabulary.id)).asc())
         .limit(10)
     )
 

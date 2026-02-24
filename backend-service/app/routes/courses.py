@@ -143,7 +143,7 @@ async def get_enrolled_courses(
             UserCourseProgress.user_id == current_user.id,
             Course.is_published == True
         )
-        .order_by(UserCourseProgress.last_accessed.desc())
+        .order_by(UserCourseProgress.last_activity_at.desc())
         .offset(skip)
         .limit(page_size)
     )

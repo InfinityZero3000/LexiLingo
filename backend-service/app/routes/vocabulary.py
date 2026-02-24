@@ -105,7 +105,7 @@ async def get_vocabulary_item(
 
 @router.get("/collection", response_model=UserVocabularyListResponse)
 async def get_user_collection(
-    status: Optional[str] = Query(None, description="learning, reviewing, mastered"),
+    vocab_status: Optional[str] = Query(None, alias="status", description="learning, reviewing, mastered"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
@@ -113,21 +113,21 @@ async def get_user_collection(
 ):
     """
     Get user's vocabulary collection with pagination.
-    
+
     Query params:
     - status: Filter by learning status (learning/reviewing/mastered)
     - limit: Results per page (max 100)
     - offset: Pagination offset
-    
+
     Returns:
     - User's vocabulary with SRS data + full vocabulary details
     """
     from app.models.vocabulary import VocabularyStatus
-    
+
     status_filter = None
-    if status:
+    if vocab_status:
         try:
-            status_filter = VocabularyStatus(status)
+            status_filter = VocabularyStatus(vocab_status)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

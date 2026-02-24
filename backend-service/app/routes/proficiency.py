@@ -393,8 +393,8 @@ async def record_exercise_results(
     
     # Update profile statistics
     correct_count = sum(1 for r in results if r.is_correct)
-    profile.total_exercises_completed += len(results)
-    profile.total_correct_exercises += correct_count
+    profile.total_exercises_completed = (profile.total_exercises_completed or 0) + len(results)
+    profile.total_correct_exercises = (profile.total_correct_exercises or 0) + correct_count
     
     # Update skill scores
     previous_level = profile.assessed_level
@@ -430,11 +430,11 @@ async def record_exercise_results(
             current_score=skill_score.score,
         )
         
-        old_score = skill_score.score
+        old_score = skill_score.score or 0.0
         skill_score.score = new_score
         skill_score.confidence = confidence
-        skill_score.exercises_completed += len(skill_results)
-        skill_score.correct_exercises += sum(1 for r in skill_results if r.is_correct)
+        skill_score.exercises_completed = (skill_score.exercises_completed or 0) + len(skill_results)
+        skill_score.correct_exercises = (skill_score.correct_exercises or 0) + sum(1 for r in skill_results if r.is_correct)
         skill_score.last_updated = datetime.utcnow()
         
         skill_updates[skill_type.value] = {
@@ -485,7 +485,7 @@ async def record_exercise_results(
     
     # Calculate XP earned (separate from proficiency)
     xp_earned = ProficiencyService._calculate_xp_from_exercises(results)
-    profile.total_xp += xp_earned
+    profile.total_xp = (profile.total_xp or 0) + xp_earned
     
     # Update overall score
     if all_skill_scores:

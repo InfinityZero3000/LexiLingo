@@ -5,8 +5,8 @@ Database models for tracking user proficiency across multiple language skills.
 This system provides a more accurate CEFR level assessment than simple XP accumulation.
 """
 
-from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Text, Boolean, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Text, Boolean, Enum as SQLEnum, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -136,7 +136,7 @@ class UserLevelHistory(Base):
     
     # Context at time of change
     overall_score = Column(Float, nullable=True)
-    skill_scores_snapshot = Column(JSONB, nullable=True)  # Snapshot of all skill scores
+    skill_scores_snapshot = Column(JSON, nullable=True)  # Snapshot of all skill scores
     exercises_completed = Column(Integer, nullable=True)
     accuracy = Column(Float, nullable=True)
     
@@ -177,7 +177,7 @@ class ExerciseAttempt(Base):
     attempted_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # Additional data (wrong answer, hints used, etc.)
-    attempt_metadata = Column(JSONB, nullable=True)
+    attempt_metadata = Column(JSON, nullable=True)
 
 
 class LevelAssessmentTest(Base):
@@ -197,7 +197,7 @@ class LevelAssessmentTest(Base):
     # Results
     assessed_level = Column(String(5), nullable=False)
     overall_score = Column(Float, nullable=False)
-    skill_scores = Column(JSONB, nullable=False)  # {skill: score, ...}
+    skill_scores = Column(JSON, nullable=False)  # {skill: score, ...}
     
     # Test metadata
     questions_count = Column(Integer, nullable=False)

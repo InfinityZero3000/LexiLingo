@@ -244,7 +244,7 @@ async def get_user_stats(
     
     vocab_mastered_query = select(func.count(UserVocabulary.id)).where(
         UserVocabulary.user_id == current_user.id,
-        UserVocabulary.mastery_level >= 4  # Assuming 4+ is "mastered"
+        UserVocabulary.status == 'mastered'  # Use status field instead of mastery_level
     )
     words_mastered = (await db.execute(vocab_mastered_query)).scalar() or 0
     
