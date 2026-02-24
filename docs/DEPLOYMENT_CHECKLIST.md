@@ -179,7 +179,7 @@ Sử dụng checklist này để đảm bảo hoàn thành đầy đủ các bư
 # Test từ backend
 curl https://[tunnel-url]/health
 
-# Check CORS trong ai-service/api/main_lite.py
+# Check CORS trong ai-service/api/main.py
 # Verify AI_SERVICE_URL trong Render environment variables
 ```
 

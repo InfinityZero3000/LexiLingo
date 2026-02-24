@@ -326,7 +326,7 @@ After=network.target
 Type=simple
 User=your-username
 WorkingDirectory=/path/to/LexiLingo/ai-service
-ExecStart=/bin/bash -c 'source /path/to/.venv/bin/activate && python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001 & cloudflared tunnel run lexilingo-ai'
+ExecStart=/bin/bash -c 'source /path/to/.venv/bin/activate && python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 & cloudflared tunnel run lexilingo-ai'
 Restart=always
 RestartSec=10
 
@@ -416,7 +416,7 @@ ALLOWED_ORIGINS = [
 
 ### 3. Rate Limiting
 ```python
-# ai-service/api/main_lite.py
+# ai-service/api/main.py
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 

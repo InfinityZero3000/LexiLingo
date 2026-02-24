@@ -297,7 +297,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 # AI Service
 cd ai-service
 export PYTHONPATH=$(pwd)
-python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8001
 
 # Flutter
 cd flutter-app && flutter run -d chrome --web-port=8080

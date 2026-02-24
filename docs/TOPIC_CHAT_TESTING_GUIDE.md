@@ -18,7 +18,7 @@ Before testing, ensure:
 make dev-all
 
 # Or individually:
-cd ai-service && source .venv/bin/activate && uvicorn api.main_lite:app --port 8001
+cd ai-service && source .venv/bin/activate && uvicorn api.main:app --port 8001
 cd backend-service && source venv/bin/activate && uvicorn app.main:app --port 8000
 cd flutter-app && flutter run -d chrome --web-port=8080
 ```
