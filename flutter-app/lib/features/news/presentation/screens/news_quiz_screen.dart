@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../games/data/repositories/games_repository.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
 
@@ -160,7 +162,15 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: provider.answers.length == quiz.totalQuestions
-                  ? () => provider.submitQuiz()
+                  ? () {
+                      provider.submitQuiz();
+                      // Award XP via the shared XP endpoint (skill: progress-xp-system)
+                      sl<GamesRepository>().awardXP(
+                        source: 'news',
+                        baseXp: quiz.xpReward,
+                        sourceId: widget.article.id,
+                      ).then((_) {}).catchError((_) {});
+                    }
                   : null,
               icon: const Icon(Icons.check_circle_rounded, size: 20),
               label: const Text('Submit Answers'),
