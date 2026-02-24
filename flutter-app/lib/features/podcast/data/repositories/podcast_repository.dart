@@ -21,8 +21,8 @@ class PodcastRepository {
   static const String _followsKey = 'podcast_follows';
 
   PodcastRepository({http.Client? client, LocalCacheService? cache})
-      : _client = client ?? http.Client(),
-        _cache = cache ?? LocalCacheService.instance;
+    : _client = client ?? http.Client(),
+      _cache = cache ?? LocalCacheService.instance;
 
   String get _baseUrl => '${ApiConfig.baseUrl}/podcasts';
 
@@ -33,10 +33,7 @@ class PodcastRepository {
     required String query,
     int maxResults = 10,
   }) async {
-    final params = {
-      'q': query,
-      'max_results': maxResults.toString(),
-    };
+    final params = {'q': query, 'max_results': maxResults.toString()};
     final cacheKey =
         'podcast:search:${params.entries.map((e) => '${e.key}:${e.value}').join(':')}';
 
@@ -44,7 +41,9 @@ class PodcastRepository {
       key: cacheKey,
       type: 'podcast',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/search').replace(queryParameters: params);
+        final uri = Uri.parse(
+          '$_baseUrl/search',
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -77,9 +76,41 @@ class PodcastRepository {
 
     if (data == null) return [];
 
-    return (data['categories'] as List<dynamic>? ?? [])
-        .map((c) => PodcastCategory.fromJson(c as Map<String, dynamic>))
+    final allPodcasts = (data['podcasts'] as List<dynamic>? ?? [])
+        .map((p) => Podcast.fromJson(p as Map<String, dynamic>))
         .toList();
+    final podcastById = {for (final p in allPodcasts) p.id: p};
+
+    final categories = (data['categories'] as List<dynamic>? ?? [])
+        .map((c) => c as Map<String, dynamic>)
+        .map((categoryJson) {
+          final podcastIds =
+              (categoryJson['podcast_ids'] as List<dynamic>? ?? [])
+                  .map((id) => id.toString())
+                  .toList();
+          final podcasts = podcastIds
+              .map((id) => podcastById[id])
+              .whereType<Podcast>()
+              .toList();
+
+          final id = categoryJson['id'] as String? ?? '';
+          final inferredLevel = switch (id) {
+            'A1-A2' => 'A1-A2',
+            'B1-B2' => 'B1-B2',
+            'C1-C2' => 'C1-C2',
+            _ => 'B1',
+          };
+
+          return PodcastCategory(
+            id: id,
+            label: categoryJson['label'] as String? ?? '',
+            cefrLevel: categoryJson['cefr_level'] as String? ?? inferredLevel,
+            podcasts: podcasts,
+          );
+        })
+        .toList();
+
+    return categories;
   }
 
   // ──── Episodes ────
@@ -89,18 +120,16 @@ class PodcastRepository {
     required String feedUrl,
     int limit = 20,
   }) async {
-    final params = {
-      'feed_url': feedUrl,
-      'limit': limit.toString(),
-    };
+    final params = {'feed_url': feedUrl, 'limit': limit.toString()};
     final cacheKey = 'podcast:episodes:$feedUrl:$limit';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'podcast',
       fetchFn: () async {
-        final uri =
-            Uri.parse('$_baseUrl/episodes').replace(queryParameters: params);
+        final uri = Uri.parse(
+          '$_baseUrl/episodes',
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -139,8 +168,10 @@ class PodcastRepository {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_followsKey) ?? [];
     return raw
-        .map((s) =>
-            UserPodcastFollow.fromJson(jsonDecode(s) as Map<String, dynamic>))
+        .map(
+          (s) =>
+              UserPodcastFollow.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        )
         .toList();
   }
 

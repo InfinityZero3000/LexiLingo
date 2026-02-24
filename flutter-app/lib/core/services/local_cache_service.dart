@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
 
@@ -13,6 +14,7 @@ class LocalCacheService {
   LocalCacheService._();
 
   static const String _tableName = 'api_cache';
+  final Map<String, _MemoryCacheEntry> _memoryCache = {};
 
   /// TTL per content type — how long local cache is considered "fresh"
   static const Map<String, Duration> ttlConfig = {
@@ -37,6 +39,10 @@ class LocalCacheService {
     required String type,
     required Future<Map<String, dynamic>> Function() fetchFn,
   }) async {
+    if (kIsWeb) {
+      return _getOrFetchMemory(key: key, type: type, fetchFn: fetchFn);
+    }
+
     final db = await DatabaseHelper.instance.database;
 
     // 1. Check local cache
@@ -80,6 +86,10 @@ class LocalCacheService {
     required String type,
     required Future<List<dynamic>> Function() fetchFn,
   }) async {
+    if (kIsWeb) {
+      return _getOrFetchListMemory(key: key, type: type, fetchFn: fetchFn);
+    }
+
     final db = await DatabaseHelper.instance.database;
 
     final cached = await db.query(
@@ -114,11 +124,25 @@ class LocalCacheService {
 
   /// Store data in cache manually (e.g., after a successful API call).
   Future<void> put(String key, String type, dynamic data) async {
+    if (kIsWeb) {
+      _memoryCache[key] = _MemoryCacheEntry(
+        contentType: type,
+        dataJson: jsonEncode(data),
+        updatedAt: DateTime.now(),
+      );
+      return;
+    }
     await _upsert(key, type, jsonEncode(data));
   }
 
   /// Get cached data without fetching (for checking if cache exists).
   Future<dynamic> get(String key) async {
+    if (kIsWeb) {
+      final entry = _memoryCache[key];
+      if (entry == null) return null;
+      return jsonDecode(entry.dataJson);
+    }
+
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       _tableName,
@@ -135,6 +159,14 @@ class LocalCacheService {
 
   /// Check if a cache entry exists and is fresh.
   Future<bool> isFresh(String key, String type) async {
+    if (kIsWeb) {
+      final entry = _memoryCache[key];
+      if (entry == null) return false;
+      final age = DateTime.now().difference(entry.updatedAt);
+      final maxAge = ttlConfig[type] ?? const Duration(hours: 1);
+      return age < maxAge;
+    }
+
     final db = await DatabaseHelper.instance.database;
     final result = await db.query(
       _tableName,
@@ -153,12 +185,23 @@ class LocalCacheService {
 
   /// Remove a specific cache entry.
   Future<void> invalidate(String key) async {
+    if (kIsWeb) {
+      _memoryCache.remove(key);
+      return;
+    }
+
     final db = await DatabaseHelper.instance.database;
     await db.delete(_tableName, where: 'cache_key = ?', whereArgs: [key]);
   }
 
   /// Remove all cache entries of a specific type.
   Future<int> invalidateType(String type) async {
+    if (kIsWeb) {
+      final before = _memoryCache.length;
+      _memoryCache.removeWhere((_, entry) => entry.contentType == type);
+      return before - _memoryCache.length;
+    }
+
     final db = await DatabaseHelper.instance.database;
     return await db.delete(
       _tableName,
@@ -169,12 +212,21 @@ class LocalCacheService {
 
   /// Remove expired cache entries to free storage.
   Future<int> clearExpired() async {
+    if (kIsWeb) {
+      final now = DateTime.now();
+      final before = _memoryCache.length;
+      _memoryCache.removeWhere((_, entry) {
+        final ttl = ttlConfig[entry.contentType] ?? const Duration(hours: 1);
+        return now.difference(entry.updatedAt) > (ttl * 2);
+      });
+      return before - _memoryCache.length;
+    }
+
     final db = await DatabaseHelper.instance.database;
     int totalCleared = 0;
 
     for (final entry in ttlConfig.entries) {
-      final cutoff =
-          DateTime.now().subtract(entry.value * 2).toIso8601String();
+      final cutoff = DateTime.now().subtract(entry.value * 2).toIso8601String();
       final count = await db.delete(
         _tableName,
         where: 'content_type = ? AND updated_at < ?',
@@ -188,13 +240,24 @@ class LocalCacheService {
 
   /// Get total cache size (number of entries).
   Future<int> getCacheSize() async {
+    if (kIsWeb) {
+      return _memoryCache.length;
+    }
+
     final db = await DatabaseHelper.instance.database;
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM $_tableName');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $_tableName',
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
   /// Clear all cache data.
   Future<void> clearAll() async {
+    if (kIsWeb) {
+      _memoryCache.clear();
+      return;
+    }
+
     final db = await DatabaseHelper.instance.database;
     await db.delete(_tableName);
   }
@@ -205,16 +268,72 @@ class LocalCacheService {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      _tableName,
-      {
-        'cache_key': key,
-        'content_type': type,
-        'data': dataJson,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(_tableName, {
+      'cache_key': key,
+      'content_type': type,
+      'data': dataJson,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<Map<String, dynamic>?> _getOrFetchMemory({
+    required String key,
+    required String type,
+    required Future<Map<String, dynamic>> Function() fetchFn,
+  }) async {
+    final cached = _memoryCache[key];
+    if (cached != null) {
+      final age = DateTime.now().difference(cached.updatedAt);
+      final maxAge = ttlConfig[type] ?? const Duration(hours: 1);
+      if (age < maxAge) {
+        return jsonDecode(cached.dataJson) as Map<String, dynamic>;
+      }
+    }
+
+    try {
+      final result = await fetchFn();
+      _memoryCache[key] = _MemoryCacheEntry(
+        contentType: type,
+        dataJson: jsonEncode(result),
+        updatedAt: DateTime.now(),
+      );
+      return result;
+    } catch (_) {
+      if (cached != null) {
+        return jsonDecode(cached.dataJson) as Map<String, dynamic>;
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>?> _getOrFetchListMemory({
+    required String key,
+    required String type,
+    required Future<List<dynamic>> Function() fetchFn,
+  }) async {
+    final cached = _memoryCache[key];
+    if (cached != null) {
+      final age = DateTime.now().difference(cached.updatedAt);
+      final maxAge = ttlConfig[type] ?? const Duration(hours: 1);
+      if (age < maxAge) {
+        return jsonDecode(cached.dataJson) as List<dynamic>;
+      }
+    }
+
+    try {
+      final result = await fetchFn();
+      _memoryCache[key] = _MemoryCacheEntry(
+        contentType: type,
+        dataJson: jsonEncode(result),
+        updatedAt: DateTime.now(),
+      );
+      return result;
+    } catch (_) {
+      if (cached != null) {
+        return jsonDecode(cached.dataJson) as List<dynamic>;
+      }
+      rethrow;
+    }
   }
 
   /// Create the cache table (called from DatabaseHelper migration).
@@ -234,4 +353,16 @@ CREATE TABLE IF NOT EXISTS $_tableName (
       'CREATE INDEX IF NOT EXISTS idx_cache_updated ON $_tableName (updated_at)',
     );
   }
+}
+
+class _MemoryCacheEntry {
+  final String contentType;
+  final String dataJson;
+  final DateTime updatedAt;
+
+  _MemoryCacheEntry({
+    required this.contentType,
+    required this.dataJson,
+    required this.updatedAt,
+  });
 }
