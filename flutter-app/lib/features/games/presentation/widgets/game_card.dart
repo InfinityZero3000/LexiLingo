@@ -56,9 +56,10 @@ class GameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                Icon(
                   gameType.icon,
-                  style: const TextStyle(fontSize: 28),
+                  color: Colors.white,
+                  size: 28,
                 ),
                 if (bestScore != null)
                   Container(

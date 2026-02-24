@@ -27,7 +27,7 @@ class DailyChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameType = _gameTypeFromKey(challenge.gameType);
-    final icon = gameType?.icon ?? '🎮';
+    final icon = gameType?.icon ?? Icons.sports_esports_rounded;
     final completed = challenge.completed;
 
     return GestureDetector(
@@ -71,7 +71,7 @@ class DailyChallengeCard extends StatelessWidget {
               child: completed
                   ? const Icon(Icons.check_circle_rounded,
                       color: AppColors.greenSuccess, size: 28)
-                  : Text(icon, style: const TextStyle(fontSize: 26)),
+                  : Icon(icon, color: Colors.white, size: 26),
             ),
             const SizedBox(width: 14),
 
