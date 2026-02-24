@@ -84,7 +84,7 @@ class AuthBackendDataSource {
   Future<LoginResponse> loginWithGoogle(String idToken) async {
     final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
       '/auth/google',
-      body: {'id_token': idToken},
+      body: {'id_token': idToken, 'source': 'app'},
       fromJson: (data) => data as Map<String, dynamic>,
     );
 

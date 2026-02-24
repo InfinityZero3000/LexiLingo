@@ -9,13 +9,17 @@ import 'package:lexilingo_app/features/chat/data/datasources/chat_firestore_data
 import 'package:lexilingo_app/features/chat/data/datasources/chat_local_datasource.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_local_datasource_web.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:lexilingo_app/features/chat/data/datasources/story_api_data_source.dart';
 import 'package:lexilingo_app/features/chat/data/repositories/chat_repository_impl.dart';
+import 'package:lexilingo_app/features/chat/data/repositories/story_repository_impl.dart';
 import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.dart';
+import 'package:lexilingo_app/features/chat/domain/repositories/story_repository.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/create_session_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/get_chat_history_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/get_sessions_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/send_message_usecase.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
+import 'package:lexilingo_app/features/chat/presentation/providers/story_provider.dart';
 
 void registerChatModule({required bool skipDatabase}) {
   if (!skipDatabase) {
@@ -71,5 +75,20 @@ void registerChatModule({required bool skipDatabase}) {
       getChatHistoryUseCase: sl(),
       sendMessageUseCase: sl(),
     ),
+  );
+
+  // ============================================================
+  // Story/Topic-based Conversation Module
+  // ============================================================
+  sl.registerLazySingleton<StoryApiDataSource>(
+    () => StoryApiDataSource(),
+  );
+
+  sl.registerLazySingleton<StoryRepository>(
+    () => StoryRepositoryImpl(apiDataSource: sl<StoryApiDataSource>()),
+  );
+
+  sl.registerFactory<StoryProvider>(
+    () => StoryProvider(repository: sl<StoryRepository>()),
   );
 }

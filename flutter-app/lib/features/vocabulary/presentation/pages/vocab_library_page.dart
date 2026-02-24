@@ -169,6 +169,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildDemoList(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),

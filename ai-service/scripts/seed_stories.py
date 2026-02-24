@@ -321,8 +321,10 @@ SAMPLE_STORIES = [
 
 
 async def seed_stories():
-    """Seed sample stories into MongoDB."""
+    """Seed sample stories into MongoDB from sample_stories.json + fallback inline data."""
     import os
+    import json
+    from pathlib import Path
     from dotenv import load_dotenv
     
     load_dotenv()
@@ -344,8 +346,31 @@ async def seed_stories():
     await collection.create_index("tags")
     logger.info("✓ Indexes created")
     
+    # Try to load from sample_stories.json first
+    stories_to_seed = SAMPLE_STORIES  # fallback to inline data
+    json_path = Path(__file__).parent.parent / "data" / "sample_stories.json"
+    
+    if json_path.exists():
+        logger.info(f"Loading stories from {json_path}...")
+        with open(json_path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        
+        # Handle dict wrapper ({"stories": [...]}) or plain list
+        json_stories = raw.get("stories", raw) if isinstance(raw, dict) else raw
+        
+        # Add timestamps and is_published flag
+        for story in json_stories:
+            story.setdefault("is_published", True)
+            story["created_at"] = datetime.utcnow()
+            story["updated_at"] = datetime.utcnow()
+        
+        stories_to_seed = json_stories
+        logger.info(f"Loaded {len(json_stories)} stories from JSON")
+    else:
+        logger.info(f"No JSON file at {json_path}, using {len(SAMPLE_STORIES)} inline stories")
+    
     # Insert stories (upsert to avoid duplicates)
-    for story in SAMPLE_STORIES:
+    for story in stories_to_seed:
         result = await collection.update_one(
             {"story_id": story["story_id"]},
             {"$set": story},

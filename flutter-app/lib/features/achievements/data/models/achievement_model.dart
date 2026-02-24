@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/achievements/domain/entities/achievement_
 class AchievementModel extends AchievementEntity {
   const AchievementModel({
     required super.id,
+    super.slug,
     required super.name,
     required super.description,
     required super.conditionType,
@@ -22,6 +23,7 @@ class AchievementModel extends AchievementEntity {
   factory AchievementModel.fromJson(Map<String, dynamic> json) {
     return AchievementModel(
       id: json['id']?.toString() ?? '',
+      slug: json['slug']?.toString(),
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       conditionType: json['condition_type'] ?? '',
@@ -39,6 +41,7 @@ class AchievementModel extends AchievementEntity {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'slug': slug,
       'name': name,
       'description': description,
       'condition_type': conditionType,

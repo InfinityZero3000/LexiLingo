@@ -1,15 +1,17 @@
 """
 FastAPI dependencies
 
-Reusable dependencies for authentication and authorization
+Reusable dependencies for authentication, authorization, and RBAC
 """
 
 import uuid
-from typing import Optional
+from typing import Optional, List, Callable
+from functools import wraps
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import decode_token
@@ -129,3 +131,94 @@ async def get_current_active_user(
             detail="Inactive user"
         )
     return current_user
+
+
+# ── RBAC Guards ───────────────────────────────────────────
+
+def _get_user_role_slug(user: User) -> str:
+    """Get the role slug for a user. Defaults to 'user' if no role assigned."""
+    if hasattr(user, "role_slug"):
+        return user.role_slug
+    if user.role and hasattr(user.role, "slug"):
+        return user.role.slug
+    return "user"
+
+
+def _get_user_role_level(user: User) -> int:
+    """Get the role level for a user. Defaults to 0 (regular user)."""
+    if hasattr(user, "role_level"):
+        return user.role_level
+    if user.role and hasattr(user.role, "level"):
+        return user.role.level
+    return 0
+
+
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Require admin or super_admin role.
+    
+    Usage:
+        @router.post("/admin/courses")
+        async def create_course(admin: User = Depends(get_current_admin)):
+            ...
+    """
+    role_level = _get_user_role_level(current_user)
+    if role_level < 1:  # admin=1, super_admin=2
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+
+async def get_current_super_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Require super_admin role only.
+    
+    Usage:
+        @router.delete("/admin/users/{id}")
+        async def delete_user(super_admin: User = Depends(get_current_super_admin)):
+            ...
+    """
+    role_level = _get_user_role_level(current_user)
+    if role_level < 2:  # super_admin=2
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin privileges required",
+        )
+    return current_user
+
+
+def require_permission(resource: str, action: str):
+    """
+    Dependency factory: require a specific permission.
+    
+    Usage:
+        @router.post("/courses", dependencies=[Depends(require_permission("courses", "create"))])
+        async def create_course(...):
+            ...
+    """
+    async def _check(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        # Super admin bypasses all permission checks
+        if _get_user_role_level(current_user) >= 2:
+            return current_user
+
+        # Check role permissions
+        if current_user.role:
+            for rp in (current_user.role.permissions or []):
+                perm = rp.permission
+                if perm and perm.resource == resource and perm.action == action:
+                    return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission denied: {resource}:{action}",
+        )
+
+    return _check

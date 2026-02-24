@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 import '../models.dart';
 import '../response_models.dart';
 import 'api_interceptor.dart';
@@ -124,9 +125,7 @@ class TokenRefreshInterceptor implements ApiInterceptor {
   }
 
   String _getBaseUrl() {
-    // This should match your API base URL
-    // You might want to pass this as a parameter
-    return 'http://localhost:8000/api/v1';
+    return ApiConfig.baseUrl;
   }
 
   void _resumePendingRequests() {

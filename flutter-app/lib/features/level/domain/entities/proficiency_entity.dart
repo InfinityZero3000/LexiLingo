@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+// ignore: depend_on_referenced_packages
+import 'package:flutter/material.dart';
 
 /// Skill types for proficiency assessment
 enum SkillType {
@@ -28,20 +30,20 @@ extension SkillTypeExtension on SkillType {
     }
   }
 
-  String get icon {
+  IconData get icon {
     switch (this) {
       case SkillType.vocabulary:
-        return '📚';
+        return Icons.library_books_rounded;
       case SkillType.grammar:
-        return '✏️';
+        return Icons.edit_note_rounded;
       case SkillType.reading:
-        return '📖';
+        return Icons.menu_book_rounded;
       case SkillType.listening:
-        return '🎧';
+        return Icons.headphones_rounded;
       case SkillType.speaking:
-        return '🎤';
+        return Icons.mic_rounded;
       case SkillType.writing:
-        return '✍️';
+        return Icons.drive_file_rename_outline_rounded;
     }
   }
 }

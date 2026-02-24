@@ -66,6 +66,174 @@ A beautiful gaming achievement badge, shield shape, microphone and sound waves t
 game UI style, 3D render, transparent background, 256x256px
 ```
 
+#### Perfect Score Badges (Diamond/Crystal theme)
+```
+A cute gaming achievement badge, diamond shape, crystal and gem theme,
+sparkling effects, pristine white and cyan gradient, "100%" text,
+playful cartoon style, bright colors, cheerful design, transparent background, 256x256px
+```
+
+#### Speed Demon Badges (Lightning/Thunder theme)
+```
+A dynamic gaming achievement badge, angular shape, lightning bolt and electricity theme,
+electric blue and yellow gradient, speed lines effect, energetic design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Night Owl Badges (Moon/Star theme)
+```
+A mystical gaming achievement badge, crescent moon shape, night sky and stars theme,
+dark blue to purple gradient, glowing stars, dreamy atmosphere,
+game achievement icon style, 3D render, transparent background, 256x256px
+```
+
+#### Early Bird Badges (Sun/Sunrise theme)
+```
+A cheerful gaming achievement badge, circular sun shape, sunrise and morning theme,
+warm orange to yellow gradient, sun rays effect, motivating design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
+#### Social Butterfly Badges (Butterfly/Wings theme)
+```
+A elegant gaming achievement badge, butterfly wing shape, social connection theme,
+pink to purple gradient, delicate wing patterns, friendly design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Grammar Guardian Badges (Shield/Crown theme)
+```
+A prestigious gaming achievement badge, royal shield shape, grammar and correctness theme,
+gold and white gradient, crown detail, scholarly design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Pronunciation Pro Badges (Speaker/Wave theme)
+```
+A modern gaming achievement badge, hexagon shape, sound wave and speaker theme,
+teal to cyan gradient, audio waves visualization, tech-inspired design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Culture Explorer Badges (Globe/Compass theme)
+```
+A adventurous gaming achievement badge, compass rose shape, world exploration theme,
+earth tones gradient, cultural symbols, discovery design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
+#### Reading Master Badges (Glasses/Book theme)
+```
+A intellectual gaming achievement badge, rounded rectangle shape, reading glasses and open book theme,
+warm brown to gold gradient, wisdom symbols, scholarly design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Writing Wizard Badges (Quill/Scroll theme)
+```
+A creative gaming achievement badge, scroll shape, magical quill and parchment theme,
+vintage gold to sepia gradient, ink splatter effects, artistic design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Listening Legend Badges (Headphone/Music theme)
+```
+A rhythmic gaming achievement badge, circular headphone shape, music and audio theme,
+vibrant purple to pink gradient, music notes floating, modern design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Conversation Champion Badges (Chat Bubble theme)
+```
+A friendly gaming achievement badge, speech bubble shape, conversation and dialogue theme,
+bright blue to green gradient, chat symbols, communicative design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
+#### Translation Titan Badges (Bridge/Connection theme)
+```
+A powerful gaming achievement badge, bridge shape, language connection theme,
+dual gradient colors (English blue + Vietnamese red), connecting lines,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Idiom Insider Badges (Key/Lock theme)
+```
+A mysterious gaming achievement badge, ornate key shape, unlocking idioms theme,
+bronze to gold gradient, decorative patterns, cultural design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Sentence Builder Badges (Brick/Construction theme)
+```
+A constructive gaming achievement badge, building block shape, sentence construction theme,
+multi-color gradient, puzzle piece elements, builder design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Time Traveler Badges (Clock/Hourglass theme)
+```
+A temporal gaming achievement badge, hourglass shape, time and history theme,
+sepia to gold gradient, sand flowing effect, vintage design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
+#### Memory Master Badges (Brain/Neuron theme)
+```
+A cognitive gaming achievement badge, brain shape, memory and learning theme,
+electric blue to pink gradient, neural connections, smart design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Challenge Crusher Badges (Hammer/Anvil theme)
+```
+A strong gaming achievement badge, hammer shape, challenge completion theme,
+metallic silver to gold gradient, impact effect, powerful design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Study Streak Badges (Calendar/Checkmark theme)
+```
+A consistent gaming achievement badge, calendar page shape, daily study theme,
+pastel gradient colors, checkmarks pattern, motivational design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Feedback Friend Badges (Heart/Comment theme)
+```
+A supportive gaming achievement badge, heart shape with comment bubble, helping others theme,
+warm pink to red gradient, friendly symbols, community design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
+#### Emoji Expert Badges (Smiley/Expression theme)
+```
+A playful gaming achievement badge, circular smiley shape, emotion expression theme,
+rainbow gradient, emoji faces, fun and cheerful design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Milestone Maker Badges (Flag/Mountain theme)
+```
+A triumphant gaming achievement badge, flag on mountain peak shape, milestone achievement theme,
+epic gradient from earth to sky, victory flag, inspirational design,
+game UI achievement style, 3D render, transparent background, 256x256px
+```
+
+#### Quiz Champion Badges (Trophy/Medal theme)
+```
+A victorious gaming achievement badge, trophy cup shape, quiz mastery theme,
+gold and silver gradient, laurel wreath, championship design,
+game achievement icon, 3D render, transparent background, 256x256px
+```
+
+#### Comeback King Badges (Phoenix/Rising theme)
+```
+A resilient gaming achievement badge, phoenix bird shape, recovery and perseverance theme,
+orange to red flames gradient, rising phoenix, motivational design,
+game UI style, 3D render, transparent background, 256x256px
+```
+
 ### Tools để generate:
 - Midjourney: /imagine [prompt] --ar 1:1 --style raw
 - DALL-E 3: Use the prompts above

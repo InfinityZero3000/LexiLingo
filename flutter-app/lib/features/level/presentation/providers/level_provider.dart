@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/network/api_client.dart';
 import '../../domain/entities/level_entity.dart';
 import '../../services/level_calculator.dart';
 
 /// Level Provider
-/// Manages user level state and provides level-related functionality
+/// Manages user level state and provides level-related functionality.
+/// Supports both local calculation and remote /me/level-full API.
 class LevelProvider with ChangeNotifier {
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
@@ -11,14 +13,26 @@ class LevelProvider with ChangeNotifier {
   bool _showLevelUpDialog = false;
   LevelTier? _previousTier;
 
-  // Getters
+  // --- Full level data from API ---
+  int _numericLevel = 1;
+  int _currentXpInLevel = 0;
+  int _xpForNextLevel = 100;
+  double _levelProgressPercent = 0;
+  int _totalXp = 0;
+  String _proficiencyLevel = 'A1';
+  String _proficiencyName = 'Beginner';
+  String _rank = 'bronze';
+  String _rankName = 'Bronze';
+  double _rankScore = 0;
+  Map<String, dynamic> _rawLevelFull = {};
+
+  // Getters  (local calculator based)
   LevelStatus get levelStatus => _levelStatus;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get showLevelUpDialog => _showLevelUpDialog;
   LevelTier? get previousTier => _previousTier;
 
-  // Convenience getters
   LevelTier get currentTier => _levelStatus.currentTier;
   String get levelDisplayName => _levelStatus.displayName;
   String get levelShortName => _levelStatus.shortName;
@@ -28,6 +42,19 @@ class LevelProvider with ChangeNotifier {
   int get xpInCurrentLevel => _levelStatus.xpInCurrentLevel;
   bool get isAtMaxLevel => _levelStatus.isAtMaxLevel;
   LevelTier? get nextTier => _levelStatus.nextTier;
+
+  // Getters (API /me/level-full based)
+  int get numericLevel => _numericLevel;
+  int get currentXpInLevel => _currentXpInLevel;
+  int get xpForNextLevel => _xpForNextLevel;
+  double get levelProgressPercent => _levelProgressPercent;
+  int get totalXp => _totalXp;
+  String get proficiencyLevel => _proficiencyLevel;
+  String get proficiencyName => _proficiencyName;
+  String get rank => _rank;
+  String get rankName => _rankName;
+  double get rankScore => _rankScore;
+  Map<String, dynamic> get rawLevelFull => _rawLevelFull;
 
   /// Update level status based on total XP
   ///
@@ -126,7 +153,57 @@ class LevelProvider with ChangeNotifier {
     _errorMessage = null;
     _showLevelUpDialog = false;
     _previousTier = null;
+    _numericLevel = 1;
+    _currentXpInLevel = 0;
+    _xpForNextLevel = 100;
+    _levelProgressPercent = 0;
+    _totalXp = 0;
+    _proficiencyLevel = 'A1';
+    _proficiencyName = 'Beginner';
+    _rank = 'bronze';
+    _rankName = 'Bronze';
+    _rankScore = 0;
+    _rawLevelFull = {};
     notifyListeners();
+  }
+
+  // =====================
+  // Remote API methods
+  // =====================
+
+  /// Fetch full level + rank data from `/users/me/level-full`.
+  ///
+  /// Requires an [ApiClient] instance (passed in to keep provider loosely
+  /// coupled from DI container).
+  Future<void> fetchLevelFull(ApiClient apiClient) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await apiClient.get('/users/me/level-full');
+      _rawLevelFull = data;
+      _numericLevel = data['numeric_level'] ?? 1;
+      _currentXpInLevel = data['current_xp_in_level'] ?? 0;
+      _xpForNextLevel = data['xp_for_next_level'] ?? 100;
+      _levelProgressPercent =
+          (data['level_progress_percent'] ?? 0).toDouble();
+      _totalXp = data['total_xp'] ?? 0;
+      _proficiencyLevel = data['proficiency_level'] ?? 'A1';
+      _proficiencyName = data['proficiency_name'] ?? 'Beginner';
+      _rank = data['rank'] ?? 'bronze';
+      _rankName = data['rank_name'] ?? 'Bronze';
+      _rankScore = (data['rank_score'] ?? 0).toDouble();
+
+      // Also keep local LevelStatus in sync
+      updateLevel(_totalXp);
+    } catch (e) {
+      _errorMessage = e.toString();
+      debugPrint('fetchLevelFull error: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Set loading state

@@ -169,6 +169,8 @@ class OllamaQwenHandler:
         try:
             # Use longer timeout for inference
             timeout = httpx.Timeout(300.0, connect=30.0)
+            if self.client is None:
+                raise RuntimeError("Ollama client not initialized. Call load() first.")
             response = await self.client.post(
                 "/api/chat",
                 json=payload,

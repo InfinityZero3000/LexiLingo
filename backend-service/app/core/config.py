@@ -51,9 +51,28 @@ class Settings(BaseSettings):
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
 
-    # Firebase (optional, for ID token verification)
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_ADMIN_CLIENT_ID: str | None = None
+
+    # Firebase (optional, for ID token verification from Flutter app)
     FIREBASE_PROJECT_ID: str | None = None
+    # Option 1: Paste JSON directly (escape quotes/newlines)
     FIREBASE_CREDENTIALS_JSON: str | None = None
+    # Option 2: Path to service account JSON file (recommended)
+    FIREBASE_CREDENTIALS_FILE: str | None = None
+
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_PASSWORD: str | None = None
+
+    # ── External API Keys (Phase 0+ Content Features) ──
+    YOUTUBE_API_KEY: str | None = None           # YouTube Data API v3
+    NEWSAPI_KEY: str | None = None               # NewsAPI.org
+    NEWSDATA_KEY: str | None = None              # NewsData.io (fallback)
+    PODCASTINDEX_KEY: str | None = None          # PodcastIndex.org
+    PODCASTINDEX_SECRET: str | None = None       # PodcastIndex.org secret
+    WORDSAPI_KEY: str | None = None              # WordsAPI (RapidAPI)
     
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),

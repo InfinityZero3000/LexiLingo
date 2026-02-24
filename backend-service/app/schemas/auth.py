@@ -32,6 +32,7 @@ class LoginResponse(TokenResponse):
     user_id: str
     username: str
     email: str
+    role: Optional[str] = "user"  # Role slug: user, admin, super_admin
 
 
 class RefreshTokenRequest(BaseModel):
@@ -50,6 +51,7 @@ class ChangePasswordRequest(BaseModel):
 class GoogleLoginRequest(BaseModel):
     """Google OAuth login request."""
     id_token: str = Field(..., description="Google ID token from client")
+    source: str = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
 
 
 class ForgotPasswordRequest(BaseModel):

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -37,7 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text('settings.title'.tr()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
@@ -60,8 +61,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildSectionHeader(
                   context,
                   icon: Icons.flag,
-                  title: 'Daily Goal',
-                  subtitle: 'Set your daily XP target',
+                  title: 'settings.daily_goal'.tr(),
+                  subtitle: 'settings.daily_goal_subtitle'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -77,8 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildSectionHeader(
                   context,
                   icon: Icons.language,
-                  title: 'App Language',
-                  subtitle: 'Choose your preferred language',
+                  title: 'settings.language'.tr(),
+                  subtitle: 'settings.language_subtitle'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -94,8 +95,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildSectionHeader(
                   context,
                   icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: 'Manage your reminders',
+                  title: 'settings.notifications'.tr(),
+                  subtitle: 'settings.notifications_subtitle'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -111,8 +112,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildSectionHeader(
                   context,
                   icon: Icons.volume_up,
-                  title: 'Sound',
-                  subtitle: 'Audio settings',
+                  title: 'settings.sound'.tr(),
+                  subtitle: 'settings.sound_subtitle'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -128,8 +129,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildSectionHeader(
                   context,
                   icon: Icons.palette,
-                  title: 'Theme',
-                  subtitle: 'Customize appearance',
+                  title: 'settings.theme'.tr(),
+                  subtitle: 'settings.theme_subtitle'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -325,7 +326,10 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: InkWell(
-                  onTap: () => settings.updateLanguage(lang['code']!),
+                  onTap: () {
+                    context.setLocale(Locale(lang['code']!));
+                    settings.updateLanguage(lang['code']!);
+                  },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

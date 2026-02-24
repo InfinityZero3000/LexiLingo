@@ -1,6 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../../../../core/services/ai_service.dart';
-import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// Google Gemini AI Service implementation

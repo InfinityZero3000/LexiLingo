@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Service Label -->
+    <key>Label</key>
+    <string>com.lexilingo.ai.local</string>
+    
+    <!-- Service Description -->
+    <key>Description</key>
+    <string>LexiLingo AI Service with Cloudflare Tunnel - Auto-start on boot</string>
+    
+    <!-- Program to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/scripts/start-ai-local.sh</string>
+    </array>
+    
+    <!-- Working Directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo</string>
+    
+    <!-- Run at system startup -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- Keep service alive (restart if it crashes) -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <!-- Restart behavior -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    
+    <!-- Standard output log -->
+    <key>StandardOutPath</key>
+    <string>/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/logs/ai-launchd.log</string>
+    
+    <!-- Standard error log -->
+    <key>StandardErrorPath</key>
+    <string>/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/logs/ai-launchd.error.log</string>
+    
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/nguyenhuuthang</string>
+    </dict>
+    
+    <!-- User to run as -->
+    <key>UserName</key>
+    <string>nguyenhuuthang</string>
+    
+    <!-- Process behavior -->
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <!-- Nice level (lower priority to not impact other apps) -->
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>
+
+<!--
+Installation Instructions:
+
+1. Copy this file:
+   cp scripts/com.lexilingo.ai.local.plist ~/Library/LaunchAgents/
+
+2. Load the service:
+   launchctl load ~/Library/LaunchAgents/com.lexilingo.ai.local.plist
+
+3. Start immediately:
+   launchctl start com.lexilingo.ai.local
+
+4. Check status:
+   launchctl list | grep lexilingo
+
+5. View logs:
+   tail -f ~/Documents/RepoGitHub/LexiLingo/logs/ai-launchd.log
+
+6. Stop service:
+   launchctl stop com.lexilingo.ai.local
+
+7. Unload (disable auto-start):
+   launchctl unload ~/Library/LaunchAgents/com.lexilingo.ai.local.plist
+
+Note: Service will automatically start on system boot and restart if it crashes.
+-->

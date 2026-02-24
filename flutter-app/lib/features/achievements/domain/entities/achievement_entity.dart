@@ -3,6 +3,7 @@
 
 class AchievementEntity {
   final String id;
+  final String? slug; // Stable identifier for badge asset mapping
   final String name;
   final String description;
   final String conditionType;
@@ -17,6 +18,7 @@ class AchievementEntity {
 
   const AchievementEntity({
     required this.id,
+    this.slug,
     required this.name,
     required this.description,
     required this.conditionType,
@@ -79,6 +81,16 @@ class AchievementEntity {
         return 'Courses';
       case 'voice':
         return 'Voice';
+      case 'level':
+        return 'Level Milestones';
+      case 'special':
+        return 'Special';
+      case 'skill':
+        return 'Skill Mastery';
+      case 'social':
+        return 'Social';
+      case 'milestone':
+        return 'Milestones';
       default:
         return category;
     }

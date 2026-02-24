@@ -1,281 +1,871 @@
 """
-LexiLingo FastAPI Backend
-Main application entry point
+LexiLingo AI Service
 
-Architecture: Clean Architecture (matching Flutter app structure)
-- Domain: Business entities and logic
-- Services: Business use cases  
-- Routes: API endpoints (like Presentation layer)
-- Models: Data models and repositories
+API for Chat, STT, TTS with ModelGateway for lazy loading.
+Supports Qwen (local), OpenRouter, or Gemini (cloud) for chat.
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import time
-import logging
+from fastapi.responses import Response, JSONResponse
 from contextlib import asynccontextmanager
-
-# Import routes
-from api.routes import (
-    ai_router,
-    chat_router,
-    user_router,
-    health_router,
-    training_router,
-    cag_router,
-    stt_router,
-    tts_router,
-    topic_chat_router,
-    websocket_stream_router,
-)
-
-# Import core
-from api.core.config import settings
-from api.core.database import mongodb_manager
-from api.core.redis_client import RedisClient
+from starlette.middleware.base import BaseHTTPMiddleware
+import logging
+import os
+import uuid
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+from motor.motor_asyncio import AsyncIOMotorClient
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load .env file
+from dotenv import load_dotenv
+load_dotenv()
 
-# Lifespan context manager for startup/shutdown events
+
+# ============================================================
+# Private Network Access Middleware (Chrome CORS-RFC1918)
+# ============================================================
+class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware to handle Chrome's Private Network Access (CORS-RFC1918).
+    
+    Chrome 94+ requires Access-Control-Allow-Private-Network: true header
+    on BOTH the OPTIONS preflight AND the actual request response.
+    Without this header on the actual request, Chrome blocks it with 'Failed to fetch'.
+    """
+    async def dispatch(self, request: Request, call_next):
+        # Check if this is a private network access request
+        has_pna_header = (
+            request.headers.get("access-control-request-private-network") == "true"
+        )
+        
+        response = await call_next(request)
+        
+        # Add PNA header to response if request had it (for both OPTIONS and actual requests)
+        if has_pna_header or request.method == "OPTIONS":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        
+        return response
+
+
+# Environment
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
+USE_QWEN = os.getenv("USE_QWEN", "true").lower() == "true"
+QWEN_MODEL = os.getenv("QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", os.getenv("MONGODB_DB_NAME", "lexilingo"))
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+# Ollama config
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3")
+OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120"))
+
+# Global Qwen engine (legacy - for fallback if gateway not used)
+qwen_engine = None
+
+# Gateway instance (lazy initialized)
+_gateway_initialized = False
+
+# MongoDB client (for admin config)
+_mongo_client: Optional[AsyncIOMotorClient] = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan events for FastAPI application.
-    Replaces deprecated @app.on_event("startup") and @app.on_event("shutdown")
-    """
+    """Application lifespan events."""
+    global _gateway_initialized, _mongo_client
+    
     # Startup
-    logger.info("Starting LexiLingo Backend API...")
-    logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"API Version: {settings.API_VERSION}")
-    
-    # Connect to MongoDB
+    # Initialize MongoDB client
     try:
-        await mongodb_manager.connect()
-        logger.info("MongoDB connected successfully")
+        _mongo_client = AsyncIOMotorClient(MONGODB_URI)
+        await _mongo_client.admin.command('ping')
+        logger.info("✓ MongoDB connected")
     except Exception as e:
-        logger.error(f"Failed to connect to MongoDB: {e}")
-        # Continue without MongoDB (graceful degradation)
+        logger.warning(f"MongoDB connection failed: {e}")
+        _mongo_client = None
     
-    # Connect to Redis (with graceful degradation)
-    try:
-        await RedisClient.get_instance()
-        logger.info("Redis connected successfully")
-    except Exception as e:
-        logger.warning(f"Redis connection failed: {e}. Continuing without cache...")
+    if USE_GATEWAY:
+        try:
+            from api.services.gateway_setup import setup_gateway
+            await setup_gateway(
+                max_memory_mb=int(os.getenv("MAX_MEMORY_MB", "8000")),
+                enable_auto_unload=True,
+                use_gemini_fallback=bool(GEMINI_API_KEY),
+            )
+            _gateway_initialized = True
+            logger.info("✓ ModelGateway initialized")
+        except Exception as e:
+            logger.warning(f"Failed to initialize gateway: {e}, using legacy mode")
+            _gateway_initialized = False
     
     yield
     
     # Shutdown
-    logger.info("Shutting down LexiLingo Backend API...")
-    await mongodb_manager.disconnect()
-    await RedisClient.close()
-    logger.info("Shutdown complete")
+    if _mongo_client:
+        _mongo_client.close()
+        logger.info("MongoDB client closed")
+    
+    if _gateway_initialized:
+        try:
+            from api.services.gateway_setup import shutdown_gateway
+            await shutdown_gateway()
+        except Exception as e:
+            logger.warning(f"Gateway shutdown error: {e}")
 
 
-# Create FastAPI app with comprehensive Swagger configuration
+# FastAPI App
 app = FastAPI(
     title="LexiLingo AI Service",
-    description="""
-    ## LexiLingo AI Service - AI-Powered Learning Platform
-    
-    AI Service xử lý chat, pronunciation analysis, STT/TTS, và ML models.
-    
-    ### Tính năng chính:
-    * **AI Chat với Gemini**: Trò chuyện thông minh với AI tutor
-    * **Phân tích ngữ pháp**: Phát hiện và sửa lỗi tự động
-    * **Theo dõi tiến độ**: Phân tích pattern học tập
-    * **Quản lý session**: Lưu trữ lịch sử hội thoại
-    
-    ### Môi trường:
-    * **Development**: `http://localhost:8000`
-    * **Production**: `https://api.lexilingo.com`
-    
-    ### Tài liệu:
-    * **Swagger UI**: `/docs` (bạn đang ở đây)
-    * **ReDoc**: `/redoc`
-    * **API Contract**: Xem file `docs/API_CONTRACT.md`
-    """,
-    version=settings.API_VERSION,
-    docs_url="/docs",  # Swagger UI tại /docs
-    redoc_url="/redoc",  # ReDoc tại /redoc
-    openapi_url="/openapi.json",  # OpenAPI schema
+    description="AI Service for Chat, STT, TTS with ModelGateway",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
     lifespan=lifespan,
-    # Swagger UI configuration
-    swagger_ui_parameters={
-        "defaultModelsExpandDepth": -1,  # Ẩn schemas mặc định
-        "docExpansion": "none",  # Thu gọn tất cả endpoints
-        "filter": True,  # Bật tìm kiếm
-        "showCommonExtensions": True,
-        "syntaxHighlight.theme": "monokai"  # Dark theme
-    },
-    # Contact và license info
-    contact={
-        "name": "LexiLingo Backend Team",
-        "url": "https://github.com/InfinityZero3000/LexiLingo",
-        "email": "support@lexilingo.com"
-    },
-    license_info={
-        "name": "MIT License",
-        "url": "https://opensource.org/licenses/MIT"
-    },
-    # Servers cho Swagger UI
-    servers=[
-        {
-            "url": "http://localhost:8000",
-            "description": "Development server"
-        },
-        {
-            "url": "https://api.lexilingo.com",
-            "description": "Production server"
-        }
-    ]
 )
 
-
-# CORS middleware (allow Flutter web/mobile to connect)
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5176",  # Admin Dashboard
+        "http://localhost:8080",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Private Network Access (Chrome CORS-RFC1918)
+app.add_middleware(PrivateNetworkAccessMiddleware)
 
-# Request logging middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """Log all incoming requests with timing."""
-    start_time = time.time()
-    
-    # Process request
-    response = await call_next(request)
-    
-    # Calculate duration
-    duration = time.time() - start_time
-    
-    # Log request
-    logger.info(
-        f"{request.method} {request.url.path} - "
-        f"Status: {response.status_code} - "
-        f"Duration: {duration:.3f}s"
+# ============================================================
+# Include Topic Chat Router
+# ============================================================
+try:
+    import importlib, types, sys, os
+    # Pre-register a stub package for api.routes to prevent __init__.py from 
+    # loading all heavy route modules (ai.py → v3_pipeline → sentence_transformers)
+    if "api.routes" not in sys.modules:
+        _stub = types.ModuleType("api.routes")
+        _stub.__path__ = [os.path.join(os.path.dirname(__file__), "routes")]
+        _stub.__package__ = "api.routes"
+        sys.modules["api.routes"] = _stub
+    _topic_module = importlib.import_module("api.routes.topic_chat")
+    topic_chat_router = _topic_module.router
+    app.include_router(
+        topic_chat_router,
+        prefix="/api/v1/topics",
+        tags=["Topic-Based Conversation"],
     )
-    
-    return response
+    logger.info("✓ Topic Chat routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register topic chat routes: {e}")
+
+# ============================================================
+# Include Admin Router
+# ============================================================
+try:
+    _admin_module = importlib.import_module("api.routes.admin")
+    admin_router = _admin_module.router
+    app.include_router(
+        admin_router,
+        prefix="/api/v1/admin",
+        tags=["Admin Configuration"],
+    )
+    logger.info("✓ Admin routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register admin routes: {e}")
 
 
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Handle uncaught exceptions."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+# ============================================================
+# Request & Response Models
+# ============================================================
+
+class CreateSessionRequest(BaseModel):
+    user_id: str
+    title: Optional[str] = None
+
+
+class SessionData(BaseModel):
+    session_id: str
+    user_id: str
+    title: str
+    created_at: str
+    last_activity: str
+
+
+class CreateSessionResponse(BaseModel):
+    success: bool
+    data: SessionData
+
+
+class SendMessageRequest(BaseModel):
+    user_id: str
+    session_id: str
+    message: str
+
+
+class MessageData(BaseModel):
+    message_id: str
+    session_id: str
+    user_message: str
+    ai_response: str
+    model_used: Optional[str] = None
+    created_at: str
+
+
+class SendMessageResponse(BaseModel):
+    success: bool
+    data: MessageData
+
+
+# ============================================================
+# In-memory storage (for development)
+# ============================================================
+sessions = {}
+messages = {}
+
+
+# ============================================================
+# Helper Functions
+# ============================================================
+
+async def get_active_gemini_key() -> Optional[str]:
+    """
+    Get active Gemini API key with priority:
+    1. Stored key from MongoDB (if exists)
+    2. Environment variable GEMINI_API_KEY
     
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "message": str(exc) if settings.DEBUG else "An error occurred",
-            "path": str(request.url.path)
+    Returns:
+        Active API key or None if not available
+    """
+    global _mongo_client
+    
+    # Try to get from database first
+    if _mongo_client:
+        try:
+            db = _mongo_client[MONGODB_DATABASE]
+            config = await db.admin_config.find_one({"_id": "ai_config"})
+            if config and config.get("gemini_api_key"):
+                logger.info("Using Gemini API key from database")
+                return config["gemini_api_key"]
+        except Exception as e:
+            logger.warning(f"Failed to fetch API key from database: {e}")
+    
+    # Fallback to environment variable
+    if GEMINI_API_KEY:
+        logger.info("Using Gemini API key from environment variable")
+        return GEMINI_API_KEY
+    
+    return None
+
+# ============================================================
+#  Get API Qwen3-next-80b-a3b-instruct:free
+# ============================================================
+async def get_openrouter_key() -> Optional[str]:
+    
+    global _mongo_client
+    
+    # Try to get OpenRouter API key from database first
+    if _mongo_client:
+        try:
+            db = _mongo_client[MONGODB_DATABASE]
+            config = await db.admin_config.find_one({"_id": "ai_config"})
+            if config and config.get("openrouter_api_key"):
+                logger.info("Using OpenRouter API key from database")
+                return config["openrouter_api_key"]
+        except Exception as e:
+            logger.warning(f"Failed to fetch OpenRouter API key from database: {e}")
+            
+    # Fallback to environment variable
+    if OPENROUTER_API_KEY:
+        logger.info("Using OpenRouter API key from environment variable")
+        return OPENROUTER_API_KEY
+    return None
+    
+
+# ============================================================
+#  API Qwen3-next-80b-a3b-instruct:free
+# ============================================================
+
+async def get_qwen3_response(message: str) -> Optional[str]:
+    """Get response from Qwen model via API of openrouter."""
+    active_api_key = await get_openrouter_key()
+    
+    if not active_api_key:
+        return None
+    
+    try:
+        import httpx
+        
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {active_api_key}",
         }
-    )
+        payload = {
+            "model": "qwen/qwen3-next-80b-a3b-instruct:free",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": message,
+                }
+            ],
+            "max_tokens": 512,
+            "temperature": 0.7,
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                choices = data.get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "")
+            else:
+                logger.error(f"Qwen API error: {response.status_code} - {response.text}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Qwen API error: {e}")
+        return None
+
+# ============================================================
+# Ollama Local Response Helper
+# ============================================================
+
+async def get_ollama_response(message: str) -> Optional[str]:
+    """Get response from local Ollama model (qwen3:4b)."""
+    try:
+        from api.services.ollama_service import OllamaService
+        
+        logger.info(f"  → Trying Ollama local ({OLLAMA_MODEL})...")
+        
+        ollama = OllamaService(
+            base_url=OLLAMA_BASE_URL,
+            model=OLLAMA_MODEL,
+            timeout=float(OLLAMA_TIMEOUT),
+        )
+        
+        # Check health first
+        is_healthy = await ollama.health_check()
+        if not is_healthy:
+            logger.warning("  → Ollama server not running")
+            await ollama.close()
+            return None
+        
+        result = await ollama.chat(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are LexiLingo, an AI English tutor helping ESL learners. "
+                               "Respond helpfully and encourage the user to practice English. "
+                               "Keep responses concise and friendly."
+                },
+                {"role": "user", "content": message},
+            ],
+            temperature=0.7,
+            max_tokens=512,
+        )
+        
+        await ollama.close()
+        
+        if isinstance(result, dict):
+            content = result.get("message", {}).get("content") or result.get("response")
+            if content:
+                logger.info(f"  → Ollama response OK (length: {len(content)} chars)")
+                return content
+        
+        return None
+        
+    except Exception as e:
+        logger.warning(f"  → Ollama error: {e}")
+        return None
 
 
-# Include routers with detailed tags
-app.include_router(
-    health_router, 
-    tags=["Health & Status"],
-    prefix=""
-)
-app.include_router(
-    ai_router, 
-    prefix="/api/v1/ai",
-    tags=["AI Interactions & Analytics"]
-)
-app.include_router(
-    chat_router, 
-    prefix="/api/v1/chat",
-    tags=["Chat with Gemini AI"]
-)
-app.include_router(
-    user_router, 
-    prefix="/api/v1/users",
-    tags=["User Data & Learning Pattern"]
-)
-app.include_router(
-    training_router,
-    prefix="/api/v1/training",
-    tags=["Training & Learning (ML Pipeline)"]
-)
-app.include_router(
-    cag_router,
-    prefix="/api/v1/cag",
-    tags=["Content Auto-Generation (CAG)"]
-)
-app.include_router(
-    stt_router,
-    prefix="/api/v1/stt",
-    tags=["Speech-to-Text (STT)"]
-)
-app.include_router(
-    tts_router,
-    prefix="/api/v1/tts",
-    tags=["Text-to-Speech (TTS)"]
-)
-app.include_router(
-    topic_chat_router,
-    prefix="/api/v1/topics",
-    tags=["Topic-Based Conversation"]
-)
-app.include_router(
-    websocket_stream_router,
-    prefix="/api/v1",
-    tags=["Dual-Stream Conversation (WebSocket)"]
-)
+# ============================================================
+# AI Response Helper (via ModelGateway - legacy)
+# ============================================================
+
+async def get_ai_response(message: str) -> Optional[str]:
+    """Get response from AI model via ModelGateway (legacy)."""
+    global _gateway_initialized
+    
+    if not _gateway_initialized:
+        return None
+    
+    try:
+        from api.services.gateway_setup import execute_task
+        
+        result = await execute_task(
+            task_type="chat",
+            params={
+                "text": message,
+                "system_prompt": """You are LexiLingo, an AI English tutor helping ESL learners.
+Respond helpfully and encourage the user to practice English.
+Keep responses concise and friendly.""",
+            },
+            fallback=True,
+        )
+        
+        if result.get("success"):
+            data = result.get("data", {})
+            response = data.get("response") or str(data)
+            return response
+        
+        return None
+        
+    except Exception as e:
+        logger.warning(f"  → Gateway error: {e}")
+        return None
 
 
-# Root endpoint
-@app.get(
-    "/",
-    summary="API Root",
-    description="Thông tin cơ bản về API",
-    tags=["General"]
-)
-async def root():
-    """API root endpoint với thông tin cơ bản."""
+async def get_qwen_response_legacy(message: str) -> Optional[str]:
+    """Legacy: Get response from Qwen model (direct loading)."""
+    global qwen_engine
+    
+    if not USE_QWEN:
+        return None
+    
+    try:
+        # Lazy load Qwen engine
+        if qwen_engine is None:
+            logger.info(f"Loading Qwen model: {QWEN_MODEL}...")
+            from api.services.qwen_engine import QwenEngine
+            
+            qwen_engine = QwenEngine(
+                model_name=QWEN_MODEL,
+                device="cpu",  # Use CPU for macOS compatibility
+                load_in_8bit=False,
+            )
+            await qwen_engine.initialize()
+            logger.info("✅ Qwen model loaded successfully")
+        
+        # Build prompt for dialogue task
+        prompt = f"""You are LexiLingo, an AI English tutor helping ESL learners.
+Respond helpfully and encourage the user to practice English.
+
+User: {message}
+Assistant:"""
+        
+        # Generate response using Qwen
+        result = await qwen_engine.generate(
+            prompt=prompt,
+            max_new_tokens=256,
+            temperature=0.7,
+        )
+        
+        # Extract response text
+        if isinstance(result, dict):
+            return result.get("response") or result.get("text") or result.get("raw_output")
+        return str(result)
+        
+    except Exception as e:
+        logger.warning(f"Qwen error: {e}, falling back to Gemini")
+        return None
+
+
+# ============================================================
+# Health Endpoints
+# ============================================================
+
+@app.get("/health")
+async def health_check():
+    """Health check with gateway status."""
+    gateway_status = None
+    
+    if _gateway_initialized:
+        try:
+            from api.services.model_gateway import get_gateway
+            gateway = await get_gateway()
+            gateway_status = gateway.get_status()  # Sync method, not async
+        except Exception as e:
+            gateway_status = {"error": str(e)}
+    
     return {
-        "name": "LexiLingo API",
-        "version": settings.API_VERSION,
-        "status": "running",
-        "docs": "/docs",
-        "redoc": "/redoc",
-        "openapi": "/openapi.json",
-        "environment": settings.ENVIRONMENT,
-        "message": "Welcome to LexiLingo API!"
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "2.0.0",
+        "gateway_enabled": USE_GATEWAY,
+        "gateway_initialized": _gateway_initialized,
+        "gateway_status": gateway_status,
+        "gemini_configured": bool(GEMINI_API_KEY),
+    }
+
+@app.get("/ping")
+async def ping():
+    return {"pong": True}
+
+@app.get("/")
+async def root():
+    return {"message": "LexiLingo AI Service with ModelGateway"}
+
+
+# ============================================================
+# Chat Endpoints
+# ============================================================
+
+@app.post("/api/v1/chat/sessions", response_model=CreateSessionResponse)
+async def create_session(request: CreateSessionRequest) -> CreateSessionResponse:
+    """Create a new chat session."""
+    session_id = str(uuid.uuid4())
+    created_at = datetime.utcnow()
+    
+    session = SessionData(
+        session_id=session_id,
+        user_id=request.user_id,
+        title=request.title or "New Conversation",
+        created_at=created_at.isoformat(),
+        last_activity=created_at.isoformat(),
+    )
+    sessions[session_id] = session.model_dump()
+    
+    return CreateSessionResponse(success=True, data=session)
+
+
+@app.post("/api/v1/chat/messages", response_model=SendMessageResponse)
+async def send_message(request: SendMessageRequest) -> SendMessageResponse:
+    """Send a message and get AI response.
+    
+    Fallback chain:
+      1. OpenRouter API (qwen3-next-80b, free tier)
+      2. Gemini API (gemini-2.0-flash)
+      3. Ollama local (lexilingo-qwen3 / qwen3:4b)
+      4. Static fallback message
+    """
+    session_id = request.session_id
+    ai_response = None
+    model_used = None
+    
+    logger.info(f"📨 Chat request received - session: {session_id[:8]}..., message: '{request.message[:50]}...'")
+    
+    # ── Step 1: OpenRouter API (free tier, best quality) ──
+    logger.info("🔄 [1/3] Trying OpenRouter (qwen3-next-80b free)...")
+    ai_response = await get_qwen3_response(request.message)
+    if ai_response:
+        model_used = "openrouter/qwen3-next-80b"
+        logger.info(f"✅ OpenRouter response received (length: {len(ai_response)} chars)")
+    
+    # ── Step 2: Gemini API (cloud fallback) ──
+    if ai_response is None:
+        active_api_key = await get_active_gemini_key()
+        if active_api_key:
+            logger.info("🔄 [2/3] OpenRouter failed, trying Gemini API...")
+            try:
+                import httpx
+                
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={active_api_key}"
+                
+                payload = {
+                    "contents": [{
+                        "parts": [{
+                            "text": f"You are LexiLingo, an AI English tutor. Help the user learn English. User message: {request.message}"
+                        }]
+                    }]
+                }
+                
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(url, json=payload)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            content = candidates[0].get("content", {})
+                            parts = content.get("parts", [])
+                            if parts:
+                                ai_response = parts[0].get("text", "")
+                    else:
+                        logger.error(f"❌ Gemini API error: {response.status_code} - {response.text}")
+                
+                if ai_response:
+                    model_used = "gemini-2.0-flash"
+                    logger.info(f"✅ Gemini response received (length: {len(ai_response)} chars)")
+                        
+            except Exception as e:
+                logger.error(f"❌ Gemini error: {e}")
+    
+    # ── Step 3: Ollama local (offline fallback) ──
+    if ai_response is None:
+        logger.info("🔄 [3/3] Cloud APIs failed, trying Ollama local...")
+        ai_response = await get_ollama_response(request.message)
+        if ai_response:
+            model_used = f"ollama/{OLLAMA_MODEL}"
+            logger.info(f"✅ Ollama response received (length: {len(ai_response)} chars)")
+    
+    # ── Step 4: Static fallback ──
+    if ai_response is None:
+        ai_response = "Hello! I'm LexiLingo AI. All AI providers are currently unavailable. Please check your configuration."
+        model_used = "fallback"
+        logger.warning("⚠️ All AI providers failed, using static fallback")
+    
+    logger.info(f"🤖 Model used: {model_used}")
+    
+    # Store messages
+    if session_id not in messages:
+        messages[session_id] = []
+    
+    message_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow()
+    
+    # User message
+    messages[session_id].append({
+        "id": str(uuid.uuid4()),
+        "session_id": session_id,
+        "content": request.message,
+        "role": "user",
+        "timestamp": timestamp.isoformat(),
+    })
+    
+    # AI message
+    messages[session_id].append({
+        "id": message_id,
+        "session_id": session_id,
+        "content": ai_response,
+        "role": "ai",
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+    
+    message_data = MessageData(
+        message_id=message_id,
+        session_id=session_id,
+        user_message=request.message,
+        ai_response=ai_response,
+        model_used=model_used,
+        created_at=timestamp.isoformat(),
+    )
+    
+    return SendMessageResponse(success=True, data=message_data)
+
+
+@app.get("/api/v1/chat/sessions/{session_id}/messages")
+async def get_messages(session_id: str):
+    """Get all messages in a session."""
+    return {
+        "success": True,
+        "data": messages.get(session_id, []),
     }
 
 
-# Health check endpoint (simple, no dependencies)
-@app.get("/health")
-async def health_simple():
-    """Simple health check."""
-    return {"status": "ok"}
+@app.get("/api/v1/chat/sessions/user/{user_id}")
+async def get_user_sessions(user_id: str):
+    """Get all sessions for a user."""
+    user_sessions = [s for s in sessions.values() if s.get("user_id") == user_id]
+    return {
+        "success": True,
+        "data": user_sessions,
+    }
 
 
-# For local development
+# ============================================================
+# STT Endpoints  
+# ============================================================
+
+@app.post("/api/v1/stt/transcribe")
+async def transcribe_audio(
+    audio: UploadFile = File(...),
+    language: Optional[str] = "en",
+):
+    """
+    Transcribe audio to text.
+    
+    For web clients, recommend using Web Speech API directly for real-time STT.
+    This endpoint is for file-based transcription.
+    """
+    import tempfile
+    
+    try:
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{audio.filename}") as tmp:
+            content = await audio.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        try:
+            # Try faster-whisper first
+            from faster_whisper import WhisperModel
+            
+            # Use base model for speed, can change to large-v3 for accuracy
+            model = WhisperModel("base", device="cpu", compute_type="int8")
+            segments, info = model.transcribe(tmp_path, language=language)
+            
+            text = " ".join([segment.text for segment in segments])
+            
+            return {
+                "success": True,
+                "text": text.strip(),
+                "language": info.language,
+                "model": "whisper-base",
+            }
+            
+        except ImportError:
+            logger.warning("faster-whisper not available")
+            # Return guidance to use Web Speech API
+            return {
+                "success": True,
+                "text": "",
+                "fallback": True,
+                "message": "Server STT unavailable. Use Web Speech API on client for real-time transcription.",
+                "web_speech_api": {
+                    "supported": True,
+                    "code_example": """
+// JavaScript Web Speech API
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = 'en-US';
+recognition.continuous = true;
+recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript;
+    console.log(transcript);
+};
+recognition.start();
+""",
+                }
+            }
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
+                
+    except Exception as e:
+        logger.error(f"STT error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+            }
+        )
+
+
+# Endpoint for checking STT/TTS capabilities
+@app.get("/api/v1/voice/capabilities")
+async def get_voice_capabilities():
+    """Check available voice capabilities on this server."""
+    
+    stt_available = False
+    tts_available = False
+    
+    try:
+        from faster_whisper import WhisperModel
+        stt_available = True
+    except ImportError:
+        pass
+    
+    try:
+        from gtts import gTTS
+        tts_available = True
+    except ImportError:
+        pass
+    
+    return {
+        "success": True,
+        "capabilities": {
+            "stt": {
+                "available": stt_available,
+                "engine": "whisper" if stt_available else "web_speech_api",
+                "languages": ["en", "vi", "fr", "de", "es", "ja", "ko", "zh"] if stt_available else ["browser_default"],
+            },
+            "tts": {
+                "available": tts_available,
+                "engine": "gtts" if tts_available else "web_speech_api",
+                "languages": ["en", "vi", "fr", "de", "es", "ja", "ko", "zh"],
+                "format": "audio/mpeg",
+            },
+            "web_speech_api": {
+                "recommended_for_realtime": True,
+                "note": "Use browser's Web Speech API for real-time voice input/output",
+            }
+        }
+    }
+
+
+# ============================================================
+# TTS Endpoints
+# ============================================================
+
+@app.post("/api/v1/tts/synthesize")
+async def synthesize_speech(text: str = Body(..., embed=True)):
+    """Synthesize speech from text using gTTS (Google Text-to-Speech)."""
+    try:
+        from gtts import gTTS
+        import io
+        
+        # Generate speech using Google TTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        
+        # Save to BytesIO
+        audio_io = io.BytesIO()
+        tts.write_to_fp(audio_io)
+        audio_io.seek(0)
+        
+        logger.info(f"TTS generated for: {text[:50]}...")
+        
+        return Response(
+            content=audio_io.getvalue(),
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"attachment; filename=speech.mp3"
+            }
+        )
+        
+    except ImportError:
+        # Fallback: return JSON indicating to use Web Speech Synthesis
+        return JSONResponse(
+            content={
+                "success": True,
+                "text": text,
+                "fallback": True,
+                "message": "Server TTS unavailable. Use Web Speech API on client.",
+                "web_speech_api": {
+                    "supported": True,
+                    "instruction": "Use browser's SpeechSynthesis API with text",
+                }
+            }
+        )
+    except Exception as e:
+        logger.error(f"TTS error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+            }
+        )
+
+
+# ============================================================
+# AI Analysis Endpoints (Placeholder)
+# ============================================================
+
+@app.post("/api/v1/ai/analyze")
+async def analyze_text(text: str = Body(..., embed=True)):
+    """Placeholder for AI text analysis."""
+    return {
+        "success": True,
+        "data": {
+            "text": text,
+            "fluency": 0.0,
+            "grammar_score": 0.0,
+            "vocabulary_level": "intermediate",
+            "suggestions": [],
+        }
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
-    
-    uvicorn.run(
-        "api.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,  # Auto-reload on code changes
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8001)

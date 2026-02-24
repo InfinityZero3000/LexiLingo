@@ -88,6 +88,7 @@ DL-Model-Support/
 # Environment variables
 .env
 *.env
+.env.*
 **/.env.firebase.local
 !.env.example
 
@@ -97,8 +98,14 @@ DL-Model-Support/
 **/models/piper/*.onnx
 **/models/embeddings/*.bin
 
+# Database backups and temporary files
+*.bak
+*.sqlite3.bak
+**/data/*.bak
+
 # Logs and temporary files
 logs/*.txt
 temp/
 tmp/
 *_log.txtsha256-*
+

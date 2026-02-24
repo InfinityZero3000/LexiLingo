@@ -40,6 +40,21 @@ class UserResponse(UserBase):
     created_at: datetime
     last_login: Optional[datetime] = None
     
+    # Level & Rank fields
+    total_xp: int = 0
+    numeric_level: int = 1
+    rank: str = "bronze"
+
+    # RBAC (admin console)
+    role_slug: str = "user"
+    role_level: int = 0
+    is_admin: bool = False
+    is_super_admin: bool = False
+    
+    # RBAC
+    role_id: Optional[UUID4] = None
+    role_slug: Optional[str] = None  # Populated from role relationship
+    
     class Config:
         from_attributes = True
 
@@ -48,3 +63,27 @@ class UserInDB(UserResponse):
     """Schema for user in database (includes sensitive data)."""
     hashed_password: str
     updated_at: datetime
+
+
+class AdminUserUpdate(BaseModel):
+    """Admin update for user (role/status)."""
+    role_slug: Optional[str] = None
+    is_active: Optional[bool] = None
+    display_name: Optional[str] = None
+
+
+class AdminUserListItem(BaseModel):
+    """Admin view of user list."""
+    id: UUID4
+    email: EmailStr
+    username: str
+    display_name: Optional[str] = None
+    is_active: bool
+    is_verified: bool
+    role_slug: str = "user"
+    role_level: int = 0
+    created_at: datetime
+    last_login: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

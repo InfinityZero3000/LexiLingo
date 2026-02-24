@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
-import '../utils/app_logger.dart';
 
 /// Service to manage user streaks and daily activity
 /// Implements real streak logic (not hardcoded)

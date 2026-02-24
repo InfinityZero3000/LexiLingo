@@ -89,7 +89,7 @@ case $choice in
         echo ""
         echo "Restart service:"
         echo "  cd ai-service"
-        echo "  python -m uvicorn api.main_lite:app --reload"
+        echo "  python -m uvicorn api.main:app --reload"
         ;;
         
     2)
@@ -201,5 +201,5 @@ echo ""
 print_success "Done! Restart AI service để apply changes."
 echo ""
 echo "Quick restart:"
-echo "  pkill -f 'uvicorn api.main_lite'"
-echo "  cd ai-service && python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001"
+echo "  pkill -f 'uvicorn api.main'"
+echo "  cd ai-service && python -m uvicorn api.main:app --host 0.0.0.0 --port 8001"

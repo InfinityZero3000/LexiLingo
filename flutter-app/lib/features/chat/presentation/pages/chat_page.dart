@@ -13,6 +13,7 @@ import 'package:lexilingo_app/features/chat/presentation/widgets/message_bubble.
 import 'package:lexilingo_app/features/chat/presentation/widgets/session_list_drawer.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/audio_waveform.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/chat_ui_components.dart';
+import 'package:lexilingo_app/features/chat/presentation/pages/story_selection_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 
 class ChatPage extends StatefulWidget {
@@ -325,6 +326,21 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         actions: [
+          // Topic/Story Selection button
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StorySelectionPage()),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              width: 40,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+              child: const Icon(Icons.auto_stories, color: AppColors.textDark, size: 20),
+            ),
+          ),
           Container(
             margin: const EdgeInsets.all(8),
             width: 40,

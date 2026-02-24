@@ -66,8 +66,11 @@ class AchievementBase(BaseModel):
 class AchievementResponse(AchievementBase):
     """Achievement response"""
     id: UUID
+    slug: Optional[str] = None
     badge_icon: Optional[str] = None
     badge_color: Optional[str] = None
+    condition_type: Optional[str] = None
+    condition_value: Optional[int] = None
     is_hidden: bool = False
     created_at: datetime
     

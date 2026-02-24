@@ -73,10 +73,10 @@ curl http://localhost:8001/health
 Nếu không response → AI service chưa chạy:
 ```bash
 # Stop old processes
-pkill -9 -f "uvicorn api.main_lite:app"
+pkill -9 -f "uvicorn api.main:app"
 
 # Start AI service
 cd /Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/ai-service
 source /Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/.venv/bin/activate
-python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8001
 ```

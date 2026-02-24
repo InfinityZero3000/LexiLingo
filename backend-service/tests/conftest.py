@@ -20,6 +20,21 @@ from app.models.progress import LessonAttempt, UserProgress, Streak
 from app.models.vocabulary import VocabularyItem
 
 
+@pytest.fixture(autouse=True)
+def disable_rate_limiting(monkeypatch):
+    """
+    Bypass rate limiting middleware for all tests.
+    Prevents cross-test interference when many tests run in the same process
+    and exhaust the 60 req/minute in-memory counter.
+    """
+    from app.core.middleware import RateLimitMiddleware
+
+    async def mock_dispatch(self, request, call_next):
+        return await call_next(request)
+
+    monkeypatch.setattr(RateLimitMiddleware, "dispatch", mock_dispatch)
+
+
 # Test database URL (use separate test database)
 TEST_DATABASE_URL = "postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test"
 

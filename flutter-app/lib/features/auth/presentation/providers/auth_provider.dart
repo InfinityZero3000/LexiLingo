@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
+import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_password_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dart';
 
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
   final SignInWithEmailPasswordUseCase signInWithEmailPasswordUseCase;
   final SignOutUseCase signOutUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
+  final RegisterUseCase registerUseCase;
+  final AuthRepository authRepository;
+  final GoogleSignInService googleSignInService;
   
   UserEntity? _user;
   bool _isLoading = false;
@@ -24,6 +30,9 @@ class AuthProvider extends ChangeNotifier {
     required this.signInWithEmailPasswordUseCase,
     required this.signOutUseCase,
     required this.getCurrentUserUseCase,
+    required this.registerUseCase,
+    required this.authRepository,
+    required this.googleSignInService,
   }) {
     _checkCurrentUser();
   }
@@ -83,8 +92,19 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      // Get real ID token from Google Sign-In
+      final idToken = await googleSignInService.signIn();
+      if (idToken == null) {
+        _errorMessage = 'Google sign in was cancelled';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      debugPrint('Google ID token obtained (length: ${idToken.length})');
+
       final result = await signInWithGoogleUseCase(
-        SignInWithGoogleParams(idToken: ''),  // TODO: Get real idToken from GoogleSignIn
+        SignInWithGoogleParams(idToken: idToken),
       );
       
       result.fold(
@@ -159,6 +179,78 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Sign out error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Register new user
+  Future<void> register({
+    required String email,
+    required String username,
+    required String password,
+    String? displayName,
+  }) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final params = RegisterParams(
+        email: email,
+        username: username,
+        password: password,
+        displayName: displayName,
+      );
+
+      final result = await registerUseCase(params);
+
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          _user = null;
+          _isJustLoggedIn = false;
+        },
+        (user) {
+          _user = user;
+          _errorMessage = null;
+          _isJustLoggedIn = true;
+        },
+      );
+    } catch (e) {
+      debugPrint("Register error: $e");
+      _errorMessage = _parseErrorMessage(e.toString());
+      _user = null;
+      _isJustLoggedIn = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Update user profile (display name, avatar)
+  Future<void> updateProfile({String? displayName, String? avatarUrl}) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.updateProfile(
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+      );
+
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          throw Exception(_errorMessage);
+        },
+        (updatedUser) {
+          _user = updatedUser;
+          _errorMessage = null;
+        },
+      );
     } finally {
       _isLoading = false;
       notifyListeners();

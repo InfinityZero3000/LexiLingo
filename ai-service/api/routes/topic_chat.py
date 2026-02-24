@@ -23,23 +23,36 @@ from api.models.story_schemas import (
     ListStoriesRequest,
     ListStoriesResponse,
     StoryListItem,
-    EducationalHints,
-    GrammarCorrection,
-    VocabularyHint,
     DifficultyLevel,
 )
 from api.services.story_service import StoryService
 from api.services.topic_prompt_builder import TopicPromptBuilder
+from api.services.topic_llm_gateway import get_topic_llm_gateway
+from api.services.educational_hints_parser import (
+    EducationalHintsParser,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Configure Gemini API
-if settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-pro')
-else:
+# Configure Gemini API as fallback (gateway handles primary Qwen + Gemini fallback)
+try:
+    if settings.GEMINI_API_KEY:
+        genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore[attr-defined]
+        gemini_model = genai.GenerativeModel('gemini-pro')  # type: ignore[attr-defined]
+    else:
+        gemini_model = None
+except Exception:
     gemini_model = None
+
+# Initialize LLM Gateway
+_llm_gateway = None
+
+def get_llm_gateway():
+    global _llm_gateway
+    if _llm_gateway is None:
+        _llm_gateway = get_topic_llm_gateway()
+    return _llm_gateway
 
 
 @router.get(
@@ -202,10 +215,10 @@ async def send_topic_message(
     The AI will respond in character based on the story's role persona,
     and provide educational hints (grammar/vocabulary) when appropriate.
     """
-    if not gemini_model:
+    if not gemini_model and not get_llm_gateway():
         raise HTTPException(
             status_code=503,
-            detail="AI service not configured (Gemini API key missing)"
+            detail="AI service not configured (no LLM available)"
         )
     
     try:
@@ -249,9 +262,52 @@ async def send_topic_message(
 [YOUR RESPONSE]
 Respond as your character. Include [💡 Tip] or [📘] notes if the user made errors or asked about vocabulary."""
         
-        # Get AI response
-        response = gemini_model.generate_content(full_prompt)
-        ai_response = response.text
+        # Get AI response via LLM Gateway (Qwen → Gemini fallback)
+        ai_response = None
+        llm_metadata = None
+        gateway = get_llm_gateway()
+        
+        # Format conversation history for the gateway
+        conversation_history = [
+            {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+            for msg in history
+        ]
+        
+        try:
+            llm_response = await gateway.generate(
+                system_prompt=system_prompt,
+                user_message=request.message,
+                conversation_history=conversation_history,
+            )
+            ai_response = llm_response.content
+            llm_metadata = {
+                "provider": llm_response.provider.value,
+                "model": llm_response.model_name,
+                "latency_ms": llm_response.latency_ms,
+                "fallback_used": llm_response.fallback_used,
+            }
+            logger.info(
+                f"Topic chat response via {llm_response.provider.value}, "
+                f"latency={llm_response.latency_ms}ms, "
+                f"fallback={'yes' if llm_response.fallback_used else 'no'}"
+            )
+        except Exception as gw_err:
+            logger.warning(f"LLM gateway failed: {gw_err}, trying direct Gemini")
+            # Direct Gemini fallback if gateway completely fails
+            if gemini_model:
+                response = gemini_model.generate_content(full_prompt)
+                ai_response = response.text
+                llm_metadata = {
+                    "provider": "gemini",
+                    "model": "gemini-pro",
+                    "latency_ms": 0,
+                    "fallback_used": True,
+                }
+            else:
+                raise
+        
+        if not ai_response:
+            raise HTTPException(status_code=500, detail="No response from AI")
         
         # Save user message
         user_message = {
@@ -286,14 +342,21 @@ Respond as your character. Include [💡 Tip] or [📘] notes if the user made e
         
         processing_time = int((time.time() - start_time) * 1000)
         
-        # Parse educational hints from response (basic extraction)
-        educational_hints = _extract_educational_hints(ai_response)
+        # Parse educational hints using enhanced parser
+        clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
+        
+        # Convert parsed hints to dict for API response
+        educational_hints_dict = None
+        if parsed_hints and parsed_hints.has_hints():
+            educational_hints_dict = parsed_hints.to_dict()
         
         return TopicChatResponse(
             message_id=ai_message_id,
             ai_response=ai_response,
-            educational_hints=educational_hints,
-            processing_time_ms=processing_time
+            clean_response=clean_response,
+            educational_hints=educational_hints_dict,
+            processing_time_ms=processing_time,
+            llm_metadata=llm_metadata,
         )
         
     except HTTPException:
@@ -306,37 +369,94 @@ Respond as your character. Include [💡 Tip] or [📘] notes if the user made e
         )
 
 
-def _extract_educational_hints(response: str) -> EducationalHints | None:
-    """
-    Extract educational hints from AI response.
-    
-    Looks for [💡 Tip: ...] and [📘 ...] patterns.
-    """
-    import re
-    
-    tips = re.findall(r'\[💡\s*Tip:\s*([^\]]+)\]', response)
-    vocab_hints = re.findall(r"\[📘\s*'([^']+)'\s*means\s*([^\]]+)\]", response)
-    
-    if not tips and not vocab_hints:
-        return None
-    
-    hints = EducationalHints()
-    
-    for tip in tips:
-        hints.grammar_corrections.append(
-            GrammarCorrection(
-                original="",  # Would need more parsing to extract
-                corrected="",
-                explanation=tip.strip()
-            )
+@router.get(
+    "/categories",
+    summary="Get available story categories"
+)
+async def get_categories(
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get list of available story categories."""
+    try:
+        story_service = StoryService(db)
+        categories = await story_service.get_categories()
+        return {"categories": categories}
+    except Exception as e:
+        logger.error(f"Failed to get categories: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get categories: {str(e)}"
         )
+
+
+@router.get(
+    "/topic-sessions/{session_id}",
+    summary="Get topic session details"
+)
+async def get_topic_session(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get details of a specific topic session."""
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
     
-    for term, definition in vocab_hints:
-        hints.vocabulary_hints.append(
-            VocabularyHint(
-                term=term.strip(),
-                definition=definition.strip()
-            )
-        )
+    # Remove MongoDB _id field
+    session.pop("_id", None)
+    # Convert datetime fields to ISO strings
+    for key in ("created_at", "last_activity"):
+        if key in session and isinstance(session[key], datetime):
+            session[key] = session[key].isoformat()
     
-    return hints if (hints.grammar_corrections or hints.vocabulary_hints) else None
+    return session
+
+
+@router.get(
+    "/topic-sessions/{session_id}/messages",
+    summary="Get messages for a topic session"
+)
+async def get_topic_messages(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get all messages in a topic session."""
+    # Verify session exists
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    cursor = db["chat_messages"].find(
+        {"session_id": session_id}
+    ).sort("timestamp", 1)
+    messages = await cursor.to_list(length=200)
+    
+    # Clean up for response
+    for msg in messages:
+        msg.pop("_id", None)
+        if "timestamp" in msg and isinstance(msg["timestamp"], datetime):
+            msg["timestamp"] = msg["timestamp"].isoformat()
+    
+    return {"messages": messages}
+
+
+@router.get(
+    "/llm/health",
+    summary="Check LLM service health"
+)
+async def check_llm_health():
+    """Check the health status of the LLM services."""
+    health = {
+        "status": "ok",
+        "gemini_configured": settings.GEMINI_API_KEY is not None,
+        "ollama_url": getattr(settings, 'OLLAMA_BASE_URL', None),
+    }
+    
+    # Check LLM gateway
+    try:
+        gateway = get_llm_gateway()
+        health["gateway_available"] = gateway is not None
+    except Exception:
+        health["gateway_available"] = False
+    
+    return health

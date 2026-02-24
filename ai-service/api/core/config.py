@@ -79,6 +79,19 @@ class Settings(BaseSettings):
     HUGGINGFACE_API_KEY: str = os.getenv("HUGGINGFACE_API_KEY", "")
     
     # ============================================================
+    # Ollama (Local LLM) Configuration
+    # ============================================================
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen3:4b")
+    OLLAMA_TIMEOUT: int = int(os.getenv("OLLAMA_TIMEOUT", "60"))
+    
+    # ============================================================
+    # Topic Chat LLM Configuration
+    # ============================================================
+    TOPIC_LLM_TEMPERATURE: float = float(os.getenv("TOPIC_LLM_TEMPERATURE", "0.7"))
+    TOPIC_LLM_MAX_TOKENS: int = int(os.getenv("TOPIC_LLM_MAX_TOKENS", "512"))
+    
+    # ============================================================
     # Logging Configuration
     # ============================================================
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

@@ -96,7 +96,7 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@lexilingo.com",
+    "email": "nhthang312@gmail.com",
     "password": "admin123"
   }'
 ```

@@ -376,7 +376,7 @@ class SystemTester:
         if HAS_PSUTIL:
             # CPU
             info.cpu_percent = psutil.cpu_percent(interval=1)
-            info.cpu_count = psutil.cpu_count()
+            info.cpu_count = psutil.cpu_count() or 0
             
             # RAM
             mem = psutil.virtual_memory()
@@ -675,7 +675,7 @@ class GraphCAGTesterApp:
         self.details_text = scrolledtext.ScrolledText(details_frame, height=8, font=("Courier", 10))
         self.details_text.pack(fill=tk.X, padx=5, pady=5)
         
-    def _create_card(self, parent, title: str) -> ttk.Frame:
+    def _create_card(self, parent, title: str) -> ttk.LabelFrame:
         """Create a card with title."""
         card = ttk.LabelFrame(parent, text=title, padding=10)
         card.pack(fill=tk.X, pady=(0, 10))

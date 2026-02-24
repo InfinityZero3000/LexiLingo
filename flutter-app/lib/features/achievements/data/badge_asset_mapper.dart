@@ -1,57 +1,89 @@
 /// Badge Asset Mapper
-/// Maps achievement IDs to custom badge images
-/// 
-/// Usage:
-/// 1. Add badge images to assets/badges/
-/// 2. Update pubspec.yaml to include assets
-/// 3. Use BadgeAssetMapper.getBadgeAsset(achievementId) to get image path
+/// Maps achievement IDs to custom badge images in assets/badges/
+///
+/// All badge PNG files are mapped to achievement IDs.
+/// The AchievementBadge widget uses this to show image assets
+/// and falls back to SmartAchievementBadge if no mapping exists.
 
 class BadgeAssetMapper {
   BadgeAssetMapper._();
-  
+
   static const String _basePath = 'assets/badges';
-  
+
   /// Map achievement IDs to their badge image files
   static const Map<String, String> _badgeAssets = {
-    // Lesson achievements
-    'first_steps': 'lesson_first_steps.png',
-    'dedicated_learner': 'lesson_dedicated.png',
-    'knowledge_seeker': 'lesson_knowledge.png',
-    'scholar': 'lesson_scholar.png',
-    'professor': 'lesson_professor.png',
-    
-    // Streak achievements
-    'getting_started': 'streak_3days.png',
-    'week_warrior': 'streak_7days.png',
-    'two_weeks_strong': 'streak_14days.png',
-    'month_master': 'streak_30days.png',
-    'quarterly_champion': 'streak_90days.png',
-    'year_legend': 'streak_365days.png',
-    
-    // Vocabulary achievements
-    'word_collector': 'vocab_10words.png',
-    'vocab_builder': 'vocab_50words.png',
-    'vocab_master': 'vocab_100words.png',
-    'walking_dictionary': 'vocab_500words.png',
-    
-    // XP achievements
-    'xp_hunter': 'xp_100.png',
-    'xp_warrior': 'xp_500.png',
-    'xp_champion': 'xp_1000.png',
-    'xp_legend': 'xp_5000.png',
-    
-    // Quiz achievements
-    'perfectionist': 'quiz_perfect_1.png',
-    'perfect_10': 'quiz_perfect_10.png',
-    'flawless': 'quiz_perfect_50.png',
-    
-    // Course achievements
-    'graduate': 'course_1.png',
-    'multi_course_master': 'course_5.png',
-    
-    // Voice achievements
-    'voice_starter': 'voice_10.png',
-    'voice_pro': 'voice_100.png',
+    // ===================== LESSON ACHIEVEMENTS =====================
+    'first_steps': 'common-lesson.png',
+    'dedicated_learner': 'common-lesson.png',
+    'knowledge_seeker': 'rare-lesson.png',
+    'scholar': 'epic-lesson.png',
+    'professor': 'legendary-lesson.png',
+
+    // ===================== STREAK ACHIEVEMENTS =====================
+    'getting_started': 'streak3.png',
+    'week_warrior': 'streak7.png',
+    'two_weeks_strong': 'streak30.png',
+    'month_master': 'streak30.png',
+    'quarterly_champion': 'streak90.png',
+    'year_legend': 'streak365.png',
+
+    // ===================== VOCABULARY ACHIEVEMENTS =================
+    'word_collector': 'common-vocabulary.png',
+    'vocab_builder': 'rare-vocabulary.png',
+    'vocab_master': 'epic-vocabulary.png',
+    'walking_dictionary': 'legendary-vocabulary.png',
+
+    // ===================== XP ACHIEVEMENTS =========================
+    'xp_hunter': 'xp-hunter.png',        // XP Hunter - Common (grey)
+    'xp_warrior': 'xp-warrior.png',      // XP Warrior - Rare (blue)
+    'xp_champion': 'xp-champion.png',    // XP Champion - Epic (purple)
+    'xp_legend': 'xp-legend.png',        // XP Legend - Legendary (gold)
+
+    // ===================== QUIZ / PERFECT SCORE ====================
+    'perfectionist': '100%.png',
+    'first_perfect_score': 'first-perfect.png',
+    'accuracy_master': 'perfect-10.png',
+    'flawless': 'perfect-50.png',
+    'quiz_champion': 'quiz-champion.png',
+
+    // ===================== COURSE ACHIEVEMENTS =====================
+    'course_explorer': 'course-graduate.png',
+    'course_champion': 'course-master.png',
+
+    // ===================== VOICE ACHIEVEMENTS ======================
+    'voice_beginner': 'voice-starter.png',
+    'voice_talent': 'voice-pro.png',
+    'pronunciation_master': 'pronunciation-pro.png',
+
+    // ===================== LEVEL MILESTONES ========================
+    'level_25': 'lv25.png',
+    'level_50': 'lv50.png',
+    'level_100': 'lv100.png',
+    'level_150': 'lv150.png',
+    'level_200': 'lv200.png',
+    'level_300': 'lv300.png',
+    'level_500': 'lv500.png',
+
+    // ===================== SPECIAL — TIME-BASED ====================
+    'night_owl': 'moon.png',
+    'early_bird': 'early-bird.png',
+    'speed_demon': 'speed-demon.png',
+
+    // ===================== SPECIAL — SKILL MASTERY =================
+    'grammar_guardian': 'grammar-guardian.png',
+    'culture_explorer': 'culture-explorer.png',
+    'writing_wizard': 'writing-wizard.png',
+    'listening_legend': 'listening-legend.png',
+
+    // ===================== SPECIAL — SOCIAL ========================
+    'social_butterfly': 'social-butterfly.png',
+    'conversation_champion': 'conversation-champion.png',
+    'feedback_friend': 'feedback-friend.png',
+
+    // ===================== SPECIAL — MILESTONES ====================
+    'challenge_crusher': 'challenge-crusher.png',
+    'milestone_maker': 'milestone-maker.png',
+    'comeback_king': 'comeback-king.png',
   };
   
   /// Get badge asset path for an achievement
@@ -73,25 +105,23 @@ class BadgeAssetMapper {
   }
 }
 
-/// Badge image URLs for achievements (can use network images)
-/// Use this if you want to host images externally
+/// Badge image URLs for achievements (CDN-hosted)
+/// Loads badges from jsdelivr CDN for better performance
 class BadgeNetworkImages {
   BadgeNetworkImages._();
   
-  static const String _baseUrl = 'https://your-cdn.com/badges';
+  static const String _baseUrl = 'https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges';
   
-  /// Get badge URL for an achievement category
-  static String getCategoryBadgeUrl(String category, String rarity) {
-    return '$_baseUrl/${category}_$rarity.png';
+  /// Get badge URL for an achievement from CDN
+  /// Returns null if no badge mapping exists
+  static String? getBadgeUrl(String achievementId) {
+    final filename = BadgeAssetMapper._badgeAssets[achievementId.toLowerCase()];
+    if (filename == null) return null;
+    return '$_baseUrl/$filename';
   }
   
-  /// Map of achievement IDs to their badge image URLs
-  static const Map<String, String> badgeUrls = {
-    // Add URLs when hosting is set up
-    // 'first_steps': 'https://your-cdn.com/badges/first_steps.png',
-  };
-  
-  static String? getBadgeUrl(String achievementId) {
-    return badgeUrls[achievementId.toLowerCase()];
+  /// Check if achievement has a CDN badge URL
+  static bool hasCdnBadge(String achievementId) {
+    return BadgeAssetMapper._badgeAssets.containsKey(achievementId.toLowerCase());
   }
 }

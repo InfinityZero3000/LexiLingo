@@ -29,14 +29,16 @@ def _init_firebase_app() -> None:
 
     cred: Optional[credentials.Base] = None
 
-    if settings.FIREBASE_CREDENTIALS_JSON:
+    if settings.FIREBASE_CREDENTIALS_FILE:
+        # Option 1: Load from file path (recommended)
+        cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_FILE)
+    elif settings.FIREBASE_CREDENTIALS_JSON:
+        # Option 2: Load from JSON string
         try:
             cred = credentials.Certificate(json.loads(settings.FIREBASE_CREDENTIALS_JSON))
         except Exception as exc:  # pragma: no cover - defensive
             logger.error("Invalid FIREBASE_CREDENTIALS_JSON: %s", exc)
             raise
-    elif "FIREBASE_CREDENTIALS_FILE" in os.environ:
-        cred = credentials.Certificate(os.environ["FIREBASE_CREDENTIALS_FILE"])
     else:
         logger.warning("Firebase credentials not provided; auth verification will fail.")
         raise RuntimeError("Missing Firebase credentials")

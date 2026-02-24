@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.models.user import User
+from app.models.rbac import Role
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
     ChangePasswordRequest, GoogleLoginRequest, ForgotPasswordRequest, 
@@ -55,11 +56,18 @@ async def register(
         )
     
     # Create new user
+    role_id = None
+    result = await db.execute(select(Role).where(Role.slug == "user"))
+    role = result.scalar_one_or_none()
+    if role:
+        role_id = role.id
+
     user = User(
         email=request.email,
         username=request.username,
         hashed_password=get_password_hash(request.password),
         display_name=request.display_name or request.username,
+        role_id=role_id,
     )
     
     db.add(user)
@@ -85,7 +93,7 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(request.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(request.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -112,7 +120,8 @@ async def login(
         token_type="bearer",
         user_id=str(user.id),
         username=user.username,
-        email=user.email
+        email=user.email,
+        role=user.role_slug if hasattr(user, 'role_slug') else "user",
     )
 
 
@@ -212,10 +221,28 @@ async def google_login(
     - Returns JWT tokens
     """
     from app.core.security import verify_google_token
+    from app.core.config import settings
     
-    # Verify Google token
-    google_info = await verify_google_token(request.id_token)
+    # Select the correct Client ID based on source
+    if request.source == "admin":
+        audience = settings.GOOGLE_ADMIN_CLIENT_ID
+        if not audience:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Admin Google OAuth not configured"
+            )
+    else:
+        audience = settings.GOOGLE_CLIENT_ID
+    
+    # Verify Google token with the correct audience
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Google login attempt: source={request.source}, audience={audience}")
+    logger.info(f"id_token length={len(request.id_token)}, first_50={request.id_token[:50]}...")
+    
+    google_info = await verify_google_token(request.id_token, audience=audience)
     if not google_info:
+        logger.error(f"Google token verification returned None for source={request.source}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Google ID token"
@@ -235,7 +262,14 @@ async def google_login(
     user = result.scalar_one_or_none()
     
     if not user:
-        # Create new user from Google info
+        # For admin source, do not create new users - must be existing admin
+        if request.source == "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No admin account found with this email. Only existing admins can login."
+            )
+        
+        # Create new user from Google info (app source only)
         username = email.split("@")[0]
         
         # Ensure unique username
@@ -250,6 +284,13 @@ async def google_login(
             username = f"{base_username}{counter}"
             counter += 1
         
+        # Get default "user" role
+        role_id = None
+        result = await db.execute(select(Role).where(Role.slug == "user"))
+        role = result.scalar_one_or_none()
+        if role:
+            role_id = role.id
+        
         user = User(
             email=email,
             username=username,
@@ -257,7 +298,8 @@ async def google_login(
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
             provider="google",
-            is_verified=google_info.get("email_verified", False)
+            is_verified=google_info.get("email_verified", False),
+            role_id=role_id  # Assign default user role
         )
         db.add(user)
         await db.commit()
@@ -268,6 +310,18 @@ async def google_login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered with email/password. Please login with password."
         )
+    
+    # For admin source, verify user has admin or super_admin role
+    if request.source == "admin":
+        # Load user with role relationship to get role_slug
+        await db.refresh(user, ["role"])
+        user_role = user.role.slug if user.role else None
+        
+        if user_role not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Admin privileges required."
+            )
     
     if not user.is_active:
         raise HTTPException(
@@ -289,7 +343,8 @@ async def google_login(
         token_type="bearer",
         user_id=str(user.id),
         username=user.username,
-        email=user.email
+        email=user.email,
+        role=user.role_slug if hasattr(user, 'role_slug') else "user",
     )
 
 
@@ -464,4 +519,3 @@ async def verify_email(
         verified=True,
         message="Email verified successfully"
     )
-

@@ -36,4 +36,23 @@ class ProficiencyDataSource {
   Future<Map<String, dynamic>> getLevelHistory({int limit = 10}) async {
     return await _apiClient.get('/proficiency/history?limit=$limit');
   }
+
+  /// Get placement test questions
+  Future<Map<String, dynamic>> getPlacementTest() async {
+    return await _apiClient.get('/proficiency/placement-test');
+  }
+
+  /// Submit placement test answers
+  Future<Map<String, dynamic>> submitPlacementTest({
+    required Map<String, int> answers,
+    required int timeTakenSeconds,
+  }) async {
+    return await _apiClient.post(
+      '/proficiency/placement-test/submit',
+      body: {
+        'answers': answers,
+        'time_taken_seconds': timeTakenSeconds,
+      },
+    );
+  }
 }

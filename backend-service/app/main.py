@@ -24,6 +24,7 @@ from app.core.middleware import (
     ErrorHandlerMiddleware,
     RequestLoggingMiddleware,
     RequestIDMiddleware,
+    PrivateNetworkAccessMiddleware,
 )
 from app.routes import (
     health_router,
@@ -40,6 +41,15 @@ from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
 from app.routes.proficiency import router as proficiency_router
+from app.routes.rbac import router as rbac_router
+from app.routes.analytics import router as analytics_router
+from app.routes.user_management import router as user_management_router
+from app.routes.youtube import router as youtube_router
+from app.routes.news import router as news_router
+from app.routes.podcasts import router as podcasts_router
+from app.routes.games import router as games_router
+from app.routes.xp import router as xp_router
+from app.routes.books import router as books_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -125,32 +135,41 @@ app = FastAPI(
 
 
 # ===== MIDDLEWARE CONFIGURATION =====
-# Order matters! Middleware is executed in reverse order of addition.
+# Order matters! Last added = outermost (executes first for requests).
+# 
+# Execution order (request): PNA → CORS → RequestID → Logging → ErrorHandler → App
+# Execution order (response): App → ErrorHandler → Logging → RequestID → CORS → PNA
+#
+# KEY: CORS must be OUTSIDE ErrorHandler so error 500 responses also get CORS headers.
+# PNA must be OUTSIDE CORS so it can add PNA headers to CORS preflight responses.
 
-# 1. CORS - Allow cross-origin requests
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Use property to parse string
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 2. Trusted Host - Security: Prevent Host header attacks
+# 1. Trusted Host - Security (innermost, closest to app)
 if not settings.is_development:
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS
     )
 
-# 3. Error Handler - Catch unhandled exceptions
+# 2. Error Handler - Catch unhandled exceptions
 app.add_middleware(ErrorHandlerMiddleware)
 
-# 4. Request Logging - Log all requests (Phase 5: Observability)
+# 3. Request Logging - Log all requests
 app.add_middleware(RequestLoggingMiddleware)
 
-# 5. Request ID - Add unique ID to each request
+# 4. Request ID - Add unique ID to each request
 app.add_middleware(RequestIDMiddleware)
+
+# 5. CORS - Must be OUTSIDE ErrorHandler so error responses get CORS headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 6. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
+app.add_middleware(PrivateNetworkAccessMiddleware)
 
 # 6. Rate Limiting - Prevent abuse (Phase 1: Security)
 app.add_middleware(
@@ -158,7 +177,6 @@ app.add_middleware(
     requests_per_minute=60,
     requests_per_hour=1000
 )
-
 
 # Include routers
 app.include_router(health_router, tags=["Health"])
@@ -174,6 +192,21 @@ app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=[
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
+app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
+app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])
+app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
+
+# Content Features
+app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])
+app.include_router(news_router, prefix=f"{settings.API_V1_PREFIX}", tags=["News"])
+app.include_router(podcasts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Podcasts"])
+
+# Phase 3: English Games + XP System
+app.include_router(games_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Games"])
+app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP System"])
+
+# Phase 5: Book Reading
+app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 
 
 @app.get("/")

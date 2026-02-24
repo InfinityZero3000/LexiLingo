@@ -39,7 +39,7 @@ async def test_qwen():
     print()
     
     # Initialize handler
-    handler = QwenHandler(qwen_config)
+    handler = QwenHandler()
     
     try:
         # Load handler

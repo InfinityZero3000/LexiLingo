@@ -230,6 +230,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   String _getCategoryDisplayName(String category) {
     switch (category.toLowerCase()) {
       case 'lesson':
+      case 'lessons':
         return 'Lessons';
       case 'streak':
         return 'Streaks';
@@ -243,6 +244,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return 'Course Completion';
       case 'voice':
         return 'Voice Practice';
+      case 'level':
+        return 'Level Milestones';
+      case 'special':
+        return 'Special Badges';
+      case 'skill':
+        return 'Skill Mastery';
+      case 'social':
+        return 'Social & Community';
+      case 'milestone':
+        return 'Achievement Milestones';
       default:
         return category[0].toUpperCase() + category.substring(1);
     }
@@ -265,6 +276,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return Icons.school;
       case 'voice':
         return Icons.mic;
+      case 'level':
+        return Icons.trending_up;
+      case 'special':
+        return Icons.auto_awesome;
+      case 'skill':
+        return Icons.psychology;
+      case 'social':
+        return Icons.people;
+      case 'milestone':
+        return Icons.flag;
       default:
         return Icons.emoji_events;
     }

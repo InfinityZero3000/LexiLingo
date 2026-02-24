@@ -44,7 +44,7 @@ class ApiClient {
 
     if (_authHeaderProvider != null) {
       try {
-        built.addAll(await _authHeaderProvider!.call());
+        built.addAll(await _authHeaderProvider.call());
       } catch (_) {
         // If token fetch fails, continue without auth header.
       }
@@ -237,7 +237,7 @@ class ApiClient {
     if (response.statusCode == 401) {
       // Try to refresh token if callback is provided
       if (_onUnauthorized != null) {
-        final refreshed = await _onUnauthorized!();
+        final refreshed = await _onUnauthorized();
         if (refreshed) {
           // Token was refreshed, caller should retry
           throw TokenRefreshedException();

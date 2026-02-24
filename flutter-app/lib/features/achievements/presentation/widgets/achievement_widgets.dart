@@ -5,6 +5,7 @@ import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
+import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -93,13 +94,15 @@ IconData _getBadgeIcon(String? badgeIcon) {
 }
 
 /// Badge widget - displays a single achievement badge
-/// Now uses the new GeneratedBadge with custom painting for professional look
+/// Now supports both custom painted badges AND image assets
 class AchievementBadge extends StatelessWidget {
   final AchievementEntity achievement;
   final bool isUnlocked;
   final VoidCallback? onTap;
   final double size;
   final bool useNewStyle; // Toggle between old and new style
+  final bool preferImageAsset; // Prefer image asset over generated badge
+  final bool useCdnFirst; // Prefer CDN over local assets
 
   const AchievementBadge({
     super.key,
@@ -108,14 +111,175 @@ class AchievementBadge extends StatelessWidget {
     this.onTap,
     this.size = 80,
     this.useNewStyle = true, // Default to new style
+    this.preferImageAsset = true, // Default to prefer image assets
+    this.useCdnFirst = true, // Default to CDN first for better performance
   });
 
   @override
   Widget build(BuildContext context) {
+    if (preferImageAsset) {
+      // Prefer slug (stable ID) over id (UUID) for badge asset lookup
+      final lookupKey = achievement.slug ?? achievement.id;
+      
+      // Priority 1: Network image from backend API (badgeIcon field)
+      if (achievement.badgeIcon != null && achievement.badgeIcon!.isNotEmpty) {
+        return _buildNetworkBadge(achievement.badgeIcon!);
+      }
+      
+      // Priority 2: CDN URL (if useCdnFirst is true)
+      if (useCdnFirst) {
+        final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
+        if (cdnUrl != null) {
+          return _buildNetworkBadge(cdnUrl);
+        }
+      }
+      
+      // Priority 3: Local asset
+      final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
+      if (assetPath != null) {
+        return _buildImageAssetBadge(assetPath);
+      }
+    }
+
+    // Fall back to generated badge
     if (useNewStyle) {
       return _buildNewStyleBadge();
     }
     return _buildClassicBadge();
+  }
+
+  /// Build badge from network URL (CDN or backend)
+  Widget _buildNetworkBadge(String imageUrl) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: isUnlocked
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Badge image from network
+            ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to local asset or generated badge
+                  final lookupKey = achievement.slug ?? achievement.id;
+                  final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
+                  if (assetPath != null) {
+                    return Image.asset(
+                      assetPath,
+                      width: size,
+                      height: size,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildNewStyleBadge(),
+                    );
+                  }
+                  return _buildNewStyleBadge();
+                },
+              ),
+            ),
+            // Lock overlay if not unlocked
+            if (!isUnlocked)
+              Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withValues(alpha: 0.6),
+                ),
+                child: Icon(
+                  Icons.lock,
+                  size: size * 0.4,
+                  color: Colors.white,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build badge from local image asset
+  Widget _buildImageAssetBadge(String assetPath) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: isUnlocked
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Badge image from asset
+            ClipOval(
+              child: Image.asset(
+                assetPath,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to generated badge if image fails to load
+                  return _buildNewStyleBadge();
+                },
+              ),
+            ),
+            // Lock overlay if not unlocked
+            if (!isUnlocked)
+              Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withValues(alpha: 0.6),
+                ),
+                child: Icon(
+                  Icons.lock,
+                  size: size * 0.4,
+                  color: Colors.white,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// New generated badge with custom painting

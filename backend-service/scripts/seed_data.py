@@ -6,68 +6,185 @@ Creates sample data for testing the LexiLingo backend
 import asyncio
 import uuid
 from datetime import datetime, timedelta
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import engine, AsyncSessionLocal
-from app.core.security import get_password_hash
 from app.models import *
 
 
-async def seed_users(db: AsyncSession):
-    """Create sample users."""
-    print("🔧 Creating users...")
-    
-    users_data = [
+# ── RBAC Seed ─────────────────────────────────────────────
+
+async def seed_roles(db: AsyncSession):
+    """Create system roles: user, admin, super_admin."""
+    print("🔧 Creating roles...")
+
+    roles_data = [
         {
-            "email": "admin@lexilingo.com",
-            "username": "admin",
-            "password": "admin123",
-            "display_name": "Admin User",
-            "level": "advanced",
-            "is_verified": True,
+            "name": "User",
+            "slug": "user",
+            "description": "Default role — can learn, complete courses, earn achievements",
+            "level": 0,
+            "is_system": True,
         },
         {
-            "email": "john@example.com",
-            "username": "john_doe",
-            "password": "password123",
-            "display_name": "John Doe",
-            "level": "beginner",
-            "is_verified": True,
+            "name": "Admin",
+            "slug": "admin",
+            "description": "Can manage courses, users, achievements, view analytics",
+            "level": 1,
+            "is_system": True,
         },
         {
-            "email": "mary@example.com",
-            "username": "mary_smith",
-            "password": "password123",
-            "display_name": "Mary Smith",
-            "level": "intermediate",
-            "is_verified": True,
+            "name": "Super Admin",
+            "slug": "super_admin",
+            "description": "Full system access — manage admins, system config, delete users",
+            "level": 2,
+            "is_system": True,
         },
     ]
+
+    created_roles = {}
+    for role_data in roles_data:
+        result = await db.execute(
+            select(Role).where(Role.slug == role_data["slug"])
+        )
+        existing = result.scalar_one_or_none()
+        if not existing:
+            role = Role(**role_data)
+            db.add(role)
+            created_roles[role_data["slug"]] = role
+            print(f"  ✅ Created role: {role_data['name']}")
+        else:
+            created_roles[role_data["slug"]] = existing
+            print(f"  ⏭️  Role already exists: {existing.name}")
+
+    await db.commit()
+    # Refresh to get IDs
+    for slug in created_roles:
+        await db.refresh(created_roles[slug])
+    print(f"✅ Roles: {len(created_roles)}\n")
+    return created_roles
+
+
+async def seed_permissions(db: AsyncSession, roles: dict):
+    """Create permissions and assign to roles."""
+    print("🔧 Creating permissions...")
+
+    # Define all permissions
+    permissions_data = [
+        # Courses
+        {"name": "View Courses", "slug": "courses:read", "resource": "courses", "action": "read", "description": "View published courses"},
+        {"name": "Create Courses", "slug": "courses:create", "resource": "courses", "action": "create", "description": "Create new courses"},
+        {"name": "Update Courses", "slug": "courses:update", "resource": "courses", "action": "update", "description": "Edit existing courses"},
+        {"name": "Delete Courses", "slug": "courses:delete", "resource": "courses", "action": "delete", "description": "Delete courses"},
+        # Users
+        {"name": "View Users", "slug": "users:read", "resource": "users", "action": "read", "description": "View user profiles and list"},
+        {"name": "Update Users", "slug": "users:update", "resource": "users", "action": "update", "description": "Edit user profiles"},
+        {"name": "Delete Users", "slug": "users:delete", "resource": "users", "action": "delete", "description": "Delete/ban users"},
+        {"name": "Manage User Roles", "slug": "users:manage_roles", "resource": "users", "action": "manage_roles", "description": "Assign/revoke roles"},
+        # Achievements
+        {"name": "View Achievements", "slug": "achievements:read", "resource": "achievements", "action": "read", "description": "View achievements"},
+        {"name": "Manage Achievements", "slug": "achievements:manage", "resource": "achievements", "action": "manage", "description": "Create/edit/delete achievements"},
+        # Content
+        {"name": "Manage Content", "slug": "content:manage", "resource": "content", "action": "manage", "description": "Manage lessons, units, vocabulary"},
+        # Analytics
+        {"name": "View Analytics", "slug": "analytics:read", "resource": "analytics", "action": "read", "description": "View platform analytics & reports"},
+        # System
+        {"name": "System Settings", "slug": "system:manage", "resource": "system", "action": "manage", "description": "System configuration and maintenance"},
+        # Reports
+        {"name": "View Reports", "slug": "reports:read", "resource": "reports", "action": "read", "description": "View user activity and engagement reports"},
+        # Shop
+        {"name": "Manage Shop", "slug": "shop:manage", "resource": "shop", "action": "manage", "description": "Create/edit/delete shop items"},
+        # Audit
+        {"name": "View Audit Logs", "slug": "audit:read", "resource": "audit", "action": "read", "description": "View admin audit trail"},
+    ]
+
+    perm_map = {}
+    for perm_data in permissions_data:
+        result = await db.execute(
+            select(Permission).where(Permission.slug == perm_data["slug"])
+        )
+        existing = result.scalar_one_or_none()
+        if not existing:
+            perm = Permission(**perm_data)
+            db.add(perm)
+            perm_map[perm_data["slug"]] = perm
+            print(f"  ✅ Created permission: {perm_data['slug']}")
+        else:
+            perm_map[perm_data["slug"]] = existing
+            print(f"  ⏭️  Permission exists: {existing.slug}")
+
+    await db.commit()
+    for slug in perm_map:
+        await db.refresh(perm_map[slug])
+
+    # ── Assign permissions to roles ──
+    # Admin gets most permissions
+    admin_perms = [
+        "courses:read", "courses:create", "courses:update", "courses:delete",
+        "users:read", "users:update",
+        "achievements:read", "achievements:manage",
+        "content:manage",
+        "analytics:read",
+        "reports:read",
+        "shop:manage",
+        "audit:read",
+    ]
+
+    # Super admin gets everything (also enforced in code via level check)
+    super_admin_perms = list(perm_map.keys())  # all permissions
+
+    # User gets basic read
+    user_perms = ["courses:read", "achievements:read"]
+
+    role_perm_assignments = {
+        "user": user_perms,
+        "admin": admin_perms,
+        "super_admin": super_admin_perms,
+    }
+
+    assigned_count = 0
+    for role_slug, perm_slugs in role_perm_assignments.items():
+        role = roles.get(role_slug)
+        if not role:
+            continue
+        for perm_slug in perm_slugs:
+            perm = perm_map.get(perm_slug)
+            if not perm:
+                continue
+            # Check if already assigned
+            result = await db.execute(
+                select(RolePermission).where(
+                    RolePermission.role_id == role.id,
+                    RolePermission.permission_id == perm.id,
+                )
+            )
+            if not result.scalar_one_or_none():
+                db.add(RolePermission(role_id=role.id, permission_id=perm.id))
+                assigned_count += 1
+
+    await db.commit()
+    print(f"✅ Permissions: {len(perm_map)} total, {assigned_count} new assignments\n")
+    return perm_map
+
+
+async def seed_users(db: AsyncSession, roles: dict = None):
+    """Create sample users with role assignments.
+    
+    NOTE: Admin accounts login via Google OAuth only (no password).
+    Users are created automatically on first Google login.
+    This function is kept for backward compatibility but creates no users.
+    """
+    print("🔧 Skipping user creation (OAuth only)...")
+    print("ℹ️  Admin users will be created on first Google OAuth login")
     
     created_users = []
-    for user_data in users_data:
-        # Check if user exists
-        result = await db.execute(
-            select(User).where(User.email == user_data["email"])
-        )
-        existing_user = result.scalar_one_or_none()
-        
-        if not existing_user:
-            password = user_data.pop("password")
-            user = User(
-                **user_data,
-                hashed_password=get_password_hash(password)
-            )
-            db.add(user)
-            created_users.append(user)
-            print(f"  ✅ Created user: {user.username}")
-        else:
-            created_users.append(existing_user)
-            print(f"  ⏭️  User already exists: {existing_user.username}")
+    
+    # No users created - admin will login via Google OAuth
+    # Users are auto-created on first OAuth login in auth routes
     
     await db.commit()
-    print(f"✅ Users created: {len(created_users)}\n")
+    print(f"✅ No users seeded (OAuth mode)\n")
     return created_users
 
 
@@ -236,6 +353,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== LESSON ACHIEVEMENTS ==========
         {
             "name": "First Steps",
+            "slug": "first_steps",
             "description": "Complete your first lesson",
             "condition_type": "lesson_complete",
             "condition_value": 1,
@@ -248,6 +366,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Dedicated Learner",
+            "slug": "dedicated_learner",
             "description": "Complete 10 lessons",
             "condition_type": "lesson_complete",
             "condition_value": 10,
@@ -260,6 +379,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Knowledge Seeker",
+            "slug": "knowledge_seeker",
             "description": "Complete 50 lessons",
             "condition_type": "lesson_complete",
             "condition_value": 50,
@@ -272,6 +392,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Scholar",
+            "slug": "scholar",
             "description": "Complete 100 lessons",
             "condition_type": "lesson_complete",
             "condition_value": 100,
@@ -284,6 +405,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Professor",
+            "slug": "professor",
             "description": "Complete 500 lessons",
             "condition_type": "lesson_complete",
             "condition_value": 500,
@@ -298,6 +420,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== STREAK ACHIEVEMENTS ==========
         {
             "name": "Getting Started",
+            "slug": "getting_started",
             "description": "Maintain a 3-day streak",
             "condition_type": "reach_streak",
             "condition_value": 3,
@@ -310,6 +433,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Week Warrior",
+            "slug": "week_warrior",
             "description": "Maintain a 7-day streak",
             "condition_type": "reach_streak",
             "condition_value": 7,
@@ -322,6 +446,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Two Weeks Strong",
+            "slug": "two_weeks_strong",
             "description": "Maintain a 14-day streak",
             "condition_type": "reach_streak",
             "condition_value": 14,
@@ -334,6 +459,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Month Master",
+            "slug": "month_master",
             "description": "Maintain a 30-day streak",
             "condition_type": "reach_streak",
             "condition_value": 30,
@@ -346,6 +472,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Quarterly Champion",
+            "slug": "quarterly_champion",
             "description": "Maintain a 90-day streak",
             "condition_type": "reach_streak",
             "condition_value": 90,
@@ -358,6 +485,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Year Legend",
+            "slug": "year_legend",
             "description": "Maintain a 365-day streak",
             "condition_type": "reach_streak",
             "condition_value": 365,
@@ -373,6 +501,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== VOCABULARY ACHIEVEMENTS ==========
         {
             "name": "Word Collector",
+            "slug": "word_collector",
             "description": "Master 10 vocabulary words",
             "condition_type": "vocab_mastered",
             "condition_value": 10,
@@ -385,6 +514,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Vocab Builder",
+            "slug": "vocab_builder",
             "description": "Master 50 vocabulary words",
             "condition_type": "vocab_mastered",
             "condition_value": 50,
@@ -397,6 +527,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Vocab Master",
+            "slug": "vocab_master",
             "description": "Master 100 vocabulary words",
             "condition_type": "vocab_mastered",
             "condition_value": 100,
@@ -409,6 +540,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Walking Dictionary",
+            "slug": "walking_dictionary",
             "description": "Master 500 vocabulary words",
             "condition_type": "vocab_mastered",
             "condition_value": 500,
@@ -423,6 +555,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== XP ACHIEVEMENTS ==========
         {
             "name": "XP Hunter",
+            "slug": "xp_hunter",
             "description": "Earn 100 XP total",
             "condition_type": "xp_earned",
             "condition_value": 100,
@@ -435,6 +568,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "XP Warrior",
+            "slug": "xp_warrior",
             "description": "Earn 500 XP total",
             "condition_type": "xp_earned",
             "condition_value": 500,
@@ -447,6 +581,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "XP Champion",
+            "slug": "xp_champion",
             "description": "Earn 1000 XP total",
             "condition_type": "xp_earned",
             "condition_value": 1000,
@@ -459,6 +594,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "XP Legend",
+            "slug": "xp_legend",
             "description": "Earn 5000 XP total",
             "condition_type": "xp_earned",
             "condition_value": 5000,
@@ -473,6 +609,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== PERFECT SCORE ACHIEVEMENTS ==========
         {
             "name": "Perfectionist",
+            "slug": "perfectionist",
             "description": "Get a perfect score on a lesson",
             "condition_type": "perfect_score",
             "condition_value": 1,
@@ -485,6 +622,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Perfect 10",
+            "slug": "accuracy_master",
             "description": "Get 10 perfect scores",
             "condition_type": "perfect_score",
             "condition_value": 10,
@@ -497,6 +635,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Flawless",
+            "slug": "flawless",
             "description": "Get 50 perfect scores",
             "condition_type": "perfect_score",
             "condition_value": 50,
@@ -511,6 +650,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== COURSE ACHIEVEMENTS ==========
         {
             "name": "Graduate",
+            "slug": "course_explorer",
             "description": "Complete your first course",
             "condition_type": "course_complete",
             "condition_value": 1,
@@ -523,6 +663,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Multi-Course Master",
+            "slug": "course_champion",
             "description": "Complete 5 courses",
             "condition_type": "course_complete",
             "condition_value": 5,
@@ -537,6 +678,7 @@ async def seed_achievements(db: AsyncSession):
         # ========== VOICE/PRONUNCIATION ACHIEVEMENTS ==========
         {
             "name": "Voice Starter",
+            "slug": "voice_beginner",
             "description": "Complete 10 pronunciation practices",
             "condition_type": "voice_practice",
             "condition_value": 10,
@@ -549,6 +691,7 @@ async def seed_achievements(db: AsyncSession):
         },
         {
             "name": "Voice Pro",
+            "slug": "voice_talent",
             "description": "Complete 100 pronunciation practices",
             "condition_type": "voice_practice",
             "condition_value": 100,
@@ -559,9 +702,307 @@ async def seed_achievements(db: AsyncSession):
             "gems_reward": 75,
             "rarity": "epic",
         },
+
+        # ========== LEVEL MILESTONE ACHIEVEMENTS ==========
+        {
+            "name": "Rising Star",
+            "slug": "level_25",
+            "description": "Reach Level 25",
+            "condition_type": "numeric_level",
+            "condition_value": 25,
+            "badge_icon": "trending",
+            "badge_color": "#4CAF50",
+            "category": "level",
+            "xp_reward": 50,
+            "gems_reward": 30,
+            "rarity": "common",
+        },
+        {
+            "name": "Half Century",
+            "slug": "level_50",
+            "description": "Reach Level 50",
+            "condition_type": "numeric_level",
+            "condition_value": 50,
+            "badge_icon": "star",
+            "badge_color": "#2196F3",
+            "category": "level",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Centurion",
+            "slug": "level_100",
+            "description": "Reach Level 100",
+            "condition_type": "numeric_level",
+            "condition_value": 100,
+            "badge_icon": "star_gold",
+            "badge_color": "#9C27B0",
+            "category": "level",
+            "xp_reward": 200,
+            "gems_reward": 100,
+            "rarity": "epic",
+        },
+        {
+            "name": "Veteran",
+            "slug": "level_150",
+            "description": "Reach Level 150",
+            "condition_type": "numeric_level",
+            "condition_value": 150,
+            "badge_icon": "trophy",
+            "badge_color": "#673AB7",
+            "category": "level",
+            "xp_reward": 300,
+            "gems_reward": 150,
+            "rarity": "epic",
+        },
+        {
+            "name": "Legend",
+            "slug": "level_200",
+            "description": "Reach Level 200",
+            "condition_type": "numeric_level",
+            "condition_value": 200,
+            "badge_icon": "crown",
+            "badge_color": "#FF9800",
+            "category": "level",
+            "xp_reward": 400,
+            "gems_reward": 200,
+            "rarity": "legendary",
+        },
+        {
+            "name": "Mythic",
+            "slug": "level_300",
+            "description": "Reach Level 300",
+            "condition_type": "numeric_level",
+            "condition_value": 300,
+            "badge_icon": "💎",
+            "badge_color": "#E91E63",
+            "category": "level",
+            "xp_reward": 600,
+            "gems_reward": 300,
+            "rarity": "legendary",
+        },
+        {
+            "name": "Immortal",
+            "slug": "level_500",
+            "description": "Reach Level 500",
+            "condition_type": "numeric_level",
+            "condition_value": 500,
+            "badge_icon": "💎",
+            "badge_color": "#FFD700",
+            "category": "level",
+            "xp_reward": 1000,
+            "gems_reward": 500,
+            "rarity": "legendary",
+            "is_hidden": True,
+        },
+
+        # ========== SPECIAL — TIME-BASED ==========
+        {
+            "name": "Night Owl",
+            "slug": "night_owl",
+            "description": "Study after 10 PM, 7 times",
+            "condition_type": "study_time_night",
+            "condition_value": 7,
+            "badge_icon": "🌙",
+            "badge_color": "#303F9F",
+            "category": "special",
+            "xp_reward": 30,
+            "gems_reward": 15,
+            "rarity": "common",
+        },
+        {
+            "name": "Early Bird",
+            "slug": "early_bird",
+            "description": "Study before 7 AM, 7 times",
+            "condition_type": "study_time_morning",
+            "condition_value": 7,
+            "badge_icon": "🌅",
+            "badge_color": "#FF9800",
+            "category": "special",
+            "xp_reward": 30,
+            "gems_reward": 15,
+            "rarity": "common",
+        },
+        {
+            "name": "Speed Demon",
+            "slug": "speed_demon",
+            "description": "Complete 5 lessons in under 3 minutes each",
+            "condition_type": "speed_lesson",
+            "condition_value": 5,
+            "badge_icon": "⚡",
+            "badge_color": "#00BCD4",
+            "category": "special",
+            "xp_reward": 75,
+            "gems_reward": 40,
+            "rarity": "rare",
+        },
+        {
+            "name": "First Perfect",
+            "slug": "first_perfect_score",
+            "description": "Get 100% on your very first quiz attempt",
+            "condition_type": "first_perfect",
+            "condition_value": 1,
+            "badge_icon": "✨",
+            "badge_color": "#8BC34A",
+            "category": "quiz",
+            "xp_reward": 30,
+            "gems_reward": 20,
+            "rarity": "common",
+        },
+        {
+            "name": "Quiz Champion",
+            "slug": "quiz_champion",
+            "description": "Score 100% on 10 different quizzes",
+            "condition_type": "perfect_score",
+            "condition_value": 10,
+            "badge_icon": "🏆",
+            "badge_color": "#FFD700",
+            "category": "quiz",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "rare",
+        },
+
+        # ========== SPECIAL — SKILL MASTERY ==========
+        {
+            "name": "Grammar Guardian",
+            "slug": "grammar_guardian",
+            "description": "Master 50 grammar rules",
+            "condition_type": "grammar_mastered",
+            "condition_value": 50,
+            "badge_icon": "📚",
+            "badge_color": "#1A237E",
+            "category": "skill",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "rare",
+        },
+        {
+            "name": "Culture Explorer",
+            "slug": "culture_explorer",
+            "description": "Complete 10 cultural lessons",
+            "condition_type": "culture_lesson",
+            "condition_value": 10,
+            "badge_icon": "🌍",
+            "badge_color": "#00897B",
+            "category": "skill",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "epic",
+        },
+        {
+            "name": "Writing Wizard",
+            "slug": "writing_wizard",
+            "description": "Write 30 essays or responses",
+            "condition_type": "writing_complete",
+            "condition_value": 30,
+            "badge_icon": "✍️",
+            "badge_color": "#6A1B9A",
+            "category": "skill",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "epic",
+        },
+        {
+            "name": "Listening Legend",
+            "slug": "listening_legend",
+            "description": "Complete 30 listening exercises",
+            "condition_type": "listening_complete",
+            "condition_value": 30,
+            "badge_icon": "🎧",
+            "badge_color": "#283593",
+            "category": "skill",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "epic",
+        },
+
+        # ========== SPECIAL — SOCIAL ==========
+        {
+            "name": "Social Butterfly",
+            "slug": "social_butterfly",
+            "description": "Interact with 20 community posts",
+            "condition_type": "social_interaction",
+            "condition_value": 20,
+            "badge_icon": "🦋",
+            "badge_color": "#E91E63",
+            "category": "social",
+            "xp_reward": 50,
+            "gems_reward": 25,
+            "rarity": "common",
+        },
+        {
+            "name": "Conversation Champion",
+            "slug": "conversation_champion",
+            "description": "Complete 50 chat conversations",
+            "condition_type": "chat_complete",
+            "condition_value": 50,
+            "badge_icon": "💬",
+            "badge_color": "#1565C0",
+            "category": "social",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "rare",
+        },
+        {
+            "name": "Feedback Friend",
+            "slug": "feedback_friend",
+            "description": "Help 10 other learners",
+            "condition_type": "help_others",
+            "condition_value": 10,
+            "badge_icon": "🤝",
+            "badge_color": "#FF6F00",
+            "category": "social",
+            "xp_reward": 75,
+            "gems_reward": 40,
+            "rarity": "epic",
+        },
+
+        # ========== SPECIAL — MILESTONES ==========
+        {
+            "name": "Challenge Crusher",
+            "slug": "challenge_crusher",
+            "description": "Complete 30 daily challenges",
+            "condition_type": "daily_challenge_complete",
+            "condition_value": 30,
+            "badge_icon": "🔨",
+            "badge_color": "#D32F2F",
+            "category": "milestone",
+            "xp_reward": 150,
+            "gems_reward": 75,
+            "rarity": "epic",
+        },
+        {
+            "name": "Milestone Maker",
+            "slug": "milestone_maker",
+            "description": "Reach Level 10",
+            "condition_type": "numeric_level",
+            "condition_value": 10,
+            "badge_icon": "🚩",
+            "badge_color": "#1976D2",
+            "category": "milestone",
+            "xp_reward": 50,
+            "gems_reward": 25,
+            "rarity": "common",
+        },
+        {
+            "name": "Comeback King",
+            "slug": "comeback_king",
+            "description": "Return after 7+ days away and complete 3 lessons",
+            "condition_type": "comeback",
+            "condition_value": 1,
+            "badge_icon": "🔥",
+            "badge_color": "#FF5722",
+            "category": "milestone",
+            "xp_reward": 100,
+            "gems_reward": 50,
+            "rarity": "legendary",
+        },
     ]
     
     created_count = 0
+    updated_count = 0
     for achievement_data in achievements_data:
         result = await db.execute(
             select(Achievement).where(Achievement.name == achievement_data["name"])
@@ -574,10 +1015,14 @@ async def seed_achievements(db: AsyncSession):
             created_count += 1
             print(f"  ✅ Created achievement: {achievement.name}")
         else:
+            # Update slug if missing
+            if not achievement.slug and "slug" in achievement_data:
+                achievement.slug = achievement_data["slug"]
+                updated_count += 1
             print(f"  ⏭️  Achievement already exists: {achievement.name}")
     
     await db.commit()
-    print(f"✅ Achievements created: {created_count} new, {len(achievements_data)} total\n")
+    print(f"✅ Achievements: {created_count} new, {updated_count} updated slugs, {len(achievements_data)} total\n")
 
 
 async def seed_shop_items(db: AsyncSession):
@@ -687,8 +1132,12 @@ async def main():
     
     async with AsyncSessionLocal() as db:
         try:
+            # Seed RBAC first (no dependencies)
+            roles = await seed_roles(db)
+            await seed_permissions(db, roles)
+            
             # Seed in order due to foreign key dependencies
-            users = await seed_users(db)
+            users = await seed_users(db, roles)
             await seed_courses(db)
             await seed_achievements(db)
             await seed_shop_items(db)
@@ -700,9 +1149,11 @@ async def main():
             print("="*50 + "\n")
             
             print("📊 Summary:")
+            print(f"  • Roles: {len(roles)} (user, admin, super_admin)")
+            print(f"  • Permissions: 16 (with role assignments)")
             print(f"  • Users: {len(users)}")
             print(f"  • Courses: 1 (with units and lessons)")
-            print(f"  • Achievements: 3")
+            print(f"  • Achievements: 48 (with slugs)")
             print(f"  • Shop Items: 3")
             print(f"  • Wallets: {len(users)}")
             print(f"  • Streaks: {len(users)}")
@@ -710,6 +1161,8 @@ async def main():
             
         except Exception as e:
             print(f"\n❌ Error during seeding: {e}")
+            import traceback
+            traceback.print_exc()
             raise
 
 

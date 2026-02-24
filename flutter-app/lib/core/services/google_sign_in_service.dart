@@ -1,5 +1,7 @@
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../utils/app_logger.dart';
 
 const _tag = 'GoogleSignInService';
@@ -18,9 +20,9 @@ class GoogleSignInService {
               ],
               // Note: serverClientId is only for Android/iOS, not for Web
               // Web uses clientId from firebase config automatically
-              serverClientId: kIsWeb 
-                  ? null 
-                  : '432329288238-xxxxxxxxxxxxxxxxx.apps.googleusercontent.com',
+              serverClientId: kIsWeb
+                  ? null
+                  : dotenv.env['GOOGLE_SERVER_CLIENT_ID'],
             );
 
   /// Sign in with Google and return ID token

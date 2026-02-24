@@ -21,10 +21,10 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import httpx
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich import print as rprint
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.table import Table  # type: ignore[import-not-found]
+from rich.panel import Panel  # type: ignore[import-not-found]
+from rich import print as rprint  # type: ignore[import-not-found]
 
 console = Console()
 
@@ -182,7 +182,7 @@ async def test_placement_test_submit(client: httpx.AsyncClient, token: str, test
         # Select option index 1 (second option) for all - correct for most questions
         answers.append({
             "question_id": q["id"],
-            "selected_answer": 1  # Most correct answers are index 1
+            "selected_option": 1  # Most correct answers are index 1
         })
     
     submission = {
@@ -339,7 +339,7 @@ async def test_level_calculation():
         table.add_row(
             str(xp),
             str(progress.numeric_level),
-            f"{progress.progress_percent:.1f}%",
+            f"{progress.level_progress_percent:.1f}%",
             str(progress.xp_for_next_level)
         )
     

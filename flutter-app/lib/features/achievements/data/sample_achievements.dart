@@ -1,16 +1,16 @@
 /// Sample Achievements Data
-/// Fallback data when API returns empty
+/// Fallback data when API returns empty or errors
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 
-/// Default achievements for the app
+/// Default achievements for the app — 46 total across 11 categories
 class SampleAchievements {
   SampleAchievements._();
 
   /// Get all sample achievements
   static List<AchievementEntity> getAll() {
     return [
-      // ========== LESSON ACHIEVEMENTS ==========
+      // ========== LESSON ACHIEVEMENTS (5) ==========
       const AchievementEntity(
         id: 'first_steps',
         name: 'First Steps',
@@ -77,7 +77,7 @@ class SampleAchievements {
         rarity: 'legendary',
       ),
 
-      // ========== STREAK ACHIEVEMENTS ==========
+      // ========== STREAK ACHIEVEMENTS (6) ==========
       const AchievementEntity(
         id: 'getting_started',
         name: 'Getting Started',
@@ -143,8 +143,22 @@ class SampleAchievements {
         gemsReward: 250,
         rarity: 'legendary',
       ),
+      const AchievementEntity(
+        id: 'year_legend',
+        name: 'Year Legend',
+        description: 'Maintain a 365-day streak',
+        conditionType: 'reach_streak',
+        conditionValue: 365,
+        badgeIcon: 'medal',
+        badgeColor: '#FFD700',
+        category: 'streak',
+        xpReward: 1000,
+        gemsReward: 500,
+        rarity: 'legendary',
+        isHidden: true,
+      ),
 
-      // ========== VOCABULARY ACHIEVEMENTS ==========
+      // ========== VOCABULARY ACHIEVEMENTS (4) ==========
       const AchievementEntity(
         id: 'word_collector',
         name: 'Word Collector',
@@ -198,7 +212,7 @@ class SampleAchievements {
         rarity: 'legendary',
       ),
 
-      // ========== XP ACHIEVEMENTS ==========
+      // ========== XP ACHIEVEMENTS (4) ==========
       const AchievementEntity(
         id: 'xp_hunter',
         name: 'XP Hunter',
@@ -228,11 +242,11 @@ class SampleAchievements {
       const AchievementEntity(
         id: 'xp_champion',
         name: 'XP Champion',
-        description: 'Earn 1000 XP total',
+        description: 'Earn 1,000 XP total',
         conditionType: 'xp_earned',
         conditionValue: 1000,
         badgeIcon: 'star_gold',
-        badgeColor: '#F44336',
+        badgeColor: '#FF5722',
         category: 'xp',
         xpReward: 100,
         gemsReward: 50,
@@ -241,7 +255,7 @@ class SampleAchievements {
       const AchievementEntity(
         id: 'xp_legend',
         name: 'XP Legend',
-        description: 'Earn 5000 XP total',
+        description: 'Earn 5,000 XP total',
         conditionType: 'xp_earned',
         conditionValue: 5000,
         badgeIcon: 'diamond',
@@ -252,7 +266,7 @@ class SampleAchievements {
         rarity: 'legendary',
       ),
 
-      // ========== QUIZ/PERFECT SCORE ACHIEVEMENTS ==========
+      // ========== QUIZ / PERFECT SCORE ACHIEVEMENTS (4) ==========
       const AchievementEntity(
         id: 'perfectionist',
         name: 'Perfectionist',
@@ -264,6 +278,19 @@ class SampleAchievements {
         category: 'quiz',
         xpReward: 25,
         gemsReward: 15,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'first_perfect_score',
+        name: 'First Perfect',
+        description: 'Get 100% on your very first quiz attempt',
+        conditionType: 'first_perfect',
+        conditionValue: 1,
+        badgeIcon: 'stars',
+        badgeColor: '#8BC34A',
+        category: 'quiz',
+        xpReward: 30,
+        gemsReward: 20,
         rarity: 'common',
       ),
       const AchievementEntity(
@@ -292,16 +319,29 @@ class SampleAchievements {
         gemsReward: 150,
         rarity: 'epic',
       ),
+      const AchievementEntity(
+        id: 'quiz_champion',
+        name: 'Quiz Champion',
+        description: 'Score 100% on 10 different quizzes',
+        conditionType: 'perfect_score',
+        conditionValue: 10,
+        badgeIcon: 'trophy',
+        badgeColor: '#FFD700',
+        category: 'quiz',
+        xpReward: 150,
+        gemsReward: 75,
+        rarity: 'rare',
+      ),
 
-      // ========== COURSE ACHIEVEMENTS ==========
+      // ========== COURSE ACHIEVEMENTS (3) ==========
       const AchievementEntity(
         id: 'course_explorer',
-        name: 'Course Explorer',
+        name: 'Graduate',
         description: 'Complete your first course',
         conditionType: 'course_complete',
         conditionValue: 1,
         badgeIcon: 'flag',
-        badgeColor: '#009688',
+        badgeColor: '#3F51B5',
         category: 'course',
         xpReward: 100,
         gemsReward: 50,
@@ -309,7 +349,7 @@ class SampleAchievements {
       ),
       const AchievementEntity(
         id: 'course_champion',
-        name: 'Course Champion',
+        name: 'Multi-Course Master',
         description: 'Complete 5 courses',
         conditionType: 'course_complete',
         conditionValue: 5,
@@ -334,12 +374,12 @@ class SampleAchievements {
         rarity: 'legendary',
       ),
 
-      // ========== VOICE ACHIEVEMENTS ==========
+      // ========== VOICE ACHIEVEMENTS (3) ==========
       const AchievementEntity(
         id: 'voice_beginner',
-        name: 'Voice Beginner',
+        name: 'Voice Starter',
         description: 'Complete 5 voice exercises',
-        conditionType: 'voice_exercise',
+        conditionType: 'voice_practice',
         conditionValue: 5,
         badgeIcon: 'mic',
         badgeColor: '#FF5722',
@@ -352,7 +392,7 @@ class SampleAchievements {
         id: 'voice_talent',
         name: 'Voice Talent',
         description: 'Complete 25 voice exercises',
-        conditionType: 'voice_exercise',
+        conditionType: 'voice_practice',
         conditionValue: 25,
         badgeIcon: 'mic',
         badgeColor: '#E91E63',
@@ -362,10 +402,10 @@ class SampleAchievements {
         rarity: 'rare',
       ),
       const AchievementEntity(
-        id: 'pronunciation_pro',
+        id: 'pronunciation_master',
         name: 'Pronunciation Pro',
         description: 'Complete 100 voice exercises',
-        conditionType: 'voice_exercise',
+        conditionType: 'voice_practice',
         conditionValue: 100,
         badgeIcon: 'record',
         badgeColor: '#9C27B0',
@@ -373,6 +413,277 @@ class SampleAchievements {
         xpReward: 200,
         gemsReward: 100,
         rarity: 'epic',
+      ),
+
+      // ========== LEVEL MILESTONES (7) ==========
+      const AchievementEntity(
+        id: 'level_25',
+        name: 'Rising Star',
+        description: 'Reach Level 25',
+        conditionType: 'numeric_level',
+        conditionValue: 25,
+        badgeIcon: 'trending',
+        badgeColor: '#4CAF50',
+        category: 'level',
+        xpReward: 50,
+        gemsReward: 30,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'level_50',
+        name: 'Half Century',
+        description: 'Reach Level 50',
+        conditionType: 'numeric_level',
+        conditionValue: 50,
+        badgeIcon: 'star',
+        badgeColor: '#2196F3',
+        category: 'level',
+        xpReward: 100,
+        gemsReward: 50,
+        rarity: 'rare',
+      ),
+      const AchievementEntity(
+        id: 'level_100',
+        name: 'Centurion',
+        description: 'Reach Level 100',
+        conditionType: 'numeric_level',
+        conditionValue: 100,
+        badgeIcon: 'star_gold',
+        badgeColor: '#9C27B0',
+        category: 'level',
+        xpReward: 200,
+        gemsReward: 100,
+        rarity: 'epic',
+      ),
+      const AchievementEntity(
+        id: 'level_150',
+        name: 'Veteran',
+        description: 'Reach Level 150',
+        conditionType: 'numeric_level',
+        conditionValue: 150,
+        badgeIcon: 'trophy',
+        badgeColor: '#673AB7',
+        category: 'level',
+        xpReward: 300,
+        gemsReward: 150,
+        rarity: 'epic',
+      ),
+      const AchievementEntity(
+        id: 'level_200',
+        name: 'Legend',
+        description: 'Reach Level 200',
+        conditionType: 'numeric_level',
+        conditionValue: 200,
+        badgeIcon: 'crown',
+        badgeColor: '#FF9800',
+        category: 'level',
+        xpReward: 400,
+        gemsReward: 200,
+        rarity: 'legendary',
+      ),
+      const AchievementEntity(
+        id: 'level_300',
+        name: 'Mythic',
+        description: 'Reach Level 300',
+        conditionType: 'numeric_level',
+        conditionValue: 300,
+        badgeIcon: 'diamond',
+        badgeColor: '#E91E63',
+        category: 'level',
+        xpReward: 600,
+        gemsReward: 300,
+        rarity: 'legendary',
+      ),
+      const AchievementEntity(
+        id: 'level_500',
+        name: 'Immortal',
+        description: 'Reach Level 500',
+        conditionType: 'numeric_level',
+        conditionValue: 500,
+        badgeIcon: 'diamond',
+        badgeColor: '#FFD700',
+        category: 'level',
+        xpReward: 1000,
+        gemsReward: 500,
+        rarity: 'legendary',
+        isHidden: true,
+      ),
+
+      // ========== SPECIAL — TIME-BASED (2) ==========
+      const AchievementEntity(
+        id: 'night_owl',
+        name: 'Night Owl',
+        description: 'Study after 10 PM, 7 times',
+        conditionType: 'study_time_night',
+        conditionValue: 7,
+        badgeIcon: 'stars',
+        badgeColor: '#303F9F',
+        category: 'special',
+        xpReward: 30,
+        gemsReward: 15,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'early_bird',
+        name: 'Early Bird',
+        description: 'Study before 7 AM, 7 times',
+        conditionType: 'study_time_morning',
+        conditionValue: 7,
+        badgeIcon: 'flash',
+        badgeColor: '#FF9800',
+        category: 'special',
+        xpReward: 30,
+        gemsReward: 15,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'speed_demon',
+        name: 'Speed Demon',
+        description: 'Complete 5 lessons in under 3 minutes each',
+        conditionType: 'speed_lesson',
+        conditionValue: 5,
+        badgeIcon: 'bolt',
+        badgeColor: '#00BCD4',
+        category: 'special',
+        xpReward: 75,
+        gemsReward: 40,
+        rarity: 'rare',
+      ),
+
+      // ========== SPECIAL — SKILL MASTERY (4) ==========
+      const AchievementEntity(
+        id: 'grammar_guardian',
+        name: 'Grammar Guardian',
+        description: 'Master 50 grammar rules',
+        conditionType: 'grammar_mastered',
+        conditionValue: 50,
+        badgeIcon: 'verified',
+        badgeColor: '#1A237E',
+        category: 'skill',
+        xpReward: 150,
+        gemsReward: 75,
+        rarity: 'rare',
+      ),
+      const AchievementEntity(
+        id: 'culture_explorer',
+        name: 'Culture Explorer',
+        description: 'Complete 10 cultural lessons',
+        conditionType: 'culture_lesson',
+        conditionValue: 10,
+        badgeIcon: 'flag',
+        badgeColor: '#00897B',
+        category: 'skill',
+        xpReward: 100,
+        gemsReward: 50,
+        rarity: 'epic',
+      ),
+      const AchievementEntity(
+        id: 'writing_wizard',
+        name: 'Writing Wizard',
+        description: 'Write 30 essays or responses',
+        conditionType: 'writing_complete',
+        conditionValue: 30,
+        badgeIcon: 'pencil',
+        badgeColor: '#6A1B9A',
+        category: 'skill',
+        xpReward: 150,
+        gemsReward: 75,
+        rarity: 'epic',
+      ),
+      const AchievementEntity(
+        id: 'listening_legend',
+        name: 'Listening Legend',
+        description: 'Complete 30 listening exercises',
+        conditionType: 'listening_complete',
+        conditionValue: 30,
+        badgeIcon: 'speaker',
+        badgeColor: '#283593',
+        category: 'skill',
+        xpReward: 150,
+        gemsReward: 75,
+        rarity: 'epic',
+      ),
+
+      // ========== SPECIAL — SOCIAL (3) ==========
+      const AchievementEntity(
+        id: 'social_butterfly',
+        name: 'Social Butterfly',
+        description: 'Interact with 20 community posts',
+        conditionType: 'social_interaction',
+        conditionValue: 20,
+        badgeIcon: 'stars',
+        badgeColor: '#E91E63',
+        category: 'social',
+        xpReward: 50,
+        gemsReward: 25,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'conversation_champion',
+        name: 'Conversation Champion',
+        description: 'Complete 50 chat conversations',
+        conditionType: 'chat_complete',
+        conditionValue: 50,
+        badgeIcon: 'mic',
+        badgeColor: '#1565C0',
+        category: 'social',
+        xpReward: 100,
+        gemsReward: 50,
+        rarity: 'rare',
+      ),
+      const AchievementEntity(
+        id: 'feedback_friend',
+        name: 'Feedback Friend',
+        description: 'Help 10 other learners',
+        conditionType: 'help_others',
+        conditionValue: 10,
+        badgeIcon: 'trophy',
+        badgeColor: '#FF6F00',
+        category: 'social',
+        xpReward: 75,
+        gemsReward: 40,
+        rarity: 'epic',
+      ),
+
+      // ========== SPECIAL — MILESTONES (3) ==========
+      const AchievementEntity(
+        id: 'challenge_crusher',
+        name: 'Challenge Crusher',
+        description: 'Complete 30 daily challenges',
+        conditionType: 'daily_challenge_complete',
+        conditionValue: 30,
+        badgeIcon: 'bolt',
+        badgeColor: '#D32F2F',
+        category: 'milestone',
+        xpReward: 150,
+        gemsReward: 75,
+        rarity: 'epic',
+      ),
+      const AchievementEntity(
+        id: 'milestone_maker',
+        name: 'Milestone Maker',
+        description: 'Reach Level 10',
+        conditionType: 'numeric_level',
+        conditionValue: 10,
+        badgeIcon: 'flag',
+        badgeColor: '#1976D2',
+        category: 'milestone',
+        xpReward: 50,
+        gemsReward: 25,
+        rarity: 'common',
+      ),
+      const AchievementEntity(
+        id: 'comeback_king',
+        name: 'Comeback King',
+        description: 'Return after 7+ days away and complete 3 lessons',
+        conditionType: 'comeback',
+        conditionValue: 1,
+        badgeIcon: 'rocket',
+        badgeColor: '#FF5722',
+        category: 'milestone',
+        xpReward: 100,
+        gemsReward: 50,
+        rarity: 'legendary',
       ),
     ];
   }
@@ -396,5 +707,10 @@ class SampleAchievements {
         'quiz',
         'course',
         'voice',
+        'level',
+        'special',
+        'skill',
+        'social',
+        'milestone',
       ];
 }
