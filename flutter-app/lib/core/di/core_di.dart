@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
+import 'package:lexilingo_app/core/services/dictionary_service.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Disabled - old schema
@@ -52,6 +53,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
   );
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
   sl.registerLazySingleton<StreakService>(() => StreakService());
+  sl.registerLazySingleton<DictionaryService>(() => DictionaryService());
 
   if (!skipDatabase) {
     sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
