@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -61,6 +61,7 @@ import 'package:lexilingo_app/features/books/presentation/screens/book_library_s
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   
   // Add error handler for Flutter and Dart errors
   FlutterError.onError = (details) {
@@ -119,7 +120,20 @@ void main() async {
     );
   }
 
-  runApp(const LexiLingoApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('vi'),
+        Locale('en'),
+        Locale('ja'),
+        Locale('ko'),
+      ],
+      path: 'assets/i18n',
+      fallbackLocale: const Locale('vi'),
+      startLocale: const Locale('vi'),
+      child: const LexiLingoApp(),
+    ),
+  );
 }
 
 class LexiLingoApp extends StatelessWidget {
@@ -170,23 +184,10 @@ class LexiLingoApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
-            // Localization settings
-            locale: Locale(settings.language),
-            supportedLocales: const [
-              Locale('en'),
-              Locale('vi'),
-              Locale('ja'),
-              Locale('ko'),
-              Locale('zh'),
-              Locale('fr'),
-              Locale('de'),
-              Locale('es'),
-            ],
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
+            // Localization — easy_localization handles locale state
+            locale: context.locale,
+            supportedLocales: context.supportedLocales,
+            localizationsDelegates: context.localizationDelegates,
             home: const AuthWrapper(),
             routes: {
               '/youtube': (context) => const YouTubeExploreScreen(),

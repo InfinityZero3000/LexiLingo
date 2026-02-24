@@ -26,15 +26,12 @@ class SettingsProvider extends ChangeNotifier {
   bool get soundEnabled => _settings?.soundEnabled ?? true;
 
   /// Available languages with emoji flags
+  /// Must match supported locales in EasyLocalization (assets/i18n/*.json)
   static const List<Map<String, String>> availableLanguages = [
-    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
     {'code': 'vi', 'name': 'Tiếng Việt', 'flag': '🇻🇳'},
+    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
     {'code': 'ja', 'name': '日本語', 'flag': '🇯🇵'},
     {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
-    {'code': 'zh', 'name': '中文', 'flag': '🇨🇳'},
-    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
-    {'code': 'de', 'name': 'Deutsch', 'flag': '🇩🇪'},
-    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
   ];
 
   /// Daily goal presets with IconData
