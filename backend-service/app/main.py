@@ -46,6 +46,10 @@ from app.routes.analytics import router as analytics_router
 from app.routes.user_management import router as user_management_router
 from app.routes.youtube import router as youtube_router
 from app.routes.news import router as news_router
+from app.routes.podcasts import router as podcasts_router
+from app.routes.games import router as games_router
+from app.routes.xp import router as xp_router
+from app.routes.books import router as books_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -195,6 +199,14 @@ app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", t
 # Content Features
 app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])
 app.include_router(news_router, prefix=f"{settings.API_V1_PREFIX}", tags=["News"])
+app.include_router(podcasts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Podcasts"])
+
+# Phase 3: English Games + XP System
+app.include_router(games_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Games"])
+app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP System"])
+
+# Phase 5: Book Reading
+app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 
 
 @app.get("/")
