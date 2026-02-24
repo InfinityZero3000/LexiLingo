@@ -417,9 +417,17 @@ class _HintCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.accentYellow),
               ),
-              child: Text(
-                '💡 ${word.hint}',
-                style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+              child: Row(
+                children: [
+                  const Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accentYellow),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      word.hint,
+                      style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                    ),
+                  ),
+                ],
               ),
             )
           : const SizedBox.shrink(),

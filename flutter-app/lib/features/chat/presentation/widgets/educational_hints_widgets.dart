@@ -324,7 +324,8 @@ class VocabularyHintCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('📝 ', style: TextStyle(fontSize: 12)),
+                    const Icon(Icons.edit_note_rounded, size: 14, color: Colors.grey),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         hint.example!,

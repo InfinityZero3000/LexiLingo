@@ -229,7 +229,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('⚡', style: TextStyle(fontSize: 14)),
+              const Icon(Icons.bolt_rounded, color: AppColors.textGrey, size: 16),
               const SizedBox(width: 4),
               Text(
                 '$dailyXp/$dailyCap XP today',
@@ -488,7 +488,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final anims = [_anim1st, _anim2nd, _anim3rd];
     final anim = anims[rank];
     const rankLabels = ['1st', '2nd', '3rd'];
-    const medalEmojis = ['🥇', '🥈', '🥉'];
+    const medalColors = [Color(0xFFFFD700), Color(0xFFC0C0C0), Color(0xFFCD7F32)];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility
         : color.withOpacity(0.85);
@@ -505,7 +505,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(medalEmojis[rank], style: const TextStyle(fontSize: 24)),
+          Icon(Icons.workspace_premium_rounded, size: 24, color: medalColors[rank]),
           const SizedBox(height: 4),
           Container(
             width: 44,

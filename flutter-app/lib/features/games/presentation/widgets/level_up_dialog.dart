@@ -121,7 +121,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: const Text('🏆', style: TextStyle(fontSize: 36)),
+                    child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 36),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -165,7 +165,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('⚡', style: TextStyle(fontSize: 18)),
+                        const Icon(Icons.bolt_rounded, color: Color(0xFFF57C00), size: 20),
                         const SizedBox(width: 6),
                         Text(
                           '+${widget.xpAwarded} XP earned',

@@ -92,8 +92,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       _selectedIndex = index;
       _answered = true;
       _feedbackTip = correct
-          ? (q.grammarTip.isNotEmpty ? '✅ ${q.grammarTip}' : '✅ Correct!')
-          : '❌ ${q.explanation.isNotEmpty ? q.explanation : 'Incorrect.'}';
+          ? (q.grammarTip.isNotEmpty ? q.grammarTip : 'Correct!')
+          : (q.explanation.isNotEmpty ? q.explanation : 'Incorrect.');
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }

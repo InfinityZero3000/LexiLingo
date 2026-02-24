@@ -79,7 +79,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _recordTopic(game.topic, false);
     setState(() {
       _answered = true;
-      _feedbackText = '⏱️ Time\'s up! ${q.explanation.isNotEmpty ? q.explanation : ''}';
+      _feedbackText = 'Time\'s up! ${q.explanation.isNotEmpty ? q.explanation : ''}';
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -97,8 +97,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       _selectedIndex = index;
       _answered = true;
       _feedbackText = correct
-          ? '✅ ${q.grammarTip.isNotEmpty ? q.grammarTip : 'Correct!'}'
-          : '❌ ${q.explanation.isNotEmpty ? q.explanation : 'Incorrect.'}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
+          ? '${q.grammarTip.isNotEmpty ? q.grammarTip : 'Correct!'}'
+          : '${q.explanation.isNotEmpty ? q.explanation : 'Incorrect.'}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -113,9 +113,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final correct = _topicCorrect[topic] ?? 0;
     if (total < 3) return '';
     final pct = correct / total * 100;
-    if (pct >= 80) return '🏆 Great mastery of ${_formatTopic(topic)}!';
-    if (pct >= 50) return '📈 Keep practicing ${_formatTopic(topic)}.';
-    return '💡 Review ${_formatTopic(topic)} concepts.';
+    if (pct >= 80) return 'Great mastery of ${_formatTopic(topic)}!';
+    if (pct >= 50) return 'Keep practicing ${_formatTopic(topic)}.';
+    return 'Review ${_formatTopic(topic)} concepts.';
   }
 
   String _formatTopic(String t) =>

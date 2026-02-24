@@ -239,11 +239,16 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
     final score = provider.quizScore;
     final pct = total > 0 ? score / total : 0.0;
 
-    final emoji = pct >= 0.8
-        ? '🎉'
+    final resultIcon = pct >= 0.8
+        ? Icons.celebration_rounded
         : pct >= 0.6
-            ? '👍'
-            : '📖';
+            ? Icons.thumb_up_rounded
+            : Icons.menu_book_rounded;
+    final resultIconColor = pct >= 0.8
+        ? Colors.amber
+        : pct >= 0.6
+            ? Colors.green
+            : Colors.blue;
     final msg = pct >= 0.8
         ? 'Excellent!'
         : pct >= 0.6
@@ -260,7 +265,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 56)),
+            Icon(resultIcon, size: 56, color: resultIconColor),
             const SizedBox(height: 16),
             Text(
               msg,

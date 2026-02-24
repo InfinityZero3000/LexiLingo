@@ -302,7 +302,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                         child: Column(
                           children: [
                             Text(
-                              _isCorrect ? '✅ Correct!' : '❌ The answer was:',
+                              _isCorrect ? 'Correct!' : 'The answer was:',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _isCorrect

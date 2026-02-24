@@ -579,10 +579,10 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   }
 
   String _resultMessage(int percentage) {
-    if (percentage >= 80) return '🎉 Excellent!';
-    if (percentage >= 60) return '👍 Good job!';
-    if (percentage >= 40) return '📚 Keep practicing!';
-    return '💪 Don\'t give up!';
+    if (percentage >= 80) return 'Excellent!';
+    if (percentage >= 60) return 'Good job!';
+    if (percentage >= 40) return 'Keep practicing!';
+    return 'Don\'t give up!';
   }
 
   String _resultSubMessage(int percentage) {

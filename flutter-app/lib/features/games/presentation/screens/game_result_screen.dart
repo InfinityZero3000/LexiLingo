@@ -252,7 +252,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             const SizedBox(height: 8),
             _xpStatRow('Total XP', '${xpResult.newTotalXp}'),
             _xpStatRow('Daily XP', '${xpResult.dailyXpToday}'),
-            _xpStatRow('Streak', '🔥 ${xpResult.streakDays} days'),
+            _xpStatRow('Streak', '${xpResult.streakDays} days'),
           ],
         ],
       ),

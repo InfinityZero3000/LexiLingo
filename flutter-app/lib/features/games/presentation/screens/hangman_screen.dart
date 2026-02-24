@@ -246,10 +246,19 @@ class _HangmanScreenState extends State<HangmanScreen>
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.accentYellow),
                       ),
-                      child: Text(
-                        '💡 $_revealedHint',
-                        style: const TextStyle(fontSize: 13),
-                        textAlign: TextAlign.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accentYellow),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              _revealedHint,
+                              style: const TextStyle(fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
