@@ -34,7 +34,7 @@ else
     echo "   cd /path/to/LexiLingo/ai-service"
     echo "   source venv/bin/activate"
     echo "   export GEMINI_API_KEY='your-key'"
-    echo "   python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001"
+    echo "   python -m uvicorn api.main:app --host 0.0.0.0 --port 8001"
     echo ""
     read -p "Continue anyway? (y/n) " -n 1 -r
     echo ""

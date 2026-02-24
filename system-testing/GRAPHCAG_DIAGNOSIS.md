@@ -140,7 +140,7 @@ time curl -X POST http://localhost:11434/api/chat \
 
 ```bash
 # 1. Stop AI service
-pkill -f "uvicorn api.main_lite"
+pkill -f "uvicorn api.main"
 
 # 2. Đổi sang model nhỏ trong .env
 sed -i '' 's/OLLAMA_MODEL=qwen3-lexi/OLLAMA_MODEL=qwen3:1.5b/' ai-service/.env
@@ -149,7 +149,7 @@ sed -i '' 's/OLLAMA_MODEL=qwen3-lexi/OLLAMA_MODEL=qwen3:1.5b/' ai-service/.env
 cd ai-service
 export PYTHONPATH=$(pwd)
 export GEMINI_API_KEY='your-key'
-python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001 &
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 &
 
 # 4. Test lại với GUI tool
 cd ../system-testing

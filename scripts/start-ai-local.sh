@@ -69,7 +69,7 @@ echo -e "${BLUE}→${NC} Starting AI Service on port $AI_PORT..."
 cd "$AI_SERVICE_DIR"
 
 # Start uvicorn in background
-nohup python -m uvicorn api.main_lite:app \
+nohup python -m uvicorn api.main:app \
     --host 0.0.0.0 \
     --port $AI_PORT \
     --log-level info \

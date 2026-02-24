@@ -92,7 +92,7 @@ source /path/to/venv/bin/activate
 export GEMINI_API_KEY='your-api-key'
 
 # Run AI service
-python -m uvicorn api.main_lite:app --host 0.0.0.0 --port 8001 --reload
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 Kiểm tra service đã chạy:
@@ -216,7 +216,7 @@ curl http://localhost:8001/health
 **Solutions:**
 1. Check AI service is running: `curl http://localhost:8001/health`
 2. Check WebSocket endpoint exists: Look for `/ws/conversation/stream` in `ai-service/api/routes/websocket_stream.py`
-3. Check CORS settings in `main_lite.py`
+3. Check CORS settings in `main.py`
 
 ---
 
@@ -244,7 +244,7 @@ curl http://localhost:8001/health
 **Problem:** Endpoints not found
 
 **Solutions:**
-1. Check API routes are registered in `main_lite.py`
+1. Check API routes are registered in `main.py`
 2. Look at available endpoints: `http://localhost:8001/docs`
 3. Verify endpoint paths match those in test tool
 
@@ -361,7 +361,7 @@ Content-Type: application/json
 ## 🎯 Next Steps
 
 1. **Open test tools** in browser
-2. **Start AI service** (`uvicorn api.main_lite:app --port 8001`)
+2. **Start AI service** (`uvicorn api.main:app --port 8001`)
 3. **Run test scenarios** following examples above
 4. **Monitor performance** via stats dashboard
 5. **Report issues** if latencies exceed targets
