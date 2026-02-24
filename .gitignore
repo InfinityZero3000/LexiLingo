@@ -82,6 +82,11 @@ DL-Model-Support/
 **/models/piper/*.onnx
 **/models/embeddings/*.bin
 
+# Database backups and temporary files
+*.bak
+*.sqlite3.bak
+**/data/*.bak
+
 # Logs and temporary files
 logs/*.txt
 temp/
