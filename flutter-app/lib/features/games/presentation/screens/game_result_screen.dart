@@ -159,9 +159,10 @@ class _GameResultScreenState extends State<GameResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          Icon(
             result.gameType.icon,
-            style: const TextStyle(fontSize: 32),
+            size: 32,
+            color: AppColors.primary,
           ),
           const SizedBox(height: 8),
           _statRow(
@@ -287,7 +288,7 @@ class _GameResultScreenState extends State<GameResultScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 16)),
+          const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 16),
           const SizedBox(width: 6),
           Text(
             'Streak bonus: ${multiplier.toStringAsFixed(1)}x',
