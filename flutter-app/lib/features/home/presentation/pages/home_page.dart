@@ -18,6 +18,7 @@ import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
+import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -104,6 +105,14 @@ class _HomePageNewState extends State<HomePageNew> {
                     _buildSectionTitle(context, 'Quick Actions'),
                     const SizedBox(height: 12),
                     _buildQuickActions(context),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Quick Stats'),
+                    const SizedBox(height: 12),
+                    _buildQuickStats(context),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Continue Exploring'),
+                    const SizedBox(height: 12),
+                    _buildContinueSection(context),
                   ],
                 ),
               ),
@@ -1284,6 +1293,58 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.sports_esports,
+                  title: 'Games',
+                  subtitle: 'Play & earn XP',
+                  color: const Color(0xFF8B5CF6), // Purple
+                  bgColor: const Color(0xFFF5F3FF),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/games');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.podcasts,
+                  title: 'Podcast',
+                  subtitle: 'Listen & learn',
+                  color: const Color(0xFF0EA5E9), // Sky blue
+                  bgColor: const Color(0xFFE0F2FE),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/podcast');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.menu_book_rounded,
+                  title: 'Books',
+                  subtitle: 'Read & grow',
+                  color: const Color(0xFF10B981), // Emerald
+                  bgColor: const Color(0xFFD1FAE5),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/books');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: const SizedBox.shrink()),
+            ],
+          ),
         ],
       ),
     );
@@ -1336,6 +1397,183 @@ class _HomePageNewState extends State<HomePageNew> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickStats(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final stats = [
+      _QuickStat(icon: Icons.article_rounded, label: 'Articles', value: '—', color: const Color(0xFF6366F1)),
+      _QuickStat(icon: Icons.sports_esports_rounded, label: 'Games', value: '—', color: const Color(0xFF8B5CF6)),
+      _QuickStat(icon: Icons.headphones_rounded, label: 'Listened', value: '—', color: const Color(0xFF0EA5E9)),
+      _QuickStat(icon: Icons.menu_book_rounded, label: 'Reading', value: '—', color: const Color(0xFF10B981)),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: stats
+            .expand((s) => [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: s.color.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(s.icon, color: s.color, size: 22),
+                          const SizedBox(height: 4),
+                          Text(
+                            s.value,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: isDark ? Colors.white : AppColors.textDark,
+                            ),
+                          ),
+                          Text(
+                            s.label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark ? Colors.white54 : AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ])
+            .take(stats.length * 2 - 1)
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildContinueSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Consumer<BookProvider>(
+      builder: (context, bookProvider, _) {
+        final currentBook = bookProvider.currentBook;
+        final currentProgress = bookProvider.currentProgress;
+
+        final items = <_ContinueItem>[
+          _ContinueItem(
+            icon: Icons.smart_display_rounded,
+            title: 'YouTube',
+            subtitle: 'Continue watching',
+            color: const Color(0xFFEF4444),
+            route: '/youtube',
+          ),
+          _ContinueItem(
+            icon: Icons.article_rounded,
+            title: 'News',
+            subtitle: 'Continue reading',
+            color: const Color(0xFF6366F1),
+            route: '/news',
+          ),
+          _ContinueItem(
+            icon: Icons.sports_esports_rounded,
+            title: 'Games',
+            subtitle: 'Earn more XP',
+            color: const Color(0xFF8B5CF6),
+            route: '/games',
+          ),
+          _ContinueItem(
+            icon: Icons.podcasts_rounded,
+            title: 'Podcast',
+            subtitle: 'Continue listening',
+            color: const Color(0xFF0EA5E9),
+            route: '/podcast',
+          ),
+          if (currentBook != null)
+            _ContinueItem(
+              icon: Icons.menu_book_rounded,
+              title: currentBook.title.length > 18
+                  ? '${currentBook.title.substring(0, 18)}…'
+                  : currentBook.title,
+              subtitle: currentProgress != null
+                  ? '${(currentProgress.readingProgress * 100).toInt()}% read'
+                  : 'Continue reading',
+              color: const Color(0xFF10B981),
+              route: '/books',
+            )
+          else
+            _ContinueItem(
+              icon: Icons.menu_book_rounded,
+              title: 'Books',
+              subtitle: 'Start reading',
+              color: const Color(0xFF10B981),
+              route: '/books',
+            ),
+        ];
+
+        return SizedBox(
+          height: 104,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final item = items[i];
+              return GestureDetector(
+                onTap: () => Navigator.pushNamed(context, item.route),
+                child: Container(
+                  width: 130,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: item.color.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(item.icon, color: item.color, size: 20),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: isDark ? Colors.white : AppColors.textDark,
+                        ),
+                      ),
+                      Text(
+                        item.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white54 : AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -1416,4 +1654,34 @@ class _HomePageNewState extends State<HomePageNew> {
       ),
     );
   }
+}
+
+class _QuickStat {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _QuickStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+}
+
+class _ContinueItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final String route;
+
+  const _ContinueItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.route,
+  });
 }
