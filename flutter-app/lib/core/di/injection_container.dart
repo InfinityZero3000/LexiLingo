@@ -18,6 +18,9 @@ import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart';
 import 'package:lexilingo_app/features/voice/di/voice_di.dart';
 import 'package:lexilingo_app/features/youtube/di/youtube_di.dart';
 import 'package:lexilingo_app/features/news/di/news_di.dart';
+import 'package:lexilingo_app/features/games/di/games_di.dart';
+import 'package:lexilingo_app/features/podcast/di/podcast_di.dart';
+import 'package:lexilingo_app/features/books/di/books_di.dart';
 
 export 'service_locator.dart';
 
@@ -43,5 +46,8 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   initVoiceDependencies(sl);
   registerYouTubeModule();        // Phase 1: YouTube Video Integration
   registerNewsModule();           // Phase 2: News Reading
+  registerGamesModule();          // Phase 3: English Games + XP System
+  await registerPodcastModule();  // Phase 4: Podcast — async (AudioService.init)
+  registerBooksModule();          // Phase 5: Book Reading
 }
 

@@ -81,9 +81,10 @@ dependencies:
   # Voice/Audio
   record: ^5.1.2
   just_audio: ^0.9.39
+  audio_service: ^0.18.16        # Phase 4: Background podcast playback + lock screen
   path_provider: ^2.1.5
   permission_handler: ^11.3.1
-  
+
   # Web platform support
   web: ^1.1.0
   

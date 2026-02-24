@@ -46,6 +46,19 @@ import 'package:lexilingo_app/features/news/presentation/screens/news_detail_scr
 import 'package:lexilingo_app/features/news/presentation/screens/news_quiz_screen.dart';
 import 'package:lexilingo_app/features/news/domain/entities/news_entities.dart';
 
+// Phase 3: English Games + XP System
+import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
+import 'package:lexilingo_app/features/games/presentation/screens/games_hub_screen.dart';
+
+// Phase 4: Podcast
+import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_provider.dart';
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_explore_screen.dart';
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_detail_screen.dart';
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_player_screen.dart';
+import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
+import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -142,6 +155,12 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<YouTubeProvider>()),
         // Phase 2: News Reading
         ChangeNotifierProvider(create: (_) => di.sl<NewsProvider>()),
+        // Phase 3: English Games + XP System
+        ChangeNotifierProvider(create: (_) => di.sl<GamesProvider>()..loadXPProfile()),
+        // Phase 4: Podcast
+        ChangeNotifierProvider(create: (_) => di.sl<PodcastProvider>()..loadCuratedPodcasts()),
+        // Phase 5: Book Reading
+        ChangeNotifierProvider(create: (_) => di.sl<BookProvider>()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
@@ -184,6 +203,23 @@ class LexiLingoApp extends StatelessWidget {
                 final article = ModalRoute.of(context)!.settings.arguments as NewsArticle;
                 return NewsQuizScreen(article: article);
               },
+              // Phase 3: English Games
+              '/games': (context) => const GamesHubScreen(),
+              // Phase 4: Podcast
+              '/podcast': (context) => const PodcastExploreScreen(),
+              '/podcast/detail': (context) {
+                final podcast = ModalRoute.of(context)!.settings.arguments as Podcast;
+                return PodcastDetailScreen(podcast: podcast);
+              },
+              '/podcast/player': (context) {
+                final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+                return PodcastPlayerScreen(
+                  episode: args['episode'] as PodcastEpisode,
+                  artworkUrl: args['artworkUrl'] as String,
+                );
+              },
+              // Phase 5: Books
+              '/books': (context) => const BookLibraryScreen(),
             },
           );
         },
