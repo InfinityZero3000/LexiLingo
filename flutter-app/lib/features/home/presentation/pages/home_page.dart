@@ -1252,6 +1252,38 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.article,
+                  title: 'News',
+                  subtitle: 'Read articles',
+                  color: const Color(0xFF6366F1), // Indigo
+                  bgColor: const Color(0xFFEEF2FF),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/news');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.smart_display,
+                  title: 'YouTube',
+                  subtitle: 'Watch videos',
+                  color: const Color(0xFFEF4444), // Red
+                  bgColor: const Color(0xFFFEF2F2),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/youtube');
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

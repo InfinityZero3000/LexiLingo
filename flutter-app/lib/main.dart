@@ -40,6 +40,12 @@ import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_expl
 import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart';
 import 'package:lexilingo_app/features/youtube/domain/entities/youtube_entities.dart';
 
+import 'package:lexilingo_app/features/news/presentation/providers/news_provider.dart';
+import 'package:lexilingo_app/features/news/presentation/screens/news_list_screen.dart';
+import 'package:lexilingo_app/features/news/presentation/screens/news_detail_screen.dart';
+import 'package:lexilingo_app/features/news/presentation/screens/news_quiz_screen.dart';
+import 'package:lexilingo_app/features/news/domain/entities/news_entities.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -134,6 +140,8 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<SocialProvider>()),
         // Phase 1: YouTube Video Integration
         ChangeNotifierProvider(create: (_) => di.sl<YouTubeProvider>()),
+        // Phase 2: News Reading
+        ChangeNotifierProvider(create: (_) => di.sl<NewsProvider>()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
@@ -166,6 +174,15 @@ class LexiLingoApp extends StatelessWidget {
               '/youtube/player': (context) {
                 final video = ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
                 return YouTubePlayerScreen(video: video);
+              },
+              '/news': (context) => const NewsListScreen(),
+              '/news/detail': (context) {
+                final article = ModalRoute.of(context)!.settings.arguments as NewsArticle;
+                return NewsDetailScreen(article: article);
+              },
+              '/news/quiz': (context) {
+                final article = ModalRoute.of(context)!.settings.arguments as NewsArticle;
+                return NewsQuizScreen(article: article);
               },
             },
           );
