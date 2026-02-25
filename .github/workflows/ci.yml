@@ -22,16 +22,29 @@ jobs:
       run:
         working-directory: backend-service
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lexilingo
+          POSTGRES_PASSWORD: lexilingo_pass
+          POSTGRES_DB: lexilingo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
-      # Use SQLite in CI (no Postgres/Redis needed)
-      DATABASE_URL: sqlite+aiosqlite:///./test_ci.db
+      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test
       SECRET_KEY: ci-secret-key-not-for-production
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       APP_ENV: testing
       DEBUG: "False"
-      # Disable external services in tests
       REDIS_URL: ""
       FIREBASE_PROJECT_ID: ""
       GEMINI_API_KEY: ""
@@ -90,7 +103,6 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.x"
           channel: stable
           cache: true
 
