@@ -5,11 +5,17 @@ Shared test fixtures for backend API tests
 
 import pytest
 import asyncio
+import sys
 from typing import AsyncGenerator
+from pathlib import Path
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 from uuid import uuid4
+
+BACKEND_SERVICE_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_SERVICE_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_SERVICE_ROOT))
 
 from app.main import app
 from app.core.database import Base, get_db

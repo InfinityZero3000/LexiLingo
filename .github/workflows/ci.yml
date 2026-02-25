@@ -70,6 +70,9 @@ jobs:
       - name: Install test dependencies
         run: pip install pytest-cov
 
+      - name: Check app import
+        run: python -c "from app.main import app; print('App import OK')"
+
       - name: Run tests with coverage
         run: |
           pytest \
@@ -117,10 +120,21 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Print Flutter and Dart versions
+        run: |
+          flutter --version
+          dart --version
+
       - name: Analyze (fail on errors only)
         run: |
-          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/ 2>&1 | tee analyze-output.txt
-          exit ${PIPESTATUS[0]}
+          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/ > analyze-output.txt 2>&1
+          ANALYZE_EXIT=$?
+          echo "=== ANALYZE EXIT CODE: $ANALYZE_EXIT ==="
+          echo "=== LAST 30 LINES OF OUTPUT ==="
+          tail -30 analyze-output.txt
+          echo "=== ALL ERRORS/WARNINGS ==="
+          grep -E "^  (error|warning)" analyze-output.txt || echo "(none)"
+          exit $ANALYZE_EXIT
 
       - name: Upload analyze output
         if: always()

@@ -79,6 +79,13 @@ from app.models.notification import Notification
 # API Cache (Phase 0 — Infrastructure)
 from app.models.api_cache import APICacheEntry
 
+# Games models (Phase 3)
+from app.models.games import (
+    GameWord,
+    GameSession,
+    XPTransaction,
+)
+
 __all__ = [
     # User (Phase 1)
     "User",
@@ -137,4 +144,8 @@ __all__ = [
     "Notification",
     # API Cache (Phase 0)
     "APICacheEntry",
+    # Games (Phase 3)
+    "GameWord",
+    "GameSession",
+    "XPTransaction",
 ]
