@@ -1,17 +1,17 @@
 :root {
   color-scheme: light;
-  --bg: #f6f1ea;
+  --bg: #E1F2FF;
   --panel: #ffffff;
-  --panel-soft: #f9f2e9;
-  --panel-ink: #1c1712;
-  --text: #1d1914;
-  --muted: #61564b;
-  --line: #eadfd2;
+  --panel-soft: #cde8ff;
+  --panel-ink: #0d1f2d;
+  --text: #1a2835;
+  --muted: #4a6070;
+  --line: #b8d9f5;
   --accent: #ff4d00;
   --accent-2: #2aa7a1;
   --accent-3: #6f3fa3;
   --accent-4: #2b2f3b;
-  --shadow: 0 18px 40px rgba(31, 21, 11, 0.08);
+  --shadow: 0 18px 40px rgba(10, 50, 90, 0.08);
 }
 
 * {
@@ -21,7 +21,7 @@
 body {
   margin: 0;
   font-family: "Instrument Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #ffe9d6 0%, #f6f1ea 35%, #f4efe8 100%);
+  background: radial-gradient(circle at top left, #fff0e6 0%, #E1F2FF 45%, #d4e9ff 100%);
   color: var(--text);
   min-height: 100vh;
 }
@@ -48,7 +48,7 @@ h3,
 .sidebar {
   padding: 28px 20px;
   border-right: 1px solid var(--line);
-  background: linear-gradient(180deg, #fff 0%, #f7efe6 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #cde8ff 100%);
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -318,7 +318,7 @@ h3,
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 44px rgba(31, 21, 11, 0.12);
+  box-shadow: 0 20px 44px rgba(10, 50, 90, 0.12);
 }
 
 .stat-card::after {
