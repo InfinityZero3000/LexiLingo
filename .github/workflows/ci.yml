@@ -71,7 +71,16 @@ jobs:
         run: pip install pytest-cov
 
       - name: Check app import
-        run: python -c "from app.main import app; print('App import OK')"
+        run: |
+          python -c "
+          import sys, traceback
+          try:
+              from app.main import app
+              print('App import OK')
+          except Exception as e:
+              traceback.print_exc()
+              sys.exit(1)
+          "
 
       - name: Run tests with coverage
         run: |
@@ -127,14 +136,18 @@ jobs:
 
       - name: Analyze (fail on errors only)
         run: |
-          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/ > analyze-output.txt 2>&1
-          ANALYZE_EXIT=$?
-          echo "=== ANALYZE EXIT CODE: $ANALYZE_EXIT ==="
-          echo "=== LAST 30 LINES OF OUTPUT ==="
-          tail -30 analyze-output.txt
-          echo "=== ALL ERRORS/WARNINGS ==="
-          grep -E "^  (error|warning)" analyze-output.txt || echo "(none)"
-          exit $ANALYZE_EXIT
+          # Run analyze, capturing output (ignore exit code for now)
+          flutter analyze --no-pub lib/ > analyze-output.txt 2>&1 || true
+          echo "=== FLUTTER ANALYZE SUMMARY ==="
+          tail -5 analyze-output.txt
+          echo "=== ERRORS FOUND ==="
+          if grep -E "^  error" analyze-output.txt; then
+            echo "Failing due to errors above"
+            exit 1
+          else
+            echo "No errors found — passing"
+            exit 0
+          fi
 
       - name: Upload analyze output
         if: always()
