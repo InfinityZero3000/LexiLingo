@@ -32,6 +32,14 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create .env for build
+        run: |
+          printf 'API_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
+            "${{ secrets.API_BASE_URL || 'https://api.lexilingo.app/api/v1' }}" \
+            "${{ secrets.AI_SERVICE_URL || 'https://ai.lexilingo.app/api/v1' }}" \
+            "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" \
+            > .env
+
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub
 

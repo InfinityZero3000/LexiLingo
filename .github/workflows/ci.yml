@@ -73,11 +73,19 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest \
-            --tb=short \
+            --tb=long \
             --cov=app \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            -q
+            -v 2>&1 | tee pytest-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pytest-output
+          path: backend-service/pytest-output.txt
 
       - name: Upload coverage report
         if: always()
@@ -110,7 +118,16 @@ jobs:
         run: flutter pub get
 
       - name: Analyze (fail on errors only)
-        run: flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/
+        run: |
+          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/ 2>&1 | tee analyze-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload analyze output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-output
+          path: flutter-app/analyze-output.txt
 
       - name: Run unit tests
         run: flutter test --no-pub -r compact
