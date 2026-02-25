@@ -37,8 +37,8 @@ class CourseProgressCard extends StatelessWidget {
                     child: Text(
                       courseProgress.courseTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -46,18 +46,14 @@ class CourseProgressCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Row(
                     children: [
-                      Icon(
-                        Icons.star,
-                        size: 16,
-                        color: Colors.amber[700],
-                      ),
+                      Icon(Icons.star, size: 16, color: Colors.amber[700]),
                       const SizedBox(width: 4),
                       Text(
                         '${courseProgress.totalXpEarned} XP',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.amber[700],
-                            ),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber[700],
+                        ),
                       ),
                     ],
                   ),
@@ -89,9 +85,9 @@ class CourseProgressCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progressPercent,
                       minHeight: 8,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         _getProgressColor(courseProgress.progressPercentage),
                       ),
@@ -114,8 +110,8 @@ class CourseProgressCard extends StatelessWidget {
                   Text(
                     'Last activity: ${_formatDate(courseProgress.lastActivityAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

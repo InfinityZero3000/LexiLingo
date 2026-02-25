@@ -31,9 +31,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LearningProvider>().startLesson(
-            widget.courseId,
-            widget.lessonId,
-          );
+        widget.courseId,
+        widget.lessonId,
+      );
     });
   }
 
@@ -61,7 +61,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             const TtsSpeedButton(),
             Consumer<LearningProvider>(
               builder: (context, provider, child) {
-                if (provider.currentLesson == null) return const SizedBox.shrink();
+                if (provider.currentLesson == null)
+                  return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
@@ -89,7 +90,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text(provider.error!, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
@@ -122,12 +127,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   backgroundColor: Colors.grey[200],
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                 ),
-                
+
                 // Content
-                Expanded(
-                  child: _buildExerciseContent(context, provider),
-                ),
-                
+                Expanded(child: _buildExerciseContent(context, provider)),
+
                 // Action buttons
                 _buildActionButtons(context, provider),
               ],
@@ -138,9 +141,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     );
   }
 
-  Widget _buildExerciseContent(BuildContext context, LearningProvider provider) {
+  Widget _buildExerciseContent(
+    BuildContext context,
+    LearningProvider provider,
+  ) {
     final exercise = provider.currentExercise;
-    
+
     if (exercise == null) {
       return const Center(child: Text('No exercise available'));
     }
@@ -155,7 +161,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           userAnswer: provider.currentUserAnswer,
           isCorrect: provider.isCurrentCorrect,
         );
-      
+
       case ExerciseType.fillInBlank:
       case ExerciseType.translate:
         return LessonContentWidget(
@@ -164,7 +170,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           isAnswered: provider.isCurrentAnswered,
           isCorrect: provider.isCurrentCorrect,
         );
-      
+
       default:
         return Center(
           child: Text('Exercise type "${exercise.type}" not implemented yet'),
@@ -193,9 +199,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               onPressed: () => provider.skipExercise(),
               child: const Text('Skip'),
             ),
-          
+
           const Spacer(),
-          
+
           // Check/Continue button
           ElevatedButton(
             onPressed: provider.isCurrentAnswered
@@ -204,7 +210,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
               backgroundColor: provider.isCurrentAnswered
-                  ? ((provider.isCurrentCorrect ?? false) ? Colors.green : Colors.orange)
+                  ? ((provider.isCurrentCorrect ?? false)
+                        ? Colors.green
+                        : Colors.orange)
                   : Colors.grey,
             ),
             child: Text(
@@ -217,16 +225,19 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     );
   }
 
-  Widget _buildCompletionScreen(BuildContext context, LearningProvider provider) {
+  Widget _buildCompletionScreen(
+    BuildContext context,
+    LearningProvider provider,
+  ) {
     final score = provider.score;
     final total = provider.totalExercises;
     final percentage = (score / total * 100).toInt();
-    
+
     // Update streak when lesson is completed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StreakProvider>().updateStreak();
     });
-    
+
     return Stack(
       children: [
         // Confetti animation
@@ -239,7 +250,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             ),
           ),
         ),
-        
+
         // Content
         Padding(
           padding: const EdgeInsets.all(24.0),
@@ -252,10 +263,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 duration: const Duration(milliseconds: 800),
                 curve: Curves.elasticOut,
                 builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: child,
-                  );
+                  return Transform.scale(scale: value, child: child);
                 },
                 child: Stack(
                   alignment: Alignment.center,
@@ -264,11 +272,14 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: (percentage >= 80 ? Colors.amber : Colors.green).withValues(alpha: 0.2),
+                        color: (percentage >= 80 ? Colors.amber : Colors.green)
+                            .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: (percentage >= 80 ? Colors.amber : Colors.green).withValues(alpha: 0.3),
+                            color:
+                                (percentage >= 80 ? Colors.amber : Colors.green)
+                                    .withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
                           ),
@@ -283,16 +294,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         repeat: false,
                       )
                     else
-                      AnimatedCheckmark(
-                        color: Colors.green,
-                        size: 80,
-                      ),
+                      AnimatedCheckmark(color: Colors.green, size: 80),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Animated Title
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -313,21 +321,28 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          percentage >= 80 ? Icons.celebration : Icons.auto_awesome,
-                          color: percentage >= 80 ? Colors.amber : Colors.purple,
+                          percentage >= 80
+                              ? Icons.celebration
+                              : Icons.auto_awesome,
+                          color: percentage >= 80
+                              ? Colors.amber
+                              : Colors.purple,
                           size: 28,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           percentage >= 80 ? 'Excellent!' : 'Well Done!',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 8),
                         Icon(
-                          percentage >= 80 ? Icons.celebration : Icons.auto_awesome,
-                          color: percentage >= 80 ? Colors.amber : Colors.purple,
+                          percentage >= 80
+                              ? Icons.celebration
+                              : Icons.auto_awesome,
+                          color: percentage >= 80
+                              ? Colors.amber
+                              : Colors.purple,
                           size: 28,
                         ),
                       ],
@@ -335,16 +350,16 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     const SizedBox(height: 12),
                     Text(
                       'You scored $score/$total ($percentage%)',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // XP earned with animation
               if (provider.xpEarned > 0)
                 TweenAnimationBuilder<double>(
@@ -352,13 +367,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   duration: const Duration(milliseconds: 800),
                   curve: Curves.bounceOut,
                   builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: child,
-                    );
+                    return Transform.scale(scale: value, child: child);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Colors.amber.shade400, Colors.orange.shade400],
@@ -389,9 +404,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     ),
                   ),
                 ),
-              
+
               const SizedBox(height: 48),
-              
+
               // Action buttons
               SizedBox(
                 width: double.infinity,
@@ -411,9 +426,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               if (percentage < 80)
                 SizedBox(
                   width: double.infinity,

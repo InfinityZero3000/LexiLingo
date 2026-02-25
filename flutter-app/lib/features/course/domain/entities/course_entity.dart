@@ -75,20 +75,20 @@ class CourseEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        language,
-        level,
-        tags,
-        thumbnailUrl,
-        totalXp,
-        estimatedDuration,
-        totalLessons,
-        isPublished,
-        createdAt,
-        updatedAt,
-        isEnrolled,
-        userProgress,
-      ];
+    id,
+    title,
+    description,
+    language,
+    level,
+    tags,
+    thumbnailUrl,
+    totalXp,
+    estimatedDuration,
+    totalLessons,
+    isPublished,
+    createdAt,
+    updatedAt,
+    isEnrolled,
+    userProgress,
+  ];
 }

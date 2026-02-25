@@ -52,8 +52,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
           'Book Library',
@@ -63,7 +64,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(_isSearchMode ? Icons.close_rounded : Icons.search_rounded),
+            icon: Icon(
+              _isSearchMode ? Icons.close_rounded : Icons.search_rounded,
+            ),
             onPressed: () {
               setState(() {
                 _isSearchMode = !_isSearchMode;
@@ -119,7 +122,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         if (provider.isSearching) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (provider.searchResults.isEmpty && _searchController.text.length >= 2) {
+        if (provider.searchResults.isEmpty &&
+            _searchController.text.length >= 2) {
           return Center(
             child: Text(
               'No books found for "${_searchController.text}"',
@@ -158,8 +162,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                   width: 48,
                   height: 64,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      _fallbackCoverSmall(cefrColor),
+                  errorBuilder: (_, __, ___) => _fallbackCoverSmall(cefrColor),
                 )
               : _fallbackCoverSmall(cefrColor),
         ),
@@ -208,14 +211,14 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   }
 
   Widget _fallbackCoverSmall(Color cefrColor) => Container(
-        width: 48,
-        height: 64,
-        decoration: BoxDecoration(
-          color: cefrColor.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(Icons.menu_book_rounded, size: 24, color: cefrColor),
-      );
+    width: 48,
+    height: 64,
+    decoration: BoxDecoration(
+      color: cefrColor.withValues(alpha: 0.2),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Icon(Icons.menu_book_rounded, size: 24, color: cefrColor),
+  );
 
   Widget _buildLibrary(BuildContext context, bool isDark) {
     return Consumer<BookProvider>(
@@ -229,8 +232,11 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline_rounded,
-                    size: 48, color: AppColors.textGrey),
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: AppColors.textGrey,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Could not load books.\nPlease try again.',
@@ -263,16 +269,21 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
               // Section: All Levels
               if (provider.selectedCefrLevel == null) ...[
                 ..._cefrLevels
-                    .where((level) =>
-                        provider.recommendedBooks.any((b) => b.cefrLevel == level))
-                    .map((level) => _buildLevelSection(
-                          context,
-                          level,
-                          provider.recommendedBooks
-                              .where((b) => b.cefrLevel == level)
-                              .toList(),
-                          isDark,
-                        )),
+                    .where(
+                      (level) => provider.recommendedBooks.any(
+                        (b) => b.cefrLevel == level,
+                      ),
+                    )
+                    .map(
+                      (level) => _buildLevelSection(
+                        context,
+                        level,
+                        provider.recommendedBooks
+                            .where((b) => b.cefrLevel == level)
+                            .toList(),
+                        isDark,
+                      ),
+                    ),
               ] else ...[
                 _buildBookGrid(context, provider.recommendedBooks, isDark),
               ],
@@ -286,13 +297,18 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   }
 
   Widget _buildCefrFilterRow(
-      BuildContext context, BookProvider provider, bool isDark) {
+    BuildContext context,
+    BookProvider provider,
+    bool isDark,
+  ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           _filterChip(context, provider, isDark, null, 'All'),
-          ..._cefrLevels.map((l) => _filterChip(context, provider, isDark, l, l)),
+          ..._cefrLevels.map(
+            (l) => _filterChip(context, provider, isDark, l, l),
+          ),
         ],
       ),
     );
@@ -319,8 +335,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           color: isSelected
               ? AppColors.primary
               : isDark
-                  ? const Color(0xFF1C2B3A)
-                  : Colors.white,
+              ? const Color(0xFF1C2B3A)
+              : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.grey300,
@@ -332,8 +348,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             color: isSelected
                 ? Colors.white
                 : isDark
-                    ? Colors.white70
-                    : AppColors.textGrey,
+                ? Colors.white70
+                : AppColors.textGrey,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 13,
           ),
@@ -343,7 +359,11 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   }
 
   Widget _buildLevelSection(
-      BuildContext context, String level, List<Book> books, bool isDark) {
+    BuildContext context,
+    String level,
+    List<Book> books,
+    bool isDark,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -403,10 +423,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         mainAxisSpacing: 12,
       ),
       itemCount: books.length,
-      itemBuilder: (context, i) => BookCard(
-        book: books[i],
-        onTap: () => _openBook(context, books[i]),
-      ),
+      itemBuilder: (context, i) =>
+          BookCard(book: books[i], onTap: () => _openBook(context, books[i])),
     );
   }
 

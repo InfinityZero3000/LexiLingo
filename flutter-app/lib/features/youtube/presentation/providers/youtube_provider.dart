@@ -9,7 +9,7 @@ class YouTubeProvider extends ChangeNotifier {
   final YouTubeRepository _repository;
 
   YouTubeProvider({YouTubeRepository? repository})
-      : _repository = repository ?? YouTubeRepository();
+    : _repository = repository ?? YouTubeRepository();
 
   // ── State ──
   List<YouTubeChannel> _channels = [];

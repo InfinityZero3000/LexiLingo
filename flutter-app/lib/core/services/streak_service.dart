@@ -7,13 +7,13 @@ class StreakService {
   final DatabaseHelper _dbHelper;
 
   StreakService({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+    : _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   /// Get current streak for a user
   /// Calculates consecutive days of activity
   Future<int> getCurrentStreak(String userId) async {
     final db = await _dbHelper.database;
-    
+
     // Get all completed days ordered by date descending
     final results = await db.query(
       'streaks',
@@ -35,8 +35,9 @@ class StreakService {
         // First row - check if it's today or yesterday
         final today = DateTime.now();
         final yesterday = today.subtract(const Duration(days: 1));
-        
-        if (_isSameDay(currentDate, today) || _isSameDay(currentDate, yesterday)) {
+
+        if (_isSameDay(currentDate, today) ||
+            _isSameDay(currentDate, yesterday)) {
           streak = 1;
           previousDate = currentDate;
         } else {
@@ -46,7 +47,7 @@ class StreakService {
       } else {
         // Check if this date is consecutive with previous
         final daysBetween = previousDate.difference(currentDate).inDays;
-        
+
         if (daysBetween == 1) {
           streak++;
           previousDate = currentDate;
@@ -66,15 +67,11 @@ class StreakService {
     final db = await _dbHelper.database;
     final today = _formatDate(DateTime.now());
 
-    await db.insert(
-      'streaks',
-      {
-        'userId': userId,
-        'date': today,
-        'completed': 1,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('streaks', {
+      'userId': userId,
+      'date': today,
+      'completed': 1,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Check if user completed activity today
@@ -100,7 +97,7 @@ class StreakService {
     });
 
     final progress = <bool>[];
-    
+
     for (final dateStr in weekDates) {
       final results = await db.query(
         'streaks',
@@ -116,7 +113,7 @@ class StreakService {
   /// Get longest streak ever for user
   Future<int> getLongestStreak(String userId) async {
     final db = await _dbHelper.database;
-    
+
     final results = await db.query(
       'streaks',
       where: 'userId = ? AND completed = 1',
@@ -136,7 +133,7 @@ class StreakService {
 
       if (previousDate != null) {
         final daysBetween = currentDate.difference(previousDate).inDays;
-        
+
         if (daysBetween == 1) {
           currentStreak++;
           if (currentStreak > longestStreak) {
@@ -178,7 +175,7 @@ class StreakService {
   /// Get total active days (lifetime)
   Future<int> getTotalActiveDays(String userId) async {
     final db = await _dbHelper.database;
-    
+
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM streaks WHERE userId = ? AND completed = 1',
       [userId],

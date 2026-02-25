@@ -29,7 +29,8 @@ class AppTheme {
         displayColor: AppColors.textDark,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent, // Or white/transparent based on design
+        backgroundColor:
+            Colors.transparent, // Or white/transparent based on design
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
@@ -79,7 +80,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
-       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1C2A38), // Darker shade for nav bar
         selectedItemColor: AppColors.primary,
         unselectedItemColor: Color(0xFF9CA3AF),
@@ -91,4 +92,3 @@ class AppTheme {
     );
   }
 }
-

@@ -75,7 +75,7 @@ class LoginResponse {
 /// From backend-service/app/models/user.py UserDevice
 class DeviceInfo {
   final String deviceId;
-  final String deviceType;  // 'ios', 'android', 'web'
+  final String deviceType; // 'ios', 'android', 'web'
   final String? deviceName;
   final String? fcmToken;
   final String? appVersion;
@@ -142,16 +142,10 @@ class LoginRequest {
   final String email;
   final String password;
 
-  const LoginRequest({
-    required this.email,
-    required this.password,
-  });
+  const LoginRequest({required this.email, required this.password});
 
   Map<String, dynamic> toJson() {
-    return {
-      'email': email,
-      'password': password,
-    };
+    return {'email': email, 'password': password};
   }
 }
 
@@ -159,13 +153,9 @@ class LoginRequest {
 class RefreshTokenRequest {
   final String refreshToken;
 
-  const RefreshTokenRequest({
-    required this.refreshToken,
-  });
+  const RefreshTokenRequest({required this.refreshToken});
 
   Map<String, dynamic> toJson() {
-    return {
-      'refresh_token': refreshToken,
-    };
+    return {'refresh_token': refreshToken};
   }
 }

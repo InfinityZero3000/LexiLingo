@@ -36,10 +36,12 @@ class CourseRoadmapModel {
       completedUnits: json['completed_units'] as int? ?? 0,
       totalLessons: json['total_lessons'] as int? ?? 0,
       completedLessons: json['completed_lessons'] as int? ?? 0,
-      completionPercentage: (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
+      completionPercentage:
+          (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
       totalXpEarned: json['total_xp_earned'] as int? ?? 0,
       currentStreak: json['current_streak'] as int? ?? 0,
-      units: (json['units'] as List<dynamic>?)
+      units:
+          (json['units'] as List<dynamic>?)
               ?.map((e) => UnitRoadmapModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -99,10 +101,14 @@ class UnitRoadmapModel {
       description: json['description'] as String?,
       totalLessons: json['total_lessons'] as int? ?? 0,
       completedLessons: json['completed_lessons'] as int? ?? 0,
-      completionPercentage: (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
+      completionPercentage:
+          (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
       isCurrent: json['is_current'] as bool? ?? false,
-      lessons: (json['lessons'] as List<dynamic>?)
-              ?.map((e) => LessonProgressModel.fromJson(e as Map<String, dynamic>))
+      lessons:
+          (json['lessons'] as List<dynamic>?)
+              ?.map(
+                (e) => LessonProgressModel.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
       iconUrl: json['icon_url'] as String?,
@@ -171,7 +177,8 @@ class LessonProgressModel {
       bestScore: (json['best_score'] as num?)?.toDouble(),
       starsEarned: json['stars_earned'] as int? ?? 0,
       attemptsCount: json['attempts_count'] as int? ?? 0,
-      completionPercentage: (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
+      completionPercentage:
+          (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
       iconUrl: json['icon_url'] as String?,
       backgroundColor: json['background_color'] as String? ?? '#4CAF50',
     );

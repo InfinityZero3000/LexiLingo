@@ -41,8 +41,11 @@ class TranscriptPanel extends StatelessWidget {
           // ── Section heading ──
           Row(
             children: [
-              const Icon(Icons.subtitles_rounded,
-                  size: 18, color: AppColors.primary),
+              const Icon(
+                Icons.subtitles_rounded,
+                size: 18,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Transcript',
@@ -73,10 +76,12 @@ class TranscriptPanel extends StatelessWidget {
   // ──────────────────────────────────────
 
   Widget _buildShimmer(bool isDark) {
-    final baseColor =
-        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200;
-    final highlightColor =
-        isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey.shade100;
+    final baseColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.grey.shade200;
+    final highlightColor = isDark
+        ? Colors.white.withValues(alpha: 0.15)
+        : Colors.grey.shade100;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -137,7 +142,9 @@ class TranscriptPanel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.6,
-                    color: isDark ? Colors.white.withOpacity(0.87) : AppColors.textDark,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.87)
+                        : AppColors.textDark,
                   ),
                 ),
               ),
@@ -181,8 +188,7 @@ class TranscriptPanel extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

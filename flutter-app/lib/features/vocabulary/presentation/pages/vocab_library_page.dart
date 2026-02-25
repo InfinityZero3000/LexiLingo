@@ -35,10 +35,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.transparent, 
+              color: Colors.transparent,
               shape: BoxShape.circle,
             ),
-             child: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+            child: const Icon(
+              Icons.arrow_back_ios,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
         ),
         actions: [
@@ -46,9 +50,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             onTap: () => _showAddWordDialog(context, vocabProvider),
             child: Container(
               margin: const EdgeInsets.only(right: 16),
-              child: const Icon(Icons.add_circle, color: AppColors.primary, size: 28),
+              child: const Icon(
+                Icons.add_circle,
+                color: AppColors.primary,
+                size: 28,
+              ),
             ),
-          )
+          ),
         ],
       ),
       body: Column(
@@ -59,10 +67,15 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1C2632)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 2,
+                  ),
                 ],
               ),
               child: Row(
@@ -108,35 +121,42 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                Text('RECENT WORDS', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.textDark.withValues(alpha: 0.6))),
+                Text(
+                  'RECENT WORDS',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                    color: AppColors.textDark.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ),
 
           // List
           Expanded(
-            child: vocabProvider.isLoading 
+            child: vocabProvider.isLoading
                 ? _buildSkeletonList()
                 : words.isEmpty
-                    ? EmptyStateWidget.vocabulary(
-                        onAdd: () => _showAddWordDialog(context, vocabProvider),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () => vocabProvider.loadWords(),
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: words.length,
-                          itemBuilder: (context, index) {
-                            final word = words[index];
-                            return _buildWordCard(
-                              context,
-                              word.word,
-                              "/.../", // IPA missing in entity
-                              word.definition, 
-                            );
-                          },
-                        ),
-                      ),
+                ? EmptyStateWidget.vocabulary(
+                    onAdd: () => _showAddWordDialog(context, vocabProvider),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () => vocabProvider.loadWords(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: words.length,
+                      itemBuilder: (context, index) {
+                        final word = words[index];
+                        return _buildWordCard(
+                          context,
+                          word.word,
+                          "/.../", // IPA missing in entity
+                          word.definition,
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -148,22 +168,45 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white),
+        color: isSelected
+            ? AppColors.primary
+            : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1C2632)
+                  : Colors.white),
         borderRadius: BorderRadius.circular(18),
-        border: isSelected ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
-        boxShadow: [if(!isSelected) BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)]
+        border: isSelected
+            ? null
+            : Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        boxShadow: [
+          if (!isSelected)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 2,
+            ),
+        ],
       ),
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18, color: isSelected ? Colors.white : AppColors.primary),
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : AppColors.primary,
+            ),
             const SizedBox(width: 8),
           ],
-          Text(label, style: TextStyle(
-            color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.textDark),
-            fontWeight: FontWeight.w600,
-            fontSize: 14
-          )),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected
+                  ? Colors.white
+                  : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : AppColors.textDark),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -174,26 +217,59 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildWordCard(context, "Resilient", "/rɪˈzɪl.jənt/", "Able to recoil or spring back into shape after bending or being compressed."),
+        _buildWordCard(
+          context,
+          "Resilient",
+          "/rɪˈzɪl.jənt/",
+          "Able to recoil or spring back into shape after bending or being compressed.",
+        ),
         const SizedBox(height: 12),
-        _buildWordCard(context, "Departure", "/dɪˈpɑː.tʃər/", "The action of leaving, especially to start a journey."),
+        _buildWordCard(
+          context,
+          "Departure",
+          "/dɪˈpɑː.tʃər/",
+          "The action of leaving, especially to start a journey.",
+        ),
         const SizedBox(height: 12),
-        _buildWordCard(context, "Ubiquitous", "/juːˈbɪk.wɪ.təs/", "Present, appearing, or found everywhere."),
+        _buildWordCard(
+          context,
+          "Ubiquitous",
+          "/juːˈbɪk.wɪ.təs/",
+          "Present, appearing, or found everywhere.",
+        ),
         const SizedBox(height: 12),
-        _buildWordCard(context, "Benevolent", "/bəˈnev.əl.ənt/", "Well meaning and kindly; marked by doing good."),
+        _buildWordCard(
+          context,
+          "Benevolent",
+          "/bəˈnev.əl.ənt/",
+          "Well meaning and kindly; marked by doing good.",
+        ),
       ],
     );
   }
 
-  Widget _buildWordCard(BuildContext context, String word, String ipa, String def) {
+  Widget _buildWordCard(
+    BuildContext context,
+    String word,
+    String ipa,
+    String def,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C2632) : Colors.white,
-         borderRadius: BorderRadius.circular(12),
-         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))],
-         border: Border.all(color: Colors.transparent),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1C2632)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.transparent),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,7 +278,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             child: Row(
               children: [
                 Container(
-                  width: 48, height: 48,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -218,14 +295,32 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Text(word, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text(
+                            word,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text(ipa, style: TextStyle(color: AppColors.primary.withValues(alpha: 0.7), fontSize: 12)),
+                          Text(
+                            ipa,
+                            style: TextStyle(
+                              color: AppColors.primary.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(def, maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 14)
+                      Text(
+                        def,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -234,13 +329,18 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             ),
           ),
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.volume_up, color: AppColors.primary, size: 20),
-          )
+            child: const Icon(
+              Icons.volume_up,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
         ],
       ),
     );
@@ -258,21 +358,31 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: wordController, decoration: const InputDecoration(labelText: 'Word')),
-            TextField(controller: defController, decoration: const InputDecoration(labelText: 'Definition')),
+            TextField(
+              controller: wordController,
+              decoration: const InputDecoration(labelText: 'Word'),
+            ),
+            TextField(
+              controller: defController,
+              decoration: const InputDecoration(labelText: 'Definition'),
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
-              if (wordController.text.isNotEmpty && defController.text.isNotEmpty) {
+              if (wordController.text.isNotEmpty &&
+                  defController.text.isNotEmpty) {
                 provider.addWord(wordController.text, defController.text);
                 Navigator.pop(ctx);
               }
             },
             child: const Text('Save'),
-          )
+          ),
         ],
       ),
     );
@@ -286,4 +396,3 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     );
   }
 }
-

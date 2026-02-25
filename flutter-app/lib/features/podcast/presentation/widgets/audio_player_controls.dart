@@ -86,10 +86,7 @@ class AudioPlayerControls extends StatelessWidget {
           const SizedBox(height: 14),
 
           // ── Seek bar ──
-          _SeekBar(
-            progress: progress.toDouble(),
-            isDark: isDark,
-          ),
+          _SeekBar(progress: progress.toDouble(), isDark: isDark),
           const SizedBox(height: 6),
 
           // ── Time labels ──
@@ -145,9 +142,7 @@ class AudioPlayerControls extends StatelessWidget {
                 child: IconButton(
                   onPressed: isPlaying ? onPause : onPlay,
                   icon: Icon(
-                    isPlaying
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
+                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     size: 30,
                     color: Colors.white,
                   ),
@@ -195,8 +190,7 @@ class AudioPlayerControls extends StatelessWidget {
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text(
                     'Playback Speed',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                 ),
                 ...speeds.map((s) {
@@ -213,8 +207,10 @@ class AudioPlayerControls extends StatelessWidget {
                       ),
                     ),
                     trailing: isSelected
-                        ? const Icon(Icons.check_rounded,
-                            color: AppColors.primary)
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: AppColors.primary,
+                          )
                         : null,
                     onTap: () {
                       onSpeedChange(s);
@@ -265,8 +261,7 @@ class _SeekBar extends StatelessWidget {
         backgroundColor: isDark
             ? Colors.white.withValues(alpha: 0.1)
             : AppColors.grey200,
-        valueColor:
-            const AlwaysStoppedAnimation<Color>(AppColors.primary),
+        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
       ),
     );
   }
@@ -288,13 +283,11 @@ class _SpeedButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: Text(
           '${speed}×',

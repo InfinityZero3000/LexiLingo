@@ -86,7 +86,9 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton<UserRepository>(
     () => UserRepositoryImpl(
       localDataSource: sl(),
-      firestoreDataSource: sl.isRegistered<UserFirestoreDataSource>() ? sl() : null,
+      firestoreDataSource: sl.isRegistered<UserFirestoreDataSource>()
+          ? sl()
+          : null,
       backendDataSource: sl<UserBackendDataSource>(),
     ),
   );
@@ -105,16 +107,20 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => UpdateUserUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateUserStatsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetUserStatsUseCase(sl<UserRepository>()));
-  sl.registerLazySingleton(() => GetWeeklyActivityUseCase(sl<UserRepository>()));
+  sl.registerLazySingleton(
+    () => GetWeeklyActivityUseCase(sl<UserRepository>()),
+  );
   sl.registerLazySingleton(() => GetSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateSettingsUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetTodayGoalUseCase(repository: sl()));
   sl.registerLazySingleton(() => SetDailyGoalUseCase(repository: sl()));
-  sl.registerLazySingleton(() => UpdateDailyProgressUseCase(
-        dailyGoalRepository: sl(),
-        userRepository: sl(),
-        streakRepository: sl(),
-      ));
+  sl.registerLazySingleton(
+    () => UpdateDailyProgressUseCase(
+      dailyGoalRepository: sl(),
+      userRepository: sl(),
+      streakRepository: sl(),
+    ),
+  );
   sl.registerLazySingleton(() => GetCurrentStreakUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetGoalHistoryUseCase(repository: sl()));
 
@@ -137,7 +143,8 @@ void registerUserModule({required bool skipDatabase}) {
   );
 
   // Only register ProgressSyncService if Firestore data sources are available
-  if (sl.isRegistered<UserFirestoreDataSource>() && sl.isRegistered<ProgressFirestoreDataSource>()) {
+  if (sl.isRegistered<UserFirestoreDataSource>() &&
+      sl.isRegistered<ProgressFirestoreDataSource>()) {
     sl.registerLazySingleton<ProgressSyncService>(
       () => ProgressSyncService(
         userLocalDataSource: sl(),

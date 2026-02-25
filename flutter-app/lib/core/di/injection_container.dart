@@ -37,17 +37,16 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerProgressModule();
   registerUserModule(skipDatabase: skipDatabase);
   registerHomeModule();
-  registerProfileModule();        // Profile stats system
-  registerAchievementModule();    // Achievement/Badge system
-  registerNotificationModule();   // Notification system
-  registerLevelModule();          // Level/XP system
-  registerGamificationModule();   // Shop, Wallet, Leaderboard
-  registerSocialModule();         // Friends, Activity Feed
+  registerProfileModule(); // Profile stats system
+  registerAchievementModule(); // Achievement/Badge system
+  registerNotificationModule(); // Notification system
+  registerLevelModule(); // Level/XP system
+  registerGamificationModule(); // Shop, Wallet, Leaderboard
+  registerSocialModule(); // Friends, Activity Feed
   initVoiceDependencies(sl);
-  registerYouTubeModule();        // Phase 1: YouTube Video Integration
-  registerNewsModule();           // Phase 2: News Reading
-  registerGamesModule();          // Phase 3: English Games + XP System
-  await registerPodcastModule();  // Phase 4: Podcast — async (AudioService.init)
-  registerBooksModule();          // Phase 5: Book Reading
+  registerYouTubeModule(); // Phase 1: YouTube Video Integration
+  registerNewsModule(); // Phase 2: News Reading
+  registerGamesModule(); // Phase 3: English Games + XP System
+  await registerPodcastModule(); // Phase 4: Podcast — async (AudioService.init)
+  registerBooksModule(); // Phase 5: Book Reading
 }
-

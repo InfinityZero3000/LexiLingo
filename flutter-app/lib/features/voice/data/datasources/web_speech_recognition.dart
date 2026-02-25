@@ -27,7 +27,9 @@ class WebSpeechRecognition {
       if (js.context.hasProperty('SpeechRecognition')) {
         return js.JsObject(js.context['SpeechRecognition'] as js.JsFunction);
       } else if (js.context.hasProperty('webkitSpeechRecognition')) {
-        return js.JsObject(js.context['webkitSpeechRecognition'] as js.JsFunction);
+        return js.JsObject(
+          js.context['webkitSpeechRecognition'] as js.JsFunction,
+        );
       }
     } catch (e) {
       print('Failed to create SpeechRecognition: $e');
@@ -55,12 +57,10 @@ class WebSpeechRecognition {
   }
 
   /// Start listening for speech
-  Stream<WebSpeechResult> startListening({
-    String language = 'en-US',
-  }) {
+  Stream<WebSpeechResult> startListening({String language = 'en-US'}) {
     _resultController?.close();
     _errorController?.close();
-    
+
     _resultController = StreamController<WebSpeechResult>.broadcast();
     _errorController = StreamController<String>.broadcast();
 
@@ -100,20 +100,23 @@ class WebSpeechRecognition {
     try {
       final results = event['results'];
       final resultIndex = event['resultIndex'] ?? 0;
-      
+
       for (int i = resultIndex; i < results['length']; i++) {
         final result = results[i];
         final alternative = result[0];
-        
+
         final transcript = alternative['transcript'] as String? ?? '';
-        final confidence = (alternative['confidence'] as num?)?.toDouble() ?? 0.0;
+        final confidence =
+            (alternative['confidence'] as num?)?.toDouble() ?? 0.0;
         final isFinal = result['isFinal'] as bool? ?? false;
 
-        _resultController?.add(WebSpeechResult(
-          transcript: transcript,
-          confidence: confidence,
-          isFinal: isFinal,
-        ));
+        _resultController?.add(
+          WebSpeechResult(
+            transcript: transcript,
+            confidence: confidence,
+            isFinal: isFinal,
+          ),
+        );
       }
     } catch (e) {
       print('Error handling result: $e');
@@ -124,7 +127,7 @@ class WebSpeechRecognition {
   void _handleError(dynamic event) {
     final error = event['error'] as String? ?? 'unknown';
     String errorMessage;
-    
+
     switch (error) {
       case 'no-speech':
         errorMessage = 'No speech detected. Please try again.';
@@ -133,7 +136,8 @@ class WebSpeechRecognition {
         errorMessage = 'Microphone not available. Please check permissions.';
         break;
       case 'not-allowed':
-        errorMessage = 'Microphone access denied. Please allow microphone access.';
+        errorMessage =
+            'Microphone access denied. Please allow microphone access.';
         break;
       case 'network':
         errorMessage = 'Network error. Please check your connection.';
@@ -147,7 +151,7 @@ class WebSpeechRecognition {
       default:
         errorMessage = 'Speech recognition error: $error';
     }
-    
+
     _resultController?.addError(errorMessage);
     _errorController?.add(errorMessage);
   }
@@ -205,5 +209,6 @@ class WebSpeechResult {
   });
 
   @override
-  String toString() => 'WebSpeechResult(transcript: $transcript, confidence: $confidence, isFinal: $isFinal)';
+  String toString() =>
+      'WebSpeechResult(transcript: $transcript, confidence: $confidence, isFinal: $isFinal)';
 }

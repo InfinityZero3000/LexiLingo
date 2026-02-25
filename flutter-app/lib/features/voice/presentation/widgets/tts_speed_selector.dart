@@ -26,7 +26,10 @@ class TtsSpeedSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactSelector(BuildContext context, TtsSettingsProvider settings) {
+  Widget _buildCompactSelector(
+    BuildContext context,
+    TtsSettingsProvider settings,
+  ) {
     return InkWell(
       onTap: () => settings.cycleSpeed(),
       onLongPress: () => _showSpeedDialog(context, settings),
@@ -40,11 +43,7 @@ class TtsSpeedSelector extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.speed,
-              size: 16,
-              color: Theme.of(context).primaryColor,
-            ),
+            Icon(Icons.speed, size: 16, color: Theme.of(context).primaryColor),
             const SizedBox(width: 4),
             Text(
               settings.speedLabel,
@@ -60,7 +59,10 @@ class TtsSpeedSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildFullSelector(BuildContext context, TtsSettingsProvider settings) {
+  Widget _buildFullSelector(
+    BuildContext context,
+    TtsSettingsProvider settings,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -70,9 +72,9 @@ class TtsSpeedSelector extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'Playback Speed',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         Wrap(
@@ -124,18 +126,18 @@ class TtsSpeedSelector extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   'TTS Playback Speed',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               'Adjust the speed of text-to-speech audio playback',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             ...TtsSettingsProvider.speedOptions.map((speed) {
@@ -153,8 +155,10 @@ class TtsSpeedSelector extends StatelessWidget {
                   ),
                 ),
                 trailing: isSelected
-                    ? Icon(Icons.check_circle,
-                        color: Theme.of(context).primaryColor)
+                    ? Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).primaryColor,
+                      )
                     : null,
                 onTap: () {
                   settings.setPlaybackSpeed(speed);
@@ -181,17 +185,15 @@ class TtsSpeedSelector extends StatelessWidget {
 class TtsSpeedButton extends StatelessWidget {
   final double size;
 
-  const TtsSpeedButton({
-    super.key,
-    this.size = 40,
-  });
+  const TtsSpeedButton({super.key, this.size = 40});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<TtsSettingsProvider>(
       builder: (context, settings, child) {
         return Tooltip(
-          message: 'TTS Speed: ${settings.speedLabel}\nTap to change, long-press for options',
+          message:
+              'TTS Speed: ${settings.speedLabel}\nTap to change, long-press for options',
           child: InkWell(
             onTap: () => settings.cycleSpeed(),
             onLongPress: () => _showSpeedBottomSheet(context, settings),
@@ -220,7 +222,10 @@ class TtsSpeedButton extends StatelessWidget {
     );
   }
 
-  void _showSpeedBottomSheet(BuildContext context, TtsSettingsProvider settings) {
+  void _showSpeedBottomSheet(
+    BuildContext context,
+    TtsSettingsProvider settings,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -233,10 +238,7 @@ class TtsSpeedButton extends StatelessWidget {
           children: [
             const Text(
               'Select Playback Speed',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Wrap(

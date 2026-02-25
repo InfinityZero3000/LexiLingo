@@ -38,7 +38,9 @@ class BookCard extends StatelessWidget {
           children: [
             // Cover image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
               child: _buildCover(cefrColor),
             ),
 
@@ -50,7 +52,10 @@ class BookCard extends StatelessWidget {
                 children: [
                   // CEFR badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: cefrColor,
                       borderRadius: BorderRadius.circular(5),

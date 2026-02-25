@@ -700,17 +700,17 @@ class SampleAchievements {
 
   /// All available categories
   static List<String> get categories => [
-        'lessons',
-        'streak',
-        'vocabulary',
-        'xp',
-        'quiz',
-        'course',
-        'voice',
-        'level',
-        'special',
-        'skill',
-        'social',
-        'milestone',
-      ];
+    'lessons',
+    'streak',
+    'vocabulary',
+    'xp',
+    'quiz',
+    'course',
+    'voice',
+    'level',
+    'special',
+    'skill',
+    'social',
+    'milestone',
+  ];
 }

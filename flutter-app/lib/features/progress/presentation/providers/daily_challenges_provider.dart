@@ -9,7 +9,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   final ProgressRepository _repository;
 
   DailyChallengesProvider({required ProgressRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   // State
   DailyChallengesResponse? _challengesResponse;
@@ -46,7 +46,8 @@ class DailyChallengesProvider extends ChangeNotifier {
   double get progress => _challengesResponse?.progress ?? 0.0;
 
   /// Check if a reward has been claimed
-  bool isRewardClaimed(String challengeId) => _claimedRewards.contains(challengeId);
+  bool isRewardClaimed(String challengeId) =>
+      _claimedRewards.contains(challengeId);
 
   /// Load daily challenges from API
   Future<void> loadChallenges() async {

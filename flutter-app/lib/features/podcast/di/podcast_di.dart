@@ -11,9 +11,7 @@ import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_pr
 /// On web, AudioService is not supported — we skip it to avoid startup hang.
 Future<void> registerPodcastModule() async {
   // Repository
-  sl.registerLazySingleton<PodcastRepository>(
-    () => PodcastRepository(),
-  );
+  sl.registerLazySingleton<PodcastRepository>(() => PodcastRepository());
 
   // Provider
   sl.registerFactory<PodcastProvider>(
@@ -35,4 +33,3 @@ Future<void> registerPodcastModule() async {
     sl.registerSingleton<PodcastAudioHandler>(audioHandler);
   }
 }
-

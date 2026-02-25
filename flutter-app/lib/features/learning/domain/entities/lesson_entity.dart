@@ -25,7 +25,8 @@ class LessonEntity {
       title: json['title'] as String,
       description: json['description'] as String?,
       orderIndex: json['order_index'] as int,
-      exercises: (json['exercises'] as List?)
+      exercises:
+          (json['exercises'] as List?)
               ?.map((e) => Exercise.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -63,11 +64,11 @@ class Exercise {
   final String id;
   final ExerciseType type;
   final String question;
-  final List<String>? options;  // For multiple choice
+  final List<String>? options; // For multiple choice
   final String correctAnswer;
   final String? explanation;
   final String? hint;
-  final String? audioUrl;  // For listening exercises
+  final String? audioUrl; // For listening exercises
   final Map<String, dynamic>? metadata;
 
   Exercise({

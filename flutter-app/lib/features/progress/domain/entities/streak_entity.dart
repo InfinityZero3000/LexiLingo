@@ -80,14 +80,14 @@ class StreakEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentStreak,
-        longestStreak,
-        totalDaysActive,
-        lastActivityDate,
-        freezeCount,
-        isActiveToday,
-        streakAtRisk,
-      ];
+    currentStreak,
+    longestStreak,
+    totalDaysActive,
+    lastActivityDate,
+    freezeCount,
+    isActiveToday,
+    streakAtRisk,
+  ];
 }
 
 /// Streak Update Response
@@ -111,11 +111,11 @@ class StreakUpdateResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentStreak,
-        longestStreak,
-        totalDaysActive,
-        freezeCount,
-        streakIncreased,
-        streakSaved,
-      ];
+    currentStreak,
+    longestStreak,
+    totalDaysActive,
+    freezeCount,
+    streakIncreased,
+    streakSaved,
+  ];
 }

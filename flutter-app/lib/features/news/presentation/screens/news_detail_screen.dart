@@ -51,8 +51,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   }
 
   void _onWordTap(String word) {
-    final cleanWord =
-        word.replaceAll(RegExp(r'[^\w\s]'), '').toLowerCase().trim();
+    final cleanWord = word
+        .replaceAll(RegExp(r'[^\w\s]'), '')
+        .toLowerCase()
+        .trim();
     if (cleanWord.isEmpty) return;
 
     showModalBottomSheet(
@@ -77,8 +79,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               SliverAppBar(
                 expandedHeight: 240,
                 pinned: true,
-                backgroundColor:
-                    isDark ? AppColors.backgroundDark : Colors.white,
+                backgroundColor: isDark
+                    ? AppColors.backgroundDark
+                    : Colors.white,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -122,7 +125,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 5),
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: cefrColor,
                                 borderRadius: BorderRadius.circular(8),
@@ -137,8 +142,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.schedule_rounded,
-                                size: 14, color: Colors.white70),
+                            const Icon(
+                              Icons.schedule_rounded,
+                              size: 14,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${widget.article.readingTimeMin} min read',
@@ -173,13 +181,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       // Title
                       Text(
                         widget.article.title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              height: 1.3,
-                            ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1.3,
+                        ),
                       ),
 
                       // Author and date
@@ -201,11 +206,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               ),
                             if (widget.article.author.isNotEmpty &&
                                 widget.article.publishedAt.isNotEmpty)
-                              Text(' · ',
-                                  style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white38
-                                          : AppColors.textGrey)),
+                              Text(
+                                ' · ',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white38
+                                      : AppColors.textGrey,
+                                ),
+                              ),
                             if (widget.article.publishedAt.isNotEmpty)
                               Text(
                                 _formatDate(widget.article.publishedAt),
@@ -230,15 +238,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             color: cefrColor.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: cefrColor.withValues(alpha: 0.15)),
+                              color: cefrColor.withValues(alpha: 0.15),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.lightbulb_outline_rounded,
-                                      size: 16, color: cefrColor),
+                                  Icon(
+                                    Icons.lightbulb_outline_rounded,
+                                    size: 16,
+                                    color: cefrColor,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Vocabulary to learn',
@@ -254,21 +266,24 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 6,
-                                children: widget.article.highlightedWords
-                                    .map((word) {
+                                children: widget.article.highlightedWords.map((
+                                  word,
+                                ) {
                                   return GestureDetector(
                                     onTap: () => _onWordTap(word),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 5),
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black
-                                                .withValues(alpha: 0.04),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.04,
+                                            ),
                                             blurRadius: 4,
                                           ),
                                         ],
@@ -293,10 +308,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
 
                       // Article body
                       _buildArticleBody(
-                          widget.article.content.isNotEmpty
-                              ? widget.article.content
-                              : widget.article.description,
-                          isDark),
+                        widget.article.content.isNotEmpty
+                            ? widget.article.content
+                            : widget.article.description,
+                        isDark,
+                      ),
                     ],
                   ),
                 ),
@@ -341,8 +357,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
 
   Widget _buildArticleBody(String text, bool isDark) {
     if (text.isEmpty) {
-      return Text('No content available.',
-          style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey));
+      return Text(
+        'No content available.',
+        style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey),
+      );
     }
 
     final highlightSet = widget.article.highlightedWords
@@ -365,7 +383,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               style: TextStyle(
                 fontSize: 16,
                 height: 1.7,
-                color: isDark ? Colors.white.withValues(alpha: 0.85) : AppColors.textDark,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : AppColors.textDark,
               ),
               children: words.map((word) {
                 final cleanWord = word
@@ -379,17 +399,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     child: Container(
                       padding: isHighlighted
                           ? const EdgeInsets.symmetric(
-                              horizontal: 2, vertical: 1)
+                              horizontal: 2,
+                              vertical: 1,
+                            )
                           : EdgeInsets.zero,
                       decoration: isHighlighted
                           ? BoxDecoration(
-                              color: _cefrColor(widget.article.cefrLevel)
-                                  .withValues(alpha: 0.12),
+                              color: _cefrColor(
+                                widget.article.cefrLevel,
+                              ).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4),
                               border: Border(
                                 bottom: BorderSide(
-                                  color:
-                                      _cefrColor(widget.article.cefrLevel),
+                                  color: _cefrColor(widget.article.cefrLevel),
                                   width: 2,
                                 ),
                               ),
@@ -436,11 +458,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       },
       child: FilledButton.icon(
         onPressed: () {
-          Navigator.pushNamed(
-            context,
-            '/news/quiz',
-            arguments: widget.article,
-          );
+          Navigator.pushNamed(context, '/news/quiz', arguments: widget.article);
         },
         icon: const Icon(Icons.quiz_rounded, size: 20),
         label: const Text('Take Comprehension Quiz'),
@@ -451,10 +469,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
       ),
     );
@@ -492,9 +507,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           Text(
             word,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: cefrColor,
-                ),
+              fontWeight: FontWeight.w800,
+              color: cefrColor,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -551,13 +566,20 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
 
   Color _cefrColor(String level) {
     switch (level) {
-      case 'A1': return const Color(0xFF4CAF50);
-      case 'A2': return const Color(0xFF8BC34A);
-      case 'B1': return const Color(0xFFFFC107);
-      case 'B2': return const Color(0xFFFF9800);
-      case 'C1': return const Color(0xFFFF5722);
-      case 'C2': return const Color(0xFF9C27B0);
-      default: return AppColors.primary;
+      case 'A1':
+        return const Color(0xFF4CAF50);
+      case 'A2':
+        return const Color(0xFF8BC34A);
+      case 'B1':
+        return const Color(0xFFFFC107);
+      case 'B2':
+        return const Color(0xFFFF9800);
+      case 'C1':
+        return const Color(0xFFFF5722);
+      case 'C2':
+        return const Color(0xFF9C27B0);
+      default:
+        return AppColors.primary;
     }
   }
 

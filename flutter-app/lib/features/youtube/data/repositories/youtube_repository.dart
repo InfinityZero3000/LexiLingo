@@ -15,8 +15,8 @@ class YouTubeRepository {
   final LocalCacheService _cache;
 
   YouTubeRepository({http.Client? client, LocalCacheService? cache})
-      : _client = client ?? http.Client(),
-        _cache = cache ?? LocalCacheService.instance;
+    : _client = client ?? http.Client(),
+      _cache = cache ?? LocalCacheService.instance;
 
   String get _baseUrl => '${ApiConfig.baseUrl}/youtube';
 
@@ -31,9 +31,7 @@ class YouTubeRepository {
       type: 'youtube',
       fetchFn: () async {
         final uri = Uri.parse('$_baseUrl/channels').replace(
-          queryParameters: {
-            if (category != null) 'category': category,
-          },
+          queryParameters: {if (category != null) 'category': category},
         );
         final response = await _client.get(uri);
         _checkResponse(response);
@@ -70,9 +68,9 @@ class YouTubeRepository {
       key: cacheKey,
       type: 'youtube',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/search').replace(
-          queryParameters: params,
-        );
+        final uri = Uri.parse(
+          '$_baseUrl/search',
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -99,9 +97,9 @@ class YouTubeRepository {
       key: cacheKey,
       type: 'youtube',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/captions/$videoId').replace(
-          queryParameters: {'lang': lang},
-        );
+        final uri = Uri.parse(
+          '$_baseUrl/captions/$videoId',
+        ).replace(queryParameters: {'lang': lang});
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -127,16 +125,16 @@ class YouTubeRepository {
       'max_results': maxResults.toString(),
       if (pageToken != null) 'page_token': pageToken,
     };
-    final cacheKey = 'youtube:channel_videos:$channelId:${params.values.join(':')}';
+    final cacheKey =
+        'youtube:channel_videos:$channelId:${params.values.join(':')}';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'youtube',
       fetchFn: () async {
-        final uri =
-            Uri.parse('$_baseUrl/channels/$channelId/videos').replace(
-          queryParameters: params,
-        );
+        final uri = Uri.parse(
+          '$_baseUrl/channels/$channelId/videos',
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;

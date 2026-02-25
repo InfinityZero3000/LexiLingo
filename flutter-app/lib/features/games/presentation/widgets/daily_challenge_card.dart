@@ -69,8 +69,11 @@ class DailyChallengeCard extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: completed
-                  ? const Icon(Icons.check_circle_rounded,
-                      color: AppColors.greenSuccess, size: 28)
+                  ? const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.greenSuccess,
+                      size: 28,
+                    )
                   : Icon(icon, color: Colors.white, size: 26),
             ),
             const SizedBox(width: 14),
@@ -146,8 +149,11 @@ class DailyChallengeCard extends StatelessWidget {
                 ),
               )
             else
-              const Icon(Icons.check_circle_rounded,
-                  color: AppColors.greenSuccess, size: 24),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.greenSuccess,
+                size: 24,
+              ),
           ],
         ),
       ),

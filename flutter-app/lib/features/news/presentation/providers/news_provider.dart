@@ -9,7 +9,7 @@ class NewsProvider extends ChangeNotifier {
   final NewsRepository _repository;
 
   NewsProvider({NewsRepository? repository})
-      : _repository = repository ?? NewsRepository();
+    : _repository = repository ?? NewsRepository();
 
   // ── State ──
   List<NewsArticle> _articles = [];
@@ -23,7 +23,7 @@ class NewsProvider extends ChangeNotifier {
   int _currentPage = 1;
 
   // Quiz state
-  Map<int, int> _answers = {};    // questionId → selectedIndex
+  Map<int, int> _answers = {}; // questionId → selectedIndex
   bool _quizSubmitted = false;
 
   // ── Getters ──

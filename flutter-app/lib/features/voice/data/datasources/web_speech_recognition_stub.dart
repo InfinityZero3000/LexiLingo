@@ -13,7 +13,9 @@ class WebSpeechRecognition {
   }
 
   Stream<WebSpeechResult> startListening({String language = 'en-US'}) {
-    throw UnsupportedError('Web Speech Recognition is only available on web platform');
+    throw UnsupportedError(
+      'Web Speech Recognition is only available on web platform',
+    );
   }
 
   void stopListening() {}

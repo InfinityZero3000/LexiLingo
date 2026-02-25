@@ -95,10 +95,7 @@ class LevelBadge extends StatelessWidget {
 class LevelProgressCard extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const LevelProgressCard({
-    super.key,
-    this.onTap,
-  });
+  const LevelProgressCard({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +130,9 @@ class LevelProgressCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _getTierColor(status.currentTier).withValues(alpha: 0.1),
+                            color: _getTierColor(
+                              status.currentTier,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -148,16 +147,16 @@ class LevelProgressCard extends StatelessWidget {
                           children: [
                             Text(
                               status.currentTier.code,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Text(
                               status.currentTier.name,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: _getTierColor(status.currentTier),
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _getTierColor(status.currentTier),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ],
                         ),
@@ -168,16 +167,16 @@ class LevelProgressCard extends StatelessWidget {
                       children: [
                         Text(
                           LevelCalculator.formatXP(status.totalXP),
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
                         ),
                         Text(
                           'Total XP',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textGrey),
                         ),
                       ],
                     ),
@@ -192,19 +191,17 @@ class LevelProgressCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          status.nextTier != null 
+                          status.nextTier != null
                               ? 'Progress to ${status.nextTier!.code}'
                               : 'Max Level Reached!',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textGrey),
                         ),
                         if (status.nextTier != null)
                           Text(
                             '${status.xpInCurrentLevel}/${status.xpToNextLevel + status.xpInCurrentLevel} XP',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                       ],
                     ),
@@ -257,10 +254,7 @@ class LevelProgressCard extends StatelessWidget {
 class LevelDetailsSheet extends StatelessWidget {
   final LevelStatus status;
 
-  const LevelDetailsSheet({
-    super.key,
-    required this.status,
-  });
+  const LevelDetailsSheet({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -299,9 +293,9 @@ class LevelDetailsSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             status.currentTier.code,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           Text(
             status.currentTier.name,
@@ -322,9 +316,17 @@ class LevelDetailsSheet extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem(context, LevelCalculator.formatXP(status.totalXP), 'Total XP'),
+                _buildStatItem(
+                  context,
+                  LevelCalculator.formatXP(status.totalXP),
+                  'Total XP',
+                ),
                 Container(width: 1, height: 40, color: Colors.grey.shade200),
-                _buildStatItem(context, '${status.xpInCurrentLevel}', 'Current Level'),
+                _buildStatItem(
+                  context,
+                  '${status.xpInCurrentLevel}',
+                  'Current Level',
+                ),
                 Container(width: 1, height: 40, color: Colors.grey.shade200),
                 _buildStatItem(context, '${status.xpToNextLevel}', 'To Next'),
               ],
@@ -334,12 +336,18 @@ class LevelDetailsSheet extends StatelessWidget {
           // All tiers
           Text(
             'Level Tiers',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          ...LevelTiers.allTiers.map((tier) => _buildTierRow(context, tier, tier.code == status.currentTier.code)),
+          ...LevelTiers.allTiers.map(
+            (tier) => _buildTierRow(
+              context,
+              tier,
+              tier.code == status.currentTier.code,
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -372,17 +380,19 @@ class LevelDetailsSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isCurrent 
-            ? _getTierColor(tier).withValues(alpha: 0.1) 
+        color: isCurrent
+            ? _getTierColor(tier).withValues(alpha: 0.1)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: isCurrent 
-            ? Border.all(color: _getTierColor(tier)) 
-            : null,
+        border: isCurrent ? Border.all(color: _getTierColor(tier)) : null,
       ),
       child: Row(
         children: [
-          Icon(_getTierIcon(tier.iconIdentifier), size: 20, color: _getTierColor(tier)),
+          Icon(
+            _getTierIcon(tier.iconIdentifier),
+            size: 20,
+            color: _getTierColor(tier),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

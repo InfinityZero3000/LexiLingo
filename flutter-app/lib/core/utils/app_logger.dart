@@ -1,12 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Logging levels for the application
-enum LogLevel {
-  debug,
-  info,
-  warn,
-  error,
-}
+enum LogLevel { debug, info, warn, error }
 
 /// App-wide logger utility
 /// Replaces print statements with structured logging
@@ -34,7 +29,12 @@ class AppLogger {
   }
 
   /// Log error message with optional exception
-  static void error(String tag, String message, [Object? error, StackTrace? stackTrace]) {
+  static void error(
+    String tag,
+    String message, [
+    Object? error,
+    StackTrace? stackTrace,
+  ]) {
     _log(LogLevel.error, tag, message);
     if (error != null && kDebugMode) {
       debugPrint('  Exception: $error');
@@ -50,7 +50,7 @@ class AppLogger {
 
     final prefix = _getPrefix(level);
     final timestamp = DateTime.now().toIso8601String().substring(11, 23);
-    
+
     // Use debugPrint which handles long messages better than print
     debugPrint('$prefix [$timestamp] [$tag] $message');
   }
@@ -111,15 +111,32 @@ void logWarn(String tagOrMessage, [String? message]) {
   }
 }
 
-void logError(String tagOrMessage, [String? messageOrError, Object? error, StackTrace? stackTrace]) {
-  if (messageOrError is String && messageOrError.isNotEmpty && !messageOrError.startsWith('[')) {
+void logError(
+  String tagOrMessage, [
+  String? messageOrError,
+  Object? error,
+  StackTrace? stackTrace,
+]) {
+  if (messageOrError is String &&
+      messageOrError.isNotEmpty &&
+      !messageOrError.startsWith('[')) {
     AppLogger.error(tagOrMessage, messageOrError, error, stackTrace);
   } else {
     final match = RegExp(r'^\[([^\]]+)\]\s*(.*)$').firstMatch(tagOrMessage);
     if (match != null) {
-      AppLogger.error(match.group(1)!, match.group(2) ?? '', messageOrError, error as StackTrace?);
+      AppLogger.error(
+        match.group(1)!,
+        match.group(2) ?? '',
+        messageOrError,
+        error as StackTrace?,
+      );
     } else {
-      AppLogger.error('App', tagOrMessage, messageOrError, error as StackTrace?);
+      AppLogger.error(
+        'App',
+        tagOrMessage,
+        messageOrError,
+        error as StackTrace?,
+      );
     }
   }
 }

@@ -4,7 +4,7 @@ import '../../utils/app_logger.dart';
 
 /// Pronunciation analysis service
 /// Implementation should use HuBERT-large for phoneme recognition
-/// 
+///
 /// Architecture specs:
 /// - Model: hubert-large-ls960
 /// - Size: 960MB
@@ -16,11 +16,11 @@ abstract class PronunciationService {
   Future<void> initialize();
 
   /// Analyze pronunciation from audio
-  /// 
+  ///
   /// [audioBytes] - Raw audio data
   /// [transcribedText] - The text that was spoken (from STT)
   /// [expectedText] - The expected/correct text (optional, for comparison)
-  /// 
+  ///
   /// Returns [PronunciationResult] with accuracy, errors, and prosody
   Future<PronunciationResult> analyze({
     required Uint8List audioBytes,
@@ -101,32 +101,32 @@ class MockPronunciationService implements PronunciationService {
 
     // Mock analysis: detect some common pronunciation errors
     final errors = <PhonemeError>[];
-    
+
     // Example: if text contains "think", simulate a common error
     if (transcribedText.toLowerCase().contains('think')) {
-      errors.add(const PhonemeError(
-        phoneme: '/θ/',
-        pronouncedAs: '/s/',
-        word: 'think',
-      ));
+      errors.add(
+        const PhonemeError(phoneme: '/θ/', pronouncedAs: '/s/', word: 'think'),
+      );
     }
-    
+
     // Example: if text contains "the"
     if (transcribedText.toLowerCase().contains('the')) {
-      errors.add(const PhonemeError(
-        phoneme: '/ð/',
-        pronouncedAs: '/d/',
-        word: 'the',
-      ));
+      errors.add(
+        const PhonemeError(phoneme: '/ð/', pronouncedAs: '/d/', word: 'the'),
+      );
     }
 
     // Calculate accuracy (mock: 0.75 to 0.95)
-    final accuracy = errors.isEmpty ? 0.90 : 0.75 + (0.05 * (3 - errors.length.clamp(0, 3)));
-    
+    final accuracy = errors.isEmpty
+        ? 0.90
+        : 0.75 + (0.05 * (3 - errors.length.clamp(0, 3)));
+
     // Mock prosody score
     final prosodyScore = 0.78;
 
-    logDebug('[MockPronunciation] Analyzed: accuracy=$accuracy, errors=${errors.length}, prosody=$prosodyScore');
+    logDebug(
+      '[MockPronunciation] Analyzed: accuracy=$accuracy, errors=${errors.length}, prosody=$prosodyScore',
+    );
 
     return PronunciationResult(
       accuracy: accuracy,
@@ -163,18 +163,18 @@ class MockPronunciationService implements PronunciationService {
 
   @override
   PronunciationModelInfo get modelInfo => const PronunciationModelInfo(
-        name: 'HuBERT-large-ls960 (Mock)',
-        sizeInMB: 960,
-        supportedPhonemes: [
-          '/p/', '/b/', '/t/', '/d/', '/k/', '/g/',
-          '/f/', '/v/', '/θ/', '/ð/', '/s/', '/z/',
-          '/ʃ/', '/ʒ/', '/h/', '/m/', '/n/', '/ŋ/',
-          '/l/', '/r/', '/w/', '/j/',
-          // vowels
-          '/i/', '/ɪ/', '/e/', '/ɛ/', '/æ/', '/ɑ/',
-          '/ɔ/', '/o/', '/ʊ/', '/u/', '/ʌ/', '/ə/',
-        ],
-      );
+    name: 'HuBERT-large-ls960 (Mock)',
+    sizeInMB: 960,
+    supportedPhonemes: [
+      '/p/', '/b/', '/t/', '/d/', '/k/', '/g/',
+      '/f/', '/v/', '/θ/', '/ð/', '/s/', '/z/',
+      '/ʃ/', '/ʒ/', '/h/', '/m/', '/n/', '/ŋ/',
+      '/l/', '/r/', '/w/', '/j/',
+      // vowels
+      '/i/', '/ɪ/', '/e/', '/ɛ/', '/æ/', '/ɑ/',
+      '/ɔ/', '/o/', '/ʊ/', '/u/', '/ʌ/', '/ə/',
+    ],
+  );
 
   @override
   Future<void> dispose() async {

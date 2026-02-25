@@ -4,7 +4,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 /// Animated Notification Badge with bounce effect
 /// Shows a pulsing badge when there are unread notifications
 /// Bounces when new notifications arrive
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - Visual feedback for engagement and user awareness
 class AnimatedNotificationBadge extends StatefulWidget {
@@ -22,7 +22,8 @@ class AnimatedNotificationBadge extends StatefulWidget {
   });
 
   @override
-  State<AnimatedNotificationBadge> createState() => _AnimatedNotificationBadgeState();
+  State<AnimatedNotificationBadge> createState() =>
+      _AnimatedNotificationBadgeState();
 }
 
 class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
@@ -41,18 +42,24 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
     );
     _bounceAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.3)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.3,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 40,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.3, end: 0.9)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 1.3,
+          end: 0.9,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.9, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween<double>(
+          begin: 0.9,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 30,
       ),
     ]).animate(_bounceController);
@@ -122,8 +129,12 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                         widget.badgeColor,
                       ],
                     ),
-                    shape: widget.count > 9 ? BoxShape.rectangle : BoxShape.circle,
-                    borderRadius: widget.count > 9 ? BorderRadius.circular(9) : null,
+                    shape: widget.count > 9
+                        ? BoxShape.rectangle
+                        : BoxShape.circle,
+                    borderRadius: widget.count > 9
+                        ? BorderRadius.circular(9)
+                        : null,
                     boxShadow: [
                       BoxShadow(
                         color: widget.badgeColor.withValues(alpha: 0.5),
@@ -288,10 +299,7 @@ class _AnimatedActionButtonState extends State<AnimatedActionButton> {
                 if (_showRipple)
                   RippleEffect(
                     rippleColor: widget.color,
-                    child: SizedBox(
-                      width: widget.size,
-                      height: widget.size,
-                    ),
+                    child: SizedBox(width: widget.size, height: widget.size),
                   ),
                 Container(
                   width: widget.size,

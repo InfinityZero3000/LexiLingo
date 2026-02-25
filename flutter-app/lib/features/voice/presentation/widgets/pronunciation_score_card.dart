@@ -42,25 +42,22 @@ class PronunciationScoreCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Overall Score
-          _OverallScoreCircle(
-            score: score.overallScore,
-            grade: score.grade,
-          ),
+          _OverallScoreCircle(score: score.overallScore, grade: score.grade),
           const SizedBox(height: 16),
-          
+
           // Feedback
           if (score.feedback != null) ...[
             Text(
               score.feedback!,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _getScoreColor(score.overallScore),
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: _getScoreColor(score.overallScore),
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 20),
           ],
-          
+
           // Detail Scores
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -82,7 +79,7 @@ class PronunciationScoreCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Word breakdown
           if (score.wordScores.isNotEmpty) ...[
             const SizedBox(height: 20),
@@ -90,19 +87,21 @@ class PronunciationScoreCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Word Breakdown',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: score.wordScores.map((ws) => _WordChip(wordScore: ws)).toList(),
+              children: score.wordScores
+                  .map((ws) => _WordChip(wordScore: ws))
+                  .toList(),
             ),
           ],
-          
+
           // Action buttons
           const SizedBox(height: 24),
           Row(
@@ -179,16 +178,16 @@ class _OverallScoreCircle extends StatelessWidget {
             Text(
               '$score',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: _getColor(),
-                  ),
+                fontWeight: FontWeight.bold,
+                color: _getColor(),
+              ),
             ),
             Text(
               grade,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _getColor(),
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: _getColor(),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -225,15 +224,15 @@ class _ScoreItem extends StatelessWidget {
         Text(
           '$score%',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: _getColor(),
-              ),
+            fontWeight: FontWeight.bold,
+            color: _getColor(),
+          ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textGrey,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
         ),
       ],
     );
@@ -278,9 +277,9 @@ class _WordChip extends StatelessWidget {
             Text(
               wordScore.word,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _getTextColor(),
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: _getTextColor(),
+                fontWeight: FontWeight.w500,
+              ),
             ),
             if (wordScore.hasIssue) ...[
               const SizedBox(width: 4),

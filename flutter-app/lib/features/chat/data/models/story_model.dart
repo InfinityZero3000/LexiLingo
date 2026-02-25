@@ -63,11 +63,16 @@ class VocabularyItem {
   factory VocabularyItem.fromJson(Map<String, dynamic> json) {
     return VocabularyItem(
       term: json['term'] as String? ?? json['word'] as String? ?? '',
-      definition: json['definition'] as String? ?? json['meaning'] as String? ?? '',
-      exampleInStory: json['example_in_story'] as String? ?? 
-                      json['exampleInStory'] as String? ?? '',
-      partOfSpeech: json['part_of_speech'] as String? ?? 
-                    json['partOfSpeech'] as String? ?? '',
+      definition:
+          json['definition'] as String? ?? json['meaning'] as String? ?? '',
+      exampleInStory:
+          json['example_in_story'] as String? ??
+          json['exampleInStory'] as String? ??
+          '',
+      partOfSpeech:
+          json['part_of_speech'] as String? ??
+          json['partOfSpeech'] as String? ??
+          '',
       phonetic: json['phonetic'] as String?,
     );
   }
@@ -97,15 +102,21 @@ class GrammarPoint {
 
   factory GrammarPoint.fromJson(Map<String, dynamic> json) {
     return GrammarPoint(
-      grammarStructure: json['grammar_structure'] as String? ?? 
-                        json['grammarStructure'] as String? ?? 
-                        json['pattern'] as String? ?? '',
+      grammarStructure:
+          json['grammar_structure'] as String? ??
+          json['grammarStructure'] as String? ??
+          json['pattern'] as String? ??
+          '',
       explanation: json['explanation'] as String? ?? '',
-      usageInStory: json['usage_in_story'] as String? ?? 
-                    json['usageInStory'] as String? ?? '',
-      examples: (json['examples'] as List<dynamic>?)
+      usageInStory:
+          json['usage_in_story'] as String? ??
+          json['usageInStory'] as String? ??
+          '',
+      examples:
+          (json['examples'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? [],
+              .toList() ??
+          [],
     );
   }
 
@@ -138,9 +149,11 @@ class RolePersona {
       name: json['name'] as String? ?? '',
       role: json['role'] as String? ?? json['description'] as String? ?? '',
       personality: json['personality'] as String? ?? '',
-      speakingStyle: json['speaking_style'] as String? ?? 
-                     json['speakingStyle'] as String? ?? 
-                     json['language_style'] as String? ?? '',
+      speakingStyle:
+          json['speaking_style'] as String? ??
+          json['speakingStyle'] as String? ??
+          json['language_style'] as String? ??
+          '',
       background: json['background'] as String? ?? '',
     );
   }
@@ -169,10 +182,13 @@ class ContextDescription {
   factory ContextDescription.fromJson(Map<String, dynamic> json) {
     return ContextDescription(
       setting: json['setting'] as String? ?? '',
-      scenario: json['scenario'] as String? ?? json['situation'] as String? ?? '',
-      objectives: (json['objectives'] as List<dynamic>?)
+      scenario:
+          json['scenario'] as String? ?? json['situation'] as String? ?? '',
+      objectives:
+          (json['objectives'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? [],
+              .toList() ??
+          [],
     );
   }
 
@@ -197,21 +213,27 @@ class ConversationFlow {
 
   factory ConversationFlow.fromJson(Map<String, dynamic> json) {
     return ConversationFlow(
-      openingPrompt: json['opening_prompt'] as String? ?? 
-                     json['openingPrompt'] as String? ?? 
-                     json['suggested_opening'] as String? ?? '',
-      keyMilestones: (json['key_milestones'] as List<dynamic>?)
+      openingPrompt:
+          json['opening_prompt'] as String? ??
+          json['openingPrompt'] as String? ??
+          json['suggested_opening'] as String? ??
+          '',
+      keyMilestones:
+          (json['key_milestones'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? 
-              (json['keyMilestones'] as List<dynamic>?)
+              .toList() ??
+          (json['keyMilestones'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? [],
-      closingScenarios: (json['closing_scenarios'] as List<dynamic>?)
+              .toList() ??
+          [],
+      closingScenarios:
+          (json['closing_scenarios'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? 
-              (json['closingScenarios'] as List<dynamic>?)
+              .toList() ??
+          (json['closingScenarios'] as List<dynamic>?)
               ?.map((e) => e.toString())
-              .toList() ?? [],
+              .toList() ??
+          [],
     );
   }
 
@@ -261,52 +283,74 @@ class Story {
   factory Story.fromJson(Map<String, dynamic> json) {
     return Story(
       storyId: json['story_id'] as String? ?? json['id'] as String? ?? '',
-      title: json['title'] is Map 
+      title: json['title'] is Map
           ? LocalizedTitle.fromJson(json['title'] as Map<String, dynamic>)
           : LocalizedTitle(vi: '', en: json['title']?.toString() ?? ''),
       category: json['category'] as String? ?? '',
       difficultyLevel: DifficultyLevel.fromString(
-          json['difficulty_level'] as String? ?? json['difficulty'] as String?),
-      estimatedMinutes: json['estimated_minutes'] as int? ?? 
-                        json['estimatedMinutes'] as int? ?? 15,
-      coverImageUrl: json['cover_image_url'] as String? ?? 
-                     json['coverImageUrl'] as String?,
+        json['difficulty_level'] as String? ?? json['difficulty'] as String?,
+      ),
+      estimatedMinutes:
+          json['estimated_minutes'] as int? ??
+          json['estimatedMinutes'] as int? ??
+          15,
+      coverImageUrl:
+          json['cover_image_url'] as String? ??
+          json['coverImageUrl'] as String?,
       contextDescription: json['context_description'] != null
-          ? ContextDescription.fromJson(json['context_description'] as Map<String, dynamic>)
+          ? ContextDescription.fromJson(
+              json['context_description'] as Map<String, dynamic>,
+            )
           : json['contextDescription'] != null
-              ? ContextDescription.fromJson(json['contextDescription'] as Map<String, dynamic>)
-              : const ContextDescription(setting: '', scenario: ''),
+          ? ContextDescription.fromJson(
+              json['contextDescription'] as Map<String, dynamic>,
+            )
+          : const ContextDescription(setting: '', scenario: ''),
       rolePersona: json['role_persona'] != null
           ? RolePersona.fromJson(json['role_persona'] as Map<String, dynamic>)
           : json['rolePersona'] != null
-              ? RolePersona.fromJson(json['rolePersona'] as Map<String, dynamic>)
-              : const RolePersona(name: '', role: '', personality: '', speakingStyle: '', background: ''),
-      vocabularyList: (json['vocabulary_list'] as List<dynamic>?)
+          ? RolePersona.fromJson(json['rolePersona'] as Map<String, dynamic>)
+          : const RolePersona(
+              name: '',
+              role: '',
+              personality: '',
+              speakingStyle: '',
+              background: '',
+            ),
+      vocabularyList:
+          (json['vocabulary_list'] as List<dynamic>?)
               ?.map((e) => VocabularyItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           (json['vocabularyList'] as List<dynamic>?)
               ?.map((e) => VocabularyItem.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
-      grammarPoints: (json['grammar_points'] as List<dynamic>?)
+              .toList() ??
+          [],
+      grammarPoints:
+          (json['grammar_points'] as List<dynamic>?)
               ?.map((e) => GrammarPoint.fromJson(e as Map<String, dynamic>))
               .toList() ??
           (json['grammarPoints'] as List<dynamic>?)
               ?.map((e) => GrammarPoint.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
+              .toList() ??
+          [],
       conversationFlow: json['conversation_flow'] != null
-          ? ConversationFlow.fromJson(json['conversation_flow'] as Map<String, dynamic>)
+          ? ConversationFlow.fromJson(
+              json['conversation_flow'] as Map<String, dynamic>,
+            )
           : json['conversationFlow'] != null
-              ? ConversationFlow.fromJson(json['conversationFlow'] as Map<String, dynamic>)
-              : const ConversationFlow(openingPrompt: ''),
-      isPublished: json['is_published'] as bool? ?? 
-                   json['isPublished'] as bool? ?? true,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ?? [],
-      createdAt: json['created_at'] != null 
+          ? ConversationFlow.fromJson(
+              json['conversationFlow'] as Map<String, dynamic>,
+            )
+          : const ConversationFlow(openingPrompt: ''),
+      isPublished:
+          json['is_published'] as bool? ?? json['isPublished'] as bool? ?? true,
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          [],
+      createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
-      updatedAt: json['updated_at'] != null 
+      updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString())
           : null,
     );
@@ -352,19 +396,23 @@ class StoryListItem {
   factory StoryListItem.fromJson(Map<String, dynamic> json) {
     return StoryListItem(
       storyId: json['story_id'] as String? ?? json['id'] as String? ?? '',
-      title: json['title'] is Map 
+      title: json['title'] is Map
           ? LocalizedTitle.fromJson(json['title'] as Map<String, dynamic>)
           : LocalizedTitle(vi: '', en: json['title']?.toString() ?? ''),
       category: json['category'] as String? ?? '',
       difficultyLevel: DifficultyLevel.fromString(
-          json['difficulty_level'] as String? ?? json['difficulty'] as String?),
-      estimatedMinutes: json['estimated_minutes'] as int? ?? 
-                        json['estimatedMinutes'] as int? ?? 15,
-      coverImageUrl: json['cover_image_url'] as String? ?? 
-                     json['coverImageUrl'] as String?,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ?? [],
+        json['difficulty_level'] as String? ?? json['difficulty'] as String?,
+      ),
+      estimatedMinutes:
+          json['estimated_minutes'] as int? ??
+          json['estimatedMinutes'] as int? ??
+          15,
+      coverImageUrl:
+          json['cover_image_url'] as String? ??
+          json['coverImageUrl'] as String?,
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          [],
     );
   }
 

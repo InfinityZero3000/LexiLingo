@@ -9,7 +9,8 @@ import 'package:lexilingo_app/features/user/domain/repositories/daily_goal_repos
 class GetTodayGoalUseCase implements UseCase<DailyGoal?, GetTodayGoalParams> {
   final DailyGoalRepository _repository;
 
-  GetTodayGoalUseCase({required DailyGoalRepository repository}) : _repository = repository;
+  GetTodayGoalUseCase({required DailyGoalRepository repository})
+    : _repository = repository;
 
   @override
   Future<Either<Failure, DailyGoal?>> call(GetTodayGoalParams params) async {

@@ -46,14 +46,20 @@ class StreakIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 16),
+          const Icon(
+            Icons.local_fire_department_rounded,
+            color: Colors.orange,
+            size: 16,
+          ),
           const SizedBox(width: 3),
           Text(
             '$streakDays',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: streakDays > 0 ? Colors.orange.shade800 : AppColors.textGrey,
+              color: streakDays > 0
+                  ? Colors.orange.shade800
+                  : AppColors.textGrey,
             ),
           ),
         ],
@@ -63,7 +69,9 @@ class StreakIndicator extends StatelessWidget {
 
   Widget _buildFull() {
     final color = streakDays > 0 ? Colors.orange.shade800 : AppColors.textGrey;
-    final bgColor = streakDays > 0 ? const Color(0xFFFFF3E0) : AppColors.grey200;
+    final bgColor = streakDays > 0
+        ? const Color(0xFFFFF3E0)
+        : AppColors.grey200;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

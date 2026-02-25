@@ -89,10 +89,7 @@ class _XPProgressBarState extends State<XPProgressBar>
               const SizedBox(height: 2),
               Text(
                 '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textGrey,
-                ),
+                style: const TextStyle(fontSize: 10, color: AppColors.textGrey),
               ),
             ],
           ),

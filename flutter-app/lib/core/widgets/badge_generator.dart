@@ -1,5 +1,5 @@
 /// Badge Generator - Custom painted badges for achievements
-/// 
+///
 /// Provides professional-looking, animated badges with various styles:
 /// - Shield, Circle, Star, Hexagon, Medal shapes
 /// - Gradient fills, glowing effects
@@ -23,9 +23,9 @@ enum BadgeShape {
 
 /// Badge rarity determines visual style
 enum BadgeRarity {
-  common,    // Gray/Bronze
-  rare,      // Blue/Silver
-  epic,      // Purple/Gold
+  common, // Gray/Bronze
+  rare, // Blue/Silver
+  epic, // Purple/Gold
   legendary, // Gold/Animated glow
 }
 
@@ -60,7 +60,7 @@ class BadgeConfig {
     if (primaryColor != null && secondaryColor != null) {
       return [primaryColor!, secondaryColor!];
     }
-    
+
     switch (rarity) {
       case BadgeRarity.common:
         return [const Color(0xFF9E9E9E), const Color(0xFF757575)]; // Gray
@@ -105,7 +105,7 @@ class GeneratedBadge extends StatefulWidget {
   State<GeneratedBadge> createState() => _GeneratedBadgeState();
 }
 
-class _GeneratedBadgeState extends State<GeneratedBadge> 
+class _GeneratedBadgeState extends State<GeneratedBadge>
     with SingleTickerProviderStateMixin {
   late AnimationController _shineController;
   late Animation<double> _shineAnimation;
@@ -120,7 +120,7 @@ class _GeneratedBadgeState extends State<GeneratedBadge>
     _shineAnimation = Tween<double>(begin: -0.5, end: 1.5).animate(
       CurvedAnimation(parent: _shineController, curve: Curves.easeInOut),
     );
-    
+
     if (widget.config.showShine && !widget.config.isLocked) {
       _shineController.repeat(reverse: false);
     }
@@ -145,11 +145,11 @@ class _GeneratedBadgeState extends State<GeneratedBadge>
             return CustomPaint(
               painter: BadgePainter(
                 config: widget.config,
-                shinePosition: widget.config.showShine ? _shineAnimation.value : null,
+                shinePosition: widget.config.showShine
+                    ? _shineAnimation.value
+                    : null,
               ),
-              child: Center(
-                child: _buildIcon(),
-              ),
+              child: Center(child: _buildIcon()),
             );
           },
         ),
@@ -171,11 +171,8 @@ class _GeneratedBadgeState extends State<GeneratedBadge>
         width: iconSize,
         height: iconSize,
         color: color,
-        errorBuilder: (_, __, ___) => Icon(
-          widget.config.icon,
-          size: iconSize,
-          color: color,
-        ),
+        errorBuilder: (_, __, ___) =>
+            Icon(widget.config.icon, size: iconSize, color: color),
       );
     }
 
@@ -196,8 +193,9 @@ class BadgePainter extends CustomPainter {
     final radius = size.width / 2 - 4;
 
     // Draw glow effect for epic/legendary
-    if (!config.isLocked && 
-        (config.rarity == BadgeRarity.epic || config.rarity == BadgeRarity.legendary)) {
+    if (!config.isLocked &&
+        (config.rarity == BadgeRarity.epic ||
+            config.rarity == BadgeRarity.legendary)) {
       _drawGlow(canvas, center, radius);
     }
 
@@ -239,12 +237,12 @@ class BadgePainter extends CustomPainter {
     final glowPaint = Paint()
       ..color = config.glowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    
+
     canvas.drawCircle(center, radius + 5, glowPaint);
   }
 
   void _drawCircle(Canvas canvas, Offset center, double radius) {
-    final colors = config.isLocked 
+    final colors = config.isLocked
         ? [Colors.grey.shade400, Colors.grey.shade600]
         : config.rarityGradient;
 
@@ -255,15 +253,17 @@ class BadgePainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: colors,
       ).createShader(Rect.fromCircle(center: center, radius: radius));
-    
+
     canvas.drawCircle(center, radius, fillPaint);
 
     // Border
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
-      ..color = config.isLocked ? Colors.grey : colors[1].withValues(alpha: 0.8);
-    
+      ..color = config.isLocked
+          ? Colors.grey
+          : colors[1].withValues(alpha: 0.8);
+
     canvas.drawCircle(center, radius, borderPaint);
 
     // Inner highlight
@@ -271,7 +271,7 @@ class BadgePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..color = Colors.white.withValues(alpha: 0.3);
-    
+
     canvas.drawCircle(center, radius - 8, highlightPaint);
   }
 
@@ -295,13 +295,13 @@ class BadgePainter extends CustomPainter {
     final path = Path();
     const points = 5;
     final innerRadius = radius * 0.5;
-    
+
     for (int i = 0; i < points * 2; i++) {
       final r = i.isEven ? radius : innerRadius;
       final angle = -math.pi / 2 + (i * math.pi / points);
       final x = center.dx + r * math.cos(angle);
       final y = center.dy + r * math.sin(angle);
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -316,12 +316,12 @@ class BadgePainter extends CustomPainter {
   void _drawHexagon(Canvas canvas, Offset center, double radius) {
     final path = Path();
     const sides = 6;
-    
+
     for (int i = 0; i < sides; i++) {
       final angle = -math.pi / 2 + (i * 2 * math.pi / sides);
       final x = center.dx + radius * math.cos(angle);
       final y = center.dy + radius * math.sin(angle);
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -336,8 +336,10 @@ class BadgePainter extends CustomPainter {
   void _drawMedal(Canvas canvas, Size size, Offset center, double radius) {
     // Draw ribbon
     final ribbonPaint = Paint()
-      ..color = config.isLocked ? Colors.grey.shade400 : config.rarityGradient[1];
-    
+      ..color = config.isLocked
+          ? Colors.grey.shade400
+          : config.rarityGradient[1];
+
     final ribbonPath = Path();
     ribbonPath.moveTo(size.width * 0.35, 0);
     ribbonPath.lineTo(size.width * 0.35, size.height * 0.4);
@@ -345,20 +347,24 @@ class BadgePainter extends CustomPainter {
     ribbonPath.lineTo(size.width * 0.65, size.height * 0.4);
     ribbonPath.lineTo(size.width * 0.65, 0);
     ribbonPath.close();
-    
+
     canvas.drawPath(ribbonPath, ribbonPaint);
 
     // Draw medal circle
-    _drawCircle(canvas, Offset(center.dx, center.dy + radius * 0.15), radius * 0.7);
+    _drawCircle(
+      canvas,
+      Offset(center.dx, center.dy + radius * 0.15),
+      radius * 0.7,
+    );
   }
 
   void _drawDiamond(Canvas canvas, Offset center, double radius) {
     final path = Path();
-    
-    path.moveTo(center.dx, center.dy - radius);  // Top
-    path.lineTo(center.dx + radius, center.dy);   // Right
-    path.lineTo(center.dx, center.dy + radius);   // Bottom
-    path.lineTo(center.dx - radius, center.dy);   // Left
+
+    path.moveTo(center.dx, center.dy - radius); // Top
+    path.lineTo(center.dx + radius, center.dy); // Right
+    path.lineTo(center.dx, center.dy + radius); // Bottom
+    path.lineTo(center.dx - radius, center.dy); // Left
     path.close();
 
     _drawPathWithGradient(canvas, path, Size(radius * 2, radius * 2));
@@ -399,7 +405,7 @@ class BadgePainter extends CustomPainter {
   }
 
   void _drawPathWithGradient(Canvas canvas, Path path, Size size) {
-    final colors = config.isLocked 
+    final colors = config.isLocked
         ? [Colors.grey.shade400, Colors.grey.shade600]
         : config.rarityGradient;
 
@@ -409,7 +415,7 @@ class BadgePainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: colors,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    
+
     canvas.drawPath(path, fillPaint);
 
     // Border
@@ -417,7 +423,7 @@ class BadgePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..color = config.isLocked ? Colors.grey : colors[1];
-    
+
     canvas.drawPath(path, borderPaint);
   }
 
@@ -451,7 +457,7 @@ class BadgePainter extends CustomPainter {
   @override
   bool shouldRepaint(BadgePainter oldDelegate) {
     return oldDelegate.shinePosition != shinePosition ||
-           oldDelegate.config != config;
+        oldDelegate.config != config;
   }
 }
 
@@ -680,16 +686,12 @@ class SmartAchievementBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final config = _getConfigFromCategory();
-    return GeneratedBadge(
-      config: config,
-      size: size,
-      onTap: onTap,
-    );
+    return GeneratedBadge(config: config, size: size, onTap: onTap);
   }
 
   BadgeConfig _getConfigFromCategory() {
     BadgeConfig baseConfig;
-    
+
     switch (category.toLowerCase()) {
       case 'streak':
         baseConfig = AchievementBadgeTemplates.streak(conditionValue ?? 0);

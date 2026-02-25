@@ -43,8 +43,9 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     );
     mediaItem.add(item);
 
-    final localFile =
-        episode.localPath != null ? File(episode.localPath!) : null;
+    final localFile = episode.localPath != null
+        ? File(episode.localPath!)
+        : null;
     final useLocal = localFile != null && localFile.existsSync();
 
     final AudioSource source;

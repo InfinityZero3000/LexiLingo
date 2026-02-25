@@ -12,10 +12,7 @@ class VocabProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isLoading = false;
 
-  VocabProvider({
-    required this.getWordsUseCase,
-    required this.addWordUseCase,
-  }) {
+  VocabProvider({required this.getWordsUseCase, required this.addWordUseCase}) {
     loadWords();
   }
 
@@ -26,7 +23,7 @@ class VocabProvider extends ChangeNotifier {
   Future<void> loadWords() async {
     _isLoading = true;
     notifyListeners();
-    
+
     final result = await getWordsUseCase(NoParams());
     result.fold(
       (failure) {
@@ -43,7 +40,9 @@ class VocabProvider extends ChangeNotifier {
   }
 
   Future<void> addWord(String word, String definition) async {
-    final result = await addWordUseCase(AddWordParams(word: word, definition: definition));
+    final result = await addWordUseCase(
+      AddWordParams(word: word, definition: definition),
+    );
     result.fold(
       (failure) {
         _errorMessage = _getFailureMessage(failure);

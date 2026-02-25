@@ -19,21 +19,21 @@ class UserModel extends UserEntity {
     required DateTime createdAt,
     DateTime? updatedAt,
   }) : super(
-          id: id,
-          email: email,
-          username: username,
-          displayName: displayName,
-          avatarUrl: avatarUrl,
-          provider: provider,
-          isVerified: isVerified,
-          level: level,
-          xp: xp,
-          currentStreak: currentStreak,
-          lastLogin: lastLogin,
-          lastLoginIp: lastLoginIp,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+         id: id,
+         email: email,
+         username: username,
+         displayName: displayName,
+         avatarUrl: avatarUrl,
+         provider: provider,
+         isVerified: isVerified,
+         level: level,
+         xp: xp,
+         currentStreak: currentStreak,
+         lastLogin: lastLogin,
+         lastLoginIp: lastLoginIp,
+         createdAt: createdAt,
+         updatedAt: updatedAt,
+       );
 
   /// Convert from backend API JSON response
   factory UserModel.fromJson(Map<String, dynamic> json) {

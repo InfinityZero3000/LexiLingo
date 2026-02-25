@@ -84,13 +84,13 @@ class UserProvider with ChangeNotifier {
 
       _user = results[0] as User?;
       _settings = results[1] as Settings?;
-      
+
       // Extract DailyGoal from Either result
       final goalResult = results[2];
       if (goalResult is DailyGoal?) {
         _todayGoal = goalResult;
       }
-      
+
       _currentStreak = results[3] as int;
 
       _isLoading = false;
@@ -107,7 +107,9 @@ class UserProvider with ChangeNotifier {
     if (_currentUserId == null) return;
 
     try {
-      final result = await getTodayGoalUseCase(GetTodayGoalParams(userId: _currentUserId!));
+      final result = await getTodayGoalUseCase(
+        GetTodayGoalParams(userId: _currentUserId!),
+      );
       result.fold(
         (failure) => _errorMessage = failure.message,
         (goal) => _todayGoal = goal,

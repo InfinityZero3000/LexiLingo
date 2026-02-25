@@ -9,13 +9,9 @@ class Result<T> {
   final T? _data;
   final Failure? _failure;
 
-  const Result.success(T data)
-      : _data = data,
-        _failure = null;
+  const Result.success(T data) : _data = data, _failure = null;
 
-  const Result.failure(Failure failure)
-      : _data = null,
-        _failure = failure;
+  const Result.failure(Failure failure) : _data = null, _failure = failure;
 
   bool get isSuccess => _failure == null;
   bool get isFailure => _failure != null;
@@ -26,7 +22,8 @@ class Result<T> {
   }
 
   Failure get failure {
-    if (_failure == null) throw Exception("Cannot get failure from a success result");
+    if (_failure == null)
+      throw Exception("Cannot get failure from a success result");
     return _failure;
   }
 

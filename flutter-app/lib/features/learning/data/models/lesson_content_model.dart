@@ -38,7 +38,8 @@ class LessonContentModel {
       passThreshold: json['pass_threshold'] as int? ?? 80,
       estimatedMinutes: json['estimated_minutes'] as int? ?? 10,
       totalExercises: json['total_exercises'] as int? ?? 0,
-      exercises: (json['exercises'] as List?)
+      exercises:
+          (json['exercises'] as List?)
               ?.map((e) => ExerciseModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

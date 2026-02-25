@@ -33,8 +33,8 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   String? _xpPopup;
 
   // Letter tile state
-  List<String> _poolLetters = [];     // Available pool
-  List<String?> _answerSlots = [];    // Filled answer slots (null = empty)
+  List<String> _poolLetters = []; // Available pool
+  List<String?> _answerSlots = []; // Filled answer slots (null = empty)
   List<bool> _slotCorrect = [];
   List<bool> _slotWrong = [];
 
@@ -65,7 +65,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     setState(() {
       _gameLoaded = true;
       _poolLetters = List<String>.from(word.shuffledLetters);
-      _answerSlots = List<String?>.filled(word.letterCount > 0 ? word.letterCount : word.word.length, null);
+      _answerSlots = List<String?>.filled(
+        word.letterCount > 0 ? word.letterCount : word.word.length,
+        null,
+      );
       _slotCorrect = List<bool>.filled(_answerSlots.length, false);
       _slotWrong = List<bool>.filled(_answerSlots.length, false);
       _showHint = false;
@@ -80,7 +83,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     _timer?.cancel();
     _timeLeft = seconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() => _timeLeft--);
       if (_timeLeft <= 0) {
         t.cancel();
@@ -203,154 +209,174 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
-        Consumer<GamesProvider>(builder: (context, provider, _) {
-          if (provider.isLoading || !_gameLoaded) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          final game = provider.wordScramble!;
-          final word = game.words[_currentWordIndex];
-          return Scaffold(
-            backgroundColor: AppColors.backgroundLight,
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              title: Text(
-                'Word ${_currentWordIndex + 1} of ${game.words.length}',
-                style: const TextStyle(color: AppColors.textDark),
-              ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Center(
-                    child: _TimerDisplay(timeLeft: _timeLeft, total: game.timerSeconds),
-                  ),
+        Consumer<GamesProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading || !_gameLoaded) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final game = provider.wordScramble!;
+            final word = game.words[_currentWordIndex];
+            return Scaffold(
+              backgroundColor: AppColors.backgroundLight,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                title: Text(
+                  'Word ${_currentWordIndex + 1} of ${game.words.length}',
+                  style: const TextStyle(color: AppColors.textDark),
                 ),
-              ],
-            ),
-            body: Column(
-              children: [
-                // Progress bar
-                LinearProgressIndicator(
-                  value: (_currentWordIndex) / game.words.length,
-                  backgroundColor: AppColors.grey200,
-                  color: AppColors.primary,
-                  minHeight: 4,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: Column(
-                      children: [
-                        // XP popup
-                        if (_xpPopup != null)
-                          _XpPopup(text: _xpPopup!),
-                        const SizedBox(height: 4),
-                        // Hint area
-                        _HintCard(word: word, showHint: _showHint),
-                        const SizedBox(height: 20),
-                        // Answer slots
-                        const Text(
-                          'Your answer:',
-                          style: TextStyle(color: AppColors.textGrey, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          children: List.generate(_answerSlots.length, (i) {
-                            return GestureDetector(
-                              onTap: () => _tapSlot(i),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                width: 42,
-                                height: 48,
-                                margin: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: _slotCorrect[i]
-                                      ? AppColors.greenSuccess
-                                      : _slotWrong[i]
-                                          ? const Color(0xFFC62828)
-                                          : Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: _answerSlots[i] != null
-                                        ? AppColors.primary
-                                        : AppColors.grey300,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  _answerSlots[i]?.toUpperCase() ?? '',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: (_slotCorrect[i] || _slotWrong[i])
-                                        ? Colors.white
-                                        : AppColors.textDark,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 24),
-                        // Letter pool
-                        const Text(
-                          'Available letters:',
-                          style: TextStyle(color: AppColors.textGrey, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          children: List.generate(_poolLetters.length, (i) {
-                            final letter = _poolLetters[i];
-                            if (letter.isEmpty) {
-                              return const SizedBox(width: 50, height: 56);
-                            }
-                            return LetterTile(
-                              key: ValueKey('pool_${i}_$letter'),
-                              letter: letter,
-                              onTap: () => _tapPool(i),
-                            );
-                          }),
-                        ),
-                        const Spacer(),
-                        // Hint & Skip
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            OutlinedButton.icon(
-                              onPressed: _wordAnswered
-                                  ? null
-                                  : () => setState(() => _showHint = !_showHint),
-                              icon: const Icon(Icons.lightbulb_outline, size: 16),
-                              label: const Text('Hint'),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.primary),
-                                foregroundColor: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            TextButton(
-                              onPressed: _wordAnswered ? null : _skipWord,
-                              child: const Text(
-                                'Skip',
-                                style: TextStyle(color: AppColors.textGrey),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Center(
+                      child: _TimerDisplay(
+                        timeLeft: _timeLeft,
+                        total: game.timerSeconds,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
+                ],
+              ),
+              body: Column(
+                children: [
+                  // Progress bar
+                  LinearProgressIndicator(
+                    value: (_currentWordIndex) / game.words.length,
+                    backgroundColor: AppColors.grey200,
+                    color: AppColors.primary,
+                    minHeight: 4,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        children: [
+                          // XP popup
+                          if (_xpPopup != null) _XpPopup(text: _xpPopup!),
+                          const SizedBox(height: 4),
+                          // Hint area
+                          _HintCard(word: word, showHint: _showHint),
+                          const SizedBox(height: 20),
+                          // Answer slots
+                          const Text(
+                            'Your answer:',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            children: List.generate(_answerSlots.length, (i) {
+                              return GestureDetector(
+                                onTap: () => _tapSlot(i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  width: 42,
+                                  height: 48,
+                                  margin: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: _slotCorrect[i]
+                                        ? AppColors.greenSuccess
+                                        : _slotWrong[i]
+                                        ? const Color(0xFFC62828)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: _answerSlots[i] != null
+                                          ? AppColors.primary
+                                          : AppColors.grey300,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _answerSlots[i]?.toUpperCase() ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: (_slotCorrect[i] || _slotWrong[i])
+                                          ? Colors.white
+                                          : AppColors.textDark,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 24),
+                          // Letter pool
+                          const Text(
+                            'Available letters:',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            children: List.generate(_poolLetters.length, (i) {
+                              final letter = _poolLetters[i];
+                              if (letter.isEmpty) {
+                                return const SizedBox(width: 50, height: 56);
+                              }
+                              return LetterTile(
+                                key: ValueKey('pool_${i}_$letter'),
+                                letter: letter,
+                                onTap: () => _tapPool(i),
+                              );
+                            }),
+                          ),
+                          const Spacer(),
+                          // Hint & Skip
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: _wordAnswered
+                                    ? null
+                                    : () => setState(
+                                        () => _showHint = !_showHint,
+                                      ),
+                                icon: const Icon(
+                                  Icons.lightbulb_outline,
+                                  size: 16,
+                                ),
+                                label: const Text('Hint'),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: AppColors.primary,
+                                  ),
+                                  foregroundColor: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              TextButton(
+                                onPressed: _wordAnswered ? null : _skipWord,
+                                child: const Text(
+                                  'Skip',
+                                  style: TextStyle(color: AppColors.textGrey),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         ConfettiWidget(
           confettiController: _confettiController,
           blastDirectionality: BlastDirectionality.explosive,
@@ -379,8 +405,8 @@ class _TimerDisplay extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -420,12 +446,19 @@ class _HintCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accentYellow),
+                  const Icon(
+                    Icons.lightbulb_outline_rounded,
+                    size: 14,
+                    color: AppColors.accentYellow,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       word.hint,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ),
                 ],

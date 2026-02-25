@@ -129,11 +129,4 @@ class ActivityFeedItemEntity extends Equatable {
   List<Object?> get props => [id, userId, activityType, createdAt];
 }
 
-enum IconType {
-  achievement,
-  course,
-  lesson,
-  streak,
-  level,
-  general,
-}
+enum IconType { achievement, course, lesson, streak, level, general }

@@ -55,9 +55,11 @@ class VocabularyHint {
   factory VocabularyHint.fromJson(Map<String, dynamic> json) {
     return VocabularyHint(
       term: json['term'] as String? ?? json['word'] as String? ?? '',
-      definition: json['definition'] as String? ?? json['meaning'] as String? ?? '',
+      definition:
+          json['definition'] as String? ?? json['meaning'] as String? ?? '',
       example: json['example'] as String?,
-      partOfSpeech: json['part_of_speech'] as String? ?? json['partOfSpeech'] as String?,
+      partOfSpeech:
+          json['part_of_speech'] as String? ?? json['partOfSpeech'] as String?,
       pronunciation: json['pronunciation'] as String?,
     );
   }
@@ -87,20 +89,30 @@ class EducationalHints {
 
   factory EducationalHints.fromJson(Map<String, dynamic> json) {
     return EducationalHints(
-      grammarCorrections: (json['grammar_corrections'] as List<dynamic>?)
-              ?.map((e) => GrammarCorrection.fromJson(e as Map<String, dynamic>))
+      grammarCorrections:
+          (json['grammar_corrections'] as List<dynamic>?)
+              ?.map(
+                (e) => GrammarCorrection.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           (json['grammarCorrections'] as List<dynamic>?)
-              ?.map((e) => GrammarCorrection.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
-      vocabularyHints: (json['vocabulary_hints'] as List<dynamic>?)
+              ?.map(
+                (e) => GrammarCorrection.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+      vocabularyHints:
+          (json['vocabulary_hints'] as List<dynamic>?)
               ?.map((e) => VocabularyHint.fromJson(e as Map<String, dynamic>))
               .toList() ??
           (json['vocabularyHints'] as List<dynamic>?)
               ?.map((e) => VocabularyHint.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
+              .toList() ??
+          [],
       encouragement: json['encouragement'] as String?,
-      nextSuggestion: json['next_suggestion'] as String? ?? json['nextSuggestion'] as String?,
+      nextSuggestion:
+          json['next_suggestion'] as String? ??
+          json['nextSuggestion'] as String?,
     );
   }
 
@@ -135,7 +147,10 @@ class LlmMetadata {
       provider: json['provider'] as String? ?? '',
       model: json['model'] as String? ?? '',
       latencyMs: json['latency_ms'] as int? ?? json['latencyMs'] as int?,
-      fallbackUsed: json['fallback_used'] as bool? ?? json['fallbackUsed'] as bool? ?? false,
+      fallbackUsed:
+          json['fallback_used'] as bool? ??
+          json['fallbackUsed'] as bool? ??
+          false,
     );
   }
 

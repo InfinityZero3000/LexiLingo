@@ -167,215 +167,236 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(builder: (context, provider, _) {
-      if (provider.isLoading || !_gameLoaded) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      }
-      final game = provider.spellingBee!;
-      final word = game.words[_wordIndex];
+    return Consumer<GamesProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading || !_gameLoaded) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final game = provider.spellingBee!;
+        final word = game.words[_wordIndex];
 
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Text(
-            'Word ${_wordIndex + 1}/${game.words.length}',
-            style: const TextStyle(color: AppColors.textDark),
-          ),
-        ),
-        body: Column(
-          children: [
-            LinearProgressIndicator(
-              value: _wordIndex / game.words.length,
-              backgroundColor: AppColors.grey200,
-              color: AppColors.primary,
-              minHeight: 4,
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: Text(
+              'Word ${_wordIndex + 1}/${game.words.length}',
+              style: const TextStyle(color: AppColors.textDark),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Big listen button
-                    GestureDetector(
-                      onTap: _playsLeft > 0 && !_isPlaying ? _playAudio : null,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: _playsLeft > 0
-                                ? [AppColors.primary, const Color(0xFF38B2FF)]
-                                : [AppColors.grey300, AppColors.grey200],
-                          ),
-                          boxShadow: _playsLeft > 0
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.4),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ]
-                              : [],
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          _isPlaying ? Icons.volume_up : Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 52,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Plays left: $_playsLeft/${word.maxReplays}',
-                      style: const TextStyle(
-                          color: AppColors.textGrey, fontSize: 13),
-                    ),
-                    const SizedBox(height: 32),
-                    // Input field
-                    TextField(
-                      controller: _inputController,
-                      enabled: !_answered,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        hintText: 'Type the word...',
-                        hintStyle:
-                            const TextStyle(color: AppColors.textGrey),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.grey300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.primary, width: 2),
-                        ),
-                      ),
-                      onSubmitted: (_) => _answered ? null : _submitAnswer(),
-                    ),
-                    const SizedBox(height: 16),
-                    if (!_answered) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _submitAnswer,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: const Text(
-                            'Submit',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      // Answer revealed
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _isCorrect
-                              ? AppColors.greenSuccess.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _isCorrect
-                                ? AppColors.greenSuccess
-                                : Colors.red,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              _isCorrect ? 'Correct!' : 'The answer was:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _isCorrect
-                                    ? AppColors.greenSuccess
-                                    : Colors.red,
-                              ),
+          ),
+          body: Column(
+            children: [
+              LinearProgressIndicator(
+                value: _wordIndex / game.words.length,
+                backgroundColor: AppColors.grey200,
+                color: AppColors.primary,
+                minHeight: 4,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      // Big listen button
+                      GestureDetector(
+                        onTap: _playsLeft > 0 && !_isPlaying
+                            ? _playAudio
+                            : null,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: _playsLeft > 0
+                                  ? [AppColors.primary, const Color(0xFF38B2FF)]
+                                  : [AppColors.grey300, AppColors.grey200],
                             ),
-                            if (!_isCorrect) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                word.word,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                            ],
-                            if (word.ipaPronunciation?.isNotEmpty ?? false) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                word.ipaPronunciation!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textGrey,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                            if (word.definition.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                word.definition,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textDark,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
+                            boxShadow: _playsLeft > 0
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(0.4),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            _isPlaying
+                                ? Icons.volume_up
+                                : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 52,
+                          ),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Plays left: $_playsLeft/${word.maxReplays}',
+                        style: const TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Input field
+                      TextField(
+                        controller: _inputController,
+                        enabled: !_answered,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Type the word...',
+                          hintStyle: const TextStyle(color: AppColors.textGrey),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        onSubmitted: (_) => _answered ? null : _submitAnswer(),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _nextWord,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(
-                            _wordIndex + 1 < game.words.length
-                                ? 'Next Word'
-                                : 'See Results',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+                      if (!_answered) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _submitAnswer,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Submit',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        // Answer revealed
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _isCorrect
+                                ? AppColors.greenSuccess.withOpacity(0.1)
+                                : Colors.red.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _isCorrect
+                                  ? AppColors.greenSuccess
+                                  : Colors.red,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                _isCorrect ? 'Correct!' : 'The answer was:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _isCorrect
+                                      ? AppColors.greenSuccess
+                                      : Colors.red,
+                                ),
+                              ),
+                              if (!_isCorrect) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  word.word,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                              ],
+                              if (word.ipaPronunciation?.isNotEmpty ??
+                                  false) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  word.ipaPronunciation!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textGrey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                              if (word.definition.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  word.definition,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textDark,
+                                    height: 1.4,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _nextWord,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              _wordIndex + 1 < game.words.length
+                                  ? 'Next Word'
+                                  : 'See Results',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      );
-    });
+            ],
+          ),
+        );
+      },
+    );
   }
 }

@@ -7,13 +7,10 @@ import '../../../domain/repositories/chat_repository.dart';
 class GeminiService implements AIService {
   final String apiKey;
   late final GenerativeModel _model;
-  
+
   static const String _defaultModelName = 'gemini-2.5-pro';
 
-  GeminiService({
-    required this.apiKey,
-    String? modelName,
-  }) {
+  GeminiService({required this.apiKey, String? modelName}) {
     _model = GenerativeModel(
       model: modelName ?? _defaultModelName,
       apiKey: apiKey,
@@ -68,9 +65,7 @@ class GeminiService implements AIService {
       );
 
       // Generate content
-      final response = await _model.generateContent([
-        Content.text(fullPrompt),
-      ]);
+      final response = await _model.generateContent([Content.text(fullPrompt)]);
 
       // Extract text from response
       final text = response.text;
@@ -100,9 +95,7 @@ class GeminiService implements AIService {
   @override
   Future<bool> testConnection() async {
     try {
-      final response = await _model.generateContent([
-        Content.text('Hello'),
-      ]);
+      final response = await _model.generateContent([Content.text('Hello')]);
       return response.text != null && response.text!.isNotEmpty;
     } catch (e) {
       print('Gemini connection test failed: $e');

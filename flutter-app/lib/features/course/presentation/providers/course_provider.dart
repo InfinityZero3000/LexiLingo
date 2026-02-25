@@ -155,20 +155,12 @@ class CourseProvider with ChangeNotifier {
 
   /// Filter courses by language
   Future<void> filterByLanguage(String? language) async {
-    await loadCourses(
-      page: 1,
-      language: language,
-      level: _selectedLevel,
-    );
+    await loadCourses(page: 1, language: language, level: _selectedLevel);
   }
 
   /// Filter courses by level
   Future<void> filterByLevel(String? level) async {
-    await loadCourses(
-      page: 1,
-      language: _selectedLanguage,
-      level: level,
-    );
+    await loadCourses(page: 1, language: _selectedLanguage, level: level);
   }
 
   /// Clear all filters
@@ -180,15 +172,15 @@ class CourseProvider with ChangeNotifier {
   /// Returns a map with category names as keys and list of courses as values
   Map<String, List<CourseEntity>> get coursesByCategory {
     final Map<String, List<CourseEntity>> grouped = {};
-    
+
     // Define category order
     const categoryOrder = ['Beginner', 'Intermediate', 'Advanced'];
-    
+
     // Initialize categories
     for (final category in categoryOrder) {
       grouped[category] = [];
     }
-    
+
     // Group courses by level
     for (final course in _courses) {
       final category = course.level;
@@ -199,17 +191,17 @@ class CourseProvider with ChangeNotifier {
         grouped[category] = [course];
       }
     }
-    
+
     // Remove empty categories
     grouped.removeWhere((key, value) => value.isEmpty);
-    
+
     return grouped;
   }
 
   /// Group courses by language
   Map<String, List<CourseEntity>> get coursesByLanguage {
     final Map<String, List<CourseEntity>> grouped = {};
-    
+
     for (final course in _courses) {
       final language = course.language;
       if (grouped.containsKey(language)) {
@@ -218,14 +210,14 @@ class CourseProvider with ChangeNotifier {
         grouped[language] = [course];
       }
     }
-    
+
     return grouped;
   }
 
   /// Group courses by first tag (if available)
   Map<String, List<CourseEntity>> get coursesByTopic {
     final Map<String, List<CourseEntity>> grouped = {};
-    
+
     for (final course in _courses) {
       // Use first tag as topic, or "General" if no tags
       final topic = course.tags.isNotEmpty ? course.tags.first : 'General';
@@ -235,7 +227,7 @@ class CourseProvider with ChangeNotifier {
         grouped[topic] = [course];
       }
     }
-    
+
     return grouped;
   }
 
@@ -244,7 +236,7 @@ class CourseProvider with ChangeNotifier {
     return _courses.map((c) => c.level).toSet().toList();
   }
 
-  /// Get all unique languages from courses  
+  /// Get all unique languages from courses
   List<String> get availableLanguages {
     return _courses.map((c) => c.language).toSet().toList();
   }
@@ -300,7 +292,7 @@ class CourseProvider with ChangeNotifier {
       (message) {
         _enrollmentSuccess = message;
         _isEnrolling = false;
-        
+
         // Update course detail enrollment status
         if (_courseDetail != null && _courseDetail!.id == courseId) {
           _courseDetail = CourseDetailEntity(
@@ -322,13 +314,13 @@ class CourseProvider with ChangeNotifier {
             units: _courseDetail!.units,
           );
         }
-        
+
         // Update course in list
         final index = _courses.indexWhere((c) => c.id == courseId);
         if (index != -1) {
           _courses[index] = _courses[index].copyWith(isEnrolled: true);
         }
-        
+
         notifyListeners();
         return true;
       },
@@ -368,7 +360,11 @@ class CourseProvider with ChangeNotifier {
   }
 
   /// Load courses by specific category
-  Future<void> loadCoursesByCategory(String categoryId, {int page = 1, bool append = false}) async {
+  Future<void> loadCoursesByCategory(
+    String categoryId, {
+    int page = 1,
+    bool append = false,
+  }) async {
     if (_isLoadingCourses) return;
 
     _isLoadingCourses = true;
@@ -409,10 +405,7 @@ class CourseProvider with ChangeNotifier {
   }
 
   /// Load enrolled courses
-  Future<void> loadEnrolledCourses({
-    int page = 1,
-    bool append = false,
-  }) async {
+  Future<void> loadEnrolledCourses({int page = 1, bool append = false}) async {
     if (_isLoadingEnrolled) return;
 
     _isLoadingEnrolled = true;
@@ -424,10 +417,7 @@ class CourseProvider with ChangeNotifier {
 
     notifyListeners();
 
-    final result = await getEnrolledCoursesUseCase(
-      page: page,
-      pageSize: 20,
-    );
+    final result = await getEnrolledCoursesUseCase(page: page, pageSize: 20);
 
     result.fold(
       (failure) {

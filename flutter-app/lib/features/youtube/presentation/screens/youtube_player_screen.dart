@@ -82,8 +82,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color:
-                        isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+                    color: isDark
+                        ? AppColors.backgroundDark
+                        : AppColors.backgroundLight,
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(24),
                     ),
@@ -127,8 +128,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   widget.video.thumbnailUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(Icons.play_circle_outline,
-                        size: 64, color: Colors.white54),
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 64,
+                      color: Colors.white54,
+                    ),
                   ),
                 ),
                 // Play overlay
@@ -204,9 +208,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       children: [
         Text(
           widget.video.title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         // CEFR level badge (skill: content-difficulty-levels)
@@ -238,8 +242,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_rounded,
-                  color: AppColors.primary, size: 20),
+              child: const Icon(
+                Icons.person_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -311,9 +318,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             ),
             child: Column(
               children: [
-                Icon(Icons.subtitles_off_rounded,
-                    size: 40,
-                    color: isDark ? Colors.white30 : Colors.grey.shade400),
+                Icon(
+                  Icons.subtitles_off_rounded,
+                  size: 40,
+                  color: isDark ? Colors.white30 : Colors.grey.shade400,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'No subtitles available for this video',
@@ -332,14 +341,17 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           children: [
             Row(
               children: [
-                const Icon(Icons.subtitles_rounded,
-                    size: 18, color: AppColors.primary),
+                const Icon(
+                  Icons.subtitles_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Subtitles',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const Spacer(),
                 Text(
@@ -430,12 +442,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     word,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                       color: isActive
                           ? (isDark ? Colors.white : AppColors.textDark)
-                          : (isDark ? Colors.white70 : AppColors.textDark
-                              .withValues(alpha: 0.7)),
+                          : (isDark
+                                ? Colors.white70
+                                : AppColors.textDark.withValues(alpha: 0.7)),
                       decoration: TextDecoration.underline,
                       decorationColor: Colors.transparent,
                       decorationStyle: TextDecorationStyle.dotted,
@@ -481,9 +495,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           Text(
             word,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -564,13 +578,20 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   // CEFR color map (skill: content-difficulty-levels)
   Color _cefrColor(String level) {
     switch (level) {
-      case 'A1': return const Color(0xFF4CAF50);
-      case 'A2': return const Color(0xFF8BC34A);
-      case 'B1': return const Color(0xFFFFC107);
-      case 'B2': return const Color(0xFFFF9800);
-      case 'C1': return const Color(0xFFFF5722);
-      case 'C2': return const Color(0xFF9C27B0);
-      default:   return AppColors.primary;
+      case 'A1':
+        return const Color(0xFF4CAF50);
+      case 'A2':
+        return const Color(0xFF8BC34A);
+      case 'B1':
+        return const Color(0xFFFFC107);
+      case 'B2':
+        return const Color(0xFFFF9800);
+      case 'C1':
+        return const Color(0xFFFF5722);
+      case 'C2':
+        return const Color(0xFF9C27B0);
+      default:
+        return AppColors.primary;
     }
   }
 }

@@ -10,7 +10,7 @@ class GamesProvider extends ChangeNotifier {
   final GamesRepository _repository;
 
   GamesProvider({GamesRepository? repository})
-      : _repository = repository ?? GamesRepository();
+    : _repository = repository ?? GamesRepository();
 
   // ── Common State ──────────────────────────────────────────────────────────
   bool _isLoading = false;
@@ -91,8 +91,7 @@ class GamesProvider extends ChangeNotifier {
       _leaderboard = (result['entries'] as List<dynamic>? ?? [])
           .map((e) => LeaderboardUser.fromJson(e as Map<String, dynamic>))
           .toList();
-      _currentUserLeaderboard =
-          result['current_user'] as Map<String, dynamic>?;
+      _currentUserLeaderboard = result['current_user'] as Map<String, dynamic>?;
       notifyListeners();
     } catch (e) {
       // Non-critical — just log

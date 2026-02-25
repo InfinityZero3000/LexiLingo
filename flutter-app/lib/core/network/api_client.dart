@@ -26,17 +26,19 @@ class ApiClient {
     bool enableLogging = true,
     Future<Map<String, String>> Function()? authHeaderProvider,
     Future<bool> Function()? onUnauthorized,
-  })  : _client = client ?? http.Client(),
-        _baseUrl = (baseUrl ?? ApiConfig.baseUrl).replaceAll(RegExp(r'/+$'), ''),
-        _interceptors = [
-          if (enableLogging) LoggingInterceptor(),
-          ...?interceptors,
-        ],
-        _networkInfo = networkInfo ?? NetworkInfoImpl(),
-        _authHeaderProvider = authHeaderProvider,
-        _onUnauthorized = onUnauthorized;
+  }) : _client = client ?? http.Client(),
+       _baseUrl = (baseUrl ?? ApiConfig.baseUrl).replaceAll(RegExp(r'/+$'), ''),
+       _interceptors = [
+         if (enableLogging) LoggingInterceptor(),
+         ...?interceptors,
+       ],
+       _networkInfo = networkInfo ?? NetworkInfoImpl(),
+       _authHeaderProvider = authHeaderProvider,
+       _onUnauthorized = onUnauthorized;
 
-  Future<Map<String, String>> _buildHeaders(Map<String, String>? headers) async {
+  Future<Map<String, String>> _buildHeaders(
+    Map<String, String>? headers,
+  ) async {
     final built = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -64,7 +66,11 @@ class ApiClient {
   }
 
   /// GET request returning unwrapped data
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? headers, Duration? timeout}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? headers,
+    Duration? timeout,
+  }) async {
     final uri = _resolve(path);
     return _send('GET', uri, headers: headers, timeout: timeout);
   }
@@ -102,6 +108,7 @@ class ApiClient {
     final response = await _sendRaw('POST', uri, headers: headers, body: body);
     return await _parseResponseEnvelope<T>(response, fromJson);
   }
+
   /// PUT request returning full ApiResponseEnvelope
   Future<ApiResponseEnvelope<T>> putEnvelope<T>(
     String path, {
@@ -113,6 +120,7 @@ class ApiClient {
     final response = await _sendRaw('PUT', uri, headers: headers, body: body);
     return await _parseResponseEnvelope<T>(response, fromJson);
   }
+
   /// GET request returning PaginatedResponseEnvelope
   Future<PaginatedResponseEnvelope<T>> getPaginated<T>(
     String path, {
@@ -132,7 +140,13 @@ class ApiClient {
     Object? body,
     Duration? timeout,
   }) async {
-    final response = await _sendRaw(method, uri, headers: headers, body: body, timeout: timeout);
+    final response = await _sendRaw(
+      method,
+      uri,
+      headers: headers,
+      body: body,
+      timeout: timeout,
+    );
     return await _handleResponse(response);
   }
 
@@ -160,8 +174,12 @@ class ApiClient {
     await _notifyRequest(req);
 
     try {
-      final response = await _dispatch(method, uri, req.headers, body)
-          .timeout(timeout ?? ApiConfig.receiveTimeout);
+      final response = await _dispatch(
+        method,
+        uri,
+        req.headers,
+        body,
+      ).timeout(timeout ?? ApiConfig.receiveTimeout);
       final apiResponse = ApiResponse(
         statusCode: response.statusCode,
         uri: uri,
@@ -170,12 +188,9 @@ class ApiClient {
       await _notifyResponse(apiResponse);
       return apiResponse;
     } catch (e) {
-      await _notifyError(ApiError(
-        method: method,
-        uri: uri,
-        cause: e,
-        message: e.toString(),
-      ));
+      await _notifyError(
+        ApiError(method: method, uri: uri, cause: e, message: e.toString()),
+      );
       if (e is ServerException) rethrow;
       if (e is ApiErrorException) rethrow;
       throw ServerException('$method ${uri.path} failed: $e');
@@ -204,14 +219,14 @@ class ApiClient {
 
   Future<Map<String, dynamic>> _handleResponse(ApiResponse response) async {
     final statusCode = response.statusCode;
-    
+
     // Check for error status codes
     if (statusCode < 200 || statusCode >= 300) {
       await _handleErrorResponse(response);
     }
-    
+
     if (response.body.isEmpty) return <String, dynamic>{};
-    
+
     final decoded = jsonDecode(response.body);
     if (decoded is Map<String, dynamic>) {
       // If it's an envelope, unwrap the data
@@ -276,7 +291,7 @@ class ApiClient {
     T Function(dynamic) fromJson,
   ) async {
     final statusCode = response.statusCode;
-    
+
     if (statusCode < 200 || statusCode >= 300) {
       await _handleErrorResponse(response);
     }
@@ -295,7 +310,7 @@ class ApiClient {
     T Function(Map<String, dynamic>) fromJson,
   ) async {
     final statusCode = response.statusCode;
-    
+
     if (statusCode < 200 || statusCode >= 300) {
       await _handleErrorResponse(response);
     }

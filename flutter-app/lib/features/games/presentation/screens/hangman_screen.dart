@@ -39,8 +39,9 @@ class _HangmanScreenState extends State<HangmanScreen>
   @override
   void initState() {
     super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GamesProvider>().loadHangman().then((_) {
         if (mounted) {
@@ -66,9 +67,9 @@ class _HangmanScreenState extends State<HangmanScreen>
       game.word.toUpperCase().split('');
 
   bool _isWordGuessed(HangmanGame game) {
-    return _wordLetters(game)
-        .where((l) => l != ' ')
-        .every((l) => _guessedLetters.contains(l));
+    return _wordLetters(
+      game,
+    ).where((l) => l != ' ').every((l) => _guessedLetters.contains(l));
   }
 
   void _guessLetter(String letter, HangmanGame game) {
@@ -117,8 +118,9 @@ class _HangmanScreenState extends State<HangmanScreen>
     if (_hint3Used) return;
     // Reveal a random unguessed letter
     final word = _wordLetters(game);
-    final unguessed =
-        word.where((l) => l != ' ' && !_guessedLetters.contains(l)).toList();
+    final unguessed = word
+        .where((l) => l != ' ' && !_guessedLetters.contains(l))
+        .toList();
     if (unguessed.isEmpty) return;
     unguessed.shuffle();
     setState(() {
@@ -174,197 +176,218 @@ class _HangmanScreenState extends State<HangmanScreen>
     return Stack(
       alignment: Alignment.topCenter,
       children: [
-        Consumer<GamesProvider>(builder: (context, provider, _) {
-          if (provider.isLoading || !_gameLoaded) {
-            return const Scaffold(
-                body: Center(child: CircularProgressIndicator()));
-          }
-          final game = provider.hangman!;
-          final word = _wordLetters(game);
+        Consumer<GamesProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading || !_gameLoaded) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final game = provider.hangman!;
+            final word = _wordLetters(game);
 
-          return Scaffold(
-            backgroundColor: AppColors.backgroundLight,
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              title: const Text('Hangman',
-                  style: TextStyle(color: AppColors.textDark)),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Row(
-                    children: List.generate(
-                      maxWrong,
-                      (i) => Icon(
-                        Icons.favorite,
-                        color: i < maxWrong - _wrongGuesses
-                            ? Colors.red
-                            : AppColors.grey300,
-                        size: 18,
+            return Scaffold(
+              backgroundColor: AppColors.backgroundLight,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                title: const Text(
+                  'Hangman',
+                  style: TextStyle(color: AppColors.textDark),
+                ),
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Row(
+                      children: List.generate(
+                        maxWrong,
+                        (i) => Icon(
+                          Icons.favorite,
+                          color: i < maxWrong - _wrongGuesses
+                              ? Colors.red
+                              : AppColors.grey300,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            body: Column(
-              children: [
-                // Category chip
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Row(
-                    children: [
-                      Chip(
-                        label: Text(
-                          game.category.isEmpty ? 'General' : game.category,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.primary),
-                        ),
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        side: const BorderSide(color: AppColors.primary),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${maxWrong - _wrongGuesses} lives left',
-                        style: const TextStyle(
-                            color: AppColors.textGrey, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                // Hangman figure
-                HangmanFigure(wrongGuesses: _wrongGuesses),
-                const SizedBox(height: 8),
-                // Hint reveal
-                if (_revealedHint != null)
+                ],
+              ),
+              body: Column(
+                children: [
+                  // Category chip
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentYellow.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.accentYellow),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accentYellow),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              _revealedHint!,
-                              style: const TextStyle(fontSize: 13),
-                              textAlign: TextAlign.center,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      children: [
+                        Chip(
+                          label: Text(
+                            game.category.isEmpty ? 'General' : game.category,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primary,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                // Word blanks
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 4,
-                    children: word.map((letter) {
-                      if (letter == ' ') {
-                        return const SizedBox(width: 16);
-                      }
-                      final revealed = _guessedLetters.contains(letter);
-                      return Container(
-                        width: 30,
-                        height: 38,
-                        margin: const EdgeInsets.only(bottom: 4),
-                        decoration: BoxDecoration(
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: revealed
-                                      ? AppColors.primary
-                                      : AppColors.textGrey,
-                                  width: 2)),
+                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          side: const BorderSide(color: AppColors.primary),
                         ),
-                        alignment: Alignment.center,
-                        child: revealed
-                            ? Text(
-                                letter,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: AppColors.textDark,
-                                ),
-                              )
-                            : null,
-                      );
-                    }).toList(),
+                        const Spacer(),
+                        Text(
+                          '${maxWrong - _wrongGuesses} lives left',
+                          style: const TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                // Lose reveal
-                if (_gameOver && !_gameWon)
+                  // Hangman figure
+                  HangmanFigure(wrongGuesses: _wrongGuesses),
+                  const SizedBox(height: 8),
+                  // Hint reveal
+                  if (_revealedHint != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentYellow.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.accentYellow),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lightbulb_outline_rounded,
+                              size: 14,
+                              color: AppColors.accentYellow,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                _revealedHint!,
+                                style: const TextStyle(fontSize: 13),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Word blanks
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      'The word was: ${game.word}',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 4,
+                      children: word.map((letter) {
+                        if (letter == ' ') {
+                          return const SizedBox(width: 16);
+                        }
+                        final revealed = _guessedLetters.contains(letter);
+                        return Container(
+                          width: 30,
+                          height: 38,
+                          margin: const EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: revealed
+                                    ? AppColors.primary
+                                    : AppColors.textGrey,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: revealed
+                              ? Text(
+                                  letter,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    color: AppColors.textDark,
+                                  ),
+                                )
+                              : null,
+                        );
+                      }).toList(),
                     ),
                   ),
-                // Hint buttons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _HintButton(
-                        label: 'Hint 1',
-                        detail: 'Free',
-                        used: _hint1Used,
-                        disabled: _gameOver,
-                        onTap: () => _useHint1(game),
-                        color: AppColors.greenSuccess,
+                  // Lose reveal
+                  if (_gameOver && !_gameWon)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'The word was: ${game.word}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(width: 8),
-                      _HintButton(
-                        label: 'Hint 2',
-                        detail: '-${game.hints.hint2XpCost}XP',
-                        used: _hint2Used,
-                        disabled: _gameOver,
-                        onTap: () => _useHint2(game),
-                        color: Colors.orange,
-                      ),
-                      const SizedBox(width: 8),
-                      _HintButton(
-                        label: 'Hint 3',
-                        detail: '-${game.hints.hint3XpCost}XP',
-                        used: _hint3Used,
-                        disabled: _gameOver,
-                        onTap: () => _useHint3(game),
-                        color: Colors.purple,
-                      ),
-                    ],
-                  ),
-                ),
-                // Keyboard
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: _Keyboard(
-                      guessedLetters: _guessedLetters,
-                      wordLetters: word.toSet(),
-                      gameOver: _gameOver,
-                      onTap: (l) => _guessLetter(l, game),
+                    ),
+                  // Hint buttons
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _HintButton(
+                          label: 'Hint 1',
+                          detail: 'Free',
+                          used: _hint1Used,
+                          disabled: _gameOver,
+                          onTap: () => _useHint1(game),
+                          color: AppColors.greenSuccess,
+                        ),
+                        const SizedBox(width: 8),
+                        _HintButton(
+                          label: 'Hint 2',
+                          detail: '-${game.hints.hint2XpCost}XP',
+                          used: _hint2Used,
+                          disabled: _gameOver,
+                          onTap: () => _useHint2(game),
+                          color: Colors.orange,
+                        ),
+                        const SizedBox(width: 8),
+                        _HintButton(
+                          label: 'Hint 3',
+                          detail: '-${game.hints.hint3XpCost}XP',
+                          used: _hint3Used,
+                          disabled: _gameOver,
+                          onTap: () => _useHint3(game),
+                          color: Colors.purple,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
+                  // Keyboard
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: _Keyboard(
+                        guessedLetters: _guessedLetters,
+                        wordLetters: word.toSet(),
+                        gameOver: _gameOver,
+                        onTap: (l) => _guessLetter(l, game),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         ConfettiWidget(
           confettiController: _confettiController,
           blastDirectionality: BlastDirectionality.explosive,
@@ -410,7 +433,9 @@ class _HintButton extends StatelessWidget {
           color: active ? color.withOpacity(0.1) : AppColors.grey200,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-              color: active ? color : AppColors.grey300, width: 1.5),
+            color: active ? color : AppColors.grey300,
+            width: 1.5,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

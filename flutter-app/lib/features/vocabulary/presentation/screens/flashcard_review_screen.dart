@@ -31,13 +31,10 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-1.5, 0),
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: Offset.zero, end: const Offset(-1.5, 0)).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
+        );
 
     // Start review session
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -68,9 +65,8 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => SessionCompleteScreen(
-              session: provider.currentSession!,
-            ),
+            builder: (_) =>
+                SessionCompleteScreen(session: provider.currentSession!),
           ),
         );
       }
@@ -96,10 +92,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
         ),
         title: const Text(
           'Review Session',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         actions: const [
@@ -150,18 +143,14 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
 
           // No session
           if (!provider.hasSession) {
-            return const Center(
-              child: Text('No review session available'),
-            );
+            return const Center(child: Text('No review session available'));
           }
 
           final session = provider.currentSession!;
           final currentCard = session.currentCard;
 
           if (currentCard == null) {
-            return const Center(
-              child: Text('Session complete!'),
-            );
+            return const Center(child: Text('Session complete!'));
           }
 
           return Column(
@@ -223,10 +212,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close screen
             },
-            child: const Text(
-              'Exit',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Exit', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

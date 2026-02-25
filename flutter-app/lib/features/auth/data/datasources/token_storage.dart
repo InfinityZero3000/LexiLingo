@@ -17,9 +17,7 @@ class TokenStorage {
   static final Map<String, String> _memoryStorage = {};
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
@@ -90,7 +88,10 @@ class TokenStorage {
       final refreshToken = await getRefreshToken();
       final tokenType = await _storage.read(key: _tokenTypeKey);
 
-      logDebug(_tag, 'accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}');
+      logDebug(
+        _tag,
+        'accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}',
+      );
       logDebug(_tag, 'refreshToken=${refreshToken != null ? "found" : "null"}');
 
       if (accessToken == null || refreshToken == null) {
@@ -119,10 +120,9 @@ class TokenStorage {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await saveTokens(AuthTokens(
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    ));
+    await saveTokens(
+      AuthTokens(accessToken: accessToken, refreshToken: refreshToken),
+    );
   }
 
   /// Check if tokens exist

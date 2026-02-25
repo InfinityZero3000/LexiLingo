@@ -36,10 +36,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     );
 
     _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _flipController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
     );
   }
 
@@ -95,10 +92,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 400,
-        maxHeight: 500,
-      ),
+      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF1C2632)
@@ -120,8 +114,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: _getDifficultyColor(vocabulary.difficultyLevel)
-                  .withValues(alpha: 0.2),
+              color: _getDifficultyColor(
+                vocabulary.difficultyLevel,
+              ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -216,10 +211,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 400,
-        maxHeight: 500,
-      ),
+      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF1C2632)
@@ -250,10 +242,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             const SizedBox(height: 8),
             Text(
               vocabulary.definition,
-              style: const TextStyle(
-                fontSize: 18,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontSize: 18, height: 1.5),
             ),
 
             // Vietnamese translation
@@ -270,10 +259,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               const SizedBox(height: 8),
               Text(
                 vocabulary.vietnameseTranslation!,
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.5,
-                ),
+                style: const TextStyle(fontSize: 18, height: 1.5),
               ),
             ],
 
@@ -289,37 +275,41 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 ),
               ),
               const SizedBox(height: 12),
-              ...examples.take(3).map((example) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '• ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            example,
+              ...examples
+                  .take(3)
+                  .map(
+                    (example) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '• ',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textGrey,
-                              height: 1.5,
+                              fontSize: 16,
+                              color: AppColors.primary,
                             ),
                           ),
-                        ),
-                        // Speak example sentence
-                        SpeakIconButton(
-                          text: example,
-                          size: 18,
-                          color: AppColors.textGrey,
-                        ),
-                      ],
+                          Expanded(
+                            child: Text(
+                              example,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textGrey,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                          // Speak example sentence
+                          SpeakIconButton(
+                            text: example,
+                            size: 18,
+                            color: AppColors.textGrey,
+                          ),
+                        ],
+                      ),
                     ),
-                  )),
+                  ),
             ],
 
             const SizedBox(height: 24),

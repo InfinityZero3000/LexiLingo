@@ -72,9 +72,9 @@ class _RecordButtonState extends State<RecordButton>
             child: Text(
               _formatDuration(widget.recordingDuration),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         GestureDetector(
@@ -94,10 +94,11 @@ class _RecordButtonState extends State<RecordButton>
                         : (widget.isRecording ? Colors.red : AppColors.primary),
                     boxShadow: [
                       BoxShadow(
-                        color: (widget.isRecording
-                                ? Colors.red
-                                : AppColors.primary)
-                            .withValues(alpha: 0.3),
+                        color:
+                            (widget.isRecording
+                                    ? Colors.red
+                                    : AppColors.primary)
+                                .withValues(alpha: 0.3),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),
@@ -129,9 +130,9 @@ class _RecordButtonState extends State<RecordButton>
           widget.isProcessing
               ? 'Processing...'
               : (widget.isRecording ? 'Tap to stop' : 'Tap to record'),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textGrey,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
         ),
       ],
     );

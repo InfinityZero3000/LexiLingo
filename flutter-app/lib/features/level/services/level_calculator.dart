@@ -122,9 +122,16 @@ class LevelCalculator {
   ///
   /// Returns 0 if no level change, or the number of levels gained
   static int getLevelsGained(int currentXP, int xpToAdd) {
-    final currentTierIndex = LevelTiers.allTiers.indexOf(getCurrentTier(currentXP));
-    final newTierIndex = LevelTiers.allTiers.indexOf(getCurrentTier(currentXP + xpToAdd));
-    return (newTierIndex - currentTierIndex).clamp(0, LevelTiers.allTiers.length);
+    final currentTierIndex = LevelTiers.allTiers.indexOf(
+      getCurrentTier(currentXP),
+    );
+    final newTierIndex = LevelTiers.allTiers.indexOf(
+      getCurrentTier(currentXP + xpToAdd),
+    );
+    return (newTierIndex - currentTierIndex).clamp(
+      0,
+      LevelTiers.allTiers.length,
+    );
   }
 
   /// Get XP required to reach a specific level from current XP
@@ -146,9 +153,9 @@ class LevelCalculator {
     } else if (xp >= 1000) {
       // Add comma separator
       return xp.toString().replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-            (Match m) => '${m[1]},',
-          );
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]},',
+      );
     }
     return xp.toString();
   }

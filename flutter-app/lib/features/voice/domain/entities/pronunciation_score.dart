@@ -3,10 +3,10 @@ import 'package:equatable/equatable.dart';
 /// Pronunciation assessment result
 /// Scores the user's pronunciation against the target
 class PronunciationScore extends Equatable {
-  final int overallScore;       // 0-100
-  final int accuracyScore;      // 0-100
-  final int fluencyScore;       // 0-100
-  final int completenessScore;  // 0-100
+  final int overallScore; // 0-100
+  final int accuracyScore; // 0-100
+  final int fluencyScore; // 0-100
+  final int completenessScore; // 0-100
   final String userTranscript;
   final String targetText;
   final List<WordScore> wordScores;
@@ -37,15 +37,15 @@ class PronunciationScore extends Equatable {
 
   @override
   List<Object?> get props => [
-        overallScore,
-        accuracyScore,
-        fluencyScore,
-        completenessScore,
-        userTranscript,
-        targetText,
-        wordScores,
-        feedback,
-      ];
+    overallScore,
+    accuracyScore,
+    fluencyScore,
+    completenessScore,
+    userTranscript,
+    targetText,
+    wordScores,
+    feedback,
+  ];
 }
 
 /// Individual word pronunciation score

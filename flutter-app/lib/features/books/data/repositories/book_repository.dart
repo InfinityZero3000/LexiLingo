@@ -22,10 +22,13 @@ class BookRepository {
   final LocalCacheService _cache;
   final ApiClient? _apiClient;
 
-  BookRepository({http.Client? client, LocalCacheService? cache, ApiClient? apiClient})
-      : _client = client ?? http.Client(),
-        _cache = cache ?? LocalCacheService.instance,
-        _apiClient = apiClient;
+  BookRepository({
+    http.Client? client,
+    LocalCacheService? cache,
+    ApiClient? apiClient,
+  }) : _client = client ?? http.Client(),
+       _cache = cache ?? LocalCacheService.instance,
+       _apiClient = apiClient;
 
   String get _baseUrl => '${ApiConfig.baseUrl}/books';
 
@@ -33,21 +36,21 @@ class BookRepository {
 
   /// Fetch curated books, optionally filtered by [cefrLevel].
   Future<List<Book>> getRecommendedBooks({String? cefrLevel}) async {
-    final params = <String, String>{
-      if (cefrLevel != null) 'level': cefrLevel,
-    };
+    final params = <String, String>{if (cefrLevel != null) 'level': cefrLevel};
     final cacheKey = 'books:recommended:${cefrLevel ?? 'all'}';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'book',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/recommended').replace(
-          queryParameters: params.isEmpty ? null : params,
-        );
+        final uri = Uri.parse(
+          '$_baseUrl/recommended',
+        ).replace(queryParameters: params.isEmpty ? null : params);
         final response = await _client.get(uri);
         if (response.statusCode != 200) {
-          throw Exception('Failed to load recommended books: ${response.statusCode}');
+          throw Exception(
+            'Failed to load recommended books: ${response.statusCode}',
+          );
         }
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
@@ -70,13 +73,16 @@ class BookRepository {
       'page': page.toString(),
       if (cefrLevel != null) 'level': cefrLevel,
     };
-    final cacheKey = 'books:search:${query.toLowerCase()}:lvl:${cefrLevel ?? 'all'}:p:$page';
+    final cacheKey =
+        'books:search:${query.toLowerCase()}:lvl:${cefrLevel ?? 'all'}:p:$page';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'book',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/search').replace(queryParameters: params);
+        final uri = Uri.parse(
+          '$_baseUrl/search',
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         if (response.statusCode != 200) {
           throw Exception('Book search failed: ${response.statusCode}');
@@ -103,9 +109,9 @@ class BookRepository {
       key: cacheKey,
       type: 'book',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/$bookId/quiz').replace(
-          queryParameters: {'chapter': chapter.toString()},
-        );
+        final uri = Uri.parse(
+          '$_baseUrl/$bookId/quiz',
+        ).replace(queryParameters: {'chapter': chapter.toString()});
         final response = await _client.get(uri);
         if (response.statusCode != 200) {
           throw Exception('Quiz fetch failed: ${response.statusCode}');
@@ -154,7 +160,9 @@ class BookRepository {
     final raw = prefs.getString('$_bookmarksKeyPrefix$bookId');
     if (raw == null) return [];
     final list = jsonDecode(raw) as List<dynamic>;
-    return list.map((e) => Bookmark.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> addBookmark(Bookmark bookmark) async {

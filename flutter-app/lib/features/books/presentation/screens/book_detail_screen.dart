@@ -56,16 +56,18 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final cefrColor = _cefrColor(book.cefrLevel);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: CustomScrollView(
         slivers: [
           // Hero app bar with cover
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            backgroundColor:
-                isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+            backgroundColor: isDark
+                ? AppColors.backgroundDark
+                : AppColors.backgroundLight,
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(6),
@@ -73,7 +75,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -114,7 +120,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               width: 120,
                               height: 180,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _buildFallback(cefrColor),
+                              errorBuilder: (_, __, ___) =>
+                                  _buildFallback(cefrColor),
                             )
                           : _buildFallback(cefrColor),
                     ),
@@ -148,7 +155,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       ),
                       const SizedBox(width: 10),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: cefrColor,
                           borderRadius: BorderRadius.circular(8),
@@ -231,7 +241,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : AppColors.textDark,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppColors.textDark,
                                 ),
                               ),
                               Text(
@@ -253,7 +265,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               backgroundColor: isDark
                                   ? Colors.white.withValues(alpha: 0.1)
                                   : AppColors.grey200,
-                              valueColor: AlwaysStoppedAnimation<Color>(cefrColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                cefrColor,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -261,7 +275,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             'Page ${progress.currentPage + 1} of ${progress.totalPages}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark ? Colors.white38 : AppColors.textGrey,
+                              color: isDark
+                                  ? Colors.white38
+                                  : AppColors.textGrey,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -283,14 +299,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               icon: const Icon(Icons.menu_book_rounded),
                               label: Text(
                                 provider.currentProgress != null &&
-                                        provider.currentProgress!.currentPage > 0
+                                        provider.currentProgress!.currentPage >
+                                            0
                                     ? 'Continue Reading'
                                     : 'Start Reading',
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -299,7 +318,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => BookReaderScreen(book: book),
+                                    builder: (_) =>
+                                        BookReaderScreen(book: book),
                                   ),
                                 );
                               },
@@ -315,17 +335,21 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     )
-                                  : Icon(isDownloaded
-                                      ? Icons.download_done_rounded
-                                      : Icons.download_rounded),
+                                  : Icon(
+                                      isDownloaded
+                                          ? Icons.download_done_rounded
+                                          : Icons.download_rounded,
+                                    ),
                               label: Text(
                                 provider.isDownloading
                                     ? 'Downloading...'
                                     : isDownloaded
-                                        ? 'Downloaded'
-                                        : 'Download for Offline',
+                                    ? 'Downloaded'
+                                    : 'Download for Offline',
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: isDownloaded
@@ -336,7 +360,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                       ? AppColors.greenSuccess
                                       : AppColors.primary,
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -361,7 +387,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   side: const BorderSide(
                                     color: Color(0xFF8B5CF6),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -369,7 +397,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 onPressed: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const BookQuizScreen(chapter: 1),
+                                    builder: (_) =>
+                                        const BookQuizScreen(chapter: 1),
                                   ),
                                 ),
                               ),
@@ -420,22 +449,22 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   }
 
   Widget _buildFallback(Color cefrColor) => Container(
-        width: 120,
-        height: 180,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              cefrColor.withValues(alpha: 0.8),
-              cefrColor.withValues(alpha: 0.4),
-            ],
-          ),
-        ),
-        child: const Center(
-          child: Icon(Icons.menu_book_rounded, size: 48, color: Colors.white),
-        ),
-      );
+    width: 120,
+    height: 180,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          cefrColor.withValues(alpha: 0.8),
+          cefrColor.withValues(alpha: 0.4),
+        ],
+      ),
+    ),
+    child: const Center(
+      child: Icon(Icons.menu_book_rounded, size: 48, color: Colors.white),
+    ),
+  );
 }
 
 class _StatItem extends StatelessWidget {
@@ -454,8 +483,11 @@ class _StatItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16,
-            color: isDark ? Colors.white54 : AppColors.textGrey),
+        Icon(
+          icon,
+          size: 16,
+          color: isDark ? Colors.white54 : AppColors.textGrey,
+        ),
         const SizedBox(width: 4),
         Text(
           label,

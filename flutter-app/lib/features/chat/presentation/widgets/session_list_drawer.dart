@@ -34,23 +34,23 @@ class SessionListDrawer extends StatefulWidget {
 
 class _SessionListDrawerState extends State<SessionListDrawer> {
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
   }
-  
+
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   void _onScroll() {
     // Load more sessions when scrolling to the bottom
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 100) {
       if (widget.hasMoreSessions && !widget.isLoadingMoreSessions) {
         widget.onLoadMoreSessions();
@@ -66,7 +66,12 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
           // Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 24),
+            padding: const EdgeInsets.only(
+              top: 60,
+              left: 24,
+              right: 24,
+              bottom: 24,
+            ),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary, AppColors.accentYellow],
@@ -148,7 +153,9 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    itemCount: widget.sessions.length + (widget.hasMoreSessions ? 1 : 0),
+                    itemCount:
+                        widget.sessions.length +
+                        (widget.hasMoreSessions ? 1 : 0),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemBuilder: (context, index) {
                       // Show loading indicator at the bottom
@@ -160,7 +167,9 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : TextButton(
                                     onPressed: widget.onLoadMoreSessions,
@@ -169,7 +178,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                           ),
                         );
                       }
-                      
+
                       final session = widget.sessions[index];
                       final isActive = session.id == widget.currentSessionId;
 
@@ -178,7 +187,8 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                         isActive: isActive,
                         onTap: () => widget.onSessionTap(session.id),
                         onDelete: () => widget.onDeleteSession(session),
-                        onRename: (newTitle) => widget.onRenameSession(session, newTitle),
+                        onRename: (newTitle) =>
+                            widget.onRenameSession(session, newTitle),
                       );
                     },
                   ),
@@ -263,7 +273,10 @@ class _SessionListItemState extends State<SessionListItem> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _formatDate(widget.session.lastMessageAt ?? widget.session.createdAt),
+                            _formatDate(
+                              widget.session.lastMessageAt ??
+                                  widget.session.createdAt,
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -357,9 +370,7 @@ class _SessionListItemState extends State<SessionListItem> {
                 });
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Rename'),
           ),
         ],
@@ -388,9 +399,7 @@ class _SessionListItemState extends State<SessionListItem> {
                 _showActions = false;
               });
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

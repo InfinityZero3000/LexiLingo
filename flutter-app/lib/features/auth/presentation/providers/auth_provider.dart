@@ -18,7 +18,7 @@ class AuthProvider extends ChangeNotifier {
   final RegisterUseCase registerUseCase;
   final AuthRepository authRepository;
   final GoogleSignInService googleSignInService;
-  
+
   UserEntity? _user;
   bool _isLoading = false;
   bool _isCheckingAuth = true;
@@ -57,7 +57,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _isCheckingAuth = true;
       notifyListeners();
-      
+
       final result = await getCurrentUserUseCase(NoParams());
       result.fold(
         (failure) {
@@ -106,7 +106,7 @@ class AuthProvider extends ChangeNotifier {
       final result = await signInWithGoogleUseCase(
         SignInWithGoogleParams(idToken: idToken),
       );
-      
+
       result.fold(
         (failure) {
           _errorMessage = _getFailureMessage(failure);
@@ -116,7 +116,7 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
-          _isJustLoggedIn = true;  // Set flag for welcome screen
+          _isJustLoggedIn = true; // Set flag for welcome screen
         },
       );
     } catch (e) {
@@ -141,9 +141,9 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
       );
-      
+
       final result = await signInWithEmailPasswordUseCase(params);
-      
+
       result.fold(
         (failure) {
           _errorMessage = _getFailureMessage(failure);
@@ -153,7 +153,7 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
-          _isJustLoggedIn = true;  // Set flag for welcome screen
+          _isJustLoggedIn = true; // Set flag for welcome screen
         },
       );
     } catch (e) {

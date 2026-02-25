@@ -65,12 +65,7 @@ class RankBadge extends StatelessWidget {
   final double size;
   final VoidCallback? onTap;
 
-  const RankBadge({
-    super.key,
-    required this.rank,
-    this.size = 36,
-    this.onTap,
-  });
+  const RankBadge({super.key, required this.rank, this.size = 36, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +91,7 @@ class RankBadge extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          data.icon,
-          size: size * 0.5,
-          color: Colors.white,
-        ),
+        child: Icon(data.icon, size: size * 0.5, color: Colors.white),
       ),
     );
   }
@@ -219,10 +210,9 @@ class RankCard extends StatelessWidget {
                     'Level $numericLevel · $proficiencyLevel',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -243,10 +233,9 @@ class RankCard extends StatelessWidget {
                   'Score',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],

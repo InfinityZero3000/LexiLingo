@@ -7,13 +7,16 @@ import 'package:lexilingo_app/features/voice/domain/repositories/voice_repositor
 
 /// Assess Pronunciation Use Case
 /// Compares user's pronunciation against target text
-class AssessPronunciationUseCase implements UseCase<PronunciationScore, AssessPronunciationParams> {
+class AssessPronunciationUseCase
+    implements UseCase<PronunciationScore, AssessPronunciationParams> {
   final VoiceRepository repository;
 
   AssessPronunciationUseCase(this.repository);
 
   @override
-  Future<Either<Failure, PronunciationScore>> call(AssessPronunciationParams params) async {
+  Future<Either<Failure, PronunciationScore>> call(
+    AssessPronunciationParams params,
+  ) async {
     return await repository.assessPronunciation(
       audioData: params.audioData,
       filename: params.filename,

@@ -1,7 +1,7 @@
 import '../../domain/entities/course_category_entity.dart';
 
 /// Course Category Model
-/// 
+///
 /// Data model for course categories with JSON serialization
 class CourseCategoryModel extends CourseCategoryEntity {
   const CourseCategoryModel({

@@ -74,7 +74,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
 
   Future<void> _submitTest() async {
     if (_isSubmitting) return;
-    
+
     setState(() {
       _isSubmitting = true;
     });
@@ -92,7 +92,9 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
         _isSubmitting = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Failed to submit test')),
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Failed to submit test'),
+        ),
       );
     }
   }
@@ -321,7 +323,7 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
               LinearProgressIndicator(
                 value: (_currentQuestionIndex + 1) / provider.questions.length,
               ),
-              
+
               // Question counter
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -333,9 +335,14 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                        color: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -370,67 +377,80 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
                       const SizedBox(height: 24),
 
                       // Options
-                      ...(question['options'] as List<dynamic>).asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final option = entry.value as String;
-                        final isSelected = selectedAnswer == index;
+                      ...(question['options'] as List<dynamic>)
+                          .asMap()
+                          .entries
+                          .map((entry) {
+                            final index = entry.key;
+                            final option = entry.value as String;
+                            final isSelected = selectedAnswer == index;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: InkWell(
-                            onTap: () => _selectAnswer(questionId, index),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                                    : Colors.grey.withValues(alpha: 0.05),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.grey.withValues(alpha: 0.3),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: InkWell(
+                                onTap: () => _selectAnswer(questionId, index),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Theme.of(
+                                            context,
+                                          ).primaryColor.withValues(alpha: 0.1)
+                                        : Colors.grey.withValues(alpha: 0.05),
+                                    border: Border.all(
                                       color: isSelected
                                           ? Theme.of(context).primaryColor
                                           : Colors.grey.withValues(alpha: 0.3),
+                                      width: isSelected ? 2 : 1,
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        String.fromCharCode(65 + index), // A, B, C, D
-                                        style: TextStyle(
-                                          color: isSelected ? Colors.white : Colors.black54,
-                                          fontWeight: FontWeight.bold,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            String.fromCharCode(
+                                              65 + index,
+                                            ), // A, B, C, D
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Colors.black54,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      option,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: isSelected ? Theme.of(context).primaryColor : null,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          option,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: isSelected
+                                                ? Theme.of(context).primaryColor
+                                                : null,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          }),
                     ],
                   ),
                 ),
@@ -460,20 +480,26 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
                     const Spacer(),
                     if (_currentQuestionIndex < provider.questions.length - 1)
                       ElevatedButton.icon(
-                        onPressed: selectedAnswer != null ? _nextQuestion : null,
+                        onPressed: selectedAnswer != null
+                            ? _nextQuestion
+                            : null,
                         icon: const Icon(Icons.arrow_forward),
                         label: const Text('Next'),
                       )
                     else
                       ElevatedButton.icon(
-                        onPressed: _answers.length == provider.questions.length && !_isSubmitting
+                        onPressed:
+                            _answers.length == provider.questions.length &&
+                                !_isSubmitting
                             ? _submitTest
                             : null,
                         icon: _isSubmitting
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.check),
                         label: Text(_isSubmitting ? 'Submitting...' : 'Submit'),

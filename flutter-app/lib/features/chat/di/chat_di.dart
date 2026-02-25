@@ -28,7 +28,8 @@ void registerChatModule({required bool skipDatabase}) {
     );
 
     sl.registerLazySingleton<ChatLocalDataSource>(
-      () => ChatLocalDataSourceImpl(databaseHelper: sl<chat_db.DatabaseHelper>()),
+      () =>
+          ChatLocalDataSourceImpl(databaseHelper: sl<chat_db.DatabaseHelper>()),
     );
   } else {
     sl.registerLazySingleton<ChatLocalDataSource>(
@@ -36,7 +37,8 @@ void registerChatModule({required bool skipDatabase}) {
     );
   }
 
-  final geminiApiKey = (dotenv.isInitialized ? dotenv.env['GEMINI_API_KEY'] : null) ?? '';
+  final geminiApiKey =
+      (dotenv.isInitialized ? dotenv.env['GEMINI_API_KEY'] : null) ?? '';
   sl.registerLazySingleton<ChatRemoteDataSource>(
     () => ChatRemoteDataSource(apiKey: geminiApiKey),
   );
@@ -80,9 +82,7 @@ void registerChatModule({required bool skipDatabase}) {
   // ============================================================
   // Story/Topic-based Conversation Module
   // ============================================================
-  sl.registerLazySingleton<StoryApiDataSource>(
-    () => StoryApiDataSource(),
-  );
+  sl.registerLazySingleton<StoryApiDataSource>(() => StoryApiDataSource());
 
   sl.registerLazySingleton<StoryRepository>(
     () => StoryRepositoryImpl(apiDataSource: sl<StoryApiDataSource>()),

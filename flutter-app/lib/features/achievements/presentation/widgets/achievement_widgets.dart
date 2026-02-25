@@ -21,7 +21,7 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.workspace_premium;
     case 'award':
       return Icons.emoji_events_outlined;
-      
+
     // Star icons
     case 'star':
       return Icons.star;
@@ -29,7 +29,7 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.star_rate;
     case 'stars':
       return Icons.auto_awesome;
-      
+
     // Fire/Energy icons
     case 'fire':
       return Icons.local_fire_department;
@@ -38,7 +38,7 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.bolt;
     case 'flash':
       return Icons.flash_on;
-      
+
     // Education icons
     case 'book':
       return Icons.menu_book;
@@ -50,7 +50,7 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.school;
     case 'pencil':
       return Icons.edit;
-      
+
     // Target/Check icons
     case 'target':
       return Icons.track_changes;
@@ -59,13 +59,13 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.check_circle;
     case 'verified':
       return Icons.verified;
-      
+
     // Gem/Diamond icons
     case 'diamond':
       return Icons.diamond;
     case 'gem':
       return Icons.diamond_outlined;
-      
+
     // Voice icons
     case 'mic':
     case 'microphone':
@@ -74,7 +74,7 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.fiber_manual_record;
     case 'speaker':
       return Icons.volume_up;
-      
+
     // Progress icons
     case 'flag':
       return Icons.flag;
@@ -82,11 +82,12 @@ IconData _getBadgeIcon(String? badgeIcon) {
       return Icons.rocket_launch;
     case 'trending':
       return Icons.trending_up;
-      
+
     // Default fallback
     default:
       // Check if it's an emoji (fallback to trophy)
-      if (badgeIcon.length <= 2 || badgeIcon.contains(RegExp(r'[\u{1F000}-\u{1FFFF}]', unicode: true))) {
+      if (badgeIcon.length <= 2 ||
+          badgeIcon.contains(RegExp(r'[\u{1F000}-\u{1FFFF}]', unicode: true))) {
         return Icons.emoji_events;
       }
       return Icons.emoji_events;
@@ -120,12 +121,12 @@ class AchievementBadge extends StatelessWidget {
     if (preferImageAsset) {
       // Prefer slug (stable ID) over id (UUID) for badge asset lookup
       final lookupKey = achievement.slug ?? achievement.id;
-      
+
       // Priority 1: Network image from backend API (badgeIcon field)
       if (achievement.badgeIcon != null && achievement.badgeIcon!.isNotEmpty) {
         return _buildNetworkBadge(achievement.badgeIcon!);
       }
-      
+
       // Priority 2: CDN URL (if useCdnFirst is true)
       if (useCdnFirst) {
         final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
@@ -133,7 +134,7 @@ class AchievementBadge extends StatelessWidget {
           return _buildNetworkBadge(cdnUrl);
         }
       }
-      
+
       // Priority 3: Local asset
       final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
       if (assetPath != null) {
@@ -183,7 +184,7 @@ class AchievementBadge extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                     ),
                   );
@@ -214,11 +215,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(
-                  Icons.lock,
-                  size: size * 0.4,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
               ),
           ],
         ),
@@ -270,11 +267,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(
-                  Icons.lock,
-                  size: size * 0.4,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
               ),
           ],
         ),

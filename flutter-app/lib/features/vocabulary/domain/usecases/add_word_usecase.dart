@@ -18,10 +18,7 @@ class AddWordUseCase implements UseCase<void, AddWordParams> {
 
   @override
   Future<Either<Failure, void>> call(AddWordParams params) async {
-    final newWord = VocabWord(
-      word: params.word,
-      definition: params.definition,
-    );
+    final newWord = VocabWord(word: params.word, definition: params.definition);
     return await repository.addWord(newWord);
   }
 }

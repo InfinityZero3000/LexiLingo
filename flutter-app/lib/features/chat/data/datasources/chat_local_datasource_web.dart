@@ -8,10 +8,10 @@ import '../../domain/entities/chat_message.dart';
 /// Web implementation of ChatLocalDataSource using SharedPreferences
 class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   final SharedPreferences sharedPreferences;
-  
+
   static const String _sessionsKey = 'chat_sessions';
   static const String _messagesKey = 'chat_messages_';
-  
+
   ChatLocalDataSourceWeb({required this.sharedPreferences});
 
   @override
@@ -26,10 +26,12 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   Future<ChatSessionModel> getSessionById(String sessionId) async {
     final jsonString = sharedPreferences.getString(_sessionsKey);
     if (jsonString == null) throw Exception('Session not found');
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
-    final sessions = jsonList.map((json) => ChatSessionModel.fromJson(json)).toList();
-    
+    final sessions = jsonList
+        .map((json) => ChatSessionModel.fromJson(json))
+        .toList();
+
     return sessions.firstWhere(
       (s) => s.id == sessionId,
       orElse: () => throw Exception('Session not found'),
@@ -40,9 +42,11 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   Future<List<ChatSessionModel>> getSessions(String userId) async {
     final jsonString = sharedPreferences.getString(_sessionsKey);
     if (jsonString == null) return [];
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
-    final allSessions = jsonList.map((json) => ChatSessionModel.fromJson(json)).toList();
+    final allSessions = jsonList
+        .map((json) => ChatSessionModel.fromJson(json))
+        .toList();
     return allSessions.where((s) => s.userId == userId).toList();
   }
 
@@ -51,11 +55,13 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
     final jsonString = sharedPreferences.getString(_sessionsKey);
     if (jsonString != null) {
       final List<dynamic> jsonList = json.decode(jsonString);
-      final sessions = jsonList.map((json) => ChatSessionModel.fromJson(json)).toList();
+      final sessions = jsonList
+          .map((json) => ChatSessionModel.fromJson(json))
+          .toList();
       sessions.removeWhere((s) => s.id == sessionId);
       await _saveSessions(sessions);
     }
-    
+
     // Delete messages too
     await sharedPreferences.remove('$_messagesKey$sessionId');
   }
@@ -80,7 +86,10 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   }
 
   @override
-  Future<void> updateSessionLastMessageTime(String sessionId, DateTime time) async {
+  Future<void> updateSessionLastMessageTime(
+    String sessionId,
+    DateTime time,
+  ) async {
     final session = await getSessionById(sessionId);
     final sessions = await getSessions(session.userId);
     final index = sessions.indexWhere((s) => s.id == sessionId);
@@ -110,20 +119,26 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   Future<List<ChatMessageModel>> getMessages(String sessionId) async {
     final jsonString = sharedPreferences.getString('$_messagesKey$sessionId');
     if (jsonString == null) return [];
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
     return jsonList.map((json) => ChatMessageModel.fromJson(json)).toList();
   }
 
   @override
-  Future<void> updateMessageStatus(String messageId, MessageStatus status, [String? error]) async {
+  Future<void> updateMessageStatus(
+    String messageId,
+    MessageStatus status, [
+    String? error,
+  ]) async {
     // Find the message across all sessions
     final jsonString = sharedPreferences.getString(_sessionsKey);
     if (jsonString == null) return;
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
-    final sessions = jsonList.map((json) => ChatSessionModel.fromJson(json)).toList();
-    
+    final sessions = jsonList
+        .map((json) => ChatSessionModel.fromJson(json))
+        .toList();
+
     for (final session in sessions) {
       final messages = await getMessages(session.id);
       final index = messages.indexWhere((m) => m.id == messageId);
@@ -149,10 +164,12 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
   Future<void> deleteMessage(String messageId) async {
     final jsonString = sharedPreferences.getString(_sessionsKey);
     if (jsonString == null) return;
-    
+
     final List<dynamic> jsonList = json.decode(jsonString);
-    final sessions = jsonList.map((json) => ChatSessionModel.fromJson(json)).toList();
-    
+    final sessions = jsonList
+        .map((json) => ChatSessionModel.fromJson(json))
+        .toList();
+
     for (final session in sessions) {
       final messages = await getMessages(session.id);
       final initialLength = messages.length;
@@ -170,8 +187,14 @@ class ChatLocalDataSourceWeb implements ChatLocalDataSource {
     await sharedPreferences.setString(_sessionsKey, json.encode(jsonList));
   }
 
-  Future<void> _saveMessages(String sessionId, List<ChatMessageModel> messages) async {
+  Future<void> _saveMessages(
+    String sessionId,
+    List<ChatMessageModel> messages,
+  ) async {
     final jsonList = messages.map((m) => m.toJson()).toList();
-    await sharedPreferences.setString('$_messagesKey$sessionId', json.encode(jsonList));
+    await sharedPreferences.setString(
+      '$_messagesKey$sessionId',
+      json.encode(jsonList),
+    );
   }
 }

@@ -10,7 +10,8 @@ import 'api_interceptor.dart';
 /// Implements token refresh logic with retry mechanism
 class TokenRefreshInterceptor implements ApiInterceptor {
   final Future<String?> Function() getRefreshToken;
-  final Future<void> Function(String accessToken, String refreshToken) saveTokens;
+  final Future<void> Function(String accessToken, String refreshToken)
+  saveTokens;
   final Future<void> Function() onRefreshFailed;
   final String refreshTokenEndpoint;
   final http.Client client;
@@ -62,7 +63,7 @@ class TokenRefreshInterceptor implements ApiInterceptor {
           final decoded = jsonDecode(response.body);
           if (decoded is Map<String, dynamic> && decoded.containsKey('error')) {
             final errorEnvelope = ErrorResponseEnvelope.fromJson(decoded);
-            
+
             // Only refresh token if error code is AUTH_EXPIRED or AUTH_INVALID
             if (errorEnvelope.error.code != ErrorCodes.authExpired &&
                 errorEnvelope.error.code != ErrorCodes.authInvalid) {
@@ -83,7 +84,7 @@ class TokenRefreshInterceptor implements ApiInterceptor {
 
       // Call refresh token endpoint
       final newTokens = await _refreshTokens(refreshToken);
-      
+
       // Save new tokens
       await saveTokens(newTokens['access_token']!, newTokens['refresh_token']!);
 
@@ -100,7 +101,7 @@ class TokenRefreshInterceptor implements ApiInterceptor {
 
   Future<Map<String, String>> _refreshTokens(String refreshToken) async {
     final uri = Uri.parse('${_getBaseUrl()}$refreshTokenEndpoint');
-    
+
     final response = await client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -108,16 +109,18 @@ class TokenRefreshInterceptor implements ApiInterceptor {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Token refresh failed with status ${response.statusCode}');
+      throw Exception(
+        'Token refresh failed with status ${response.statusCode}',
+      );
     }
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    
+
     // Parse response - backend returns tokens directly, not wrapped in 'data'
-    final data = decoded.containsKey('data') 
+    final data = decoded.containsKey('data')
         ? decoded['data'] as Map<String, dynamic>
         : decoded;
-    
+
     return {
       'access_token': data['access_token'] as String,
       'refresh_token': data['refresh_token'] as String,

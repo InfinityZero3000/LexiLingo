@@ -35,7 +35,7 @@ class _ShopScreenState extends State<ShopScreen>
     super.initState();
     _tabController = TabController(length: _categories.length, vsync: this);
     _tabController.addListener(_onTabChanged);
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<GamificationProvider>();
       provider.loadShopItems();
@@ -58,7 +58,7 @@ class _ShopScreenState extends State<ShopScreen>
 
   Future<void> _handlePurchase(ShopItemEntity item) async {
     final provider = context.read<GamificationProvider>();
-    
+
     // Check if can afford
     if (provider.gems < item.priceGems) {
       _showNotEnoughGemsDialog();
@@ -186,9 +186,7 @@ class _ShopScreenState extends State<ShopScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -208,10 +206,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 16),
             const Text(
               'Purchase Successful!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -244,9 +239,7 @@ class _ShopScreenState extends State<ShopScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -266,10 +259,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 16),
             const Text(
               'Not Enough Gems',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -372,10 +362,7 @@ class _ShopScreenState extends State<ShopScreen>
                   const SizedBox(height: 16),
                   Text(
                     'No items in this category',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),

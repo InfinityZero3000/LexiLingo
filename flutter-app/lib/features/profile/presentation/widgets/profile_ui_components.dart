@@ -19,7 +19,8 @@ class AnimatedProfileBackground extends StatefulWidget {
   });
 
   @override
-  State<AnimatedProfileBackground> createState() => _AnimatedProfileBackgroundState();
+  State<AnimatedProfileBackground> createState() =>
+      _AnimatedProfileBackgroundState();
 }
 
 class _AnimatedProfileBackgroundState extends State<AnimatedProfileBackground>
@@ -30,14 +31,13 @@ class _AnimatedProfileBackgroundState extends State<AnimatedProfileBackground>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat(reverse: true);
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -57,11 +57,7 @@ class _AnimatedProfileBackgroundState extends State<AnimatedProfileBackground>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: widget.colors,
-              stops: [
-                0.0,
-                0.5 + (_animation.value * 0.2),
-                1.0,
-              ],
+              stops: [0.0, 0.5 + (_animation.value * 0.2), 1.0],
             ),
           ),
           child: child,
@@ -111,13 +107,15 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _glowAnimation = Tween<double>(begin: 0.2, end: 0.4).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _glowAnimation = Tween<double>(
+      begin: 0.2,
+      end: 0.4,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -209,7 +207,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                               child: Text(
                                 widget.title,
                                 style: TextStyle(
-                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -237,7 +237,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                   style: TextStyle(
                                     color: widget.isAction
                                         ? widget.color
-                                        : (isDark ? Colors.grey[500] : Colors.grey[600]),
+                                        : (isDark
+                                              ? Colors.grey[500]
+                                              : Colors.grey[600]),
                                     fontSize: 11,
                                     fontWeight: widget.isAction
                                         ? FontWeight.w600
@@ -297,25 +299,17 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: widget.progress.clamp(0.0, 1.0),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    _shimmerAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.linear,
-      ),
-    );
+    _shimmerAnimation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     _controller.forward();
   }
@@ -324,13 +318,13 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   void didUpdateWidget(AnimatedProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.progress != widget.progress) {
-      _progressAnimation = Tween<double>(
-        begin: _progressAnimation.value,
-        end: widget.progress.clamp(0.0, 1.0),
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-      ));
+      _progressAnimation =
+          Tween<double>(
+            begin: _progressAnimation.value,
+            end: widget.progress.clamp(0.0, 1.0),
+          ).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
       _controller.forward(from: 0);
     }
   }
@@ -344,8 +338,8 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final secondaryColor = widget.secondaryColor ?? 
-        widget.primaryColor.withValues(alpha: 0.6);
+    final secondaryColor =
+        widget.secondaryColor ?? widget.primaryColor.withValues(alpha: 0.6);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -436,40 +430,16 @@ class _AnimatedSocialStatState extends State<AnimatedSocialStat>
     );
 
     _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.1),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.1, end: 1.0),
-        weight: 50,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.1), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.1, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _iconBounceAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: -4.0),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: -4.0, end: 0.0),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: -2.0),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: -2.0, end: 0.0),
-        weight: 25,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -4.0), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: -4.0, end: 0.0), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -2.0), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 25),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Auto-play animation on build
     Future.delayed(const Duration(milliseconds: 200), () {
@@ -563,9 +533,10 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -612,11 +583,7 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        widget.icon,
-                        size: 16,
-                        color: Colors.white,
-                      ),
+                      Icon(widget.icon, size: 16, color: Colors.white),
                       const SizedBox(width: 6),
                       Text(
                         widget.text,
@@ -676,10 +643,7 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
     _heightAnimation = Tween<double>(
       begin: 0.0,
       end: widget.value.clamp(0.0, 1.0),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -732,10 +696,7 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [
-                      widget.color,
-                      widget.color.withValues(alpha: 0.6),
-                    ],
+                    colors: [widget.color, widget.color.withValues(alpha: 0.6)],
                   ),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
@@ -811,8 +772,9 @@ class GlassmorphicContainer extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
-                color: borderColor ?? 
-                    (isDark 
+                color:
+                    borderColor ??
+                    (isDark
                         ? Colors.white.withValues(alpha: 0.1)
                         : Colors.white.withValues(alpha: 0.5)),
               ),

@@ -52,11 +52,8 @@ class AuthBackendDataSource {
     required String password,
   }) async {
     logDebug(_tag, 'Starting login for $email');
-    
-    final request = LoginRequest(
-      email: email,
-      password: password,
-    );
+
+    final request = LoginRequest(email: email, password: password);
 
     final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
       '/auth/login',
@@ -66,12 +63,15 @@ class AuthBackendDataSource {
 
     logDebug(_tag, 'Login response received');
     final loginResponse = LoginResponse.fromJson(envelope.data);
-    logDebug(_tag, 'Token parsed, length: ${loginResponse.tokens.accessToken.length}');
-    
+    logDebug(
+      _tag,
+      'Token parsed, length: ${loginResponse.tokens.accessToken.length}',
+    );
+
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
     logDebug(_tag, 'Tokens saved, now registering device...');
-    
+
     // Register device with FCM token
     await _registerDevice();
     logInfo(_tag, 'Login complete');
@@ -89,7 +89,7 @@ class AuthBackendDataSource {
     );
 
     final loginResponse = LoginResponse.fromJson(envelope.data);
-    
+
     await tokenStorage.saveTokens(loginResponse.tokens);
     await _registerDevice();
 
@@ -108,7 +108,7 @@ class AuthBackendDataSource {
     );
 
     final tokens = AuthTokens.fromJson(envelope.data);
-    
+
     // Update stored tokens (token rotation)
     await tokenStorage.saveTokens(tokens);
 
@@ -209,10 +209,7 @@ class AuthBackendDataSource {
   }) async {
     await apiClient.post(
       '/auth/reset-password',
-      body: {
-        'token': token,
-        'new_password': newPassword,
-      },
+      body: {'token': token, 'new_password': newPassword},
     );
   }
 
@@ -224,10 +221,7 @@ class AuthBackendDataSource {
   }) async {
     await apiClient.post(
       '/auth/change-password',
-      body: {
-        'current_password': currentPassword,
-        'new_password': newPassword,
-      },
+      body: {'current_password': currentPassword, 'new_password': newPassword},
     );
   }
 }

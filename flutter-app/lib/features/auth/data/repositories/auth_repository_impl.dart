@@ -43,10 +43,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       // Login and save tokens (done in datasource)
-      await backendDataSource.login(
-        email: email,
-        password: password,
-      );
+      await backendDataSource.login(email: email, password: password);
       // Fetch full user profile after login
       final user = await backendDataSource.getCurrentUser();
       return Right(user);
@@ -198,24 +195,24 @@ class AuthRepositoryImpl implements AuthRepository {
       case ErrorCodes.authExpired:
       case ErrorCodes.authMissing:
         return AuthFailure(e.message);
-      
+
       case ErrorCodes.validationError:
       case ErrorCodes.invalidInput:
       case ErrorCodes.missingField:
         return ValidationFailure(e.message);
-      
+
       case ErrorCodes.notFound:
         return NotFoundFailure(e.message);
-      
+
       case ErrorCodes.alreadyExists:
         return ConflictFailure(e.message);
-      
+
       case ErrorCodes.rateLimited:
         return RateLimitFailure(e.message);
-      
+
       case ErrorCodes.permissionDenied:
         return PermissionFailure(e.message);
-      
+
       default:
         return ServerFailure(e.message);
     }

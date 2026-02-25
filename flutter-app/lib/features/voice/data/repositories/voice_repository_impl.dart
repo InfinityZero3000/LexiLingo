@@ -29,18 +29,17 @@ class VoiceRepositoryImpl implements VoiceRepository {
     if (await networkInfo.isConnected == false) {
       return const Left(NetworkFailure());
     }
-    
+
     try {
       final result = await remoteDataSource.transcribeAudio(
         audioData: audioData,
         filename: filename,
         language: language,
       );
-      
-      return Right(Transcription(
-        text: result['text'] ?? '',
-        language: result['language'],
-      ));
+
+      return Right(
+        Transcription(text: result['text'] ?? '', language: result['language']),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -55,14 +54,13 @@ class VoiceRepositoryImpl implements VoiceRepository {
     if (await networkInfo.isConnected == false) {
       return const Left(NetworkFailure());
     }
-    
+
     try {
       final audioBytes = await remoteDataSource.synthesizeSpeech(text: text);
-      
-      return Right(AudioSynthesis(
-        audioData: audioBytes,
-        mimeType: 'audio/wav',
-      ));
+
+      return Right(
+        AudioSynthesis(audioData: audioBytes, mimeType: 'audio/wav'),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -80,7 +78,7 @@ class VoiceRepositoryImpl implements VoiceRepository {
     if (await networkInfo.isConnected == false) {
       return const Left(NetworkFailure());
     }
-    
+
     try {
       // First, transcribe the audio
       final transcriptionResult = await remoteDataSource.transcribeAudio(
@@ -88,13 +86,13 @@ class VoiceRepositoryImpl implements VoiceRepository {
         filename: filename,
         language: language,
       );
-      
+
       final userTranscript = transcriptionResult['text'] ?? '';
-      
+
       // Calculate scores based on text comparison
       // This is a basic implementation - can be enhanced with AI
       final score = _calculatePronunciationScore(userTranscript, targetText);
-      
+
       return Right(score);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -111,66 +109,62 @@ class VoiceRepositoryImpl implements VoiceRepository {
   ) {
     final userWords = _normalizeText(userTranscript).split(' ');
     final targetWords = _normalizeText(targetText).split(' ');
-    
+
     int matchedWords = 0;
     final wordScores = <WordScore>[];
-    
+
     for (int i = 0; i < targetWords.length; i++) {
       if (i < userWords.length) {
         final target = targetWords[i];
         final user = userWords[i];
-        
+
         if (target == user) {
           matchedWords++;
           wordScores.add(WordScore(word: target, score: 100));
         } else if (_levenshteinDistance(target, user) <= 2) {
           matchedWords++;
-          wordScores.add(WordScore(
-            word: target,
-            score: 70,
-            issue: 'mispronunciation',
-          ));
+          wordScores.add(
+            WordScore(word: target, score: 70, issue: 'mispronunciation'),
+          );
         } else {
-          wordScores.add(WordScore(
-            word: target,
-            score: 30,
-            issue: 'mispronunciation',
-          ));
+          wordScores.add(
+            WordScore(word: target, score: 30, issue: 'mispronunciation'),
+          );
         }
       } else {
-        wordScores.add(WordScore(
-          word: targetWords[i],
-          score: 0,
-          issue: 'omission',
-        ));
+        wordScores.add(
+          WordScore(word: targetWords[i], score: 0, issue: 'omission'),
+        );
       }
     }
-    
+
     // Check for extra words (insertions)
     if (userWords.length > targetWords.length) {
       for (int i = targetWords.length; i < userWords.length; i++) {
-        wordScores.add(WordScore(
-          word: userWords[i],
-          score: 0,
-          issue: 'insertion',
-        ));
+        wordScores.add(
+          WordScore(word: userWords[i], score: 0, issue: 'insertion'),
+        );
       }
     }
-    
+
     // Calculate overall scores
-    final accuracyScore = targetWords.isEmpty 
-        ? 0 
+    final accuracyScore = targetWords.isEmpty
+        ? 0
         : ((matchedWords / targetWords.length) * 100).round();
-    
+
     final completenessScore = targetWords.isEmpty
         ? 0
-        : ((wordScores.where((w) => w.issue != 'omission').length / 
-            targetWords.length) * 100).round().clamp(0, 100);
-    
+        : ((wordScores.where((w) => w.issue != 'omission').length /
+                      targetWords.length) *
+                  100)
+              .round()
+              .clamp(0, 100);
+
     final fluencyScore = userTranscript.isEmpty ? 0 : 80; // Basic assumption
-    
-    final overallScore = ((accuracyScore + completenessScore + fluencyScore) / 3).round();
-    
+
+    final overallScore =
+        ((accuracyScore + completenessScore + fluencyScore) / 3).round();
+
     String feedback;
     if (overallScore >= 90) {
       feedback = 'Excellent pronunciation! Keep up the great work!';
@@ -181,7 +175,7 @@ class VoiceRepositoryImpl implements VoiceRepository {
     } else {
       feedback = 'Try again slowly. Listen to the example first.';
     }
-    
+
     return PronunciationScore(
       overallScore: overallScore.clamp(0, 100),
       accuracyScore: accuracyScore.clamp(0, 100),
@@ -205,23 +199,27 @@ class VoiceRepositoryImpl implements VoiceRepository {
   int _levenshteinDistance(String s1, String s2) {
     if (s1.isEmpty) return s2.length;
     if (s2.isEmpty) return s1.length;
-    
+
     List<int> v0 = List.generate(s2.length + 1, (i) => i);
     List<int> v1 = List.filled(s2.length + 1, 0);
-    
+
     for (int i = 0; i < s1.length; i++) {
       v1[0] = i + 1;
-      
+
       for (int j = 0; j < s2.length; j++) {
         int cost = s1[i] == s2[j] ? 0 : 1;
-        v1[j + 1] = [v1[j] + 1, v0[j + 1] + 1, v0[j] + cost].reduce((a, b) => a < b ? a : b);
+        v1[j + 1] = [
+          v1[j] + 1,
+          v0[j + 1] + 1,
+          v0[j] + cost,
+        ].reduce((a, b) => a < b ? a : b);
       }
-      
+
       final temp = v0;
       v0 = v1;
       v1 = temp;
     }
-    
+
     return v0[s2.length];
   }
 }

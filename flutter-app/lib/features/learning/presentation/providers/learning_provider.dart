@@ -24,11 +24,11 @@ class LearningProvider with ChangeNotifier {
     required CompleteLessonUseCase completeLessonUseCase,
     required GetCourseRoadmapUseCase getCourseRoadmapUseCase,
     required GetLessonContentUseCase getLessonContentUseCase,
-  })  : _startLessonUseCase = startLessonUseCase,
-        _submitAnswerUseCase = submitAnswerUseCase,
-        _completeLessonUseCase = completeLessonUseCase,
-        _getCourseRoadmapUseCase = getCourseRoadmapUseCase,
-        _getLessonContentUseCase = getLessonContentUseCase;
+  }) : _startLessonUseCase = startLessonUseCase,
+       _submitAnswerUseCase = submitAnswerUseCase,
+       _completeLessonUseCase = completeLessonUseCase,
+       _getCourseRoadmapUseCase = getCourseRoadmapUseCase,
+       _getLessonContentUseCase = getLessonContentUseCase;
 
   // ROADMAP STATE
   CourseRoadmapModel? _courseRoadmap;
@@ -97,10 +97,13 @@ class LearningProvider with ChangeNotifier {
   bool get isCurrentAnswered => _userAnswers.containsKey(_currentExerciseIndex);
   String? get currentUserAnswer => _userAnswers[_currentExerciseIndex];
   bool? get isCurrentCorrect => _answerResults[_currentExerciseIndex];
-  AnswerResponseModel? get currentAnswerResponse => _answerResponses[_currentExerciseIndex];
-  bool get isCompleted => _currentLesson != null && _currentExerciseIndex >= totalExercises;
+  AnswerResponseModel? get currentAnswerResponse =>
+      _answerResponses[_currentExerciseIndex];
+  bool get isCompleted =>
+      _currentLesson != null && _currentExerciseIndex >= totalExercises;
   int get score => _answerResults.values.where((result) => result).length;
-  double get progress => totalExercises == 0 ? 0 : (_currentExerciseIndex + 1) / totalExercises;
+  double get progress =>
+      totalExercises == 0 ? 0 : (_currentExerciseIndex + 1) / totalExercises;
 
   Future<void> startLesson(String courseId, String lessonId) async {
     _isLoading = true;
@@ -109,7 +112,9 @@ class LearningProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final attemptResult = await _startLessonUseCase(StartLessonParams(lessonId: lessonId));
+      final attemptResult = await _startLessonUseCase(
+        StartLessonParams(lessonId: lessonId),
+      );
       attemptResult.fold(
         (failure) => debugPrint('Start lesson API failed: ${failure.message}'),
         (attempt) {
@@ -119,7 +124,9 @@ class LearningProvider with ChangeNotifier {
         },
       );
 
-      final contentResult = await _getLessonContentUseCase(GetLessonContentParams(lessonId: lessonId));
+      final contentResult = await _getLessonContentUseCase(
+        GetLessonContentParams(lessonId: lessonId),
+      );
       contentResult.fold(
         (failure) => _error = failure.message,
         (lesson) => _currentLesson = lesson,
@@ -151,13 +158,15 @@ class LearningProvider with ChangeNotifier {
         : 5000;
 
     if (_currentAttempt != null) {
-      final result = await _submitAnswerUseCase(SubmitAnswerParams(
-        attemptId: _currentAttempt!.attemptId,
-        questionId: exercise.id,
-        questionType: _exerciseTypeToString(exercise.type),
-        userAnswer: answer,
-        timeSpentMs: timeSpentMs,
-      ));
+      final result = await _submitAnswerUseCase(
+        SubmitAnswerParams(
+          attemptId: _currentAttempt!.attemptId,
+          questionId: exercise.id,
+          questionType: _exerciseTypeToString(exercise.type),
+          userAnswer: answer,
+          timeSpentMs: timeSpentMs,
+        ),
+      );
 
       result.fold(
         (failure) {
@@ -225,12 +234,16 @@ class LearningProvider with ChangeNotifier {
     if (_currentAttempt == null) {
       final correctAnswers = score;
       final totalQuestions = totalExercises;
-      final percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100) : 0.0;
+      final percentage = totalQuestions > 0
+          ? (correctAnswers / totalQuestions * 100)
+          : 0.0;
       _xpEarned = (correctAnswers * 10) + (percentage >= 80 ? 20 : 0);
       return;
     }
 
-    final result = await _completeLessonUseCase(CompleteLessonParams(attemptId: _currentAttempt!.attemptId));
+    final result = await _completeLessonUseCase(
+      CompleteLessonParams(attemptId: _currentAttempt!.attemptId),
+    );
     result.fold(
       (failure) => debugPrint('Complete lesson failed: ${failure.message}'),
       (lessonComplete) {
@@ -251,7 +264,8 @@ class LearningProvider with ChangeNotifier {
         return userAnswer == correctAnswer;
       case ExerciseType.fillInBlank:
         return userAnswer == correctAnswer ||
-            userAnswer.replaceAll(RegExp(r'[^\w\s]'), '') == correctAnswer.replaceAll(RegExp(r'[^\w\s]'), '');
+            userAnswer.replaceAll(RegExp(r'[^\w\s]'), '') ==
+                correctAnswer.replaceAll(RegExp(r'[^\w\s]'), '');
       case ExerciseType.translate:
         return _calculateSimilarity(userAnswer, correctAnswer) > 0.7;
       default:
@@ -261,12 +275,18 @@ class LearningProvider with ChangeNotifier {
 
   String _exerciseTypeToString(ExerciseType type) {
     switch (type) {
-      case ExerciseType.multipleChoice: return 'multiple_choice';
-      case ExerciseType.trueFalse: return 'true_false';
-      case ExerciseType.fillInBlank: return 'fill_blank';
-      case ExerciseType.translate: return 'translation';
-      case ExerciseType.listening: return 'listening';
-      case ExerciseType.speaking: return 'speaking';
+      case ExerciseType.multipleChoice:
+        return 'multiple_choice';
+      case ExerciseType.trueFalse:
+        return 'true_false';
+      case ExerciseType.fillInBlank:
+        return 'fill_blank';
+      case ExerciseType.translate:
+        return 'translation';
+      case ExerciseType.listening:
+        return 'listening';
+      case ExerciseType.speaking:
+        return 'speaking';
     }
   }
 
@@ -288,8 +308,11 @@ class LearningProvider with ChangeNotifier {
     for (int i = 1; i <= len1; i++) {
       for (int j = 1; j <= len2; j++) {
         final cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
-        matrix[i][j] = [matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost]
-            .reduce((a, b) => a < b ? a : b);
+        matrix[i][j] = [
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost,
+        ].reduce((a, b) => a < b ? a : b);
       }
     }
     return matrix[len1][len2];

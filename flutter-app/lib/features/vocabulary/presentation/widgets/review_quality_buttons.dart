@@ -36,13 +36,10 @@ class ReviewQualityButtons extends StatelessWidget {
         children: [
           const Text(
             'How well did you know this?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
-          
+
           // Main quality buttons (simplified - 3 options)
           Row(
             children: [
@@ -145,10 +142,7 @@ class _QualityButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withValues(alpha: 0.3),
-              width: 2,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           ),
           child: Column(
             children: [

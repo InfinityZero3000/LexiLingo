@@ -56,7 +56,8 @@ class NewsArticle {
           ? CefrInfo.fromJson(json['cefr_info'] as Map<String, dynamic>)
           : null,
       readingTimeMin: json['reading_time_min'] as int? ?? 1,
-      highlightedWords: (json['highlighted_words'] as List<dynamic>?)
+      highlightedWords:
+          (json['highlighted_words'] as List<dynamic>?)
               ?.map((w) => w as String)
               .toList() ??
           [],
@@ -64,21 +65,21 @@ class NewsArticle {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'content': content,
-        'url': url,
-        'image_url': imageUrl,
-        'source_name': sourceName,
-        'author': author,
-        'published_at': publishedAt,
-        'category': category,
-        'provider': provider,
-        'cefr_level': cefrLevel,
-        'reading_time_min': readingTimeMin,
-        'highlighted_words': highlightedWords,
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'content': content,
+    'url': url,
+    'image_url': imageUrl,
+    'source_name': sourceName,
+    'author': author,
+    'published_at': publishedAt,
+    'category': category,
+    'provider': provider,
+    'cefr_level': cefrLevel,
+    'reading_time_min': readingTimeMin,
+    'highlighted_words': highlightedWords,
+  };
 }
 
 /// CEFR level information for display.
@@ -87,11 +88,7 @@ class CefrInfo {
   final String color;
   final int maxWords;
 
-  const CefrInfo({
-    required this.label,
-    required this.color,
-    this.maxWords = 0,
-  });
+  const CefrInfo({required this.label, required this.color, this.maxWords = 0});
 
   factory CefrInfo.fromJson(Map<String, dynamic> json) {
     return CefrInfo(
@@ -146,7 +143,8 @@ class QuizQuestion {
       id: json['id'] as int? ?? 0,
       type: json['type'] as String? ?? '',
       question: json['question'] as String? ?? '',
-      options: (json['options'] as List<dynamic>?)
+      options:
+          (json['options'] as List<dynamic>?)
               ?.map((o) => o as String)
               .toList() ??
           [],
@@ -171,7 +169,8 @@ class NewsQuiz {
   factory NewsQuiz.fromJson(Map<String, dynamic> json) {
     final quizData = json['quiz'] as Map<String, dynamic>? ?? json;
     return NewsQuiz(
-      questions: (quizData['questions'] as List<dynamic>?)
+      questions:
+          (quizData['questions'] as List<dynamic>?)
               ?.map((q) => QuizQuestion.fromJson(q as Map<String, dynamic>))
               .toList() ??
           [],

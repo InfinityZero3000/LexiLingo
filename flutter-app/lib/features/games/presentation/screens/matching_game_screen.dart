@@ -24,8 +24,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   Timer? _timer;
   int _timeLeft = 45;
   bool _gameLoaded = false;
-  String? _selectedWord;   // Word column selection (pair id)
-  String? _selectedMatch;  // Match column selection
+  String? _selectedWord; // Word column selection (pair id)
+  String? _selectedMatch; // Match column selection
   Set<String> _matchedIds = {};
   Map<String, _PairState> _matchState = {};
   int _correctCount = 0;
@@ -34,7 +34,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GamesProvider>().loadMatchingGame().then((_) {
         if (mounted) _initGame();
@@ -66,7 +68,10 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   void _startTimer(int seconds) {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() => _timeLeft--);
       if (_timeLeft <= 0) {
         t.cancel();
@@ -131,8 +136,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     final elapsed = game.timerSeconds - _timeLeft;
     // Time bonus: +5 XP if finished in less than 50% of total time
     // (skill: progress-xp-system → time-bonus)
-    final timeBonusXp =
-        (elapsed < game.timerSeconds * game.timeBonusThreshold) ? 5 : 0;
+    final timeBonusXp = (elapsed < game.timerSeconds * game.timeBonusThreshold)
+        ? 5
+        : 0;
     final rawXp = game.baseXp - (_wrongPenalty * 2) + timeBonusXp;
     final finalXp = rawXp.clamp(0, game.baseXp + 5);
 
@@ -166,123 +172,143 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(builder: (context, provider, _) {
-      if (provider.isLoading || !_gameLoaded) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      }
-      final game = provider.matching!;
-      final remaining = game.pairs
-          .where((p) => !_matchedIds.contains(p.wordId))
-          .toList();
+    return Consumer<GamesProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading || !_gameLoaded) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final game = provider.matching!;
+        final remaining = game.pairs
+            .where((p) => !_matchedIds.contains(p.wordId))
+            .toList();
 
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: const Text('Matching Game',
-              style: TextStyle(color: AppColors.textDark)),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: _TimerChip(timeLeft: _timeLeft, total: game.timerSeconds),
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text(
+              'Matching Game',
+              style: TextStyle(color: AppColors.textDark),
             ),
-          ],
-        ),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-            LinearProgressIndicator(
-              value: _matchedIds.length / game.pairs.length,
-              backgroundColor: AppColors.grey200,
-              color: AppColors.greenSuccess,
-              minHeight: 4,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                '${_matchedIds.length}/${game.pairs.length} matched',
-                style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: _TimerChip(
+                  timeLeft: _timeLeft,
+                  total: game.timerSeconds,
+                ),
               ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    // Words column
-                    Expanded(
-                      child: _ColumnList(
-                        items: remaining.map((p) => p.word).toList(),
-                        selectedItem: _selectedWord != null
-                            ? game.pairs
-                                .firstWhere((p) => p.wordId == _selectedWord)
-                                .word
-                            : null,
-                        pairStates: Map.fromEntries(
-                          remaining.map(
-                            (p) => MapEntry(p.word, _matchState[p.wordId]),
+            ],
+          ),
+          body: Stack(
+            children: [
+              Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: _matchedIds.length / game.pairs.length,
+                    backgroundColor: AppColors.grey200,
+                    color: AppColors.greenSuccess,
+                    minHeight: 4,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      '${_matchedIds.length}/${game.pairs.length} matched',
+                      style: const TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          // Words column
+                          Expanded(
+                            child: _ColumnList(
+                              items: remaining.map((p) => p.word).toList(),
+                              selectedItem: _selectedWord != null
+                                  ? game.pairs
+                                        .firstWhere(
+                                          (p) => p.wordId == _selectedWord,
+                                        )
+                                        .word
+                                  : null,
+                              pairStates: Map.fromEntries(
+                                remaining.map(
+                                  (p) =>
+                                      MapEntry(p.word, _matchState[p.wordId]),
+                                ),
+                              ),
+                              onTap: (word) {
+                                final p = game.pairs.firstWhere(
+                                  (p) => p.word == word,
+                                );
+                                _selectWord(p.wordId);
+                              },
+                              label: 'Words',
+                            ),
                           ),
-                        ),
-                        onTap: (word) {
-                          final p = game.pairs.firstWhere((p) => p.word == word);
-                          _selectWord(p.wordId);
-                        },
-                        label: 'Words',
+                          const SizedBox(width: 10),
+                          // Matches column
+                          Expanded(
+                            child: _ColumnList(
+                              items: game.matchesColumn
+                                  .where(
+                                    (m) => !_matchedIds.any((id) {
+                                      try {
+                                        return game.pairs
+                                                .firstWhere(
+                                                  (p) => p.wordId == id,
+                                                )
+                                                .matchText ==
+                                            m;
+                                      } catch (_) {
+                                        return false;
+                                      }
+                                    }),
+                                  )
+                                  .toList(),
+                              selectedItem: _selectedMatch,
+                              pairStates: const {},
+                              onTap: _selectMatchItem,
+                              label: game.variation == 'definition'
+                                  ? 'Definitions'
+                                  : 'Matches',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    // Matches column
-                    Expanded(
-                      child: _ColumnList(
-                        items: game.matchesColumn
-                            .where((m) =>
-                                !_matchedIds.any((id) {
-                                  try {
-                                    return game.pairs
-                                            .firstWhere((p) => p.wordId == id)
-                                            .matchText ==
-                                        m;
-                                  } catch (_) {
-                                    return false;
-                                  }
-                                }))
-                            .toList(),
-                        selectedItem: _selectedMatch,
-                        pairStates: const {},
-                        onTap: _selectMatchItem,
-                        label: game.variation == 'definition'
-                            ? 'Definitions'
-                            : 'Matches',
-                      ),
-                    ),
+                  ),
+                ],
+              ),
+              // Confetti overlay (skill: gamification-confetti-win)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  numberOfParticles: 20,
+                  gravity: 0.4,
+                  colors: const [
+                    AppColors.primary,
+                    Colors.yellow,
+                    Colors.green,
+                    Colors.orange,
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-        // Confetti overlay (skill: gamification-confetti-win)
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            numberOfParticles: 20,
-            gravity: 0.4,
-            colors: const [
-              AppColors.primary,
-              Colors.yellow,
-              Colors.green,
-              Colors.orange,
             ],
           ),
-        ),
-      ],
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -344,7 +370,9 @@ class _ColumnList extends StatelessWidget {
                   duration: const Duration(milliseconds: 180),
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: bg,
                     borderRadius: BorderRadius.circular(10),
@@ -380,8 +408,8 @@ class _TimerChip extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -392,7 +420,10 @@ class _TimerChip extends StatelessWidget {
       child: Text(
         '${timeLeft}s',
         style: TextStyle(
-            fontWeight: FontWeight.bold, color: color, fontSize: 14),
+          fontWeight: FontWeight.bold,
+          color: color,
+          fontSize: 14,
+        ),
       ),
     );
   }

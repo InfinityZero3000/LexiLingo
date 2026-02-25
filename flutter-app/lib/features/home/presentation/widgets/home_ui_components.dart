@@ -110,10 +110,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                 // Avatar with animated ring
                 GestureDetector(
                   onTap: onAvatarTap,
-                  child: _AnimatedAvatarRing(
-                    avatarUrl: avatarUrl,
-                    size: 56,
-                  ),
+                  child: _AnimatedAvatarRing(avatarUrl: avatarUrl, size: 56),
                 ),
                 const SizedBox(width: 14),
                 // Greeting text
@@ -127,16 +124,14 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                             greeting,
                             style: TextStyle(
                               fontSize: 14,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(
-                            timeIcon,
-                            size: 16,
-                            color: iconColor,
-                          ),
+                          Icon(timeIcon, size: 16, color: iconColor),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -174,10 +169,7 @@ class _AnimatedAvatarRing extends StatefulWidget {
   final String? avatarUrl;
   final double size;
 
-  const _AnimatedAvatarRing({
-    this.avatarUrl,
-    this.size = 56,
-  });
+  const _AnimatedAvatarRing({this.avatarUrl, this.size = 56});
 
   @override
   State<_AnimatedAvatarRing> createState() => _AnimatedAvatarRingState();
@@ -247,11 +239,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
   Widget _buildDefaultAvatar() {
     return Container(
       color: const Color(0xFF667eea).withValues(alpha: 0.2),
-      child: const Icon(
-        Icons.person,
-        color: Color(0xFF667eea),
-        size: 28,
-      ),
+      child: const Icon(Icons.person, color: Color(0xFF667eea), size: 28),
     );
   }
 }
@@ -279,9 +267,10 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
       vsync: this,
     )..repeat(reverse: true);
 
-    _sparkleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _sparkleAnimation = Tween<double>(
+      begin: 0.6,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -353,10 +342,7 @@ class _NotificationBell extends StatefulWidget {
   final int count;
   final VoidCallback? onTap;
 
-  const _NotificationBell({
-    this.count = 0,
-    this.onTap,
-  });
+  const _NotificationBell({this.count = 0, this.onTap});
 
   @override
   State<_NotificationBell> createState() => _NotificationBellState();
@@ -375,13 +361,15 @@ class _NotificationBellState extends State<_NotificationBell>
       vsync: this,
     );
 
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.08), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.08, end: -0.05), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -0.05, end: 0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
+    _shakeAnimation = TweenSequence<double>(
+      [
+        TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.08), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 0.08, end: -0.05), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -0.05, end: 0), weight: 1),
+      ],
+    ).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
 
     // Shake if there are notifications
     if (widget.count > 0) {
@@ -502,7 +490,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
   @override
   void initState() {
     super.initState();
-    
+
     // Flame flickering animation
     _flameController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -565,7 +553,9 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
               boxShadow: widget.streakDays > 0
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFFF6B35).withValues(alpha: _pulseAnimation.value * 0.3),
+                        color: const Color(
+                          0xFFFF6B35,
+                        ).withValues(alpha: _pulseAnimation.value * 0.3),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -610,7 +600,10 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 // Status indicator
                 if (widget.isActiveToday)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
@@ -707,9 +700,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
-                  color: isToday
-                      ? const Color(0xFFFF6B35)
-                      : Colors.grey[500],
+                  color: isToday ? const Color(0xFFFF6B35) : Colors.grey[500],
                 ),
               ),
               const SizedBox(height: 3),
@@ -725,8 +716,8 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     color: isToday
                         ? const Color(0xFFFF6B35)
                         : isActive
-                            ? Colors.transparent
-                            : Colors.grey.withValues(alpha: 0.3),
+                        ? Colors.transparent
+                        : Colors.grey.withValues(alpha: 0.3),
                     width: isToday ? 2 : 1,
                   ),
                 ),
@@ -776,9 +767,10 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
       vsync: this,
     )..repeat();
 
-    _animation = Tween<double>(begin: -2, end: 2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -804,11 +796,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
             gradient: LinearGradient(
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value, 0),
-              colors: [
-                baseColor,
-                highlightColor,
-                baseColor,
-              ],
+              colors: [baseColor, highlightColor, baseColor],
             ),
           ),
         );
@@ -821,10 +809,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
 class CardSkeleton extends StatelessWidget {
   final bool isHorizontal;
 
-  const CardSkeleton({
-    super.key,
-    this.isHorizontal = false,
-  });
+  const CardSkeleton({super.key, this.isHorizontal = false});
 
   @override
   Widget build(BuildContext context) {

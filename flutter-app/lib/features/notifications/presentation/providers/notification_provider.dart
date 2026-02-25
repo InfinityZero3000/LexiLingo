@@ -21,9 +21,8 @@ class NotificationProvider with ChangeNotifier {
   StreamSubscription<int>? _unreadCountSubscription;
   StreamSubscription<RemoteMessage>? _fcmSubscription;
 
-  NotificationProvider({
-    required NotificationRepository repository,
-  }) : _repository = repository {
+  NotificationProvider({required NotificationRepository repository})
+    : _repository = repository {
     _init();
   }
 

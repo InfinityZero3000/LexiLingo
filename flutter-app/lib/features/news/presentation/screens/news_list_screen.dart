@@ -50,7 +50,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => context.read<NewsProvider>().loadArticles(refresh: true),
+          onRefresh: () =>
+              context.read<NewsProvider>().loadArticles(refresh: true),
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
@@ -73,9 +74,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       Expanded(
                         child: Text(
                           'English News',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -116,14 +115,20 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline_rounded,
-                                size: 48, color: Colors.red.shade300),
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 48,
+                              color: Colors.red.shade300,
+                            ),
                             const SizedBox(height: 12),
-                            Text('Failed to load articles',
-                                style: TextStyle(color: Colors.grey.shade500)),
+                            Text(
+                              'Failed to load articles',
+                              style: TextStyle(color: Colors.grey.shade500),
+                            ),
                             const SizedBox(height: 8),
                             TextButton(
-                              onPressed: () => provider.loadArticles(refresh: true),
+                              onPressed: () =>
+                                  provider.loadArticles(refresh: true),
                               child: const Text('Retry'),
                             ),
                           ],
@@ -138,12 +143,19 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.article_outlined,
-                                size: 64, color: Colors.grey.shade400),
+                            Icon(
+                              Icons.article_outlined,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
                             const SizedBox(height: 12),
-                            Text('No articles found',
-                                style: TextStyle(
-                                    color: Colors.grey.shade500, fontSize: 16)),
+                            Text(
+                              'No articles found',
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 16,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -153,25 +165,25 @@ class _NewsListScreenState extends State<NewsListScreen> {
                   return SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index == provider.articles.length) {
-                            return provider.isLoading
-                                ? const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                        child: CircularProgressIndicator()),
-                                  )
-                                : const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: _buildArticleCard(
-                                provider.articles[index], isDark),
-                          );
-                        },
-                        childCount: provider.articles.length + 1,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        if (index == provider.articles.length) {
+                          return provider.isLoading
+                              ? const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildArticleCard(
+                            provider.articles[index],
+                            isDark,
+                          ),
+                        );
+                      }, childCount: provider.articles.length + 1),
                     ),
                   );
                 },
@@ -288,7 +300,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
               label: Text(
                 cat.label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColors.textDark),
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : AppColors.textDark),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 12,
                 ),
@@ -318,11 +332,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/news/detail',
-          arguments: article,
-        );
+        Navigator.pushNamed(context, '/news/detail', arguments: article);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -343,8 +353,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
             // Image
             if (article.imageUrl.isNotEmpty)
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Stack(
@@ -355,8 +366,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: cefrColor.withValues(alpha: 0.1),
-                          child: Icon(Icons.article_rounded,
-                              size: 48, color: cefrColor),
+                          child: Icon(
+                            Icons.article_rounded,
+                            size: 48,
+                            color: cefrColor,
+                          ),
                         ),
                       ),
                       // Gradient overlay
@@ -378,7 +392,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         left: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: cefrColor,
                             borderRadius: BorderRadius.circular(8),
@@ -406,7 +422,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         right: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(8),
@@ -414,8 +432,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.schedule_rounded,
-                                  size: 12, color: Colors.white70),
+                              const Icon(
+                                Icons.schedule_rounded,
+                                size: 12,
+                                color: Colors.white70,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${article.readingTimeMin} min',
@@ -484,12 +505,15 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       children: article.highlightedWords.take(4).map((word) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: cefrColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: cefrColor.withValues(alpha: 0.2)),
+                              color: cefrColor.withValues(alpha: 0.2),
+                            ),
                           ),
                           child: Text(
                             word,

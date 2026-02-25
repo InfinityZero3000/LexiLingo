@@ -53,8 +53,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
     Widget currentPage;
     if (authProvider.isAuthenticated && _showWelcome) {
       currentPage = WelcomePage(
-        userName: authProvider.currentUser?.displayName ?? 
-                  authProvider.currentUser?.username,
+        userName:
+            authProvider.currentUser?.displayName ??
+            authProvider.currentUser?.username,
         onComplete: () {
           setState(() {
             _showWelcome = false;
@@ -79,43 +80,33 @@ class _AuthWrapperState extends State<AuthWrapper> {
         final fadeAnimation = Tween<double>(
           begin: 0.0,
           end: 1.0,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOut,
-        ));
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
 
-        final scaleAnimation = Tween<double>(
-          begin: 0.95,
-          end: 1.0,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        ));
+        final scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        );
 
-        final slideAnimation = Tween<Offset>(
-          begin: const Offset(0.0, 0.05),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        ));
+        final slideAnimation =
+            Tween<Offset>(
+              begin: const Offset(0.0, 0.05),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: fadeAnimation,
           child: ScaleTransition(
             scale: scaleAnimation,
-            child: SlideTransition(
-              position: slideAnimation,
-              child: child,
-            ),
+            child: SlideTransition(position: slideAnimation, child: child),
           ),
         );
       },
       child: KeyedSubtree(
         key: ValueKey<String>(
-          authProvider.isAuthenticated 
-              ? (_showWelcome ? 'welcome' : 'main') 
-              : 'login'
+          authProvider.isAuthenticated
+              ? (_showWelcome ? 'welcome' : 'main')
+              : 'login',
         ),
         child: currentPage,
       ),

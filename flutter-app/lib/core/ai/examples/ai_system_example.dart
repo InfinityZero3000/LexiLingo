@@ -11,7 +11,7 @@ import '../pronunciation/pronunciation_service.dart';
 import '../models/ai_task.dart';
 
 /// Example usage of the LexiLingo AI system
-/// 
+///
 /// This demonstrates how to:
 /// 1. Initialize the AI pipeline
 /// 2. Process text input
@@ -48,12 +48,14 @@ void main() async {
   // ============================================================
   print('[STEP 2] Setting learner profile...\n');
 
-  contextManager.setLearnerProfile(LearnerProfile(
-    userId: 'user123',
-    level: LearnerLevel.a2, // Elementary learner
-    commonErrors: ['past_tense', 'articles', 'verb_forms'],
-    totalSessions: 10,
-  ));
+  contextManager.setLearnerProfile(
+    LearnerProfile(
+      userId: 'user123',
+      level: LearnerLevel.a2, // Elementary learner
+      commonErrors: ['past_tense', 'articles', 'verb_forms'],
+      totalSessions: 10,
+    ),
+  );
 
   print('Profile: Level ${contextManager.learnerLevel.displayName}\n');
 
@@ -73,7 +75,7 @@ void main() async {
   print('  - Fluency Score: ${response1.analysis.fluencyScore}');
   print('  - Vocabulary Level: ${response1.analysis.vocabularyLevel}');
   print('  - Grammar Errors: ${response1.analysis.grammarErrors.length}');
-  
+
   if (response1.analysis.grammarErrors.isNotEmpty) {
     print('\n  Errors found:');
     for (final error in response1.analysis.grammarErrors) {
@@ -92,7 +94,9 @@ void main() async {
   }
 
   print('[TIME] Processing Time: ${response1.latencyMs}ms');
-  print('[SCORE] Confidence: ${(response1.confidence * 100).toStringAsFixed(1)}%');
+  print(
+    '[SCORE] Confidence: ${(response1.confidence * 100).toStringAsFixed(1)}%',
+  );
   print('[TOOLS] Components Used: ${response1.componentUsage}\n');
 
   // ============================================================
@@ -120,8 +124,10 @@ void main() async {
     final pronResult = response2.analysis.pronunciation!;
     print('\n  [PRONUNCIATION]:');
     print('    - Accuracy: ${(pronResult.accuracy * 100).toStringAsFixed(1)}%');
-    print('    - Prosody Score: ${(pronResult.prosodyScore * 100).toStringAsFixed(1)}%');
-    
+    print(
+      '    - Prosody Score: ${(pronResult.prosodyScore * 100).toStringAsFixed(1)}%',
+    );
+
     if (pronResult.errors.isNotEmpty) {
       print('\n    Pronunciation errors:');
       for (final error in pronResult.errors) {
@@ -135,7 +141,9 @@ void main() async {
   print('  "${response2.responseEn}"\n');
 
   print('[TIME] Processing Time: ${response2.latencyMs}ms');
-  print('[SCORE] Confidence: ${(response2.confidence * 100).toStringAsFixed(1)}%\n');
+  print(
+    '[SCORE] Confidence: ${(response2.confidence * 100).toStringAsFixed(1)}%\n',
+  );
 
   // ============================================================
   // STEP 5: Synthesize Response to Audio (TTS)
@@ -161,7 +169,9 @@ void main() async {
   print('EXAMPLE 4: Conversation History');
   print('══════════════════════════════════════════════════════════\n');
 
-  print('[HISTORY] Conversation History (${contextManager.history.length} turns):\n');
+  print(
+    '[HISTORY] Conversation History (${contextManager.history.length} turns):\n',
+  );
 
   for (var i = 0; i < contextManager.history.length; i++) {
     final turn = contextManager.history[i];
@@ -213,10 +223,8 @@ Future<void> errorHandlingExample() async {
 
   try {
     // This will fail gracefully
-    final response = await orchestrator.processText(
-      userText: 'Hello',
-    );
-    
+    final response = await orchestrator.processText(userText: 'Hello');
+
     // Orchestrator will return fallback response
     print('Fallback response: ${response.responseEn}');
     print('Confidence: ${response.confidence}'); // Will be 0.0
@@ -235,20 +243,20 @@ void levelAdaptationExample() {
 
   for (final level in levels) {
     print('${level.displayName}:');
-    
+
     switch (level) {
       case LearnerLevel.a2:
         print('  - Simple words, short sentences');
         print('  - More Vietnamese explanations');
         print('  - Detailed guidance');
         break;
-      
+
       case LearnerLevel.b1:
         print('  - Natural conversation');
         print('  - Some complexity');
         print('  - Gentle corrections');
         break;
-      
+
       case LearnerLevel.b2:
         print('  - Near-native interaction');
         print('  - Minimal hand-holding');

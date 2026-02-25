@@ -1,5 +1,5 @@
 /// LexiLingo AI Core System
-/// 
+///
 /// Complete AI pipeline for language learning with:
 /// - Speech-to-Text (STT)
 /// - Text-to-Speech (TTS)
@@ -7,7 +7,7 @@
 /// - Grammar & Fluency Analysis
 /// - Context Management
 /// - AI Orchestration
-/// 
+///
 /// See README.md for usage examples
 
 // Core orchestrator

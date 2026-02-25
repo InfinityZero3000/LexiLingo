@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Types of errors that can be displayed
-enum ErrorType {
-  network,
-  server,
-  timeout,
-  unauthorized,
-  notFound,
-  unknown,
-}
+enum ErrorType { network, server, timeout, unauthorized, notFound, unknown }
 
 /// Reusable error widget with retry functionality
 class ErrorDisplayWidget extends StatelessWidget {
@@ -16,7 +9,7 @@ class ErrorDisplayWidget extends StatelessWidget {
   final String? customMessage;
   final VoidCallback? onRetry;
   final bool compact;
-  
+
   const ErrorDisplayWidget({
     super.key,
     this.errorType = ErrorType.unknown,
@@ -24,7 +17,7 @@ class ErrorDisplayWidget extends StatelessWidget {
     this.onRetry,
     this.compact = false,
   });
-  
+
   /// Create from exception/failure message
   factory ErrorDisplayWidget.fromMessage({
     required String message,
@@ -39,10 +32,12 @@ class ErrorDisplayWidget extends StatelessWidget {
       compact: compact,
     );
   }
-  
+
   static ErrorType _parseErrorType(String message) {
     final lower = message.toLowerCase();
-    if (lower.contains('network') || lower.contains('connection') || lower.contains('internet')) {
+    if (lower.contains('network') ||
+        lower.contains('connection') ||
+        lower.contains('internet')) {
       return ErrorType.network;
     }
     if (lower.contains('timeout')) {
@@ -59,7 +54,7 @@ class ErrorDisplayWidget extends StatelessWidget {
     }
     return ErrorType.unknown;
   }
-  
+
   IconData get _icon {
     switch (errorType) {
       case ErrorType.network:
@@ -76,7 +71,7 @@ class ErrorDisplayWidget extends StatelessWidget {
         return Icons.error_outline_rounded;
     }
   }
-  
+
   Color get _iconColor {
     switch (errorType) {
       case ErrorType.network:
@@ -91,7 +86,7 @@ class ErrorDisplayWidget extends StatelessWidget {
         return Colors.grey;
     }
   }
-  
+
   String get _title {
     switch (errorType) {
       case ErrorType.network:
@@ -108,7 +103,7 @@ class ErrorDisplayWidget extends StatelessWidget {
         return 'Something Went Wrong';
     }
   }
-  
+
   String get _description {
     switch (errorType) {
       case ErrorType.network:
@@ -122,10 +117,11 @@ class ErrorDisplayWidget extends StatelessWidget {
       case ErrorType.notFound:
         return 'The requested content could not be found.';
       case ErrorType.unknown:
-        return customMessage ?? 'An unexpected error occurred. Please try again.';
+        return customMessage ??
+            'An unexpected error occurred. Please try again.';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (compact) {
@@ -133,7 +129,7 @@ class ErrorDisplayWidget extends StatelessWidget {
     }
     return _buildFull(context);
   }
-  
+
   Widget _buildCompact(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -150,10 +146,7 @@ class ErrorDisplayWidget extends StatelessWidget {
           Expanded(
             child: Text(
               _title,
-              style: TextStyle(
-                color: _iconColor,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: _iconColor, fontWeight: FontWeight.w500),
             ),
           ),
           if (onRetry != null)
@@ -167,10 +160,10 @@ class ErrorDisplayWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildFull(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -183,11 +176,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                 color: _iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                _icon,
-                size: 64,
-                color: _iconColor,
-              ),
+              child: Icon(_icon, size: 64, color: _iconColor),
             ),
             const SizedBox(height: 24),
             Text(
@@ -214,7 +203,10 @@ class ErrorDisplayWidget extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _iconColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -223,7 +215,9 @@ class ErrorDisplayWidget extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   // Navigate to login
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
                 },
                 child: const Text('Go to Login'),
               ),
@@ -238,7 +232,7 @@ class ErrorDisplayWidget extends StatelessWidget {
 /// Offline indicator banner
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(

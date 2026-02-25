@@ -20,22 +20,22 @@ class CourseModel extends CourseEntity {
     bool? isEnrolled,
     double? userProgress,
   }) : super(
-          id: id,
-          title: title,
-          description: description,
-          language: language,
-          level: level,
-          tags: tags,
-          thumbnailUrl: thumbnailUrl,
-          totalXp: totalXp,
-          estimatedDuration: estimatedDuration,
-          totalLessons: totalLessons,
-          isPublished: isPublished,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-          isEnrolled: isEnrolled,
-          userProgress: userProgress,
-        );
+         id: id,
+         title: title,
+         description: description,
+         language: language,
+         level: level,
+         tags: tags,
+         thumbnailUrl: thumbnailUrl,
+         totalXp: totalXp,
+         estimatedDuration: estimatedDuration,
+         totalLessons: totalLessons,
+         isPublished: isPublished,
+         createdAt: createdAt,
+         updatedAt: updatedAt,
+         isEnrolled: isEnrolled,
+         userProgress: userProgress,
+       );
 
   /// Convert from JSON to Model
   factory CourseModel.fromJson(Map<String, dynamic> json) {
@@ -45,20 +45,19 @@ class CourseModel extends CourseEntity {
       description: json['description'] as String?,
       language: json['language'] as String,
       level: json['level'] as String,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
       thumbnailUrl: json['thumbnail_url'] as String?,
       totalXp: (json['total_xp'] as int?) ?? 0,
       estimatedDuration: (json['estimated_duration'] as int?) ?? 0,
       totalLessons: (json['total_lessons'] as int?) ?? 0,
       isPublished: (json['is_published'] as bool?) ?? true,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'] as String) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'] as String) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : DateTime.now(),
       isEnrolled: json['is_enrolled'] as bool?,
       userProgress: (json['user_progress'] as num?)?.toDouble(),
@@ -107,6 +106,3 @@ class CourseModel extends CourseEntity {
     );
   }
 }
-
-
-

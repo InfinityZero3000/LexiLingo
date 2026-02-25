@@ -6,9 +6,9 @@ import '../models/daily_goal_model.dart';
 /// Web implementation of DailyGoalLocalDataSource using SharedPreferences
 class DailyGoalLocalDataSourceWeb implements DailyGoalLocalDataSource {
   final SharedPreferences sharedPreferences;
-  
+
   static const String _goalKey = 'daily_goal_';
-  
+
   DailyGoalLocalDataSourceWeb({required this.sharedPreferences});
 
   String _formatDate(DateTime date) {
@@ -23,7 +23,9 @@ class DailyGoalLocalDataSourceWeb implements DailyGoalLocalDataSource {
   @override
   Future<DailyGoalModel?> getGoalByDate(String userId, DateTime date) async {
     final dateStr = _formatDate(date);
-    final jsonString = sharedPreferences.getString('$_goalKey${userId}_$dateStr');
+    final jsonString = sharedPreferences.getString(
+      '$_goalKey${userId}_$dateStr',
+    );
     if (jsonString != null) {
       return DailyGoalModel.fromJson(json.decode(jsonString));
     }
@@ -31,10 +33,13 @@ class DailyGoalLocalDataSourceWeb implements DailyGoalLocalDataSource {
   }
 
   @override
-  Future<List<DailyGoalModel>> getGoalHistory(String userId, {int days = 7}) async {
+  Future<List<DailyGoalModel>> getGoalHistory(
+    String userId, {
+    int days = 7,
+  }) async {
     final goals = <DailyGoalModel>[];
     final now = DateTime.now();
-    
+
     for (int i = 0; i < days; i++) {
       final date = now.subtract(Duration(days: i));
       final goal = await getGoalByDate(userId, date);
@@ -42,7 +47,7 @@ class DailyGoalLocalDataSourceWeb implements DailyGoalLocalDataSource {
         goals.add(goal);
       }
     }
-    
+
     return goals;
   }
 
@@ -65,7 +70,7 @@ class DailyGoalLocalDataSourceWeb implements DailyGoalLocalDataSource {
     int minutesSpent = 0,
   }) async {
     final todayGoal = await getTodayGoal(userId);
-    
+
     if (todayGoal == null) {
       // Create new goal for today
       final newGoal = DailyGoalModel(

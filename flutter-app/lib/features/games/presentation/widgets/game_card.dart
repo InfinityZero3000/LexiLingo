@@ -29,7 +29,8 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _gradients[gameType] ?? [AppColors.primary, AppColors.primary];
+    final colors =
+        _gradients[gameType] ?? [AppColors.primary, AppColors.primary];
 
     return GestureDetector(
       onTap: onTap,
@@ -56,14 +57,13 @@ class GameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  gameType.icon,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                Icon(gameType.icon, color: Colors.white, size: 28),
                 if (bestScore != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -114,7 +114,10 @@ class GameCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(12),

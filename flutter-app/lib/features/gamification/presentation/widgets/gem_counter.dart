@@ -36,9 +36,10 @@ class _GemCounterState extends State<GemCounter>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -71,10 +72,7 @@ class _GemCounterState extends State<GemCounter>
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
+          return Transform.scale(scale: _scaleAnimation.value, child: child);
         },
         child: Container(
           padding: widget.showBackground
@@ -136,11 +134,7 @@ class _GemCounterState extends State<GemCounter>
           ),
         ],
       ),
-      child: const Icon(
-        Icons.diamond,
-        color: Colors.white,
-        size: 14,
-      ),
+      child: const Icon(Icons.diamond, color: Colors.white, size: 14),
     );
   }
 
@@ -159,11 +153,7 @@ class GemIcon extends StatelessWidget {
   final double size;
   final bool withShadow;
 
-  const GemIcon({
-    super.key,
-    this.size = 24,
-    this.withShadow = true,
-  });
+  const GemIcon({super.key, this.size = 24, this.withShadow = true});
 
   @override
   Widget build(BuildContext context) {
@@ -187,11 +177,7 @@ class GemIcon extends StatelessWidget {
               ]
             : null,
       ),
-      child: Icon(
-        Icons.diamond,
-        color: Colors.white,
-        size: size * 0.6,
-      ),
+      child: Icon(Icons.diamond, color: Colors.white, size: size * 0.6),
     );
   }
 }

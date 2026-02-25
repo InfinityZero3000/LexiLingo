@@ -10,7 +10,7 @@ class PodcastProvider extends ChangeNotifier {
   final PodcastRepository _repository;
 
   PodcastProvider({PodcastRepository? repository})
-      : _repository = repository ?? PodcastRepository();
+    : _repository = repository ?? PodcastRepository();
 
   // ── State ──
 
@@ -106,8 +106,9 @@ class PodcastProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentEpisodes =
-          await _repository.getEpisodes(feedUrl: podcast.feedUrl);
+      _currentEpisodes = await _repository.getEpisodes(
+        feedUrl: podcast.feedUrl,
+      );
     } catch (e) {
       _error = e.toString();
     } finally {

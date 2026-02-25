@@ -17,9 +17,7 @@ final getIt = GetIt.instance;
 void setupVocabularyDependencies() {
   // Data Sources
   getIt.registerLazySingleton<VocabularyRemoteDataSource>(
-    () => VocabularyRemoteDataSourceImpl(
-      apiClient: getIt<ApiClient>(),
-    ),
+    () => VocabularyRemoteDataSourceImpl(apiClient: getIt<ApiClient>()),
   );
 
   // Repositories
@@ -33,15 +31,15 @@ void setupVocabularyDependencies() {
   getIt.registerLazySingleton(
     () => GetDueVocabularyUseCase(getIt<VocabularyRepository>()),
   );
-  
+
   getIt.registerLazySingleton(
     () => SubmitReviewUseCase(getIt<VocabularyRepository>()),
   );
-  
+
   getIt.registerLazySingleton(
     () => GetUserCollectionUseCase(getIt<VocabularyRepository>()),
   );
-  
+
   getIt.registerLazySingleton(
     () => AddToCollectionUseCase(getIt<VocabularyRepository>()),
   );

@@ -21,16 +21,23 @@ void setupCourseDependencies(GetIt sl) {
 
   // Repositories
   sl.registerLazySingleton<CourseRepository>(
-    () => CourseRepositoryImpl(backendDataSource: sl<CourseBackendDataSource>()),
+    () =>
+        CourseRepositoryImpl(backendDataSource: sl<CourseBackendDataSource>()),
   );
 
   // Use Cases
   sl.registerLazySingleton(() => GetCoursesUseCase(sl<CourseRepository>()));
-  sl.registerLazySingleton(() => GetCourseDetailUseCase(sl<CourseRepository>()));
+  sl.registerLazySingleton(
+    () => GetCourseDetailUseCase(sl<CourseRepository>()),
+  );
   sl.registerLazySingleton(() => EnrollInCourseUseCase(sl<CourseRepository>()));
   sl.registerLazySingleton(() => GetCategoriesUseCase(sl<CourseRepository>()));
-  sl.registerLazySingleton(() => GetCoursesByCategoryUseCase(sl<CourseRepository>()));
-  sl.registerLazySingleton(() => GetEnrolledCoursesUseCase(sl<CourseRepository>()));
+  sl.registerLazySingleton(
+    () => GetCoursesByCategoryUseCase(sl<CourseRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => GetEnrolledCoursesUseCase(sl<CourseRepository>()),
+  );
 
   // Providers
   sl.registerFactory(

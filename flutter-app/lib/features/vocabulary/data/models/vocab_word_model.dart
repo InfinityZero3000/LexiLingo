@@ -6,12 +6,7 @@ class VocabWordModel extends VocabWord {
     required String word,
     required String definition,
     bool isLearned = false,
-  }) : super(
-          id: id,
-          word: word,
-          definition: definition,
-          isLearned: isLearned,
-        );
+  }) : super(id: id, word: word, definition: definition, isLearned: isLearned);
 
   // Convert from JSON to Model
   factory VocabWordModel.fromJson(Map<String, dynamic> json) {

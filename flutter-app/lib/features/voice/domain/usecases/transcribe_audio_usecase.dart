@@ -7,7 +7,8 @@ import 'package:lexilingo_app/features/voice/domain/repositories/voice_repositor
 
 /// Transcribe Audio Use Case
 /// Converts audio recording to text using STT service
-class TranscribeAudioUseCase implements UseCase<Transcription, TranscribeParams> {
+class TranscribeAudioUseCase
+    implements UseCase<Transcription, TranscribeParams> {
   final VoiceRepository repository;
 
   TranscribeAudioUseCase(this.repository);

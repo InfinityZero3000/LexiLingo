@@ -30,9 +30,7 @@ class PodcastCard extends StatelessWidget {
         width: 160,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             if (!isDark)
@@ -48,8 +46,9 @@ class PodcastCard extends StatelessWidget {
           children: [
             // ── Artwork ──
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Stack(
                 children: [
                   // Artwork image
@@ -113,9 +112,7 @@ class PodcastCard extends StatelessWidget {
                   Text(
                     podcast.author,
                     style: TextStyle(
-                      color: isDark
-                          ? Colors.white54
-                          : AppColors.textGrey,
+                      color: isDark ? Colors.white54 : AppColors.textGrey,
                       fontSize: 11,
                     ),
                     maxLines: 1,
@@ -131,9 +128,7 @@ class PodcastCard extends StatelessWidget {
                           Icon(
                             Icons.podcasts_rounded,
                             size: 12,
-                            color: isDark
-                                ? Colors.white38
-                                : AppColors.textGrey,
+                            color: isDark ? Colors.white38 : AppColors.textGrey,
                           ),
                           const SizedBox(width: 3),
                           Text(

@@ -44,7 +44,7 @@ void registerProgressModule() {
   sl.registerLazySingleton<CompleteLessonUseCase>(
     () => CompleteLessonUseCase(sl()),
   );
-  
+
   // Weekly Progress Use Case (Task 1.3)
   sl.registerLazySingleton<GetWeeklyProgressUseCase>(
     () => GetWeeklyProgressUseCase(sl()),
@@ -52,15 +52,11 @@ void registerProgressModule() {
 
   // Repository
   sl.registerLazySingleton<ProgressRepository>(
-    () => ProgressRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+    () => ProgressRepositoryImpl(remoteDataSource: sl()),
   );
 
   // Data sources
   sl.registerLazySingleton<ProgressRemoteDataSource>(
-    () => ProgressRemoteDataSourceImpl(
-      apiClient: sl(),
-    ),
+    () => ProgressRemoteDataSourceImpl(apiClient: sl()),
   );
 }

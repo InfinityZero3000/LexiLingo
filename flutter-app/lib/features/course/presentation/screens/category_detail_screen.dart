@@ -22,10 +22,8 @@ enum CourseSortOption {
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
 
-  const CategoryDetailScreen({
-    Key? key,
-    required this.categoryId,
-  }) : super(key: key);
+  const CategoryDetailScreen({Key? key, required this.categoryId})
+    : super(key: key);
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -55,10 +53,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         sorted.sort((a, b) => b.totalXp.compareTo(a.totalXp));
         break;
       case CourseSortOption.alphabetical:
-        sorted.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        sorted.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        );
         break;
       case CourseSortOption.level:
-        sorted.sort((a, b) => _levelOrder(a.level).compareTo(_levelOrder(b.level)));
+        sorted.sort(
+          (a, b) => _levelOrder(a.level).compareTo(_levelOrder(b.level)),
+        );
         break;
     }
     return sorted;
@@ -66,12 +68,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   int _levelOrder(String level) {
     switch (level.toLowerCase()) {
-      case 'beginner': return 0;
-      case 'elementary': return 1;
-      case 'intermediate': return 2;
-      case 'advanced': return 3;
-      case 'expert': return 4;
-      default: return 5;
+      case 'beginner':
+        return 0;
+      case 'elementary':
+        return 1;
+      case 'intermediate':
+        return 2;
+      case 'advanced':
+        return 3;
+      case 'expert':
+        return 4;
+      default:
+        return 5;
     }
   }
 
@@ -143,9 +151,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       Expanded(
                         child: Text(
                           '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: Colors.grey[600]),
                         ),
                       ),
                       // Sort dropdown
@@ -153,30 +160,43 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         icon: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(_sortOption.icon, size: 18, color: Colors.grey[600]),
+                            Icon(
+                              _sortOption.icon,
+                              size: 18,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 4),
-                            Icon(Icons.arrow_drop_down, size: 18, color: Colors.grey[600]),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 18,
+                              color: Colors.grey[600],
+                            ),
                           ],
                         ),
                         onSelected: (option) {
                           setState(() => _sortOption = option);
                         },
-                        itemBuilder: (context) => CourseSortOption.values.map((option) {
-                          return PopupMenuItem(
-                            value: option,
-                            child: Row(
-                              children: [
-                                Icon(option.icon, size: 18),
-                                const SizedBox(width: 8),
-                                Text(option.label),
-                                if (option == _sortOption) ...[
-                                  const Spacer(),
-                                  const Icon(Icons.check, size: 18, color: Colors.green),
-                                ],
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                        itemBuilder: (context) =>
+                            CourseSortOption.values.map((option) {
+                              return PopupMenuItem(
+                                value: option,
+                                child: Row(
+                                  children: [
+                                    Icon(option.icon, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(option.label),
+                                    if (option == _sortOption) ...[
+                                      const Spacer(),
+                                      const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: Colors.green,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                       ),
                       const SizedBox(width: 8),
                       // View toggle
@@ -207,7 +227,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 SliverFillRemaining(
                   child: ErrorDisplayWidget.fromMessage(
                     message: provider.coursesError!,
-                    onRetry: () => provider.loadCoursesByCategory(widget.categoryId),
+                    onRetry: () =>
+                        provider.loadCoursesByCategory(widget.categoryId),
                   ),
                 )
               else if (categoryCourses.isEmpty)
@@ -224,9 +245,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'No courses in this category yet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: Colors.grey[600]),
                         ),
                       ],
                     ),
@@ -249,21 +269,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final course = courses[index];
-            return AnimatedListItem(
-              index: index,
-              duration: const Duration(milliseconds: 300),
-              delayPerItem: const Duration(milliseconds: 50),
-              child: _CourseCard(
-                course: course,
-                onTap: () => _navigateToCourseDetail(context, course.id),
-              ),
-            );
-          },
-          childCount: courses.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final course = courses[index];
+          return AnimatedListItem(
+            index: index,
+            duration: const Duration(milliseconds: 300),
+            delayPerItem: const Duration(milliseconds: 50),
+            child: _CourseCard(
+              course: course,
+              onTap: () => _navigateToCourseDetail(context, course.id),
+            ),
+          );
+        }, childCount: courses.length),
       ),
     );
   }
@@ -279,21 +296,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final course = courses[index];
-            return AnimatedListItem(
-              index: index,
-              duration: const Duration(milliseconds: 300),
-              delayPerItem: const Duration(milliseconds: 50),
-              child: _CourseGridCard(
-                course: course,
-                onTap: () => _navigateToCourseDetail(context, course.id),
-              ),
-            );
-          },
-          childCount: courses.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final course = courses[index];
+          return AnimatedListItem(
+            index: index,
+            duration: const Duration(milliseconds: 300),
+            delayPerItem: const Duration(milliseconds: 50),
+            child: _CourseGridCard(
+              course: course,
+              onTap: () => _navigateToCourseDetail(context, course.id),
+            ),
+          );
+        }, childCount: courses.length),
       ),
     );
   }
@@ -348,20 +362,15 @@ class _CourseCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseCard({
-    Key? key,
-    required this.course,
-    required this.onTap,
-  }) : super(key: key);
+  const _CourseCard({Key? key, required this.course, required this.onTap})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -398,8 +407,8 @@ class _CourseCard extends StatelessWidget {
                     Text(
                       course.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -410,8 +419,8 @@ class _CourseCard extends StatelessWidget {
                       Text(
                         course.description!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                          color: Colors.grey[600],
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -425,15 +434,17 @@ class _CourseCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(course.level).withValues(alpha: 0.1),
+                        color: _getLevelColor(
+                          course.level,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: _getLevelColor(course.level),
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: _getLevelColor(course.level),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -441,11 +452,7 @@ class _CourseCard extends StatelessWidget {
               ),
 
               // Arrow icon
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
             ],
           ),
         ),
@@ -456,11 +463,7 @@ class _CourseCard extends StatelessWidget {
   Widget _buildPlaceholderImage() {
     return Container(
       color: Colors.grey[200],
-      child: Icon(
-        Icons.book,
-        size: 40,
-        color: Colors.grey[400],
-      ),
+      child: Icon(Icons.book, size: 40, color: Colors.grey[400]),
     );
   }
 
@@ -489,19 +492,14 @@ class _CourseGridCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseGridCard({
-    Key? key,
-    required this.course,
-    required this.onTap,
-  }) : super(key: key);
+  const _CourseGridCard({Key? key, required this.course, required this.onTap})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -512,14 +510,17 @@ class _CourseGridCard extends StatelessWidget {
             Expanded(
               flex: 3,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   child: course.thumbnailUrl != null
                       ? Image.network(
                           course.thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                          errorBuilder: (_, __, ___) =>
+                              _buildPlaceholderImage(),
                         )
                       : _buildPlaceholderImage(),
                 ),
@@ -537,25 +538,30 @@ class _CourseGridCard extends StatelessWidget {
                     Text(
                       course.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
                     // Level badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(course.level).withValues(alpha: 0.1),
+                        color: _getLevelColor(
+                          course.level,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: _getLevelColor(course.level),
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: _getLevelColor(course.level),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -571,13 +577,7 @@ class _CourseGridCard extends StatelessWidget {
   Widget _buildPlaceholderImage() {
     return Container(
       color: Colors.grey[200],
-      child: Center(
-        child: Icon(
-          Icons.book,
-          size: 40,
-          color: Colors.grey[400],
-        ),
-      ),
+      child: Center(child: Icon(Icons.book, size: 40, color: Colors.grey[400])),
     );
   }
 

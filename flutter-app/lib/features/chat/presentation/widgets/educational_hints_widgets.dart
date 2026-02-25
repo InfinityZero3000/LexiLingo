@@ -161,7 +161,11 @@ class GrammarCorrectionBadge extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check, size: 14, color: Colors.green.shade600),
+                        Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.green.shade600,
+                        ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -295,10 +299,7 @@ class VocabularyHintCard extends StatelessWidget {
                   ),
                   child: Text(
                     hint.pronunciation!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.blue.shade600,
-                    ),
+                    style: TextStyle(fontSize: 11, color: Colors.blue.shade600),
                   ),
                 ),
             ],
@@ -306,10 +307,7 @@ class VocabularyHintCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Definition
-          Text(
-            hint.definition,
-            style: const TextStyle(fontSize: 13),
-          ),
+          Text(hint.definition, style: const TextStyle(fontSize: 13)),
 
           // Example
           if (hint.example != null && hint.example!.isNotEmpty)
@@ -324,7 +322,11 @@ class VocabularyHintCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.edit_note_rounded, size: 14, color: Colors.grey),
+                    const Icon(
+                      Icons.edit_note_rounded,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -377,7 +379,10 @@ class TopicProgressIndicator extends StatelessWidget {
             children: [
               Text(
                 stepLabel ?? 'Progress',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               Text(
                 '$currentStep / $totalSteps',
@@ -420,7 +425,8 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
 
   @override
   Widget build(BuildContext context) {
-    final totalHints = widget.hints.grammarCorrections.length +
+    final totalHints =
+        widget.hints.grammarCorrections.length +
         widget.hints.vocabularyHints.length;
 
     if (totalHints == 0) return const SizedBox.shrink();
@@ -442,11 +448,7 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.school,
-                  size: 14,
-                  color: Colors.purple.shade600,
-                ),
+                Icon(Icons.school, size: 14, color: Colors.purple.shade600),
                 const SizedBox(width: 4),
                 Text(
                   '$totalHints Learning Hint${totalHints > 1 ? 's' : ''}',

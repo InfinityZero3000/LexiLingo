@@ -28,7 +28,8 @@ class AchievementProvider with ChangeNotifier {
   bool get usingSampleData => _usingSampleData;
 
   /// Unlocked achievement IDs for quick lookup
-  Set<String> get unlockedIds => _myAchievements.map((ua) => ua.achievement.id).toSet();
+  Set<String> get unlockedIds =>
+      _myAchievements.map((ua) => ua.achievement.id).toSet();
 
   /// Achievements grouped by category
   Map<String, List<AchievementEntity>> get achievementsByCategory {
@@ -61,7 +62,7 @@ class AchievementProvider with ChangeNotifier {
 
     try {
       _allAchievements = await repository.getAllAchievements();
-      
+
       // Use sample data if API returns empty
       if (_allAchievements.isEmpty) {
         _allAchievements = SampleAchievements.getAll();
@@ -114,7 +115,7 @@ class AchievementProvider with ChangeNotifier {
 
       _allAchievements = results[0] as List<AchievementEntity>;
       _myAchievements = results[1] as List<UserAchievementEntity>;
-      
+
       // Use sample data if API returns empty
       if (_allAchievements.isEmpty) {
         _allAchievements = SampleAchievements.getAll();

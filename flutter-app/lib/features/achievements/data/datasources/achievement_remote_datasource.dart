@@ -65,7 +65,9 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
   Future<List<UserAchievementModel>> getRecentBadges({int limit = 4}) async {
     try {
       // Uses new /gamification/achievements/recent endpoint
-      final data = await apiClient.get('/gamification/achievements/recent?limit=$limit');
+      final data = await apiClient.get(
+        '/gamification/achievements/recent?limit=$limit',
+      );
 
       if (data['success'] == true && data['data'] != null) {
         final List<dynamic> badgesList = data['data'];

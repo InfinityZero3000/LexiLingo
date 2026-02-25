@@ -75,13 +75,13 @@ class ChatSession extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        title,
-        createdAt,
-        lastMessageAt,
-        messages,
-      ];
+    id,
+    userId,
+    title,
+    createdAt,
+    lastMessageAt,
+    messages,
+  ];
 
   @override
   String toString() {

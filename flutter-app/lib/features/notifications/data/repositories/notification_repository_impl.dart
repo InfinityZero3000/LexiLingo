@@ -101,8 +101,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     if (yesterday.isNotEmpty) {
-      groups
-          .add(NotificationGroup(title: 'Yesterday', notifications: yesterday));
+      groups.add(
+        NotificationGroup(title: 'Yesterday', notifications: yesterday),
+      );
     }
 
     if (earlier.isNotEmpty) {

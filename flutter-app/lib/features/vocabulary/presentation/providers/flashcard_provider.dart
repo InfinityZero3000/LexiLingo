@@ -60,7 +60,7 @@ class FlashcardProvider extends ChangeNotifier {
 
           // Load full vocabulary items for each user vocabulary
           final cards = <ReviewCardEntity>[];
-          
+
           for (final userVocab in dueVocabularyList) {
             final vocabResult = await vocabularyRepository.getVocabularyItem(
               userVocab.vocabularyId,
@@ -69,13 +69,17 @@ class FlashcardProvider extends ChangeNotifier {
             vocabResult.fold(
               (failure) {
                 // Skip if failed to load vocabulary item
-                debugPrint('Failed to load vocabulary: ${userVocab.vocabularyId}');
+                debugPrint(
+                  'Failed to load vocabulary: ${userVocab.vocabularyId}',
+                );
               },
               (vocabularyItem) {
-                cards.add(ReviewCardEntity(
-                  userVocabulary: userVocab,
-                  vocabularyItem: vocabularyItem,
-                ));
+                cards.add(
+                  ReviewCardEntity(
+                    userVocabulary: userVocab,
+                    vocabularyItem: vocabularyItem,
+                  ),
+                );
               },
             );
           }
@@ -115,7 +119,7 @@ class FlashcardProvider extends ChangeNotifier {
   /// Submit review for current card
   Future<void> submitReview(ReviewQuality quality) async {
     if (_currentSession == null) return;
-    
+
     final currentCard = _currentSession!.currentCard;
     if (currentCard == null) return;
 
@@ -146,10 +150,10 @@ class FlashcardProvider extends ChangeNotifier {
         (reviewResult) {
           // Update session
           final newReviewedCount = _currentSession!.reviewedCards + 1;
-          final newCorrectCount = _currentSession!.correctCount + 
-              (quality.isCorrect ? 1 : 0);
-          final newXpEarned = _currentSession!.totalXpEarned + 
-              reviewResult.xpEarned;
+          final newCorrectCount =
+              _currentSession!.correctCount + (quality.isCorrect ? 1 : 0);
+          final newXpEarned =
+              _currentSession!.totalXpEarned + reviewResult.xpEarned;
 
           _currentSession = _currentSession!.copyWith(
             reviewedCards: newReviewedCount,

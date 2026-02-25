@@ -11,7 +11,7 @@ class HuggingFaceService implements AIService {
   final String modelId;
 
   static const String _baseUrl = 'https://api-inference.huggingface.co/models';
-  
+
   // Free models available for testing
   static const String defaultModelId = 'microsoft/DialoGPT-medium';
   static const String alternativeModel1 = 'facebook/blenderbot-400M-distill';
@@ -59,7 +59,7 @@ class HuggingFaceService implements AIService {
       );
 
       final url = Uri.parse('$_baseUrl/$modelId');
-      
+
       final response = await httpClient.post(
         url,
         headers: {
@@ -75,16 +75,13 @@ class HuggingFaceService implements AIService {
             'return_full_text': false,
             'do_sample': true,
           },
-          'options': {
-            'wait_for_model': true,
-            'use_cache': false,
-          },
+          'options': {'wait_for_model': true, 'use_cache': false},
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         // Handle different response formats
         if (data is List && data.isNotEmpty) {
           final firstResult = data[0];
@@ -94,7 +91,7 @@ class HuggingFaceService implements AIService {
         } else if (data is Map<String, dynamic>) {
           return _extractText(data);
         }
-        
+
         throw AIServiceException(
           'Unexpected response format from HuggingFace',
           model: AIModel.huggingface,
@@ -162,7 +159,7 @@ class HuggingFaceService implements AIService {
     if (data.containsKey('response')) {
       return data['response'].toString().trim();
     }
-    
+
     throw AIServiceException(
       'Could not extract text from response',
       model: AIModel.huggingface,
@@ -186,10 +183,10 @@ class HuggingFaceService implements AIService {
 
     // Add recent history (limit to last 3 exchanges to stay within token limit)
     if (history != null && history.isNotEmpty) {
-      final recentHistory = history.length > 6 
-          ? history.sublist(history.length - 6) 
+      final recentHistory = history.length > 6
+          ? history.sublist(history.length - 6)
           : history;
-      
+
       for (final message in recentHistory) {
         final role = message['role'];
         final content = message['content'];

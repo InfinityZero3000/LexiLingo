@@ -28,12 +28,12 @@ class ChatProvider extends ChangeNotifier {
   bool _isSending = false;
   String? _error;
   AIModel _selectedModel = AIModel.gemini;
-  
+
   // Pagination for messages
   bool _hasMoreMessages = true;
   bool _isLoadingMoreMessages = false;
   int _messagesPageSize = 20;
-  
+
   // Pagination for sessions
   bool _hasMoreSessions = true;
   bool _isLoadingMoreSessions = false;
@@ -94,13 +94,13 @@ class ChatProvider extends ChangeNotifier {
       },
     );
   }
-  
+
   Future<void> loadMoreSessions(String userId) async {
     if (_isLoadingMoreSessions || !_hasMoreSessions) return;
-    
+
     _isLoadingMoreSessions = true;
     notifyListeners();
-    
+
     final result = await getSessionsUseCase(userId);
     result.fold(
       (failure) {
@@ -111,7 +111,10 @@ class ChatProvider extends ChangeNotifier {
       (sessions) {
         final startIndex = _sessions.length;
         final endIndex = startIndex + _sessionsPageSize;
-        final newSessions = sessions.skip(startIndex).take(_sessionsPageSize).toList();
+        final newSessions = sessions
+            .skip(startIndex)
+            .take(_sessionsPageSize)
+            .toList();
         _sessions.addAll(newSessions);
         _hasMoreSessions = sessions.length > endIndex;
         _isLoadingMoreSessions = false;
@@ -142,7 +145,7 @@ class ChatProvider extends ChangeNotifier {
       },
       (messages) {
         // Load only the last N messages initially (most recent)
-        final recentMessages = messages.length > _messagesPageSize 
+        final recentMessages = messages.length > _messagesPageSize
             ? messages.skip(messages.length - _messagesPageSize).toList()
             : messages;
         _messages = recentMessages;
@@ -152,13 +155,14 @@ class ChatProvider extends ChangeNotifier {
       },
     );
   }
-  
+
   Future<void> loadMoreMessages() async {
-    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) return;
-    
+    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages)
+      return;
+
     _isLoadingMoreMessages = true;
     notifyListeners();
-    
+
     final result = await getChatHistoryUseCase(_currentSession!.id);
     result.fold(
       (failure) {
@@ -170,18 +174,18 @@ class ChatProvider extends ChangeNotifier {
         // Calculate how many messages to load
         final currentCount = _messages.length;
         final totalCount = allMessages.length;
-        
+
         if (currentCount >= totalCount) {
           _hasMoreMessages = false;
           _isLoadingMoreMessages = false;
           notifyListeners();
           return;
         }
-        
+
         // Load older messages (from the beginning)
         final startIndex = totalCount - currentCount - _messagesPageSize;
         final endIndex = totalCount - currentCount;
-        
+
         if (startIndex < 0) {
           // Load all remaining messages
           final olderMessages = allMessages.take(endIndex).toList();
@@ -189,11 +193,14 @@ class ChatProvider extends ChangeNotifier {
           _hasMoreMessages = false;
         } else {
           // Load next batch
-          final olderMessages = allMessages.skip(startIndex).take(_messagesPageSize).toList();
+          final olderMessages = allMessages
+              .skip(startIndex)
+              .take(_messagesPageSize)
+              .toList();
           _messages.insertAll(0, olderMessages);
           _hasMoreMessages = startIndex > 0;
         }
-        
+
         _isLoadingMoreMessages = false;
         notifyListeners();
       },
@@ -211,7 +218,7 @@ class ChatProvider extends ChangeNotifier {
 
     _isSending = true;
     _error = null;
-    
+
     final tempUserMessage = ChatMessage(
       id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
       sessionId: _currentSession!.id,
@@ -220,7 +227,7 @@ class ChatProvider extends ChangeNotifier {
       timestamp: DateTime.now(),
       status: MessageStatus.sending,
     );
-    
+
     _messages.add(tempUserMessage);
     notifyListeners();
 
@@ -229,7 +236,9 @@ class ChatProvider extends ChangeNotifier {
       userId: userId,
       message: content.trim(),
       model: _selectedModel,
-      conversationHistory: _messages.where((m) => m.status == MessageStatus.sent).toList(),
+      conversationHistory: _messages
+          .where((m) => m.status == MessageStatus.sent)
+          .toList(),
     );
 
     final result = await sendMessageUseCase(params);

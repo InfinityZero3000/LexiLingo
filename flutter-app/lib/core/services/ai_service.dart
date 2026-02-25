@@ -19,12 +19,12 @@ abstract class AIService {
   int get maxTokens;
 
   /// Generate a response from the AI
-  /// 
+  ///
   /// [prompt] - The user's message
   /// [systemPrompt] - System instructions for the AI
   /// [conversationHistory] - Previous messages in the conversation
   /// [temperature] - Controls randomness (0.0 = deterministic, 1.0 = creative)
-  /// 
+  ///
   /// Returns the AI's text response
   Future<String> generateResponse({
     required String prompt,
@@ -47,11 +47,7 @@ class AIServiceException implements Exception {
   final AIModel? model;
   final String? details;
 
-  AIServiceException(
-    this.message, {
-    this.model,
-    this.details,
-  });
+  AIServiceException(this.message, {this.model, this.details});
 
   @override
   String toString() {

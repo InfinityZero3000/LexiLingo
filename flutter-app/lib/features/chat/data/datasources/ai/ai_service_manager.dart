@@ -98,7 +98,7 @@ class AIServiceManager {
           conversationHistory: conversationHistory,
           temperature: temperature,
         );
-        
+
         // Switch to this working service
         _currentService = service;
         return response;
@@ -118,13 +118,13 @@ class AIServiceManager {
   /// Test all services and return their availability status
   Future<Map<AIModel, bool>> testAllServices() async {
     final results = <AIModel, bool>{};
-    
+
     for (final service in _services) {
       if (!service.isConfigured()) {
         results[service.modelType] = false;
         continue;
       }
-      
+
       try {
         final isAvailable = await service.testConnection();
         results[service.modelType] = isAvailable;
@@ -132,7 +132,7 @@ class AIServiceManager {
         results[service.modelType] = false;
       }
     }
-    
+
     return results;
   }
 

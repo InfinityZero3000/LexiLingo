@@ -6,7 +6,7 @@ import 'package:lexilingo_app/features/progress/data/models/weekly_progress_mode
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 
 /// Progress Remote Data Source Interface
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - progress-learning-streaks: Visual progress tracking (3-5x engagement)
 abstract class ProgressRemoteDataSource {
@@ -17,15 +17,15 @@ abstract class ProgressRemoteDataSource {
     required double score,
   });
   Future<int> getTotalXp();
-  
+
   // Weekly progress (Task 1.3)
   Future<WeeklyProgressEntity> getWeeklyProgress();
-  
+
   // Streak methods
   Future<StreakModel> getMyStreak();
   Future<StreakUpdateResultModel> updateStreak();
   Future<Map<String, dynamic>> useStreakFreeze();
-  
+
   // Daily Challenges methods
   Future<DailyChallengesResponseModel> getDailyChallenges();
   Future<Map<String, dynamic>> claimChallengeReward(String challengeId);
@@ -48,7 +48,9 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
   }
 
   @override
-  Future<CourseProgressWithUnitsModel> getCourseProgress(String courseId) async {
+  Future<CourseProgressWithUnitsModel> getCourseProgress(
+    String courseId,
+  ) async {
     try {
       final response = await apiClient.get('/progress/courses/$courseId');
       return CourseProgressWithUnitsModel.fromJson(response);
@@ -65,10 +67,7 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     try {
       final response = await apiClient.post(
         '/progress/lessons/$lessonId/complete',
-        body: {
-          'lesson_id': lessonId,
-          'score': score,
-        },
+        body: {'lesson_id': lessonId, 'score': score},
       );
       return LessonCompletionResultModel.fromJson(response);
     } catch (e) {
@@ -118,7 +117,10 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
   @override
   Future<StreakUpdateResultModel> updateStreak() async {
     try {
-      final response = await apiClient.post('/progress/streak/update', body: {});
+      final response = await apiClient.post(
+        '/progress/streak/update',
+        body: {},
+      );
       return StreakUpdateResultModel.fromJson(response);
     } catch (e) {
       rethrow;
@@ -128,7 +130,10 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
   @override
   Future<Map<String, dynamic>> useStreakFreeze() async {
     try {
-      final response = await apiClient.post('/progress/streak/freeze', body: {});
+      final response = await apiClient.post(
+        '/progress/streak/freeze',
+        body: {},
+      );
       return response;
     } catch (e) {
       rethrow;

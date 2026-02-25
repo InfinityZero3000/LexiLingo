@@ -113,7 +113,9 @@ class StoryRepositoryImpl implements StoryRepository {
   }
 
   @override
-  Future<Either<Failure, TopicSession>> getTopicSession(String sessionId) async {
+  Future<Either<Failure, TopicSession>> getTopicSession(
+    String sessionId,
+  ) async {
     try {
       final session = await apiDataSource.getTopicSession(sessionId);
       return Right(session);

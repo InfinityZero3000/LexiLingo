@@ -70,16 +70,16 @@ class BadgeGalleryScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
         ),
         const SizedBox(height: 16),
         content,
@@ -175,10 +175,7 @@ class BadgeGalleryScreen extends StatelessWidget {
       children: categories.map((cat) {
         return Column(
           children: [
-            GeneratedBadge(
-              config: cat.$2,
-              size: 65,
-            ),
+            GeneratedBadge(config: cat.$2, size: 65),
             const SizedBox(height: 6),
             SizedBox(
               width: 70,
@@ -249,7 +246,10 @@ class BadgeGalleryScreen extends StatelessWidget {
               size: 80,
             ),
             const SizedBox(height: 8),
-            const Text('Unlocked', style: TextStyle(fontWeight: FontWeight.w500)),
+            const Text(
+              'Unlocked',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ],

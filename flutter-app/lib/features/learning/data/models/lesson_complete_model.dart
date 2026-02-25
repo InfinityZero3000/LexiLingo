@@ -41,7 +41,8 @@ class LessonCompleteModel {
       accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
       starsEarned: json['stars_earned'] as int? ?? 0,
       nextLessonUnlocked: json['next_lesson_unlocked'] as String?,
-      achievementsUnlocked: (json['achievements_unlocked'] as List<dynamic>?)
+      achievementsUnlocked:
+          (json['achievements_unlocked'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],

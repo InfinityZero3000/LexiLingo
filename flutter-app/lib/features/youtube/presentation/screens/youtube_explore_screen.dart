@@ -89,9 +89,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         Expanded(
                           child: Text(
                             'English Videos',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
+                            style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -127,9 +125,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget _buildSearchBar(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           if (!isDark)
@@ -197,9 +193,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'English Learning Channels',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 12),
@@ -224,9 +220,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'Browse by Category',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 12),
@@ -237,10 +233,26 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildCategoryChip('General', Icons.school_rounded, const Color(0xFF137FEC)),
-              _buildCategoryChip('Pronunciation', Icons.record_voice_over_rounded, const Color(0xFFE91E63)),
-              _buildCategoryChip('Academic', Icons.auto_stories_rounded, const Color(0xFF9C27B0)),
-              _buildCategoryChip('News', Icons.newspaper_rounded, const Color(0xFF00897B)),
+              _buildCategoryChip(
+                'General',
+                Icons.school_rounded,
+                const Color(0xFF137FEC),
+              ),
+              _buildCategoryChip(
+                'Pronunciation',
+                Icons.record_voice_over_rounded,
+                const Color(0xFFE91E63),
+              ),
+              _buildCategoryChip(
+                'Academic',
+                Icons.auto_stories_rounded,
+                const Color(0xFF9C27B0),
+              ),
+              _buildCategoryChip(
+                'News',
+                Icons.newspaper_rounded,
+                const Color(0xFF00897B),
+              ),
             ],
           ),
         ),
@@ -347,9 +359,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         side: BorderSide(color: color.withValues(alpha: 0.2)),
       ),
       onPressed: () {
-        context
-            .read<YouTubeProvider>()
-            .loadChannels(category: label.toLowerCase());
+        context.read<YouTubeProvider>().loadChannels(
+          category: label.toLowerCase(),
+        );
       },
     );
   }
@@ -371,15 +383,15 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded,
-                  size: 64, color: Colors.grey.shade400),
+              Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No videos found',
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
               ),
             ],
           ),
@@ -390,23 +402,20 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == provider.searchResults.length) {
-              return provider.isSearching
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildVideoCard(provider.searchResults[index], isDark),
-            );
-          },
-          childCount: provider.searchResults.length + 1,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index == provider.searchResults.length) {
+            return provider.isSearching
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : const SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildVideoCard(provider.searchResults[index], isDark),
+          );
+        }, childCount: provider.searchResults.length + 1),
       ),
     );
   }
@@ -414,17 +423,11 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget _buildVideoCard(YouTubeVideo video, bool isDark) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/youtube/player',
-          arguments: video,
-        );
+        Navigator.pushNamed(context, '/youtube/player', arguments: video);
       },
       child: Container(
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             if (!isDark)
@@ -440,8 +443,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           children: [
             // Thumbnail
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Stack(
@@ -454,8 +458,11 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         color: AppColors.primary.withValues(alpha: 0.1),
-                        child: const Icon(Icons.play_circle_outline,
-                            size: 48, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.play_circle_outline,
+                          size: 48,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                     // Play overlay
@@ -485,7 +492,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         right: 8,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 3),
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: _cefrColor(video.cefrLevel),
                             borderRadius: BorderRadius.circular(6),
@@ -556,13 +565,20 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   // CEFR color map (skill: content-difficulty-levels)
   Color _cefrColor(String level) {
     switch (level) {
-      case 'A1': return const Color(0xFF4CAF50);
-      case 'A2': return const Color(0xFF8BC34A);
-      case 'B1': return const Color(0xFFFFC107);
-      case 'B2': return const Color(0xFFFF9800);
-      case 'C1': return const Color(0xFFFF5722);
-      case 'C2': return const Color(0xFF9C27B0);
-      default:   return AppColors.primary;
+      case 'A1':
+        return const Color(0xFF4CAF50);
+      case 'A2':
+        return const Color(0xFF8BC34A);
+      case 'B1':
+        return const Color(0xFFFFC107);
+      case 'B2':
+        return const Color(0xFFFF9800);
+      case 'C1':
+        return const Color(0xFFFF5722);
+      case 'C2':
+        return const Color(0xFF9C27B0);
+      default:
+        return AppColors.primary;
     }
   }
 }

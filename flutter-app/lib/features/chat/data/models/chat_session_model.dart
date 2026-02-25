@@ -74,8 +74,10 @@ class ChatSessionModel extends ChatSession {
           : null,
       messages: json['messages'] != null
           ? (json['messages'] as List)
-              .map((m) => ChatMessageModel.fromJson(m as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (m) => ChatMessageModel.fromJson(m as Map<String, dynamic>),
+                )
+                .toList()
           : null,
     );
   }

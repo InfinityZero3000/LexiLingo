@@ -7,11 +7,7 @@ class LeagueCard extends StatelessWidget {
   final LeagueStatusEntity status;
   final VoidCallback? onTap;
 
-  const LeagueCard({
-    super.key,
-    required this.status,
-    this.onTap,
-  });
+  const LeagueCard({super.key, required this.status, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -57,11 +53,7 @@ class LeagueCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                leagueData.icon,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: Icon(leagueData.icon, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
 
@@ -106,10 +98,7 @@ class LeagueCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Rank #${status.currentRank} · ${status.xpEarned} XP this week',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                   if (status.weekEndsInHours > 0) ...[
                     const SizedBox(height: 4),
@@ -136,10 +125,7 @@ class LeagueCard extends StatelessWidget {
             ),
 
             // Arrow
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],
         ),
       ),
@@ -221,11 +207,7 @@ class LeagueBadge extends StatelessWidget {
   final String league;
   final double size;
 
-  const LeagueBadge({
-    super.key,
-    required this.league,
-    this.size = 32,
-  });
+  const LeagueBadge({super.key, required this.league, this.size = 32});
 
   @override
   Widget build(BuildContext context) {
@@ -249,28 +231,44 @@ class LeagueBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        data.$3,
-        color: Colors.white,
-        size: size * 0.5,
-      ),
+      child: Icon(data.$3, color: Colors.white, size: size * 0.5),
     );
   }
 
   (Color, Color, IconData) _getLeagueColor(String league) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return (const Color(0xFFCD7F32), const Color(0xFFB8720E), Icons.shield_outlined);
+        return (
+          const Color(0xFFCD7F32),
+          const Color(0xFFB8720E),
+          Icons.shield_outlined,
+        );
       case 'silver':
         return (const Color(0xFFC0C0C0), const Color(0xFF9E9E9E), Icons.shield);
       case 'gold':
-        return (const Color(0xFFFFD700), const Color(0xFFE5C100), Icons.emoji_events_outlined);
+        return (
+          const Color(0xFFFFD700),
+          const Color(0xFFE5C100),
+          Icons.emoji_events_outlined,
+        );
       case 'platinum':
-        return (const Color(0xFFE5E4E2), const Color(0xFFB8B8B6), Icons.emoji_events);
+        return (
+          const Color(0xFFE5E4E2),
+          const Color(0xFFB8B8B6),
+          Icons.emoji_events,
+        );
       case 'diamond':
-        return (const Color(0xFFB9F2FF), const Color(0xFF7DD3EA), Icons.diamond);
+        return (
+          const Color(0xFFB9F2FF),
+          const Color(0xFF7DD3EA),
+          Icons.diamond,
+        );
       default:
-        return (const Color(0xFFCD7F32), const Color(0xFFB8720E), Icons.shield_outlined);
+        return (
+          const Color(0xFFCD7F32),
+          const Color(0xFFB8720E),
+          Icons.shield_outlined,
+        );
     }
   }
 }

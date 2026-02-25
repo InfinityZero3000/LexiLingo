@@ -8,14 +8,14 @@ import '../pronunciation/pronunciation_service.dart';
 import '../../utils/app_logger.dart';
 
 /// AI Orchestrator - Central coordinator for the AI pipeline
-/// 
+///
 /// This is the core engine that manages:
 /// - Task analysis and planning
 /// - Resource allocation (model loading)
 /// - Execution coordination (sequential + parallel)
 /// - Error handling and fallback
 /// - State management
-/// 
+///
 /// Following the architecture diagram in docs/architecture.md
 class AIOrchestrator {
   final ContextManager contextManager;
@@ -55,8 +55,12 @@ class AIOrchestrator {
       }
 
       if (pronunciationService != null) {
-        futures.add(_initService('Pronunciation', 
-            () => pronunciationService!.initialize()));
+        futures.add(
+          _initService(
+            'Pronunciation',
+            () => pronunciationService!.initialize(),
+          ),
+        );
       }
 
       await Future.wait(futures);
@@ -81,7 +85,7 @@ class AIOrchestrator {
   }
 
   /// Process text input (no audio)
-  /// 
+  ///
   /// Flow:
   /// 1. Task analysis
   /// 2. Context retrieval
@@ -93,7 +97,9 @@ class AIOrchestrator {
     String? sessionId,
   }) async {
     if (!_isInitialized) {
-      throw StateError('Orchestrator not initialized. Call initialize() first.');
+      throw StateError(
+        'Orchestrator not initialized. Call initialize() first.',
+      );
     }
 
     logDebug('[Orchestrator] Processing text: "$userText"');
@@ -101,10 +107,7 @@ class AIOrchestrator {
 
     try {
       // Phase 1: Task Analysis
-      final taskAnalysis = _analyzeTask(
-        userText: userText,
-        hasAudio: false,
-      );
+      final taskAnalysis = _analyzeTask(userText: userText, hasAudio: false);
       logDebug('[Orchestrator] Task analysis: $taskAnalysis');
 
       // Phase 2: Context Retrieval
@@ -134,13 +137,14 @@ class AIOrchestrator {
       );
 
       // Update conversation history
-      contextManager.addTurn(ConversationTurn(
-        userMessage: userText,
-        aiResponse: englishResponse,
-      ));
+      contextManager.addTurn(
+        ConversationTurn(userMessage: userText, aiResponse: englishResponse),
+      );
 
       // Calculate total latency
-      final totalLatency = DateTime.now().difference(pipelineStart).inMilliseconds;
+      final totalLatency = DateTime.now()
+          .difference(pipelineStart)
+          .inMilliseconds;
 
       return AIResponse(
         analysis: analysisResult,
@@ -165,7 +169,7 @@ class AIOrchestrator {
   }
 
   /// Process audio input (with pronunciation analysis)
-  /// 
+  ///
   /// Flow:
   /// 1. STT (transcribe audio)
   /// 2. Task analysis
@@ -180,11 +184,15 @@ class AIOrchestrator {
     String? sessionId,
   }) async {
     if (!_isInitialized) {
-      throw StateError('Orchestrator not initialized. Call initialize() first.');
+      throw StateError(
+        'Orchestrator not initialized. Call initialize() first.',
+      );
     }
 
     if (sttService == null || pronunciationService == null) {
-      throw StateError('Audio processing requires STT and Pronunciation services');
+      throw StateError(
+        'Audio processing requires STT and Pronunciation services',
+      );
     }
 
     logDebug('[Orchestrator] Processing audio (${audioBytes.length} bytes)');
@@ -249,12 +257,16 @@ class AIOrchestrator {
       );
 
       // Update conversation history
-      contextManager.addTurn(ConversationTurn(
-        userMessage: transcription.text,
-        aiResponse: englishResponse,
-      ));
+      contextManager.addTurn(
+        ConversationTurn(
+          userMessage: transcription.text,
+          aiResponse: englishResponse,
+        ),
+      );
 
-      final totalLatency = DateTime.now().difference(pipelineStart).inMilliseconds;
+      final totalLatency = DateTime.now()
+          .difference(pipelineStart)
+          .inMilliseconds;
 
       return AIResponse(
         analysis: completeAnalysis,
@@ -301,8 +313,8 @@ class AIOrchestrator {
     final complexity = wordCount < 5
         ? TaskComplexity.simple
         : wordCount < 15
-            ? TaskComplexity.medium
-            : TaskComplexity.complex;
+        ? TaskComplexity.medium
+        : TaskComplexity.complex;
 
     // Determine primary tasks
     final primaryTasks = <AITaskType>[
@@ -351,14 +363,16 @@ class AIOrchestrator {
     // Example: detect "I am go" error (must be exact match to avoid false positives)
     final lowerText = userText.toLowerCase();
     if (lowerText.contains('i am go ') || lowerText.contains('i am go.')) {
-      errors.add(const GrammarError(
-        errorType: 'incorrect_verb_form',
-        incorrect: 'am go',
-        correction: 'am going',
-        explanation: 'Use present continuous "am going" for current action',
-        startPos: 2,
-        endPos: 7,
-      ));
+      errors.add(
+        const GrammarError(
+          errorType: 'incorrect_verb_form',
+          incorrect: 'am go',
+          correction: 'am going',
+          explanation: 'Use present continuous "am going" for current action',
+          startPos: 2,
+          endPos: 7,
+        ),
+      );
     }
 
     // Mock fluency score
@@ -367,7 +381,9 @@ class AIOrchestrator {
     // Mock vocabulary level
     final vocabularyLevel = learnerLevel.displayName;
 
-    logDebug('[Orchestrator] Grammar analysis: ${errors.length} errors, fluency: $fluencyScore');
+    logDebug(
+      '[Orchestrator] Grammar analysis: ${errors.length} errors, fluency: $fluencyScore',
+    );
 
     return AnalysisResult(
       fluencyScore: fluencyScore,
@@ -408,18 +424,18 @@ class AIOrchestrator {
 
     // Has errors - provide correction
     final firstError = analysisResult.grammarErrors.first;
-    
+
     switch (strategy) {
       case FeedbackStrategy.praise:
         return 'Good effort! ${_formatCorrection(firstError)}';
-      
+
       case FeedbackStrategy.correct:
         return 'Almost there! ${_formatCorrection(firstError)} Try: "${firstError.correction}"';
-      
+
       case FeedbackStrategy.explain:
         return 'Let me help you. ${_formatCorrection(firstError)} '
             '${firstError.explanation}. The correct form is: "${firstError.correction}"';
-      
+
       case FeedbackStrategy.drill:
         return 'Let\'s practice this again. ${_formatCorrection(firstError)} '
             'Try to use "${firstError.correction}" in a new sentence.';
@@ -445,7 +461,8 @@ class AIOrchestrator {
     }
 
     // Factor in pronunciation
-    if (analysis.pronunciation != null && analysis.pronunciation!.accuracy < 0.7) {
+    if (analysis.pronunciation != null &&
+        analysis.pronunciation!.accuracy < 0.7) {
       confidence -= 0.1;
     }
 
@@ -463,7 +480,8 @@ class AIOrchestrator {
         fluencyScore: null,
         vocabularyLevel: null,
       ),
-      responseEn: 'I\'m sorry, I encountered an issue analyzing your message. '
+      responseEn:
+          'I\'m sorry, I encountered an issue analyzing your message. '
           'Could you please try again?',
       responseVi: null,
       confidence: 0.0,
@@ -480,7 +498,8 @@ class AIOrchestrator {
   }
 
   /// Get performance metrics
-  Map<String, dynamic> get performanceMetrics => Map.unmodifiable(_performanceMetrics);
+  Map<String, dynamic> get performanceMetrics =>
+      Map.unmodifiable(_performanceMetrics);
 
   /// Check if orchestrator is ready
   bool get isReady => _isInitialized;
@@ -491,7 +510,7 @@ class AIOrchestrator {
   /// Clean up all resources
   Future<void> dispose() async {
     logDebug('[Orchestrator] Disposing...');
-    
+
     await Future.wait([
       if (sttService != null) sttService!.dispose(),
       if (ttsService != null) ttsService!.dispose(),
@@ -501,7 +520,7 @@ class AIOrchestrator {
     _loadedModels.clear();
     _performanceMetrics.clear();
     _isInitialized = false;
-    
+
     logDebug('[Orchestrator] Disposed');
   }
 }

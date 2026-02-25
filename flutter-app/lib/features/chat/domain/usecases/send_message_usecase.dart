@@ -60,21 +60,20 @@ class SendMessageUseCase {
       conversationHistory: params.conversationHistory,
     );
 
-    return await aiResponseEither.fold(
-      (failure) async => Left(failure),
-      (aiText) async {
-        final aiMessage = ChatMessage(
-          id: _generateId(prefix: 'ai'),
-          sessionId: params.sessionId,
-          content: aiText,
-          role: MessageRole.ai,
-          timestamp: DateTime.now(),
-          status: MessageStatus.sent,
-        );
+    return await aiResponseEither.fold((failure) async => Left(failure), (
+      aiText,
+    ) async {
+      final aiMessage = ChatMessage(
+        id: _generateId(prefix: 'ai'),
+        sessionId: params.sessionId,
+        content: aiText,
+        role: MessageRole.ai,
+        timestamp: DateTime.now(),
+        status: MessageStatus.sent,
+      );
 
-        return repository.saveMessage(aiMessage);
-      },
-    );
+      return repository.saveMessage(aiMessage);
+    });
   }
 
   String _generateId({required String prefix}) {

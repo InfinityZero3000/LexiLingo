@@ -19,8 +19,7 @@ class PodcastDetailScreen extends StatefulWidget {
   const PodcastDetailScreen({super.key, required this.podcast});
 
   @override
-  State<PodcastDetailScreen> createState() =>
-      _PodcastDetailScreenState();
+  State<PodcastDetailScreen> createState() => _PodcastDetailScreenState();
 }
 
 class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
@@ -68,8 +67,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
     return Scaffold(
       body: Consumer<PodcastProvider>(
         builder: (context, provider, _) {
-          final isFollowed = provider.followedPodcasts
-              .any((f) => f.feedUrl == widget.podcast.feedUrl);
+          final isFollowed = provider.followedPodcasts.any(
+            (f) => f.feedUrl == widget.podcast.feedUrl,
+          );
 
           return CustomScrollView(
             slivers: [
@@ -77,8 +77,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
               SliverAppBar(
                 pinned: true,
                 expandedHeight: 0,
-                backgroundColor:
-                    isDark ? AppColors.backgroundDark : Colors.white,
+                backgroundColor: isDark
+                    ? AppColors.backgroundDark
+                    : Colors.white,
                 title: Text(
                   widget.podcast.title,
                   maxLines: 1,
@@ -93,8 +94,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
                         : TextButton.icon(
@@ -105,8 +105,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                                   : Icons.add_rounded,
                               size: 18,
                             ),
-                            label: Text(
-                                isFollowed ? 'Following' : 'Follow'),
+                            label: Text(isFollowed ? 'Following' : 'Follow'),
                             style: TextButton.styleFrom(
                               foregroundColor: isFollowed
                                   ? AppColors.greenSuccess
@@ -120,7 +119,11 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
               // ── Podcast header ──
               SliverToBoxAdapter(
                 child: _buildHeader(
-                    widget.podcast, cefrColor, isDark, isFollowed),
+                  widget.podcast,
+                  cefrColor,
+                  isDark,
+                  isFollowed,
+                ),
               ),
 
               // ── Episode count heading ──
@@ -129,16 +132,18 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.format_list_numbered_rounded,
-                          size: 18, color: AppColors.primary),
+                      const Icon(
+                        Icons.format_list_numbered_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '${widget.podcast.episodeCount} Episodes',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color:
-                              isDark ? Colors.white : AppColors.textDark,
+                          color: isDark ? Colors.white : AppColors.textDark,
                         ),
                       ),
                     ],
@@ -154,8 +159,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     delegate: SliverChildBuilderDelegate(
                       (_, __) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child:
-                            _buildEpisodeSkeleton(isDark),
+                        child: _buildEpisodeSkeleton(isDark),
                       ),
                       childCount: 5,
                     ),
@@ -169,16 +173,19 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.error_outline_rounded,
-                              size: 48,
-                              color: Colors.red.shade300),
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: Colors.red.shade300,
+                          ),
                           const SizedBox(height: 8),
-                          Text('Failed to load episodes',
-                              style: TextStyle(
-                                  color: Colors.grey.shade500)),
+                          Text(
+                            'Failed to load episodes',
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
                           TextButton(
-                            onPressed: () => provider
-                                .loadEpisodes(widget.podcast),
+                            onPressed: () =>
+                                provider.loadEpisodes(widget.podcast),
                             child: const Text('Retry'),
                           ),
                         ],
@@ -192,9 +199,8 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     child: Text(
                       'No episodes available',
                       style: TextStyle(
-                          color: isDark
-                              ? Colors.white38
-                              : Colors.grey.shade400),
+                        color: isDark ? Colors.white38 : Colors.grey.shade400,
+                      ),
                     ),
                   ),
                 )
@@ -202,25 +208,20 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final ep =
-                            provider.currentEpisodes[index];
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: 12),
-                          child: EpisodeTile(
-                            episode: ep,
-                            onTap: () => _openPlayer(ep),
-                            onDownload: ep.downloadState ==
-                                    DownloadState.notDownloaded
-                                ? () => provider.downloadEpisode(ep)
-                                : null,
-                          ),
-                        );
-                      },
-                      childCount: provider.currentEpisodes.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final ep = provider.currentEpisodes[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: EpisodeTile(
+                          episode: ep,
+                          onTap: () => _openPlayer(ep),
+                          onDownload:
+                              ep.downloadState == DownloadState.notDownloaded
+                              ? () => provider.downloadEpisode(ep)
+                              : null,
+                        ),
+                      );
+                    }, childCount: provider.currentEpisodes.length),
                   ),
                 ),
             ],
@@ -284,9 +285,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     Text(
                       podcast.author,
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.white60
-                            : AppColors.textGrey,
+                        color: isDark ? Colors.white60 : AppColors.textGrey,
                         fontSize: 13,
                       ),
                     ),
@@ -294,7 +293,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     // CEFR badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: cefrColor,
                         borderRadius: BorderRadius.circular(8),
@@ -337,8 +338,8 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                   : TextOverflow.ellipsis,
             ),
             GestureDetector(
-              onTap: () => setState(
-                  () => _descriptionExpanded = !_descriptionExpanded),
+              onTap: () =>
+                  setState(() => _descriptionExpanded = !_descriptionExpanded),
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(

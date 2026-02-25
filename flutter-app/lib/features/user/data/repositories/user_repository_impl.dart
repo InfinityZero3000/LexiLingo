@@ -25,7 +25,7 @@ class UserRepositoryImpl implements UserRepository {
   Future<User?> getUser(String userId) async {
     // Offline-first: Try local first
     var user = await localDataSource.getUser(userId);
-    
+
     // If not in local and have internet, try Firestore
     if (user == null && firestoreDataSource != null) {
       try {
@@ -38,17 +38,17 @@ class UserRepositoryImpl implements UserRepository {
         // Firestore failed, return null
       }
     }
-    
+
     return user;
   }
 
   @override
   Future<void> createUser(User user) async {
     final userModel = UserModel.fromEntity(user);
-    
+
     // Write to local first
     await localDataSource.createUser(userModel);
-    
+
     // Sync to Firestore if available
     if (firestoreDataSource != null) {
       try {
@@ -62,10 +62,10 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<void> updateUser(User user) async {
     final userModel = UserModel.fromEntity(user);
-    
+
     // Write to local first
     await localDataSource.updateUser(userModel);
-    
+
     // Sync to Firestore if available
     if (firestoreDataSource != null) {
       try {
@@ -94,7 +94,7 @@ class UserRepositoryImpl implements UserRepository {
       totalLessonsCompleted: totalLessonsCompleted,
       totalWordsLearned: totalWordsLearned,
     );
-    
+
     // Sync to Firestore if available
     if (firestoreDataSource != null) {
       try {
@@ -115,7 +115,7 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<void> updateLastLogin(String userId) async {
     await localDataSource.updateLastLogin(userId);
-    
+
     // Update in Firestore
     if (firestoreDataSource != null) {
       try {
@@ -146,7 +146,8 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<Either<Failure, List<WeeklyActivityEntity>>> getWeeklyActivity() async {
+  Future<Either<Failure, List<WeeklyActivityEntity>>>
+  getWeeklyActivity() async {
     if (backendDataSource == null) {
       return Left(ServerFailure('Backend data source not available'));
     }

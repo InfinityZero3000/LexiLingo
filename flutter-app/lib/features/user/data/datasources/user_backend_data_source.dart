@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/user/data/models/weekly_activity_model.da
 abstract class UserBackendDataSource {
   /// Get user statistics from backend
   Future<UserStatsModel> getUserStats();
-  
+
   /// Get weekly activity data
   Future<List<WeeklyActivityModel>> getWeeklyActivity();
 }
@@ -31,10 +31,10 @@ class UserBackendDataSourceImpl implements UserBackendDataSource {
   Future<List<WeeklyActivityModel>> getWeeklyActivity() async {
     try {
       final response = await apiClient.get('/users/me/weekly-activity');
-      
+
       // Handle response based on its structure
       List<dynamic> activitiesList;
-      
+
       if (response.containsKey('weekly_activity')) {
         activitiesList = response['weekly_activity'] as List<dynamic>;
       } else if (response is List) {
@@ -42,9 +42,12 @@ class UserBackendDataSourceImpl implements UserBackendDataSource {
       } else {
         throw ServerException('Invalid response format for weekly activity');
       }
-      
+
       return activitiesList
-          .map((activity) => WeeklyActivityModel.fromJson(activity as Map<String, dynamic>))
+          .map(
+            (activity) =>
+                WeeklyActivityModel.fromJson(activity as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw ServerException('Failed to get weekly activity: $e');

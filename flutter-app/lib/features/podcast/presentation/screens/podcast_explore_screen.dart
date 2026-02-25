@@ -93,9 +93,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                     Expanded(
                       child: Text(
                         'Podcasts',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -124,8 +122,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                     fillColor: isDark
                         ? Colors.white.withValues(alpha: 0.06)
                         : Colors.white,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
@@ -153,14 +153,15 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.wifi_off_rounded,
-                              size: 52,
-                              color: Colors.red.shade300),
+                          Icon(
+                            Icons.wifi_off_rounded,
+                            size: 52,
+                            color: Colors.red.shade300,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'Failed to load podcasts',
-                            style:
-                                TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: Colors.grey.shade500),
                           ),
                           const SizedBox(height: 8),
                           TextButton(
@@ -209,19 +210,20 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.podcasts_rounded,
-                  size: 64, color: Colors.grey.shade300),
+              Icon(
+                Icons.podcasts_rounded,
+                size: 64,
+                color: Colors.grey.shade300,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No podcasts found',
-                style: TextStyle(
-                    color: Colors.grey.shade500, fontSize: 16),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Try a different search term',
-                style: TextStyle(
-                    color: Colors.grey.shade400, fontSize: 13),
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
               ),
             ],
           ),
@@ -232,22 +234,20 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final podcast = provider.searchResults[index];
-            final isFollowed = provider.followedPodcasts
-                .any((f) => f.feedUrl == podcast.feedUrl);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _SearchResultTile(
-                podcast: podcast,
-                isFollowed: isFollowed,
-                onTap: () => _openDetail(podcast),
-              ),
-            );
-          },
-          childCount: provider.searchResults.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final podcast = provider.searchResults[index];
+          final isFollowed = provider.followedPodcasts.any(
+            (f) => f.feedUrl == podcast.feedUrl,
+          );
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _SearchResultTile(
+              podcast: podcast,
+              isFollowed: isFollowed,
+              onTap: () => _openDetail(podcast),
+            ),
+          );
+        }, childCount: provider.searchResults.length),
       ),
     );
   }
@@ -256,8 +256,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   //  Curated categories view
   // ──────────────────────────────────────
 
-  Widget _buildCuratedCategories(
-      PodcastProvider provider, bool isDark) {
+  Widget _buildCuratedCategories(PodcastProvider provider, bool isDark) {
     if (provider.curatedCategories.isEmpty) {
       return SliverFillRemaining(
         child: Center(
@@ -272,13 +271,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 40),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final category = provider.curatedCategories[index];
-            return _buildCategorySection(category, provider, isDark);
-          },
-          childCount: provider.curatedCategories.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final category = provider.curatedCategories[index];
+          return _buildCategorySection(category, provider, isDark);
+        }, childCount: provider.curatedCategories.length),
       ),
     );
   }
@@ -300,8 +296,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
             children: [
               // CEFR chip
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: cefrColor,
                   borderRadius: BorderRadius.circular(20),
@@ -340,8 +338,9 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
             itemCount: category.podcasts.length,
             itemBuilder: (context, i) {
               final podcast = category.podcasts[i];
-              final isFollowed = provider.followedPodcasts
-                  .any((f) => f.feedUrl == podcast.feedUrl);
+              final isFollowed = provider.followedPodcasts.any(
+                (f) => f.feedUrl == podcast.feedUrl,
+              );
               return PodcastCard(
                 podcast: podcast,
                 isFollowed: isFollowed,
@@ -361,9 +360,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   void _openDetail(Podcast podcast) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PodcastDetailScreen(podcast: podcast),
-      ),
+      MaterialPageRoute(builder: (_) => PodcastDetailScreen(podcast: podcast)),
     );
   }
 
@@ -417,9 +414,7 @@ class _SearchResultTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             if (!isDark)
@@ -445,16 +440,22 @@ class _SearchResultTile extends StatelessWidget {
                         width: 60,
                         height: 60,
                         color: cefrColor.withValues(alpha: 0.12),
-                        child: Icon(Icons.podcasts_rounded,
-                            color: cefrColor, size: 28),
+                        child: Icon(
+                          Icons.podcasts_rounded,
+                          color: cefrColor,
+                          size: 28,
+                        ),
                       ),
                     )
                   : Container(
                       width: 60,
                       height: 60,
                       color: cefrColor.withValues(alpha: 0.12),
-                      child: Icon(Icons.podcasts_rounded,
-                          color: cefrColor, size: 28),
+                      child: Icon(
+                        Icons.podcasts_rounded,
+                        color: cefrColor,
+                        size: 28,
+                      ),
                     ),
             ),
             const SizedBox(width: 12),
@@ -465,7 +466,9 @@ class _SearchResultTile extends StatelessWidget {
                   Text(
                     podcast.title,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -473,10 +476,9 @@ class _SearchResultTile extends StatelessWidget {
                   Text(
                     podcast.author,
                     style: TextStyle(
-                        color: isDark
-                            ? Colors.white54
-                            : AppColors.textGrey,
-                        fontSize: 12),
+                      color: isDark ? Colors.white54 : AppColors.textGrey,
+                      fontSize: 12,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -485,7 +487,9 @@ class _SearchResultTile extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: cefrColor,
                           borderRadius: BorderRadius.circular(5),
@@ -493,19 +497,19 @@ class _SearchResultTile extends StatelessWidget {
                         child: Text(
                           podcast.cefrLevel,
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 10),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${podcast.episodeCount} episodes',
                         style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? Colors.white38
-                                : AppColors.textGrey),
+                          fontSize: 11,
+                          color: isDark ? Colors.white38 : AppColors.textGrey,
+                        ),
                       ),
                     ],
                   ),

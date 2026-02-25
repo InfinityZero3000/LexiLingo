@@ -5,6 +5,8 @@ import 'package:lexilingo_app/features/gamification/presentation/providers/gamif
 void registerGamificationModule() {
   // Provider (lazily loaded singleton)
   if (!sl.isRegistered<GamificationProvider>()) {
-    sl.registerLazySingleton<GamificationProvider>(() => GamificationProvider());
+    sl.registerLazySingleton<GamificationProvider>(
+      () => GamificationProvider(),
+    );
   }
 }

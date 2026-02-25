@@ -15,40 +15,40 @@ enum GameType {
   hangman;
 
   String get apiKey => switch (this) {
-        GameType.wordScramble => 'word_scramble',
-        GameType.fillBlank => 'fill_blank',
-        GameType.matching => 'matching',
-        GameType.spellingBee => 'spelling_bee',
-        GameType.grammarQuiz => 'grammar_quiz',
-        GameType.hangman => 'hangman',
-      };
+    GameType.wordScramble => 'word_scramble',
+    GameType.fillBlank => 'fill_blank',
+    GameType.matching => 'matching',
+    GameType.spellingBee => 'spelling_bee',
+    GameType.grammarQuiz => 'grammar_quiz',
+    GameType.hangman => 'hangman',
+  };
 
   String get displayName => switch (this) {
-        GameType.wordScramble => 'Word Scramble',
-        GameType.fillBlank => 'Fill in the Blank',
-        GameType.matching => 'Matching Game',
-        GameType.spellingBee => 'Spelling Bee',
-        GameType.grammarQuiz => 'Grammar Quiz',
-        GameType.hangman => 'Hangman',
-      };
+    GameType.wordScramble => 'Word Scramble',
+    GameType.fillBlank => 'Fill in the Blank',
+    GameType.matching => 'Matching Game',
+    GameType.spellingBee => 'Spelling Bee',
+    GameType.grammarQuiz => 'Grammar Quiz',
+    GameType.hangman => 'Hangman',
+  };
 
   IconData get icon => switch (this) {
-        GameType.wordScramble => Icons.sort_by_alpha_rounded,
-        GameType.fillBlank => Icons.edit_note_rounded,
-        GameType.matching => Icons.compare_arrows_rounded,
-        GameType.spellingBee => Icons.volume_up_rounded,
-        GameType.grammarQuiz => Icons.menu_book_rounded,
-        GameType.hangman => Icons.extension_rounded,
-      };
+    GameType.wordScramble => Icons.sort_by_alpha_rounded,
+    GameType.fillBlank => Icons.edit_note_rounded,
+    GameType.matching => Icons.compare_arrows_rounded,
+    GameType.spellingBee => Icons.volume_up_rounded,
+    GameType.grammarQuiz => Icons.menu_book_rounded,
+    GameType.hangman => Icons.extension_rounded,
+  };
 
   String get description => switch (this) {
-        GameType.wordScramble => 'Arrange scrambled letters to form words',
-        GameType.fillBlank => 'Choose the correct word to complete the sentence',
-        GameType.matching => 'Match words with their definitions',
-        GameType.spellingBee => 'Listen and type the word you hear',
-        GameType.grammarQuiz => 'Test your grammar knowledge',
-        GameType.hangman => 'Guess the word letter by letter',
-      };
+    GameType.wordScramble => 'Arrange scrambled letters to form words',
+    GameType.fillBlank => 'Choose the correct word to complete the sentence',
+    GameType.matching => 'Match words with their definitions',
+    GameType.spellingBee => 'Listen and type the word you hear',
+    GameType.grammarQuiz => 'Test your grammar knowledge',
+    GameType.hangman => 'Guess the word letter by letter',
+  };
 }
 
 // ── GameWord ──────────────────────────────────────────────────────────────────
@@ -100,19 +100,19 @@ class GameWord {
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        'definition': definition,
-        if (hint != null) 'hint': hint,
-        if (exampleSentence != null) 'example_sentence': exampleSentence,
-        if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
-        'cefr_level': cefrLevel,
-        'category': category,
-        'xp_value': xpValue,
-        if (vietnameseTranslation != null)
-          'vietnamese_translation': vietnameseTranslation,
-        if (synonyms != null) 'synonyms': synonyms,
-      };
+    'word_id': wordId,
+    'word': word,
+    'definition': definition,
+    if (hint != null) 'hint': hint,
+    if (exampleSentence != null) 'example_sentence': exampleSentence,
+    if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
+    'cefr_level': cefrLevel,
+    'category': category,
+    'xp_value': xpValue,
+    if (vietnameseTranslation != null)
+      'vietnamese_translation': vietnameseTranslation,
+    if (synonyms != null) 'synonyms': synonyms,
+  };
 
   GameWord copyWith({
     String? wordId,
@@ -150,12 +150,15 @@ class GameWord {
 class ScrambleWord {
   final String wordId;
   final String word;
+
   /// Shuffled letters the player rearranges (field: shuffled_letters | letters).
   final List<String> shuffledLetters;
+
   /// Correct letter order — present when the backend sends it.
   final List<String> correctOrder;
   final String hint;
   final String definition;
+
   /// IPA pronunciation (field: ipa_pronunciation | ipa).
   final String? ipaPronunciation;
   final int xpValue;
@@ -186,7 +189,8 @@ class ScrambleWord {
       wordId: json['word_id'] as String? ?? json['id'] as String? ?? '',
       word: word,
       shuffledLetters: rawLetters.map((l) => l as String).toList(),
-      correctOrder: (json['correct_order'] as List<dynamic>?)
+      correctOrder:
+          (json['correct_order'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -201,17 +205,17 @@ class ScrambleWord {
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        'shuffled_letters': shuffledLetters,
-        'correct_order': correctOrder,
-        'hint': hint,
-        'definition': definition,
-        if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
-        'xp_value': xpValue,
-        'letter_count': letterCount,
-        'cefr_level': cefrLevel,
-      };
+    'word_id': wordId,
+    'word': word,
+    'shuffled_letters': shuffledLetters,
+    'correct_order': correctOrder,
+    'hint': hint,
+    'definition': definition,
+    if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
+    'xp_value': xpValue,
+    'letter_count': letterCount,
+    'cefr_level': cefrLevel,
+  };
 
   ScrambleWord copyWith({
     String? wordId,
@@ -262,7 +266,8 @@ class WordScrambleGame {
       timerSeconds: json['timer_seconds'] as int? ?? 60,
       baseXpPerWord: json['base_xp_per_word'] as int? ?? 10,
       streakBonusThreshold: json['streak_bonus_threshold'] as int? ?? 3,
-      words: (json['words'] as List<dynamic>?)
+      words:
+          (json['words'] as List<dynamic>?)
               ?.map((w) => ScrambleWord.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
@@ -270,12 +275,12 @@ class WordScrambleGame {
   }
 
   Map<String, dynamic> toJson() => {
-        'cefr_level': cefrLevel,
-        'timer_seconds': timerSeconds,
-        'base_xp_per_word': baseXpPerWord,
-        'streak_bonus_threshold': streakBonusThreshold,
-        'words': words.map((w) => w.toJson()).toList(),
-      };
+    'cefr_level': cefrLevel,
+    'timer_seconds': timerSeconds,
+    'base_xp_per_word': baseXpPerWord,
+    'streak_bonus_threshold': streakBonusThreshold,
+    'words': words.map((w) => w.toJson()).toList(),
+  };
 
   WordScrambleGame copyWith({
     String? cefrLevel,
@@ -304,8 +309,10 @@ class WordScrambleGame {
 class MatchingPair {
   final String wordId;
   final String word;
+
   /// The definition, synonym, or Vietnamese text the player matches to [word].
   final String matchText;
+
   /// Variant type: 'definition' | 'synonym' | 'vietnamese'.
   final String variant;
 
@@ -320,7 +327,8 @@ class MatchingPair {
     return MatchingPair(
       wordId: json['word_id'] as String? ?? json['id'] as String? ?? '',
       word: json['word'] as String? ?? '',
-      matchText: json['match_text'] as String? ?? json['match'] as String? ?? '',
+      matchText:
+          json['match_text'] as String? ?? json['match'] as String? ?? '',
       variant:
           json['variant'] as String? ??
           json['variation'] as String? ??
@@ -329,11 +337,11 @@ class MatchingPair {
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        'match_text': matchText,
-        'variant': variant,
-      };
+    'word_id': wordId,
+    'word': word,
+    'match_text': matchText,
+    'variant': variant,
+  };
 
   MatchingPair copyWith({
     String? wordId,
@@ -368,19 +376,16 @@ class MatchingGameData {
       wordsColumn: (json['words_column'] as List<dynamic>? ?? [])
           .map((p) => MatchingPair.fromJson(p as Map<String, dynamic>))
           .toList(),
-      definitionsColumn:
-          (json['definitions_column'] as List<dynamic>? ?? [])
-              .map((p) =>
-                  MatchingPair.fromJson(p as Map<String, dynamic>))
-              .toList(),
+      definitionsColumn: (json['definitions_column'] as List<dynamic>? ?? [])
+          .map((p) => MatchingPair.fromJson(p as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'words_column': wordsColumn.map((p) => p.toJson()).toList(),
-        'definitions_column':
-            definitionsColumn.map((p) => p.toJson()).toList(),
-      };
+    'words_column': wordsColumn.map((p) => p.toJson()).toList(),
+    'definitions_column': definitionsColumn.map((p) => p.toJson()).toList(),
+  };
 
   MatchingGameData copyWith({
     List<MatchingPair>? wordsColumn,
@@ -423,15 +428,18 @@ class MatchingGame {
       timeBonusThreshold:
           (json['time_bonus_threshold'] as num?)?.toDouble() ?? 0.5,
       baseXp: json['base_xp'] as int? ?? 18,
-      pairs: (json['pairs'] as List<dynamic>?)
+      pairs:
+          (json['pairs'] as List<dynamic>?)
               ?.map((p) => MatchingPair.fromJson(p as Map<String, dynamic>))
               .toList() ??
           [],
-      wordsColumn: (json['words_column'] as List<dynamic>?)
+      wordsColumn:
+          (json['words_column'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      matchesColumn: (json['matches_column'] as List<dynamic>?)
+      matchesColumn:
+          (json['matches_column'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -439,15 +447,15 @@ class MatchingGame {
   }
 
   Map<String, dynamic> toJson() => {
-        'cefr_level': cefrLevel,
-        'variation': variation,
-        'timer_seconds': timerSeconds,
-        'time_bonus_threshold': timeBonusThreshold,
-        'base_xp': baseXp,
-        'pairs': pairs.map((p) => p.toJson()).toList(),
-        'words_column': wordsColumn,
-        'matches_column': matchesColumn,
-      };
+    'cefr_level': cefrLevel,
+    'variation': variation,
+    'timer_seconds': timerSeconds,
+    'time_bonus_threshold': timeBonusThreshold,
+    'base_xp': baseXp,
+    'pairs': pairs.map((p) => p.toJson()).toList(),
+    'words_column': wordsColumn,
+    'matches_column': matchesColumn,
+  };
 
   MatchingGame copyWith({
     String? cefrLevel,
@@ -485,8 +493,10 @@ class SpellingBeeWord {
   final String? exampleSentence;
   final int xpValue;
   final String? audioUrl;
+
   /// Full-credit XP (when backend sends split values).
   final int? xpFull;
+
   /// Partial-credit XP.
   final int? xpPartial;
   final int maxReplays;
@@ -512,11 +522,8 @@ class SpellingBeeWord {
           json['ipa_pronunciation'] as String? ?? json['ipa'] as String?,
       definition: json['definition'] as String? ?? '',
       exampleSentence: json['example_sentence'] as String?,
-      xpValue: json['xp_value'] as int? ??
-          json['xp_full'] as int? ??
-          10,
-      audioUrl:
-          json['audio_url'] as String? ?? json['tts_url'] as String?,
+      xpValue: json['xp_value'] as int? ?? json['xp_full'] as int? ?? 10,
+      audioUrl: json['audio_url'] as String? ?? json['tts_url'] as String?,
       xpFull: json['xp_full'] as int?,
       xpPartial: json['xp_partial'] as int?,
       maxReplays: json['max_replays'] as int? ?? 3,
@@ -524,17 +531,17 @@ class SpellingBeeWord {
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
-        'definition': definition,
-        if (exampleSentence != null) 'example_sentence': exampleSentence,
-        'xp_value': xpValue,
-        if (audioUrl != null) 'audio_url': audioUrl,
-        if (xpFull != null) 'xp_full': xpFull,
-        if (xpPartial != null) 'xp_partial': xpPartial,
-        'max_replays': maxReplays,
-      };
+    'word_id': wordId,
+    'word': word,
+    if (ipaPronunciation != null) 'ipa_pronunciation': ipaPronunciation,
+    'definition': definition,
+    if (exampleSentence != null) 'example_sentence': exampleSentence,
+    'xp_value': xpValue,
+    if (audioUrl != null) 'audio_url': audioUrl,
+    if (xpFull != null) 'xp_full': xpFull,
+    if (xpPartial != null) 'xp_partial': xpPartial,
+    'max_replays': maxReplays,
+  };
 
   SpellingBeeWord copyWith({
     String? wordId,
@@ -579,19 +586,19 @@ class SpellingBeeGame {
     return SpellingBeeGame(
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
       timerSeconds: json['timer_seconds'] as int? ?? 90,
-      words: (json['words'] as List<dynamic>?)
-              ?.map((w) =>
-                  SpellingBeeWord.fromJson(w as Map<String, dynamic>))
+      words:
+          (json['words'] as List<dynamic>?)
+              ?.map((w) => SpellingBeeWord.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'cefr_level': cefrLevel,
-        'timer_seconds': timerSeconds,
-        'words': words.map((w) => w.toJson()).toList(),
-      };
+    'cefr_level': cefrLevel,
+    'timer_seconds': timerSeconds,
+    'words': words.map((w) => w.toJson()).toList(),
+  };
 
   SpellingBeeGame copyWith({
     String? cefrLevel,
@@ -638,23 +645,23 @@ class HangmanWord {
       category: json['category'] as String? ?? 'general',
       hint: json['hint'] as String?,
       definition: json['definition'] as String? ?? '',
-      letterCount: json['letter_count'] as int? ??
-          word.replaceAll(' ', '').length,
+      letterCount:
+          json['letter_count'] as int? ?? word.replaceAll(' ', '').length,
       xpValue: json['xp_value'] as int? ?? json['base_xp'] as int? ?? 10,
       cefrLevel: json['cefr_level'] as String? ?? 'A1',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        'category': category,
-        if (hint != null) 'hint': hint,
-        'definition': definition,
-        'letter_count': letterCount,
-        'xp_value': xpValue,
-        'cefr_level': cefrLevel,
-      };
+    'word_id': wordId,
+    'word': word,
+    'category': category,
+    if (hint != null) 'hint': hint,
+    'definition': definition,
+    'letter_count': letterCount,
+    'xp_value': xpValue,
+    'cefr_level': cefrLevel,
+  };
 
   HangmanWord copyWith({
     String? wordId,
@@ -703,11 +710,11 @@ class HangmanHints {
   }
 
   Map<String, dynamic> toJson() => {
-        'hint1_free': hint1Free,
-        'hint2_xp_cost': hint2XpCost,
-        'hint2_definition': hint2Definition,
-        'hint3_xp_cost': hint3XpCost,
-      };
+    'hint1_free': hint1Free,
+    'hint2_xp_cost': hint2XpCost,
+    'hint2_definition': hint2Definition,
+    'hint3_xp_cost': hint3XpCost,
+  };
 
   HangmanHints copyWith({
     String? hint1Free,
@@ -756,7 +763,8 @@ class HangmanGame {
       category: json['category'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'A2',
       hints: HangmanHints.fromJson(
-          json['hints'] as Map<String, dynamic>? ?? {}),
+        json['hints'] as Map<String, dynamic>? ?? {},
+      ),
       maxLives: json['max_lives'] as int? ?? 6,
       baseXp: json['base_xp'] as int? ?? 10,
       availableCategories:
@@ -768,16 +776,16 @@ class HangmanGame {
   }
 
   Map<String, dynamic> toJson() => {
-        'word_id': wordId,
-        'word': word,
-        'letter_count': letterCount,
-        'category': category,
-        'cefr_level': cefrLevel,
-        'hints': hints.toJson(),
-        'max_lives': maxLives,
-        'base_xp': baseXp,
-        'available_categories': availableCategories,
-      };
+    'word_id': wordId,
+    'word': word,
+    'letter_count': letterCount,
+    'category': category,
+    'cefr_level': cefrLevel,
+    'hints': hints.toJson(),
+    'max_lives': maxLives,
+    'base_xp': baseXp,
+    'available_categories': availableCategories,
+  };
 
   HangmanGame copyWith({
     String? wordId,
@@ -836,16 +844,20 @@ class FillBlankQuestion {
       // Accept 'sentence' (new API) or 'question' (legacy).
       sentence:
           json['sentence'] as String? ?? json['question'] as String? ?? '',
-      options: (json['options'] as List<dynamic>?)
+      options:
+          (json['options'] as List<dynamic>?)
               ?.map((o) => o as String)
               .toList() ??
           [],
       // Accept 'correct_answer' (new API) or derive from 'correct_index' (legacy).
-      correctAnswer: json['correct_answer'] as String? ?? (() {
+      correctAnswer:
+          json['correct_answer'] as String? ??
+          (() {
             final idx = json['correct_index'] as int? ?? 0;
-            final opts = (json['options'] as List<dynamic>?)
-                ?.map((o) => o as String)
-                .toList() ??
+            final opts =
+                (json['options'] as List<dynamic>?)
+                    ?.map((o) => o as String)
+                    .toList() ??
                 const [];
             return (idx >= 0 && idx < opts.length) ? opts[idx] : '';
           }()),
@@ -856,14 +868,14 @@ class FillBlankQuestion {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'sentence': sentence,
-        'options': options,
-        'correct_answer': correctAnswer,
-        'grammar_tip': grammarTip,
-        'cefr_level': cefrLevel,
-        'explanation': explanation,
-      };
+    'id': id,
+    'sentence': sentence,
+    'options': options,
+    'correct_answer': correctAnswer,
+    'grammar_tip': grammarTip,
+    'cefr_level': cefrLevel,
+    'explanation': explanation,
+  };
 
   FillBlankQuestion copyWith({
     String? id,
@@ -903,23 +915,24 @@ class FillBlankGame {
   factory FillBlankGame.fromJson(Map<String, dynamic> json) {
     return FillBlankGame(
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
-      timerSecondsPerQuestion:
-          json['timer_seconds_per_question'] as int? ?? 15,
+      timerSecondsPerQuestion: json['timer_seconds_per_question'] as int? ?? 15,
       totalXp: json['total_xp'] as int? ?? 25,
-      questions: (json['questions'] as List<dynamic>?)
-              ?.map((q) =>
-                  FillBlankQuestion.fromJson(q as Map<String, dynamic>))
+      questions:
+          (json['questions'] as List<dynamic>?)
+              ?.map(
+                (q) => FillBlankQuestion.fromJson(q as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'cefr_level': cefrLevel,
-        'timer_seconds_per_question': timerSecondsPerQuestion,
-        'total_xp': totalXp,
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'cefr_level': cefrLevel,
+    'timer_seconds_per_question': timerSecondsPerQuestion,
+    'total_xp': totalXp,
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
 
   FillBlankGame copyWith({
     String? cefrLevel,
@@ -966,15 +979,19 @@ class GrammarQuizQuestion {
     return GrammarQuizQuestion(
       id: (json['id'] ?? '').toString(),
       question: json['question'] as String? ?? '',
-      options: (json['options'] as List<dynamic>?)
+      options:
+          (json['options'] as List<dynamic>?)
               ?.map((o) => o as String)
               .toList() ??
           [],
-      correctAnswer: json['correct_answer'] as String? ?? (() {
+      correctAnswer:
+          json['correct_answer'] as String? ??
+          (() {
             final idx = json['correct_index'] as int? ?? 0;
-            final opts = (json['options'] as List<dynamic>?)
-                ?.map((o) => o as String)
-                .toList() ??
+            final opts =
+                (json['options'] as List<dynamic>?)
+                    ?.map((o) => o as String)
+                    .toList() ??
                 const [];
             return (idx >= 0 && idx < opts.length) ? opts[idx] : '';
           }()),
@@ -985,14 +1002,14 @@ class GrammarQuizQuestion {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'question': question,
-        'options': options,
-        'correct_answer': correctAnswer,
-        'explanation': explanation,
-        'topic': topic,
-        'cefr_level': cefrLevel,
-      };
+    'id': id,
+    'question': question,
+    'options': options,
+    'correct_answer': correctAnswer,
+    'explanation': explanation,
+    'topic': topic,
+    'cefr_level': cefrLevel,
+  };
 
   GrammarQuizQuestion copyWith({
     String? id,
@@ -1037,7 +1054,8 @@ class GrammarQuestion {
     return GrammarQuestion(
       id: json['id'] as int? ?? 0,
       question: json['question'] as String? ?? '',
-      options: (json['options'] as List<dynamic>?)
+      options:
+          (json['options'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -1048,13 +1066,13 @@ class GrammarQuestion {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'question': question,
-        'options': options,
-        'correct_index': correctIndex,
-        'explanation': explanation,
-        'grammar_tip': grammarTip,
-      };
+    'id': id,
+    'question': question,
+    'options': options,
+    'correct_index': correctIndex,
+    'explanation': explanation,
+    'grammar_tip': grammarTip,
+  };
 
   GrammarQuestion copyWith({
     int? id,
@@ -1095,24 +1113,23 @@ class GrammarQuizGame {
     return GrammarQuizGame(
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
       topic: json['topic'] as String? ?? 'mixed',
-      timerSecondsPerQuestion:
-          json['timer_seconds_per_question'] as int? ?? 12,
+      timerSecondsPerQuestion: json['timer_seconds_per_question'] as int? ?? 12,
       totalXp: json['total_xp'] as int? ?? 25,
-      questions: (json['questions'] as List<dynamic>?)
-              ?.map((q) =>
-                  GrammarQuestion.fromJson(q as Map<String, dynamic>))
+      questions:
+          (json['questions'] as List<dynamic>?)
+              ?.map((q) => GrammarQuestion.fromJson(q as Map<String, dynamic>))
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'cefr_level': cefrLevel,
-        'topic': topic,
-        'timer_seconds_per_question': timerSecondsPerQuestion,
-        'total_xp': totalXp,
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'cefr_level': cefrLevel,
+    'topic': topic,
+    'timer_seconds_per_question': timerSecondsPerQuestion,
+    'total_xp': totalXp,
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
 
   GrammarQuizGame copyWith({
     String? cefrLevel,
@@ -1155,14 +1172,14 @@ class GameSessionResult {
   });
 
   Map<String, dynamic> toJson() => {
-        'game_type': gameType,
-        'score': score,
-        'total_questions': totalQuestions,
-        'correct_answers': correctAnswers,
-        'duration_seconds': durationSeconds,
-        'base_xp': baseXp,
-        'cefr_level': cefrLevel,
-      };
+    'game_type': gameType,
+    'score': score,
+    'total_questions': totalQuestions,
+    'correct_answers': correctAnswers,
+    'duration_seconds': durationSeconds,
+    'base_xp': baseXp,
+    'cefr_level': cefrLevel,
+  };
 
   GameSessionResult copyWith({
     String? gameType,
@@ -1213,8 +1230,8 @@ class GameResult {
   int get stars => accuracy >= 90
       ? 3
       : accuracy >= 60
-          ? 2
-          : 1;
+      ? 2
+      : 1;
 
   GameResult copyWith({
     GameType? gameType,
@@ -1267,20 +1284,19 @@ class XPTransaction {
       sourceDetail: json['source_detail'] as String?,
       leveledUp: json['leveled_up'] as bool? ?? false,
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String) ??
-              DateTime.now()
+          ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
           : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'amount': amount,
-        'source': source,
-        if (sourceDetail != null) 'source_detail': sourceDetail,
-        'leveled_up': leveledUp,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'amount': amount,
+    'source': source,
+    if (sourceDetail != null) 'source_detail': sourceDetail,
+    'leveled_up': leveledUp,
+    'created_at': createdAt.toIso8601String(),
+  };
 
   XPTransaction copyWith({
     String? id,
@@ -1342,28 +1358,25 @@ class XPProfile {
       dailyCapRemaining: json['daily_cap_remaining'] as int? ?? 500,
       streakDays: json['streak_days'] as int? ?? 0,
       bestStreak: json['best_streak'] as int? ?? 0,
-      recentTransactions:
-          (json['recent_transactions'] as List<dynamic>? ?? [])
-              .map((t) =>
-                  XPTransaction.fromJson(t as Map<String, dynamic>))
-              .toList(),
+      recentTransactions: (json['recent_transactions'] as List<dynamic>? ?? [])
+          .map((t) => XPTransaction.fromJson(t as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'total_xp': totalXp,
-        'numeric_level': numericLevel,
-        'level_progress_percent': levelProgressPercent,
-        'xp_for_next_level': xpForNextLevel,
-        'current_xp_in_level': currentXpInLevel,
-        'daily_xp_today': dailyXpToday,
-        'daily_cap_remaining': dailyCapRemaining,
-        'streak_days': streakDays,
-        'best_streak': bestStreak,
-        'recent_transactions':
-            recentTransactions.map((t) => t.toJson()).toList(),
-      };
+    'user_id': userId,
+    'total_xp': totalXp,
+    'numeric_level': numericLevel,
+    'level_progress_percent': levelProgressPercent,
+    'xp_for_next_level': xpForNextLevel,
+    'current_xp_in_level': currentXpInLevel,
+    'daily_xp_today': dailyXpToday,
+    'daily_cap_remaining': dailyCapRemaining,
+    'streak_days': streakDays,
+    'best_streak': bestStreak,
+    'recent_transactions': recentTransactions.map((t) => t.toJson()).toList(),
+  };
 
   XPProfile copyWith({
     String? userId,
@@ -1446,20 +1459,20 @@ class XPAwardResult {
   }
 
   Map<String, dynamic> toJson() => {
-        'xp_awarded': xpAwarded,
-        'base_xp': baseXp,
-        'multiplier': multiplier,
-        'new_total_xp': newTotalXp,
-        'daily_xp_today': dailyXpToday,
-        'daily_cap_remaining': dailyCapRemaining,
-        'leveled_up': leveledUp,
-        'old_level': oldLevel,
-        'new_level': newLevel,
-        'level_progress_percent': levelProgressPercent,
-        'xp_for_next_level': xpForNextLevel,
-        'streak_days': streakDays,
-        'message': message,
-      };
+    'xp_awarded': xpAwarded,
+    'base_xp': baseXp,
+    'multiplier': multiplier,
+    'new_total_xp': newTotalXp,
+    'daily_xp_today': dailyXpToday,
+    'daily_cap_remaining': dailyCapRemaining,
+    'leveled_up': leveledUp,
+    'old_level': oldLevel,
+    'new_level': newLevel,
+    'level_progress_percent': levelProgressPercent,
+    'xp_for_next_level': xpForNextLevel,
+    'streak_days': streakDays,
+    'message': message,
+  };
 
   XPAwardResult copyWith({
     int? xpAwarded,
@@ -1528,13 +1541,13 @@ class DailyChallenge {
   }
 
   Map<String, dynamic> toJson() => {
-        'game_type': gameType,
-        'description': description,
-        'target_score': targetScore,
-        'bonus_multiplier': bonusMultiplier,
-        'completed': completed,
-        'resets_at': resetsAt.toIso8601String(),
-      };
+    'game_type': gameType,
+    'description': description,
+    'target_score': targetScore,
+    'bonus_multiplier': bonusMultiplier,
+    'completed': completed,
+    'resets_at': resetsAt.toIso8601String(),
+  };
 
   DailyChallenge copyWith({
     String? gameType,
@@ -1590,14 +1603,14 @@ class LeaderboardEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'rank': rank,
-        'user_id': userId,
-        'username': username,
-        'total_xp': totalXp,
-        'numeric_level': numericLevel,
-        'weekly_xp': weeklyXp,
-        'is_current_user': isCurrentUser,
-      };
+    'rank': rank,
+    'user_id': userId,
+    'username': username,
+    'total_xp': totalXp,
+    'numeric_level': numericLevel,
+    'weekly_xp': weeklyXp,
+    'is_current_user': isCurrentUser,
+  };
 
   LeaderboardEntry copyWith({
     int? rank,
@@ -1651,13 +1664,13 @@ class LeaderboardUser {
   }
 
   Map<String, dynamic> toJson() => {
-        'rank': rank,
-        'user_id': userId,
-        'username': username,
-        'total_xp': totalXp,
-        'numeric_level': numericLevel,
-        'weekly_xp': weeklyXp,
-      };
+    'rank': rank,
+    'user_id': userId,
+    'username': username,
+    'total_xp': totalXp,
+    'numeric_level': numericLevel,
+    'weekly_xp': weeklyXp,
+  };
 
   LeaderboardUser copyWith({
     int? rank,

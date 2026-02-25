@@ -1,5 +1,5 @@
 /// Weekly Progress Model
-/// 
+///
 /// Data layer model for weekly progress API response.
 /// Maps to WeeklyProgressEntity.
 library;
@@ -27,7 +27,8 @@ class DailyProgressModel extends DailyProgressEntity {
       lessonsCompleted: json['lessons_completed'] as int? ?? 0,
       studyTimeMinutes: json['study_time_minutes'] as int? ?? 0,
       vocabularyReviewed: json['vocabulary_reviewed'] as int? ?? 0,
-      goalMet: json['daily_goal_met'] as bool? ?? json['goal_met'] as bool? ?? false,
+      goalMet:
+          json['daily_goal_met'] as bool? ?? json['goal_met'] as bool? ?? false,
       isToday: json['is_today'] as bool? ?? false,
     );
   }
@@ -76,12 +77,16 @@ class WeeklyProgressModel extends WeeklyProgressEntity {
 
   factory WeeklyProgressModel.fromJson(Map<String, dynamic> json) {
     // Support both 'days' (new API) and 'week_progress' (legacy) format
-    final weekProgressJson = json['days'] as List<dynamic>? ?? 
-                              json['week_progress'] as List<dynamic>? ?? [];
-    
+    final weekProgressJson =
+        json['days'] as List<dynamic>? ??
+        json['week_progress'] as List<dynamic>? ??
+        [];
+
     return WeeklyProgressModel(
       weekProgress: weekProgressJson
-          .map((item) => DailyProgressModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => DailyProgressModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList(),
       totalXP: json['total_xp'] as int? ?? 0,
       totalLessons: json['total_lessons'] as int? ?? 0,

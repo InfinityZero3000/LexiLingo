@@ -36,20 +36,23 @@ class DeviceManager {
       // Native platforms
       try {
         final baseInfo = await _deviceInfo.deviceInfo;
-        deviceId = baseInfo.data['id']?.toString() ?? 
-                   baseInfo.data['identifierForVendor']?.toString() ??
-                   'device-${DateTime.now().millisecondsSinceEpoch}';
-        
+        deviceId =
+            baseInfo.data['id']?.toString() ??
+            baseInfo.data['identifierForVendor']?.toString() ??
+            'device-${DateTime.now().millisecondsSinceEpoch}';
+
         if (baseInfo.data.containsKey('brand')) {
           // Android
           deviceType = 'android';
           deviceName = '${baseInfo.data['brand']} ${baseInfo.data['model']}';
-          osVersion = 'Android ${baseInfo.data['version']?['release'] ?? 'Unknown'}';
+          osVersion =
+              'Android ${baseInfo.data['version']?['release'] ?? 'Unknown'}';
         } else if (baseInfo.data.containsKey('systemName')) {
           // iOS
           deviceType = 'ios';
           deviceName = '${baseInfo.data['name']} ${baseInfo.data['model']}';
-          osVersion = '${baseInfo.data['systemName']} ${baseInfo.data['systemVersion']}';
+          osVersion =
+              '${baseInfo.data['systemName']} ${baseInfo.data['systemVersion']}';
         } else {
           deviceType = 'unknown';
           deviceName = 'Unknown Device';

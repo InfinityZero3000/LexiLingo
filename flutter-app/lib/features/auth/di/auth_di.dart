@@ -18,7 +18,7 @@ void registerAuthModule() {
   if (!sl.isRegistered<DeviceManager>()) {
     sl.registerLazySingleton<DeviceManager>(() => DeviceManager());
   }
-  
+
   sl.registerLazySingleton<AuthBackendDataSource>(
     () => AuthBackendDataSource(
       apiClient: sl<ApiClient>(),

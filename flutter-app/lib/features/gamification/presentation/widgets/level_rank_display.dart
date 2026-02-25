@@ -36,14 +36,15 @@ class LevelRankDisplay extends StatelessWidget {
   });
 
   /// Build from API JSON map (e.g. /me/level-full response)
-  factory LevelRankDisplay.fromJson(Map<String, dynamic> json,
-      {VoidCallback? onTap}) {
+  factory LevelRankDisplay.fromJson(
+    Map<String, dynamic> json, {
+    VoidCallback? onTap,
+  }) {
     return LevelRankDisplay(
       numericLevel: json['numeric_level'] ?? 1,
       currentXpInLevel: json['current_xp_in_level'] ?? 0,
       xpForNextLevel: json['xp_for_next_level'] ?? 100,
-      levelProgressPercent:
-          (json['level_progress_percent'] ?? 0).toDouble(),
+      levelProgressPercent: (json['level_progress_percent'] ?? 0).toDouble(),
       totalXp: json['total_xp'] ?? 0,
       proficiencyLevel: json['proficiency_level'] ?? 'A1',
       proficiencyName: json['proficiency_name'] ?? 'Beginner',
@@ -78,8 +79,10 @@ class LevelRankDisplay extends StatelessWidget {
               children: [
                 // Level number
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
@@ -96,15 +99,19 @@ class LevelRankDisplay extends StatelessWidget {
                 const SizedBox(width: 8),
                 // CEFR proficiency tag
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _proficiencyColor(proficiencyLevel)
-                        .withValues(alpha: 0.15),
+                    color: _proficiencyColor(
+                      proficiencyLevel,
+                    ).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: _proficiencyColor(proficiencyLevel)
-                          .withValues(alpha: 0.5),
+                      color: _proficiencyColor(
+                        proficiencyLevel,
+                      ).withValues(alpha: 0.5),
                     ),
                   ),
                   child: Text(
@@ -131,8 +138,7 @@ class LevelRankDisplay extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor:
-                          colorScheme.surfaceContainerHighest,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       color: colorScheme.primary,
                     ),
                   ),

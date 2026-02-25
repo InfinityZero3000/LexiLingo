@@ -142,7 +142,9 @@ class _WalletScreenState extends State<WalletScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -211,9 +213,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'No transactions yet',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                            ),
+                            style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -222,19 +222,14 @@ class _WalletScreenState extends State<WalletScreen> {
                 )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final transaction = provider.transactions[index];
-                      return _TransactionRow(transaction: transaction);
-                    },
-                    childCount: provider.transactions.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final transaction = provider.transactions[index];
+                    return _TransactionRow(transaction: transaction);
+                  }, childCount: provider.transactions.length),
                 ),
 
               // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 80),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
@@ -254,10 +249,7 @@ class _WalletScreenState extends State<WalletScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
         ],
       ),
       child: Row(
@@ -286,10 +278,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -304,19 +293,12 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(
-            Icons.check_circle,
-            color: Color(0xFF10B981),
-            size: 16,
-          ),
+          const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[700],
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey[700]),
             ),
           ),
           Text(
@@ -348,9 +330,7 @@ class _TransactionRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.1),
-          ),
+          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
         ),
       ),
       child: Row(
@@ -363,11 +343,7 @@ class _TransactionRow extends StatelessWidget {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              _getTransactionIcon(),
-              color: color,
-              size: 20,
-            ),
+            child: Icon(_getTransactionIcon(), color: color, size: 20),
           ),
           const SizedBox(width: 12),
 
@@ -388,10 +364,7 @@ class _TransactionRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _formatDate(transaction.createdAt),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
               ],
             ),
@@ -421,11 +394,7 @@ class _TransactionRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.diamond,
-                  size: 12,
-                  color: color,
-                ),
+                Icon(Icons.diamond, size: 12, color: color),
               ],
             ),
           ),

@@ -178,7 +178,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
   ) {
     return Row(
       children: [
-        Icon(_getCategoryIcon(challenge.category), size: 16, color: _getCategoryColor(challenge.category)),
+        Icon(
+          _getCategoryIcon(challenge.category),
+          size: 16,
+          color: _getCategoryColor(challenge.category),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -218,25 +222,39 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'lesson': return Colors.blue;
-      case 'vocabulary': return Colors.purple;
-      case 'streak': return Colors.orange;
-      case 'xp': return Colors.amber;
-      case 'voice': return Colors.pink;
-      case 'social': return Colors.teal;
-      default: return Colors.grey;
+      case 'lesson':
+        return Colors.blue;
+      case 'vocabulary':
+        return Colors.purple;
+      case 'streak':
+        return Colors.orange;
+      case 'xp':
+        return Colors.amber;
+      case 'voice':
+        return Colors.pink;
+      case 'social':
+        return Colors.teal;
+      default:
+        return Colors.grey;
     }
   }
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case 'lesson': return Icons.school_rounded;
-      case 'vocabulary': return Icons.library_books_rounded;
-      case 'streak': return Icons.local_fire_department_rounded;
-      case 'xp': return Icons.bolt_rounded;
-      case 'voice': return Icons.mic_rounded;
-      case 'social': return Icons.people_rounded;
-      default: return Icons.star_rounded;
+      case 'lesson':
+        return Icons.school_rounded;
+      case 'vocabulary':
+        return Icons.library_books_rounded;
+      case 'streak':
+        return Icons.local_fire_department_rounded;
+      case 'xp':
+        return Icons.bolt_rounded;
+      case 'voice':
+        return Icons.mic_rounded;
+      case 'social':
+        return Icons.people_rounded;
+      default:
+        return Icons.star_rounded;
     }
   }
 }

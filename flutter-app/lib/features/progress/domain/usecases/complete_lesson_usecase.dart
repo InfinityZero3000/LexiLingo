@@ -10,10 +10,7 @@ class CompleteLessonParams extends Equatable {
   final String lessonId;
   final double score;
 
-  const CompleteLessonParams({
-    required this.lessonId,
-    required this.score,
-  });
+  const CompleteLessonParams({required this.lessonId, required this.score});
 
   @override
   List<Object?> get props => [lessonId, score];
@@ -21,13 +18,16 @@ class CompleteLessonParams extends Equatable {
 
 /// Complete Lesson UseCase
 /// Marks a lesson as complete with a score
-class CompleteLessonUseCase implements UseCase<LessonCompletionResult, CompleteLessonParams> {
+class CompleteLessonUseCase
+    implements UseCase<LessonCompletionResult, CompleteLessonParams> {
   final ProgressRepository repository;
 
   CompleteLessonUseCase(this.repository);
 
   @override
-  Future<Either<Failure, LessonCompletionResult>> call(CompleteLessonParams params) async {
+  Future<Either<Failure, LessonCompletionResult>> call(
+    CompleteLessonParams params,
+  ) async {
     return await repository.completeLesson(
       lessonId: params.lessonId,
       score: params.score,

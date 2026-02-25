@@ -42,14 +42,14 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
   Future<int> createUser(UserModel user) async {
     final db = await databaseHelper.database;
     final data = user.toJson();
-    
+
     // For insert, we don't use the id field since it's the primary key
     await db.insert(
       'users',
       data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    
+
     return 1; // Success
   }
 
@@ -74,16 +74,18 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     int? totalWordsLearned,
   }) async {
     final db = await databaseHelper.database;
-    
+
     final Map<String, dynamic> updates = {};
     if (totalXP != null) updates['totalXP'] = totalXP;
     if (currentStreak != null) updates['currentStreak'] = currentStreak;
     if (longestStreak != null) updates['longestStreak'] = longestStreak;
-    if (totalLessonsCompleted != null) updates['totalLessonsCompleted'] = totalLessonsCompleted;
-    if (totalWordsLearned != null) updates['totalWordsLearned'] = totalWordsLearned;
-    
+    if (totalLessonsCompleted != null)
+      updates['totalLessonsCompleted'] = totalLessonsCompleted;
+    if (totalWordsLearned != null)
+      updates['totalWordsLearned'] = totalWordsLearned;
+
     if (updates.isEmpty) return 0;
-    
+
     return await db.update(
       'users',
       updates,

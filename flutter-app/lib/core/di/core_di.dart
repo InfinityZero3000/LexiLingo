@@ -38,7 +38,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
     ),
   );
-  
+
   // AI API Client for AI Service (Chat, STT, TTS, AI Analysis)
   sl.registerLazySingleton<AiApiClient>(
     () => AiApiClient(
@@ -47,7 +47,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
     ),
   );
-  
+
   sl.registerLazySingleton<HealthCheckService>(
     () => HealthCheckService(apiClient: sl<ApiClient>()),
   );
@@ -64,9 +64,6 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
 /// AI API Client - connects to AI Service for chat, STT, TTS
 class AiApiClient extends ApiClient {
-  AiApiClient({
-    super.networkInfo,
-    super.interceptors,
-    super.authHeaderProvider,
-  }) : super(baseUrl: AppConstants.aiServiceUrl);
+  AiApiClient({super.networkInfo, super.interceptors, super.authHeaderProvider})
+    : super(baseUrl: AppConstants.aiServiceUrl);
 }

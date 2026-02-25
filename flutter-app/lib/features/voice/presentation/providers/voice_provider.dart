@@ -66,11 +66,13 @@ class VoiceProvider extends ChangeNotifier {
     _state = VoiceState.processing;
     notifyListeners();
 
-    final result = await transcribeAudioUseCase(TranscribeParams(
-      audioData: audioData,
-      filename: filename,
-      language: language,
-    ));
+    final result = await transcribeAudioUseCase(
+      TranscribeParams(
+        audioData: audioData,
+        filename: filename,
+        language: language,
+      ),
+    );
 
     return result.fold(
       (failure) {
@@ -143,12 +145,14 @@ class VoiceProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await assessPronunciationUseCase(AssessPronunciationParams(
-      audioData: audioData,
-      filename: filename,
-      targetText: targetText,
-      language: language,
-    ));
+    final result = await assessPronunciationUseCase(
+      AssessPronunciationParams(
+        audioData: audioData,
+        filename: filename,
+        targetText: targetText,
+        language: language,
+      ),
+    );
 
     return result.fold(
       (failure) {

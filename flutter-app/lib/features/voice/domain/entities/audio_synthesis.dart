@@ -18,7 +18,7 @@ class AudioSynthesis extends Equatable {
 
   bool get isEmpty => audioData.isEmpty;
   bool get isNotEmpty => audioData.isNotEmpty;
-  
+
   int get sizeInBytes => audioData.length;
 
   @override

@@ -82,15 +82,17 @@ class _SpeakButtonState extends State<SpeakButton> {
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
-        
+
         // Clean up temp file after playback
-        _player.playerStateStream.firstWhere(
-          (state) => state.processingState == ProcessingState.completed,
-        ).then((_) {
-          try {
-            file.deleteSync();
-          } catch (_) {}
-        });
+        _player.playerStateStream
+            .firstWhere(
+              (state) => state.processingState == ProcessingState.completed,
+            )
+            .then((_) {
+              try {
+                file.deleteSync();
+              } catch (_) {}
+            });
       }
     } catch (e) {
       if (mounted) {
@@ -152,9 +154,7 @@ class _SpeakButtonState extends State<SpeakButton> {
         child: Container(
           width: widget.size,
           height: widget.size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle),
           child: _buildIcon(iconColor),
         ),
       ),
@@ -253,14 +253,16 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
-        
-        _player.playerStateStream.firstWhere(
-          (state) => state.processingState == ProcessingState.completed,
-        ).then((_) {
-          try {
-            file.deleteSync();
-          } catch (_) {}
-        });
+
+        _player.playerStateStream
+            .firstWhere(
+              (state) => state.processingState == ProcessingState.completed,
+            )
+            .then((_) {
+              try {
+                file.deleteSync();
+              } catch (_) {}
+            });
       }
     } catch (e) {
       // Silent fail for icon button

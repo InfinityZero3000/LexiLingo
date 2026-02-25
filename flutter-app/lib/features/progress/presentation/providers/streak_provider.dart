@@ -9,7 +9,7 @@ class StreakProvider extends ChangeNotifier {
   final ProgressRepository _repository;
 
   StreakProvider({required ProgressRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   // State
   StreakEntity? _streak;
@@ -22,19 +22,19 @@ class StreakProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
-  
+
   /// Current streak count (0 if not loaded)
   int get currentStreak => _streak?.currentStreak ?? 0;
-  
+
   /// Whether user has learned today
   bool get isActiveToday => _streak?.isActiveToday ?? false;
-  
+
   /// Whether streak is at risk
   bool get streakAtRisk => _streak?.streakAtRisk ?? false;
-  
+
   /// Available streak freezes
   int get freezeCount => _streak?.freezeCount ?? 0;
-  
+
   /// Whether we have streak data
   bool get hasStreak => _streak != null;
 
@@ -45,7 +45,7 @@ class StreakProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _repository.getMyStreak();
-    
+
     result.fold(
       (failure) {
         _errorMessage = failure.message;
@@ -68,7 +68,7 @@ class StreakProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _repository.updateStreak();
-    
+
     bool success = false;
     result.fold(
       (failure) {
@@ -108,7 +108,7 @@ class StreakProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _repository.useStreakFreeze();
-    
+
     bool success = false;
     result.fold(
       (failure) {

@@ -20,16 +20,14 @@ void initVoiceDependencies(GetIt sl) {
       assessPronunciationUseCase: sl(),
     ),
   );
-  
+
   // Speech Recognition Provider (for Web Speech API)
   sl.registerFactory<SpeechRecognitionProvider>(
     () => SpeechRecognitionProvider(),
   );
-  
+
   // TTS Settings Provider (Singleton - persists settings)
-  sl.registerLazySingleton<TtsSettingsProvider>(
-    () => TtsSettingsProvider(),
-  );
+  sl.registerLazySingleton<TtsSettingsProvider>(() => TtsSettingsProvider());
 
   // Use Cases
   sl.registerLazySingleton<TranscribeAudioUseCase>(
@@ -44,10 +42,7 @@ void initVoiceDependencies(GetIt sl) {
 
   // Repository
   sl.registerLazySingleton<VoiceRepository>(
-    () => VoiceRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => VoiceRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
   );
 
   // Data Sources

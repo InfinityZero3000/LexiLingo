@@ -3,28 +3,28 @@ import '../../domain/entities/proficiency_entity.dart';
 import '../../data/datasources/proficiency_data_source.dart';
 
 /// Proficiency Provider
-/// 
+///
 /// Manages user proficiency state with multi-dimensional skill assessment.
 /// This replaces simple XP-based leveling with a comprehensive evaluation
 /// of vocabulary, grammar, reading, listening, speaking, and writing skills.
-/// 
+///
 /// Key difference from XP-based system:
 /// - XP is for gamification (rewards, leaderboards)
 /// - Proficiency level is based on actual skill demonstration
-/// 
+///
 /// Users cannot "grind" their way to C2 just by doing easy exercises.
 /// They must demonstrate competency in multiple skill areas to advance.
 class ProficiencyProvider with ChangeNotifier {
   final ProficiencyDataSource? _dataSource;
-  
+
   ProficiencyProfile _profile = ProficiencyProfile.empty();
   bool _isLoading = false;
   String? _errorMessage;
   bool _showLevelUpDialog = false;
   String? _previousLevel;
-  
-  ProficiencyProvider({ProficiencyDataSource? dataSource}) 
-      : _dataSource = dataSource;
+
+  ProficiencyProvider({ProficiencyDataSource? dataSource})
+    : _dataSource = dataSource;
 
   // Getters
   ProficiencyProfile get profile => _profile;
@@ -43,23 +43,30 @@ class ProficiencyProvider with ChangeNotifier {
   bool get isCloseToLevelUp => _profile.isCloseToLevelUp;
   List<SkillScore> get weakestSkills => _profile.weakestSkills;
   List<SkillScore> get strongestSkills => _profile.strongestSkills;
-  
+
   /// Level code for display (A1, A2, B1, B2, C1, C2)
   String get levelCode => _profile.assessedLevel;
-  
+
   /// Human-readable level name
   String get levelName {
     switch (_profile.assessedLevel) {
-      case 'A1': return 'Beginner';
-      case 'A2': return 'Elementary';
-      case 'B1': return 'Intermediate';
-      case 'B2': return 'Upper Intermediate';
-      case 'C1': return 'Advanced';
-      case 'C2': return 'Mastery';
-      default: return 'Beginner';
+      case 'A1':
+        return 'Beginner';
+      case 'A2':
+        return 'Elementary';
+      case 'B1':
+        return 'Intermediate';
+      case 'B2':
+        return 'Upper Intermediate';
+      case 'C1':
+        return 'Advanced';
+      case 'C2':
+        return 'Mastery';
+      default:
+        return 'Beginner';
     }
   }
-  
+
   /// Full display name (e.g., "B2 Upper Intermediate")
   String get displayName => '$levelCode $levelName';
 
@@ -67,7 +74,7 @@ class ProficiencyProvider with ChangeNotifier {
   Future<void> loadProfile() async {
     final dataSource = _dataSource;
     if (dataSource == null) return;
-    
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -85,7 +92,7 @@ class ProficiencyProvider with ChangeNotifier {
   }
 
   /// Record exercise results and update proficiency
-  /// 
+  ///
   /// Call this after completing exercises to:
   /// 1. Track performance in specific skills
   /// 2. Update skill scores
@@ -100,17 +107,19 @@ class ProficiencyProvider with ChangeNotifier {
     try {
       final jsonResults = results.map((r) => r.toJson()).toList();
       final result = await dataSource.recordExercises(jsonResults);
-      
+
       // Check for level change
       if (result.levelChanged) {
         _previousLevel = result.previousLevel;
         _showLevelUpDialog = true;
-        debugPrint('Level up! ${result.previousLevel} -> ${result.currentLevel}');
+        debugPrint(
+          'Level up! ${result.previousLevel} -> ${result.currentLevel}',
+        );
       }
-      
+
       // Reload profile to get updated data
       await loadProfile();
-      
+
       return result;
     } catch (e) {
       _errorMessage = 'Failed to record exercises: $e';
@@ -164,7 +173,7 @@ class ProficiencyProvider with ChangeNotifier {
     if (weakestSkills.isEmpty) {
       return 'Complete more exercises to get personalized recommendations.';
     }
-    
+
     final weakest = weakestSkills.first;
     return 'Focus on improving your ${weakest.skill.displayName} skills to reach the next level.';
   }

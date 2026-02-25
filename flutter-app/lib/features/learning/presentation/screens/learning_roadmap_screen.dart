@@ -67,11 +67,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
               'Failed to load roadmap',
@@ -81,9 +77,9 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -102,11 +98,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.school_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.school_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No lessons available',
@@ -115,16 +107,19 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
           const SizedBox(height: 8),
           Text(
             'Check back later for new content',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRoadmapContent(BuildContext context, CourseRoadmapModel roadmap) {
+  Widget _buildRoadmapContent(
+    BuildContext context,
+    CourseRoadmapModel roadmap,
+  ) {
     return CustomScrollView(
       slivers: [
         // Header with course info and progress
@@ -139,20 +134,20 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final unit = roadmap.units[index];
-                return _buildUnitSection(context, unit, index, roadmap.units.length);
-              },
-              childCount: roadmap.units.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final unit = roadmap.units[index];
+              return _buildUnitSection(
+                context,
+                unit,
+                index,
+                roadmap.units.length,
+              );
+            }, childCount: roadmap.units.length),
           ),
         ),
 
         // Bottom padding
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 100),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
   }

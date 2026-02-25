@@ -9,10 +9,7 @@ class AnimationShowcasePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Custom Animations'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Custom Animations'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -86,7 +83,10 @@ class AnimationShowcasePage extends StatelessWidget {
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
                   progressColor: Colors.red,
-                  child: Text('30%', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    '30%',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 AnimatedProgressRing(
                   progress: 0.65,
@@ -94,7 +94,10 @@ class AnimationShowcasePage extends StatelessWidget {
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
                   progressColor: Colors.orange,
-                  child: Text('65%', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    '65%',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 AnimatedProgressRing(
                   progress: 1.0,
@@ -120,9 +123,7 @@ class AnimationShowcasePage extends StatelessWidget {
                     color: Colors.purple.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
-                    child: Text('Tap me'),
-                  ),
+                  child: const Center(child: Text('Tap me')),
                 ),
               ),
             ),
@@ -135,7 +136,10 @@ class AnimationShowcasePage extends StatelessWidget {
                 glowColor: Colors.amber,
                 maxBlur: 20,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber,
                     borderRadius: BorderRadius.circular(24),
@@ -156,15 +160,15 @@ class AnimationShowcasePage extends StatelessWidget {
             _buildDescription('Chat typing animation'),
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const TypingIndicator(
-                  color: Colors.grey,
-                  dotSize: 10,
-                ),
+                child: const TypingIndicator(color: Colors.grey, dotSize: 10),
               ),
             ),
             const SizedBox(height: 32),
@@ -203,18 +207,9 @@ class AnimationShowcasePage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                AnimatedCheckmark(
-                  color: Colors.green,
-                  size: 60,
-                ),
-                AnimatedCheckmark(
-                  color: Colors.blue,
-                  size: 60,
-                ),
-                AnimatedCheckmark(
-                  color: Colors.purple,
-                  size: 60,
-                ),
+                AnimatedCheckmark(color: Colors.green, size: 60),
+                AnimatedCheckmark(color: Colors.blue, size: 60),
+                AnimatedCheckmark(color: Colors.purple, size: 60),
               ],
             ),
             const SizedBox(height: 48),
@@ -229,10 +224,7 @@ class AnimationShowcasePage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -242,10 +234,7 @@ class AnimationShowcasePage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         text,
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 14,
-        ),
+        style: TextStyle(color: Colors.grey[600], fontSize: 14),
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_category_en
 import 'package:lexilingo_app/features/course/domain/repositories/course_repository.dart';
 
 /// Get Categories Use Case
-/// 
+///
 /// Fetches all available course categories from the repository.
 class GetCategoriesUseCase {
   final CourseRepository repository;
@@ -12,10 +12,10 @@ class GetCategoriesUseCase {
   GetCategoriesUseCase(this.repository);
 
   /// Execute the use case
-  /// 
+  ///
   /// Parameters:
   /// - [activeOnly]: Only return active categories (default: true)
-  /// 
+  ///
   /// Returns:
   /// - Right: List of course categories
   /// - Left: Failure

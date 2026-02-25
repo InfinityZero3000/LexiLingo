@@ -153,7 +153,9 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF4FC3F7).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFF4FC3F7,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -164,10 +166,11 @@ class _LoginPageState extends State<LoginPage> {
                                 ? null
                                 : () async {
                                     if (_formKey.currentState!.validate()) {
-                                      await authProvider.signInWithEmailPassword(
-                                        _emailController.text.trim(),
-                                        _passwordController.text,
-                                      );
+                                      await authProvider
+                                          .signInWithEmailPassword(
+                                            _emailController.text.trim(),
+                                            _passwordController.text,
+                                          );
                                     }
                                   },
                             style: ElevatedButton.styleFrom(
@@ -184,8 +187,9 @@ class _LoginPageState extends State<LoginPage> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
                                   )
                                 : const Text(
@@ -205,7 +209,9 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             const Expanded(child: Divider()),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 'OR',
                                 style: theme.textTheme.bodySmall?.copyWith(
@@ -238,7 +244,9 @@ class _LoginPageState extends State<LoginPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            backgroundColor: Colors.white.withValues(alpha: 0.8),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.8,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -254,13 +262,17 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline,
-                                    color: Colors.red.shade700),
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red.shade700,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     authProvider.errorMessage!,
-                                    style: TextStyle(color: Colors.red.shade700),
+                                    style: TextStyle(
+                                      color: Colors.red.shade700,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -278,4 +290,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

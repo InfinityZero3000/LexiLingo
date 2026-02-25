@@ -233,16 +233,16 @@ class NotificationEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        type,
-        title,
-        body,
-        timestamp,
-        isRead,
-        data,
-        iconIdentifier,
-        colorHex,
-      ];
+    id,
+    type,
+    title,
+    body,
+    timestamp,
+    isRead,
+    data,
+    iconIdentifier,
+    colorHex,
+  ];
 }
 
 /// Notification group for displaying in sections
@@ -250,10 +250,7 @@ class NotificationGroup {
   final String title;
   final List<NotificationEntity> notifications;
 
-  const NotificationGroup({
-    required this.title,
-    required this.notifications,
-  });
+  const NotificationGroup({required this.title, required this.notifications});
 
   /// Check if group has any unread notifications
   bool get hasUnread => notifications.any((n) => !n.isRead);

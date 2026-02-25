@@ -18,7 +18,7 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   static const List<String> _leagues = [
     'bronze',
     'silver',
@@ -72,7 +72,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _getLeagueColor(provider.selectedLeague).withValues(alpha: 0.3),
+                            _getLeagueColor(
+                              provider.selectedLeague,
+                            ).withValues(alpha: 0.3),
                             Theme.of(context).scaffoldBackgroundColor,
                           ],
                           begin: Alignment.topCenter,
@@ -85,7 +87,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                             const SizedBox(height: 56), // AppBar height
                             if (provider.leagueStatus != null)
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: LeagueCard(
                                   status: provider.leagueStatus!,
                                   onTap: () {
@@ -234,10 +238,7 @@ class _LeaderboardTab extends StatelessWidget {
                       ),
                       Text(
                         '${leaderboard.totalParticipants} participants',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
                   ),
@@ -261,24 +262,19 @@ class _LeaderboardTab extends StatelessWidget {
 
               // Rest of the leaderboard
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final entry = remaining[index];
-                    return LeaderboardEntryRow(
-                      entry: entry,
-                      onTap: () {
-                        // Navigate to user profile
-                      },
-                    );
-                  },
-                  childCount: remaining.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final entry = remaining[index];
+                  return LeaderboardEntryRow(
+                    entry: entry,
+                    onTap: () {
+                      // Navigate to user profile
+                    },
+                  );
+                }, childCount: remaining.length),
               ),
 
               // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 80),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           ),
         );
@@ -291,11 +287,7 @@ class _LeaderboardTab extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.emoji_events_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No rankings yet',
@@ -308,9 +300,7 @@ class _LeaderboardTab extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Be the first to compete this week!',
-            style: TextStyle(
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(color: Colors.grey[500]),
           ),
         ],
       ),
@@ -320,7 +310,7 @@ class _LeaderboardTab extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = date.difference(now);
-    
+
     if (diff.inDays > 1) {
       return 'in ${diff.inDays} days';
     } else if (diff.inHours > 0) {
@@ -340,7 +330,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getLeagueColor(league);
-    
+
     return Container(
       width: 20,
       height: 20,
@@ -352,17 +342,10 @@ class _LeagueBadgeSmall extends StatelessWidget {
         ),
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 4,
-          ),
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
         ],
       ),
-      child: Icon(
-        _getLeagueIcon(league),
-        color: Colors.white,
-        size: 12,
-      ),
+      child: Icon(_getLeagueIcon(league), color: Colors.white, size: 12),
     );
   }
 

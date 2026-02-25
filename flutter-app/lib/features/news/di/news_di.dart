@@ -5,9 +5,7 @@ import 'package:lexilingo_app/features/news/presentation/providers/news_provider
 /// Register News feature dependencies.
 void registerNewsModule() {
   // Repository
-  sl.registerLazySingleton<NewsRepository>(
-    () => NewsRepository(),
-  );
+  sl.registerLazySingleton<NewsRepository>(() => NewsRepository());
 
   // Provider
   sl.registerFactory<NewsProvider>(

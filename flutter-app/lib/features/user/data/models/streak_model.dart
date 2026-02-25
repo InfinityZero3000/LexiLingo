@@ -21,7 +21,8 @@ class StreakModel extends Streak {
     return {
       'id': id,
       'userId': userId,
-      'date': '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      'date':
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
       'completed': completed ? 1 : 0,
     };
   }

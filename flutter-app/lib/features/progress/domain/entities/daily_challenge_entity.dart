@@ -41,17 +41,17 @@ class DailyChallengeEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        icon,
-        category,
-        target,
-        current,
-        xpReward,
-        isCompleted,
-        expiresAt,
-      ];
+    id,
+    title,
+    description,
+    icon,
+    category,
+    target,
+    current,
+    xpReward,
+    isCompleted,
+    expiresAt,
+  ];
 }
 
 /// Daily Challenges List Response
@@ -82,15 +82,16 @@ class DailyChallengesResponse extends Equatable {
       challenges.fold(0, (sum, c) => sum + c.xpReward) + bonusXp;
 
   /// XP already earned from completed challenges
-  int get xpEarned =>
-      challenges.where((c) => c.isCompleted).fold(0, (sum, c) => sum + c.xpReward);
+  int get xpEarned => challenges
+      .where((c) => c.isCompleted)
+      .fold(0, (sum, c) => sum + c.xpReward);
 
   @override
   List<Object?> get props => [
-        date,
-        challenges,
-        totalCompleted,
-        totalChallenges,
-        bonusXp,
-      ];
+    date,
+    challenges,
+    totalCompleted,
+    totalChallenges,
+    bonusXp,
+  ];
 }

@@ -229,7 +229,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.bolt_rounded, color: AppColors.textGrey, size: 16),
+              const Icon(
+                Icons.bolt_rounded,
+                color: AppColors.textGrey,
+                size: 16,
+              ),
               const SizedBox(width: 4),
               Text(
                 '$dailyXp/$dailyCap XP today',
@@ -396,21 +400,30 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               if (second != null)
                 Expanded(
                   child: _buildPodiumColumn(
-                    second, 1, 72, const Color(0xFFC0C0C0),
+                    second,
+                    1,
+                    72,
+                    const Color(0xFFC0C0C0),
                   ),
                 ),
               if (second != null) const SizedBox(width: 8),
               if (first != null)
                 Expanded(
                   child: _buildPodiumColumn(
-                    first, 0, 104, const Color(0xFFFFD700),
+                    first,
+                    0,
+                    104,
+                    const Color(0xFFFFD700),
                   ),
                 ),
               if (third != null) const SizedBox(width: 8),
               if (third != null)
                 Expanded(
                   child: _buildPodiumColumn(
-                    third, 2, 56, const Color(0xFFCD7F32),
+                    third,
+                    2,
+                    56,
+                    const Color(0xFFCD7F32),
                   ),
                 ),
             ],
@@ -464,7 +477,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     Text(
                       '${user.weeklyXp} this week',
                       style: const TextStyle(
-                          fontSize: 11, color: AppColors.textGrey),
+                        fontSize: 11,
+                        color: AppColors.textGrey,
+                      ),
                     ),
                   ],
                 ),
@@ -488,7 +503,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final anims = [_anim1st, _anim2nd, _anim3rd];
     final anim = anims[rank];
     const rankLabels = ['1st', '2nd', '3rd'];
-    const medalColors = [Color(0xFFFFD700), Color(0xFFC0C0C0), Color(0xFFCD7F32)];
+    const medalColors = [
+      Color(0xFFFFD700),
+      Color(0xFFC0C0C0),
+      Color(0xFFCD7F32),
+    ];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility
         : color.withOpacity(0.85);
@@ -505,7 +524,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.workspace_premium_rounded, size: 24, color: medalColors[rank]),
+          Icon(
+            Icons.workspace_premium_rounded,
+            size: 24,
+            color: medalColors[rank],
+          ),
           const SizedBox(height: 4),
           Container(
             width: 44,
@@ -517,9 +540,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             ),
             child: Center(
               child: Text(
-                user.username.isNotEmpty
-                    ? user.username[0].toUpperCase()
-                    : '?',
+                user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -555,8 +576,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 end: Alignment.bottomCenter,
                 colors: [color, color.withOpacity(0.75)],
               ),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
             ),
             alignment: Alignment.center,
             child: Text(

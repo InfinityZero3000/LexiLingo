@@ -30,8 +30,7 @@ class PodcastPlayerScreen extends StatefulWidget {
   });
 
   @override
-  State<PodcastPlayerScreen> createState() =>
-      _PodcastPlayerScreenState();
+  State<PodcastPlayerScreen> createState() => _PodcastPlayerScreenState();
 }
 
 class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
@@ -59,23 +58,29 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
 
   Future<void> _setupPlayer() async {
     // Position stream
-    _subs.add(_handler!.positionStream.listen((pos) {
-      if (!mounted) return;
-      setState(() => _position = pos);
-      _checkXpAward(pos);
-    }));
+    _subs.add(
+      _handler!.positionStream.listen((pos) {
+        if (!mounted) return;
+        setState(() => _position = pos);
+        _checkXpAward(pos);
+      }),
+    );
 
     // Duration stream
-    _subs.add(_handler!.durationStream.listen((dur) {
-      if (!mounted) return;
-      if (dur != null) setState(() => _duration = dur);
-    }));
+    _subs.add(
+      _handler!.durationStream.listen((dur) {
+        if (!mounted) return;
+        if (dur != null) setState(() => _duration = dur);
+      }),
+    );
 
     // Player state stream
-    _subs.add(_handler!.playerStateStream.listen((state) {
-      if (!mounted) return;
-      setState(() => _isPlaying = state.playing);
-    }));
+    _subs.add(
+      _handler!.playerStateStream.listen((state) {
+        if (!mounted) return;
+        setState(() => _isPlaying = state.playing);
+      }),
+    );
 
     // Load episode into the handler (resolves local/remote source)
     try {
@@ -113,8 +118,13 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     }
   }
 
-  void _skipBack() { if (_handler != null) _handler!.rewind(); }
-  void _skipForward() { if (_handler != null) _handler!.fastForward(); }
+  void _skipBack() {
+    if (_handler != null) _handler!.rewind();
+  }
+
+  void _skipForward() {
+    if (_handler != null) _handler!.fastForward();
+  }
 
   Future<void> _changeSpeed(double speed) async {
     setState(() => _playbackSpeed = speed);
@@ -139,8 +149,9 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     // Web fallback: audio_service not supported on web
     if (_handler == null) {
       return Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
@@ -155,8 +166,11 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.headphones_rounded, size: 64,
-                    color: isDark ? Colors.white38 : Colors.grey),
+                Icon(
+                  Icons.headphones_rounded,
+                  size: 64,
+                  color: isDark ? Colors.white38 : Colors.grey,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Podcast playback is available on mobile only.',
@@ -174,13 +188,13 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     }
 
     final progressRatio = _duration.inMilliseconds > 0
-        ? (_position.inMilliseconds / _duration.inMilliseconds)
-            .clamp(0.0, 1.0)
+        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
         : 0.0;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
@@ -238,8 +252,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
 
             // ── CEFR badge ──
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: cefrColor,
                 borderRadius: BorderRadius.circular(8),
@@ -277,16 +290,14 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                   _formatDuration(_position),
                   style: TextStyle(
                     fontSize: 12,
-                    color:
-                        isDark ? Colors.white54 : AppColors.textGrey,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
                   ),
                 ),
                 Text(
                   _formatDuration(_duration),
                   style: TextStyle(
                     fontSize: 12,
-                    color:
-                        isDark ? Colors.white54 : AppColors.textGrey,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
                   ),
                 ),
               ],
@@ -348,8 +359,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                   _transcriptExpanded
                       ? Icons.expand_less_rounded
                       : Icons.expand_more_rounded,
-                  color:
-                      isDark ? Colors.white54 : AppColors.textGrey,
+                  color: isDark ? Colors.white54 : AppColors.textGrey,
                 ),
               ],
             ),

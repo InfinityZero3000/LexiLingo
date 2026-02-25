@@ -6,7 +6,7 @@ import 'package:lexilingo_app/features/achievements/domain/usecases/get_recent_b
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 
 /// Registers all achievement-related dependencies
-/// 
+///
 /// Following agent-skills/gamification-achievement-badges pattern:
 /// Meaningful achievement system with tiered badges for 25-40% engagement boost
 void registerAchievementModule() {
@@ -17,22 +17,16 @@ void registerAchievementModule() {
 
   // Provider - Factory for fresh instances
   sl.registerFactory<AchievementProvider>(
-    () => AchievementProvider(
-      repository: sl(),
-    ),
+    () => AchievementProvider(repository: sl()),
   );
 
   // Repository - Singleton
   sl.registerLazySingleton<AchievementRepository>(
-    () => AchievementRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+    () => AchievementRepositoryImpl(remoteDataSource: sl()),
   );
 
   // Data sources - Singleton
   sl.registerLazySingleton<AchievementRemoteDataSource>(
-    () => AchievementRemoteDataSourceImpl(
-      apiClient: sl(),
-    ),
+    () => AchievementRemoteDataSourceImpl(apiClient: sl()),
   );
 }

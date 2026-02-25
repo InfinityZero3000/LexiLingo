@@ -28,10 +28,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: Consumer<NotificationProvider>(
         builder: (context, notificationProvider, child) {
           final unreadCount = notificationProvider.unreadCount;
@@ -94,7 +91,11 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildNotificationIcon(IconData icon, int unreadCount, BuildContext context) {
+  Widget _buildNotificationIcon(
+    IconData icon,
+    int unreadCount,
+    BuildContext context,
+  ) {
     if (unreadCount <= 0) {
       return Icon(icon);
     }

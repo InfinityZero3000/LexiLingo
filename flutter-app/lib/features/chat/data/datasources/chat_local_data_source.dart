@@ -18,10 +18,14 @@ class ChatLocalDataSource {
   Future<List<Message>> getHistory() async {
     final db = await dbHelper.database;
     final result = await db.query('chat_history', orderBy: 'timestamp ASC');
-    return result.map((e) => Message(
-      content: e['message'] as String,
-      isUser: (e['isUser'] as int) == 1,
-      timestamp: DateTime.parse(e['timestamp'] as String),
-    )).toList();
+    return result
+        .map(
+          (e) => Message(
+            content: e['message'] as String,
+            isUser: (e['isUser'] as int) == 1,
+            timestamp: DateTime.parse(e['timestamp'] as String),
+          ),
+        )
+        .toList();
   }
 }

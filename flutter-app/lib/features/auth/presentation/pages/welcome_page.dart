@@ -9,11 +9,7 @@ class WelcomePage extends StatefulWidget {
   final VoidCallback onComplete;
   final String? userName;
 
-  const WelcomePage({
-    super.key,
-    required this.onComplete,
-    this.userName,
-  });
+  const WelcomePage({super.key, required this.onComplete, this.userName});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -61,34 +57,34 @@ class _WelcomePageState extends State<WelcomePage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
-              
+
               // Welcome Animation
               _buildWelcomeAnimation(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Welcome Text
               _buildWelcomeText(context),
-              
+
               const SizedBox(height: 16),
-              
+
               // User greeting
               if (widget.userName != null) _buildUserGreeting(context),
-              
+
               const SizedBox(height: 24),
-              
+
               // Motivational message
               _buildMotivationalMessage(context),
-              
+
               const Spacer(flex: 2),
-              
+
               // Continue button
               AnimatedOpacity(
                 opacity: _showContinueButton ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 500),
                 child: _buildContinueButton(context),
               ),
-              
+
               const SizedBox(height: 48),
             ],
           ),
@@ -153,18 +149,15 @@ class _WelcomePageState extends State<WelcomePage>
         final opacity = value.clamp(0.0, 1.0);
         return Transform.scale(
           scale: value,
-          child: Opacity(
-            opacity: opacity,
-            child: child,
-          ),
+          child: Opacity(opacity: opacity, child: child),
         );
       },
       child: Text(
         'Welcome to LexiLingo!',
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -173,7 +166,7 @@ class _WelcomePageState extends State<WelcomePage>
   Widget _buildUserGreeting(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 800),
@@ -204,10 +197,7 @@ class _WelcomePageState extends State<WelcomePage>
               color: AppColors.accentYellow,
             ),
           ),
-          Text(
-            ' ',
-            style: theme.textTheme.titleLarge,
-          ),
+          Text(' ', style: theme.textTheme.titleLarge),
         ],
       ),
     );
@@ -216,7 +206,7 @@ class _WelcomePageState extends State<WelcomePage>
   Widget _buildMotivationalMessage(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     final messages = [
       "Ready to learn something new today?",
       "Your language journey continues!",
@@ -224,20 +214,17 @@ class _WelcomePageState extends State<WelcomePage>
       "Time to expand your vocabulary!",
       "Learning is the greatest adventure!",
     ];
-    
+
     // Pick a random message
     final message = messages[DateTime.now().second % messages.length];
-    
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 1000),
       curve: Curves.easeOut,
       builder: (context, value, child) {
         final opacity = value.clamp(0.0, 1.0);
-        return Opacity(
-          opacity: opacity,
-          child: child,
-        );
+        return Opacity(opacity: opacity, child: child);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),

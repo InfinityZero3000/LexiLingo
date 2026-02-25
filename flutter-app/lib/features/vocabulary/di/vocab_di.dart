@@ -22,9 +22,6 @@ void registerVocabModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => AddWordUseCase(sl()));
 
   sl.registerFactory(
-    () => VocabProvider(
-      getWordsUseCase: sl(),
-      addWordUseCase: sl(),
-    ),
+    () => VocabProvider(getWordsUseCase: sl(), addWordUseCase: sl()),
   );
 }

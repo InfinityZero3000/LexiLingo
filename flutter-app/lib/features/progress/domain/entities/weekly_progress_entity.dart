@@ -1,8 +1,8 @@
 /// Weekly Progress Entity
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - progress-learning-streaks: Visual progress tracking (3-5x engagement boost)
-/// 
+///
 /// Used for home page week progress chart.
 library;
 
@@ -10,7 +10,7 @@ import 'package:equatable/equatable.dart';
 
 /// Single day's progress data
 class DailyProgressEntity extends Equatable {
-  final String day;           // Mon, Tue, Wed, etc.
+  final String day; // Mon, Tue, Wed, etc.
   final DateTime date;
   final int xpEarned;
   final int lessonsCompleted;
@@ -55,15 +55,15 @@ class DailyProgressEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        day,
-        date,
-        xpEarned,
-        lessonsCompleted,
-        studyTimeMinutes,
-        vocabularyReviewed,
-        goalMet,
-        isToday,
-      ];
+    day,
+    date,
+    xpEarned,
+    lessonsCompleted,
+    studyTimeMinutes,
+    vocabularyReviewed,
+    goalMet,
+    isToday,
+  ];
 }
 
 /// Weekly progress summary
@@ -93,14 +93,11 @@ class WeeklyProgressEntity extends Equatable {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: 6));
     final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
+
     return WeeklyProgressEntity(
       weekProgress: List.generate(7, (i) {
         final date = weekStart.add(Duration(days: i));
-        return DailyProgressEntity.empty(
-          dayNames[date.weekday - 1],
-          date,
-        );
+        return DailyProgressEntity.empty(dayNames[date.weekday - 1], date);
       }),
       totalXP: 0,
       totalLessons: 0,
@@ -124,7 +121,9 @@ class WeeklyProgressEntity extends Equatable {
   /// Get max XP earned in a single day (for chart scaling)
   int get maxDailyXP {
     if (weekProgress.isEmpty) return 20;
-    final max = weekProgress.map((d) => d.xpEarned).reduce((a, b) => a > b ? a : b);
+    final max = weekProgress
+        .map((d) => d.xpEarned)
+        .reduce((a, b) => a > b ? a : b);
     return max > 0 ? max : 20;
   }
 
@@ -136,13 +135,13 @@ class WeeklyProgressEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        weekProgress,
-        totalXP,
-        totalLessons,
-        totalStudyTime,
-        daysActive,
-        currentStreak,
-        longestStreak,
-        weekGoalProgress,
-      ];
+    weekProgress,
+    totalXP,
+    totalLessons,
+    totalStudyTime,
+    daysActive,
+    currentStreak,
+    longestStreak,
+    weekGoalProgress,
+  ];
 }

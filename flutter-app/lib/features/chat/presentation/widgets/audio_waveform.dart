@@ -54,10 +54,7 @@ class _AudioWaveformState extends State<AudioWaveform>
       return Tween<double>(
         begin: widget.minHeight,
         end: widget.maxHeight,
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeInOut,
-      ));
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
     }).toList();
 
     if (widget.isRecording) {
@@ -116,13 +113,15 @@ class _AudioWaveformState extends State<AudioWaveform>
             builder: (context, child) {
               return Container(
                 width: widget.barWidth,
-                height: widget.isRecording 
-                    ? _animations[index].value 
+                height: widget.isRecording
+                    ? _animations[index].value
                     : widget.minHeight,
                 margin: EdgeInsets.symmetric(horizontal: widget.barWidth / 2),
                 decoration: BoxDecoration(
                   color: widget.color.withValues(
-                    alpha: 0.5 + (_animations[index].value / widget.maxHeight) * 0.5,
+                    alpha:
+                        0.5 +
+                        (_animations[index].value / widget.maxHeight) * 0.5,
                   ),
                   borderRadius: BorderRadius.circular(widget.barWidth / 2),
                 ),
@@ -163,7 +162,7 @@ class VoiceRecordingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -274,12 +273,14 @@ class _PulsingDotState extends State<_PulsingDot>
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.3).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.5,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _opacityAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.3,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -412,13 +413,15 @@ class _VoiceMessagePlaybackState extends State<VoiceMessagePlayback> {
                   final barWidth = 3.0;
                   final barSpacing = 2.0;
                   final totalBarWidth = barWidth + barSpacing;
-                  final barCount = (constraints.maxWidth / totalBarWidth).floor();
+                  final barCount = (constraints.maxWidth / totalBarWidth)
+                      .floor();
                   final progressBarCount = (barCount * widget.progress).floor();
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(barCount, (index) {
-                      final height = _barHeights[index % _barHeights.length] * 32;
+                      final height =
+                          _barHeights[index % _barHeights.length] * 32;
                       final isPlayed = index < progressBarCount;
                       return Container(
                         width: barWidth,

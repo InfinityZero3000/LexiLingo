@@ -34,7 +34,8 @@ class AIAnalysisResult extends Equatable {
   bool get hasGrammarErrors => grammarErrors.isNotEmpty;
 
   /// Check if the text needed correction
-  bool get needsCorrection => correctedText != null && correctedText!.isNotEmpty;
+  bool get needsCorrection =>
+      correctedText != null && correctedText!.isNotEmpty;
 
   /// Get a summary of issues found
   String get issueSummary {
@@ -65,13 +66,13 @@ class AIAnalysisResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        messageId,
-        fluency,
-        vocabularyLevel,
-        grammarErrors,
-        correctedText,
-        analyzedAt,
-      ];
+    messageId,
+    fluency,
+    vocabularyLevel,
+    grammarErrors,
+    correctedText,
+    analyzedAt,
+  ];
 }
 
 /// Represents fluency score and analysis
@@ -161,12 +162,12 @@ class GrammarError extends Equatable {
 
   @override
   List<Object?> get props => [
-        errorType,
-        explanation,
-        suggestion,
-        startPos,
-        endPos,
-      ];
+    errorType,
+    explanation,
+    suggestion,
+    startPos,
+    endPos,
+  ];
 }
 
 /// Represents a difficult word that might be above user's level

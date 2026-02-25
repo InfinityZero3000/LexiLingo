@@ -1,6 +1,6 @@
 /// Course Local Datasource
 /// Handles local caching for course-related data
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - Improve UX with offline-first data when available
 /// - Reduce API calls for rarely-changing data like categories
@@ -13,24 +13,24 @@ import 'package:lexilingo_app/features/course/data/models/course_category_model.
 abstract class CourseLocalDataSource {
   /// Get cached categories
   Future<List<CourseCategoryModel>?> getCachedCategories();
-  
+
   /// Cache categories
   Future<void> cacheCategories(List<CourseCategoryModel> categories);
-  
+
   /// Check if cache is still valid
   Future<bool> isCategoryCacheValid();
-  
+
   /// Clear category cache
   Future<void> clearCategoryCache();
 }
 
 class CourseLocalDataSourceImpl implements CourseLocalDataSource {
   final SharedPreferences sharedPreferences;
-  
+
   // Cache keys
   static const String _categoriesKey = 'cached_categories';
   static const String _categoriesCacheTimeKey = 'categories_cache_time';
-  
+
   // Cache duration: 1 hour (categories rarely change)
   static const Duration _cacheDuration = Duration(hours: 1);
 
@@ -41,7 +41,7 @@ class CourseLocalDataSourceImpl implements CourseLocalDataSource {
     try {
       final jsonString = sharedPreferences.getString(_categoriesKey);
       if (jsonString == null) return null;
-      
+
       final List<dynamic> jsonList = json.decode(jsonString);
       return jsonList
           .map((json) => CourseCategoryModel.fromJson(json))
@@ -57,13 +57,13 @@ class CourseLocalDataSourceImpl implements CourseLocalDataSource {
     try {
       final jsonList = categories.map((c) => c.toJson()).toList();
       final jsonString = json.encode(jsonList);
-      
+
       await sharedPreferences.setString(_categoriesKey, jsonString);
       await sharedPreferences.setInt(
-        _categoriesCacheTimeKey, 
+        _categoriesCacheTimeKey,
         DateTime.now().millisecondsSinceEpoch,
       );
-      
+
       debugPrint('Cached ${categories.length} categories');
     } catch (e) {
       debugPrint('Error caching categories: $e');
@@ -75,10 +75,10 @@ class CourseLocalDataSourceImpl implements CourseLocalDataSource {
     try {
       final cacheTime = sharedPreferences.getInt(_categoriesCacheTimeKey);
       if (cacheTime == null) return false;
-      
+
       final cachedAt = DateTime.fromMillisecondsSinceEpoch(cacheTime);
       final now = DateTime.now();
-      
+
       return now.difference(cachedAt) < _cacheDuration;
     } catch (e) {
       return false;

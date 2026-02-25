@@ -22,9 +22,9 @@ class UserModel extends User {
       email: json['email'] as String,
       avatarUrl: json['avatarUrl'] as String?,
       joinDate: DateTime.parse(json['joinDate'] as String),
-      lastLoginDate: json['lastLoginDate'] != null 
-        ? DateTime.parse(json['lastLoginDate'] as String)
-        : null,
+      lastLoginDate: json['lastLoginDate'] != null
+          ? DateTime.parse(json['lastLoginDate'] as String)
+          : null,
       totalXP: json['totalXP'] as int? ?? 0,
       currentStreak: json['currentStreak'] as int? ?? 0,
       longestStreak: json['longestStreak'] as int? ?? 0,

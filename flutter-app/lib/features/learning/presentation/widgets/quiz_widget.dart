@@ -23,7 +23,8 @@ class QuizWidget extends StatefulWidget {
   State<QuizWidget> createState() => _QuizWidgetState();
 }
 
-class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateMixin {
+class _QuizWidgetState extends State<QuizWidget>
+    with SingleTickerProviderStateMixin {
   String? _selectedAnswer;
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -110,7 +111,7 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                       ),
                     ],
                   ),
-                  
+
                   // Show hint if available
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
@@ -122,8 +123,11 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.lightbulb_outline, 
-                              size: 20, color: Colors.blue),
+                          const Icon(
+                            Icons.lightbulb_outline,
+                            size: 20,
+                            color: Colors.blue,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -142,19 +146,19 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Options
           ...widget.exercise.options!.map((option) {
             final isSelected = _selectedAnswer == option;
             final isCorrectAnswer = widget.exercise.correctAnswer == option;
             final showResult = widget.isAnswered;
-            
+
             Color? backgroundColor;
             Color? borderColor;
             IconData? icon;
-            
+
             if (showResult) {
               if (isCorrectAnswer) {
                 backgroundColor = Colors.green.withValues(alpha: 0.1);
@@ -166,10 +170,12 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
-              backgroundColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
+              backgroundColor = Theme.of(
+                context,
+              ).primaryColor.withValues(alpha: 0.1);
               borderColor = Theme.of(context).primaryColor;
             }
-            
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: InkWell(
@@ -198,7 +204,9 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                           option,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -213,14 +221,14 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
               ),
             );
           }).toList(),
-          
+
           // Explanation (shown after answering)
           if (widget.isAnswered && widget.exercise.explanation != null) ...[
             const SizedBox(height: 24),
             FadeTransition(
               opacity: _animation,
               child: Card(
-                color: widget.isCorrect! 
+                color: widget.isCorrect!
                     ? Colors.green.withValues(alpha: 0.1)
                     : Colors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
@@ -238,10 +246,12 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                       Row(
                         children: [
                           Icon(
-                            widget.isCorrect! 
-                                ? Icons.check_circle 
+                            widget.isCorrect!
+                                ? Icons.check_circle
                                 : Icons.info_outline,
-                            color: widget.isCorrect! ? Colors.green : Colors.orange,
+                            color: widget.isCorrect!
+                                ? Colors.green
+                                : Colors.orange,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -249,7 +259,9 @@ class _QuizWidgetState extends State<QuizWidget> with SingleTickerProviderStateM
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: widget.isCorrect! ? Colors.green : Colors.orange,
+                              color: widget.isCorrect!
+                                  ? Colors.green
+                                  : Colors.orange,
                             ),
                           ),
                         ],

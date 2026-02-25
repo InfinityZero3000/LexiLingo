@@ -2,36 +2,28 @@
 enum AITaskType {
   /// Grammar correction and analysis
   grammar,
-  
+
   /// Fluency assessment
   fluency,
-  
+
   /// Vocabulary level analysis
   vocabulary,
-  
+
   /// Dialogue/conversation practice
   dialogue,
-  
+
   /// Pronunciation analysis (requires audio)
   pronunciation,
-  
+
   /// Vietnamese explanation (for A2 learners)
   vietnameseExplanation,
 }
 
 /// Complexity level of the user's input
-enum TaskComplexity {
-  simple,
-  medium,
-  complex,
-}
+enum TaskComplexity { simple, medium, complex }
 
 /// CEFR levels for learner proficiency
-enum LearnerLevel {
-  a2,
-  b1,
-  b2,
-}
+enum LearnerLevel { a2, b1, b2 }
 
 extension LearnerLevelExtension on LearnerLevel {
   String get displayName {
@@ -50,13 +42,13 @@ extension LearnerLevelExtension on LearnerLevel {
 enum FeedbackStrategy {
   /// No errors, just praise
   praise,
-  
+
   /// 1-2 errors, gentle correction
   correct,
-  
+
   /// 3+ errors, detailed explanation
   explain,
-  
+
   /// Repeated same error, focused drill
   drill,
 }

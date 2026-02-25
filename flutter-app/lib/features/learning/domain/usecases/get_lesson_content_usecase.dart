@@ -6,10 +6,12 @@ import 'package:lexilingo_app/features/learning/domain/repositories/learning_rep
 
 /// Get Lesson Content Use Case
 /// Fetches the content/exercises for a specific lesson
-class GetLessonContentUseCase implements UseCase<LessonEntity, GetLessonContentParams> {
+class GetLessonContentUseCase
+    implements UseCase<LessonEntity, GetLessonContentParams> {
   final LearningRepository _repository;
 
-  GetLessonContentUseCase({required LearningRepository repository}) : _repository = repository;
+  GetLessonContentUseCase({required LearningRepository repository})
+    : _repository = repository;
 
   @override
   Future<Either<Failure, LessonEntity>> call(GetLessonContentParams params) {

@@ -6,19 +6,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TtsSettingsProvider extends ChangeNotifier {
   static const String _speedKey = 'tts_playback_speed';
   static const double defaultSpeed = 1.0;
-  
+
   double _playbackSpeed = defaultSpeed;
   bool _isInitialized = false;
 
   /// Available speed options
   static const List<double> speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
-  
+
   /// Current playback speed
   double get playbackSpeed => _playbackSpeed;
-  
+
   /// Whether settings have been loaded
   bool get isInitialized => _isInitialized;
-  
+
   /// Get speed label for display
   String get speedLabel {
     if (_playbackSpeed == 1.0) return 'Normal';
@@ -35,7 +35,7 @@ class TtsSettingsProvider extends ChangeNotifier {
   /// Initialize from SharedPreferences
   Future<void> init() async {
     if (_isInitialized) return;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       _playbackSpeed = prefs.getDouble(_speedKey) ?? defaultSpeed;
@@ -51,10 +51,10 @@ class TtsSettingsProvider extends ChangeNotifier {
   Future<void> setPlaybackSpeed(double speed) async {
     if (!speedOptions.contains(speed)) return;
     if (_playbackSpeed == speed) return;
-    
+
     _playbackSpeed = speed;
     notifyListeners();
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(_speedKey, speed);

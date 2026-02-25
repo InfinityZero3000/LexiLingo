@@ -5,28 +5,28 @@ import 'package:lottie/lottie.dart';
 enum LottieAnimation {
   /// Welcome animation for login/onboarding
   welcome('animation/Welcome.json'),
-  
+
   /// Sandy loading animation
   sandyLoading('animation/Sandy Loading.json'),
-  
+
   /// Confetti celebration
   confetti('animation/Confetti.json'),
-  
+
   /// Live Love Learn animation
   liveLoveLearn('animation/Live Love Learn.json'),
-  
+
   /// Pulse loader animation (custom)
   pulseLoader('animation/PulseLoader.json'),
-  
+
   /// Success checkmark animation (custom)
   successCheck('animation/SuccessCheck.json'),
-  
+
   /// Spinning dots loader (custom)
   spinningDots('animation/SpinningDots.json'),
-  
+
   /// Heartbeat animation (custom)
   heartbeat('animation/HeartBeat.json'),
-  
+
   /// Star burst celebration (custom)
   starBurst('animation/StarBurst.json');
 
@@ -204,17 +204,14 @@ class AnimatedSuccessDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const LottieAnimationWidget.success(
-              width: 100,
-              height: 100,
-            ),
+            const LottieAnimationWidget.success(width: 100, height: 100),
             if (title != null) ...[
               const SizedBox(height: 16),
               Text(
                 title!,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
             ],

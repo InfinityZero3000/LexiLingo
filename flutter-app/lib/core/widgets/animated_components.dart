@@ -37,9 +37,10 @@ class _AnimatedStarRatingState extends State<AnimatedStarRating>
       duration: widget.animationDuration,
       vsync: this,
     );
-    _animation = Tween<double>(begin: 0, end: widget.rating).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: widget.rating,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
   }
 
@@ -47,10 +48,10 @@ class _AnimatedStarRatingState extends State<AnimatedStarRating>
   void didUpdateWidget(AnimatedStarRating oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.rating != widget.rating) {
-      _animation = Tween<double>(
-        begin: _animation.value,
-        end: widget.rating,
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+      _animation = Tween<double>(begin: _animation.value, end: widget.rating)
+          .animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+          );
       _controller.forward(from: 0);
     }
   }
@@ -70,7 +71,7 @@ class _AnimatedStarRatingState extends State<AnimatedStarRating>
           mainAxisSize: MainAxisSize.min,
           children: List.generate(widget.starCount, (index) {
             final fillAmount = (_animation.value - index).clamp(0.0, 1.0);
-            
+
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.8, end: 1.0),
               duration: Duration(milliseconds: 200 + (index * 100)),
@@ -151,7 +152,9 @@ class _StarPainter extends CustomPainter {
     // Draw filled portion
     if (fillAmount > 0) {
       canvas.save();
-      canvas.clipRect(Rect.fromLTWH(0, 0, size.width * fillAmount, size.height));
+      canvas.clipRect(
+        Rect.fromLTWH(0, 0, size.width * fillAmount, size.height),
+      );
       final filledPaint = Paint()
         ..color = filledColor
         ..style = PaintingStyle.fill;
@@ -160,7 +163,12 @@ class _StarPainter extends CustomPainter {
     }
   }
 
-  Path _createStarPath(Offset center, double outerRadius, double innerRadius, int points) {
+  Path _createStarPath(
+    Offset center,
+    double outerRadius,
+    double innerRadius,
+    int points,
+  ) {
     final path = Path();
     final angle = math.pi / points;
 
@@ -213,10 +221,8 @@ class _SpinningLoaderState extends State<SpinningLoader>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat();
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat();
   }
 
   @override
@@ -330,7 +336,7 @@ class _BouncingDotsLoaderState extends State<BouncingDotsLoader>
             final delay = index * 0.2;
             final value = ((_controller.value + delay) % 1.0);
             final bounce = math.sin(value * math.pi);
-            
+
             return Container(
               margin: EdgeInsets.symmetric(horizontal: widget.spacing / 2),
               child: Transform.translate(
@@ -440,14 +446,20 @@ class _HeartPainter extends CustomPainter {
 
     path.moveTo(width / 2, height * 0.85);
     path.cubicTo(
-      width * 0.1, height * 0.6,
-      width * 0.1, height * 0.2,
-      width / 2, height * 0.35,
+      width * 0.1,
+      height * 0.6,
+      width * 0.1,
+      height * 0.2,
+      width / 2,
+      height * 0.35,
     );
     path.cubicTo(
-      width * 0.9, height * 0.2,
-      width * 0.9, height * 0.6,
-      width / 2, height * 0.85,
+      width * 0.9,
+      height * 0.2,
+      width * 0.9,
+      height * 0.6,
+      width / 2,
+      height * 0.85,
     );
 
     canvas.drawPath(path, paint);
@@ -533,14 +545,17 @@ class _CountdownTimerState extends State<CountdownTimer>
                 size: Size(widget.size, widget.size),
                 painter: _CountdownPainter(
                   progress: 1 - _controller.value,
-                  backgroundColor: widget.backgroundColor.withValues(alpha: 0.3),
+                  backgroundColor: widget.backgroundColor.withValues(
+                    alpha: 0.3,
+                  ),
                   progressColor: widget.progressColor,
                   strokeWidth: widget.strokeWidth,
                 ),
               ),
               Text(
                 '$_remainingSeconds',
-                style: widget.textStyle ??
+                style:
+                    widget.textStyle ??
                     TextStyle(
                       fontSize: widget.size * 0.35,
                       fontWeight: FontWeight.bold,
@@ -743,21 +758,17 @@ class _SlideFadeTransitionState extends State<SlideFadeTransition>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: widget.curve),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     _slideAnimation = Tween<Offset>(
       begin: widget.beginOffset,
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: widget.curve),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     Future.delayed(widget.delay, () {
       if (mounted) _controller.forward();
@@ -787,7 +798,7 @@ class _SlideFadeTransitionState extends State<SlideFadeTransition>
   }
 }
 
-/// Scale Bounce Transition  
+/// Scale Bounce Transition
 /// Wrapper widget for scale + bounce entrance animation
 class ScaleBounceTransition extends StatefulWidget {
   final Widget child;
@@ -815,14 +826,12 @@ class _ScaleBounceTransitionState extends State<ScaleBounceTransition>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
-    _scaleAnimation = Tween<double>(begin: widget.beginScale, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: widget.beginScale,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     Future.delayed(widget.delay, () {
       if (mounted) _controller.forward();

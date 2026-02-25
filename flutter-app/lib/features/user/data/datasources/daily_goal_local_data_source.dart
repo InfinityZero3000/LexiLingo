@@ -34,7 +34,7 @@ class DailyGoalLocalDataSourceImpl implements DailyGoalLocalDataSource {
   Future<DailyGoalModel?> getGoalByDate(String userId, DateTime date) async {
     final db = await databaseHelper.database;
     final dateStr = _formatDate(date);
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'daily_goals',
       where: 'userId = ? AND date = ?',
@@ -49,11 +49,14 @@ class DailyGoalLocalDataSourceImpl implements DailyGoalLocalDataSource {
   }
 
   @override
-  Future<List<DailyGoalModel>> getGoalHistory(String userId, {int days = 7}) async {
+  Future<List<DailyGoalModel>> getGoalHistory(
+    String userId, {
+    int days = 7,
+  }) async {
     final db = await databaseHelper.database;
     final endDate = DateTime.now();
     final startDate = endDate.subtract(Duration(days: days));
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'daily_goals',
       where: 'userId = ? AND date >= ? AND date <= ?',
@@ -84,7 +87,7 @@ class DailyGoalLocalDataSourceImpl implements DailyGoalLocalDataSource {
   }) async {
     // Get current goal or create new one
     final existing = await getTodayGoal(userId);
-    
+
     if (existing == null) {
       // Create new goal with default target
       final newGoal = DailyGoalModel(

@@ -9,7 +9,7 @@ import 'package:lexilingo_app/features/voice/domain/entities/transcription.dart'
 class SpeechRecognitionProvider extends ChangeNotifier {
   WebSpeechRecognition? _webSpeech;
   StreamSubscription? _resultSubscription;
-  
+
   SpeechState _state = SpeechState.idle;
   String _transcript = '';
   String _interimTranscript = '';
@@ -43,7 +43,8 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   /// Start listening with Web Speech API
   Future<void> startListening({String? language}) async {
     if (!kIsWeb) {
-      _errorMessage = 'Web Speech Recognition is only available on web platform';
+      _errorMessage =
+          'Web Speech Recognition is only available on web platform';
       _state = SpeechState.error;
       notifyListeners();
       return;
@@ -67,13 +68,13 @@ class SpeechRecognitionProvider extends ChangeNotifier {
     _webSpeech = WebSpeechRecognition();
 
     final lang = language ?? _language;
-    
+
     _state = SpeechState.listening;
     notifyListeners();
 
     try {
       final stream = _webSpeech!.startListening(language: lang);
-      
+
       _resultSubscription?.cancel();
       _resultSubscription = stream.listen(
         (result) {
@@ -117,7 +118,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   /// Get transcription result
   Transcription? getTranscription() {
     if (_transcript.isEmpty) return null;
-    
+
     return Transcription(
       text: _transcript,
       language: _language,
@@ -150,12 +151,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   }
 }
 
-enum SpeechState {
-  idle,
-  listening,
-  processing,
-  error,
-}
+enum SpeechState { idle, listening, processing, error }
 
 /// Supported languages for speech recognition
 class SpeechLanguages {

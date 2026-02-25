@@ -13,10 +13,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 class SessionCompleteScreen extends StatefulWidget {
   final ReviewSessionEntity session;
 
-  const SessionCompleteScreen({
-    super.key,
-    required this.session,
-  });
+  const SessionCompleteScreen({super.key, required this.session});
 
   @override
   State<SessionCompleteScreen> createState() => _SessionCompleteScreenState();
@@ -28,13 +25,15 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+
     // Start confetti animation
     Future.delayed(const Duration(milliseconds: 500), () {
       _confettiController.play();
     });
-    
+
     // Update streak after review session complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StreakProvider>().updateStreak();
@@ -67,7 +66,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
               ),
             ),
           ),
-          
+
           // Confetti widget (additional particles)
           Align(
             alignment: Alignment.topCenter,
@@ -116,10 +115,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Title
                   const Text(
                     'Session Complete!',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
 
@@ -128,10 +124,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Motivational message
                   Text(
                     _getMotivationalMessage(accuracy),
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.textGrey,
-                    ),
+                    style: TextStyle(fontSize: 18, color: AppColors.textGrey),
                     textAlign: TextAlign.center,
                   ),
 
@@ -153,7 +146,8 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                             icon: Icons.check_circle,
                             label: 'Correct Answers',
                             value: '${session.correctCount}',
-                            subtitle: '${accuracy.toStringAsFixed(1)}% accuracy',
+                            subtitle:
+                                '${accuracy.toStringAsFixed(1)}% accuracy',
                             color: AppColors.greenSuccess,
                           ),
                           const SizedBox(height: 16),
@@ -281,11 +275,7 @@ class _StatCard extends StatelessWidget {
               color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 28,
-            ),
+            child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -294,10 +284,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textGrey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 4),
                 Text(

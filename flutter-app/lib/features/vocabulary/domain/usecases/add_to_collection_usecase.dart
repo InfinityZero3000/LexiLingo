@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 
 /// UseCase: Add Vocabulary to Collection
 /// Adds a vocabulary word to user's personal collection
-class AddToCollectionUseCase 
+class AddToCollectionUseCase
     implements UseCase<UserVocabularyEntity, AddToCollectionParams> {
   final VocabularyRepository repository;
 

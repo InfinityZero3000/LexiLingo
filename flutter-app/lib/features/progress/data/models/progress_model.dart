@@ -161,7 +161,8 @@ class ProgressStatsModel extends ProgressStatsEntity {
   factory ProgressStatsModel.fromJson(Map<String, dynamic> json) {
     return ProgressStatsModel(
       summary: UserProgressSummaryModel.fromJson(json['summary'] ?? {}),
-      courseProgress: (json['course_progress'] as List<dynamic>?)
+      courseProgress:
+          (json['course_progress'] as List<dynamic>?)
               ?.map((cp) => CourseProgressDetailModel.fromJson(cp))
               .toList() ??
           [],
@@ -188,7 +189,8 @@ class CourseProgressWithUnitsModel extends CourseProgressWithUnits {
   factory CourseProgressWithUnitsModel.fromJson(Map<String, dynamic> json) {
     return CourseProgressWithUnitsModel(
       course: CourseProgressDetailModel.fromJson(json['course'] ?? {}),
-      unitsProgress: (json['units_progress'] as List<dynamic>?)
+      unitsProgress:
+          (json['units_progress'] as List<dynamic>?)
               ?.map((up) => UnitProgressModel.fromJson(up))
               .toList() ??
           [],

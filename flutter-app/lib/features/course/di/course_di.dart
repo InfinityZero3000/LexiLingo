@@ -15,7 +15,7 @@ import 'package:lexilingo_app/features/course/presentation/providers/course_prov
 
 /// Register Course Module
 /// Phase 2 implementation with backend API integration
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - Category caching for offline-first UX and reduced API calls
 void registerCourseModule({required bool skipDatabase}) {
@@ -23,7 +23,7 @@ void registerCourseModule({required bool skipDatabase}) {
   sl.registerLazySingleton<CourseBackendDataSource>(
     () => CourseBackendDataSourceImpl(apiClient: sl<ApiClient>()),
   );
-  
+
   // Local Data Source for caching
   sl.registerLazySingleton<CourseLocalDataSource>(
     () => CourseLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
@@ -57,4 +57,3 @@ void registerCourseModule({required bool skipDatabase}) {
     ),
   );
 }
-

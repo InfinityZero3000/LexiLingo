@@ -29,8 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final authProvider = context.read<AuthProvider>();
     if (authProvider.currentUser != null) {
       await context.read<SettingsProvider>().loadSettings(
-            authProvider.currentUser!.id,
-          );
+        authProvider.currentUser!.id,
+      );
     }
   }
 
@@ -67,7 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 12),
               _buildDailyGoalSelector(context, settings),
-              
+
               const SizedBox(height: 32),
 
               // Language Section
@@ -166,15 +166,15 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
             ),
           ],
         ),
@@ -183,7 +183,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// Daily Goal Selector - Task 4.5.3
-  Widget _buildDailyGoalSelector(BuildContext context, SettingsProvider settings) {
+  Widget _buildDailyGoalSelector(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -196,18 +199,17 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withValues(alpha: 0.7),
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    settings.currentGoalIcon,
-                    size: 32,
-                    color: Colors.white,
-                  ),
+                  Icon(settings.currentGoalIcon, size: 32, color: Colors.white),
                   const SizedBox(width: 12),
                   Column(
                     children: [
@@ -245,14 +247,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () => settings.updateDailyGoal(goal['xp'] as int),
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primary.withValues(alpha: 0.1)
                             : Colors.grey.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -261,7 +268,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           Icon(
                             goal['icon'] as IconData,
                             size: 24,
-                            color: isSelected ? AppColors.primary : Colors.grey[600],
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.grey[600],
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -272,7 +281,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                   goal['label'] as String,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: isSelected ? AppColors.primary : null,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : null,
                                   ),
                                 ),
                                 Text(
@@ -289,12 +300,17 @@ class _SettingsPageState extends State<SettingsPage> {
                             '${goal['xp']} XP',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? AppColors.primary : Colors.grey[700],
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey[700],
                             ),
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 8),
-                            const Icon(Icons.check_circle, color: AppColors.primary),
+                            const Icon(
+                              Icons.check_circle,
+                              color: AppColors.primary,
+                            ),
                           ],
                         ],
                       ),
@@ -310,7 +326,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// Language Selector - Task 4.5.2
-  Widget _buildLanguageSelector(BuildContext context, SettingsProvider settings) {
+  Widget _buildLanguageSelector(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -332,7 +351,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primary.withValues(alpha: 0.1)
@@ -344,18 +366,26 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
+                        Text(
+                          lang['flag']!,
+                          style: const TextStyle(fontSize: 24),
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           lang['name']!,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             color: isSelected ? AppColors.primary : null,
                           ),
                         ),
                         const Spacer(),
                         if (isSelected)
-                          const Icon(Icons.check_circle, color: AppColors.primary),
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                          ),
                       ],
                     ),
                   ),
@@ -368,7 +398,10 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildNotificationSettings(BuildContext context, SettingsProvider settings) {
+  Widget _buildNotificationSettings(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -383,7 +416,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Text('Daily Reminders'),
                 Switch(
                   value: settings.notificationEnabled,
-                  onChanged: (value) => settings.updateNotificationSettings(enabled: value),
+                  onChanged: (value) =>
+                      settings.updateNotificationSettings(enabled: value),
                   activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
                   thumbColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
@@ -403,11 +437,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     context: context,
                     initialTime: TimeOfDay(
                       hour: int.parse(settings.notificationTime.split(':')[0]),
-                      minute: int.parse(settings.notificationTime.split(':')[1]),
+                      minute: int.parse(
+                        settings.notificationTime.split(':')[1],
+                      ),
                     ),
                   );
                   if (time != null) {
-                    final formatted = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                    final formatted =
+                        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
                     settings.updateNotificationSettings(time: formatted);
                   }
                 },
@@ -494,9 +531,14 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () => settings.updateTheme(theme['code'] as String),
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                  color: isSelected
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : null,
                   borderRadius: BorderRadius.circular(12),
                   border: isSelected
                       ? Border.all(color: AppColors.primary, width: 2)
@@ -513,7 +555,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     Text(
                       theme['name'] as String,
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isSelected ? AppColors.primary : null,
                         fontSize: 12,
                       ),

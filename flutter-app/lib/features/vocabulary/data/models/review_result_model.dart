@@ -82,10 +82,7 @@ class ReviewSubmissionModel {
   final int quality; // 0-5
   final int? timeSpentMs; // Optional: time spent on card
 
-  const ReviewSubmissionModel({
-    required this.quality,
-    this.timeSpentMs,
-  });
+  const ReviewSubmissionModel({required this.quality, this.timeSpentMs});
 
   Map<String, dynamic> toJson() {
     return {

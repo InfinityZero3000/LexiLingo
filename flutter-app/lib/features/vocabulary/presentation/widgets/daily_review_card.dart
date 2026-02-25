@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
-import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart' as vocab_di;
+import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
+    as vocab_di;
 
 /// Daily Review Card Widget
 /// Shows due vocabulary count and starts review session
@@ -78,11 +79,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.style,
-              color: Colors.white,
-              size: 32,
-            ),
+            child: const Icon(Icons.style, color: Colors.white, size: 32),
           ),
 
           const SizedBox(width: 16),

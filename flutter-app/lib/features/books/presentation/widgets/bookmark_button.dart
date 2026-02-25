@@ -36,9 +36,10 @@ class _BookmarkButtonState extends State<BookmarkButton>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.3)
-        .chain(CurveTween(curve: Curves.easeOut))
-        .animate(_controller);
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.3,
+    ).chain(CurveTween(curve: Curves.easeOut)).animate(_controller);
   }
 
   @override
@@ -64,10 +65,8 @@ class _BookmarkButtonState extends State<BookmarkButton>
       child: IconButton(
         icon: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, anim) => ScaleTransition(
-            scale: anim,
-            child: child,
-          ),
+          transitionBuilder: (child, anim) =>
+              ScaleTransition(scale: anim, child: child),
           child: Icon(
             widget.isBookmarked
                 ? Icons.bookmark_rounded

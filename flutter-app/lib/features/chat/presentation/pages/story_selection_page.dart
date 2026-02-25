@@ -66,9 +66,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                   ),
 
                 // Difficulty filter
-                SliverToBoxAdapter(
-                  child: _buildDifficultyFilter(),
-                ),
+                SliverToBoxAdapter(child: _buildDifficultyFilter()),
 
                 // Stories grid
                 SliverPadding(
@@ -123,14 +121,16 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             onSelected: (_) => _filterByCategory(null),
           ),
           const SizedBox(width: 8),
-          ...categories.map((category) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(_capitalize(category)),
-                  selected: _selectedCategory == category,
-                  onSelected: (_) => _filterByCategory(category),
-                ),
-              )),
+          ...categories.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(_capitalize(category)),
+                selected: _selectedCategory == category,
+                onSelected: (_) => _filterByCategory(category),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -150,16 +150,18 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             onSelected: (_) => _filterByDifficulty(null),
           ),
           const SizedBox(width: 8),
-          ...DifficultyLevel.values.map((level) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(level.shortName),
-                  selected: _selectedDifficulty == level,
-                  onSelected: (_) => _filterByDifficulty(level),
-                  backgroundColor: _getDifficultyColor(level).withOpacity(0.2),
-                  selectedColor: _getDifficultyColor(level),
-                ),
-              )),
+          ...DifficultyLevel.values.map(
+            (level) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(level.shortName),
+                selected: _selectedDifficulty == level,
+                onSelected: (_) => _filterByDifficulty(level),
+                backgroundColor: _getDifficultyColor(level).withOpacity(0.2),
+                selectedColor: _getDifficultyColor(level),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -177,9 +179,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
               const SizedBox(height: 16),
               Text(
                 'No stories found',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 8),
               Text(
@@ -212,17 +214,17 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   void _filterByCategory(String? category) {
     setState(() => _selectedCategory = category);
     context.read<StoryProvider>().setFilter(
-          category: category,
-          difficultyLevel: _selectedDifficulty,
-        );
+      category: category,
+      difficultyLevel: _selectedDifficulty,
+    );
   }
 
   void _filterByDifficulty(DifficultyLevel? difficulty) {
     setState(() => _selectedDifficulty = difficulty);
     context.read<StoryProvider>().setFilter(
-          category: _selectedCategory,
-          difficultyLevel: difficulty,
-        );
+      category: _selectedCategory,
+      difficultyLevel: difficulty,
+    );
   }
 
   void _showFilterSheet() {
@@ -243,9 +245,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   void _openStory(StoryListItem story) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => TopicChatPage(story: story),
-      ),
+      MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
     );
   }
 
@@ -338,8 +338,8 @@ class _StoryCard extends StatelessWidget {
                     Text(
                       story.title.en,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -354,9 +354,8 @@ class _StoryCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${story.estimatedMinutes} min',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -379,7 +378,9 @@ class _StoryCard extends StatelessWidget {
           if (loadingProgress == null) return child;
           return Container(
             color: Colors.grey.shade200,
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           );
         },
         errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
@@ -528,10 +529,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Filter Stories',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Filter Stories', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 24),
           Text(
             'Difficulty Level',
@@ -546,11 +544,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                 selected: _difficulty == null,
                 onSelected: (_) => setState(() => _difficulty = null),
               ),
-              ...DifficultyLevel.values.map((level) => ChoiceChip(
-                    label: Text(level.shortName),
-                    selected: _difficulty == level,
-                    onSelected: (_) => setState(() => _difficulty = level),
-                  )),
+              ...DifficultyLevel.values.map(
+                (level) => ChoiceChip(
+                  label: Text(level.shortName),
+                  selected: _difficulty == level,
+                  onSelected: (_) => setState(() => _difficulty = level),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),

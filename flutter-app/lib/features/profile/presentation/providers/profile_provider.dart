@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/user/domain/usecases/get_user_stats_useca
 import 'package:lexilingo_app/features/user/domain/usecases/get_weekly_activity_usecase.dart';
 
 /// Provider for Profile page data management
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - gamification-achievement-badges: Display recent badges for 25-40% engagement boost
 class ProfileProvider with ChangeNotifier {
@@ -115,11 +115,7 @@ class ProfileProvider with ChangeNotifier {
 
   /// Load all profile data
   Future<void> loadProfileData() async {
-    await Future.wait([
-      loadStats(),
-      loadWeeklyActivity(),
-      loadRecentBadges(),
-    ]);
+    await Future.wait([loadStats(), loadWeeklyActivity(), loadRecentBadges()]);
   }
 
   /// Refresh all data

@@ -33,7 +33,7 @@ abstract class ProgressRepository {
   // ============================================================================
 
   /// Get weekly progress for home page chart
-  /// 
+  ///
   /// Returns 7-day activity breakdown with totals and streak info.
   /// Used for the week progress visualization component.
   Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress();

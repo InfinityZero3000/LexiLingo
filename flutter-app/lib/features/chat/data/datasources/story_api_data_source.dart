@@ -15,11 +15,9 @@ class StoryApiDataSource {
   final String baseUrl;
   final http.Client _client;
 
-  StoryApiDataSource({
-    String? baseUrl,
-    http.Client? client,
-  })  : baseUrl = baseUrl ?? AppConstants.aiServiceUrl,
-        _client = client ?? http.Client();
+  StoryApiDataSource({String? baseUrl, http.Client? client})
+    : baseUrl = baseUrl ?? AppConstants.aiServiceUrl,
+      _client = client ?? http.Client();
 
   /// Get all available stories
   Future<List<StoryListItem>> getStories({
@@ -35,9 +33,9 @@ class StoryApiDataSource {
       }
       if (limit != 20) queryParams['limit'] = limit.toString();
 
-      final uri = Uri.parse('$baseUrl/topics/stories').replace(
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      );
+      final uri = Uri.parse(
+        '$baseUrl/topics/stories',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       logDebug(_tag, 'getStories: $uri');
 
@@ -97,7 +95,9 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException('Failed to get categories: ${response.statusCode}');
+        throw ServerException(
+          'Failed to get categories: ${response.statusCode}',
+        );
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -135,7 +135,9 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException('Failed to start session: ${response.statusCode}');
+        throw ServerException(
+          'Failed to start session: ${response.statusCode}',
+        );
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -153,7 +155,9 @@ class StoryApiDataSource {
     required String message,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages');
+      final uri = Uri.parse(
+        '$baseUrl/topics/topic-sessions/$sessionId/messages',
+      );
       logDebug(_tag, 'sendTopicMessage: $uri');
 
       final body = {
@@ -206,7 +210,9 @@ class StoryApiDataSource {
   /// Get messages for a topic session
   Future<List<TopicChatMessage>> getTopicMessages(String sessionId) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages');
+      final uri = Uri.parse(
+        '$baseUrl/topics/topic-sessions/$sessionId/messages',
+      );
       logDebug(_tag, 'getTopicMessages: $uri');
 
       final response = await _client.get(
@@ -242,7 +248,9 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException('LLM health check failed: ${response.statusCode}');
+        throw ServerException(
+          'LLM health check failed: ${response.statusCode}',
+        );
       }
 
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -251,5 +259,4 @@ class StoryApiDataSource {
       rethrow;
     }
   }
-
 }

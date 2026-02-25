@@ -1,5 +1,5 @@
 /// Course Category Entity
-/// 
+///
 /// Represents a category for organizing courses (e.g., Grammar, Vocabulary, Business English)
 class CourseCategoryEntity {
   final String id;

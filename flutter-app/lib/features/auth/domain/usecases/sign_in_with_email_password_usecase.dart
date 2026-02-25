@@ -8,20 +8,19 @@ class SignInWithEmailPasswordParams {
   final String email;
   final String password;
 
-  SignInWithEmailPasswordParams({
-    required this.email,
-    required this.password,
-  });
+  SignInWithEmailPasswordParams({required this.email, required this.password});
 }
 
-class SignInWithEmailPasswordUseCase 
+class SignInWithEmailPasswordUseCase
     implements UseCase<UserEntity, SignInWithEmailPasswordParams> {
   final AuthRepository repository;
 
   SignInWithEmailPasswordUseCase(this.repository);
 
   @override
-  Future<Either<Failure, UserEntity>> call(SignInWithEmailPasswordParams params) async {
+  Future<Either<Failure, UserEntity>> call(
+    SignInWithEmailPasswordParams params,
+  ) async {
     return await repository.login(
       email: params.email,
       password: params.password,

@@ -6,20 +6,21 @@ class ShimmerContainer extends StatelessWidget {
   final Widget child;
   final Color? baseColor;
   final Color? highlightColor;
-  
+
   const ShimmerContainer({
     super.key,
     required this.child,
     this.baseColor,
     this.highlightColor,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
       baseColor: baseColor ?? (isDark ? Colors.grey[700]! : Colors.grey[300]!),
-      highlightColor: highlightColor ?? (isDark ? Colors.grey[600]! : Colors.grey[100]!),
+      highlightColor:
+          highlightColor ?? (isDark ? Colors.grey[600]! : Colors.grey[100]!),
       child: child,
     );
   }
@@ -30,14 +31,14 @@ class SkeletonBox extends StatelessWidget {
   final double? width;
   final double height;
   final double borderRadius;
-  
+
   const SkeletonBox({
     super.key,
     this.width,
     required this.height,
     this.borderRadius = 8,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -55,13 +56,9 @@ class SkeletonBox extends StatelessWidget {
 class SkeletonText extends StatelessWidget {
   final double? width;
   final double height;
-  
-  const SkeletonText({
-    super.key,
-    this.width,
-    this.height = 16,
-  });
-  
+
+  const SkeletonText({super.key, this.width, this.height = 16});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -78,12 +75,9 @@ class SkeletonText extends StatelessWidget {
 /// Skeleton for circular avatars
 class SkeletonCircle extends StatelessWidget {
   final double size;
-  
-  const SkeletonCircle({
-    super.key,
-    required this.size,
-  });
-  
+
+  const SkeletonCircle({super.key, required this.size});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -101,19 +95,16 @@ class SkeletonCircle extends StatelessWidget {
 class SkeletonCard extends StatelessWidget {
   final double? height;
   final EdgeInsets? margin;
-  
-  const SkeletonCard({
-    super.key,
-    this.height,
-    this.margin,
-  });
-  
+
+  const SkeletonCard({super.key, this.height, this.margin});
+
   @override
   Widget build(BuildContext context) {
     return ShimmerContainer(
       child: Container(
         height: height ?? 120,
-        margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin:
+            margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -130,7 +121,10 @@ class SkeletonCard extends StatelessWidget {
                 children: [
                   const SkeletonText(width: double.infinity, height: 18),
                   const SizedBox(height: 8),
-                  SkeletonText(width: MediaQuery.of(context).size.width * 0.4, height: 14),
+                  SkeletonText(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    height: 14,
+                  ),
                   const SizedBox(height: 12),
                   const SkeletonText(width: 100, height: 12),
                 ],
@@ -149,7 +143,7 @@ class SkeletonList extends StatelessWidget {
   final Widget Function(BuildContext, int)? itemBuilder;
   final ScrollPhysics? physics;
   final EdgeInsets? padding;
-  
+
   const SkeletonList({
     super.key,
     this.itemCount = 5,
@@ -157,7 +151,7 @@ class SkeletonList extends StatelessWidget {
     this.physics,
     this.padding,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -173,7 +167,7 @@ class SkeletonList extends StatelessWidget {
 /// Skeleton for vocabulary card items
 class SkeletonVocabCard extends StatelessWidget {
   const SkeletonVocabCard({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return ShimmerContainer(
@@ -192,7 +186,10 @@ class SkeletonVocabCard extends StatelessWidget {
                 children: [
                   const SkeletonText(width: 150, height: 20),
                   const SizedBox(height: 8),
-                  SkeletonText(width: MediaQuery.of(context).size.width * 0.5, height: 14),
+                  SkeletonText(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    height: 14,
+                  ),
                 ],
               ),
             ),
@@ -207,7 +204,7 @@ class SkeletonVocabCard extends StatelessWidget {
 /// Skeleton for home screen sections
 class SkeletonHomeSection extends StatelessWidget {
   const SkeletonHomeSection({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return ShimmerContainer(
@@ -245,7 +242,7 @@ class SkeletonHomeSection extends StatelessWidget {
 /// Skeleton for roadmap/progress items
 class SkeletonRoadmapNode extends StatelessWidget {
   const SkeletonRoadmapNode({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return ShimmerContainer(
@@ -261,7 +258,10 @@ class SkeletonRoadmapNode extends StatelessWidget {
                 children: [
                   const SkeletonText(width: 180, height: 18),
                   const SizedBox(height: 8),
-                  SkeletonText(width: MediaQuery.of(context).size.width * 0.4, height: 14),
+                  SkeletonText(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    height: 14,
+                  ),
                 ],
               ),
             ),
@@ -275,7 +275,7 @@ class SkeletonRoadmapNode extends StatelessWidget {
 /// Skeleton for progress stats
 class SkeletonProgressStats extends StatelessWidget {
   const SkeletonProgressStats({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return ShimmerContainer(
@@ -302,7 +302,11 @@ class SkeletonProgressStats extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const SkeletonBox(width: double.infinity, height: 8, borderRadius: 4),
+            const SkeletonBox(
+              width: double.infinity,
+              height: 8,
+              borderRadius: 4,
+            ),
           ],
         ),
       ),

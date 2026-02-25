@@ -53,7 +53,9 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Comprehension Quiz'),
         leading: IconButton(
@@ -77,12 +79,19 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.quiz_outlined,
-                        size: 64, color: Colors.grey.shade400),
+                    Icon(
+                      Icons.quiz_outlined,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Quiz not available',
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 16)),
+                    Text(
+                      'Quiz not available',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 16,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -103,8 +112,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   //  Quiz Questions View
   // ──────────────────────────────────────
 
-  Widget _buildQuizView(
-      NewsProvider provider, Color cefrColor, bool isDark) {
+  Widget _buildQuizView(NewsProvider provider, Color cefrColor, bool isDark) {
     final quiz = provider.currentQuiz!;
 
     return Column(
@@ -165,11 +173,14 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   ? () {
                       provider.submitQuiz();
                       // Award XP via the shared XP endpoint (skill: progress-xp-system)
-                      sl<GamesRepository>().awardXP(
-                        source: 'news',
-                        baseXp: quiz.xpReward,
-                        sourceId: widget.article.id,
-                      ).then((_) {}).catchError((_) {});
+                      sl<GamesRepository>()
+                          .awardXP(
+                            source: 'news',
+                            baseXp: quiz.xpReward,
+                            sourceId: widget.article.id,
+                          )
+                          .then((_) {})
+                          .catchError((_) {});
                     }
                   : null,
               icon: const Icon(Icons.check_circle_rounded, size: 20),
@@ -182,7 +193,9 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 textStyle: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -221,8 +234,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: _questionTypeColor(question.type)
-                  .withValues(alpha: 0.1),
+              color: _questionTypeColor(question.type).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -265,15 +277,15 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     color: isSelected
                         ? cefrColor.withValues(alpha: 0.08)
                         : (isDark
-                            ? Colors.white.withValues(alpha: 0.03)
-                            : Colors.grey.shade50),
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.grey.shade50),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
                           ? cefrColor
                           : (isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.grey.shade200),
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200),
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -287,8 +299,8 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                           color: isSelected
                               ? cefrColor
                               : (isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : Colors.grey.shade100),
+                                    ? Colors.white.withValues(alpha: 0.06)
+                                    : Colors.grey.shade100),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -298,8 +310,8 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                               color: isSelected
                                   ? Colors.white
                                   : (isDark
-                                      ? Colors.white54
-                                      : Colors.grey.shade600),
+                                        ? Colors.white54
+                                        : Colors.grey.shade600),
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -334,7 +346,10 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   // ──────────────────────────────────────
 
   Widget _buildResultsView(
-      NewsProvider provider, Color cefrColor, bool isDark) {
+    NewsProvider provider,
+    Color cefrColor,
+    bool isDark,
+  ) {
     final score = provider.quizScore;
     final total = provider.quizTotal;
     final percentage = total > 0 ? (score / total * 100).round() : 0;
@@ -390,9 +405,9 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           // Result message
           Text(
             _resultMessage(percentage),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -559,22 +574,33 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
 
   Color _cefrColor(String level) {
     switch (level) {
-      case 'A1': return const Color(0xFF4CAF50);
-      case 'A2': return const Color(0xFF8BC34A);
-      case 'B1': return const Color(0xFFFFC107);
-      case 'B2': return const Color(0xFFFF9800);
-      case 'C1': return const Color(0xFFFF5722);
-      case 'C2': return const Color(0xFF9C27B0);
-      default: return AppColors.primary;
+      case 'A1':
+        return const Color(0xFF4CAF50);
+      case 'A2':
+        return const Color(0xFF8BC34A);
+      case 'B1':
+        return const Color(0xFFFFC107);
+      case 'B2':
+        return const Color(0xFFFF9800);
+      case 'C1':
+        return const Color(0xFFFF5722);
+      case 'C2':
+        return const Color(0xFF9C27B0);
+      default:
+        return AppColors.primary;
     }
   }
 
   Color _questionTypeColor(String type) {
     switch (type) {
-      case 'comprehension': return const Color(0xFF137FEC);
-      case 'vocabulary':    return const Color(0xFF9C27B0);
-      case 'grammar':       return const Color(0xFFFF9800);
-      default:              return AppColors.primary;
+      case 'comprehension':
+        return const Color(0xFF137FEC);
+      case 'vocabulary':
+        return const Color(0xFF9C27B0);
+      case 'grammar':
+        return const Color(0xFFFF9800);
+      default:
+        return AppColors.primary;
     }
   }
 
@@ -586,9 +612,12 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   }
 
   String _resultSubMessage(int percentage) {
-    if (percentage >= 80) return 'You have a great understanding of this article.';
-    if (percentage >= 60) return 'You\'re on the right track. Review the highlighted words.';
-    if (percentage >= 40) return 'Try re-reading the article and focusing on key details.';
+    if (percentage >= 80)
+      return 'You have a great understanding of this article.';
+    if (percentage >= 60)
+      return 'You\'re on the right track. Review the highlighted words.';
+    if (percentage >= 40)
+      return 'Try re-reading the article and focusing on key details.';
     return 'Re-read the article carefully before trying again.';
   }
 }

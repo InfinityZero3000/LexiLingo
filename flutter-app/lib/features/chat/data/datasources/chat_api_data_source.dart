@@ -14,7 +14,10 @@ class ChatApiDataSource {
 
   ChatApiDataSource({required this.apiClient});
 
-  Future<ChatSessionModel> createSession({required String userId, String? title}) async {
+  Future<ChatSessionModel> createSession({
+    required String userId,
+    String? title,
+  }) async {
     final payload = {
       'user_id': userId,
       if (title != null && title.isNotEmpty) 'title': title,
@@ -30,7 +33,9 @@ class ChatApiDataSource {
     final json = await apiClient.get('/chat/sessions/user/$userId');
     final sessions = (json['data'] ?? json['sessions'] ?? json) as dynamic;
     if (sessions is List) {
-      return sessions.map((e) => _mapSession(Map<String, dynamic>.from(e))).toList();
+      return sessions
+          .map((e) => _mapSession(Map<String, dynamic>.from(e)))
+          .toList();
     }
     throw ServerException('Unexpected sessions response');
   }
@@ -44,7 +49,9 @@ class ChatApiDataSource {
     final json = await apiClient.get('/chat/sessions/$sessionId/messages');
     final messages = (json['data'] ?? json['messages'] ?? json) as dynamic;
     if (messages is List) {
-      return messages.map((e) => _mapMessage(Map<String, dynamic>.from(e))).toList();
+      return messages
+          .map((e) => _mapMessage(Map<String, dynamic>.from(e)))
+          .toList();
     }
     throw ServerException('Unexpected messages response');
   }
@@ -71,7 +78,11 @@ class ChatApiDataSource {
     );
     // Backend may return {data: {ai_response: '...'}} or {ai_response: '...'}
     final data = json['data'] ?? json;
-    final response = data['ai_response'] ?? data['response'] ?? data['message'] ?? data['reply'];
+    final response =
+        data['ai_response'] ??
+        data['response'] ??
+        data['message'] ??
+        data['reply'];
     if (response is String && response.isNotEmpty) {
       return response;
     }
@@ -80,32 +91,46 @@ class ChatApiDataSource {
 
   ChatSessionModel _mapSession(Map<String, dynamic> json) {
     // Accept both snake_case and camelCase, including session_id from AI service
-    final id = json['id']?.toString() ?? 
-        json['session_id']?.toString() ?? 
-        json['sessionId']?.toString() ?? 
-        json['_id']?.toString() ?? '';
-    logDebug(_tag, '_mapSession: json keys=${json.keys.toList()}, extracted id=$id');
+    final id =
+        json['id']?.toString() ??
+        json['session_id']?.toString() ??
+        json['sessionId']?.toString() ??
+        json['_id']?.toString() ??
+        '';
+    logDebug(
+      _tag,
+      '_mapSession: json keys=${json.keys.toList()}, extracted id=$id',
+    );
     return ChatSessionModel(
       id: id,
       userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Chat Session',
       createdAt: _parseDate(json['created_at'] ?? json['createdAt']),
-      lastMessageAt: _tryParseDate(json['last_message_at'] ?? json['lastMessageAt'] ?? json['last_activity']),
+      lastMessageAt: _tryParseDate(
+        json['last_message_at'] ??
+            json['lastMessageAt'] ??
+            json['last_activity'],
+      ),
       messages: null,
     );
   }
 
   ChatMessageModel _mapMessage(Map<String, dynamic> json) {
-    final roleRaw = (json['role'] ?? json['sender'] ?? 'ai').toString().toLowerCase();
+    final roleRaw = (json['role'] ?? json['sender'] ?? 'ai')
+        .toString()
+        .toLowerCase();
     final role = roleRaw == 'user' ? MessageRole.user : MessageRole.ai;
     final statusRaw = (json['status'] ?? 'sent').toString();
     final status = _safeStatus(statusRaw);
     return ChatMessageModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
-      sessionId: json['session_id']?.toString() ?? json['sessionId']?.toString() ?? '',
+      sessionId:
+          json['session_id']?.toString() ?? json['sessionId']?.toString() ?? '',
       content: json['content']?.toString() ?? json['message']?.toString() ?? '',
       role: role,
-      timestamp: _parseDate(json['timestamp'] ?? json['created_at'] ?? json['createdAt']),
+      timestamp: _parseDate(
+        json['timestamp'] ?? json['created_at'] ?? json['createdAt'],
+      ),
       status: status,
       error: json['error']?.toString(),
     );

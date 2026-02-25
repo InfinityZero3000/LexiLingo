@@ -26,7 +26,9 @@ class NetworkInfoImpl implements NetworkInfo {
 
     for (final host in probeHosts) {
       try {
-        final lookup = await InternetAddress.lookup(host).timeout(dnsCheckTimeout);
+        final lookup = await InternetAddress.lookup(
+          host,
+        ).timeout(dnsCheckTimeout);
         if (lookup.isNotEmpty) return true;
       } catch (_) {
         // try next host

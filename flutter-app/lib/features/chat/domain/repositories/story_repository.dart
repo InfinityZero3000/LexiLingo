@@ -38,7 +38,9 @@ abstract class StoryRepository {
   Future<Either<Failure, TopicSession>> getTopicSession(String sessionId);
 
   /// Get messages for a topic session
-  Future<Either<Failure, List<TopicChatMessage>>> getTopicMessages(String sessionId);
+  Future<Either<Failure, List<TopicChatMessage>>> getTopicMessages(
+    String sessionId,
+  );
 
   /// Check LLM health status
   Future<Either<Failure, Map<String, dynamic>>> checkLlmHealth();

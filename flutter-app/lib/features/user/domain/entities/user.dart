@@ -48,7 +48,8 @@ class User {
       totalXP: totalXP ?? this.totalXP,
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
-      totalLessonsCompleted: totalLessonsCompleted ?? this.totalLessonsCompleted,
+      totalLessonsCompleted:
+          totalLessonsCompleted ?? this.totalLessonsCompleted,
       totalWordsLearned: totalWordsLearned ?? this.totalWordsLearned,
     );
   }

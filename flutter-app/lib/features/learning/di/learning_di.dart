@@ -19,7 +19,9 @@ void registerLearningModule() {
 
   // Repositories
   sl.registerLazySingleton<LearningRepository>(
-    () => LearningRepositoryImpl(remoteDataSource: sl<LearningRemoteDataSource>()),
+    () => LearningRepositoryImpl(
+      remoteDataSource: sl<LearningRemoteDataSource>(),
+    ),
   );
 
   // Use Cases
@@ -50,4 +52,3 @@ void registerLearningModule() {
     ),
   );
 }
-

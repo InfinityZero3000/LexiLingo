@@ -66,9 +66,10 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       pathParams.add('offset=$offset');
       if (courseId != null) pathParams.add('course_id=$courseId');
       if (lessonId != null) pathParams.add('lesson_id=$lessonId');
-      if (difficultyLevel != null) pathParams.add('difficulty_level=$difficultyLevel');
+      if (difficultyLevel != null)
+        pathParams.add('difficulty_level=$difficultyLevel');
       if (search != null) pathParams.add('search=$search');
-      
+
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
       final response = await apiClient.get('/vocabulary/items$queryString');
 
@@ -104,9 +105,11 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       pathParams.add('limit=$limit');
       pathParams.add('offset=$offset');
       if (status != null) pathParams.add('status=$status');
-      
+
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
-      final response = await apiClient.get('/vocabulary/collection$queryString');
+      final response = await apiClient.get(
+        '/vocabulary/collection$queryString',
+      );
 
       // Response format: {"items": [...], "total": 100, "has_more": true}
       final List<dynamic> items = response['items'] as List<dynamic>;
@@ -144,7 +147,9 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       // Response: {"due_items": [...], "total_due": 10}
       final List<dynamic> dueItems = response['due_items'] as List<dynamic>;
 
-      return dueItems.map((json) => UserVocabularyModel.fromJson(json)).toList();
+      return dueItems
+          .map((json) => UserVocabularyModel.fromJson(json))
+          .toList();
     } on ServerException {
       rethrow;
     } catch (e) {

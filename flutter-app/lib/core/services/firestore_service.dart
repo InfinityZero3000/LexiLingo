@@ -8,9 +8,9 @@ import 'package:flutter/foundation.dart' show debugPrint;
 class FirestoreService {
   static FirestoreService? _instance;
   static bool _initialized = false;
-  
+
   late final FirebaseFirestore _firestore;
-  
+
   FirestoreService._init() {
     try {
       _firestore = FirebaseFirestore.instance;
@@ -21,19 +21,20 @@ class FirestoreService {
       _initialized = false;
     }
   }
-  
+
   static FirestoreService get instance {
     _instance ??= FirestoreService._init();
     return _instance!;
   }
-  
+
   static bool get isInitialized => _initialized;
-  
+
   /// Check if Firebase/Firestore is available for use
   bool get isAvailable => _initialized && Firebase.apps.isNotEmpty;
 
   // Get current user ID from Firebase Auth
-  String? get currentUserId => firebase_auth.FirebaseAuth.instance.currentUser?.uid;
+  String? get currentUserId =>
+      firebase_auth.FirebaseAuth.instance.currentUser?.uid;
 
   // Check Firestore connection by attempting a simple read
   Future<bool> checkConnection() async {
@@ -53,15 +54,15 @@ class FirestoreService {
   // ========== Collection References ==========
 
   /// Users collection
-  CollectionReference<Map<String, dynamic>> get usersCollection => 
+  CollectionReference<Map<String, dynamic>> get usersCollection =>
       _firestore.collection('users');
-  
+
   /// Courses collection
-  CollectionReference<Map<String, dynamic>> get coursesCollection => 
+  CollectionReference<Map<String, dynamic>> get coursesCollection =>
       _firestore.collection('courses');
-  
+
   /// Leaderboard collection
-  CollectionReference<Map<String, dynamic>> get leaderboardCollection => 
+  CollectionReference<Map<String, dynamic>> get leaderboardCollection =>
       _firestore.collection('leaderboard');
 
   // ========== User Document & Subcollections ==========
@@ -72,23 +73,29 @@ class FirestoreService {
     if (uid == null) return null;
     return usersCollection.doc(uid);
   }
-  
+
   /// Get user chat sessions subcollection
-  CollectionReference<Map<String, dynamic>>? getUserChatSessions(String? userId) {
+  CollectionReference<Map<String, dynamic>>? getUserChatSessions(
+    String? userId,
+  ) {
     final userDoc = getUserDocument(userId);
     if (userDoc == null) return null;
     return userDoc.collection('chatSessions');
   }
-  
+
   /// Get user enrollments subcollection
-  CollectionReference<Map<String, dynamic>>? getUserEnrollments(String? userId) {
+  CollectionReference<Map<String, dynamic>>? getUserEnrollments(
+    String? userId,
+  ) {
     final userDoc = getUserDocument(userId);
     if (userDoc == null) return null;
     return userDoc.collection('enrollments');
   }
-  
+
   /// Get user achievements subcollection
-  CollectionReference<Map<String, dynamic>>? getUserAchievements(String? userId) {
+  CollectionReference<Map<String, dynamic>>? getUserAchievements(
+    String? userId,
+  ) {
     final userDoc = getUserDocument(userId);
     if (userDoc == null) return null;
     return userDoc.collection('achievements');
@@ -98,7 +105,7 @@ class FirestoreService {
 
   /// Create a new write batch
   WriteBatch batch() => _firestore.batch();
-  
+
   /// Run a transaction
   Future<T> runTransaction<T>(
     TransactionHandler<T> transactionHandler, {

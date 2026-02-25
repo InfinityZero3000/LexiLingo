@@ -79,11 +79,7 @@ class _SocialScreenState extends State<SocialScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildFeedTab(),
-          _buildFollowersTab(),
-          _buildFollowingTab(),
-        ],
+        children: [_buildFeedTab(), _buildFollowersTab(), _buildFollowingTab()],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showSearchSheet,
@@ -116,8 +112,8 @@ class _SocialScreenState extends State<SocialScreen>
           child: ListView.builder(
             controller: _feedScrollController,
             padding: const EdgeInsets.only(bottom: 80),
-            itemCount: provider.activityFeed.length +
-                (provider.isLoadingFeed ? 1 : 0),
+            itemCount:
+                provider.activityFeed.length + (provider.isLoadingFeed ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == provider.activityFeed.length) {
                 return const Center(
@@ -142,18 +138,11 @@ class _SocialScreenState extends State<SocialScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.people_outline,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           const Text(
             'No activity yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -273,7 +262,7 @@ class _SocialScreenState extends State<SocialScreen>
 
   Future<void> _toggleFollow(UserSocialProfileEntity user) async {
     final provider = context.read<SocialProvider>();
-    
+
     if (user.isFollowing) {
       await provider.unfollowUser(user.userId);
     } else {
@@ -286,9 +275,8 @@ class _SocialScreenState extends State<SocialScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _SearchUsersSheet(
-        onFollow: (user) => _toggleFollow(user),
-      ),
+      builder: (context) =>
+          _SearchUsersSheet(onFollow: (user) => _toggleFollow(user)),
     );
   }
 }
@@ -318,7 +306,9 @@ class _ActivityFeedCard extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.primary.withValues(alpha: 0.1),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+              ),
             ),
             child: activity.avatarUrl != null && activity.avatarUrl!.isNotEmpty
                 ? ClipOval(
@@ -346,7 +336,9 @@ class _ActivityFeedCard extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: activity.displayName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const TextSpan(text: ' '),
                             TextSpan(
@@ -370,10 +362,7 @@ class _ActivityFeedCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       _formatTime(activity.createdAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ],
                 ),
@@ -503,10 +492,7 @@ class _UserProfileCard extends StatelessWidget {
                 ),
                 Text(
                   '@${user.username}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -520,19 +506,13 @@ class _UserProfileCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         '${user.currentStreak}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 8),
                     ],
                     Text(
                       '${user.xp} XP',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -546,9 +526,7 @@ class _UserProfileCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: user.isFollowing
-                    ? Colors.grey[200]
-                    : AppColors.primary,
+                color: user.isFollowing ? Colors.grey[200] : AppColors.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -631,10 +609,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
               children: [
                 const Text(
                   'Find Friends',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 // Search field
@@ -696,7 +671,11 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.person_off, size: 48, color: Colors.grey[400]),
+                        Icon(
+                          Icons.person_off,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No users found',

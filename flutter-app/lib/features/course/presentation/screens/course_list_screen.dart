@@ -22,7 +22,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    
+
     // Load categories and courses
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<CourseProvider>();
@@ -83,11 +83,18 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                      colors: [
+                                        Color(0xFF6366F1),
+                                        Color(0xFF8B5CF6),
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(Icons.explore, color: Colors.white, size: 24),
+                                  child: const Icon(
+                                    Icons.explore,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Column(
@@ -95,15 +102,19 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   children: [
                                     Text(
                                       'Discover Courses',
-                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     Text(
                                       '${provider.courses.length} courses available',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[600],
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: Colors.grey[600]),
                                     ),
                                   ],
                                 ),
@@ -123,7 +134,10 @@ class _CourseListScreenState extends State<CourseListScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.tune_rounded, color: Color(0xFF6366F1)),
+                      icon: const Icon(
+                        Icons.tune_rounded,
+                        color: Color(0xFF6366F1),
+                      ),
                       onPressed: () => _showFilterSheet(context),
                       tooltip: 'Filter',
                     ),
@@ -132,13 +146,14 @@ class _CourseListScreenState extends State<CourseListScreen> {
               ),
 
               // Content
-              if ((provider.isLoadingCourses || provider.isLoadingCategories) && 
-                  provider.courses.isEmpty && 
+              if ((provider.isLoadingCourses || provider.isLoadingCategories) &&
+                  provider.courses.isEmpty &&
                   provider.categories.isEmpty)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (provider.coursesError != null && provider.courses.isEmpty)
+              else if (provider.coursesError != null &&
+                  provider.courses.isEmpty)
                 SliverFillRemaining(
                   child: ErrorDisplayWidget.fromMessage(
                     message: provider.coursesError!,
@@ -169,67 +184,68 @@ class _CourseListScreenState extends State<CourseListScreen> {
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
     final categories = provider.categories;
     final shouldUseCategories = categories.isNotEmpty;
-    final sections = shouldUseCategories 
-        ? categories 
+    final sections = shouldUseCategories
+        ? categories
         : provider.coursesByCategory.keys.toList();
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index == sections.length) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ),
-            );
+      delegate: SliverChildBuilderDelegate((context, index) {
+        if (index == sections.length) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (shouldUseCategories) {
+          final category = categories[index];
+          final categoryCourses = provider.courses
+              .where(
+                (c) =>
+                    c.tags.contains(category.slug) ||
+                    c.tags.contains(category.name.toLowerCase()) ||
+                    // fallback: if course has no tags, don't show it here unless category is general
+                    (c.tags.isEmpty && category.slug == 'general'),
+              )
+              .toList();
+
+          if (categoryCourses.isEmpty) {
+            return const SizedBox.shrink();
           }
 
-          if (shouldUseCategories) {
-            final category = categories[index];
-            final categoryCourses = provider.courses
-                .where((c) => 
-                  c.tags.contains(category.slug) || 
-                  c.tags.contains(category.name.toLowerCase()) ||
-                  // fallback: if course has no tags, don't show it here unless category is general
-                  (c.tags.isEmpty && category.slug == 'general'))
-                .toList();
-            
-            if (categoryCourses.isEmpty) {
-              return const SizedBox.shrink();
-            }
+          return _CategorySection(
+            categoryId: category.id,
+            title: category.name,
+            description:
+                '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
+            icon: _parseCategoryIcon(category.icon ?? 'book'),
+            color: _parseCategoryColor(category.color),
+            courses: categoryCourses,
+            onCourseTap: (courseId) =>
+                _navigateToCourseDetail(context, courseId),
+            onSeeAll: () => _navigateToCategoryDetail(context, category.id),
+          );
+        } else {
+          final groupedCourses = provider.coursesByCategory;
+          final levelKey = sections[index] as String;
+          final courses = groupedCourses[levelKey]!;
 
-            return _CategorySection(
-              categoryId: category.id,
-              title: category.name,
-              description: '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
-              icon: _parseCategoryIcon(category.icon ?? 'book'),
-              color: _parseCategoryColor(category.color),
-              courses: categoryCourses,
-              onCourseTap: (courseId) =>
-                  _navigateToCourseDetail(context, courseId),
-              onSeeAll: () => _navigateToCategoryDetail(context, category.id),
-            );
-          } else {
-            final groupedCourses = provider.coursesByCategory;
-            final levelKey = sections[index] as String;
-            final courses = groupedCourses[levelKey]!;
-
-            return _CategorySection(
-              categoryId: levelKey,
-              title: levelKey,
-              description: '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
-              icon: _getLevelIcon(levelKey),
-              color: _getLevelColor(levelKey),
-              courses: courses,
-              onCourseTap: (courseId) =>
-                  _navigateToCourseDetail(context, courseId),
-              onSeeAll: null,
-            );
-          }
-        },
-        childCount: sections.length + (provider.isLoadingCourses ? 1 : 0),
-      ),
+          return _CategorySection(
+            categoryId: levelKey,
+            title: levelKey,
+            description:
+                '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+            icon: _getLevelIcon(levelKey),
+            color: _getLevelColor(levelKey),
+            courses: courses,
+            onCourseTap: (courseId) =>
+                _navigateToCourseDetail(context, courseId),
+            onSeeAll: null,
+          );
+        }
+      }, childCount: sections.length + (provider.isLoadingCourses ? 1 : 0)),
     );
   }
 
@@ -365,11 +381,7 @@ class _CategorySection extends StatelessWidget {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 20,
-                ),
+                child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -379,23 +391,20 @@ class _CategorySection extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               if (onSeeAll != null)
-                TextButton(
-                  onPressed: onSeeAll,
-                  child: const Text('See All'),
-                ),
+                TextButton(onPressed: onSeeAll, child: const Text('See All')),
             ],
           ),
         ),
@@ -443,16 +452,14 @@ class _HorizontalCourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       width: 200,
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Card(
         elevation: 4,
         shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
@@ -463,8 +470,9 @@ class _HorizontalCourseCard extends StatelessWidget {
               Hero(
                 tag: 'discovery-course-image-${course.id}',
                 child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: AspectRatio(
                     aspectRatio: 16 / 10,
                     child: Stack(
@@ -480,7 +488,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 },
                               )
                             : _buildHeroPlaceholder(context),
-                        
+
                         // Gradient overlay for better text visibility
                         Container(
                           decoration: BoxDecoration(
@@ -494,7 +502,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        
+
                         // Level badge
                         Positioned(
                           top: 8,
@@ -505,7 +513,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: _getLevelColor(course.level).withValues(alpha: 0.9),
+                              color: _getLevelColor(
+                                course.level,
+                              ).withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
@@ -525,7 +535,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        
+
                         // XP badge (bottom right)
                         Positioned(
                           bottom: 8,
@@ -597,17 +607,15 @@ class _HorizontalCourseCard extends StatelessWidget {
                       // Language chip with flag
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer
+                              Theme.of(context).colorScheme.primaryContainer
                                   .withValues(alpha: 0.7),
-                              Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer
+                              Theme.of(context).colorScheme.primaryContainer
                                   .withValues(alpha: 0.5),
                             ],
                           ),
@@ -617,9 +625,14 @@ class _HorizontalCourseCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -637,9 +650,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                               ),
                             ),
                           ],
@@ -674,8 +687,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: (course.userProgress ?? 0) / 100,
-                            backgroundColor: isDark 
-                                ? Colors.grey[700] 
+                            backgroundColor: isDark
+                                ? Colors.grey[700]
                                 : Colors.grey[200],
                             minHeight: 4,
                             valueColor: AlwaysStoppedAnimation<Color>(
@@ -691,7 +704,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                             gradient: LinearGradient(
                               colors: [
                                 Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.8),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(6),
@@ -733,7 +748,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     // Generate a unique gradient based on course ID
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -909,11 +924,7 @@ class _HorizontalCourseCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.trending_up,
-            size: 12,
-            color: _getProgressColor(progress),
-          ),
+          Icon(Icons.trending_up, size: 12, color: _getProgressColor(progress)),
           const SizedBox(width: 4),
           Text(
             '${progress.toStringAsFixed(0)}%',
@@ -959,7 +970,7 @@ class _FilterSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Header
           Row(
             children: [
@@ -971,7 +982,11 @@ class _FilterSheet extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -979,7 +994,8 @@ class _FilterSheet extends StatelessWidget {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              if (provider.selectedLanguage != null || provider.selectedLevel != null)
+              if (provider.selectedLanguage != null ||
+                  provider.selectedLevel != null)
                 TextButton.icon(
                   onPressed: () {
                     provider.clearFilters();
@@ -987,14 +1003,12 @@ class _FilterSheet extends StatelessWidget {
                   },
                   icon: const Icon(Icons.clear_all, size: 18),
                   label: const Text('Clear'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red[400],
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red[400]),
                 ),
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Language Filter
           Row(
             children: [
@@ -1007,7 +1021,10 @@ class _FilterSheet extends StatelessWidget {
                 child: const Icon(Icons.language, size: 16, color: Colors.blue),
               ),
               const SizedBox(width: 8),
-              const Text('Language', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Text(
+                'Language',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -1030,7 +1047,11 @@ class _FilterSheet extends StatelessWidget {
                 label: 'English',
                 isSelected: provider.selectedLanguage == 'English',
                 color: Colors.blue,
-                iconWidget: _buildLanguageIcon('EN', Colors.blue, provider.selectedLanguage == 'English'),
+                iconWidget: _buildLanguageIcon(
+                  'EN',
+                  Colors.blue,
+                  provider.selectedLanguage == 'English',
+                ),
                 onTap: () {
                   provider.filterByLanguage('English');
                   Navigator.pop(context);
@@ -1041,7 +1062,11 @@ class _FilterSheet extends StatelessWidget {
                 label: 'Spanish',
                 isSelected: provider.selectedLanguage == 'Spanish',
                 color: Colors.orange,
-                iconWidget: _buildLanguageIcon('ES', Colors.orange, provider.selectedLanguage == 'Spanish'),
+                iconWidget: _buildLanguageIcon(
+                  'ES',
+                  Colors.orange,
+                  provider.selectedLanguage == 'Spanish',
+                ),
                 onTap: () {
                   provider.filterByLanguage('Spanish');
                   Navigator.pop(context);
@@ -1052,7 +1077,11 @@ class _FilterSheet extends StatelessWidget {
                 label: 'Vietnamese',
                 isSelected: provider.selectedLanguage == 'Vietnamese',
                 color: Colors.red,
-                iconWidget: _buildLanguageIcon('VI', Colors.red, provider.selectedLanguage == 'Vietnamese'),
+                iconWidget: _buildLanguageIcon(
+                  'VI',
+                  Colors.red,
+                  provider.selectedLanguage == 'Vietnamese',
+                ),
                 onTap: () {
                   provider.filterByLanguage('Vietnamese');
                   Navigator.pop(context);
@@ -1060,9 +1089,9 @@ class _FilterSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Level Filter
           Row(
             children: [
@@ -1072,10 +1101,17 @@ class _FilterSheet extends StatelessWidget {
                   color: Colors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.signal_cellular_alt, size: 16, color: Colors.purple),
+                child: const Icon(
+                  Icons.signal_cellular_alt,
+                  size: 16,
+                  color: Colors.purple,
+                ),
               ),
               const SizedBox(width: 8),
-              const Text('Level', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Text(
+                'Level',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -1125,7 +1161,7 @@ class _FilterSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
         ],
       ),
@@ -1168,10 +1204,7 @@ class _FilterSheet extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (iconWidget != null) ...[
-              iconWidget,
-              const SizedBox(width: 6),
-            ],
+            if (iconWidget != null) ...[iconWidget, const SizedBox(width: 6)],
             Text(
               label,
               style: TextStyle(
@@ -1194,7 +1227,9 @@ class _FilterSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white.withValues(alpha: 0.2) : color.withValues(alpha: 0.2),
+        color: isSelected
+            ? Colors.white.withValues(alpha: 0.2)
+            : color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

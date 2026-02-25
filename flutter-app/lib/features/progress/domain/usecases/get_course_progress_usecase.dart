@@ -6,7 +6,8 @@ import 'package:lexilingo_app/features/progress/domain/repositories/progress_rep
 
 /// Get Course Progress UseCase
 /// Retrieves detailed progress for a specific course
-class GetCourseProgressUseCase implements UseCase<CourseProgressWithUnits, String> {
+class GetCourseProgressUseCase
+    implements UseCase<CourseProgressWithUnits, String> {
   final ProgressRepository repository;
 
   GetCourseProgressUseCase(this.repository);

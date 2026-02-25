@@ -12,7 +12,7 @@ class BookProvider extends ChangeNotifier {
   final BookRepository _repository;
 
   BookProvider({BookRepository? repository})
-      : _repository = repository ?? BookRepository();
+    : _repository = repository ?? BookRepository();
 
   // ── State ──────────────────────────────────────────────────
 
@@ -21,8 +21,8 @@ class BookProvider extends ChangeNotifier {
   String? _selectedCefrLevel;
 
   Book? _currentBook;
-  String? _bookText;         // Loaded plain-text content
-  List<String> _pages = [];  // Text split into pages
+  String? _bookText; // Loaded plain-text content
+  List<String> _pages = []; // Text split into pages
   int _currentPage = 0;
 
   List<Bookmark> _bookmarks = [];
@@ -277,12 +277,14 @@ class BookProvider extends ChangeNotifier {
     if (isMarked) {
       await _repository.removeBookmark(book.id, _currentPage);
     } else {
-      await _repository.addBookmark(Bookmark(
-        id: '${book.id}_page_$_currentPage',
-        bookId: book.id,
-        page: _currentPage,
-        createdAt: DateTime.now(),
-      ));
+      await _repository.addBookmark(
+        Bookmark(
+          id: '${book.id}_page_$_currentPage',
+          bookId: book.id,
+          page: _currentPage,
+          createdAt: DateTime.now(),
+        ),
+      );
     }
     _bookmarks = await _repository.getBookmarks(book.id);
     notifyListeners();

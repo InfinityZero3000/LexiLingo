@@ -6,9 +6,9 @@ import '../models/settings_model.dart';
 /// Web implementation of SettingsLocalDataSource using SharedPreferences
 class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
   final SharedPreferences sharedPreferences;
-  
+
   static const String _settingsKey = 'user_settings_';
-  
+
   SettingsLocalDataSourceWeb({required this.sharedPreferences});
 
   @override
@@ -42,7 +42,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
   Future<int> updateNotificationTime(String userId, String time) async {
     final settings = await getSettings(userId);
     if (settings == null) return 0;
-    
+
     // Update the notification time field
     final updatedSettings = SettingsModel(
       id: settings.id,
@@ -54,7 +54,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       language: settings.language,
       dailyGoalXP: settings.dailyGoalXP,
     );
-    
+
     return await updateSettings(updatedSettings);
   }
 
@@ -62,7 +62,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
   Future<int> updateDailyGoalXP(String userId, int xp) async {
     final settings = await getSettings(userId);
     if (settings == null) return 0;
-    
+
     // Update the daily goal XP field
     final updatedSettings = SettingsModel(
       id: settings.id,
@@ -74,7 +74,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       language: settings.language,
       dailyGoalXP: xp,
     );
-    
+
     return await updateSettings(updatedSettings);
   }
 }

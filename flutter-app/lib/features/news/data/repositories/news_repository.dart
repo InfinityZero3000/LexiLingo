@@ -15,8 +15,8 @@ class NewsRepository {
   final LocalCacheService _cache;
 
   NewsRepository({http.Client? client, LocalCacheService? cache})
-      : _client = client ?? http.Client(),
-        _cache = cache ?? LocalCacheService.instance;
+    : _client = client ?? http.Client(),
+      _cache = cache ?? LocalCacheService.instance;
 
   String get _baseUrl => '${ApiConfig.baseUrl}/news';
 

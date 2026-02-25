@@ -33,7 +33,7 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
         limit: limit,
         offset: offset,
       );
-      
+
       // Convert models to entities
       final entities = models.map((model) => model.toEntity()).toList();
       return Right(entities);
@@ -69,16 +69,16 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     int offset = 0,
   }) async {
     try {
-      final statusString = status != null 
-          ? status.toString().split('.').last 
+      final statusString = status != null
+          ? status.toString().split('.').last
           : null;
-      
+
       final models = await remoteDataSource.getUserCollection(
         status: statusString,
         limit: limit,
         offset: offset,
       );
-      
+
       final entities = models.map((model) => model.toEntity()).toList();
       return Right(entities);
     } on ServerException catch (e) {

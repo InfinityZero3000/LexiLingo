@@ -48,7 +48,8 @@ class ChatRepositoryImpl implements ChatRepository {
       }
 
       final now = DateTime.now();
-      final title = 'Chat ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute}';
+      final title =
+          'Chat ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute}';
 
       final session = ChatSessionModel(
         id: _generateId(),
@@ -146,7 +147,9 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, List<ChatMessage>>> getMessages(String sessionId) async {
+  Future<Either<Failure, List<ChatMessage>>> getMessages(
+    String sessionId,
+  ) async {
     try {
       if (apiDataSource != null && await networkInfo.isConnected) {
         final messages = await apiDataSource!.getMessages(sessionId);
@@ -241,14 +244,16 @@ class ChatRepositoryImpl implements ChatRepository {
     required String message,
     required String messageId,
   }) async {
-    return Right(AIAnalysisResult(
-      messageId: messageId,
-      fluency: null,
-      vocabularyLevel: null,
-      grammarErrors: [],
-      correctedText: null,
-      analyzedAt: DateTime.now(),
-    ));
+    return Right(
+      AIAnalysisResult(
+        messageId: messageId,
+        fluency: null,
+        vocabularyLevel: null,
+        grammarErrors: [],
+        correctedText: null,
+        analyzedAt: DateTime.now(),
+      ),
+    );
   }
 
   @override

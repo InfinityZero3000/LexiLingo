@@ -12,13 +12,15 @@ class EmptyNotificationWidget extends StatefulWidget {
   const EmptyNotificationWidget({
     super.key,
     this.title = 'No Notifications Yet',
-    this.description = 'You\'ll see notifications about your learning progress, achievements, and reminders here.',
+    this.description =
+        'You\'ll see notifications about your learning progress, achievements, and reminders here.',
     this.buttonText = 'Refresh',
     this.onRefresh,
   });
 
   @override
-  State<EmptyNotificationWidget> createState() => _EmptyNotificationWidgetState();
+  State<EmptyNotificationWidget> createState() =>
+      _EmptyNotificationWidgetState();
 }
 
 class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
@@ -33,7 +35,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -48,7 +50,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),
@@ -74,10 +76,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        return Transform.scale(
-          scale: _pulseAnimation.value,
-          child: child,
-        );
+        return Transform.scale(scale: _pulseAnimation.value, child: child);
       },
       child: Container(
         width: 160,
@@ -118,10 +117,10 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     return Text(
       widget.title,
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black87,
-            letterSpacing: -0.5,
-          ),
+        fontWeight: FontWeight.bold,
+        color: isDark ? Colors.white : Colors.black87,
+        letterSpacing: -0.5,
+      ),
       textAlign: TextAlign.center,
     );
   }
@@ -132,9 +131,9 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
       child: Text(
         widget.description,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-              height: 1.6,
-            ),
+          color: isDark ? Colors.grey[400] : Colors.grey[600],
+          height: 1.6,
+        ),
         textAlign: TextAlign.center,
       ),
     );

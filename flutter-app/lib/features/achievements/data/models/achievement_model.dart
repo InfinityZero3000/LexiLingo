@@ -70,7 +70,8 @@ class UserAchievementModel extends UserAchievementEntity {
     return UserAchievementModel(
       id: json['id']?.toString() ?? '',
       achievement: AchievementModel.fromJson(json['achievement'] ?? {}),
-      unlockedAt: DateTime.tryParse(json['unlocked_at'] ?? '') ?? DateTime.now(),
+      unlockedAt:
+          DateTime.tryParse(json['unlocked_at'] ?? '') ?? DateTime.now(),
       progress: json['progress'] ?? 0,
       isShowcased: json['is_showcased'] ?? false,
     );

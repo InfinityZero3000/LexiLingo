@@ -46,19 +46,27 @@ class TopicSession {
 
   factory TopicSession.fromJson(Map<String, dynamic> json) {
     return TopicSession(
-      sessionId: json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
+      sessionId:
+          json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
       story: StoryListItem.fromJson(json['story'] as Map<String, dynamic>),
-      rolePersona: RolePersona.fromJson(json['role_persona'] as Map<String, dynamic>? ?? 
-                                        json['rolePersona'] as Map<String, dynamic>? ?? {}),
-      openingMessage: json['opening_message'] as String? ?? 
-                      json['openingMessage'] as String? ?? '',
-      vocabularyPreview: (json['vocabulary_preview'] as List<dynamic>?)
+      rolePersona: RolePersona.fromJson(
+        json['role_persona'] as Map<String, dynamic>? ??
+            json['rolePersona'] as Map<String, dynamic>? ??
+            {},
+      ),
+      openingMessage:
+          json['opening_message'] as String? ??
+          json['openingMessage'] as String? ??
+          '',
+      vocabularyPreview:
+          (json['vocabulary_preview'] as List<dynamic>?)
               ?.map((e) => VocabularyItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           (json['vocabularyPreview'] as List<dynamic>?)
               ?.map((e) => VocabularyItem.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
-      createdAt: json['created_at'] != null 
+              .toList() ??
+          [],
+      createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
     );
@@ -111,19 +119,26 @@ class TopicChatResponse {
 
   factory TopicChatResponse.fromJson(Map<String, dynamic> json) {
     return TopicChatResponse(
-      response: json['ai_response'] as String? ?? json['response'] as String? ?? '',
+      response:
+          json['ai_response'] as String? ?? json['response'] as String? ?? '',
       messageId: json['message_id'] as String? ?? json['messageId'] as String?,
       educationalHints: json['educational_hints'] != null
-          ? EducationalHints.fromJson(json['educational_hints'] as Map<String, dynamic>)
+          ? EducationalHints.fromJson(
+              json['educational_hints'] as Map<String, dynamic>,
+            )
           : json['educationalHints'] != null
-              ? EducationalHints.fromJson(json['educationalHints'] as Map<String, dynamic>)
-              : null,
-      processingTimeMs: json['processing_time_ms'] as int? ?? json['processingTimeMs'] as int?,
+          ? EducationalHints.fromJson(
+              json['educationalHints'] as Map<String, dynamic>,
+            )
+          : null,
+      processingTimeMs:
+          json['processing_time_ms'] as int? ??
+          json['processingTimeMs'] as int?,
       llmMetadata: json['llm_metadata'] != null
           ? LlmMetadata.fromJson(json['llm_metadata'] as Map<String, dynamic>)
           : json['llmMetadata'] != null
-              ? LlmMetadata.fromJson(json['llmMetadata'] as Map<String, dynamic>)
-              : null,
+          ? LlmMetadata.fromJson(json['llmMetadata'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -136,9 +151,10 @@ class TopicChatResponse {
 
   String get displayResponse => response;
   bool get hasHints => educationalHints?.hasAnyHints ?? false;
-  
+
   // Additional getters for compatibility
-  String get messageId => _messageId ?? DateTime.now().millisecondsSinceEpoch.toString();
+  String get messageId =>
+      _messageId ?? DateTime.now().millisecondsSinceEpoch.toString();
   String get aiResponse => response;
   String get cleanResponse => response;
 }
@@ -166,17 +182,20 @@ class TopicChatMessage {
   factory TopicChatMessage.fromJson(Map<String, dynamic> json) {
     return TopicChatMessage(
       id: json['id'] as String? ?? json['message_id'] as String? ?? '',
-      sessionId: json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
+      sessionId:
+          json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
       content: json['content'] as String? ?? json['message'] as String? ?? '',
       isUser: json['is_user'] as bool? ?? json['isUser'] as bool? ?? false,
-      timestamp: json['timestamp'] != null 
+      timestamp: json['timestamp'] != null
           ? DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now()
           : DateTime.now(),
       hints: json['hints'] != null
           ? EducationalHints.fromJson(json['hints'] as Map<String, dynamic>)
           : json['educational_hints'] != null
-              ? EducationalHints.fromJson(json['educational_hints'] as Map<String, dynamic>)
-              : null,
+          ? EducationalHints.fromJson(
+              json['educational_hints'] as Map<String, dynamic>,
+            )
+          : null,
       llmMetadata: json['llm_metadata'] != null
           ? LlmMetadata.fromJson(json['llm_metadata'] as Map<String, dynamic>)
           : null,
@@ -213,12 +232,14 @@ class StoriesListResponse {
 
   factory StoriesListResponse.fromJson(Map<String, dynamic> json) {
     return StoriesListResponse(
-      stories: (json['stories'] as List<dynamic>?)
+      stories:
+          (json['stories'] as List<dynamic>?)
               ?.map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           (json['items'] as List<dynamic>?)
               ?.map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [],
+              .toList() ??
+          [],
       total: json['total'] as int? ?? 0,
       page: json['page'] as int? ?? 1,
       limit: json['limit'] as int? ?? 20,

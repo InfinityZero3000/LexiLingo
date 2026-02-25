@@ -72,14 +72,14 @@ class ChatMessage extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        sessionId,
-        content,
-        role,
-        timestamp,
-        status,
-        error,
-      ];
+    id,
+    sessionId,
+    content,
+    role,
+    timestamp,
+    status,
+    error,
+  ];
 
   @override
   String toString() {

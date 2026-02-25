@@ -52,36 +52,36 @@ class HomeProvider with ChangeNotifier {
   String? get enrolledError => _enrolledError;
   // Only show critical errors (courses/dashboard), not enrolled error which is secondary
   String? get errorMessage => _coursesError ?? _dashboardError;
-  
+
   User? get currentUser => _currentUser;
   String get userName => _currentUser?.name ?? _currentUser?.email ?? 'User';
   int get totalXP => _currentUser?.totalXP ?? 0;
   int get streakDays => _weeklyProgress.currentStreak;
-  
+
   /// Week progress as list of booleans for UI visualization
   /// Returns true for each day that had activity
-  List<bool> get weekProgress => _weeklyProgress.weekProgress
-      .map((day) => day.hasActivity)
-      .toList();
-  
+  List<bool> get weekProgress =>
+      _weeklyProgress.weekProgress.map((day) => day.hasActivity).toList();
+
   /// Get weekly progress entity for detailed display
   WeeklyProgressEntity get weeklyProgress => _weeklyProgress;
   bool get isLoadingWeekly => _isLoadingWeekly;
-  
+
   DailyGoal? get todayGoal => _todayGoal;
   int get dailyXP => _todayGoal?.earnedXP ?? 0;
   int get dailyGoalXP => _todayGoal?.targetXP ?? 50;
   double get dailyProgressPercentage => _todayGoal?.progressPercentage ?? 0.0;
-  
+
   bool get isLoadingDashboard => _isLoadingDashboard;
   String? get dashboardError => _dashboardError;
-  
-  bool get isLoading => _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
+
+  bool get isLoading =>
+      _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
 
   /// Load weekly progress for home screen chart (Task 1.3)
   Future<void> loadWeeklyProgress() async {
     if (getWeeklyProgressUseCase == null) return;
-    
+
     _isLoadingWeekly = true;
     notifyListeners();
 
@@ -133,10 +133,7 @@ class HomeProvider with ChangeNotifier {
     _enrolledError = null;
     notifyListeners();
 
-    final result = await getEnrolledCoursesUseCase(
-      page: 1,
-      pageSize: 10,
-    );
+    final result = await getEnrolledCoursesUseCase(page: 1, pageSize: 10);
 
     result.fold(
       (failure) {
@@ -175,10 +172,10 @@ class HomeProvider with ChangeNotifier {
     try {
       // Set current user
       _currentUser = user;
-      
+
       // Load today's goal (mock data for now)
       _todayGoal = DailyGoal(
-        id: 1,  // Mock ID
+        id: 1, // Mock ID
         userId: user.id,
         date: DateTime.now(),
         targetXP: 50,
@@ -218,15 +215,15 @@ class HomeProvider with ChangeNotifier {
     _featuredCourses = [];
     _coursesError = null;
     _isLoadingCourses = false;
-    
+
     _currentUser = null;
     _todayGoal = null;
     _dashboardError = null;
     _isLoadingDashboard = false;
-    
+
     _weeklyProgress = WeeklyProgressEntity.empty();
     _isLoadingWeekly = false;
-    
+
     notifyListeners();
   }
 }

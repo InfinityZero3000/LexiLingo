@@ -7,9 +7,7 @@ import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_pr
 /// Phase 1: YouTube Video Integration.
 void registerYouTubeModule() {
   // Repository
-  sl.registerLazySingleton<YouTubeRepository>(
-    () => YouTubeRepository(),
-  );
+  sl.registerLazySingleton<YouTubeRepository>(() => YouTubeRepository());
 
   // Provider
   sl.registerFactory<YouTubeProvider>(

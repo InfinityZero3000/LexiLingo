@@ -41,9 +41,10 @@ class _GameResultScreenState extends State<GameResultScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-    _xpAnimation = IntTween(begin: 0, end: _xpEarned).animate(
-      CurvedAnimation(parent: _xpController, curve: Curves.easeOut),
-    );
+    _xpAnimation = IntTween(
+      begin: 0,
+      end: _xpEarned,
+    ).animate(CurvedAnimation(parent: _xpController, curve: Curves.easeOut));
 
     _starsController = AnimationController(
       vsync: this,
@@ -159,11 +160,7 @@ class _GameResultScreenState extends State<GameResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            result.gameType.icon,
-            size: 32,
-            color: AppColors.primary,
-          ),
+          Icon(result.gameType.icon, size: 32, color: AppColors.primary),
           const SizedBox(height: 8),
           _statRow(
             'Accuracy',
@@ -171,25 +168,16 @@ class _GameResultScreenState extends State<GameResultScreen>
             color: result.accuracy >= 90
                 ? AppColors.greenSuccess
                 : result.accuracy >= 60
-                    ? AppColors.primary
-                    : Colors.red,
+                ? AppColors.primary
+                : Colors.red,
           ),
           _statRow(
             'Correct',
             '${result.correctAnswers}/${result.totalQuestions}',
           ),
-          _statRow(
-            'Score',
-            '${result.score}',
-          ),
-          _statRow(
-            'Duration',
-            '${result.durationSeconds}s',
-          ),
-          _statRow(
-            'Level',
-            result.cefrLevel,
-          ),
+          _statRow('Score', '${result.score}'),
+          _statRow('Duration', '${result.durationSeconds}s'),
+          _statRow('Level', result.cefrLevel),
         ],
       ),
     );
@@ -265,13 +253,18 @@ class _GameResultScreenState extends State<GameResultScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
@@ -288,7 +281,11 @@ class _GameResultScreenState extends State<GameResultScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 16),
+          const Icon(
+            Icons.local_fire_department_rounded,
+            color: Colors.orange,
+            size: 16,
+          ),
           const SizedBox(width: 6),
           Text(
             'Streak bonus: ${multiplier.toStringAsFixed(1)}x',
@@ -318,7 +315,8 @@ class _GameResultScreenState extends State<GameResultScreen>
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text(
               'Play Again',
@@ -341,7 +339,8 @@ class _GameResultScreenState extends State<GameResultScreen>
               padding: const EdgeInsets.symmetric(vertical: 15),
               side: const BorderSide(color: AppColors.primary),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text(
               'Back to Games',

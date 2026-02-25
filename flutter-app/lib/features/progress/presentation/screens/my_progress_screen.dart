@@ -26,10 +26,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Progress'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('My Progress'), centerTitle: true),
       body: Consumer<ProgressProvider>(
         builder: (context, progressProvider, child) {
           if (progressProvider.isLoading) {
@@ -69,9 +66,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
           final courseProgressList = progressProvider.courseProgressList;
 
           if (summary == null) {
-            return const Center(
-              child: Text('No progress data available'),
-            );
+            return const Center(child: Text('No progress data available'));
           }
 
           return RefreshIndicator(
@@ -137,8 +132,8 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                   Text(
                     'Course Progress',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -152,9 +147,9 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                               Icon(
                                 Icons.inbox,
                                 size: 48,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -199,24 +194,17 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
       ),

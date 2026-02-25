@@ -3,7 +3,7 @@ import '../../utils/app_logger.dart';
 
 /// Text-to-Speech service interface
 /// Implementation should use Piper VITS for natural, offline TTS
-/// 
+///
 /// Architecture specs:
 /// - Model: en_US-lessac-medium (VITS-based)
 /// - Size: 30-60MB
@@ -16,11 +16,11 @@ abstract class TTSService {
   Future<void> initialize();
 
   /// Synthesize text to audio
-  /// 
+  ///
   /// [text] - Text to convert to speech
   /// [speed] - Speech rate (0.5 = slow, 1.0 = normal, 2.0 = fast)
   /// [cacheKey] - Optional key for caching common phrases
-  /// 
+  ///
   /// Returns audio bytes (WAV format)
   Future<Uint8List> synthesize({
     required String text,
@@ -84,7 +84,7 @@ class MockTTSService implements TTSService {
     await Future.delayed(const Duration(milliseconds: 300));
     _isInitialized = true;
     logDebug('[MockTTS] Initialized (Piper VITS - Mock)');
-    
+
     // Pre-generate common phrases
     await preGenerateCommonPhrases();
   }
@@ -130,12 +130,14 @@ class MockTTSService implements TTSService {
 
   @override
   Future<void> preGenerateCommonPhrases() async {
-    logDebug('[MockTTS] Pre-generating ${_commonPhrases.length} common phrases...');
-    
+    logDebug(
+      '[MockTTS] Pre-generating ${_commonPhrases.length} common phrases...',
+    );
+
     for (final phrase in _commonPhrases) {
       await synthesize(text: phrase, cacheKey: phrase);
     }
-    
+
     logDebug('[MockTTS] Pre-generation complete. Cache size: ${_cache.length}');
   }
 
@@ -144,11 +146,11 @@ class MockTTSService implements TTSService {
 
   @override
   TTSModelInfo get modelInfo => const TTSModelInfo(
-        name: 'Piper VITS (Mock)',
-        voice: 'en_US-lessac-medium',
-        sampleRate: 22050,
-        sizeInMB: 45,
-      );
+    name: 'Piper VITS (Mock)',
+    voice: 'en_US-lessac-medium',
+    sampleRate: 22050,
+    sizeInMB: 45,
+  );
 
   @override
   Future<void> dispose() async {

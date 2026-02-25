@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 
 /// UseCase: Get Due Vocabulary
 /// Returns vocabulary items that need to be reviewed today
-class GetDueVocabularyUseCase 
+class GetDueVocabularyUseCase
     implements UseCase<List<UserVocabularyEntity>, GetDueVocabularyParams> {
   final VocabularyRepository repository;
 

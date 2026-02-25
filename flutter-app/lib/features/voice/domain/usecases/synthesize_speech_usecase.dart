@@ -6,16 +6,15 @@ import 'package:lexilingo_app/features/voice/domain/repositories/voice_repositor
 
 /// Synthesize Speech Use Case
 /// Converts text to audio using TTS service
-class SynthesizeSpeechUseCase implements UseCase<AudioSynthesis, SynthesizeParams> {
+class SynthesizeSpeechUseCase
+    implements UseCase<AudioSynthesis, SynthesizeParams> {
   final VoiceRepository repository;
 
   SynthesizeSpeechUseCase(this.repository);
 
   @override
   Future<Either<Failure, AudioSynthesis>> call(SynthesizeParams params) async {
-    return await repository.synthesizeSpeech(
-      text: params.text,
-    );
+    return await repository.synthesizeSpeech(text: params.text);
   }
 }
 

@@ -2,19 +2,19 @@
 class AIResponse {
   /// Analysis results
   final AnalysisResult analysis;
-  
+
   /// English tutor response
   final String responseEn;
-  
+
   /// Vietnamese explanation (optional, for A2 learners)
   final String? responseVi;
-  
+
   /// Overall confidence score (0.0 to 1.0)
   final double confidence;
-  
+
   /// Processing latency in milliseconds
   final int latencyMs;
-  
+
   /// Which components were used
   final ComponentUsage componentUsage;
 
@@ -133,11 +133,7 @@ class PhonemeError {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'phoneme': phoneme,
-      'pronounced_as': pronouncedAs,
-      'word': word,
-    };
+    return {'phoneme': phoneme, 'pronounced_as': pronouncedAs, 'word': word};
   }
 }
 

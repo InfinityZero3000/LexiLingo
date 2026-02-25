@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 class MessageReaction {
   final String emoji;
   final String label;
-  
+
   const MessageReaction({required this.emoji, required this.label});
 }
 
@@ -35,7 +35,8 @@ class MessageBubble extends StatefulWidget {
   State<MessageBubble> createState() => _MessageBubbleState();
 }
 
-class _MessageBubbleState extends State<MessageBubble> with SingleTickerProviderStateMixin {
+class _MessageBubbleState extends State<MessageBubble>
+    with SingleTickerProviderStateMixin {
   bool _showActions = false;
   bool _showReactions = false;
   String? _selectedReaction;
@@ -128,12 +129,14 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser && widget.showAvatar) _buildAvatar(isAI: true),
           if (!isUser && widget.showAvatar) const SizedBox(width: 12),
-          
+
           Flexible(
             child: GestureDetector(
               onLongPress: () {
@@ -141,12 +144,16 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                   _showActions = !_showActions;
                 });
               },
-              onDoubleTap: !widget.message.isUserMessage ? () {
-                _toggleReactions();
-                HapticFeedback.mediumImpact();
-              } : null,
+              onDoubleTap: !widget.message.isUserMessage
+                  ? () {
+                      _toggleReactions();
+                      HapticFeedback.mediumImpact();
+                    }
+                  : null,
               child: Column(
-                crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isUser
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   // Sender label
                   Padding(
@@ -164,7 +171,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                       ),
                     ),
                   ),
-                  
+
                   // Message bubble
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -177,7 +184,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                                 color: Colors.black12,
                                 blurRadius: 4,
                                 offset: Offset(0, 2),
-                              )
+                              ),
                             ]
                           : null,
                     ),
@@ -188,18 +195,19 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                         if (isUser)
                           Text(
                             widget.message.content,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white),
                           )
                         else
                           MarkdownMessageContent(
                             content: widget.message.content,
                             isDark: isDark,
                           ),
-                        
+
                         // Status indicator & timestamp
-                        if (widget.showTimestamp || widget.message.isSending || widget.message.hasError)
+                        if (widget.showTimestamp ||
+                            widget.message.isSending ||
+                            widget.message.hasError)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Row(
@@ -210,14 +218,14 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                                     _formatTimestamp(widget.message.timestamp),
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: isUser 
+                                      color: isUser
                                           ? Colors.white.withValues(alpha: 0.7)
                                           : AppColors.textGrey,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                 ],
-                                
+
                                 // Status icon
                                 if (widget.message.isSending)
                                   SizedBox(
@@ -225,14 +233,18 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                                     height: 12,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: isUser ? Colors.white : AppColors.primary,
+                                      color: isUser
+                                          ? Colors.white
+                                          : AppColors.primary,
                                     ),
                                   )
                                 else if (widget.message.hasError)
                                   Icon(
                                     Icons.error_outline,
                                     size: 14,
-                                    color: isUser ? Colors.red[200] : Colors.red,
+                                    color: isUser
+                                        ? Colors.red[200]
+                                        : Colors.red,
                                   )
                                 else if (isUser)
                                   Icon(
@@ -246,7 +258,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                       ],
                     ),
                   ),
-                  
+
                   // Error message
                   if (widget.message.hasError && widget.message.error != null)
                     Padding(
@@ -283,18 +295,25 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                         ],
                       ),
                     ),
-                  
+
                   // Selected Reaction Display
                   if (_selectedReaction != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getReactionColor(_selectedReaction!).withValues(alpha: 0.1),
+                          color: _getReactionColor(
+                            _selectedReaction!,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _getReactionColor(_selectedReaction!).withValues(alpha: 0.3),
+                            color: _getReactionColor(
+                              _selectedReaction!,
+                            ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Icon(
@@ -311,7 +330,10 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                       scale: _reactionScaleAnimation,
                       child: Container(
                         margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(24),
@@ -331,7 +353,10 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                               child: Tooltip(
                                 message: reaction.label,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   child: Icon(
                                     _getReactionIcon(reaction.emoji),
                                     size: 24,
@@ -344,7 +369,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                         ),
                       ),
                     ),
-                  
+
                   // Action buttons (copy, react)
                   if (_showActions)
                     Padding(
@@ -374,8 +399,8 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
                           if (!widget.message.isUserMessage) ...[
                             const SizedBox(width: 8),
                             _buildActionButton(
-                              icon: _selectedReaction != null 
-                                  ? Icons.emoji_emotions 
+                              icon: _selectedReaction != null
+                                  ? Icons.emoji_emotions
                                   : Icons.emoji_emotions_outlined,
                               label: 'React',
                               onTap: _toggleReactions,
@@ -388,7 +413,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           if (isUser && widget.showAvatar) const SizedBox(width: 12),
           if (isUser && widget.showAvatar) _buildAvatar(isAI: false),
         ],
@@ -428,11 +453,7 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
             width: 1.5,
           ),
         ),
-        child: const Icon(
-          Icons.person,
-          size: 18,
-          color: AppColors.primary,
-        ),
+        child: const Icon(Icons.person, size: 18, color: AppColors.primary),
       );
     }
   }
@@ -486,7 +507,11 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
+    final messageDate = DateTime(
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
+    );
 
     if (messageDate == today) {
       return DateFormat.Hm().format(timestamp); // HH:mm

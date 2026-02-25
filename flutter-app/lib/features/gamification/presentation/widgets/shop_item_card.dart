@@ -60,10 +60,8 @@ class ShopItemCard extends StatelessWidget {
               child: Stack(
                 children: [
                   // Item Icon
-                  Center(
-                    child: _buildItemIcon(),
-                  ),
-                  
+                  Center(child: _buildItemIcon()),
+
                   // Limited stock badge
                   if (item.isLimitedStock)
                     Positioned(
@@ -92,7 +90,7 @@ class ShopItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                   // Effect duration badge
                   if (item.effectDuration != null)
                     Positioned(
@@ -132,7 +130,7 @@ class ShopItemCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Item Info
           Expanded(
             flex: 2,
@@ -154,16 +152,13 @@ class ShopItemCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.description,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Price and Buy Button
                   Row(
                     children: [
@@ -198,7 +193,7 @@ class ShopItemCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      
+
                       // Buy Button
                       GestureDetector(
                         onTap: canAfford && !item.isOutOfStock && !isLoading
@@ -225,9 +220,7 @@ class ShopItemCard extends StatelessWidget {
                                   ),
                                 )
                               : Text(
-                                  item.isOutOfStock
-                                      ? 'SOLD'
-                                      : 'BUY',
+                                  item.isOutOfStock ? 'SOLD' : 'BUY',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -289,11 +282,7 @@ class ShopItemCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 32,
-      ),
+      child: Icon(icon, color: Colors.white, size: 32),
     );
   }
 

@@ -41,15 +41,11 @@ void setupProgressDependencies(GetIt sl) {
 
   // Repository
   sl.registerLazySingleton<ProgressRepository>(
-    () => ProgressRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+    () => ProgressRepositoryImpl(remoteDataSource: sl()),
   );
 
   // Data sources
   sl.registerLazySingleton<ProgressRemoteDataSource>(
-    () => ProgressRemoteDataSourceImpl(
-      apiClient: sl(),
-    ),
+    () => ProgressRemoteDataSourceImpl(apiClient: sl()),
   );
 }

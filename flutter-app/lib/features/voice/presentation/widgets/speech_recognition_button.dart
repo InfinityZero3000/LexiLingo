@@ -8,19 +8,19 @@ import 'package:lexilingo_app/features/voice/presentation/providers/speech_recog
 class SpeechRecognitionButton extends StatefulWidget {
   /// Called when final transcription is received
   final void Function(String transcript, double confidence)? onResult;
-  
+
   /// Called when listening state changes
   final void Function(bool isListening)? onListeningChanged;
-  
+
   /// Called when an error occurs
   final void Function(String error)? onError;
-  
+
   /// Initial language for recognition
   final String language;
-  
+
   /// Button size
   final double size;
-  
+
   /// Show transcription text below button
   final bool showTranscript;
 
@@ -35,7 +35,8 @@ class SpeechRecognitionButton extends StatefulWidget {
   });
 
   @override
-  State<SpeechRecognitionButton> createState() => _SpeechRecognitionButtonState();
+  State<SpeechRecognitionButton> createState() =>
+      _SpeechRecognitionButtonState();
 }
 
 class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
@@ -62,7 +63,10 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
     super.didChangeDependencies();
     // Try to get provider from context, or create one
     try {
-      _provider = Provider.of<SpeechRecognitionProvider>(context, listen: false);
+      _provider = Provider.of<SpeechRecognitionProvider>(
+        context,
+        listen: false,
+      );
     } catch (e) {
       // Create our own provider if not available
       _provider = SpeechRecognitionProvider();
@@ -86,16 +90,19 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
       _animationController.stop();
       _animationController.reset();
       widget.onListeningChanged?.call(false);
-      
+
       // Return final result
       final transcription = _provider.getTranscription();
       if (transcription != null && transcription.text.isNotEmpty) {
-        widget.onResult?.call(transcription.text, transcription.confidence ?? 0.0);
+        widget.onResult?.call(
+          transcription.text,
+          transcription.confidence ?? 0.0,
+        );
       }
     } else {
       _provider.clearTranscript();
       await _provider.startListening(language: widget.language);
-      
+
       if (_provider.hasError) {
         widget.onError?.call(_provider.errorMessage ?? 'Unknown error');
       } else {
@@ -144,8 +151,11 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                           : Theme.of(context).primaryColor,
                       boxShadow: [
                         BoxShadow(
-                          color: (provider.isListening ? Colors.red : Theme.of(context).primaryColor)
-                              .withValues(alpha: 0.3),
+                          color:
+                              (provider.isListening
+                                      ? Colors.red
+                                      : Theme.of(context).primaryColor)
+                                  .withValues(alpha: 0.3),
                           blurRadius: provider.isListening ? 20 : 10,
                           spreadRadius: provider.isListening ? 5 : 2,
                         ),
@@ -159,23 +169,20 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                   ),
                 ),
               ),
-              
+
               // Status text
               if (widget.showTranscript) ...[
                 const SizedBox(height: 12),
                 _buildStatusText(provider),
               ],
-              
+
               // Error message
               if (provider.hasError && provider.errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     provider.errorMessage!,
-                    style: TextStyle(
-                      color: Colors.red[400],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.red[400], fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -212,7 +219,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
         ),
       );
     }
-    
+
     if (provider.transcript.isNotEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -234,23 +241,17 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   'Confidence: ${(provider.confidence * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
               ),
           ],
         ),
       );
     }
-    
+
     return Text(
       'Tap to speak',
-      style: TextStyle(
-        color: Colors.grey[500],
-        fontSize: 12,
-      ),
+      style: TextStyle(color: Colors.grey[500], fontSize: 12),
     );
   }
 
@@ -272,13 +273,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          message,
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 12,
-          ),
-        ),
+        Text(message, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
       ],
     );
   }

@@ -12,7 +12,8 @@ import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_c
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
-import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart' as glass;
+import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
+    as glass;
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -46,10 +47,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Load progress stats
     await progressProvider.fetchMyProgress();
-    
+
     // Load profile stats from backend
     await profileProvider.loadProfileData();
-    
+
     // Load gamification data (wallet, etc.)
     await gamificationProvider.loadWallet();
   }
@@ -69,7 +70,11 @@ class _ProfilePageState extends State<ProfilePage> {
         title: const Text('Profile'),
         leading: GestureDetector(
           onTap: () {}, // Back if needed
-          child: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          child: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
         ),
         actions: [
           // Wallet/Gems Button
@@ -82,7 +87,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
@@ -116,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 MaterialPageRoute(builder: (context) => const SettingsPage()),
               );
             },
-          )
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -262,7 +270,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
         final levelStatus = levelProvider.levelStatus;
-        final tierName = '${levelStatus.currentTier.code} ${levelStatus.currentTier.name}';
+        final tierName =
+            '${levelStatus.currentTier.code} ${levelStatus.currentTier.name}';
         final progress = levelStatus.progressPercentage / 100;
 
         return Container(
@@ -327,30 +336,38 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.3),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       blurRadius: 20,
                                       spreadRadius: 5,
                                     ),
                                   ],
                                 ),
                                 child: ClipOval(
-                                  child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                                  child:
+                                      user?.avatarUrl != null &&
+                                          user!.avatarUrl!.isNotEmpty
                                       ? Image.network(
                                           user.avatarUrl!,
                                           fit: BoxFit.cover,
                                           width: 120,
                                           height: 120,
-                                          errorBuilder: (_, __, ___) => Container(
-                                            color: AppColors.primary.withValues(alpha: 0.2),
-                                            child: const Icon(
-                                              Icons.person,
-                                              size: 60,
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
+                                          errorBuilder: (_, __, ___) =>
+                                              Container(
+                                                color: AppColors.primary
+                                                    .withValues(alpha: 0.2),
+                                                child: const Icon(
+                                                  Icons.person,
+                                                  size: 60,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
                                         )
                                       : Container(
-                                          color: AppColors.primary.withValues(alpha: 0.2),
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           child: const Icon(
                                             Icons.person,
                                             size: 60,
@@ -369,18 +386,30 @@ class _ProfilePageState extends State<ProfilePage> {
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
+                                      colors: [
+                                        Color(0xFF137FEC),
+                                        Color(0xFF6366F1),
+                                      ],
                                     ),
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.5),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.5,
+                                        ),
                                         blurRadius: 8,
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.verified, color: Colors.white, size: 16),
+                                  child: const Icon(
+                                    Icons.verified,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                 ),
                               ),
                             // Level Badge
@@ -400,10 +429,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         Text(
                           user?.displayName ?? 'Guest User',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
                         ),
                         const SizedBox(height: 6),
                         // Email
@@ -418,18 +448,25 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 12),
                         // Tier Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
                                 _getTierColor(levelStatus.currentTier.code),
-                                _getTierColor(levelStatus.currentTier.code).withValues(alpha: 0.7),
+                                _getTierColor(
+                                  levelStatus.currentTier.code,
+                                ).withValues(alpha: 0.7),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: _getTierColor(levelStatus.currentTier.code).withValues(alpha: 0.4),
+                                color: _getTierColor(
+                                  levelStatus.currentTier.code,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -479,7 +516,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
@@ -487,7 +527,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.3),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -531,7 +573,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context, levelProvider, profileProvider, _) {
         final stats = profileProvider.stats;
         final totalXP = levelProvider.levelStatus.totalXP;
-        
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -610,8 +652,10 @@ class _ProfilePageState extends State<ProfilePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(progressLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Text(
+                    progressLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   Text(xpLabel, style: const TextStyle(fontSize: 14)),
                 ],
               ),
@@ -619,7 +663,9 @@ class _ProfilePageState extends State<ProfilePage> {
               AnimatedProgressBar(
                 progress: levelStatus.progressPercentage / 100,
                 primaryColor: _getTierColor(currentTier.code),
-                secondaryColor: _getTierColor(currentTier.code).withValues(alpha: 0.6),
+                secondaryColor: _getTierColor(
+                  currentTier.code,
+                ).withValues(alpha: 0.6),
                 height: 12,
               ),
               const SizedBox(height: 12),
@@ -627,8 +673,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    nextTier != null ? '${LevelCalculator.formatXP(xpToNext)} XP to go' : 'Master Level!',
-                    style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                    nextTier != null
+                        ? '${LevelCalculator.formatXP(xpToNext)} XP to go'
+                        : 'Master Level!',
+                    style: const TextStyle(
+                      color: AppColors.textGrey,
+                      fontSize: 12,
+                    ),
                   ),
                   Text(
                     '${levelStatus.progressPercentage.toStringAsFixed(0)}% complete',
@@ -692,10 +743,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Text(
                     'Learning Stats',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -742,7 +792,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: Colors.teal,
                   title: 'Tests',
                   value: '$testsPassed',
-                  subtitle: avgScore > 0 ? '${avgScore.toStringAsFixed(0)}% avg' : 'Passed',
+                  subtitle: avgScore > 0
+                      ? '${avgScore.toStringAsFixed(0)}% avg'
+                      : 'Passed',
                 ),
                 GlassmorphicStatCard(
                   icon: Icons.stars,
@@ -755,7 +807,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const AchievementsScreen()),
+                        builder: (_) => const AchievementsScreen(),
+                      ),
                     );
                   },
                 ),
@@ -775,10 +828,9 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: const EdgeInsets.all(16.0),
           child: Text(
             'Learning Stats',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
         GridView.count(
@@ -815,17 +867,25 @@ class _ProfilePageState extends State<ProfilePage> {
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  Text('Weekly Activity',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Last 7 Days',
-                      style: TextStyle(
-                          color: AppColors.textGrey,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500)),
+                  Text(
+                    'Weekly Activity',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Last 7 Days',
+                    style: TextStyle(
+                      color: AppColors.textGrey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -838,70 +898,76 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     )
                   : activities.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Text(
-                              'No activity data yet',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(
+                          'No activity data yet',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        // XP Chart with animated bars
+                        SizedBox(
+                          height: 120,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: activities.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final activity = entry.value;
+                              final maxXP = activities
+                                  .map((a) => a.xpEarned)
+                                  .reduce((a, b) => a > b ? a : b);
+                              final normalizedValue = maxXP > 0
+                                  ? activity.xpEarned / maxXP
+                                  : 0.0;
+                              final date = DateTime.parse(activity.date);
+                              final dayLabel = DateFormat(
+                                'E',
+                              ).format(date).substring(0, 1);
+
+                              return Expanded(
+                                child: AnimatedActivityBar(
+                                  label: dayLabel,
+                                  value: normalizedValue,
+                                  xpValue: activity.xpEarned,
+                                  color: const Color(0xFF6366F1),
+                                  delay: Duration(milliseconds: index * 100),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                        )
-                      : Column(
+                        ),
+                        const SizedBox(height: 16),
+                        // Summary stats
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            // XP Chart with animated bars
-                            SizedBox(
-                              height: 120,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: activities.asMap().entries.map((entry) {
-                                  final index = entry.key;
-                                  final activity = entry.value;
-                                  final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
-                                  final normalizedValue = maxXP > 0 ? activity.xpEarned / maxXP : 0.0;
-                                  final date = DateTime.parse(activity.date);
-                                  final dayLabel = DateFormat('E').format(date).substring(0, 1);
-                                  
-                                  return Expanded(
-                                    child: AnimatedActivityBar(
-                                      label: dayLabel,
-                                      value: normalizedValue,
-                                      xpValue: activity.xpEarned,
-                                      color: const Color(0xFF6366F1),
-                                      delay: Duration(milliseconds: index * 100),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                            _buildActivityStat(
+                              'Total XP',
+                              '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
+                              Icons.star,
+                              Colors.amber,
                             ),
-                            const SizedBox(height: 16),
-                            // Summary stats
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildActivityStat(
-                                  'Total XP',
-                                  '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
-                                  Icons.star,
-                                  Colors.amber,
-                                ),
-                                _buildActivityStat(
-                                  'Lessons',
-                                  '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
-                                  Icons.menu_book,
-                                  Colors.blue,
-                                ),
-                                _buildActivityStat(
-                                  'Words',
-                                  '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
-                                  Icons.abc,
-                                  Colors.green,
-                                ),
-                              ],
+                            _buildActivityStat(
+                              'Lessons',
+                              '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
+                              Icons.menu_book,
+                              Colors.blue,
+                            ),
+                            _buildActivityStat(
+                              'Words',
+                              '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
+                              Icons.abc,
+                              Colors.green,
                             ),
                           ],
                         ),
+                      ],
+                    ),
             ),
           ],
         );
@@ -909,25 +975,21 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildActivityStat(String label, String value, IconData icon, Color color) {
+  Widget _buildActivityStat(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, size: 20, color: color),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
       ],
     );
   }
@@ -945,17 +1007,19 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Recent Badges',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Recent Badges',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const AchievementsScreen()),
+                          builder: (_) => const AchievementsScreen(),
+                        ),
                       );
                     },
                     child: const Text('View All'),
@@ -968,17 +1032,17 @@ class _ProfilePageState extends State<ProfilePage> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : badges.isEmpty
-                      ? _buildEmptyBadges()
-                      : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: badges.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 16),
-                          itemBuilder: (context, index) {
-                            final badge = badges[index];
-                            return _buildBadgeItemFromEntity(badge);
-                          },
-                        ),
+                  ? _buildEmptyBadges()
+                  : ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: badges.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final badge = badges[index];
+                        return _buildBadgeItemFromEntity(badge);
+                      },
+                    ),
             ),
           ],
         );

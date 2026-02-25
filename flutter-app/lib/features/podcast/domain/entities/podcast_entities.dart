@@ -42,7 +42,8 @@ class Podcast {
       feedUrl: json['feed_url'] as String? ?? '',
       artworkUrl: json['artwork_url'] as String? ?? '',
       episodeCount: json['episode_count'] as int? ?? 0,
-      categories: (json['categories'] as List<dynamic>?)
+      categories:
+          (json['categories'] as List<dynamic>?)
               ?.map((c) => c as String)
               .toList() ??
           [],
@@ -53,18 +54,18 @@ class Podcast {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'author': author,
-        'description': description,
-        'feed_url': feedUrl,
-        'artwork_url': artworkUrl,
-        'episode_count': episodeCount,
-        'categories': categories,
-        'cefr_level': cefrLevel,
-        'language': language,
-        'is_followed': isFollowed,
-      };
+    'id': id,
+    'title': title,
+    'author': author,
+    'description': description,
+    'feed_url': feedUrl,
+    'artwork_url': artworkUrl,
+    'episode_count': episodeCount,
+    'categories': categories,
+    'cefr_level': cefrLevel,
+    'language': language,
+    'is_followed': isFollowed,
+  };
 
   Podcast copyWith({bool? isFollowed}) {
     return Podcast(
@@ -149,21 +150,21 @@ class PodcastEpisode {
   }
 
   Map<String, dynamic> toJson() => {
-        'guid': guid,
-        'title': title,
-        'audio_url': audioUrl,
-        'duration_seconds': durationSeconds,
-        'published_at': publishedAt,
-        'description': description,
-        'episode_number': episodeNumber,
-        'image_url': imageUrl,
-        'cefr_level': cefrLevel,
-        'feed_url': feedUrl,
-        'listen_progress': listenProgress,
-        'is_completed': isCompleted,
-        'download_state': downloadState.name,
-        'local_path': localPath,
-      };
+    'guid': guid,
+    'title': title,
+    'audio_url': audioUrl,
+    'duration_seconds': durationSeconds,
+    'published_at': publishedAt,
+    'description': description,
+    'episode_number': episodeNumber,
+    'image_url': imageUrl,
+    'cefr_level': cefrLevel,
+    'feed_url': feedUrl,
+    'listen_progress': listenProgress,
+    'is_completed': isCompleted,
+    'download_state': downloadState.name,
+    'local_path': localPath,
+  };
 
   PodcastEpisode copyWith({
     int? listenProgress,
@@ -221,19 +222,20 @@ class ListeningHistory {
           ? DateTime.parse(json['completed_at'] as String)
           : null,
       updatedAt: DateTime.parse(
-          json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
+        json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'episode_guid': episodeGuid,
-        'feed_url': feedUrl,
-        'last_position_seconds': lastPositionSeconds,
-        'total_listened_seconds': totalListenedSeconds,
-        'completed': completed,
-        'completed_at': completedAt?.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    'episode_guid': episodeGuid,
+    'feed_url': feedUrl,
+    'last_position_seconds': lastPositionSeconds,
+    'total_listened_seconds': totalListenedSeconds,
+    'completed': completed,
+    'completed_at': completedAt?.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 }
 
 /// A podcast the user is following (stored locally).
@@ -256,16 +258,17 @@ class UserPodcastFollow {
       podcastTitle: json['podcast_title'] as String? ?? '',
       artworkUrl: json['artwork_url'] as String? ?? '',
       followedAt: DateTime.parse(
-          json['followed_at'] as String? ?? DateTime.now().toIso8601String()),
+        json['followed_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'feed_url': feedUrl,
-        'podcast_title': podcastTitle,
-        'artwork_url': artworkUrl,
-        'followed_at': followedAt.toIso8601String(),
-      };
+    'feed_url': feedUrl,
+    'podcast_title': podcastTitle,
+    'artwork_url': artworkUrl,
+    'followed_at': followedAt.toIso8601String(),
+  };
 }
 
 /// A curated category of podcasts grouped by CEFR level.
@@ -287,7 +290,8 @@ class PodcastCategory {
       id: json['id'] as String? ?? '',
       label: json['label'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
-      podcasts: (json['podcasts'] as List<dynamic>?)
+      podcasts:
+          (json['podcasts'] as List<dynamic>?)
               ?.map((p) => Podcast.fromJson(p as Map<String, dynamic>))
               .toList() ??
           [],
@@ -295,9 +299,9 @@ class PodcastCategory {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'cefr_level': cefrLevel,
-        'podcasts': podcasts.map((p) => p.toJson()).toList(),
-      };
+    'id': id,
+    'label': label,
+    'cefr_level': cefrLevel,
+    'podcasts': podcasts.map((p) => p.toJson()).toList(),
+  };
 }

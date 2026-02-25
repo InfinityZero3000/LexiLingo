@@ -9,13 +9,17 @@ class VocabLocalDataSource {
   Future<List<VocabWord>> getWords() async {
     final db = await dbHelper.database;
     final result = await db.query('vocabulary', orderBy: 'id DESC');
-    
-    return result.map((e) => VocabWord(
-      id: e['id'] as int?,
-      word: e['word'] as String,
-      definition: e['definition'] as String,
-      isLearned: (e['isLearned'] as int) == 1,
-    )).toList();
+
+    return result
+        .map(
+          (e) => VocabWord(
+            id: e['id'] as int?,
+            word: e['word'] as String,
+            definition: e['definition'] as String,
+            isLearned: (e['isLearned'] as int) == 1,
+          ),
+        )
+        .toList();
   }
 
   Future<void> addWord(VocabWord word) async {
@@ -24,7 +28,7 @@ class VocabLocalDataSource {
       'word': word.word,
       'definition': word.definition,
       'isLearned': word.isLearned ? 1 : 0,
-      'example': '', 
+      'example': '',
     });
   }
 }

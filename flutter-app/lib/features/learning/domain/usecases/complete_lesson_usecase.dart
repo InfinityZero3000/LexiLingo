@@ -6,13 +6,17 @@ import 'package:lexilingo_app/features/learning/domain/repositories/learning_rep
 
 /// Complete Lesson Use Case
 /// Completes the current lesson attempt and returns results
-class CompleteLessonUseCase implements UseCase<LessonCompleteModel, CompleteLessonParams> {
+class CompleteLessonUseCase
+    implements UseCase<LessonCompleteModel, CompleteLessonParams> {
   final LearningRepository _repository;
 
-  CompleteLessonUseCase({required LearningRepository repository}) : _repository = repository;
+  CompleteLessonUseCase({required LearningRepository repository})
+    : _repository = repository;
 
   @override
-  Future<Either<Failure, LessonCompleteModel>> call(CompleteLessonParams params) {
+  Future<Either<Failure, LessonCompleteModel>> call(
+    CompleteLessonParams params,
+  ) {
     return _repository.completeLesson(params.attemptId);
   }
 }

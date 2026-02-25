@@ -64,27 +64,27 @@ import 'package:lexilingo_app/features/books/presentation/screens/book_library_s
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
-  
+
   // Add error handler for Flutter and Dart errors
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('Flutter Error: ${details.exception}');
   };
-  
+
   try {
     // Load environment variables from .env file
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
-  
+
   // Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     debugPrint('Firebase initialized successfully');
-    
+
     // Initialize Firebase Cloud Messaging
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     await FirebaseMessagingService.instance.initialize();
@@ -92,38 +92,43 @@ void main() async {
   } catch (e) {
     debugPrint('Warning: Firebase initialization failed: $e');
   }
-  
+
   // Initialize Dependency Injection (skip database on web)
   await di.initializeDependencies(skipDatabase: kIsWeb);
 
   // Run startup tasks (health check, seeding). Non-blocking for web.
   if (!kIsWeb) {
-    final coordinator = StartupCoordinator(tasks: [
-      StartupTask(
-        id: 'health_check',
-        label: 'Ping backend /health',
-        action: () async {
-          final ok = await di.sl<HealthCheckService>().ping();
-          if (!ok) throw Exception('Backend health check failed');
-        },
-      ),
-      // Commented out - CourseImportService uses old local database schema
-      // Courses are now fetched from backend API
-      // StartupTask(
-      //   id: 'seed_courses',
-      //   label: 'Seed courses if empty',
-      //   action: () async {
-      //     final courseImportService = di.sl<CourseImportService>();
-      //     final stats = await courseImportService.getCourseStats();
-      //     if (stats['total'] == 0) {
-      //       await courseImportService.seedRealCourses();
-      //     }
-      //   },
-      // ),
-    ]);
+    final coordinator = StartupCoordinator(
+      tasks: [
+        StartupTask(
+          id: 'health_check',
+          label: 'Ping backend /health',
+          action: () async {
+            final ok = await di.sl<HealthCheckService>().ping();
+            if (!ok) throw Exception('Backend health check failed');
+          },
+        ),
+        // Commented out - CourseImportService uses old local database schema
+        // Courses are now fetched from backend API
+        // StartupTask(
+        //   id: 'seed_courses',
+        //   label: 'Seed courses if empty',
+        //   action: () async {
+        //     final courseImportService = di.sl<CourseImportService>();
+        //     final stats = await courseImportService.getCourseStats();
+        //     if (stats['total'] == 0) {
+        //       await courseImportService.seedRealCourses();
+        //     }
+        //   },
+        // ),
+      ],
+    );
 
     await coordinator.run(
-      onProgress: (result) => logDebug('Startup', '${result.id}: ${result.status.name} ${result.message ?? ''}'),
+      onProgress: (result) => logDebug(
+        'Startup',
+        '${result.id}: ${result.status.name} ${result.message ?? ''}',
+      ),
     );
   }
 
@@ -162,10 +167,18 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<SpeechRecognitionProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<TtsSettingsProvider>()..init()),
-        ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()..loadStreak()),
-        ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges()),
+        ChangeNotifierProvider(
+          create: (_) => di.sl<SpeechRecognitionProvider>(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => di.sl<TtsSettingsProvider>()..init(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => di.sl<StreakProvider>()..loadStreak(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges(),
+        ),
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<LevelProvider>()),
@@ -178,18 +191,22 @@ class LexiLingoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.sl<NewsProvider>()),
         // Phase 3: English Games + XP System
         // On web: defer XP profile load to avoid blocking startup
-        ChangeNotifierProvider(create: (_) {
-          final p = di.sl<GamesProvider>();
-          if (!kIsWeb) p.loadXPProfile();
-          return p;
-        }),
+        ChangeNotifierProvider(
+          create: (_) {
+            final p = di.sl<GamesProvider>();
+            if (!kIsWeb) p.loadXPProfile();
+            return p;
+          },
+        ),
         // Phase 4: Podcast
         // On web: defer curated podcast load (AudioService not available on web)
-        ChangeNotifierProvider(create: (_) {
-          final p = di.sl<PodcastProvider>();
-          if (!kIsWeb) p.loadCuratedPodcasts();
-          return p;
-        }),
+        ChangeNotifierProvider(
+          create: (_) {
+            final p = di.sl<PodcastProvider>();
+            if (!kIsWeb) p.loadCuratedPodcasts();
+            return p;
+          },
+        ),
         // Phase 5: Book Reading
         ChangeNotifierProvider(create: (_) => di.sl<BookProvider>()),
       ],
@@ -209,16 +226,19 @@ class LexiLingoApp extends StatelessWidget {
             routes: {
               '/youtube': (context) => const YouTubeExploreScreen(),
               '/youtube/player': (context) {
-                final video = ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
+                final video =
+                    ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
                 return YouTubePlayerScreen(video: video);
               },
               '/news': (context) => const NewsListScreen(),
               '/news/detail': (context) {
-                final article = ModalRoute.of(context)!.settings.arguments as NewsArticle;
+                final article =
+                    ModalRoute.of(context)!.settings.arguments as NewsArticle;
                 return NewsDetailScreen(article: article);
               },
               '/news/quiz': (context) {
-                final article = ModalRoute.of(context)!.settings.arguments as NewsArticle;
+                final article =
+                    ModalRoute.of(context)!.settings.arguments as NewsArticle;
                 return NewsQuizScreen(article: article);
               },
               // Phase 3: English Games
@@ -226,11 +246,14 @@ class LexiLingoApp extends StatelessWidget {
               // Phase 4: Podcast
               '/podcast': (context) => const PodcastExploreScreen(),
               '/podcast/detail': (context) {
-                final podcast = ModalRoute.of(context)!.settings.arguments as Podcast;
+                final podcast =
+                    ModalRoute.of(context)!.settings.arguments as Podcast;
                 return PodcastDetailScreen(podcast: podcast);
               },
               '/podcast/player': (context) {
-                final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+                final args =
+                    ModalRoute.of(context)!.settings.arguments
+                        as Map<String, dynamic>;
                 return PodcastPlayerScreen(
                   episode: args['episode'] as PodcastEpisode,
                   artworkUrl: args['artworkUrl'] as String,
@@ -245,4 +268,3 @@ class LexiLingoApp extends StatelessWidget {
     );
   }
 }
-

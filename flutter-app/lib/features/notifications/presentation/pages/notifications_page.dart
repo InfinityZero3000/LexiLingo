@@ -90,25 +90,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
               provider.errorMessage ?? 'Failed to load notifications',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -124,9 +120,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget _buildEmptyState(BuildContext context) {
     return EmptyNotificationWidget(
       title: 'No Notifications Yet',
-      description: 'You\'ll see notifications about your learning progress, achievements, and reminders here.',
+      description:
+          'You\'ll see notifications about your learning progress, achievements, and reminders here.',
       buttonText: 'Refresh',
-      onRefresh: () => context.read<NotificationProvider>().refreshNotifications(),
+      onRefresh: () =>
+          context.read<NotificationProvider>().refreshNotifications(),
     );
   }
 
@@ -139,21 +137,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(context, group.title),
-        ...group.notifications.asMap().entries.map(
-          (entry) {
-            final index = entry.key;
-            final notification = entry.value;
-            return AnimatedListItem(
-              index: index,
-              child: _buildNotificationItem(
-                context,
-                notification: notification,
-                onTap: () => _handleNotificationTap(context, notification, provider),
-                onDismiss: () => provider.deleteNotification(notification.id),
-              ),
-            );
-          },
-        ),
+        ...group.notifications.asMap().entries.map((entry) {
+          final index = entry.key;
+          final notification = entry.value;
+          return AnimatedListItem(
+            index: index,
+            child: _buildNotificationItem(
+              context,
+              notification: notification,
+              onTap: () =>
+                  _handleNotificationTap(context, notification, provider),
+              onDismiss: () => provider.deleteNotification(notification.id),
+            ),
+          );
+        }),
       ],
     );
   }
@@ -164,9 +161,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
       ),
     );
   }
@@ -234,16 +231,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Text(
                       notification.title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       notification.body,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                            height: 1.3,
-                          ),
+                        color: AppColors.textGrey,
+                        height: 1.3,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -255,9 +252,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 child: Text(
                   notification.relativeTimeString,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: AppColors.textGrey,
-                      ),
+                    fontSize: 11,
+                    color: AppColors.textGrey,
+                  ),
                 ),
               ),
             ],

@@ -23,14 +23,14 @@ class UserProgressSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalXp,
-        coursesEnrolled,
-        coursesCompleted,
-        lessonsCompleted,
-        currentStreak,
-        longestStreak,
-        achievementsUnlocked,
-      ];
+    totalXp,
+    coursesEnrolled,
+    coursesCompleted,
+    lessonsCompleted,
+    currentStreak,
+    longestStreak,
+    achievementsUnlocked,
+  ];
 }
 
 /// Course Progress Detail Entity
@@ -59,16 +59,16 @@ class CourseProgressDetail extends Equatable {
 
   @override
   List<Object?> get props => [
-        courseId,
-        courseTitle,
-        progressPercentage,
-        lessonsCompleted,
-        totalLessons,
-        totalXpEarned,
-        startedAt,
-        lastActivityAt,
-        estimatedCompletionDays,
-      ];
+    courseId,
+    courseTitle,
+    progressPercentage,
+    lessonsCompleted,
+    totalLessons,
+    totalXpEarned,
+    startedAt,
+    lastActivityAt,
+    estimatedCompletionDays,
+  ];
 }
 
 /// Unit Progress Entity
@@ -89,12 +89,12 @@ class UnitProgressEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        unitId,
-        unitTitle,
-        totalLessons,
-        completedLessons,
-        progressPercentage,
-      ];
+    unitId,
+    unitTitle,
+    totalLessons,
+    completedLessons,
+    progressPercentage,
+  ];
 }
 
 /// Lesson Completion Result Entity
@@ -121,15 +121,15 @@ class LessonCompletionResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        lessonId,
-        isPassed,
-        score,
-        bestScore,
-        xpEarned,
-        totalXp,
-        courseProgress,
-        message,
-      ];
+    lessonId,
+    isPassed,
+    score,
+    bestScore,
+    xpEarned,
+    totalXp,
+    courseProgress,
+    message,
+  ];
 }
 
 /// Progress Stats Entity

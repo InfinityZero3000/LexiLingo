@@ -23,7 +23,11 @@ class ChatFirestoreDataSourceImpl implements ChatFirestoreDataSource {
   }
 
   @override
-  Future<void> saveMessage(String userId, String sessionId, Message message) async {
+  Future<void> saveMessage(
+    String userId,
+    String sessionId,
+    Message message,
+  ) async {
     try {
       final messagesRef = _getSessionMessages(userId, sessionId);
       if (messagesRef == null) throw Exception('Invalid user ID');
@@ -36,23 +40,29 @@ class ChatFirestoreDataSourceImpl implements ChatFirestoreDataSource {
       });
 
       // Update session's last message timestamp
-      await firestoreService.getUserChatSessions(userId)?.doc(sessionId).update({
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'messageCount': FieldValue.increment(1),
-      });
+      await firestoreService
+          .getUserChatSessions(userId)
+          ?.doc(sessionId)
+          .update({
+            'lastMessageAt': FieldValue.serverTimestamp(),
+            'messageCount': FieldValue.increment(1),
+          });
     } catch (e) {
       throw Exception('Failed to save message to Firestore: $e');
     }
   }
 
   @override
-  Future<List<Message>> getSessionHistory(String userId, String sessionId) async {
+  Future<List<Message>> getSessionHistory(
+    String userId,
+    String sessionId,
+  ) async {
     try {
       final messagesRef = _getSessionMessages(userId, sessionId);
       if (messagesRef == null) return [];
 
       final snapshot = await messagesRef.orderBy('timestamp').get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return Message(
@@ -72,8 +82,10 @@ class ChatFirestoreDataSourceImpl implements ChatFirestoreDataSource {
       final sessionsRef = firestoreService.getUserChatSessions(userId);
       if (sessionsRef == null) return [];
 
-      final snapshot = await sessionsRef.orderBy('lastMessageAt', descending: true).get();
-      
+      final snapshot = await sessionsRef
+          .orderBy('lastMessageAt', descending: true)
+          .get();
+
       return snapshot.docs.map((doc) => doc.id).toList();
     } catch (e) {
       throw Exception('Failed to get user sessions from Firestore: $e');
@@ -81,7 +93,11 @@ class ChatFirestoreDataSourceImpl implements ChatFirestoreDataSource {
   }
 
   @override
-  Future<void> createSession(String userId, String sessionId, String title) async {
+  Future<void> createSession(
+    String userId,
+    String sessionId,
+    String title,
+  ) async {
     try {
       await firestoreService.getUserChatSessions(userId)?.doc(sessionId).set({
         'title': title,

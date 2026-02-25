@@ -39,16 +39,16 @@ class YouTubeVideo {
   }
 
   Map<String, dynamic> toJson() => {
-        'video_id': videoId,
-        'title': title,
-        'description': description,
-        'channel_title': channelTitle,
-        'channel_id': channelId,
-        'published_at': publishedAt,
-        'thumbnail_url': thumbnailUrl,
-        'thumbnail_medium': thumbnailMedium,
-        'cefr_level': cefrLevel,
-      };
+    'video_id': videoId,
+    'title': title,
+    'description': description,
+    'channel_title': channelTitle,
+    'channel_id': channelId,
+    'published_at': publishedAt,
+    'thumbnail_url': thumbnailUrl,
+    'thumbnail_medium': thumbnailMedium,
+    'cefr_level': cefrLevel,
+  };
 }
 
 /// YouTube Channel entity — curated learning channel.
@@ -105,7 +105,8 @@ class CaptionSegment {
   double get durationSeconds => (endMs - startMs) / 1000.0;
 
   /// Check if this segment is active at the given playback position.
-  bool isActiveAt(int positionMs) => positionMs >= startMs && positionMs < endMs;
+  bool isActiveAt(int positionMs) =>
+      positionMs >= startMs && positionMs < endMs;
 }
 
 /// Search result response from YouTube API.

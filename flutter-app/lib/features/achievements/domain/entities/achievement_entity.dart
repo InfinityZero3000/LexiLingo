@@ -150,12 +150,18 @@ class AchievementProgressEntity {
   double get progressPercentage {
     if (isUnlocked) return 100.0;
     if (achievement.conditionValue == 0) return 0.0;
-    return (currentProgress / achievement.conditionValue * 100).clamp(0.0, 100.0);
+    return (currentProgress / achievement.conditionValue * 100).clamp(
+      0.0,
+      100.0,
+    );
   }
 
   /// Remaining count to unlock
   int get remaining {
     if (isUnlocked) return 0;
-    return (achievement.conditionValue - currentProgress).clamp(0, achievement.conditionValue);
+    return (achievement.conditionValue - currentProgress).clamp(
+      0,
+      achievement.conditionValue,
+    );
   }
 }

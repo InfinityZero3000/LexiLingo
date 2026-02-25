@@ -163,10 +163,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.story.title.en,
-            style: const TextStyle(fontSize: 16),
-          ),
+          Text(widget.story.title.en, style: const TextStyle(fontSize: 16)),
           Text(
             '${widget.story.category.toUpperCase()} • ${widget.story.difficultyLevel.shortName}',
             style: TextStyle(
@@ -303,9 +300,7 @@ class _StoryContextHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor.withOpacity(0.1),
         border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
-          ),
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
@@ -378,8 +373,9 @@ class _TopicMessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           // Message bubble
           Container(
@@ -407,9 +403,7 @@ class _TopicMessageBubble extends StatelessWidget {
             ),
             child: Text(
               message.displayContent,
-              style: TextStyle(
-                color: isUser ? Colors.white : null,
-              ),
+              style: TextStyle(color: isUser ? Colors.white : null),
             ),
           ),
 
@@ -427,9 +421,9 @@ class _TopicMessageBubble extends StatelessWidget {
               child: Text(
                 '${message.llmMetadata!.provider} • ${message.llmMetadata!.latencyMs}ms',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade500,
-                      fontSize: 10,
-                    ),
+                  color: Colors.grey.shade500,
+                  fontSize: 10,
+                ),
               ),
             ),
         ],

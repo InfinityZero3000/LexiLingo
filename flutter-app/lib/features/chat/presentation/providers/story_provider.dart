@@ -50,7 +50,9 @@ class StoryProvider extends ChangeNotifier {
     }
 
     if (_filterDifficulty != null) {
-      result = result.where((s) => s.difficultyLevel == _filterDifficulty).toList();
+      result = result
+          .where((s) => s.difficultyLevel == _filterDifficulty)
+          .toList();
     }
 
     return result;
@@ -268,9 +270,6 @@ class StoryProvider extends ChangeNotifier {
   /// Check LLM health
   Future<Map<String, dynamic>?> checkLlmHealth() async {
     final result = await repository.checkLlmHealth();
-    return result.fold(
-      (failure) => null,
-      (health) => health,
-    );
+    return result.fold((failure) => null, (health) => health);
   }
 }

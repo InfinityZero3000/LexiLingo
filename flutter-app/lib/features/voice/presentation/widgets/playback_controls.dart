@@ -64,11 +64,12 @@ class PlaybackControls extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: totalDuration!.inMilliseconds > 0
                           ? (currentPosition?.inMilliseconds ?? 0) /
-                              totalDuration!.inMilliseconds
+                                totalDuration!.inMilliseconds
                           : 0,
                       backgroundColor: AppColors.grey200,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
@@ -160,9 +161,9 @@ class _SpeedButton extends StatelessWidget {
         ),
         child: Text(
           '${speed}x',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
     );

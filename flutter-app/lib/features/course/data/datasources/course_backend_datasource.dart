@@ -16,10 +16,14 @@ abstract class CourseBackendDataSource {
   });
 
   /// GET /api/v1/courses/{id} - Get course detail with roadmap
-  Future<ApiResponseEnvelope<CourseDetailModel>> getCourseDetail(String courseId);
+  Future<ApiResponseEnvelope<CourseDetailModel>> getCourseDetail(
+    String courseId,
+  );
 
   /// POST /api/v1/courses/{id}/enroll - Enroll in course
-  Future<ApiResponseEnvelope<Map<String, dynamic>>> enrollInCourse(String courseId);
+  Future<ApiResponseEnvelope<Map<String, dynamic>>> enrollInCourse(
+    String courseId,
+  );
 
   /// GET /api/v1/categories - Get all categories
   Future<ApiResponseEnvelope<List<CourseCategoryModel>>> getCategories({
@@ -44,7 +48,8 @@ abstract class CourseBackendDataSource {
 class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   final ApiClient _apiClient;
 
-  CourseBackendDataSourceImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+  CourseBackendDataSourceImpl({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   @override
   Future<PaginatedResponseEnvelope<CourseModel>> getCourses({
@@ -60,10 +65,7 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     if (language != null) queryParams['language'] = language;
     if (level != null) queryParams['level'] = level;
 
-    final uri = Uri(
-      path: '/courses',
-      queryParameters: queryParams,
-    );
+    final uri = Uri(path: '/courses', queryParameters: queryParams);
     final response = await _apiClient.get(uri.toString());
 
     return PaginatedResponseEnvelope<CourseModel>.fromJson(
@@ -74,7 +76,8 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
 
   @override
   Future<ApiResponseEnvelope<CourseDetailModel>> getCourseDetail(
-      String courseId) async {
+    String courseId,
+  ) async {
     final response = await _apiClient.get('/courses/$courseId');
 
     return ApiResponseEnvelope<CourseDetailModel>.fromJson(
@@ -85,7 +88,8 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
 
   @override
   Future<ApiResponseEnvelope<Map<String, dynamic>>> enrollInCourse(
-      String courseId) async {
+    String courseId,
+  ) async {
     final response = await _apiClient.post('/courses/$courseId/enroll');
 
     return ApiResponseEnvelope<Map<String, dynamic>>.fromJson(
@@ -98,23 +102,22 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   Future<ApiResponseEnvelope<List<CourseCategoryModel>>> getCategories({
     bool activeOnly = true,
   }) async {
-    final queryParams = <String, String>{
-      'active_only': activeOnly.toString(),
-    };
+    final queryParams = <String, String>{'active_only': activeOnly.toString()};
 
-    final uri = Uri(
-      path: '/categories',
-      queryParameters: queryParams,
-    );
+    final uri = Uri(path: '/categories', queryParameters: queryParams);
     final response = await _apiClient.get(uri.toString());
 
-    return ApiResponseEnvelope<List<CourseCategoryModel>>.fromJson(
-      response,
-      (data) {
-        final list = data as List;
-        return list.map((json) => CourseCategoryModel.fromJson(json as Map<String, dynamic>)).toList();
-      },
-    );
+    return ApiResponseEnvelope<List<CourseCategoryModel>>.fromJson(response, (
+      data,
+    ) {
+      final list = data as List;
+      return list
+          .map(
+            (json) =>
+                CourseCategoryModel.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
+    });
   }
 
   @override
@@ -150,10 +153,7 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
       'page_size': pageSize.toString(),
     };
 
-    final uri = Uri(
-      path: '/courses/enrolled',
-      queryParameters: queryParams,
-    );
+    final uri = Uri(path: '/courses/enrolled', queryParameters: queryParams);
     final response = await _apiClient.get(uri.toString());
 
     return PaginatedResponseEnvelope<CourseModel>.fromJson(

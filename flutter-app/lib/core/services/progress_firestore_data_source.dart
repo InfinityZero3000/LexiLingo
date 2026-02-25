@@ -21,15 +21,19 @@ class ProgressFirestoreDataSourceImpl implements ProgressFirestoreDataSource {
   Future<void> syncDailyGoal(String userId, DailyGoal goal) async {
     try {
       final dateStr = _formatDate(goal.date);
-      await firestoreService.getUserDocument(userId)?.collection('dailyGoals').doc(dateStr).set({
-        'date': dateStr,
-        'targetXP': goal.targetXP,
-        'earnedXP': goal.earnedXP,
-        'lessonsCompleted': goal.lessonsCompleted,
-        'wordsLearned': goal.wordsLearned,
-        'minutesSpent': goal.minutesSpent,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await firestoreService
+          .getUserDocument(userId)
+          ?.collection('dailyGoals')
+          .doc(dateStr)
+          .set({
+            'date': dateStr,
+            'targetXP': goal.targetXP,
+            'earnedXP': goal.earnedXP,
+            'lessonsCompleted': goal.lessonsCompleted,
+            'wordsLearned': goal.wordsLearned,
+            'minutesSpent': goal.minutesSpent,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to sync daily goal to Firestore: $e');
     }
@@ -44,15 +48,11 @@ class ProgressFirestoreDataSourceImpl implements ProgressFirestoreDataSource {
           ?.collection('dailyGoals')
           .doc(dateStr)
           .get();
-      
+
       if (doc == null || !doc.exists) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
-      return DailyGoalModel.fromJson({
-        ...data,
-        'id': 0,
-        'userId': userId,
-      });
+      return DailyGoalModel.fromJson({...data, 'id': 0, 'userId': userId});
     } catch (e) {
       throw Exception('Failed to get daily goal from Firestore: $e');
     }

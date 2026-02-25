@@ -5,11 +5,8 @@ import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_
 /// Displays the top 3 users on a podium
 class LeaderboardPodium extends StatelessWidget {
   final List<LeaderboardEntryEntity> topThree;
-  
-  const LeaderboardPodium({
-    super.key,
-    required this.topThree,
-  });
+
+  const LeaderboardPodium({super.key, required this.topThree});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +34,7 @@ class LeaderboardPodium extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          
+
           // 1st Place
           Expanded(
             child: _buildPodiumItem(
@@ -51,7 +48,7 @@ class LeaderboardPodium extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          
+
           // 3rd Place
           Expanded(
             child: _buildPodiumItem(
@@ -90,7 +87,7 @@ class LeaderboardPodium extends StatelessWidget {
               size: 28,
             ),
           ),
-        
+
         // Avatar with medal
         Stack(
           alignment: Alignment.center,
@@ -102,12 +99,11 @@ class LeaderboardPodium extends StatelessWidget {
               height: rank == 1 ? 60 : 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: color,
-                  width: 3,
-                ),
+                border: Border.all(color: color, width: 3),
                 color: entry != null
-                    ? (entry.isCurrentUser ? const Color(0xFF137FEC).withValues(alpha: 0.2) : Colors.grey[200])
+                    ? (entry.isCurrentUser
+                          ? const Color(0xFF137FEC).withValues(alpha: 0.2)
+                          : Colors.grey[200])
                     : Colors.grey[200],
                 boxShadow: [
                   BoxShadow(
@@ -119,21 +115,22 @@ class LeaderboardPodium extends StatelessWidget {
               ),
               child: entry != null
                   ? (entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                      ? ClipOval(
-                          child: Image.network(
-                            entry.avatarUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildInitialAvatar(entry),
-                          ),
-                        )
-                      : _buildInitialAvatar(entry))
+                        ? ClipOval(
+                            child: Image.network(
+                              entry.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildInitialAvatar(entry),
+                            ),
+                          )
+                        : _buildInitialAvatar(entry))
                   : Icon(
                       Icons.person_outline,
                       color: Colors.grey[400],
                       size: 24,
                     ),
             ),
-            
+
             // Medal badge
             Positioned(
               bottom: -8,
@@ -165,21 +162,25 @@ class LeaderboardPodium extends StatelessWidget {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Username
         Text(
           entry?.displayName ?? '---',
           style: TextStyle(
             fontSize: 12,
-            fontWeight: entry?.isCurrentUser == true ? FontWeight.bold : FontWeight.w500,
-            color: entry?.isCurrentUser == true ? const Color(0xFF137FEC) : Colors.grey[800],
+            fontWeight: entry?.isCurrentUser == true
+                ? FontWeight.bold
+                : FontWeight.w500,
+            color: entry?.isCurrentUser == true
+                ? const Color(0xFF137FEC)
+                : Colors.grey[800],
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         // XP
         if (entry != null)
           Text(
@@ -190,24 +191,19 @@ class LeaderboardPodium extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Podium
         Container(
           height: podiumHeight,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                color,
-                color.withValues(alpha: 0.7),
-              ],
+              colors: [color, color.withValues(alpha: 0.7)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(8),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: 0.3),
@@ -237,7 +233,9 @@ class LeaderboardPodium extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? const Color(0xFF137FEC) : Colors.grey[600],
+          color: entry.isCurrentUser
+              ? const Color(0xFF137FEC)
+              : Colors.grey[600],
         ),
       ),
     );
@@ -273,11 +271,7 @@ class LeaderboardEntryRow extends StatelessWidget {
   final LeaderboardEntryEntity entry;
   final VoidCallback? onTap;
 
-  const LeaderboardEntryRow({
-    super.key,
-    required this.entry,
-    this.onTap,
-  });
+  const LeaderboardEntryRow({super.key, required this.entry, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -290,9 +284,7 @@ class LeaderboardEntryRow extends StatelessWidget {
               ? const Color(0xFF137FEC).withValues(alpha: 0.1)
               : Colors.transparent,
           border: Border(
-            bottom: BorderSide(
-              color: Colors.grey.withValues(alpha: 0.1),
-            ),
+            bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
           ),
         ),
         child: Row(
@@ -309,7 +301,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Avatar
             Container(
               width: 40,
@@ -334,7 +326,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                   : _buildInitial(),
             ),
             const SizedBox(width: 12),
-            
+
             // Name
             Expanded(
               child: Column(
@@ -383,15 +375,12 @@ class LeaderboardEntryRow extends StatelessWidget {
                   ),
                   Text(
                     '@${entry.username}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                   ),
                 ],
               ),
             ),
-            
+
             // XP
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -406,10 +395,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                 ),
                 Text(
                   'XP',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[500]),
                 ),
               ],
             ),
@@ -428,7 +414,9 @@ class LeaderboardEntryRow extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? const Color(0xFF137FEC) : Colors.grey[600],
+          color: entry.isCurrentUser
+              ? const Color(0xFF137FEC)
+              : Colors.grey[600],
         ),
       ),
     );

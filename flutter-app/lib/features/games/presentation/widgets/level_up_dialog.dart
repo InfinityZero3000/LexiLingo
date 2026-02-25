@@ -43,8 +43,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
   void initState() {
     super.initState();
 
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
 
     _scaleController = AnimationController(
       vsync: this,
@@ -121,7 +122,11 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 36),
+                    child: const Icon(
+                      Icons.emoji_events_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -157,7 +162,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accentYellow.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -165,7 +172,11 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.bolt_rounded, color: Color(0xFFF57C00), size: 20),
+                        const Icon(
+                          Icons.bolt_rounded,
+                          color: Color(0xFFF57C00),
+                          size: 20,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           '+${widget.xpAwarded} XP earned',

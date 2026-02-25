@@ -5,11 +5,7 @@ class MessageModel extends Message {
     required String content,
     required bool isUser,
     required DateTime timestamp,
-  }) : super(
-          content: content,
-          isUser: isUser,
-          timestamp: timestamp,
-        );
+  }) : super(content: content, isUser: isUser, timestamp: timestamp);
 
   // Convert from JSON to Model
   factory MessageModel.fromJson(Map<String, dynamic> json) {

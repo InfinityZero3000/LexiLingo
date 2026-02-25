@@ -132,8 +132,9 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
     try {
       final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
       return jsonList
-          .map((item) =>
-              NotificationModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => NotificationModel.fromJson(item as Map<String, dynamic>),
+          )
           .map((model) => model.toEntity())
           .toList()
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -149,8 +150,9 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
     // Limit to max notifications
     final limitedList = notifications.take(_maxNotifications).toList();
 
-    final models =
-        limitedList.map((e) => NotificationModel.fromEntity(e)).toList();
+    final models = limitedList
+        .map((e) => NotificationModel.fromEntity(e))
+        .toList();
     final jsonList = models.map((m) => m.toJson()).toList();
     final jsonString = json.encode(jsonList);
 
@@ -181,8 +183,9 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
   @override
   Future<void> markAllAsRead() async {
     final notifications = await getNotifications();
-    final updatedNotifications =
-        notifications.map((n) => n.markAsRead()).toList();
+    final updatedNotifications = notifications
+        .map((n) => n.markAsRead())
+        .toList();
     await saveNotifications(updatedNotifications);
   }
 

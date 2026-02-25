@@ -3,7 +3,7 @@ import '../../utils/app_logger.dart';
 
 /// Speech-to-Text service interface
 /// Implementation should use Faster-Whisper v3 for optimal performance
-/// 
+///
 /// Architecture specs:
 /// - Model: openai/whisper-small (244MB)
 /// - Backend: CTranslate2 optimization
@@ -15,11 +15,11 @@ abstract class STTService {
   Future<void> initialize();
 
   /// Transcribe audio bytes to text
-  /// 
+  ///
   /// [audioBytes] - Raw audio data (WAV format, 16kHz recommended)
   /// [language] - Target language code (default: 'en')
   /// [withTimestamps] - Include word-level timestamps for pronunciation alignment
-  /// 
+  ///
   /// Returns [TranscriptionResult] with text and optional timestamps
   Future<TranscriptionResult> transcribe({
     required Uint8List audioBytes,
@@ -133,33 +133,58 @@ class MockSTTService implements STTService {
 
     // Mock transcription result
     final mockText = 'I am go to the kitchen for coffee';
-    final processingTime =
-        DateTime.now().difference(startTime).inMilliseconds;
+    final processingTime = DateTime.now().difference(startTime).inMilliseconds;
 
     final wordTimestamps = withTimestamps
         ? [
             const WordTimestamp(
-                word: 'I', startTime: 0.0, endTime: 0.2, confidence: 0.95),
+              word: 'I',
+              startTime: 0.0,
+              endTime: 0.2,
+              confidence: 0.95,
+            ),
             const WordTimestamp(
-                word: 'am', startTime: 0.2, endTime: 0.4, confidence: 0.92),
+              word: 'am',
+              startTime: 0.2,
+              endTime: 0.4,
+              confidence: 0.92,
+            ),
             const WordTimestamp(
-                word: 'go', startTime: 0.4, endTime: 0.6, confidence: 0.88),
+              word: 'go',
+              startTime: 0.4,
+              endTime: 0.6,
+              confidence: 0.88,
+            ),
             const WordTimestamp(
-                word: 'to', startTime: 0.6, endTime: 0.75, confidence: 0.94),
+              word: 'to',
+              startTime: 0.6,
+              endTime: 0.75,
+              confidence: 0.94,
+            ),
             const WordTimestamp(
-                word: 'the', startTime: 0.75, endTime: 0.9, confidence: 0.96),
+              word: 'the',
+              startTime: 0.75,
+              endTime: 0.9,
+              confidence: 0.96,
+            ),
             const WordTimestamp(
-                word: 'kitchen',
-                startTime: 0.9,
-                endTime: 1.3,
-                confidence: 0.93),
+              word: 'kitchen',
+              startTime: 0.9,
+              endTime: 1.3,
+              confidence: 0.93,
+            ),
             const WordTimestamp(
-                word: 'for', startTime: 1.3, endTime: 1.5, confidence: 0.91),
+              word: 'for',
+              startTime: 1.3,
+              endTime: 1.5,
+              confidence: 0.91,
+            ),
             const WordTimestamp(
-                word: 'coffee',
-                startTime: 1.5,
-                endTime: 2.0,
-                confidence: 0.94),
+              word: 'coffee',
+              startTime: 1.5,
+              endTime: 2.0,
+              confidence: 0.94,
+            ),
           ]
         : null;
 
@@ -187,11 +212,11 @@ class MockSTTService implements STTService {
 
   @override
   ModelInfo get modelInfo => const ModelInfo(
-        name: 'Faster-Whisper v3 (Mock)',
-        version: '3.0.0',
-        sizeInMB: 244,
-        supportedLanguages: ['en', 'vi', 'es', 'fr', 'de', 'it', 'pt', 'ru'],
-      );
+    name: 'Faster-Whisper v3 (Mock)',
+    version: '3.0.0',
+    sizeInMB: 244,
+    supportedLanguages: ['en', 'vi', 'es', 'fr', 'de', 'it', 'pt', 'ru'],
+  );
 
   @override
   Future<void> dispose() async {

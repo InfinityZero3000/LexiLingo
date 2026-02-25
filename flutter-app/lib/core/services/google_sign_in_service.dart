@@ -10,33 +10,30 @@ const _tag = 'GoogleSignInService';
 class GoogleSignInService {
   final GoogleSignIn _googleSignIn;
 
-  GoogleSignInService({
-    GoogleSignIn? googleSignIn,
-  }) : _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              scopes: [
-                'email',
-                'profile',
-              ],
-              // Note: serverClientId is only for Android/iOS, not for Web
-              // Web uses clientId from firebase config automatically
-              serverClientId: kIsWeb
-                  ? null
-                  : dotenv.env['GOOGLE_SERVER_CLIENT_ID'],
-            );
+  GoogleSignInService({GoogleSignIn? googleSignIn})
+    : _googleSignIn =
+          googleSignIn ??
+          GoogleSignIn(
+            scopes: ['email', 'profile'],
+            // Note: serverClientId is only for Android/iOS, not for Web
+            // Web uses clientId from firebase config automatically
+            serverClientId: kIsWeb
+                ? null
+                : dotenv.env['GOOGLE_SERVER_CLIENT_ID'],
+          );
 
   /// Sign in with Google and return ID token
   /// Returns null if sign in was cancelled or failed
   Future<String?> signIn() async {
     try {
       logInfo(_tag, 'Starting Google Sign In...');
-      
+
       // Sign out first to ensure account picker is shown
       await _googleSignIn.signOut();
-      
+
       // Trigger the authentication flow
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
-      
+
       if (account == null) {
         logWarn(_tag, 'Google Sign In cancelled by user');
         return null;

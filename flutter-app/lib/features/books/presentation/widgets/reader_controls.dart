@@ -59,7 +59,9 @@ class ReaderControls extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: settings.fontSize > 14
-                    ? () => onChanged(settings.copyWith(fontSize: settings.fontSize - 1))
+                    ? () => onChanged(
+                        settings.copyWith(fontSize: settings.fontSize - 1),
+                      )
                     : null,
                 icon: const Icon(Icons.text_decrease_rounded),
                 color: AppColors.primary,
@@ -68,7 +70,9 @@ class ReaderControls extends StatelessWidget {
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 8,
+                    ),
                   ),
                   child: Slider(
                     value: settings.fontSize,
@@ -83,7 +87,9 @@ class ReaderControls extends StatelessWidget {
               ),
               IconButton(
                 onPressed: settings.fontSize < 28
-                    ? () => onChanged(settings.copyWith(fontSize: settings.fontSize + 1))
+                    ? () => onChanged(
+                        settings.copyWith(fontSize: settings.fontSize + 1),
+                      )
                     : null,
                 icon: const Icon(Icons.text_increase_rounded),
                 color: AppColors.primary,
@@ -105,12 +111,27 @@ class ReaderControls extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _themeChip(context, ReaderTheme.light, 'Light',
-                  const Color(0xFFF8F5EE), Colors.black87),
-              _themeChip(context, ReaderTheme.sepia, 'Sepia',
-                  const Color(0xFFF4ECD8), const Color(0xFF4B3B2A)),
-              _themeChip(context, ReaderTheme.dark, 'Dark',
-                  const Color(0xFF1A1A2E), Colors.white),
+              _themeChip(
+                context,
+                ReaderTheme.light,
+                'Light',
+                const Color(0xFFF8F5EE),
+                Colors.black87,
+              ),
+              _themeChip(
+                context,
+                ReaderTheme.sepia,
+                'Sepia',
+                const Color(0xFFF4ECD8),
+                const Color(0xFF4B3B2A),
+              ),
+              _themeChip(
+                context,
+                ReaderTheme.dark,
+                'Dark',
+                const Color(0xFF1A1A2E),
+                Colors.white,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -123,7 +144,9 @@ class ReaderControls extends StatelessWidget {
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 8,
+                    ),
                   ),
                   child: Slider(
                     value: settings.lineSpacing,
@@ -132,7 +155,8 @@ class ReaderControls extends StatelessWidget {
                     divisions: 4,
                     activeColor: AppColors.primary,
                     inactiveColor: AppColors.primary.withValues(alpha: 0.2),
-                    onChanged: (v) => onChanged(settings.copyWith(lineSpacing: v)),
+                    onChanged: (v) =>
+                        onChanged(settings.copyWith(lineSpacing: v)),
                   ),
                 ),
               ),
@@ -152,13 +176,13 @@ class ReaderControls extends StatelessWidget {
   }
 
   Widget _sectionLabel(String label, ReaderTheme theme) => Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: _textColor(theme).withValues(alpha: 0.6),
-        ),
-      );
+    label,
+    style: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: _textColor(theme).withValues(alpha: 0.6),
+    ),
+  );
 
   Widget _themeChip(
     BuildContext context,

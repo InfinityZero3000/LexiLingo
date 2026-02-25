@@ -36,10 +36,7 @@ class _PulseAnimationState extends State<PulseAnimation>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
     if (widget.enabled) {
       _controller.repeat();
     }
@@ -95,18 +92,18 @@ class _PulsePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final baseRadius = math.min(size.width, size.height) / 2;
-    
+
     // Draw multiple expanding rings
     for (int i = 0; i < 3; i++) {
       final ringProgress = (progress + i * 0.33) % 1.0;
       final radius = baseRadius + (maxRadius * ringProgress);
       final opacity = (1.0 - ringProgress) * 0.5;
-      
+
       final paint = Paint()
         ..color = color.withOpacity(opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0 * (1.0 - ringProgress);
-      
+
       canvas.drawCircle(center, radius, paint);
     }
   }
@@ -146,10 +143,8 @@ class _ShimmerEffectState extends State<ShimmerEffect>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat();
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat();
   }
 
   @override
@@ -219,10 +214,8 @@ class _WaveAnimationState extends State<WaveAnimation>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat();
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat();
   }
 
   @override
@@ -266,23 +259,24 @@ class _WavePainter extends CustomPainter {
       final opacity = 0.3 - (i * 0.08);
       final amplitude = size.height * (0.3 - i * 0.05);
       final phaseShift = progress * 2 * math.pi + (i * math.pi / 3);
-      
+
       final paint = Paint()
         ..color = color.withOpacity(opacity.clamp(0.1, 0.3))
         ..style = PaintingStyle.fill;
-      
+
       final path = Path();
       path.moveTo(0, size.height);
-      
+
       for (double x = 0; x <= size.width; x++) {
-        final y = size.height * 0.5 +
+        final y =
+            size.height * 0.5 +
             amplitude * math.sin((x / size.width * 2 * math.pi) + phaseShift);
         path.lineTo(x, y);
       }
-      
+
       path.lineTo(size.width, size.height);
       path.close();
-      
+
       canvas.drawPath(path, paint);
     }
   }
@@ -325,7 +319,7 @@ class _FloatingParticlesState extends State<FloatingParticles>
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
-    
+
     _particles = List.generate(
       widget.particleCount,
       (_) => _Particle.random(widget.maxSize),
@@ -399,11 +393,11 @@ class _ParticlesPainter extends CustomPainter {
     for (final particle in particles) {
       final x = particle.x * size.width;
       final y = ((particle.y + progress * particle.speed) % 1.0) * size.height;
-      
+
       final paint = Paint()
         ..color = color.withOpacity(particle.opacity)
         ..style = PaintingStyle.fill;
-      
+
       canvas.drawCircle(Offset(x, y), particle.size, paint);
     }
   }
@@ -451,10 +445,7 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
     _updateAnimation();
   }
 
@@ -471,10 +462,7 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
     _animation = Tween<double>(
       begin: _previousProgress,
       end: widget.progress,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward(from: 0);
   }
 
@@ -524,23 +512,23 @@ class _ProgressRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
-    
+
     // Background circle
     final bgPaint = Paint()
       ..color = backgroundColor.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawCircle(center, radius, bgPaint);
-    
+
     // Progress arc
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-    
+
     final sweepAngle = 2 * math.pi * progress;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -642,14 +630,16 @@ class _RipplePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final maxRadius = math.sqrt(size.width * size.width + size.height * size.height);
+    final maxRadius = math.sqrt(
+      size.width * size.width + size.height * size.height,
+    );
     final radius = maxRadius * progress;
     final opacity = (1.0 - progress) * 0.3;
-    
+
     final paint = Paint()
       ..color = color.withOpacity(opacity)
       ..style = PaintingStyle.fill;
-    
+
     canvas.drawCircle(center, radius, paint);
   }
 
@@ -688,10 +678,8 @@ class _BreathingGlowState extends State<BreathingGlow>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat(reverse: true);
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat(reverse: true);
   }
 
   @override
@@ -710,7 +698,9 @@ class _BreathingGlowState extends State<BreathingGlow>
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withOpacity(0.3 + 0.3 * _controller.value),
+                color: widget.glowColor.withOpacity(
+                  0.3 + 0.3 * _controller.value,
+                ),
                 blurRadius: blur,
                 spreadRadius: blur / 4,
               ),
@@ -805,14 +795,14 @@ class _TypingIndicatorPainter extends CustomPainter {
       final delay = i * 0.2;
       final animProgress = ((progress - delay) % 1.0).clamp(0.0, 1.0);
       final bounce = math.sin(animProgress * math.pi);
-      
+
       final x = dotSize / 2 + i * (dotSize + spacing);
       final y = size.height / 2 - bounce * dotSize / 2;
-      
+
       final paint = Paint()
         ..color = color.withOpacity(0.4 + 0.6 * bounce)
         ..style = PaintingStyle.fill;
-      
+
       canvas.drawCircle(Offset(x, y), dotSize / 2, paint);
     }
   }
@@ -854,10 +844,8 @@ class _AnimatedGradientBorderState extends State<AnimatedGradientBorder>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat();
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat();
   }
 
   @override
@@ -910,22 +898,19 @@ class _GradientBorderPainter extends CustomPainter {
       size.width - borderWidth,
       size.height - borderWidth,
     );
-    
-    final rrect = RRect.fromRectAndRadius(
-      rect,
-      Radius.circular(borderRadius),
-    );
-    
+
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+
     final gradient = SweepGradient(
       startAngle: progress * 2 * math.pi,
       colors: colors,
     );
-    
+
     final paint = Paint()
       ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderWidth;
-    
+
     canvas.drawRRect(rrect, paint);
   }
 
@@ -964,11 +949,8 @@ class _AnimatedCheckmarkState extends State<AnimatedCheckmark>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
-    
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+
     _controller.forward().then((_) {
       widget.onComplete?.call();
     });
@@ -1001,30 +983,27 @@ class _CheckmarkPainter extends CustomPainter {
   final double progress;
   final Color color;
 
-  _CheckmarkPainter({
-    required this.progress,
-    required this.color,
-  });
+  _CheckmarkPainter({required this.progress, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 4;
-    
+
     // Circle background
     final circleProgress = (progress * 2).clamp(0.0, 1.0);
     final circlePaint = Paint()
       ..color = color.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius * circleProgress, circlePaint);
-    
+
     // Circle border
     final borderPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
@@ -1032,7 +1011,7 @@ class _CheckmarkPainter extends CustomPainter {
       false,
       borderPaint,
     );
-    
+
     // Checkmark
     if (progress > 0.5) {
       final checkProgress = ((progress - 0.5) * 2).clamp(0.0, 1.0);
@@ -1042,7 +1021,7 @@ class _CheckmarkPainter extends CustomPainter {
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
-      
+
       final path = Path();
       final startX = size.width * 0.28;
       final startY = size.height * 0.52;
@@ -1050,24 +1029,18 @@ class _CheckmarkPainter extends CustomPainter {
       final midY = size.height * 0.68;
       final endX = size.width * 0.75;
       final endY = size.height * 0.35;
-      
+
       path.moveTo(startX, startY);
-      
+
       if (checkProgress <= 0.5) {
         final p = checkProgress * 2;
-        path.lineTo(
-          startX + (midX - startX) * p,
-          startY + (midY - startY) * p,
-        );
+        path.lineTo(startX + (midX - startX) * p, startY + (midY - startY) * p);
       } else {
         path.lineTo(midX, midY);
         final p = (checkProgress - 0.5) * 2;
-        path.lineTo(
-          midX + (endX - midX) * p,
-          midY + (endY - midY) * p,
-        );
+        path.lineTo(midX + (endX - midX) * p, midY + (endY - midY) * p);
       }
-      
+
       canvas.drawPath(path, checkPaint);
     }
   }

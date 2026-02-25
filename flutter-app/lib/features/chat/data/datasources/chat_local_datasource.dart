@@ -146,8 +146,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         whereArgs: [sessionId],
       );
     } catch (e) {
-      throw CacheException(
-          'Failed to update session last message time: $e');
+      throw CacheException('Failed to update session last message time: $e');
     }
   }
 
@@ -164,10 +163,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       );
 
       // Update session's last_message_at
-      await updateSessionLastMessageTime(
-        message.sessionId,
-        message.timestamp,
-      );
+      await updateSessionLastMessageTime(message.sessionId, message.timestamp);
 
       return message;
     } catch (e) {
@@ -204,10 +200,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       final db = await databaseHelper.database;
       await db.update(
         'chat_messages',
-        {
-          'status': status.toShortString(),
-          'error': error,
-        },
+        {'status': status.toShortString(), 'error': error},
         where: 'id = ?',
         whereArgs: [messageId],
       );
@@ -220,11 +213,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<void> deleteMessage(String messageId) async {
     try {
       final db = await databaseHelper.database;
-      await db.delete(
-        'chat_messages',
-        where: 'id = ?',
-        whereArgs: [messageId],
-      );
+      await db.delete('chat_messages', where: 'id = ?', whereArgs: [messageId]);
     } catch (e) {
       throw CacheException('Failed to delete message: $e');
     }

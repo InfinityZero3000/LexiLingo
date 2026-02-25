@@ -6,10 +6,7 @@ import 'package:flutter/material.dart';
 class AuthGradientBackground extends StatefulWidget {
   final Widget child;
 
-  const AuthGradientBackground({
-    super.key,
-    required this.child,
-  });
+  const AuthGradientBackground({super.key, required this.child});
 
   @override
   State<AuthGradientBackground> createState() => _AuthGradientBackgroundState();
@@ -79,9 +76,15 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
       final speed = 0.5 + random.nextDouble() * 0.5;
 
       return Positioned(
-        left: (startX + math.sin((_controller.value * speed + index) * 2 * math.pi) * 0.1) *
+        left:
+            (startX +
+                math.sin((_controller.value * speed + index) * 2 * math.pi) *
+                    0.1) *
             MediaQuery.of(context).size.width,
-        top: (startY + math.cos((_controller.value * speed + index) * 2 * math.pi) * 0.1) *
+        top:
+            (startY +
+                math.cos((_controller.value * speed + index) * 2 * math.pi) *
+                    0.1) *
             MediaQuery.of(context).size.height,
         child: Container(
           width: size,
@@ -121,51 +124,38 @@ class AuthPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
   final String? heroTag;
 
-  AuthPageRoute({
-    required this.page,
-    this.heroTag,
-  }) : super(
-          pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Fade + Scale transition
-            final fadeAnimation = Tween<double>(
-              begin: 0.0,
-              end: 1.0,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ));
+  AuthPageRoute({required this.page, this.heroTag})
+    : super(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Fade + Scale transition
+          final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          );
 
-            final scaleAnimation = Tween<double>(
-              begin: 0.9,
-              end: 1.0,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ));
+          final scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          );
 
-            final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.0, 0.1),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ));
+          final slideAnimation =
+              Tween<Offset>(
+                begin: const Offset(0.0, 0.1),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              );
 
-            return FadeTransition(
-              opacity: fadeAnimation,
-              child: ScaleTransition(
-                scale: scaleAnimation,
-                child: SlideTransition(
-                  position: slideAnimation,
-                  child: child,
-                ),
-              ),
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 400),
-        );
+          return FadeTransition(
+            opacity: fadeAnimation,
+            child: ScaleTransition(
+              scale: scaleAnimation,
+              child: SlideTransition(position: slideAnimation, child: child),
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 600),
+        reverseTransitionDuration: const Duration(milliseconds: 400),
+      );
 }
 
 /// Glassmorphism card for auth forms

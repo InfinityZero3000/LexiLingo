@@ -11,11 +11,8 @@ class CourseDetailScreen extends StatefulWidget {
   final String courseId;
   final String? heroTag;
 
-  const CourseDetailScreen({
-    Key? key,
-    required this.courseId,
-    this.heroTag,
-  }) : super(key: key);
+  const CourseDetailScreen({Key? key, required this.courseId, this.heroTag})
+    : super(key: key);
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -119,10 +116,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             icon: Icons.language,
                             label: course.language,
                           ),
-                          _StatChip(
-                            icon: Icons.bar_chart,
-                            label: course.level,
-                          ),
+                          _StatChip(icon: Icons.bar_chart, label: course.level),
                           _StatChip(
                             icon: Icons.star,
                             label: '${course.totalXp} XP',
@@ -206,12 +200,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation(
+                                        Colors.white,
+                                      ),
                                     ),
                                   )
                                 : const Icon(Icons.play_arrow),
                             label: Text(
-                              provider.isEnrolling ? 'Enrolling...' : 'Start Learning',
+                              provider.isEnrolling
+                                  ? 'Enrolling...'
+                                  : 'Start Learning',
                             ),
                             onPressed: provider.isEnrolling
                                 ? null
@@ -242,23 +240,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
               // Units List
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final unit = course.units[index];
-                    return _UnitCard(
-                      unit: unit,
-                      unitNumber: index + 1,
-                      courseId: course.id,
-                    );
-                  },
-                  childCount: course.units.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final unit = course.units[index];
+                  return _UnitCard(
+                    unit: unit,
+                    unitNumber: index + 1,
+                    courseId: course.id,
+                  );
+                }, childCount: course.units.length),
               ),
 
               // Bottom Padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           );
         },
@@ -266,9 +259,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
-  Future<void> _enrollInCourse(BuildContext context, CourseProvider provider) async {
+  Future<void> _enrollInCourse(
+    BuildContext context,
+    CourseProvider provider,
+  ) async {
     provider.clearEnrollmentMessages();
-    
+
     final success = await provider.enrollInCourse(widget.courseId);
 
     if (!mounted) return;
@@ -290,7 +286,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
   }
 
-  Widget _buildCourseBackground(BuildContext context, CourseDetailEntity course) {
+  Widget _buildCourseBackground(
+    BuildContext context,
+    CourseDetailEntity course,
+  ) {
     if (course.thumbnailUrl != null) {
       return Stack(
         fit: StackFit.expand,
@@ -332,18 +331,12 @@ class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _StatChip({
-    Key? key,
-    required this.icon,
-    required this.label,
-  }) : super(key: key);
+  const _StatChip({Key? key, required this.icon, required this.label})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-    );
+    return Chip(avatar: Icon(icon, size: 18), label: Text(label));
   }
 }
 
@@ -387,10 +380,7 @@ class _UnitCard extends StatelessWidget {
               )
             : null,
         children: unit.lessons.map((lesson) {
-          return _LessonTile(
-            lesson: lesson,
-            courseId: courseId,
-          );
+          return _LessonTile(lesson: lesson, courseId: courseId);
         }).toList(),
       ),
     );
@@ -413,11 +403,8 @@ class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
   final String courseId;
 
-  const _LessonTile({
-    Key? key,
-    required this.lesson,
-    required this.courseId,
-  }) : super(key: key);
+  const _LessonTile({Key? key, required this.lesson, required this.courseId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {

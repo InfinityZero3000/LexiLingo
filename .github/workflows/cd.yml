@@ -26,7 +26,6 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.x"
           channel: stable
           cache: true
 
@@ -34,11 +33,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter web (release)
-        run: |
-          flutter build web \
-            --release \
-            --web-renderer canvaskit \
-            --no-pub
+        run: flutter build web --release --no-pub
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25

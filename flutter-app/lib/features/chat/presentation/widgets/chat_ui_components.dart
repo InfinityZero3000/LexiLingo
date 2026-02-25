@@ -48,9 +48,10 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _focusAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _focusController, curve: Curves.easeOut),
-    );
+    _focusAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _focusController, curve: Curves.easeOut));
     widget.controller.addListener(_onTextChanged);
   }
 
@@ -92,20 +93,28 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withValues(alpha: 0.08 + _focusAnimation.value * 0.04),
-                      Colors.white.withValues(alpha: 0.04 + _focusAnimation.value * 0.02),
+                      Colors.white.withValues(
+                        alpha: 0.08 + _focusAnimation.value * 0.04,
+                      ),
+                      Colors.white.withValues(
+                        alpha: 0.04 + _focusAnimation.value * 0.02,
+                      ),
                     ]
                   : [
-                      Colors.white.withValues(alpha: 0.7 + _focusAnimation.value * 0.2),
-                      Colors.white.withValues(alpha: 0.5 + _focusAnimation.value * 0.2),
+                      Colors.white.withValues(
+                        alpha: 0.7 + _focusAnimation.value * 0.2,
+                      ),
+                      Colors.white.withValues(
+                        alpha: 0.5 + _focusAnimation.value * 0.2,
+                      ),
                     ],
             ),
             border: Border.all(
               color: _isFocused
                   ? AppColors.primary.withValues(alpha: 0.5)
-                  : (isDark 
-                      ? Colors.white.withValues(alpha: 0.1) 
-                      : Colors.grey.withValues(alpha: 0.2)),
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey.withValues(alpha: 0.2)),
               width: 1.5,
             ),
             boxShadow: [
@@ -135,7 +144,7 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                           color: isDark ? Colors.white60 : AppColors.textGrey,
                         ),
                       ),
-                    
+
                     // Text input
                     Expanded(
                       child: Focus(
@@ -152,8 +161,8 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                           decoration: InputDecoration(
                             hintText: widget.hintText,
                             hintStyle: TextStyle(
-                              color: isDark 
-                                  ? Colors.white38 
+                              color: isDark
+                                  ? Colors.white38
                                   : AppColors.textGrey.withValues(alpha: 0.7),
                               fontSize: 15,
                             ),
@@ -167,7 +176,7 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                         ),
                       ),
                     ),
-                    
+
                     // Voice button (optional)
                     if (widget.showVoiceButton && !_hasText)
                       GestureDetector(
@@ -187,11 +196,13 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                             widget.isRecording ? Icons.mic : Icons.mic_none,
                             color: widget.isRecording
                                 ? Colors.red
-                                : (isDark ? Colors.white60 : AppColors.textGrey),
+                                : (isDark
+                                      ? Colors.white60
+                                      : AppColors.textGrey),
                           ),
                         ),
                       ),
-                    
+
                     // Send button
                     AnimatedOpacity(
                       opacity: _hasText ? 1.0 : 0.5,
@@ -215,7 +226,9 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                             boxShadow: _hasText
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 12,
                                       offset: const Offset(0, 4),
                                     ),
@@ -417,13 +430,7 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
 }
 
 /// AI Mood enum
-enum AIMood {
-  neutral,
-  happy,
-  thinking,
-  excited,
-  helpful,
-}
+enum AIMood { neutral, happy, thinking, excited, helpful }
 
 /// Topic Chip for conversation starters
 class TopicChip extends StatelessWidget {
@@ -464,8 +471,8 @@ class TopicChip extends StatelessWidget {
             color: isSelected
                 ? null
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.grey.withValues(alpha: 0.1)),
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.grey.withValues(alpha: 0.1)),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected
@@ -544,11 +551,7 @@ class TopicData {
   final IconData icon;
   final Color? color;
 
-  const TopicData({
-    required this.label,
-    required this.icon,
-    this.color,
-  });
+  const TopicData({required this.label, required this.icon, this.color});
 }
 
 /// Default conversation topics

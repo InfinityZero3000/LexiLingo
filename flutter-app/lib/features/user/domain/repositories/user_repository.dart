@@ -17,7 +17,7 @@ abstract class UserRepository {
     int? totalWordsLearned,
   });
   Future<void> updateLastLogin(String userId);
-  
+
   // New methods for stats API
   Future<Either<Failure, UserStatsEntity>> getUserStats();
   Future<Either<Failure, List<WeeklyActivityEntity>>> getWeeklyActivity();

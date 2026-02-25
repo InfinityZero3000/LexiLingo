@@ -39,9 +39,7 @@ class EpisodeTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.04)
-              : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             if (!isDark)
@@ -108,23 +106,21 @@ class EpisodeTile extends StatelessWidget {
                           _MetaChip(
                             icon: Icons.schedule_rounded,
                             label: _formatDuration(totalSeconds),
-                            color: isDark
-                                ? Colors.white54
-                                : AppColors.textGrey,
+                            color: isDark ? Colors.white54 : AppColors.textGrey,
                           ),
                           // Published date
                           _MetaChip(
                             icon: Icons.calendar_today_rounded,
                             label: _relativeDate(episode.publishedAt),
-                            color: isDark
-                                ? Colors.white54
-                                : AppColors.textGrey,
+                            color: isDark ? Colors.white54 : AppColors.textGrey,
                           ),
                           // CEFR badge
                           if (episode.cefrLevel != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2),
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: cefrColor,
                                 borderRadius: BorderRadius.circular(5),
@@ -165,9 +161,7 @@ class EpisodeTile extends StatelessWidget {
                       ? Colors.white.withValues(alpha: 0.08)
                       : Colors.grey.shade200,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    episode.isCompleted
-                        ? AppColors.greenSuccess
-                        : cefrColor,
+                    episode.isCompleted ? AppColors.greenSuccess : cefrColor,
                   ),
                 ),
               ),
@@ -281,8 +275,11 @@ class _DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (state) {
       case DownloadState.downloaded:
-        return Icon(Icons.download_done_rounded,
-            size: 22, color: AppColors.greenSuccess);
+        return Icon(
+          Icons.download_done_rounded,
+          size: 22,
+          color: AppColors.greenSuccess,
+        );
       case DownloadState.downloading:
         return const SizedBox(
           width: 22,
@@ -295,9 +292,7 @@ class _DownloadButton extends StatelessWidget {
           child: Icon(
             Icons.download_outlined,
             size: 22,
-            color: onDownload != null
-                ? AppColors.primary
-                : AppColors.textGrey,
+            color: onDownload != null ? AppColors.primary : AppColors.textGrey,
           ),
         );
     }

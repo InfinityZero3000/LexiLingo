@@ -27,7 +27,7 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   // Voice recording state
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _ttsPlayer = AudioPlayer();
@@ -43,13 +43,13 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    
+
     // Add scroll listener for lazy loading
     _scrollController.addListener(_onScroll);
-    
+
     // Note: Don't check microphone permission here to avoid auto-triggering
     // Permission will be checked when user tries to record
-    
+
     // Initialize chat session if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
@@ -59,14 +59,14 @@ class _ChatPageState extends State<ChatPage> {
       }
     });
   }
-  
+
   Future<void> _checkRecorderPermission() async {
     final hasPermission = await _recorder.hasPermission();
     if (mounted) {
       setState(() => _hasRecorderPermission = hasPermission);
     }
   }
-  
+
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -77,7 +77,7 @@ class _ChatPageState extends State<ChatPage> {
     _recordingTimer?.cancel();
     super.dispose();
   }
-  
+
   void _onScroll() {
     // Load more messages when scrolling to the top
     if (_scrollController.position.pixels <= 100) {
@@ -105,20 +105,23 @@ class _ChatPageState extends State<ChatPage> {
 
     try {
       final directory = await getTemporaryDirectory();
-      _recordingPath = '${directory.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.wav';
-      
+      _recordingPath =
+          '${directory.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.wav';
+
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
         path: _recordingPath!,
       );
-      
+
       setState(() {
         _isRecording = true;
         _recordingDuration = Duration.zero;
       });
-      
+
       // Update recording duration every 100ms
-      _recordingTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _recordingTimer = Timer.periodic(const Duration(milliseconds: 100), (
+        timer,
+      ) {
         if (mounted) {
           setState(() {
             _recordingDuration += const Duration(milliseconds: 100);
@@ -132,22 +135,22 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _stopRecordingAndTranscribe() async {
     _recordingTimer?.cancel();
-    
+
     if (!_isRecording || _recordingPath == null) return;
-    
+
     try {
       final path = await _recorder.stop();
-      
+
       setState(() {
         _isRecording = false;
         _isProcessingVoice = true;
       });
-      
+
       if (path != null) {
         // Read audio file
         final file = File(path);
         final audioData = await file.readAsBytes();
-        
+
         // Transcribe using VoiceProvider
         final voiceProvider = context.read<VoiceProvider>();
         final transcription = await voiceProvider.stopRecordingAndTranscribe(
@@ -155,7 +158,7 @@ class _ChatPageState extends State<ChatPage> {
           filename: 'chat_voice.wav',
           language: 'en',
         );
-        
+
         if (transcription != null && transcription.text.isNotEmpty) {
           // Send transcribed text to chat
           final chatProvider = context.read<ChatProvider>();
@@ -166,7 +169,7 @@ class _ChatPageState extends State<ChatPage> {
         } else {
           _showSnackBar('Could not transcribe audio. Please try again.');
         }
-        
+
         // Clean up temp file
         try {
           await file.delete();
@@ -186,10 +189,10 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _cancelRecording() async {
     _recordingTimer?.cancel();
-    
+
     try {
       await _recorder.stop();
-      
+
       if (_recordingPath != null) {
         final file = File(_recordingPath!);
         if (await file.exists()) {
@@ -197,7 +200,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       }
     } catch (_) {}
-    
+
     setState(() {
       _isRecording = false;
       _recordingDuration = Duration.zero;
@@ -206,27 +209,31 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _playTtsResponse(String text) async {
     if (!_isTtsEnabled || text.isEmpty) return;
-    
+
     try {
       final voiceProvider = context.read<VoiceProvider>();
       final result = await voiceProvider.synthesizeAndPlay(text: text);
-      
+
       if (result != null && result.audioData.isNotEmpty) {
         final directory = await getTemporaryDirectory();
-        final file = File('${directory.path}/chat_tts_${DateTime.now().millisecondsSinceEpoch}.wav');
+        final file = File(
+          '${directory.path}/chat_tts_${DateTime.now().millisecondsSinceEpoch}.wav',
+        );
         await file.writeAsBytes(result.audioData);
-        
+
         await _ttsPlayer.setFilePath(file.path);
         await _ttsPlayer.play();
-        
+
         // Clean up after playback
-        _ttsPlayer.playerStateStream.firstWhere(
-          (state) => state.processingState == ProcessingState.completed,
-        ).then((_) {
-          try {
-            file.deleteSync();
-          } catch (_) {}
-        });
+        _ttsPlayer.playerStateStream
+            .firstWhere(
+              (state) => state.processingState == ProcessingState.completed,
+            )
+            .then((_) {
+              try {
+                file.deleteSync();
+              } catch (_) {}
+            });
       }
     } catch (e) {
       debugPrint('TTS playback error: $e');
@@ -234,9 +241,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -320,8 +327,15 @@ class _ChatPageState extends State<ChatPage> {
             },
             child: Container(
               margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-              child: const Icon(Icons.menu, color: AppColors.textDark, size: 18),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.menu,
+                color: AppColors.textDark,
+                size: 18,
+              ),
             ),
           ),
         ),
@@ -337,16 +351,26 @@ class _ChatPageState extends State<ChatPage> {
             child: Container(
               margin: const EdgeInsets.all(8),
               width: 40,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-              child: const Icon(Icons.auto_stories, color: AppColors.textDark, size: 20),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.auto_stories,
+                color: AppColors.textDark,
+                size: 20,
+              ),
             ),
           ),
           Container(
             margin: const EdgeInsets.all(8),
             width: 40,
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
             child: const Icon(Icons.info_outline, color: AppColors.textDark),
-          )
+          ),
         ],
       ),
       body: Column(
@@ -368,7 +392,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                   ),
-                
+
                 // Show message if no more messages to load
                 if (!chatProvider.hasMoreMessages && messages.isNotEmpty)
                   Padding(
@@ -383,40 +407,52 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                   ),
-                
+
                 // Header Image & Topic
                 Center(
                   child: Column(
                     children: [
                       Container(
-                        width: 96, height: 96,
+                        width: 96,
+                        height: 96,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.accentYellow, width: 4),
+                          border: Border.all(
+                            color: AppColors.accentYellow,
+                            width: 4,
+                          ),
                           image: const DecorationImage(
-                              image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuB7j08S11fEpUVbsYxQF7dLRe1TbFOIMCXBxdZepnZ4a6XfLsK4MpdIAr--vTv_b_sQRcHo1i7FjivInGLaxT_p4W873AbslxtutlGVoBNLttdGthAJ9bvVXsI_vKboU0hvRr9va6EIk5Y6zRh5iT1-Gumps6V_Y1mYqctJZC6Qj9y9p1bLcn8P2vP-coBy9dH60woBanrMV5gfVLkwqWMIuVEjrGv0w1dZ8rZUWmCXIIxrc3JIyi--dYM2dlX0IePD8wMqbfregMAJ"),
-                              fit: BoxFit.cover
+                            image: NetworkImage(
+                              "https://lh3.googleusercontent.com/aida-public/AB6AXuB7j08S11fEpUVbsYxQF7dLRe1TbFOIMCXBxdZepnZ4a6XfLsK4MpdIAr--vTv_b_sQRcHo1i7FjivInGLaxT_p4W873AbslxtutlGVoBNLttdGthAJ9bvVXsI_vKboU0hvRr9va6EIk5Y6zRh5iT1-Gumps6V_Y1mYqctJZC6Qj9y9p1bLcn8P2vP-coBy9dH60woBanrMV5gfVLkwqWMIuVEjrGv0w1dZ8rZUWmCXIIxrc3JIyi--dYM2dlX0IePD8wMqbfregMAJ",
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       RichText(
                         text: TextSpan(
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textGrey),
                           children: const [
                             TextSpan(text: "Today's Topic: "),
-                            TextSpan(text: "Daily Habits", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                            TextSpan(
+                              text: "Daily Habits",
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Existing messages
-                if (messages.isEmpty)
-                   _buildWelcomeMessage(context),
+                if (messages.isEmpty) _buildWelcomeMessage(context),
 
                 ...messages.map((msg) {
                   return MessageBubble(
@@ -435,18 +471,19 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 }),
 
-                if (chatProvider.isSending)
-                  _buildTypingIndicator(),
+                if (chatProvider.isSending) _buildTypingIndicator(),
               ],
             ),
           ),
-          
+
           // Footer
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-               color: Theme.of(context).scaffoldBackgroundColor,
-               border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.1)))
+              color: Theme.of(context).scaffoldBackgroundColor,
+              border: Border(
+                top: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+              ),
             ),
             child: Column(
               children: [
@@ -481,16 +518,26 @@ class _ChatPageState extends State<ChatPage> {
                     IconButton(
                       icon: Icon(
                         _isTtsEnabled ? Icons.volume_up : Icons.volume_off,
-                        color: _isTtsEnabled ? AppColors.primary : AppColors.textGrey,
+                        color: _isTtsEnabled
+                            ? AppColors.primary
+                            : AppColors.textGrey,
                       ),
-                      onPressed: () => setState(() => _isTtsEnabled = !_isTtsEnabled),
-                      tooltip: _isTtsEnabled ? 'Disable auto TTS' : 'Enable auto TTS',
+                      onPressed: () =>
+                          setState(() => _isTtsEnabled = !_isTtsEnabled),
+                      tooltip: _isTtsEnabled
+                          ? 'Disable auto TTS'
+                          : 'Enable auto TTS',
                     ),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : const Color(0xFFF0F2F4),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : const Color(0xFFF0F2F4),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
@@ -500,15 +547,17 @@ class _ChatPageState extends State<ChatPage> {
                                 controller: _controller,
                                 enabled: !_isRecording && !_isProcessingVoice,
                                 decoration: InputDecoration(
-                                  hintText: _isRecording 
-                                      ? 'Recording...' 
-                                      : _isProcessingVoice 
-                                          ? 'Processing...' 
-                                          : 'Type your message...',
+                                  hintText: _isRecording
+                                      ? 'Recording...'
+                                      : _isProcessingVoice
+                                      ? 'Processing...'
+                                      : 'Type your message...',
                                   border: InputBorder.none,
                                 ),
                                 onSubmitted: (value) {
-                                  if (value.isNotEmpty && !_isRecording && !_isProcessingVoice) {
+                                  if (value.isNotEmpty &&
+                                      !_isRecording &&
+                                      !_isProcessingVoice) {
                                     chatProvider.sendMessage(
                                       value,
                                       userId: _currentUserId(context),
@@ -521,17 +570,20 @@ class _ChatPageState extends State<ChatPage> {
                             // Mic button with long press to record
                             GestureDetector(
                               onLongPressStart: (_) => _startRecording(),
-                              onLongPressEnd: (_) => _stopRecordingAndTranscribe(),
+                              onLongPressEnd: (_) =>
+                                  _stopRecordingAndTranscribe(),
                               child: IconButton(
                                 icon: Icon(
                                   _isRecording ? Icons.mic : Icons.mic_none,
-                                  color: _isRecording ? Colors.red : AppColors.textGrey,
+                                  color: _isRecording
+                                      ? Colors.red
+                                      : AppColors.textGrey,
                                 ),
                                 onPressed: () {
                                   _showSnackBar('Hold to record');
                                 },
                               ),
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -541,7 +593,8 @@ class _ChatPageState extends State<ChatPage> {
                       onTap: () {
                         if (_isRecording) {
                           _stopRecordingAndTranscribe();
-                        } else if (_controller.text.isNotEmpty && !_isProcessingVoice) {
+                        } else if (_controller.text.isNotEmpty &&
+                            !_isProcessingVoice) {
                           chatProvider.sendMessage(
                             _controller.text,
                             userId: _currentUserId(context),
@@ -550,11 +603,22 @@ class _ChatPageState extends State<ChatPage> {
                         }
                       },
                       child: Container(
-                        width: 48, height: 48,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: _isRecording ? Colors.red : AppColors.primary,
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: (_isRecording ? Colors.red : AppColors.primary).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (_isRecording
+                                          ? Colors.red
+                                          : AppColors.primary)
+                                      .withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Icon(
                           _isRecording ? Icons.stop : Icons.send,
@@ -562,12 +626,12 @@ class _ChatPageState extends State<ChatPage> {
                           size: 20,
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -611,10 +675,7 @@ class _ChatPageState extends State<ChatPage> {
                 bottomLeft: Radius.circular(0),
               ),
             ),
-            child: const TypingIndicator(
-              color: AppColors.primary,
-              dotSize: 8,
-            ),
+            child: const TypingIndicator(color: AppColors.primary, dotSize: 8),
           ),
         ],
       ),
@@ -635,8 +696,10 @@ class _ChatPageState extends State<ChatPage> {
               shape: BoxShape.circle,
               image: DecorationImage(
                 image: NetworkImage(
-                    "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E"),
-                fit: BoxFit.cover),
+                  "https://lh3.googleusercontent.com/aida-public/AB6AXuATpszxo8IDSZGFMcAe7wu3OsLcfmZ-s1g8zqZEZrd1NWWKigT9eaRCBLHYPYrzm_QHWJnz7gDyqvGT8FPffL3SHy4BPngd150uW71CjgCXpokjLtm7-JOo639zGjehA2gx3x0GrWgVn3fQhVJQnFfn53UEibhEVOb1k3gycZzHNg6fSz23m5uyeyR0n2gaM8_-RSKtJ5LPpf8z6c_nvkCPbAeOU-UKQ5RtZOh_4iBwspBMQqLZY3yHpWZ5hYD5Vj3tWnYFB68cxn1E",
+                ),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -646,11 +709,14 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 4),
-                  child: Text('AI Tutor',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.w500)),
+                  child: Text(
+                    'AI Tutor',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -672,7 +738,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -688,13 +754,17 @@ class _ChatPageState extends State<ChatPage> {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.3))
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 180),
           child: Text(
-            text, 
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textGrey),
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textGrey,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),

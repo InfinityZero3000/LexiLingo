@@ -40,7 +40,9 @@ class GamificationProvider extends ChangeNotifier {
 
   List<ShopItemEntity> get filteredShopItems {
     if (_selectedCategory == 'all') return _shopItems;
-    return _shopItems.where((item) => item.category == _selectedCategory).toList();
+    return _shopItems
+        .where((item) => item.category == _selectedCategory)
+        .toList();
   }
 
   // ============== Inventory State ==============
@@ -132,18 +134,12 @@ class GamificationProvider extends ChangeNotifier {
     try {
       final response = await _apiClient.post(
         '/gamification/shop/purchase',
-        body: {
-          'item_id': itemId,
-          'quantity': quantity,
-        },
+        body: {'item_id': itemId, 'quantity': quantity},
       );
 
       if (response['success'] == true) {
         // Reload wallet and inventory
-        await Future.wait([
-          loadWallet(),
-          loadInventory(),
-        ]);
+        await Future.wait([loadWallet(), loadInventory()]);
         return true;
       }
       return false;
@@ -163,9 +159,7 @@ class GamificationProvider extends ChangeNotifier {
       final response = await _apiClient.get('/gamification/inventory');
       if (response['success'] == true && response['data'] != null) {
         final items = response['data']['items'] as List? ?? [];
-        _inventory = items
-            .map((e) => InventoryItemEntity.fromJson(e))
-            .toList();
+        _inventory = items.map((e) => InventoryItemEntity.fromJson(e)).toList();
       }
     } catch (e) {
       _inventoryError = e.toString();
@@ -205,7 +199,7 @@ class GamificationProvider extends ChangeNotifier {
       final response = await _apiClient.get(
         '/gamification/leaderboard?league=$targetLeague',
       );
-      
+
       if (response['success'] == true && response['data'] != null) {
         _leaderboard = LeaderboardEntity.fromJson(response['data']);
         _selectedLeague = targetLeague;

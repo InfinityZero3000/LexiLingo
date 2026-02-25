@@ -65,8 +65,11 @@ class UnitModel extends UnitEntity {
       totalLessons: json['total_lessons'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      lessons: (json['lessons'] as List<dynamic>?)
-              ?.map((e) => LessonInUnitModel.fromJson(e as Map<String, dynamic>))
+      lessons:
+          (json['lessons'] as List<dynamic>?)
+              ?.map(
+                (e) => LessonInUnitModel.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
@@ -85,15 +88,17 @@ class UnitModel extends UnitEntity {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'lessons': lessons
-          .map((l) => LessonInUnitModel(
-                id: l.id,
-                title: l.title,
-                orderIndex: l.orderIndex,
-                lessonType: l.lessonType,
-                xpReward: l.xpReward,
-                isLocked: l.isLocked,
-                isCompleted: l.isCompleted,
-              ).toJson())
+          .map(
+            (l) => LessonInUnitModel(
+              id: l.id,
+              title: l.title,
+              orderIndex: l.orderIndex,
+              lessonType: l.lessonType,
+              xpReward: l.xpReward,
+              isLocked: l.isLocked,
+              isCompleted: l.isCompleted,
+            ).toJson(),
+          )
           .toList(),
     };
   }
@@ -111,15 +116,17 @@ class UnitModel extends UnitEntity {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       lessons: entity.lessons
-          .map((l) => LessonInUnitModel(
-                id: l.id,
-                title: l.title,
-                orderIndex: l.orderIndex,
-                lessonType: l.lessonType,
-                xpReward: l.xpReward,
-                isLocked: l.isLocked,
-                isCompleted: l.isCompleted,
-              ))
+          .map(
+            (l) => LessonInUnitModel(
+              id: l.id,
+              title: l.title,
+              orderIndex: l.orderIndex,
+              lessonType: l.lessonType,
+              xpReward: l.xpReward,
+              isLocked: l.isLocked,
+              isCompleted: l.isCompleted,
+            ),
+          )
           .toList(),
     );
   }

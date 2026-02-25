@@ -1,10 +1,5 @@
 /// Vocabulary status enumeration
-enum VocabularyStatus {
-  learning,
-  reviewing,
-  mastered,
-  archived,
-}
+enum VocabularyStatus { learning, reviewing, mastered, archived }
 
 /// User Vocabulary Entity (Domain Layer)
 class UserVocabularyEntity {

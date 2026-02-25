@@ -18,8 +18,6 @@ void registerNotificationModule() {
 
   // Provider - Factory for fresh instances
   sl.registerFactory<NotificationProvider>(
-    () => NotificationProvider(
-      repository: sl<NotificationRepository>(),
-    ),
+    () => NotificationProvider(repository: sl<NotificationRepository>()),
   );
 }

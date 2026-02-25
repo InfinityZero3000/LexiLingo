@@ -5,7 +5,8 @@ import '../../domain/entities/proficiency_entity.dart';
 class ProficiencyDataSource {
   final ApiClient _apiClient;
 
-  ProficiencyDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
+  ProficiencyDataSource({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   /// Get user's proficiency profile
   Future<ProficiencyProfile> getProfile() async {
@@ -14,7 +15,9 @@ class ProficiencyDataSource {
   }
 
   /// Record exercise results for proficiency tracking
-  Future<ExerciseRecordResult> recordExercises(List<Map<String, dynamic>> results) async {
+  Future<ExerciseRecordResult> recordExercises(
+    List<Map<String, dynamic>> results,
+  ) async {
     final response = await _apiClient.post(
       '/proficiency/record-exercises',
       body: results,
@@ -49,10 +52,7 @@ class ProficiencyDataSource {
   }) async {
     return await _apiClient.post(
       '/proficiency/placement-test/submit',
-      body: {
-        'answers': answers,
-        'time_taken_seconds': timeTakenSeconds,
-      },
+      body: {'answers': answers, 'time_taken_seconds': timeTakenSeconds},
     );
   }
 }

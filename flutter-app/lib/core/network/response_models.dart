@@ -8,10 +8,7 @@ class RequestMeta extends Equatable {
   final String requestId;
   final String timestamp;
 
-  const RequestMeta({
-    required this.requestId,
-    required this.timestamp,
-  });
+  const RequestMeta({required this.requestId, required this.timestamp});
 
   factory RequestMeta.fromJson(Map<String, dynamic> json) {
     return RequestMeta(
@@ -21,10 +18,7 @@ class RequestMeta extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'request_id': requestId,
-      'timestamp': timestamp,
-    };
+    return {'request_id': requestId, 'timestamp': timestamp};
   }
 
   @override
@@ -37,10 +31,7 @@ class ApiResponseEnvelope<T> extends Equatable {
   final T data;
   final RequestMeta meta;
 
-  const ApiResponseEnvelope({
-    required this.data,
-    required this.meta,
-  });
+  const ApiResponseEnvelope({required this.data, required this.meta});
 
   factory ApiResponseEnvelope.fromJson(
     Map<String, dynamic> json,
@@ -49,7 +40,7 @@ class ApiResponseEnvelope<T> extends Equatable {
     // Handle both wrapped (with 'data' field) and unwrapped responses
     final hasDataField = json.containsKey('data');
     final hasMetaField = json.containsKey('meta');
-    
+
     if (hasDataField && hasMetaField) {
       // Standard envelope format: {"data": ..., "meta": ...}
       return ApiResponseEnvelope<T>(
@@ -62,17 +53,15 @@ class ApiResponseEnvelope<T> extends Equatable {
         data: fromJsonT(json),
         meta: RequestMeta(
           requestId: json['request_id'] as String? ?? 'unknown',
-          timestamp: json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
+          timestamp:
+              json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
         ),
       );
     }
   }
 
   Map<String, dynamic> toJson(Object? Function(T) toJsonT) {
-    return {
-      'data': toJsonT(data),
-      'meta': meta.toJson(),
-    };
+    return {'data': toJsonT(data), 'meta': meta.toJson()};
   }
 
   @override
@@ -165,11 +154,7 @@ class ErrorDetail extends Equatable {
   final String message;
   final Map<String, dynamic>? details;
 
-  const ErrorDetail({
-    required this.code,
-    required this.message,
-    this.details,
-  });
+  const ErrorDetail({required this.code, required this.message, this.details});
 
   factory ErrorDetail.fromJson(Map<String, dynamic> json) {
     return ErrorDetail(
@@ -197,10 +182,7 @@ class ErrorResponseEnvelope extends Equatable {
   final ErrorDetail error;
   final RequestMeta meta;
 
-  const ErrorResponseEnvelope({
-    required this.error,
-    required this.meta,
-  });
+  const ErrorResponseEnvelope({required this.error, required this.meta});
 
   factory ErrorResponseEnvelope.fromJson(Map<String, dynamic> json) {
     return ErrorResponseEnvelope(
@@ -210,10 +192,7 @@ class ErrorResponseEnvelope extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'error': error.toJson(),
-      'meta': meta.toJson(),
-    };
+    return {'error': error.toJson(), 'meta': meta.toJson()};
   }
 
   @override

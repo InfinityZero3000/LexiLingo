@@ -1,14 +1,14 @@
 /// User entity matching backend Phase 1 schema
 /// From backend-service/app/models/user.py
 class UserEntity {
-  final String id;  // UUID from backend
+  final String id; // UUID from backend
   final String email;
   final String username;
   final String displayName;
   final String? avatarUrl;
-  final String provider;  // 'local', 'google', 'facebook'
+  final String provider; // 'local', 'google', 'facebook'
   final bool isVerified;
-  final String level;  // CEFR level: A1, A2, B1, B2, C1, C2
+  final String level; // CEFR level: A1, A2, B1, B2, C1, C2
   final int xp;
   final int currentStreak;
   final DateTime? lastLogin;

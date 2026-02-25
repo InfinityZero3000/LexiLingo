@@ -6,10 +6,12 @@ import 'package:lexilingo_app/features/learning/domain/repositories/learning_rep
 
 /// Start Lesson Use Case
 /// Starts or resumes a lesson and returns attempt data
-class StartLessonUseCase implements UseCase<LessonAttemptModel, StartLessonParams> {
+class StartLessonUseCase
+    implements UseCase<LessonAttemptModel, StartLessonParams> {
   final LearningRepository _repository;
 
-  StartLessonUseCase({required LearningRepository repository}) : _repository = repository;
+  StartLessonUseCase({required LearningRepository repository})
+    : _repository = repository;
 
   @override
   Future<Either<Failure, LessonAttemptModel>> call(StartLessonParams params) {

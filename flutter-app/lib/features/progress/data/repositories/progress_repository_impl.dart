@@ -9,7 +9,7 @@ import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 
 /// Progress Repository Implementation
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - progress-learning-streaks: Robust streak system (3-5x engagement)
 class ProgressRepositoryImpl implements ProgressRepository {

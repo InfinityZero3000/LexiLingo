@@ -6,10 +6,12 @@ import 'package:lexilingo_app/features/learning/domain/repositories/learning_rep
 
 /// Submit Answer Use Case
 /// Submits an answer for a question in the current lesson attempt
-class SubmitAnswerUseCase implements UseCase<AnswerResponseModel, SubmitAnswerParams> {
+class SubmitAnswerUseCase
+    implements UseCase<AnswerResponseModel, SubmitAnswerParams> {
   final LearningRepository _repository;
 
-  SubmitAnswerUseCase({required LearningRepository repository}) : _repository = repository;
+  SubmitAnswerUseCase({required LearningRepository repository})
+    : _repository = repository;
 
   @override
   Future<Either<Failure, AnswerResponseModel>> call(SubmitAnswerParams params) {

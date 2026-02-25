@@ -37,7 +37,14 @@ class LevelTier extends Equatable {
   int get xpRange => isMaxLevel ? 0 : (maxXP! - minXP + 1);
 
   @override
-  List<Object?> get props => [code, name, minXP, maxXP, colorHex, iconIdentifier];
+  List<Object?> get props => [
+    code,
+    name,
+    minXP,
+    maxXP,
+    colorHex,
+    iconIdentifier,
+  ];
 }
 
 /// User's current level status
@@ -93,13 +100,13 @@ class LevelStatus extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentTier,
-        totalXP,
-        xpInCurrentLevel,
-        xpToNextLevel,
-        progressPercentage,
-        nextTier,
-      ];
+    currentTier,
+    totalXP,
+    xpInCurrentLevel,
+    xpToNextLevel,
+    progressPercentage,
+    nextTier,
+  ];
 }
 
 /// Predefined level tiers following CEFR standard

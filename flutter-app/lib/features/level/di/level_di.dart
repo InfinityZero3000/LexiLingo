@@ -4,7 +4,5 @@ import 'package:lexilingo_app/features/level/presentation/providers/level_provid
 /// Registers all level-related dependencies
 void registerLevelModule() {
   // Provider - Factory for fresh instances
-  sl.registerFactory<LevelProvider>(
-    () => LevelProvider(),
-  );
+  sl.registerFactory<LevelProvider>(() => LevelProvider());
 }

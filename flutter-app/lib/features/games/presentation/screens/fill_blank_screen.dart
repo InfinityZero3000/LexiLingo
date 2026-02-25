@@ -32,7 +32,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GamesProvider>().loadFillBlank().then((_) {
         if (mounted) _startQuestion();
@@ -61,7 +63,10 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() => _timeLeft--);
       if (_timeLeft <= 0) {
         t.cancel();
@@ -150,198 +155,224 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(builder: (context, provider, _) {
-      if (provider.isLoading || !_gameLoaded) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      }
-      final game = provider.fillBlank!;
-      final q = game.questions[_questionIndex];
+    return Consumer<GamesProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading || !_gameLoaded) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final game = provider.fillBlank!;
+        final q = game.questions[_questionIndex];
 
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Text(
-            'Question ${_questionIndex + 1}/${game.questions.length}',
-            style: const TextStyle(color: AppColors.textDark),
-          ),
-        ),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                // Progress bar
-            LinearProgressIndicator(
-              value: (_questionIndex) / game.questions.length,
-              backgroundColor: AppColors.grey200,
-              color: AppColors.primary,
-              minHeight: 4,
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: Text(
+              'Question ${_questionIndex + 1}/${game.questions.length}',
+              style: const TextStyle(color: AppColors.textDark),
             ),
-            // Timer bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+          ),
+          body: Stack(
+            children: [
+              Column(
                 children: [
-                  const Icon(Icons.timer_outlined, size: 16, color: AppColors.textGrey),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: _timeLeft / game.timerSecondsPerQuestion,
-                      backgroundColor: AppColors.grey200,
-                      color: _timeLeft > 5 ? AppColors.primary : Colors.red,
-                      minHeight: 6,
+                  // Progress bar
+                  LinearProgressIndicator(
+                    value: (_questionIndex) / game.questions.length,
+                    backgroundColor: AppColors.grey200,
+                    color: AppColors.primary,
+                    minHeight: 4,
+                  ),
+                  // Timer bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.timer_outlined,
+                          size: 16,
+                          color: AppColors.textGrey,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: _timeLeft / game.timerSecondsPerQuestion,
+                            backgroundColor: AppColors.grey200,
+                            color: _timeLeft > 5
+                                ? AppColors.primary
+                                : Colors.red,
+                            minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_timeLeft}s',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _timeLeft > 5
+                                ? AppColors.textGrey
+                                : Colors.red,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_timeLeft}s',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _timeLeft > 5 ? AppColors.textGrey : Colors.red,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Question sentence
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              q.sentence,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Options grid
+                          GridView.count(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 2.4,
+                            children: List.generate(q.options.length, (i) {
+                              Color bg = Colors.white;
+                              Color border = AppColors.grey300;
+                              Color text = AppColors.textDark;
+                              if (_answered) {
+                                if (q.options[i] == q.correctAnswer) {
+                                  bg = AppColors.greenSuccess.withOpacity(0.1);
+                                  border = AppColors.greenSuccess;
+                                  text = AppColors.greenSuccess;
+                                } else if (i == _selectedIndex) {
+                                  bg = Colors.red.withOpacity(0.1);
+                                  border = Colors.red;
+                                  text = Colors.red;
+                                }
+                              } else if (_selectedIndex == i) {
+                                bg = AppColors.primary.withOpacity(0.1);
+                                border = AppColors.primary;
+                                text = AppColors.primary;
+                              }
+                              return GestureDetector(
+                                onTap: () => _selectAnswer(i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: border,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    q.options[i],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: text,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          // Feedback tip
+                          if (_feedbackTip != null) ...[
+                            const SizedBox(height: 16),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color:
+                                    _answered &&
+                                        _selectedIndex != null &&
+                                        q.options[_selectedIndex!] ==
+                                            q.correctAnswer
+                                    ? AppColors.greenSuccess.withOpacity(0.1)
+                                    : Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color:
+                                      _answered &&
+                                          _selectedIndex != null &&
+                                          q.options[_selectedIndex!] ==
+                                              q.correctAnswer
+                                      ? AppColors.greenSuccess
+                                      : Colors.red,
+                                ),
+                              ),
+                              child: Text(
+                                _feedbackTip!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textDark,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Question sentence
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        q.sentence,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textDark,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Options grid
-                    GridView.count(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 2.4,
-                      children: List.generate(q.options.length, (i) {
-                        Color bg = Colors.white;
-                        Color border = AppColors.grey300;
-                        Color text = AppColors.textDark;
-                        if (_answered) {
-                          if (q.options[i] == q.correctAnswer) {
-                            bg = AppColors.greenSuccess.withOpacity(0.1);
-                            border = AppColors.greenSuccess;
-                            text = AppColors.greenSuccess;
-                          } else if (i == _selectedIndex) {
-                            bg = Colors.red.withOpacity(0.1);
-                            border = Colors.red;
-                            text = Colors.red;
-                          }
-                        } else if (_selectedIndex == i) {
-                          bg = AppColors.primary.withOpacity(0.1);
-                          border = AppColors.primary;
-                          text = AppColors.primary;
-                        }
-                        return GestureDetector(
-                          onTap: () => _selectAnswer(i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: border, width: 1.5),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              q.options[i],
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: text,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    // Feedback tip
-                    if (_feedbackTip != null) ...[
-                      const SizedBox(height: 16),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: _answered && _selectedIndex != null &&
-                                  q.options[_selectedIndex!] == q.correctAnswer
-                              ? AppColors.greenSuccess.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _answered && _selectedIndex != null &&
-                                    q.options[_selectedIndex!] == q.correctAnswer
-                                ? AppColors.greenSuccess
-                                : Colors.red,
-                          ),
-                        ),
-                        child: Text(
-                          _feedbackTip!,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textDark,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
+              // Confetti overlay — fires on win (skill: gamification-confetti-win)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  numberOfParticles: 20,
+                  gravity: 0.4,
+                  colors: const [
+                    AppColors.primary,
+                    Colors.yellow,
+                    Colors.green,
+                    Colors.orange,
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-        // Confetti overlay — fires on win (skill: gamification-confetti-win)
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            numberOfParticles: 20,
-            gravity: 0.4,
-            colors: const [
-              AppColors.primary,
-              Colors.yellow,
-              Colors.green,
-              Colors.orange,
             ],
           ),
-        ),
-      ],
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

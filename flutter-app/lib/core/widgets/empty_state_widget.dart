@@ -9,7 +9,7 @@ class EmptyStateWidget extends StatelessWidget {
   final VoidCallback? onAction;
   final Color? iconColor;
   final double iconSize;
-  
+
   const EmptyStateWidget({
     super.key,
     required this.icon,
@@ -20,12 +20,12 @@ class EmptyStateWidget extends StatelessWidget {
     this.iconColor,
     this.iconSize = 80,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -41,7 +41,8 @@ class EmptyStateWidget extends StatelessWidget {
               child: Icon(
                 icon,
                 size: iconSize,
-                color: iconColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
+                color:
+                    iconColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 24),
@@ -69,7 +70,10 @@ class EmptyStateWidget extends StatelessWidget {
                 icon: const Icon(Icons.add),
                 label: Text(actionLabel!),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -78,7 +82,7 @@ class EmptyStateWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   /// Factory for empty course list
   factory EmptyStateWidget.courses({VoidCallback? onExplore}) {
     return EmptyStateWidget(
@@ -90,7 +94,7 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.blue,
     );
   }
-  
+
   /// Factory for empty vocabulary
   factory EmptyStateWidget.vocabulary({VoidCallback? onAdd}) {
     return EmptyStateWidget(
@@ -102,7 +106,7 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.green,
     );
   }
-  
+
   /// Factory for empty notifications
   factory EmptyStateWidget.notifications() {
     return const EmptyStateWidget(
@@ -112,7 +116,7 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.orange,
     );
   }
-  
+
   /// Factory for empty chat history
   factory EmptyStateWidget.chatHistory({VoidCallback? onStartChat}) {
     return EmptyStateWidget(
@@ -124,19 +128,19 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.purple,
     );
   }
-  
+
   /// Factory for empty search results
   factory EmptyStateWidget.searchResults({String? query}) {
     return EmptyStateWidget(
       icon: Icons.search_off,
       title: 'No Results Found',
-      description: query != null 
+      description: query != null
           ? 'No results found for "$query". Try a different search term.'
           : 'No results found. Try a different search term.',
       iconColor: Colors.grey,
     );
   }
-  
+
   /// Factory for empty progress
   factory EmptyStateWidget.progress({VoidCallback? onStart}) {
     return EmptyStateWidget(
@@ -148,7 +152,7 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.teal,
     );
   }
-  
+
   /// Factory for network error
   factory EmptyStateWidget.networkError({VoidCallback? onRetry}) {
     return EmptyStateWidget(
@@ -160,7 +164,7 @@ class EmptyStateWidget extends StatelessWidget {
       iconColor: Colors.red,
     );
   }
-  
+
   /// Factory for server error
   factory EmptyStateWidget.serverError({VoidCallback? onRetry}) {
     return EmptyStateWidget(

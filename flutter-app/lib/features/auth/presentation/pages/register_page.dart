@@ -190,7 +190,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                  _isConfirmPasswordVisible =
+                                      !_isConfirmPasswordVisible;
                                 });
                               },
                             ),
@@ -221,7 +222,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF4FC3F7).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFF4FC3F7,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -234,9 +237,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                     if (_formKey.currentState!.validate()) {
                                       await authProvider.register(
                                         email: _emailController.text.trim(),
-                                        username: _usernameController.text.trim(),
+                                        username: _usernameController.text
+                                            .trim(),
                                         password: _passwordController.text,
-                                        displayName: _usernameController.text.trim(),
+                                        displayName: _usernameController.text
+                                            .trim(),
                                       );
                                     }
                                   },
@@ -254,8 +259,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
                                   )
                                 : const Text(
@@ -304,13 +310,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline,
-                                    color: Colors.red.shade700),
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red.shade700,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     authProvider.errorMessage!,
-                                    style: TextStyle(color: Colors.red.shade700),
+                                    style: TextStyle(
+                                      color: Colors.red.shade700,
+                                    ),
                                   ),
                                 ),
                               ],

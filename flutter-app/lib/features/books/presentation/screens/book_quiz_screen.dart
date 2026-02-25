@@ -62,7 +62,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
           'Chapter ${widget.chapter} Quiz',
@@ -74,7 +76,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
       body: Consumer<BookProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
           }
 
           if (provider.quizCompleted) {
@@ -86,7 +90,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             return Center(
               child: Text(
                 'Quiz not available.',
-                style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey),
+                style: TextStyle(
+                  color: isDark ? Colors.white54 : AppColors.textGrey,
+                ),
               ),
             );
           }
@@ -122,8 +128,12 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 6,
-                    backgroundColor: isDark ? Colors.white12 : AppColors.grey200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    backgroundColor: isDark
+                        ? Colors.white12
+                        : AppColors.grey200,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -182,8 +192,11 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded,
-                      color: AppColors.primary, size: 18),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -220,7 +233,10 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                   _currentQuestion < quiz.questions.length - 1
                       ? 'Next Question'
                       : 'See Results',
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
@@ -242,18 +258,18 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
     final resultIcon = pct >= 0.8
         ? Icons.celebration_rounded
         : pct >= 0.6
-            ? Icons.thumb_up_rounded
-            : Icons.menu_book_rounded;
+        ? Icons.thumb_up_rounded
+        : Icons.menu_book_rounded;
     final resultIconColor = pct >= 0.8
         ? Colors.amber
         : pct >= 0.6
-            ? Colors.green
-            : Colors.blue;
+        ? Colors.green
+        : Colors.blue;
     final msg = pct >= 0.8
         ? 'Excellent!'
         : pct >= 0.6
-            ? 'Good job!'
-            : 'Keep reading!';
+        ? 'Good job!'
+        : 'Keep reading!';
 
     final xpEarned = quiz != null && score > 0
         ? (quiz.xpReward * pct).round().clamp(5, quiz.xpReward)
@@ -286,7 +302,10 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             const SizedBox(height: 24),
             if (xpEarned > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -403,10 +422,10 @@ class _OptionTile extends StatelessWidget {
                 color: showGreen
                     ? const Color(0xFF4CAF50)
                     : showRed
-                        ? Colors.red
-                        : selected
-                            ? AppColors.primary
-                            : (isDark ? Colors.white12 : AppColors.grey200),
+                    ? Colors.red
+                    : selected
+                    ? AppColors.primary
+                    : (isDark ? Colors.white12 : AppColors.grey200),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -429,13 +448,19 @@ class _OptionTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  fontWeight: (showGreen || showRed) ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: (showGreen || showRed)
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                   color: textColor,
                 ),
               ),
             ),
             if (showGreen)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF4CAF50), size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF4CAF50),
+                size: 20,
+              ),
             if (showRed)
               const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
           ],

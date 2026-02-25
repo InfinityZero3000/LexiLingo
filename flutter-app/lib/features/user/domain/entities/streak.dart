@@ -11,12 +11,7 @@ class Streak {
     this.completed = false,
   });
 
-  Streak copyWith({
-    int? id,
-    String? userId,
-    DateTime? date,
-    bool? completed,
-  }) {
+  Streak copyWith({int? id, String? userId, DateTime? date, bool? completed}) {
     return Streak(
       id: id ?? this.id,
       userId: userId ?? this.userId,

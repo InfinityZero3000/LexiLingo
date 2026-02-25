@@ -21,8 +21,7 @@ class InventoryItemEntity extends Equatable {
     required this.purchasedAt,
   });
 
-  bool get isExpired =>
-      expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
   bool get canUse => quantity > 0 && !isExpired && !isActive;
 

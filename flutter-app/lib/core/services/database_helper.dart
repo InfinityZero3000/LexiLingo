@@ -5,7 +5,7 @@ import 'local_cache_service.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  
+
   // Database type constants
   static const String idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
   static const String textType = 'TEXT NOT NULL';
@@ -26,8 +26,8 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
 
     return await openDatabase(
-      path, 
-      version: 5, 
+      path,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -38,26 +38,34 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE courses ADD COLUMN imageUrl TEXT');
       await db.execute('ALTER TABLE courses ADD COLUMN category TEXT');
       await db.execute('ALTER TABLE courses ADD COLUMN duration TEXT');
-      await db.execute('ALTER TABLE courses ADD COLUMN lessonsCount INTEGER DEFAULT 0');
+      await db.execute(
+        'ALTER TABLE courses ADD COLUMN lessonsCount INTEGER DEFAULT 0',
+      );
     }
-    
+
     if (oldVersion < 3) {
       await _createUsersTable(db);
       await _createSettingsTable(db);
       await _createDailyGoalsTable(db);
       await _createStreaksTable(db);
       await _createCourseEnrollmentsTable(db);
-      
+
       // Update existing tables
-      await db.execute('ALTER TABLE lessons ADD COLUMN status TEXT DEFAULT "locked"');
+      await db.execute(
+        'ALTER TABLE lessons ADD COLUMN status TEXT DEFAULT "locked"',
+      );
       await db.execute('ALTER TABLE chat_history ADD COLUMN sessionId TEXT');
       await db.execute('ALTER TABLE chat_history ADD COLUMN userId TEXT');
     }
 
     if (oldVersion < 4) {
       // Align courses table with data source expectations
-      await db.execute('ALTER TABLE courses ADD COLUMN isEnrolled INTEGER DEFAULT 0');
-      await db.execute('ALTER TABLE courses ADD COLUMN progress REAL DEFAULT 0.0');
+      await db.execute(
+        'ALTER TABLE courses ADD COLUMN isEnrolled INTEGER DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE courses ADD COLUMN progress REAL DEFAULT 0.0',
+      );
     }
 
     if (oldVersion < 5) {
@@ -270,13 +278,14 @@ CREATE TABLE user_progress (
 
   Future<void> _seedInitialData(Database db) async {
     final timestamp = DateTime.now().toIso8601String();
-    
+
     // Create demo user
     await db.insert('users', {
       'id': 'demo_user_001',
       'name': 'Demo User',
       'email': 'demo@lexilingo.com',
-      'avatarUrl': 'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff',
+      'avatarUrl':
+          'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff',
       'joinDate': timestamp,
       'lastLoginDate': timestamp,
       'totalXP': 150,
@@ -285,7 +294,7 @@ CREATE TABLE user_progress (
       'totalLessonsCompleted': 5,
       'totalWordsLearned': 25,
     });
-    
+
     // Create settings for demo user
     await db.insert('settings', {
       'userId': 'demo_user_001',
@@ -296,10 +305,11 @@ CREATE TABLE user_progress (
       'soundEnabled': 1,
       'dailyGoalXP': 50,
     });
-    
+
     // Create today's goal for demo user
     final today = DateTime.now();
-    final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     await db.insert('daily_goals', {
       'userId': 'demo_user_001',
       'date': todayStr,
@@ -309,26 +319,29 @@ CREATE TABLE user_progress (
       'wordsLearned': 10,
       'minutesSpent': 15,
     });
-    
+
     // Create streak records for last 3 days
     for (int i = 0; i < 3; i++) {
       final date = today.subtract(Duration(days: i));
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       await db.insert('streaks', {
         'userId': 'demo_user_001',
         'date': dateStr,
         'completed': 1,
       });
     }
-    
+
     // Seed courses (without progress field)
     final courses = [
       {
         'title': 'English for Beginners',
-        'description': 'Start your English learning journey with fundamental vocabulary and grammar.',
+        'description':
+            'Start your English learning journey with fundamental vocabulary and grammar.',
         'level': 'A1',
         'category': 'Language Basics',
-        'imageUrl': 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400',
         'duration': '4 weeks',
         'lessonsCount': 12,
         'isFeatured': 1,
@@ -339,10 +352,12 @@ CREATE TABLE user_progress (
       },
       {
         'title': 'Conversational English',
-        'description': 'Learn practical English for everyday conversations and real-life situations.',
+        'description':
+            'Learn practical English for everyday conversations and real-life situations.',
         'level': 'B1',
         'category': 'Speaking',
-        'imageUrl': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
         'duration': '6 weeks',
         'lessonsCount': 18,
         'isFeatured': 1,
@@ -353,10 +368,12 @@ CREATE TABLE user_progress (
       },
       {
         'title': 'Business English',
-        'description': 'Master professional English for workplace communication and presentations.',
+        'description':
+            'Master professional English for workplace communication and presentations.',
         'level': 'B2',
         'category': 'Business',
-        'imageUrl': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400',
         'duration': '8 weeks',
         'lessonsCount': 24,
         'isFeatured': 0,
@@ -367,10 +384,12 @@ CREATE TABLE user_progress (
       },
       {
         'title': 'IELTS Preparation',
-        'description': 'Comprehensive preparation for all sections of the IELTS examination.',
+        'description':
+            'Comprehensive preparation for all sections of the IELTS examination.',
         'level': 'B2-C1',
         'category': 'Test Prep',
-        'imageUrl': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
         'duration': '12 weeks',
         'lessonsCount': 36,
         'isFeatured': 1,
@@ -381,10 +400,12 @@ CREATE TABLE user_progress (
       },
       {
         'title': 'English Grammar Mastery',
-        'description': 'Deep dive into English grammar rules with practical exercises.',
+        'description':
+            'Deep dive into English grammar rules with practical exercises.',
         'level': 'A2-B1',
         'category': 'Grammar',
-        'imageUrl': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400',
         'duration': '5 weeks',
         'lessonsCount': 15,
         'isFeatured': 0,
@@ -395,10 +416,12 @@ CREATE TABLE user_progress (
       },
       {
         'title': 'Travel English',
-        'description': 'Essential English phrases and vocabulary for travelers.',
+        'description':
+            'Essential English phrases and vocabulary for travelers.',
         'level': 'A2',
         'category': 'Travel',
-        'imageUrl': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400',
         'duration': '3 weeks',
         'lessonsCount': 9,
         'isFeatured': 0,
@@ -412,7 +435,7 @@ CREATE TABLE user_progress (
     for (var course in courses) {
       await db.insert('courses', course);
     }
-    
+
     // Enroll demo user in first two courses
     await db.insert('course_enrollments', {
       'userId': 'demo_user_001',
@@ -421,12 +444,16 @@ CREATE TABLE user_progress (
       'lastAccessedAt': timestamp,
       'currentProgress': 0.35,
     });
-    
+
     await db.insert('course_enrollments', {
       'userId': 'demo_user_001',
       'courseId': 2, // Conversational English
-      'enrolledAt': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-      'lastAccessedAt': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+      'enrolledAt': DateTime.now()
+          .subtract(const Duration(days: 2))
+          .toIso8601String(),
+      'lastAccessedAt': DateTime.now()
+          .subtract(const Duration(days: 1))
+          .toIso8601String(),
       'currentProgress': 0.15,
     });
 
@@ -435,7 +462,8 @@ CREATE TABLE user_progress (
       {
         'userId': 'demo_user_001',
         'word': 'hello',
-        'definition': 'A greeting used to acknowledge someone\'s presence or to begin a conversation.',
+        'definition':
+            'A greeting used to acknowledge someone\'s presence or to begin a conversation.',
         'example': 'Hello! How are you today?',
         'phonetic': '/həˈloʊ/',
         'partOfSpeech': 'interjection',
@@ -467,7 +495,7 @@ CREATE TABLE user_progress (
     final db = await database;
     db.close();
   }
-  
+
   Future<void> deleteDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'lexilingo.db');
@@ -475,4 +503,3 @@ CREATE TABLE user_progress (
     _database = null;
   }
 }
-

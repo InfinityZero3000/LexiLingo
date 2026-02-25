@@ -15,11 +15,11 @@ class CourseDetailEntity extends Equatable {
   final bool isPublished;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // User-specific
   final bool? isEnrolled;
   final double? userProgress;
-  
+
   // Nested units with lessons
   final List<UnitWithLessonsEntity> units;
 
@@ -44,23 +44,23 @@ class CourseDetailEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        language,
-        level,
-        tags,
-        thumbnailUrl,
-        totalXp,
-        estimatedDuration,
-        totalLessons,
-        isPublished,
-        createdAt,
-        updatedAt,
-        isEnrolled,
-        userProgress,
-        units,
-      ];
+    id,
+    title,
+    description,
+    language,
+    level,
+    tags,
+    thumbnailUrl,
+    totalXp,
+    estimatedDuration,
+    totalLessons,
+    isPublished,
+    createdAt,
+    updatedAt,
+    isEnrolled,
+    userProgress,
+    units,
+  ];
 }
 
 /// Unit with its lessons for roadmap display
@@ -85,14 +85,14 @@ class UnitWithLessonsEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        orderIndex,
-        backgroundColor,
-        iconUrl,
-        lessons,
-      ];
+    id,
+    title,
+    description,
+    orderIndex,
+    backgroundColor,
+    iconUrl,
+    lessons,
+  ];
 }
 
 /// Lesson info for roadmap display
@@ -117,12 +117,12 @@ class LessonInRoadmapEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        orderIndex,
-        lessonType,
-        xpReward,
-        isLocked,
-        isCompleted,
-      ];
+    id,
+    title,
+    orderIndex,
+    lessonType,
+    xpReward,
+    isLocked,
+    isCompleted,
+  ];
 }

@@ -34,9 +34,9 @@ class LottieLoadingWidget extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             message!,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -92,16 +92,11 @@ class LottieLoadingWidget extends StatelessWidget {
 class LoadingScreen extends StatelessWidget {
   final String? message;
 
-  const LoadingScreen({
-    super.key,
-    this.message,
-  });
+  const LoadingScreen({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: LottieLoadingWidget.large(message: message),
-    );
+    return Center(child: LottieLoadingWidget.large(message: message));
   }
 }
 

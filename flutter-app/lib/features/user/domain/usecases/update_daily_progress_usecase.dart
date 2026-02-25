@@ -34,19 +34,19 @@ class UpdateDailyProgressUseCase {
     if (goal != null && goal.isCompleted) {
       final today = DateTime.now();
       final streak = await streakRepository.getStreakByDate(userId, today);
-      
+
       // Only mark if not already completed
       if (streak == null || !streak.completed) {
         await streakRepository.markDayComplete(userId, today);
-        
+
         // Update user's current streak
         final currentStreak = await streakRepository.getCurrentStreak(userId);
         final user = await userRepository.getUser(userId);
         if (user != null) {
-          final longestStreak = currentStreak > user.longestStreak 
-              ? currentStreak 
+          final longestStreak = currentStreak > user.longestStreak
+              ? currentStreak
               : user.longestStreak;
-          
+
           await userRepository.updateUserStats(
             userId: userId,
             currentStreak: currentStreak,

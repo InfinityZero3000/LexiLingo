@@ -58,7 +58,8 @@ class GlassmorphicCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: gradientBegin,
                 end: gradientEnd,
-                colors: gradientColors ??
+                colors:
+                    gradientColors ??
                     [
                       Colors.white.withOpacity(bgOpacity),
                       Colors.white.withOpacity(bgOpacity * 0.5),
@@ -122,9 +123,10 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    _animation = Tween<double>(begin: 0, end: widget.progress).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: widget.progress,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward();
   }
 
@@ -133,12 +135,10 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.progress != widget.progress) {
       _previousProgress = _animation.value;
-      _animation = Tween<double>(
-        begin: _previousProgress,
-        end: widget.progress,
-      ).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
+      _animation = Tween<double>(begin: _previousProgress, end: widget.progress)
+          .animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
       _controller.forward(from: 0);
     }
   }
@@ -270,19 +270,15 @@ class _StreakFlameState extends State<StreakFlame>
       duration: const Duration(milliseconds: 1500),
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _glowAnimation = Tween<double>(begin: 0.3, end: 0.6).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _glowAnimation = Tween<double>(
+      begin: 0.3,
+      end: 0.6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     if (widget.isActive) {
       _controller.repeat(reverse: true);
@@ -338,7 +334,10 @@ class _StreakFlameState extends State<StreakFlame>
                 Positioned(
                   bottom: 4,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: widget.isActive
                           ? Colors.orange.shade700
@@ -413,9 +412,11 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     if (!widget.isLoading) return widget.child;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = widget.baseColor ??
+    final baseColor =
+        widget.baseColor ??
         (isDark ? Colors.grey.shade800 : Colors.grey.shade300);
-    final highlightColor = widget.highlightColor ??
+    final highlightColor =
+        widget.highlightColor ??
         (isDark ? Colors.grey.shade700 : Colors.grey.shade100);
 
     return AnimatedBuilder(
@@ -427,11 +428,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [baseColor, highlightColor, baseColor],
-              stops: [
-                0.0,
-                0.5 + _animation.value * 0.25,
-                1.0,
-              ],
+              stops: [0.0, 0.5 + _animation.value * 0.25, 1.0],
             ).createShader(bounds);
           },
           blendMode: BlendMode.srcATop,
@@ -516,10 +513,7 @@ class GradientStatCard extends StatelessWidget {
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade500,
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
               ),
           ],
         ),

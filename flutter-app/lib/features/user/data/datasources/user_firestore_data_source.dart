@@ -30,7 +30,7 @@ class UserFirestoreDataSourceImpl implements UserFirestoreDataSource {
     try {
       final doc = await firestoreService.getUserDocument(userId)?.get();
       if (doc == null || !doc.exists) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
       return UserModel.fromJson({...data, 'id': userId});
     } catch (e) {
@@ -85,14 +85,18 @@ class UserFirestoreDataSourceImpl implements UserFirestoreDataSource {
     int? totalWordsLearned,
   }) async {
     try {
-      final Map<String, dynamic> updates = {'updatedAt': FieldValue.serverTimestamp()};
-      
+      final Map<String, dynamic> updates = {
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
       if (totalXP != null) updates['totalXP'] = totalXP;
       if (currentStreak != null) updates['currentStreak'] = currentStreak;
       if (longestStreak != null) updates['longestStreak'] = longestStreak;
-      if (totalLessonsCompleted != null) updates['totalLessonsCompleted'] = totalLessonsCompleted;
-      if (totalWordsLearned != null) updates['totalWordsLearned'] = totalWordsLearned;
-      
+      if (totalLessonsCompleted != null)
+        updates['totalLessonsCompleted'] = totalLessonsCompleted;
+      if (totalWordsLearned != null)
+        updates['totalWordsLearned'] = totalWordsLearned;
+
       await firestoreService.getUserDocument(userId)?.update(updates);
     } catch (e) {
       throw Exception('Failed to update user stats in Firestore: $e');
@@ -104,12 +108,12 @@ class UserFirestoreDataSourceImpl implements UserFirestoreDataSource {
     try {
       final doc = await firestoreService.getUserDocument(userId)?.get();
       if (doc == null || !doc.exists) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
       final settingsData = data['settings'] as Map<String, dynamic>?;
-      
+
       if (settingsData == null) return null;
-      
+
       return SettingsModel.fromJson({
         ...settingsData,
         'id': 0, // Firestore doesn't use auto-increment IDs

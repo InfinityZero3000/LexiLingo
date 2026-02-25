@@ -18,10 +18,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         return Right(settings);
       }
       // Create default settings if not found
-      final defaultSettings = SettingsModel(
-        id: 0,
-        userId: userId,
-      );
+      final defaultSettings = SettingsModel(id: 0, userId: userId);
       await localDataSource.createSettings(defaultSettings);
       return Right(defaultSettings);
     } catch (e) {
@@ -52,7 +49,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateNotificationTime(String userId, String time) async {
+  Future<Either<Failure, void>> updateNotificationTime(
+    String userId,
+    String time,
+  ) async {
     try {
       await localDataSource.updateNotificationTime(userId, time);
       return const Right(null);

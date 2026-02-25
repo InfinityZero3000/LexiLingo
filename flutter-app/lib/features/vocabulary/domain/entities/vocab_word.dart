@@ -4,5 +4,10 @@ class VocabWord {
   final String definition;
   final bool isLearned;
 
-  VocabWord({this.id, required this.word, required this.definition, this.isLearned = false});
+  VocabWord({
+    this.id,
+    required this.word,
+    required this.definition,
+    this.isLearned = false,
+  });
 }

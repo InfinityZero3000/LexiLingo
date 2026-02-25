@@ -18,7 +18,7 @@ class GamesRepository {
   final ApiClient _apiClient;
 
   GamesRepository({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   // ── Word Scramble ─────────────────────────────────────────────────────────
 
@@ -27,8 +27,9 @@ class GamesRepository {
     String level = 'A2',
     int count = 10,
   }) async {
-    final data = await _apiClient
-        .get('/games/word-scramble?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/word-scramble?level=$level&count=$count',
+    );
     return WordScrambleGame.fromJson(data);
   }
 
@@ -39,8 +40,9 @@ class GamesRepository {
     String level = 'A1',
     int count = 10,
   }) async {
-    final data = await _apiClient
-        .get('/games/scramble?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/scramble?level=$level&count=$count',
+    );
     return (data['words'] as List<dynamic>? ?? [])
         .map((w) => ScrambleWord.fromJson(w as Map<String, dynamic>))
         .toList();
@@ -53,8 +55,9 @@ class GamesRepository {
     String level = 'B1',
     int count = 8,
   }) async {
-    final data = await _apiClient
-        .get('/games/fill-blank?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/fill-blank?level=$level&count=$count',
+    );
     return FillBlankGame.fromJson(data);
   }
 
@@ -65,8 +68,9 @@ class GamesRepository {
     String level = 'A1',
     int count = 8,
   }) async {
-    final data = await _apiClient
-        .get('/games/fill-blank?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/fill-blank?level=$level&count=$count',
+    );
     return (data['questions'] as List<dynamic>? ?? [])
         .map((q) => FillBlankQuestion.fromJson(q as Map<String, dynamic>))
         .toList();
@@ -79,8 +83,9 @@ class GamesRepository {
     String level = 'B1',
     String variation = 'definition',
   }) async {
-    final data = await _apiClient
-        .get('/games/matching?level=$level&variation=$variation');
+    final data = await _apiClient.get(
+      '/games/matching?level=$level&variation=$variation',
+    );
     return MatchingGame.fromJson(data);
   }
 
@@ -93,7 +98,8 @@ class GamesRepository {
     String variant = 'definition',
   }) async {
     final data = await _apiClient.get(
-        '/games/matching?level=$level&count=$count&variant=$variant');
+      '/games/matching?level=$level&count=$count&variant=$variant',
+    );
     return MatchingGameData.fromJson(data);
   }
 
@@ -104,8 +110,9 @@ class GamesRepository {
     String level = 'B1',
     int count = 8,
   }) async {
-    final data = await _apiClient
-        .get('/games/spelling-bee?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/spelling-bee?level=$level&count=$count',
+    );
     return SpellingBeeGame.fromJson(data);
   }
 
@@ -116,8 +123,9 @@ class GamesRepository {
     String level = 'A1',
     int count = 8,
   }) async {
-    final data = await _apiClient
-        .get('/games/spelling-bee?level=$level&count=$count');
+    final data = await _apiClient.get(
+      '/games/spelling-bee?level=$level&count=$count',
+    );
     return (data['words'] as List<dynamic>? ?? [])
         .map((w) => SpellingBeeWord.fromJson(w as Map<String, dynamic>))
         .toList();
@@ -131,8 +139,7 @@ class GamesRepository {
     String? topic,
     int count = 10,
   }) async {
-    final query = StringBuffer(
-        '/games/grammar-quiz?level=$level&count=$count');
+    final query = StringBuffer('/games/grammar-quiz?level=$level&count=$count');
     if (topic != null) query.write('&topic=$topic');
     final data = await _apiClient.get(query.toString());
     return GrammarQuizGame.fromJson(data);
@@ -147,13 +154,11 @@ class GamesRepository {
     String? topic,
     int count = 10,
   }) async {
-    final query = StringBuffer(
-        '/games/grammar-quiz?level=$level&count=$count');
+    final query = StringBuffer('/games/grammar-quiz?level=$level&count=$count');
     if (topic != null) query.write('&topic=$topic');
     final data = await _apiClient.get(query.toString());
     return (data['questions'] as List<dynamic>? ?? [])
-        .map((q) =>
-            GrammarQuizQuestion.fromJson(q as Map<String, dynamic>))
+        .map((q) => GrammarQuizQuestion.fromJson(q as Map<String, dynamic>))
         .toList();
   }
 

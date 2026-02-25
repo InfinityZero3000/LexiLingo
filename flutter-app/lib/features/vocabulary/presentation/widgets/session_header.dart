@@ -7,10 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session
 class SessionHeader extends StatelessWidget {
   final ReviewSessionEntity session;
 
-  const SessionHeader({
-    super.key,
-    required this.session,
-  });
+  const SessionHeader({super.key, required this.session});
 
   @override
   Widget build(BuildContext context) {

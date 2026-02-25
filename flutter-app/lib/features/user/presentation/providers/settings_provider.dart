@@ -5,13 +5,13 @@ import 'package:lexilingo_app/features/user/domain/repositories/settings_reposit
 /// Provider for managing user settings
 class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
-  
+
   Settings? _settings;
   bool _isLoading = false;
   String? _error;
 
   SettingsProvider({required SettingsRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   Settings? get settings => _settings;
   bool get isLoading => _isLoading;
@@ -36,11 +36,36 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Daily goal presets with IconData
   static final List<Map<String, dynamic>> dailyGoalPresets = [
-    {'xp': 10, 'label': 'Casual', 'description': '5 minutes/day', 'icon': Icons.eco},
-    {'xp': 30, 'label': 'Regular', 'description': '10 minutes/day', 'icon': Icons.menu_book},
-    {'xp': 50, 'label': 'Serious', 'description': '15 minutes/day', 'icon': Icons.local_fire_department},
-    {'xp': 100, 'label': 'Intense', 'description': '30 minutes/day', 'icon': Icons.fitness_center},
-    {'xp': 200, 'label': 'Insane', 'description': '1 hour/day', 'icon': Icons.emoji_events},
+    {
+      'xp': 10,
+      'label': 'Casual',
+      'description': '5 minutes/day',
+      'icon': Icons.eco,
+    },
+    {
+      'xp': 30,
+      'label': 'Regular',
+      'description': '10 minutes/day',
+      'icon': Icons.menu_book,
+    },
+    {
+      'xp': 50,
+      'label': 'Serious',
+      'description': '15 minutes/day',
+      'icon': Icons.local_fire_department,
+    },
+    {
+      'xp': 100,
+      'label': 'Intense',
+      'description': '30 minutes/day',
+      'icon': Icons.fitness_center,
+    },
+    {
+      'xp': 200,
+      'label': 'Insane',
+      'description': '1 hour/day',
+      'icon': Icons.emoji_events,
+    },
   ];
 
   /// Load settings for user
@@ -55,10 +80,7 @@ class SettingsProvider extends ChangeNotifier {
         (failure) {
           _error = failure.message;
           // Create default settings if not found
-          _settings = Settings(
-            id: 0,
-            userId: userId,
-          );
+          _settings = Settings(id: 0, userId: userId);
         },
         (settings) {
           _settings = settings;
@@ -155,15 +177,12 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   /// Update notification settings
-  Future<void> updateNotificationSettings({
-    bool? enabled,
-    String? time,
-  }) async {
+  Future<void> updateNotificationSettings({bool? enabled, String? time}) async {
     if (_settings == null) return;
 
     final oldEnabled = _settings!.notificationEnabled;
     final oldTime = _settings!.notificationTime;
-    
+
     _settings = _settings!.copyWith(
       notificationEnabled: enabled ?? oldEnabled,
       notificationTime: time ?? oldTime,

@@ -46,13 +46,15 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _glowAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -98,7 +100,9 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
                     : [
                         BoxShadow(
                           color: widget.isCurrent
-                              ? widget.statusColor.withValues(alpha: 0.3 + (_glowAnimation.value * 0.2))
+                              ? widget.statusColor.withValues(
+                                  alpha: 0.3 + (_glowAnimation.value * 0.2),
+                                )
                               : Colors.black.withValues(alpha: 0.08),
                           blurRadius: widget.isCurrent ? 16 : 10,
                           offset: const Offset(0, 4),
@@ -120,29 +124,26 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: widget.isLocked
-                            ? [
-                                Colors.grey[200]!,
-                                Colors.grey[100]!,
-                              ]
+                            ? [Colors.grey[200]!, Colors.grey[100]!]
                             : isDark
-                                ? [
-                                    Colors.white.withValues(alpha: 0.12),
-                                    Colors.white.withValues(alpha: 0.06),
-                                  ]
-                                : [
-                                    Colors.white.withValues(alpha: 0.95),
-                                    Colors.white.withValues(alpha: 0.85),
-                                  ],
+                            ? [
+                                Colors.white.withValues(alpha: 0.12),
+                                Colors.white.withValues(alpha: 0.06),
+                              ]
+                            : [
+                                Colors.white.withValues(alpha: 0.95),
+                                Colors.white.withValues(alpha: 0.85),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: widget.isCurrent
                             ? widget.statusColor.withValues(alpha: 0.5)
                             : widget.isLocked
-                                ? Colors.grey[300]!
-                                : (isDark 
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.grey[200]!),
+                            ? Colors.grey[300]!
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.grey[200]!),
                         width: widget.isCurrent ? 2 : 1,
                       ),
                     ),
@@ -305,11 +306,7 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.emoji_events_rounded,
-            size: 14,
-            color: Colors.amber[700],
-          ),
+          Icon(Icons.emoji_events_rounded, size: 14, color: Colors.amber[700]),
           const SizedBox(width: 4),
           Text(
             '${widget.bestScore!.toStringAsFixed(0)}%',
@@ -328,11 +325,7 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.replay_rounded,
-          size: 14,
-          color: Colors.grey[500],
-        ),
+        Icon(Icons.replay_rounded, size: 14, color: Colors.grey[500]),
         const SizedBox(width: 3),
         Text(
           '${widget.attemptsCount}',
@@ -369,11 +362,7 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 22,
-          ),
+          Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
           SizedBox(width: 8),
           Text(
             'Continue',
@@ -485,10 +474,7 @@ class _AnimatedTimelineNodeState extends State<AnimatedTimelineNode>
                   decoration: BoxDecoration(
                     color: widget.isLocked ? Colors.grey[300] : widget.color,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: widget.color,
-                      width: 3,
-                    ),
+                    border: Border.all(color: widget.color, width: 3),
                     boxShadow: widget.isCurrent
                         ? [
                             BoxShadow(
@@ -498,13 +484,13 @@ class _AnimatedTimelineNodeState extends State<AnimatedTimelineNode>
                             ),
                           ]
                         : widget.isCompleted
-                            ? [
-                                BoxShadow(
-                                  color: widget.color.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                ),
-                              ]
-                            : null,
+                        ? [
+                            BoxShadow(
+                              color: widget.color.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Center(child: _buildNodeIcon()),
                 ),
@@ -536,18 +522,10 @@ class _AnimatedTimelineNodeState extends State<AnimatedTimelineNode>
 
   Widget _buildNodeIcon() {
     if (widget.isLocked) {
-      return Icon(
-        Icons.lock_rounded,
-        size: 16,
-        color: Colors.grey[500],
-      );
+      return Icon(Icons.lock_rounded, size: 16, color: Colors.grey[500]);
     }
     if (widget.isCompleted) {
-      return const Icon(
-        Icons.check_rounded,
-        size: 18,
-        color: Colors.white,
-      );
+      return const Icon(Icons.check_rounded, size: 18, color: Colors.white);
     }
     if (widget.isCurrent) {
       return Container(

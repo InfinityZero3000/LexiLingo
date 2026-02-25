@@ -34,7 +34,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   final TextEditingController _phraseController = TextEditingController();
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
-  
+
   Timer? _recordingTimer;
   StreamSubscription<PlayerState>? _playerStateSub;
   Duration _recordingDuration = Duration.zero;
@@ -61,7 +61,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     super.initState();
     _phraseController.text = widget.initialPhrase ?? _samplePhrases.first;
     _checkPermission();
-    
+
     _playerStateSub = _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         setState(() => _isPlaying = false);
@@ -95,23 +95,26 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
     try {
       final directory = await getTemporaryDirectory();
-      _recordingPath = '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
-      
+      _recordingPath =
+          '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
+
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
         path: _recordingPath!,
       );
-      
+
       setState(() {
         _isRecording = true;
         _recordingDuration = Duration.zero;
       });
-      
+
       context.read<VoiceProvider>().startRecording();
-      
+
       _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() => _recordingDuration += const Duration(seconds: 1));
-        context.read<VoiceProvider>().updateRecordingDuration(_recordingDuration);
+        context.read<VoiceProvider>().updateRecordingDuration(
+          _recordingDuration,
+        );
       });
     } catch (e) {
       _showError('Failed to start recording: $e');
@@ -120,12 +123,12 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   Future<void> _stopRecording() async {
     _recordingTimer?.cancel();
-    
+
     try {
       final path = await _recorder.stop();
-      
+
       setState(() => _isRecording = false);
-      
+
       if (path != null) {
         final file = File(path);
         if (await file.exists()) {
@@ -138,9 +141,12 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     }
   }
 
-  Future<void> _assessPronunciation(Uint8List audioData, String filename) async {
+  Future<void> _assessPronunciation(
+    Uint8List audioData,
+    String filename,
+  ) async {
     setState(() => _isProcessing = true);
-    
+
     final provider = context.read<VoiceProvider>();
     await provider.assessPronunciation(
       audioData: audioData,
@@ -148,7 +154,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       targetText: _phraseController.text.trim(),
       language: widget.language,
     );
-    
+
     setState(() => _isProcessing = false);
   }
 
@@ -157,24 +163,24 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       _showError('Enter a phrase first');
       return;
     }
-    
+
     setState(() => _isProcessing = true);
-    
+
     final provider = context.read<VoiceProvider>();
     final result = await provider.synthesizeAndPlay(
       text: _phraseController.text.trim(),
     );
-    
+
     if (result != null && result.audioData.isNotEmpty) {
       try {
         // Save to temp file and play
         final directory = await getTemporaryDirectory();
         final file = File('${directory.path}/tts_audio.wav');
         await file.writeAsBytes(result.audioData);
-        
+
         await _player.setFilePath(file.path);
         await _player.play();
-        
+
         setState(() {
           _isPlaying = true;
           _isProcessing = false;
@@ -201,10 +207,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -305,8 +308,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                   Text(
                     'Your Turn',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   RecordButton(
@@ -319,7 +322,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                 const SizedBox(height: 32),
 
                 // Error message
-                if (voiceProvider.hasError && voiceProvider.errorMessage != null)
+                if (voiceProvider.hasError &&
+                    voiceProvider.errorMessage != null)
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -356,9 +360,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                       children: [
                         Text(
                           'You said:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: AppColors.textGrey,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(color: AppColors.textGrey),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -380,7 +383,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     onListenExample: _playExample,
                   ),
                 ],
-                
+
                 const SizedBox(height: 40),
               ],
             ),

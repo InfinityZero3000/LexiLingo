@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
-import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart' as glass;
+import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
+    as glass;
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -130,11 +131,11 @@ class _HomePageNewState extends State<HomePageNew> {
   ) {
     // Get user display name from AuthProvider
     final user = authProvider.currentUser;
-    final displayName = user?.displayName.isNotEmpty == true 
-        ? user!.displayName 
+    final displayName = user?.displayName.isNotEmpty == true
+        ? user!.displayName
         : user?.username ?? 'User';
     final totalXP = user?.xp ?? homeProvider.totalXP;
-    
+
     return Consumer<NotificationProvider>(
       builder: (context, notificationProvider, child) {
         return PersonalizedGreetingHeader(
@@ -163,153 +164,175 @@ class _HomePageNewState extends State<HomePageNew> {
     AuthProvider authProvider,
   ) {
     return Consumer3<StreakProvider, LevelProvider, GamificationProvider>(
-      builder: (context, streakProvider, levelProvider, gamificationProvider, _) {
-        final streak = streakProvider.streak?.currentStreak ?? homeProvider.streakDays;
-        final xp = levelProvider.levelStatus.totalXP;
-        final gems = gamificationProvider.wallet?.gems ?? 0;
-        final lessonsToday = homeProvider.dailyXP ~/ 10; // Approximate lessons from XP
-        final progress = levelProvider.levelStatus.progressPercentage;
+      builder:
+          (context, streakProvider, levelProvider, gamificationProvider, _) {
+            final streak =
+                streakProvider.streak?.currentStreak ?? homeProvider.streakDays;
+            final xp = levelProvider.levelStatus.totalXP;
+            final gems = gamificationProvider.wallet?.gems ?? 0;
+            final lessonsToday =
+                homeProvider.dailyXP ~/ 10; // Approximate lessons from XP
+            final progress = levelProvider.levelStatus.progressPercentage;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              // Row 1: Streak + XP
-              Row(
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
                 children: [
-                  // Streak Card - Large
-                  Expanded(
-                    flex: 3,
-                    child: _buildBentoCard(
-                      context,
-                      icon: Icons.local_fire_department,
-                      iconColor: Colors.orange,
-                      bgGradient: const [Color(0xFFFEF3C7), Color(0xFFFED7AA)],
-                      title: 'Streak',
-                      value: '$streak',
-                      subtitle: 'days',
-                      height: 120,
-                      onTap: () {
-                        if (streakProvider.streak != null) {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => StreakDetailsSheet(streak: streakProvider.streak!),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // XP Card
-                  Expanded(
-                    flex: 2,
-                    child: _buildBentoCard(
-                      context,
-                      icon: Icons.star,
-                      iconColor: const Color(0xFFF59E0B),
-                      bgGradient: const [Color(0xFFFEF9C3), Color(0xFFFDE68A)],
-                      title: 'XP',
-                      value: LevelCalculator.formatXP(xp),
-                      subtitle: 'earned',
-                      height: 120,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Row 2: Gems + Progress + Lessons
-              Row(
-                children: [
-                  // Gems Card
-                  Expanded(
-                    child: _buildBentoCard(
-                      context,
-                      icon: Icons.diamond,
-                      iconColor: const Color(0xFF8B5CF6),
-                      bgGradient: const [Color(0xFFEDE9FE), Color(0xFFDDD6FE)],
-                      title: 'Gems',
-                      value: '$gems',
-                      subtitle: null,
-                      height: 100,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const WalletScreen()),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Progress Card with Ring
-                  Expanded(
-                    child: Container(
-                      height: 100,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFFDBEAFE), Color(0xFFBFDBFE)],
+                  // Row 1: Streak + XP
+                  Row(
+                    children: [
+                      // Streak Card - Large
+                      Expanded(
+                        flex: 3,
+                        child: _buildBentoCard(
+                          context,
+                          icon: Icons.local_fire_department,
+                          iconColor: Colors.orange,
+                          bgGradient: const [
+                            Color(0xFFFEF3C7),
+                            Color(0xFFFED7AA),
+                          ],
+                          title: 'Streak',
+                          value: '$streak',
+                          subtitle: 'days',
+                          height: 120,
+                          onTap: () {
+                            if (streakProvider.streak != null) {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => StreakDetailsSheet(
+                                  streak: streakProvider.streak!,
+                                ),
+                              );
+                            }
+                          },
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                        glass.AnimatedProgressRing(
-                            progress: progress / 100,
-                            size: 50,
-                            strokeWidth: 5,
-                            gradientColors: const [Color(0xFF3B82F6), Color(0xFF6366F1)],
-                            child: Text(
-                              '${progress.toInt()}%',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF3B82F6),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Level Progress',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF3B82F6),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      // XP Card
+                      Expanded(
+                        flex: 2,
+                        child: _buildBentoCard(
+                          context,
+                          icon: Icons.star,
+                          iconColor: const Color(0xFFF59E0B),
+                          bgGradient: const [
+                            Color(0xFFFEF9C3),
+                            Color(0xFFFDE68A),
+                          ],
+                          title: 'XP',
+                          value: LevelCalculator.formatXP(xp),
+                          subtitle: 'earned',
+                          height: 120,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  // Lessons Today Card
-                  Expanded(
-                    child: _buildBentoCard(
-                      context,
-                      icon: Icons.menu_book,
-                      iconColor: const Color(0xFF10B981),
-                      bgGradient: const [Color(0xFFD1FAE5), Color(0xFFA7F3D0)],
-                      title: 'Today',
-                      value: '$lessonsToday',
-                      subtitle: 'lessons',
-                      height: 100,
-                    ),
+                  const SizedBox(height: 12),
+                  // Row 2: Gems + Progress + Lessons
+                  Row(
+                    children: [
+                      // Gems Card
+                      Expanded(
+                        child: _buildBentoCard(
+                          context,
+                          icon: Icons.diamond,
+                          iconColor: const Color(0xFF8B5CF6),
+                          bgGradient: const [
+                            Color(0xFFEDE9FE),
+                            Color(0xFFDDD6FE),
+                          ],
+                          title: 'Gems',
+                          value: '$gems',
+                          subtitle: null,
+                          height: 100,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const WalletScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Progress Card with Ring
+                      Expanded(
+                        child: Container(
+                          height: 100,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFFDBEAFE), Color(0xFFBFDBFE)],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              glass.AnimatedProgressRing(
+                                progress: progress / 100,
+                                size: 50,
+                                strokeWidth: 5,
+                                gradientColors: const [
+                                  Color(0xFF3B82F6),
+                                  Color(0xFF6366F1),
+                                ],
+                                child: Text(
+                                  '${progress.toInt()}%',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF3B82F6),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Level Progress',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF3B82F6),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Lessons Today Card
+                      Expanded(
+                        child: _buildBentoCard(
+                          context,
+                          icon: Icons.menu_book,
+                          iconColor: const Color(0xFF10B981),
+                          bgGradient: const [
+                            Color(0xFFD1FAE5),
+                            Color(0xFFA7F3D0),
+                          ],
+                          title: 'Today',
+                          value: '$lessonsToday',
+                          subtitle: 'lessons',
+                          height: 100,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        );
-      },
+            );
+          },
     );
   }
 
@@ -452,7 +475,9 @@ class _HomePageNewState extends State<HomePageNew> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (isCompleted ? Colors.green : Colors.blue).withValues(alpha: 0.15),
+            color: (isCompleted ? Colors.green : Colors.blue).withValues(
+              alpha: 0.15,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -485,7 +510,9 @@ class _HomePageNewState extends State<HomePageNew> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                        color: isCompleted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF3B82F6),
                       ),
                     ),
                 ],
@@ -508,7 +535,9 @@ class _HomePageNewState extends State<HomePageNew> {
                       ),
                       child: Icon(
                         isCompleted ? Icons.emoji_events : Icons.bolt,
-                        color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                        color: isCompleted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF3B82F6),
                         size: 18,
                       ),
                     ),
@@ -517,7 +546,9 @@ class _HomePageNewState extends State<HomePageNew> {
                       'Daily XP Goal',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isCompleted ? const Color(0xFF065F46) : const Color(0xFF1E40AF),
+                        color: isCompleted
+                            ? const Color(0xFF065F46)
+                            : const Color(0xFF1E40AF),
                       ),
                     ),
                   ],
@@ -527,12 +558,17 @@ class _HomePageNewState extends State<HomePageNew> {
                   '${provider.dailyXP}/${provider.dailyGoalXP} XP',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                    color: isCompleted
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF3B82F6),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(12),
@@ -543,7 +579,9 @@ class _HomePageNewState extends State<HomePageNew> {
                       Icon(
                         isCompleted ? Icons.celebration : Icons.trending_up,
                         size: 14,
-                        color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                        color: isCompleted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF3B82F6),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -551,7 +589,9 @@ class _HomePageNewState extends State<HomePageNew> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                          color: isCompleted
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF3B82F6),
                         ),
                       ),
                     ],
@@ -565,7 +605,10 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildEnrolledCoursesSection(BuildContext context, HomeProvider provider) {
+  Widget _buildEnrolledCoursesSection(
+    BuildContext context,
+    HomeProvider provider,
+  ) {
     // Show loading state if courses are being loaded
     if (provider.isLoading && provider.enrolledCourses.isEmpty) {
       return SizedBox(
@@ -594,25 +637,21 @@ class _HomePageNewState extends State<HomePageNew> {
           ),
           child: Column(
             children: [
-              Icon(
-                Icons.school_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.school_outlined, size: 48, color: Colors.grey[400]),
               const SizedBox(height: 12),
               Text(
                 'No enrolled courses yet',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Start your learning journey by enrolling in a course',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -648,11 +687,11 @@ class _HomePageNewState extends State<HomePageNew> {
 
   Widget _buildEnrolledCourseCard(BuildContext context, CourseEntity course) {
     final progress = course.userProgress ?? 0;
-    final progressColor = progress >= 80 
-        ? const Color(0xFF10B981) 
-        : progress >= 50 
-            ? const Color(0xFFF59E0B) 
-            : const Color(0xFF3B82F6);
+    final progressColor = progress >= 80
+        ? const Color(0xFF10B981)
+        : progress >= 50
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFF3B82F6);
 
     return GestureDetector(
       onTap: () {
@@ -670,10 +709,7 @@ class _HomePageNewState extends State<HomePageNew> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              progressColor.withValues(alpha: 0.05),
-            ],
+            colors: [Colors.white, progressColor.withValues(alpha: 0.05)],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
@@ -733,7 +769,10 @@ class _HomePageNewState extends State<HomePageNew> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: progressColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -750,9 +789,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         const SizedBox(width: 8),
                         Text(
                           '${course.totalLessons} lessons',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textGrey),
                         ),
                       ],
                     ),
@@ -773,7 +811,10 @@ class _HomePageNewState extends State<HomePageNew> {
                             height: 8,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [progressColor, progressColor.withValues(alpha: 0.7)],
+                                colors: [
+                                  progressColor,
+                                  progressColor.withValues(alpha: 0.7),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -794,17 +835,27 @@ class _HomePageNewState extends State<HomePageNew> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [progressColor, progressColor.withValues(alpha: 0.8)],
+                              colors: [
+                                progressColor,
+                                progressColor.withValues(alpha: 0.8),
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.play_arrow, size: 14, color: Colors.white),
+                              Icon(
+                                Icons.play_arrow,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                               SizedBox(width: 2),
                               Text(
                                 'Continue',
@@ -876,7 +927,7 @@ class _HomePageNewState extends State<HomePageNew> {
   ) {
     final levelColor = _getLevelColor(course.level);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -902,7 +953,7 @@ class _HomePageNewState extends State<HomePageNew> {
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isDark 
+            color: isDark
                 ? Colors.white.withValues(alpha: 0.1)
                 : levelColor.withValues(alpha: 0.2),
             width: 1,
@@ -945,7 +996,9 @@ class _HomePageNewState extends State<HomePageNew> {
                     // Gradient overlay
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -968,7 +1021,11 @@ class _HomePageNewState extends State<HomePageNew> {
                               width: 2,
                             ),
                           ),
-                          child: Icon(Icons.school_rounded, size: 40, color: Colors.white.withValues(alpha: 0.9)),
+                          child: Icon(
+                            Icons.school_rounded,
+                            size: 40,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
                         ),
                       ),
                     // Level badge - top left
@@ -976,10 +1033,16 @@ class _HomePageNewState extends State<HomePageNew> {
                       top: 12,
                       left: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [levelColor, levelColor.withValues(alpha: 0.85)],
+                            colors: [
+                              levelColor,
+                              levelColor.withValues(alpha: 0.85),
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
@@ -1006,7 +1069,10 @@ class _HomePageNewState extends State<HomePageNew> {
                       top: 12,
                       right: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
@@ -1014,7 +1080,9 @@ class _HomePageNewState extends State<HomePageNew> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFFF59E0B,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -1023,7 +1091,11 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star_rounded, size: 14, color: Colors.white),
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${course.totalXp} XP',
@@ -1049,10 +1121,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           shadows: [
-                            Shadow(
-                              color: Colors.black54,
-                              blurRadius: 4,
-                            ),
+                            Shadow(color: Colors.black54, blurRadius: 4),
                           ],
                         ),
                         maxLines: 2,
@@ -1094,7 +1163,10 @@ class _HomePageNewState extends State<HomePageNew> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [levelColor, levelColor.withValues(alpha: 0.85)],
+                          colors: [
+                            levelColor,
+                            levelColor.withValues(alpha: 0.85),
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
@@ -1108,7 +1180,11 @@ class _HomePageNewState extends State<HomePageNew> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.play_circle_filled_rounded, size: 20, color: Colors.white),
+                          Icon(
+                            Icons.play_circle_filled_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Start Learning',
@@ -1142,10 +1218,7 @@ class _HomePageNewState extends State<HomePageNew> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1254,7 +1327,9 @@ class _HomePageNewState extends State<HomePageNew> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const LeaderboardScreen(),
+                      ),
                     );
                   },
                 ),
@@ -1383,9 +1458,9 @@ class _HomePageNewState extends State<HomePageNew> {
             const SizedBox(height: 12),
             Text(
               title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               subtitle,
@@ -1403,51 +1478,71 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget _buildQuickStats(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final stats = [
-      _QuickStat(icon: Icons.article_rounded, label: 'Articles', value: '—', color: const Color(0xFF6366F1)),
-      _QuickStat(icon: Icons.sports_esports_rounded, label: 'Games', value: '—', color: const Color(0xFF8B5CF6)),
-      _QuickStat(icon: Icons.headphones_rounded, label: 'Listened', value: '—', color: const Color(0xFF0EA5E9)),
-      _QuickStat(icon: Icons.menu_book_rounded, label: 'Reading', value: '—', color: const Color(0xFF10B981)),
+      _QuickStat(
+        icon: Icons.article_rounded,
+        label: 'Articles',
+        value: '—',
+        color: const Color(0xFF6366F1),
+      ),
+      _QuickStat(
+        icon: Icons.sports_esports_rounded,
+        label: 'Games',
+        value: '—',
+        color: const Color(0xFF8B5CF6),
+      ),
+      _QuickStat(
+        icon: Icons.headphones_rounded,
+        label: 'Listened',
+        value: '—',
+        color: const Color(0xFF0EA5E9),
+      ),
+      _QuickStat(
+        icon: Icons.menu_book_rounded,
+        label: 'Reading',
+        value: '—',
+        color: const Color(0xFF10B981),
+      ),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: stats
-            .expand((s) => [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: s.color.withValues(alpha: 0.2),
+            .expand(
+              (s) => [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: s.color.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(s.icon, color: s.color, size: 22),
+                        const SizedBox(height: 4),
+                        Text(
+                          s.value,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: isDark ? Colors.white : AppColors.textDark,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(s.icon, color: s.color, size: 22),
-                          const SizedBox(height: 4),
-                          Text(
-                            s.value,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: isDark ? Colors.white : AppColors.textDark,
-                            ),
+                        Text(
+                          s.label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.white54 : AppColors.textGrey,
                           ),
-                          Text(
-                            s.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark ? Colors.white54 : AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ])
+                ),
+                const SizedBox(width: 8),
+              ],
+            )
             .take(stats.length * 2 - 1)
             .toList(),
       ),

@@ -81,10 +81,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     final provider = context.read<BookProvider>();
     showModalBottomSheet(
       context: context,
-      backgroundColor:
-          Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1A1A2E)
-              : Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A2E)
+          : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -109,15 +108,20 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
-            ...provider.bookmarks.map((b) => ListTile(
-                  leading: const Icon(Icons.bookmark_rounded, color: AppColors.primary),
-                  title: Text('Page ${b.page + 1}'),
-                  subtitle: b.note.isNotEmpty ? Text(b.note) : null,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pageController.jumpToPage(b.page);
-                  },
-                )),
+            ...provider.bookmarks.map(
+              (b) => ListTile(
+                leading: const Icon(
+                  Icons.bookmark_rounded,
+                  color: AppColors.primary,
+                ),
+                title: Text('Page ${b.page + 1}'),
+                subtitle: b.note.isNotEmpty ? Text(b.note) : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pageController.jumpToPage(b.page);
+                },
+              ),
+            ),
           ],
         );
       },
@@ -168,7 +172,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Loading book...',
-                        style: TextStyle(color: textColor.withValues(alpha: 0.6)),
+                        style: TextStyle(
+                          color: textColor.withValues(alpha: 0.6),
+                        ),
                       ),
                     ],
                   ),
@@ -180,8 +186,11 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline_rounded,
-                            size: 48, color: Colors.grey),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Could not load book.\n${provider.error}',
@@ -295,11 +304,19 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context, BookProvider provider,
-      ReaderSettings settings, Color textColor) {
+  Widget _buildTopBar(
+    BuildContext context,
+    BookProvider provider,
+    ReaderSettings settings,
+    Color textColor,
+  ) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          4, MediaQuery.of(context).padding.top + 4, 4, 4),
+        4,
+        MediaQuery.of(context).padding.top + 4,
+        4,
+        4,
+      ),
       decoration: BoxDecoration(
         color: _readerBg(settings.theme).withValues(alpha: 0.95),
       ),
@@ -343,14 +360,22 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, BookProvider provider,
-      ReaderSettings settings, Color textColor) {
+  Widget _buildBottomBar(
+    BuildContext context,
+    BookProvider provider,
+    ReaderSettings settings,
+    Color textColor,
+  ) {
     final totalPages = provider.totalPages;
     final cur = provider.currentPage;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-          16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
+        16,
+        10,
+        16,
+        MediaQuery.of(context).padding.bottom + 10,
+      ),
       decoration: BoxDecoration(
         color: _readerBg(settings.theme).withValues(alpha: 0.95),
       ),
@@ -365,7 +390,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 value: totalPages > 1 ? cur / (totalPages - 1) : 1.0,
                 minHeight: 3,
                 backgroundColor: textColor.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
               ),
             ),
           const SizedBox(height: 8),
@@ -505,20 +532,20 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                       ),
                     )
                   : _notFound
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              'No definition found for "${widget.word}".',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: widget.subtextColor,
-                                fontSize: 14,
-                              ),
-                            ),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'No definition found for "${widget.word}".',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: widget.subtextColor,
+                            fontSize: 14,
                           ),
-                        )
-                      : _buildDefinitionContent(controller),
+                        ),
+                      ),
+                    )
+                  : _buildDefinitionContent(controller),
             ),
           ],
         ),
@@ -583,45 +610,49 @@ class _DictionarySheetState extends State<_DictionarySheet> {
           ),
         ),
         // Definitions
-        ...m.definitions.asMap().entries.map((e) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${e.key + 1}.  ',
-                    style: TextStyle(
-                      color: widget.subtextColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+        ...m.definitions.asMap().entries.map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${e.key + 1}.  ',
+                  style: TextStyle(
+                    color: widget.subtextColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
-                  Expanded(
-                    child: Text(
-                      e.value,
-                      style: TextStyle(
-                        color: widget.textColor,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-        // Examples
-        ...m.examples.map((ex) => Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 4),
-              child: Text(
-                '"$ex"',
-                style: TextStyle(
-                  color: widget.subtextColor,
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  height: 1.4,
                 ),
+                Expanded(
+                  child: Text(
+                    e.value,
+                    style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Examples
+        ...m.examples.map(
+          (ex) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 4),
+            child: Text(
+              '"$ex"',
+              style: TextStyle(
+                color: widget.subtextColor,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
               ),
-            )),
+            ),
+          ),
+        ),
         // Synonyms
         if (m.synonyms.isNotEmpty) ...[
           const SizedBox(height: 4),
@@ -629,21 +660,25 @@ class _DictionarySheetState extends State<_DictionarySheet> {
             spacing: 6,
             runSpacing: 4,
             children: m.synonyms
-                .map((s) => Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
+                .map(
+                  (s) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      s,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: widget.subtextColor,
                       ),
-                      child: Text(
-                        s,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: widget.subtextColor,
-                        ),
-                      ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ],

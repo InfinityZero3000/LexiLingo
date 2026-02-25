@@ -34,11 +34,10 @@ class BadgeAssetMapper {
     'walking_dictionary': 'legendary-vocabulary.png',
 
     // ===================== XP ACHIEVEMENTS =========================
-    'xp_hunter': 'xp-hunter.png',        // XP Hunter - Common (grey)
-    'xp_warrior': 'xp-warrior.png',      // XP Warrior - Rare (blue)
-    'xp_champion': 'xp-champion.png',    // XP Champion - Epic (purple)
-    'xp_legend': 'xp-legend.png',        // XP Legend - Legendary (gold)
-
+    'xp_hunter': 'xp-hunter.png', // XP Hunter - Common (grey)
+    'xp_warrior': 'xp-warrior.png', // XP Warrior - Rare (blue)
+    'xp_champion': 'xp-champion.png', // XP Champion - Epic (purple)
+    'xp_legend': 'xp-legend.png', // XP Legend - Legendary (gold)
     // ===================== QUIZ / PERFECT SCORE ====================
     'perfectionist': '100%.png',
     'first_perfect_score': 'first-perfect.png',
@@ -85,7 +84,7 @@ class BadgeAssetMapper {
     'milestone_maker': 'milestone-maker.png',
     'comeback_king': 'comeback-king.png',
   };
-  
+
   /// Get badge asset path for an achievement
   /// Returns null if no custom asset exists
   static String? getBadgeAsset(String achievementId) {
@@ -93,12 +92,12 @@ class BadgeAssetMapper {
     if (filename == null) return null;
     return '$_basePath/$filename';
   }
-  
+
   /// Check if achievement has a custom badge image
   static bool hasCustomBadge(String achievementId) {
     return _badgeAssets.containsKey(achievementId.toLowerCase());
   }
-  
+
   /// Get all badge assets that need to be created
   static List<String> getAllRequiredAssets() {
     return _badgeAssets.values.map((f) => '$_basePath/$f').toList();
@@ -109,9 +108,10 @@ class BadgeAssetMapper {
 /// Loads badges from jsdelivr CDN for better performance
 class BadgeNetworkImages {
   BadgeNetworkImages._();
-  
-  static const String _baseUrl = 'https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges';
-  
+
+  static const String _baseUrl =
+      'https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges';
+
   /// Get badge URL for an achievement from CDN
   /// Returns null if no badge mapping exists
   static String? getBadgeUrl(String achievementId) {
@@ -119,9 +119,11 @@ class BadgeNetworkImages {
     if (filename == null) return null;
     return '$_baseUrl/$filename';
   }
-  
+
   /// Check if achievement has a CDN badge URL
   static bool hasCdnBadge(String achievementId) {
-    return BadgeAssetMapper._badgeAssets.containsKey(achievementId.toLowerCase());
+    return BadgeAssetMapper._badgeAssets.containsKey(
+      achievementId.toLowerCase(),
+    );
   }
 }

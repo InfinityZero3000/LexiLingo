@@ -1,8 +1,8 @@
 /// Get Weekly Progress Use Case
-/// 
+///
 /// Following agent-skills/language-learning-patterns:
 /// - progress-learning-streaks: Visual progress tracking (3-5x engagement boost)
-/// 
+///
 /// Retrieves 7-day progress summary for home page chart.
 library;
 
@@ -17,7 +17,7 @@ class GetWeeklyProgressUseCase {
   GetWeeklyProgressUseCase(this.repository);
 
   /// Execute the use case to fetch weekly progress
-  /// 
+  ///
   /// Returns:
   /// - WeeklyProgressEntity with 7-day activity data
   /// - Failure if API call fails

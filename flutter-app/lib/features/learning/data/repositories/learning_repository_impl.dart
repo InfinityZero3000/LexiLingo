@@ -13,12 +13,13 @@ import 'package:lexilingo_app/features/learning/domain/repositories/learning_rep
 class LearningRepositoryImpl implements LearningRepository {
   final LearningRemoteDataSource _remoteDataSource;
 
-  LearningRepositoryImpl({
-    required LearningRemoteDataSource remoteDataSource,
-  }) : _remoteDataSource = remoteDataSource;
+  LearningRepositoryImpl({required LearningRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<Either<Failure, LessonAttemptModel>> startLesson(String lessonId) async {
+  Future<Either<Failure, LessonAttemptModel>> startLesson(
+    String lessonId,
+  ) async {
     try {
       final response = await _remoteDataSource.startLesson(lessonId);
       return Right(response.data);
@@ -62,7 +63,9 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, LessonCompleteModel>> completeLesson(String attemptId) async {
+  Future<Either<Failure, LessonCompleteModel>> completeLesson(
+    String attemptId,
+  ) async {
     try {
       final response = await _remoteDataSource.completeLesson(attemptId);
       return Right(response.data);
@@ -76,7 +79,9 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, CourseRoadmapModel>> getCourseRoadmap(String courseId) async {
+  Future<Either<Failure, CourseRoadmapModel>> getCourseRoadmap(
+    String courseId,
+  ) async {
     try {
       final response = await _remoteDataSource.getCourseRoadmap(courseId);
       return Right(response.data);
@@ -90,7 +95,9 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, LessonEntity>> getLessonContent(String lessonId) async {
+  Future<Either<Failure, LessonEntity>> getLessonContent(
+    String lessonId,
+  ) async {
     try {
       final response = await _remoteDataSource.getLessonContent(lessonId);
       return Right(response.data.toEntity());

@@ -13,7 +13,7 @@ class UnitEntity extends Equatable {
   final int totalLessons;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // Nested lessons
   final List<LessonInUnitEntity> lessons;
 
@@ -33,18 +33,18 @@ class UnitEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        courseId,
-        title,
-        description,
-        orderIndex,
-        backgroundColor,
-        iconUrl,
-        totalLessons,
-        createdAt,
-        updatedAt,
-        lessons,
-      ];
+    id,
+    courseId,
+    title,
+    description,
+    orderIndex,
+    backgroundColor,
+    iconUrl,
+    totalLessons,
+    createdAt,
+    updatedAt,
+    lessons,
+  ];
 }
 
 /// Lightweight lesson info within a unit (for roadmap display)
@@ -69,12 +69,12 @@ class LessonInUnitEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        orderIndex,
-        lessonType,
-        xpReward,
-        isLocked,
-        isCompleted,
-      ];
+    id,
+    title,
+    orderIndex,
+    lessonType,
+    xpReward,
+    isLocked,
+    isCompleted,
+  ];
 }

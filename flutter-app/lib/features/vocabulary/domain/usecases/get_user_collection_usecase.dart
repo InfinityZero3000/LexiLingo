@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 
 /// UseCase: Get User Vocabulary Collection
 /// Returns user's vocabulary with optional status filter
-class GetUserCollectionUseCase 
+class GetUserCollectionUseCase
     implements UseCase<List<UserVocabularyEntity>, GetUserCollectionParams> {
   final VocabularyRepository repository;
 

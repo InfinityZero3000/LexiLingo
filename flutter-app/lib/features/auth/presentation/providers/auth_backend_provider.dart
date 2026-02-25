@@ -41,7 +41,7 @@ class AuthBackendProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await getCurrentUserUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         // User not authenticated, that's okay
@@ -67,12 +67,14 @@ class AuthBackendProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = await registerUseCase(RegisterParams(
-      email: email,
-      username: username,
-      password: password,
-      displayName: displayName,
-    ));
+    final result = await registerUseCase(
+      RegisterParams(
+        email: email,
+        username: username,
+        password: password,
+        displayName: displayName,
+      ),
+    );
 
     return result.fold(
       (failure) {
@@ -91,18 +93,14 @@ class AuthBackendProvider extends ChangeNotifier {
   }
 
   /// Login with email and password
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await loginUseCase(LoginParams(
-      email: email,
-      password: password,
-    ));
+    final result = await loginUseCase(
+      LoginParams(email: email, password: password),
+    );
 
     return result.fold(
       (failure) {
@@ -152,7 +150,7 @@ class AuthBackendProvider extends ChangeNotifier {
     notifyListeners();
 
     await logoutUseCase(const NoParams());
-    
+
     _user = null;
     _errorMessage = null;
     _isLoading = false;
@@ -162,7 +160,7 @@ class AuthBackendProvider extends ChangeNotifier {
   /// Refresh current user data
   Future<void> refreshUser() async {
     final result = await getCurrentUserUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         _errorMessage = failure.message;
@@ -171,7 +169,7 @@ class AuthBackendProvider extends ChangeNotifier {
         _user = user;
       },
     );
-    
+
     notifyListeners();
   }
 
@@ -184,20 +182,20 @@ class AuthBackendProvider extends ChangeNotifier {
   /// Get user-friendly error message
   String getUserFriendlyError(String? error) {
     if (error == null) return '';
-    
+
     if (error.toLowerCase().contains('invalid credentials')) {
       return 'Email hoặc mật khẩu không đúng';
     } else if (error.toLowerCase().contains('already exists')) {
       return 'Email hoặc username đã được sử dụng';
     } else if (error.toLowerCase().contains('validation')) {
       return 'Thông tin không hợp lệ. Vui lòng kiểm tra lại';
-    } else if (error.toLowerCase().contains('network') || 
-               error.toLowerCase().contains('connection')) {
+    } else if (error.toLowerCase().contains('network') ||
+        error.toLowerCase().contains('connection')) {
       return 'Không có kết nối mạng. Vui lòng thử lại';
     } else if (error.toLowerCase().contains('rate limit')) {
       return 'Bạn đã thử quá nhiều lần. Vui lòng đợi một chút';
     }
-    
+
     return error;
   }
 }

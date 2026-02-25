@@ -3,14 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 /// Skill types for proficiency assessment
-enum SkillType {
-  vocabulary,
-  grammar,
-  reading,
-  listening,
-  speaking,
-  writing,
-}
+enum SkillType { vocabulary, grammar, reading, listening, speaking, writing }
 
 extension SkillTypeExtension on SkillType {
   String get displayName {
@@ -84,7 +77,15 @@ class SkillScore extends Equatable {
   bool get isDeclining => trend == 'declining';
 
   @override
-  List<Object?> get props => [skill, score, confidence, estimatedLevel, accuracy, trend, exercisesCompleted];
+  List<Object?> get props => [
+    skill,
+    score,
+    confidence,
+    estimatedLevel,
+    accuracy,
+    trend,
+    exercisesCompleted,
+  ];
 }
 
 /// Requirement status for level progression
@@ -134,9 +135,10 @@ class NextLevelInfo extends Equatable {
   });
 
   factory NextLevelInfo.fromJson(Map<String, dynamic> json) {
-    final requirementsJson = json['requirements'] as Map<String, dynamic>? ?? {};
+    final requirementsJson =
+        json['requirements'] as Map<String, dynamic>? ?? {};
     final requirements = <String, LevelRequirement>{};
-    
+
     requirementsJson.forEach((key, value) {
       if (value is Map<String, dynamic>) {
         requirements[key] = LevelRequirement.fromJson(key, value);
@@ -156,7 +158,13 @@ class NextLevelInfo extends Equatable {
   int get totalRequirements => requirements.length;
 
   @override
-  List<Object?> get props => [level, progress, qualifies, requirements, blockers];
+  List<Object?> get props => [
+    level,
+    progress,
+    qualifies,
+    requirements,
+    blockers,
+  ];
 }
 
 /// User's proficiency profile - comprehensive language assessment
@@ -230,9 +238,11 @@ class ProficiencyProfile extends Equatable {
       correctExercises: stats['correct_exercises'] ?? 0,
       accuracy: (stats['accuracy'] ?? 0).toDouble(),
       lessonsCompleted: stats['lessons_completed'] ?? 0,
-      nextLevel: nextLevelJson != null ? NextLevelInfo.fromJson(nextLevelJson) : null,
-      lastAssessment: json['last_assessment'] != null 
-          ? DateTime.tryParse(json['last_assessment']) 
+      nextLevel: nextLevelJson != null
+          ? NextLevelInfo.fromJson(nextLevelJson)
+          : null,
+      lastAssessment: json['last_assessment'] != null
+          ? DateTime.tryParse(json['last_assessment'])
           : null,
     );
   }

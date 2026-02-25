@@ -39,7 +39,9 @@ class ProgressSyncService {
     try {
       final localUser = await userLocalDataSource.getUser(_currentUserId!);
       if (localUser != null) {
-        await userFirestoreDataSource.updateUser(UserModel.fromEntity(localUser));
+        await userFirestoreDataSource.updateUser(
+          UserModel.fromEntity(localUser),
+        );
       }
     } catch (e) {
       // Log error but don't throw
@@ -75,14 +77,18 @@ class ProgressSyncService {
     if (!await isOnline()) return;
 
     try {
-      final firestoreUser = await userFirestoreDataSource.getUser(_currentUserId!);
+      final firestoreUser = await userFirestoreDataSource.getUser(
+        _currentUserId!,
+      );
       if (firestoreUser != null) {
         // Check if local user exists
         final localUser = await userLocalDataSource.getUser(_currentUserId!);
-        
+
         if (localUser == null) {
           // First time on this device, create local copy
-          await userLocalDataSource.createUser(UserModel.fromEntity(firestoreUser));
+          await userLocalDataSource.createUser(
+            UserModel.fromEntity(firestoreUser),
+          );
         } else {
           // Merge: Keep higher values (conflict resolution)
           final mergedUser = UserModel(
@@ -92,13 +98,26 @@ class ProgressSyncService {
             avatarUrl: firestoreUser.avatarUrl,
             joinDate: localUser.joinDate,
             lastLoginDate: DateTime.now(),
-            totalXP: firestoreUser.totalXP > localUser.totalXP ? firestoreUser.totalXP : localUser.totalXP,
-            currentStreak: firestoreUser.currentStreak > localUser.currentStreak ? firestoreUser.currentStreak : localUser.currentStreak,
-            longestStreak: firestoreUser.longestStreak > localUser.longestStreak ? firestoreUser.longestStreak : localUser.longestStreak,
-            totalLessonsCompleted: firestoreUser.totalLessonsCompleted > localUser.totalLessonsCompleted ? firestoreUser.totalLessonsCompleted : localUser.totalLessonsCompleted,
-            totalWordsLearned: firestoreUser.totalWordsLearned > localUser.totalWordsLearned ? firestoreUser.totalWordsLearned : localUser.totalWordsLearned,
+            totalXP: firestoreUser.totalXP > localUser.totalXP
+                ? firestoreUser.totalXP
+                : localUser.totalXP,
+            currentStreak: firestoreUser.currentStreak > localUser.currentStreak
+                ? firestoreUser.currentStreak
+                : localUser.currentStreak,
+            longestStreak: firestoreUser.longestStreak > localUser.longestStreak
+                ? firestoreUser.longestStreak
+                : localUser.longestStreak,
+            totalLessonsCompleted:
+                firestoreUser.totalLessonsCompleted >
+                    localUser.totalLessonsCompleted
+                ? firestoreUser.totalLessonsCompleted
+                : localUser.totalLessonsCompleted,
+            totalWordsLearned:
+                firestoreUser.totalWordsLearned > localUser.totalWordsLearned
+                ? firestoreUser.totalWordsLearned
+                : localUser.totalWordsLearned,
           );
-          
+
           await userLocalDataSource.updateUser(mergedUser);
         }
       }
@@ -115,7 +134,7 @@ class ProgressSyncService {
     try {
       // Pull latest data from cloud
       await pullUserData();
-      
+
       // Push any local changes
       await syncUserProfile();
       await syncUserStats();

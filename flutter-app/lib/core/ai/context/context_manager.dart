@@ -34,8 +34,7 @@ class ContextManager {
   LearnerProfile? get learnerProfile => _learnerProfile;
 
   /// Get learner level (default to A2 if not set)
-  LearnerLevel get learnerLevel =>
-      _learnerProfile?.level ?? LearnerLevel.a2;
+  LearnerLevel get learnerLevel => _learnerProfile?.level ?? LearnerLevel.a2;
 
   /// Get context summary for AI prompt
   String getContextSummary() {
@@ -57,7 +56,8 @@ class ContextManager {
       buffer.writeln('Level: ${_learnerProfile!.level.displayName}');
       if (_learnerProfile!.commonErrors.isNotEmpty) {
         buffer.writeln(
-            'Common errors: ${_learnerProfile!.commonErrors.join(", ")}');
+          'Common errors: ${_learnerProfile!.commonErrors.join(", ")}',
+        );
       }
     }
 

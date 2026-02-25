@@ -5,13 +5,16 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 import 'package:lexilingo_app/features/course/domain/repositories/course_repository.dart';
 
 /// Get paginated list of courses
-class GetCoursesUseCase implements UseCase<(List<CourseEntity>, int), GetCoursesParams> {
+class GetCoursesUseCase
+    implements UseCase<(List<CourseEntity>, int), GetCoursesParams> {
   final CourseRepository repository;
 
   GetCoursesUseCase(this.repository);
 
   @override
-  Future<Either<Failure, (List<CourseEntity>, int)>> call(GetCoursesParams params) async {
+  Future<Either<Failure, (List<CourseEntity>, int)>> call(
+    GetCoursesParams params,
+  ) async {
     return await repository.getCourses(
       page: params.page,
       pageSize: params.pageSize,

@@ -7,7 +7,8 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 
 /// UseCase: Submit Vocabulary Review
 /// Submits a review result and updates SRS parameters
-class SubmitReviewUseCase implements UseCase<ReviewResultEntity, SubmitReviewParams> {
+class SubmitReviewUseCase
+    implements UseCase<ReviewResultEntity, SubmitReviewParams> {
   final VocabularyRepository repository;
 
   SubmitReviewUseCase(this.repository);

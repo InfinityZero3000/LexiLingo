@@ -16,12 +16,14 @@ class VocabRepositoryImpl implements VocabRepository {
     if (localDataSource == null) {
       return const Right([]); // Return empty if database is skipped
     }
-    
+
     try {
       final words = await localDataSource!.getWords();
       return Right(words);
     } catch (e) {
-      return Left(CacheFailure('Failed to get vocabulary words: ${e.toString()}'));
+      return Left(
+        CacheFailure('Failed to get vocabulary words: ${e.toString()}'),
+      );
     }
   }
 
@@ -30,12 +32,14 @@ class VocabRepositoryImpl implements VocabRepository {
     if (localDataSource == null) {
       return Left(CacheFailure('Cannot add word: Database is disabled'));
     }
-    
+
     try {
       await localDataSource!.addWord(word);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Failed to add vocabulary word: ${e.toString()}'));
+      return Left(
+        CacheFailure('Failed to add vocabulary word: ${e.toString()}'),
+      );
     }
   }
 }

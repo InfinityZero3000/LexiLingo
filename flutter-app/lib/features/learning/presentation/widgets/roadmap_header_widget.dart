@@ -16,7 +16,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -77,13 +77,15 @@ class RoadmapHeaderWidget extends StatelessWidget {
                   ),
                   _buildStatItem(
                     icon: Icons.check_circle,
-                    value: '${roadmap.completedLessons}/${roadmap.totalLessons}',
+                    value:
+                        '${roadmap.completedLessons}/${roadmap.totalLessons}',
                     label: 'Lessons',
                     iconColor: Colors.green,
                   ),
                   _buildStatItem(
                     icon: Icons.pie_chart,
-                    value: '${roadmap.completionPercentage.toStringAsFixed(0)}%',
+                    value:
+                        '${roadmap.completionPercentage.toStringAsFixed(0)}%',
                     label: 'Progress',
                     iconColor: Colors.blue,
                   ),
@@ -102,10 +104,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     children: [
                       const Text(
                         'Course Progress',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                       Text(
                         '${roadmap.completionPercentage.toStringAsFixed(1)}%',
@@ -124,7 +123,9 @@ class RoadmapHeaderWidget extends StatelessWidget {
                       value: roadmap.completionPercentage / 100,
                       minHeight: 8,
                       backgroundColor: Colors.white.withValues(alpha: 0.3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
                     ),
                   ),
                 ],

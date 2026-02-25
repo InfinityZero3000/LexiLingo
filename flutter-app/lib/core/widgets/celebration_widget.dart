@@ -30,7 +30,7 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this);
-    
+
     if (widget.show) {
       _startCelebration();
     }
@@ -128,7 +128,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _confettiController = AnimationController(vsync: this);
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -139,9 +139,10 @@ class _CelebrationScreenState extends State<CelebrationScreen>
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeIn));
 
     // Start animations
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -161,7 +162,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -276,10 +277,9 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                   // Extra content
                   if (widget.extraContent != null) ...[
                     const SizedBox(height: 24),
-                    ...widget.extraContent!.map((w) => FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: w,
-                        )),
+                    ...widget.extraContent!.map(
+                      (w) => FadeTransition(opacity: _fadeAnimation, child: w),
+                    ),
                   ],
 
                   const Spacer(flex: 2),
@@ -325,10 +325,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.amber.shade400,
-            Colors.orange.shade400,
-          ],
+          colors: [Colors.amber.shade400, Colors.orange.shade400],
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
@@ -359,7 +356,8 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 }
 
 /// Show celebration dialog/overlay
-void showCelebration(BuildContext context, {
+void showCelebration(
+  BuildContext context, {
   required String title,
   String? subtitle,
   String? xpEarned,
@@ -386,10 +384,7 @@ void showCelebration(BuildContext context, {
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: animation,
-        child: child,
-      );
+      return FadeTransition(opacity: animation, child: child);
     },
   );
 }

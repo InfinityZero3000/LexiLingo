@@ -90,7 +90,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                       ),
                     ],
                   ),
-                  
+
                   // Show hint if available
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
@@ -103,8 +103,11 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.lightbulb_outline, 
-                              size: 20, color: Colors.blue),
+                          const Icon(
+                            Icons.lightbulb_outline,
+                            size: 20,
+                            color: Colors.blue,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -124,9 +127,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Answer Input Field
           TextField(
             controller: _controller,
@@ -139,22 +142,17 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   : 'Fill in the blank...',
               filled: true,
               fillColor: widget.isAnswered
-                  ? (widget.isCorrect! ? Colors.green : Colors.red)
-                      .withValues(alpha: 0.1)
+                  ? (widget.isCorrect! ? Colors.green : Colors.red).withValues(
+                      alpha: 0.1,
+                    )
                   : Colors.grey[50],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -187,9 +185,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               }
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Submit Button
           if (!widget.isAnswered)
             ElevatedButton(
@@ -211,12 +209,12 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-          
+
           // Result and Explanation
           if (widget.isAnswered) ...[
             const SizedBox(height: 24),
             Card(
-              color: widget.isCorrect! 
+              color: widget.isCorrect!
                   ? Colors.green.withValues(alpha: 0.1)
                   : Colors.orange.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
@@ -234,10 +232,12 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     Row(
                       children: [
                         Icon(
-                          widget.isCorrect! 
-                              ? Icons.check_circle 
+                          widget.isCorrect!
+                              ? Icons.check_circle
                               : Icons.info_outline,
-                          color: widget.isCorrect! ? Colors.green : Colors.orange,
+                          color: widget.isCorrect!
+                              ? Colors.green
+                              : Colors.orange,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -245,12 +245,14 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: widget.isCorrect! ? Colors.green : Colors.orange,
+                            color: widget.isCorrect!
+                                ? Colors.green
+                                : Colors.orange,
                           ),
                         ),
                       ],
                     ),
-                    
+
                     if (!widget.isCorrect!) ...[
                       const SizedBox(height: 12),
                       Text(
@@ -270,7 +272,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         ),
                       ),
                     ],
-                    
+
                     if (widget.exercise.explanation != null) ...[
                       const SizedBox(height: 12),
                       const Divider(),

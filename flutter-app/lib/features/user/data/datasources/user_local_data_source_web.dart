@@ -6,9 +6,9 @@ import '../models/user_model.dart';
 /// Web implementation of UserLocalDataSource using SharedPreferences
 class UserLocalDataSourceWeb implements UserLocalDataSource {
   final SharedPreferences sharedPreferences;
-  
+
   static const String _userKey = 'cached_user_';
-  
+
   UserLocalDataSourceWeb({required this.sharedPreferences});
 
   @override
@@ -49,7 +49,7 @@ class UserLocalDataSourceWeb implements UserLocalDataSource {
   }) async {
     final user = await getUser(userId);
     if (user == null) return 0;
-    
+
     final updatedUser = UserModel(
       id: user.id,
       name: user.name,
@@ -60,10 +60,11 @@ class UserLocalDataSourceWeb implements UserLocalDataSource {
       totalXP: totalXP ?? user.totalXP,
       currentStreak: currentStreak ?? user.currentStreak,
       longestStreak: longestStreak ?? user.longestStreak,
-      totalLessonsCompleted: totalLessonsCompleted ?? user.totalLessonsCompleted,
+      totalLessonsCompleted:
+          totalLessonsCompleted ?? user.totalLessonsCompleted,
       totalWordsLearned: totalWordsLearned ?? user.totalWordsLearned,
     );
-    
+
     return await updateUser(updatedUser);
   }
 
@@ -71,7 +72,7 @@ class UserLocalDataSourceWeb implements UserLocalDataSource {
   Future<int> updateLastLogin(String userId) async {
     final user = await getUser(userId);
     if (user == null) return 0;
-    
+
     final updatedUser = UserModel(
       id: user.id,
       name: user.name,
@@ -85,7 +86,7 @@ class UserLocalDataSourceWeb implements UserLocalDataSource {
       totalLessonsCompleted: user.totalLessonsCompleted,
       totalWordsLearned: user.totalWordsLearned,
     );
-    
+
     return await updateUser(updatedUser);
   }
 }

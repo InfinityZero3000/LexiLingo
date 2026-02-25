@@ -13,7 +13,9 @@ abstract class LearningRemoteDataSource {
   Future<ApiResponseEnvelope<LessonAttemptModel>> startLesson(String lessonId);
 
   /// GET /learning/lessons/{lesson_id}/content - Get lesson content with exercises
-  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(String lessonId);
+  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(
+    String lessonId,
+  );
 
   /// POST /learning/attempts/{attempt_id}/answer - Submit an answer
   Future<ApiResponseEnvelope<AnswerResponseModel>> submitAnswer({
@@ -27,20 +29,27 @@ abstract class LearningRemoteDataSource {
   });
 
   /// POST /learning/attempts/{attempt_id}/complete - Complete a lesson
-  Future<ApiResponseEnvelope<LessonCompleteModel>> completeLesson(String attemptId);
+  Future<ApiResponseEnvelope<LessonCompleteModel>> completeLesson(
+    String attemptId,
+  );
 
   /// GET /learning/courses/{course_id}/roadmap - Get course roadmap
-  Future<ApiResponseEnvelope<CourseRoadmapModel>> getCourseRoadmap(String courseId);
+  Future<ApiResponseEnvelope<CourseRoadmapModel>> getCourseRoadmap(
+    String courseId,
+  );
 }
 
 /// Implementation of LearningRemoteDataSource
 class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
   final ApiClient _apiClient;
 
-  LearningRemoteDataSourceImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+  LearningRemoteDataSourceImpl({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   @override
-  Future<ApiResponseEnvelope<LessonAttemptModel>> startLesson(String lessonId) async {
+  Future<ApiResponseEnvelope<LessonAttemptModel>> startLesson(
+    String lessonId,
+  ) async {
     final response = await _apiClient.post('/learning/lessons/$lessonId/start');
 
     return ApiResponseEnvelope<LessonAttemptModel>.fromJson(
@@ -50,8 +59,12 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
   }
 
   @override
-  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(String lessonId) async {
-    final response = await _apiClient.get('/learning/lessons/$lessonId/content');
+  Future<ApiResponseEnvelope<LessonContentModel>> getLessonContent(
+    String lessonId,
+  ) async {
+    final response = await _apiClient.get(
+      '/learning/lessons/$lessonId/content',
+    );
 
     return ApiResponseEnvelope<LessonContentModel>.fromJson(
       response,
@@ -90,8 +103,12 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
   }
 
   @override
-  Future<ApiResponseEnvelope<LessonCompleteModel>> completeLesson(String attemptId) async {
-    final response = await _apiClient.post('/learning/attempts/$attemptId/complete');
+  Future<ApiResponseEnvelope<LessonCompleteModel>> completeLesson(
+    String attemptId,
+  ) async {
+    final response = await _apiClient.post(
+      '/learning/attempts/$attemptId/complete',
+    );
 
     return ApiResponseEnvelope<LessonCompleteModel>.fromJson(
       response,
@@ -100,8 +117,12 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
   }
 
   @override
-  Future<ApiResponseEnvelope<CourseRoadmapModel>> getCourseRoadmap(String courseId) async {
-    final response = await _apiClient.get('/learning/courses/$courseId/roadmap');
+  Future<ApiResponseEnvelope<CourseRoadmapModel>> getCourseRoadmap(
+    String courseId,
+  ) async {
+    final response = await _apiClient.get(
+      '/learning/courses/$courseId/roadmap',
+    );
 
     return ApiResponseEnvelope<CourseRoadmapModel>.fromJson(
       response,

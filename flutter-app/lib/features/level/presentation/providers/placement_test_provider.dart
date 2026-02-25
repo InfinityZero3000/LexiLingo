@@ -7,7 +7,7 @@ class PlacementTestProvider with ChangeNotifier {
   final ProficiencyDataSource _dataSource;
 
   PlacementTestProvider({required ProficiencyDataSource dataSource})
-      : _dataSource = dataSource;
+    : _dataSource = dataSource;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -43,7 +43,10 @@ class PlacementTestProvider with ChangeNotifier {
   /// Submit the test answers
   /// [answers] is a map of question_id -> selected_answer_index
   /// Returns true if submission was successful
-  Future<bool> submitTest(Map<String, int> answers, int timeTakenSeconds) async {
+  Future<bool> submitTest(
+    Map<String, int> answers,
+    int timeTakenSeconds,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

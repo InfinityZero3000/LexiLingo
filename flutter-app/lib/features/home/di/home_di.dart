@@ -9,8 +9,8 @@ void registerHomeModule() {
     () => HomeProvider(
       getCoursesUseCase: sl<GetCoursesUseCase>(),
       getEnrolledCoursesUseCase: sl<GetEnrolledCoursesUseCase>(),
-      getWeeklyProgressUseCase: sl.isRegistered<GetWeeklyProgressUseCase>() 
-          ? sl<GetWeeklyProgressUseCase>() 
+      getWeeklyProgressUseCase: sl.isRegistered<GetWeeklyProgressUseCase>()
+          ? sl<GetWeeklyProgressUseCase>()
           : null,
     ),
   );

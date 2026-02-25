@@ -30,7 +30,8 @@ class LeaderboardEntryEntity extends Equatable {
       displayName: json['display_name'] ?? json['displayName'] ?? '',
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
-      lessonsCompleted: json['lessons_completed'] ?? json['lessonsCompleted'] ?? 0,
+      lessonsCompleted:
+          json['lessons_completed'] ?? json['lessonsCompleted'] ?? 0,
       isCurrentUser: json['is_current_user'] ?? json['isCurrentUser'] ?? false,
     );
   }
@@ -66,7 +67,13 @@ class LeagueStatusEntity extends Equatable {
   static const String platinum = 'platinum';
   static const String diamond = 'diamond';
 
-  static const List<String> leagueOrder = [bronze, silver, gold, platinum, diamond];
+  static const List<String> leagueOrder = [
+    bronze,
+    silver,
+    gold,
+    platinum,
+    diamond,
+  ];
 
   String get nextLeague {
     final index = leagueOrder.indexOf(league);
@@ -83,10 +90,14 @@ class LeagueStatusEntity extends Equatable {
       league: json['league'] ?? bronze,
       currentRank: json['current_rank'] ?? json['currentRank'] ?? 0,
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
-      lessonsCompleted: json['lessons_completed'] ?? json['lessonsCompleted'] ?? 0,
-      isInPromotionZone: json['is_in_promotion_zone'] ?? json['isInPromotionZone'] ?? false,
-      isInDemotionZone: json['is_in_demotion_zone'] ?? json['isInDemotionZone'] ?? false,
-      weekEndsInHours: json['week_ends_in_hours'] ?? json['weekEndsInHours'] ?? 0,
+      lessonsCompleted:
+          json['lessons_completed'] ?? json['lessonsCompleted'] ?? 0,
+      isInPromotionZone:
+          json['is_in_promotion_zone'] ?? json['isInPromotionZone'] ?? false,
+      isInDemotionZone:
+          json['is_in_demotion_zone'] ?? json['isInDemotionZone'] ?? false,
+      weekEndsInHours:
+          json['week_ends_in_hours'] ?? json['weekEndsInHours'] ?? 0,
     );
   }
 
@@ -112,8 +123,7 @@ class LeaderboardEntity extends Equatable {
     this.totalParticipants = 0,
   });
 
-  List<LeaderboardEntryEntity> get topThree =>
-      entries.take(3).toList();
+  List<LeaderboardEntryEntity> get topThree => entries.take(3).toList();
 
   factory LeaderboardEntity.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntity(
@@ -124,7 +134,8 @@ class LeaderboardEntity extends Equatable {
           .map((e) => LeaderboardEntryEntity.fromJson(e))
           .toList(),
       currentUserRank: json['current_user_rank'] ?? json['currentUserRank'],
-      totalParticipants: json['total_participants'] ?? json['totalParticipants'] ?? 0,
+      totalParticipants:
+          json['total_participants'] ?? json['totalParticipants'] ?? 0,
     );
   }
 
