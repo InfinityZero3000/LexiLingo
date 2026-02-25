@@ -20,8 +20,8 @@ class NetworkInfoImpl implements NetworkInfo {
 
   @override
   Future<bool> get isConnected async {
-    final status = await connectivity.checkConnectivity();
-    if (status == ConnectivityResult.none) return false;
+    final statuses = await connectivity.checkConnectivity();
+    if (statuses.every((s) => s == ConnectivityResult.none)) return false;
     if (kIsWeb) return true; // skip DNS ping on web
 
     for (final host in probeHosts) {
