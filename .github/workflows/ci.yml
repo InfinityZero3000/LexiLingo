@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feature, develop]
+  pull_request:
+    branches: [main, feature]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Backend — pytest + coverage
+  # ──────────────────────────────────────────────
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend-service
+
+    env:
+      # Use SQLite in CI (no Postgres/Redis needed)
+      DATABASE_URL: sqlite+aiosqlite:///./test_ci.db
+      SECRET_KEY: ci-secret-key-not-for-production
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      APP_ENV: testing
+      DEBUG: "False"
+      # Disable external services in tests
+      REDIS_URL: ""
+      FIREBASE_PROJECT_ID: ""
+      GEMINI_API_KEY: ""
+      YOUTUBE_API_KEY: ""
+      NEWSAPI_KEY: ""
+      NEWSDATA_KEY: ""
+      PODCASTINDEX_KEY: ""
+      PODCASTINDEX_SECRET: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend-service/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install test dependencies
+        run: pip install pytest-cov
+
+      - name: Run tests with coverage
+        run: |
+          pytest \
+            --tb=short \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            -q
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-service/coverage.xml
+
+  # ──────────────────────────────────────────────
+  # Flutter — analyze + test
+  # ──────────────────────────────────────────────
+  flutter:
+    name: Flutter Analyze & Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: flutter-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.x"
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze (no warnings allowed)
+        run: flutter analyze --no-pub --fatal-infos
+
+      - name: Run unit tests
+        run: flutter test --no-pub -r compact
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib/

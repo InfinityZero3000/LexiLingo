@@ -1,0 +1,51 @@
+repos:
+  # ──────────────────────────────────────────────
+  # General file hygiene
+  # ──────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # ──────────────────────────────────────────────
+  # Python — ruff (lint + auto-fix) + black (format)
+  # ──────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.6
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend-service/
+      - id: ruff-format
+        name: ruff-format
+        files: ^backend-service/
+
+  # ──────────────────────────────────────────────
+  # Dart / Flutter
+  # (requires Flutter SDK on PATH)
+  # ──────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format
+        language: system
+        entry: dart format
+        args: [--set-exit-if-changed]
+        files: ^flutter-app/.*\.dart$
+        pass_filenames: true
+
+      - id: flutter-analyze
+        name: flutter analyze
+        language: system
+        entry: bash -c 'cd flutter-app && flutter analyze --no-pub --fatal-infos lib/'
+        files: ^flutter-app/lib/.*\.dart$
+        pass_filenames: false
