@@ -151,13 +151,21 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
-    user_id = payload.get("sub")
-    if not user_id:
+    user_id_str = payload.get("sub")
+    if not user_id_str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload"
         )
-    
+
+    try:
+        user_id = uuid.UUID(user_id_str) if isinstance(user_id_str, str) else user_id_str
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
     # Verify user exists
     result = await db.execute(
         select(User).where(User.id == user_id)

@@ -111,12 +111,8 @@ async def get_current_user_optional(
         except ValueError:
             pass  # Invalid token, return None
     
-    # 3) Unauthorized
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    # 3) Invalid/unrecognized credentials — return None (optional auth contract)
+    return None
 
 
 async def get_current_active_user(

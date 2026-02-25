@@ -36,6 +36,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   final AudioPlayer _player = AudioPlayer();
   
   Timer? _recordingTimer;
+  StreamSubscription<PlayerState>? _playerStateSub;
   Duration _recordingDuration = Duration.zero;
   String? _recordingPath;
   bool _isRecording = false;
@@ -61,7 +62,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     _phraseController.text = widget.initialPhrase ?? _samplePhrases.first;
     _checkPermission();
     
-    _player.playerStateStream.listen((state) {
+    _playerStateSub = _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         setState(() => _isPlaying = false);
       }
@@ -76,6 +77,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   @override
   void dispose() {
     _phraseController.dispose();
+    _playerStateSub?.cancel();
     _recorder.dispose();
     _player.dispose();
     _recordingTimer?.cancel();

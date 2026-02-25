@@ -136,7 +136,7 @@ class _HangmanScreenState extends State<HangmanScreen>
     }
   }
 
-  void _finishGame(HangmanGame game) async {
+  Future<void> _finishGame(HangmanGame game) async {
     await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
     final provider = context.read<GamesProvider>();

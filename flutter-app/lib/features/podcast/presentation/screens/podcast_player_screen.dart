@@ -113,12 +113,12 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     }
   }
 
-  void _skipBack() => _handler!.rewind();
-  void _skipForward() => _handler!.fastForward();
+  void _skipBack() { if (_handler != null) _handler!.rewind(); }
+  void _skipForward() { if (_handler != null) _handler!.fastForward(); }
 
   Future<void> _changeSpeed(double speed) async {
     setState(() => _playbackSpeed = speed);
-    await _handler!.setSpeed(speed);
+    await _handler?.setSpeed(speed);
   }
 
   @override

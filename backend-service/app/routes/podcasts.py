@@ -14,6 +14,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -258,6 +259,16 @@ async def get_podcast_episodes(
     Public endpoint — no authentication required.
     """
     feed_url = feed_url.strip()
+
+    # SSRF protection: only allow public HTTP/HTTPS URLs
+    _parsed = urlparse(feed_url)
+    if _parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Only HTTP/HTTPS feed URLs are allowed")
+    _host = (_parsed.hostname or "").lower()
+    _private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.")
+    if any(_host == p or _host.startswith(p) for p in _private_prefixes):
+        raise HTTPException(status_code=400, detail="Internal/private feed URLs are not allowed")
+
     cache_key = f"podcasts:episodes:{hashlib.md5(f'{feed_url}:{limit}'.encode()).hexdigest()[:16]}"
     cache_service = APICacheService(db)
 

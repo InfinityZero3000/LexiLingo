@@ -118,7 +118,8 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
 
   void _checkAnswer() {
     if (_answerSlots.any((s) => s == null)) return;
-    final game = context.read<GamesProvider>().wordScramble!;
+    final game = context.read<GamesProvider>().wordScramble;
+    if (game == null) return;
     final word = game.words[_currentWordIndex];
     final answer = _answerSlots.join().toLowerCase();
     final correct = word.word.toLowerCase();

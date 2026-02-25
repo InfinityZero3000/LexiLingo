@@ -7,6 +7,7 @@ Following agent-skills/language-learning-patterns:
 - gamification-achievement-badges: Meaningful achievements (25-40% engagement boost)
 """
 from datetime import date, datetime, timedelta
+import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, and_, func
@@ -34,6 +35,7 @@ from app.services.level_service import (
 from app.services.rank_service import calculate_rank as calc_rank, check_rank_up
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/me", response_model=ApiResponse[ProgressStatsResponse])
@@ -608,7 +610,7 @@ async def update_streak(
             db, current_user.id, "streak_update"
         )
     except Exception as e:
-        print(f"Achievement check error: {e}")
+        logger.error("Achievement check error: %s", e, exc_info=True)
     
     message = "Streak updated"
     if streak_saved:
