@@ -253,7 +253,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _revealedHint,
+                              _revealedHint!,
                               style: const TextStyle(fontSize: 13),
                               textAlign: TextAlign.center,
                             ),

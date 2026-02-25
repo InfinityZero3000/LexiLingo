@@ -177,9 +177,19 @@ class LexiLingoApp extends StatelessWidget {
         // Phase 2: News Reading
         ChangeNotifierProvider(create: (_) => di.sl<NewsProvider>()),
         // Phase 3: English Games + XP System
-        ChangeNotifierProvider(create: (_) => di.sl<GamesProvider>()..loadXPProfile()),
+        // On web: defer XP profile load to avoid blocking startup
+        ChangeNotifierProvider(create: (_) {
+          final p = di.sl<GamesProvider>();
+          if (!kIsWeb) p.loadXPProfile();
+          return p;
+        }),
         // Phase 4: Podcast
-        ChangeNotifierProvider(create: (_) => di.sl<PodcastProvider>()..loadCuratedPodcasts()),
+        // On web: defer curated podcast load (AudioService not available on web)
+        ChangeNotifierProvider(create: (_) {
+          final p = di.sl<PodcastProvider>();
+          if (!kIsWeb) p.loadCuratedPodcasts();
+          return p;
+        }),
         // Phase 5: Book Reading
         ChangeNotifierProvider(create: (_) => di.sl<BookProvider>()),
       ],

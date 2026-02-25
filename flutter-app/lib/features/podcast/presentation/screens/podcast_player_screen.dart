@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/podcast_audio_handler.dart';
@@ -34,7 +35,7 @@ class PodcastPlayerScreen extends StatefulWidget {
 }
 
 class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
-  late final PodcastAudioHandler _handler;
+  PodcastAudioHandler? _handler;
 
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -50,37 +51,39 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _handler = sl<PodcastAudioHandler>();
-    _setupPlayer();
+    if (!kIsWeb && sl.isRegistered<PodcastAudioHandler>()) {
+      _handler = sl<PodcastAudioHandler>();
+      _setupPlayer();
+    }
   }
 
   Future<void> _setupPlayer() async {
     // Position stream
-    _subs.add(_handler.positionStream.listen((pos) {
+    _subs.add(_handler!.positionStream.listen((pos) {
       if (!mounted) return;
       setState(() => _position = pos);
       _checkXpAward(pos);
     }));
 
     // Duration stream
-    _subs.add(_handler.durationStream.listen((dur) {
+    _subs.add(_handler!.durationStream.listen((dur) {
       if (!mounted) return;
       if (dur != null) setState(() => _duration = dur);
     }));
 
     // Player state stream
-    _subs.add(_handler.playerStateStream.listen((state) {
+    _subs.add(_handler!.playerStateStream.listen((state) {
       if (!mounted) return;
       setState(() => _isPlaying = state.playing);
     }));
 
     // Load episode into the handler (resolves local/remote source)
     try {
-      await _handler.setEpisode(widget.episode);
+      await _handler!.setEpisode(widget.episode);
       // Restore previous listen position
       final prevMs = widget.episode.listenProgress * 1000;
       if (prevMs > 0) {
-        await _handler.seek(Duration(milliseconds: prevMs.toInt()));
+        await _handler!.seek(Duration(milliseconds: prevMs.toInt()));
       }
     } catch (e) {
       debugPrint('PodcastPlayerScreen: failed to load audio: $e');
@@ -110,12 +113,12 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     }
   }
 
-  void _skipBack() => _handler.rewind();
-  void _skipForward() => _handler.fastForward();
+  void _skipBack() => _handler!.rewind();
+  void _skipForward() => _handler!.fastForward();
 
   Future<void> _changeSpeed(double speed) async {
     setState(() => _playbackSpeed = speed);
-    await _handler.setSpeed(speed);
+    await _handler!.setSpeed(speed);
   }
 
   @override
@@ -132,6 +135,43 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cefrColor = _cefrColor(widget.episode.cefrLevel ?? 'B1');
+
+    // Web fallback: audio_service not supported on web
+    if (_handler == null) {
+      return Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
+            onPressed: () => Navigator.pop(context),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.headphones_rounded, size: 64,
+                    color: isDark ? Colors.white38 : Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  'Podcast playback is available on mobile only.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.white60 : Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final progressRatio = _duration.inMilliseconds > 0
         ? (_position.inMilliseconds / _duration.inMilliseconds)
@@ -255,8 +295,8 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
 
             // ── Audio player controls ──
             AudioPlayerControls(
-              onPlay: _handler.play,
-              onPause: _handler.pause,
+              onPlay: _handler!.play,
+              onPause: _handler!.pause,
               onSkipBack: _skipBack,
               onSkipForward: _skipForward,
               onSpeedChange: _changeSpeed,
