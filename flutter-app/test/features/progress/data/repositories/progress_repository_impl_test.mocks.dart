@@ -3,12 +3,18 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i7;
 
 import 'package:lexilingo_app/features/progress/data/datasources/progress_remote_datasource.dart'
-    as _i3;
+    as _i6;
+import 'package:lexilingo_app/features/progress/data/models/daily_challenge_model.dart'
+    as _i5;
 import 'package:lexilingo_app/features/progress/data/models/progress_model.dart'
     as _i2;
+import 'package:lexilingo_app/features/progress/data/models/streak_model.dart'
+    as _i4;
+import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart'
+    as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -46,45 +52,70 @@ class _FakeLessonCompletionResultModel_2 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeWeeklyProgressEntity_3 extends _i1.SmartFake
+    implements _i3.WeeklyProgressEntity {
+  _FakeWeeklyProgressEntity_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeStreakModel_4 extends _i1.SmartFake implements _i4.StreakModel {
+  _FakeStreakModel_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeStreakUpdateResultModel_5 extends _i1.SmartFake
+    implements _i4.StreakUpdateResultModel {
+  _FakeStreakUpdateResultModel_5(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDailyChallengesResponseModel_6 extends _i1.SmartFake
+    implements _i5.DailyChallengesResponseModel {
+  _FakeDailyChallengesResponseModel_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(parent, parentInvocation);
+}
+
 /// A class which mocks [ProgressRemoteDataSource].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockProgressRemoteDataSource extends _i1.Mock
-    implements _i3.ProgressRemoteDataSource {
+    implements _i6.ProgressRemoteDataSource {
   MockProgressRemoteDataSource() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.ProgressStatsModel> getMyProgress() =>
+  _i7.Future<_i2.ProgressStatsModel> getMyProgress() =>
       (super.noSuchMethod(
             Invocation.method(#getMyProgress, []),
-            returnValue: _i4.Future<_i2.ProgressStatsModel>.value(
+            returnValue: _i7.Future<_i2.ProgressStatsModel>.value(
               _FakeProgressStatsModel_0(
                 this,
                 Invocation.method(#getMyProgress, []),
               ),
             ),
           )
-          as _i4.Future<_i2.ProgressStatsModel>);
+          as _i7.Future<_i2.ProgressStatsModel>);
 
   @override
-  _i4.Future<_i2.CourseProgressWithUnitsModel> getCourseProgress(
+  _i7.Future<_i2.CourseProgressWithUnitsModel> getCourseProgress(
     String? courseId,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getCourseProgress, [courseId]),
-            returnValue: _i4.Future<_i2.CourseProgressWithUnitsModel>.value(
+            returnValue: _i7.Future<_i2.CourseProgressWithUnitsModel>.value(
               _FakeCourseProgressWithUnitsModel_1(
                 this,
                 Invocation.method(#getCourseProgress, [courseId]),
               ),
             ),
           )
-          as _i4.Future<_i2.CourseProgressWithUnitsModel>);
+          as _i7.Future<_i2.CourseProgressWithUnitsModel>);
 
   @override
-  _i4.Future<_i2.LessonCompletionResultModel> completeLesson({
+  _i7.Future<_i2.LessonCompletionResultModel> completeLesson({
     required String? lessonId,
     required double? score,
   }) =>
@@ -93,7 +124,7 @@ class MockProgressRemoteDataSource extends _i1.Mock
               #lessonId: lessonId,
               #score: score,
             }),
-            returnValue: _i4.Future<_i2.LessonCompletionResultModel>.value(
+            returnValue: _i7.Future<_i2.LessonCompletionResultModel>.value(
               _FakeLessonCompletionResultModel_2(
                 this,
                 Invocation.method(#completeLesson, [], {
@@ -103,13 +134,82 @@ class MockProgressRemoteDataSource extends _i1.Mock
               ),
             ),
           )
-          as _i4.Future<_i2.LessonCompletionResultModel>);
+          as _i7.Future<_i2.LessonCompletionResultModel>);
 
   @override
-  _i4.Future<int> getTotalXp() =>
+  _i7.Future<int> getTotalXp() =>
       (super.noSuchMethod(
             Invocation.method(#getTotalXp, []),
-            returnValue: _i4.Future<int>.value(0),
+            returnValue: _i7.Future<int>.value(0),
           )
-          as _i4.Future<int>);
+          as _i7.Future<int>);
+
+  @override
+  _i7.Future<_i3.WeeklyProgressEntity> getWeeklyProgress() =>
+      (super.noSuchMethod(
+            Invocation.method(#getWeeklyProgress, []),
+            returnValue: _i7.Future<_i3.WeeklyProgressEntity>.value(
+              _FakeWeeklyProgressEntity_3(
+                this,
+                Invocation.method(#getWeeklyProgress, []),
+              ),
+            ),
+          )
+          as _i7.Future<_i3.WeeklyProgressEntity>);
+
+  @override
+  _i7.Future<_i4.StreakModel> getMyStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMyStreak, []),
+            returnValue: _i7.Future<_i4.StreakModel>.value(
+              _FakeStreakModel_4(this, Invocation.method(#getMyStreak, [])),
+            ),
+          )
+          as _i7.Future<_i4.StreakModel>);
+
+  @override
+  _i7.Future<_i4.StreakUpdateResultModel> updateStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#updateStreak, []),
+            returnValue: _i7.Future<_i4.StreakUpdateResultModel>.value(
+              _FakeStreakUpdateResultModel_5(
+                this,
+                Invocation.method(#updateStreak, []),
+              ),
+            ),
+          )
+          as _i7.Future<_i4.StreakUpdateResultModel>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> useStreakFreeze() =>
+      (super.noSuchMethod(
+            Invocation.method(#useStreakFreeze, []),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
+
+  @override
+  _i7.Future<_i5.DailyChallengesResponseModel> getDailyChallenges() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDailyChallenges, []),
+            returnValue: _i7.Future<_i5.DailyChallengesResponseModel>.value(
+              _FakeDailyChallengesResponseModel_6(
+                this,
+                Invocation.method(#getDailyChallenges, []),
+              ),
+            ),
+          )
+          as _i7.Future<_i5.DailyChallengesResponseModel>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> claimChallengeReward(String? challengeId) =>
+      (super.noSuchMethod(
+            Invocation.method(#claimChallengeReward, [challengeId]),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
 }

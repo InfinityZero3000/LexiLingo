@@ -7,8 +7,14 @@ import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:lexilingo_app/core/error/failures.dart' as _i5;
+import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart'
+    as _i9;
+import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart'
+    as _i8;
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart'
     as _i6;
+import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart'
+    as _i7;
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart'
     as _i3;
 import 'package:mockito/mockito.dart' as _i1;
@@ -111,4 +117,97 @@ class MockProgressRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, int>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i7.WeeklyProgressEntity>>
+  getWeeklyProgress() =>
+      (super.noSuchMethod(
+            Invocation.method(#getWeeklyProgress, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i7.WeeklyProgressEntity>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i7.WeeklyProgressEntity>(
+                    this,
+                    Invocation.method(#getWeeklyProgress, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i7.WeeklyProgressEntity>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>> getMyStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMyStreak, []),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>>.value(
+                  _FakeEither_0<_i5.Failure, _i8.StreakEntity>(
+                    this,
+                    Invocation.method(#getMyStreak, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i8.StreakUpdateResult>> updateStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#updateStreak, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i8.StreakUpdateResult>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i8.StreakUpdateResult>(
+                    this,
+                    Invocation.method(#updateStreak, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i8.StreakUpdateResult>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>> useStreakFreeze() =>
+      (super.noSuchMethod(
+            Invocation.method(#useStreakFreeze, []),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>.value(
+                  _FakeEither_0<_i5.Failure, Map<String, dynamic>>(
+                    this,
+                    Invocation.method(#useStreakFreeze, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i9.DailyChallengesResponse>>
+  getDailyChallenges() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDailyChallenges, []),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i9.DailyChallengesResponse>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i9.DailyChallengesResponse>(
+                    this,
+                    Invocation.method(#getDailyChallenges, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i9.DailyChallengesResponse>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>
+  claimChallengeReward(String? challengeId) =>
+      (super.noSuchMethod(
+            Invocation.method(#claimChallengeReward, [challengeId]),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>.value(
+                  _FakeEither_0<_i5.Failure, Map<String, dynamic>>(
+                    this,
+                    Invocation.method(#claimChallengeReward, [challengeId]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
 }

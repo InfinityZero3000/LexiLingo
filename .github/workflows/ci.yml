@@ -136,18 +136,12 @@ jobs:
 
       - name: Analyze (fail on errors only)
         run: |
-          # Run analyze, capturing output (ignore exit code for now)
-          flutter analyze --no-pub lib/ > analyze-output.txt 2>&1 || true
-          echo "=== FLUTTER ANALYZE SUMMARY ==="
+          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib/ \
+            > analyze-output.txt 2>&1 || ANALYZE_EXIT=$?
+          ANALYZE_EXIT=${ANALYZE_EXIT:-0}
+          echo "=== Analyze exit code: $ANALYZE_EXIT ==="
           tail -5 analyze-output.txt
-          echo "=== ERRORS FOUND ==="
-          if grep -E "^  error" analyze-output.txt; then
-            echo "Failing due to errors above"
-            exit 1
-          else
-            echo "No errors found — passing"
-            exit 0
-          fi
+          exit $ANALYZE_EXIT
 
       - name: Upload analyze output
         if: always()

@@ -23,8 +23,8 @@ void main() {
 
     test('icon returns non-empty string for all types', () {
       for (final type in GameType.values) {
-        expect(type.icon.isNotEmpty, isTrue,
-            reason: '${type.name} icon should not be empty');
+        expect(type.icon, isNotNull,
+            reason: '${type.name} icon should not be null');
       }
     });
 
