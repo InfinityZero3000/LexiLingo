@@ -4,13 +4,13 @@ Dự án này sử dụng **PR-Agent** để tự động review code bằng AI 
 
 ## Tính năng
 
-- ✅ Tự động review code khi tạo/cập nhật PR
-- ✅ Đánh giá chất lượng code và đưa ra điểm số
-- ✅ Gợi ý cải thiện code (code suggestions)
-- ✅ Kiểm tra security vulnerabilities
-- ✅ Đánh giá test coverage
-- ✅ Tự động tạo PR description
-- ✅ Hỗ trợ nhiều lệnh thông qua comments
+- Tự động review code khi tạo/cập nhật PR
+- Đánh giá chất lượng code và đưa ra điểm số
+- Gợi ý cải thiện code (code suggestions)
+- Kiểm tra security vulnerabilities
+- Đánh giá test coverage
+- Tự động tạo PR description
+- Hỗ trợ nhiều lệnh thông qua comments
 
 ## Cài đặt
 
