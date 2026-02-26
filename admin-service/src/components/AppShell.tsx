@@ -77,7 +77,7 @@ export const AppShell = ({
               <div className="user-email">{user?.email}</div>
             </div>
           </div>
-          <button className="ghost-button" onClick={signOut}>
+          <button className="ghost-button logout-button" onClick={signOut}>
             {t.appShell.logout}
           </button>
         </div>

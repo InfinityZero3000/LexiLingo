@@ -73,7 +73,7 @@ DL-Model-Support/
 .env
 *.env
 **/.env.firebase.local
-!.env.example
+.env.production
 
 # AI Models (too large for git)
 **/models/whisper/*.pt
