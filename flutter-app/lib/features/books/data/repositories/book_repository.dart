@@ -227,8 +227,20 @@ class BookRepository {
     final filePath = '${booksDir.path}/$safeId.txt';
 
     if (!File(filePath).existsSync()) {
-      final request = http.Request('GET', Uri.parse(book.downloadUrl));
-      final streamed = await _client.send(request);
+      final request = http.Request('GET', Uri.parse(book.downloadUrl))
+        ..followRedirects = true
+        ..maxRedirects = 5;
+      var streamed = await _client.send(request);
+      // Handle redirect manually if needed
+      if (streamed.statusCode == 301 || streamed.statusCode == 302) {
+        final location = streamed.headers['location'];
+        if (location != null) {
+          final redirectRequest = http.Request('GET', Uri.parse(location))
+            ..followRedirects = true
+            ..maxRedirects = 5;
+          streamed = await _client.send(redirectRequest);
+        }
+      }
       if (streamed.statusCode >= 400) {
         throw Exception('Download failed: HTTP ${streamed.statusCode}');
       }
@@ -301,13 +313,32 @@ class BookRepository {
       return File(localPath).readAsString();
     }
 
-    final request = http.Request('GET', Uri.parse(book.downloadUrl));
+    final request = http.Request('GET', Uri.parse(book.downloadUrl))
+      ..followRedirects = true
+      ..maxRedirects = 5;
     final streamed = await _client.send(request);
+    if (streamed.statusCode == 301 || streamed.statusCode == 302) {
+      // Manual redirect follow if auto-redirect didn't work
+      final location = streamed.headers['location'];
+      if (location != null) {
+        final redirectRequest = http.Request('GET', Uri.parse(location))
+          ..followRedirects = true
+          ..maxRedirects = 5;
+        final redirected = await _client.send(redirectRequest);
+        if (redirected.statusCode >= 400) {
+          throw Exception(
+            'Failed to fetch book text: HTTP ${redirected.statusCode}',
+          );
+        }
+        final bytes = await redirected.stream.toBytes();
+        return utf8.decode(bytes, allowMalformed: true);
+      }
+    }
     if (streamed.statusCode >= 400) {
       throw Exception('Failed to fetch book text: HTTP ${streamed.statusCode}');
     }
     final bytes = await streamed.stream.toBytes();
     // Gutenberg serves UTF-8; decode manually to handle BOMs
-    return String.fromCharCodes(bytes);
+    return utf8.decode(bytes, allowMalformed: true);
   }
 }
