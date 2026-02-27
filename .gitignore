@@ -78,6 +78,7 @@ flutter-app/lexilingo-88492-firebase-adminsdk-fbsvc-aa6640bef2.json
 !**/google-services.json.example
 !**/GoogleService-Info.plist.example
 !**/firebase_options.dart.example
+!flutter-app/lib/firebase_options.dart
 
 # Documentation & Model Support (not tracked)
 docs/cmd
@@ -102,6 +103,8 @@ DL-Model-Support/
 *.bak
 *.sqlite3.bak
 **/data/*.bak
+**/data/kuzu_db/
+**/api/data/
 
 # Logs and temporary files
 logs/*.txt

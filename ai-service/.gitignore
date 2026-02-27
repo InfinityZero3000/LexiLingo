@@ -24,3 +24,7 @@ checkpoints/
 outputs/
 logs/
 temp/
+
+# KuzuDB and data files (generated at runtime)
+data/kuzu_db/
+api/data/

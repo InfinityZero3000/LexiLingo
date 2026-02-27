@@ -146,6 +146,8 @@ class OllamaService:
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         stream: bool = False,
+        num_ctx: int = 2048,
+        num_thread: int = 8,
     ) -> str | AsyncIterator[str]:
         """
         Chat completion with message history.
@@ -155,6 +157,8 @@ class OllamaService:
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             stream: Stream response if True
+            num_ctx: Context window size (smaller = faster)
+            num_thread: Number of CPU threads for inference
             
         Returns:
             Generated response or async iterator
@@ -163,10 +167,11 @@ class OllamaService:
             "model": self.model,
             "messages": messages,
             "stream": stream,
+            "keep_alive": "10m",
             "options": {
                 "temperature": temperature,
-                "num_ctx": 2048,  # Limit context window for faster inference
-                "num_thread": 8,  # Use multiple threads
+                "num_ctx": num_ctx,
+                "num_thread": num_thread,
             }
         }
         
@@ -189,7 +194,7 @@ class OllamaService:
                 return data.get("message", {}).get("content", "")
                 
         except Exception as e:
-            logger.error(f"Ollama chat failed: {e}")
+            logger.error(f"Ollama chat failed: {type(e).__name__}: {e}")
             raise
     
     async def _stream_chat(self, payload: Dict) -> AsyncIterator[str]:

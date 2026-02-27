@@ -60,12 +60,16 @@ USE_QWEN = os.getenv("USE_QWEN", "true").lower() == "true"
 QWEN_MODEL = os.getenv("QWEN_MODEL_NAME", "Qwen/Qwen3-1.7B")
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", os.getenv("MONGODB_DB_NAME", "lexilingo"))
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # Ollama config
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
 OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120"))
+OLLAMA_NUM_THREADS = int(os.getenv("OLLAMA_NUM_THREADS", "8"))
+OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "128"))
+OLLAMA_CONTEXT_LENGTH = int(os.getenv("OLLAMA_CONTEXT_LENGTH", "512"))
 
 # Global Qwen engine (legacy - for fallback if gateway not used)
 qwen_engine = None
@@ -189,7 +193,6 @@ try:
 except Exception as e:
     logger.warning(f"Failed to register admin routes: {e}")
 
-
 # ============================================================
 # Request & Response Models
 # ============================================================
@@ -273,52 +276,131 @@ async def get_active_gemini_key() -> Optional[str]:
     return None
 
 # ============================================================
-#  Get API Qwen3-next-80b-a3b-instruct:free
+#  Groq Rate Limiter (sliding window)
+#  Free tier: 30 RPM, 12K TPM, 14.4K RPD
 # ============================================================
-async def get_openrouter_key() -> Optional[str]:
+import time
+import collections
+
+class GroqRateLimiter:
+    """
+    Sliding-window rate limiter for Groq free tier.
+    Limits: 30 RPM, 12,000 TPM, 14,400 RPD.
+    Falls back (returns False) at 90% of each limit.
+    """
+    RPM_LIMIT   = 30
+    TPM_LIMIT   = 12_000
+    RPD_LIMIT   = 14_400
+    SAFETY      = 0.90   # trigger fallback at 90% to be safe
+
+    def __init__(self):
+        # (timestamp, tokens) deques
+        self._minute_reqs: collections.deque = collections.deque()
+        self._minute_toks: collections.deque = collections.deque()
+        self._day_reqs:    collections.deque = collections.deque()
+
+    def _evict(self):
+        now = time.monotonic()
+        minute_ago = now - 60
+        day_ago    = now - 86_400
+
+        while self._minute_reqs and self._minute_reqs[0] < minute_ago:
+            self._minute_reqs.popleft()
+        while self._minute_toks and self._minute_toks[0][0] < minute_ago:
+            self._minute_toks.popleft()
+        while self._day_reqs and self._day_reqs[0] < day_ago:
+            self._day_reqs.popleft()
+
+    def can_request(self, estimated_tokens: int = 600) -> bool:
+        """Return True if the request is safe to send."""
+        self._evict()
+        rpm = len(self._minute_reqs)
+        tpm = sum(t for _, t in self._minute_toks)
+        rpd = len(self._day_reqs)
+
+        if rpm  >= self.RPM_LIMIT * self.SAFETY:
+            logger.warning(f"Groq RPM limit near ({rpm}/{self.RPM_LIMIT}), skipping")
+            return False
+        if tpm + estimated_tokens >= self.TPM_LIMIT * self.SAFETY:
+            logger.warning(f"Groq TPM limit near ({tpm}/{self.TPM_LIMIT}), skipping")
+            return False
+        if rpd  >= self.RPD_LIMIT * self.SAFETY:
+            logger.warning(f"Groq RPD limit near ({rpd}/{self.RPD_LIMIT}), skipping")
+            return False
+        return True
+
+    def record(self, tokens_used: int):
+        """Record a completed request."""
+        now = time.monotonic()
+        self._minute_reqs.append(now)
+        self._minute_toks.append((now, tokens_used))
+        self._day_reqs.append(now)
+        self._evict()
+        logger.debug(
+            f"Groq usage — RPM: {len(self._minute_reqs)}/{self.RPM_LIMIT}, "
+            f"TPM: {sum(t for _,t in self._minute_toks)}/{self.TPM_LIMIT}, "
+            f"RPD: {len(self._day_reqs)}/{self.RPD_LIMIT}"
+        )
+
+_groq_limiter = GroqRateLimiter()
+
+# ============================================================
+#  Get Groq API Key
+# ============================================================
+async def get_groq_key() -> Optional[str]:
     
     global _mongo_client
     
-    # Try to get OpenRouter API key from database first
+    # Try to get Groq API key from database first
     if _mongo_client:
         try:
             db = _mongo_client[MONGODB_DATABASE]
             config = await db.admin_config.find_one({"_id": "ai_config"})
-            if config and config.get("openrouter_api_key"):
-                logger.info("Using OpenRouter API key from database")
-                return config["openrouter_api_key"]
+            if config and config.get("groq_api_key"):
+                logger.info("Using Groq API key from database")
+                return config["groq_api_key"]
         except Exception as e:
-            logger.warning(f"Failed to fetch OpenRouter API key from database: {e}")
+            logger.warning(f"Failed to fetch Groq API key from database: {e}")
             
     # Fallback to environment variable
-    if OPENROUTER_API_KEY:
-        logger.info("Using OpenRouter API key from environment variable")
-        return OPENROUTER_API_KEY
+    if GROQ_API_KEY:
+        logger.info("Using Groq API key from environment variable")
+        return GROQ_API_KEY
     return None
     
 
 # ============================================================
-#  API Qwen3-next-80b-a3b-instruct:free
+#  Groq API (LPU — fast free tier)
 # ============================================================
 
-async def get_qwen3_response(message: str) -> Optional[str]:
-    """Get response from Qwen model via API of openrouter."""
-    active_api_key = await get_openrouter_key()
+async def get_groq_response(message: str) -> Optional[str]:
+    """Get response from Groq Cloud API (OpenAI-compatible, LPU inference)."""
+    active_api_key = await get_groq_key()
     
     if not active_api_key:
+        return None
+
+    # Estimate tokens: ~4 chars/token, system prompt ~50 tokens
+    estimated_tokens = len(message) // 4 + 50 + 512  # input + max output
+    if not _groq_limiter.can_request(estimated_tokens):
+        logger.warning("Groq rate limit guard triggered, falling back to next provider")
         return None
     
     try:
         import httpx
         
-        url = "https://openrouter.ai/api/v1/chat/completions"
+        url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {active_api_key}",
         }
         payload = {
-            "model": "qwen/qwen3-next-80b-a3b-instruct:free",
+            "model": GROQ_MODEL,
             "messages": [
+                {
+                    "role": "system",
+                    "content": "You are LexiLingo, a friendly AI English tutor. Help users learn English clearly and concisely."
+                },
                 {
                     "role": "user",
                     "content": message,
@@ -334,13 +416,21 @@ async def get_qwen3_response(message: str) -> Optional[str]:
                 data = response.json()
                 choices = data.get("choices", [])
                 if choices:
-                    return choices[0].get("message", {}).get("content", "")
+                    content = choices[0].get("message", {}).get("content", "")
+                    # Record actual token usage from response
+                    usage = data.get("usage", {})
+                    tokens_used = usage.get("total_tokens", estimated_tokens)
+                    _groq_limiter.record(tokens_used)
+                    return content
+            elif response.status_code == 429:
+                logger.warning(f"Groq 429 rate limited: {response.text[:200]}")
+                return None
             else:
-                logger.error(f"Qwen API error: {response.status_code} - {response.text}")
+                logger.error(f"Groq API error: {response.status_code} - {response.text}")
                 return None
                 
     except Exception as e:
-        logger.error(f"Qwen API error: {e}")
+        logger.error(f"Groq API error: {e}")
         return None
 
 # ============================================================
@@ -373,18 +463,30 @@ async def get_ollama_response(message: str) -> Optional[str]:
                     "role": "system",
                     "content": "You are LexiLingo, an AI English tutor helping ESL learners. "
                                "Respond helpfully and encourage the user to practice English. "
-                               "Keep responses concise and friendly."
+                               "Keep responses concise and friendly. /no_think"
                 },
                 {"role": "user", "content": message},
             ],
             temperature=0.7,
-            max_tokens=512,
+            max_tokens=OLLAMA_MAX_TOKENS,
+            num_ctx=OLLAMA_CONTEXT_LENGTH,
+            num_thread=OLLAMA_NUM_THREADS,
         )
         
         await ollama.close()
         
+        # Strip <think>...</think> tags from Qwen3 thinking output
+        content = None
         if isinstance(result, dict):
             content = result.get("message", {}).get("content") or result.get("response")
+        elif isinstance(result, str):
+            content = result
+        
+        if content:
+            # Remove thinking tags and their content (full blocks and stray closing tags)
+            import re
+            content = re.sub(r'<think>.*?</think>\s*', '', content, flags=re.DOTALL)
+            content = re.sub(r'</think>\s*', '', content).strip()
             if content:
                 logger.info(f"  → Ollama response OK (length: {len(content)} chars)")
                 return content
@@ -541,9 +643,9 @@ async def send_message(request: SendMessageRequest) -> SendMessageResponse:
     """Send a message and get AI response.
     
     Fallback chain:
-      1. OpenRouter API (qwen3-next-80b, free tier)
+      1. Groq API (llama-3.3-70b, LPU fast free tier)
       2. Gemini API (gemini-2.0-flash)
-      3. Ollama local (lexilingo-qwen3 / qwen3:4b)
+      3. Ollama local (lexilingo-qwen3-1.7b)
       4. Static fallback message
     """
     session_id = request.session_id
@@ -552,18 +654,18 @@ async def send_message(request: SendMessageRequest) -> SendMessageResponse:
     
     logger.info(f"📨 Chat request received - session: {session_id[:8]}..., message: '{request.message[:50]}...'")
     
-    # ── Step 1: OpenRouter API (free tier, best quality) ──
-    logger.info("🔄 [1/3] Trying OpenRouter (qwen3-next-80b free)...")
-    ai_response = await get_qwen3_response(request.message)
+    # ── Step 1: Groq API (fast LPU, free tier) ──
+    logger.info(f"🔄 [1/3] Trying Groq ({GROQ_MODEL})...")
+    ai_response = await get_groq_response(request.message)
     if ai_response:
-        model_used = "openrouter/qwen3-next-80b"
-        logger.info(f"✅ OpenRouter response received (length: {len(ai_response)} chars)")
+        model_used = f"groq/{GROQ_MODEL}"
+        logger.info(f"✅ Groq response received (length: {len(ai_response)} chars)")
     
     # ── Step 2: Gemini API (cloud fallback) ──
     if ai_response is None:
         active_api_key = await get_active_gemini_key()
         if active_api_key:
-            logger.info("🔄 [2/3] OpenRouter failed, trying Gemini API...")
+            logger.info("🔄 [2/3] Groq failed, trying Gemini API...")
             try:
                 import httpx
                 

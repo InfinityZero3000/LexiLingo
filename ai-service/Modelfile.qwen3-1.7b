@@ -1,0 +1,31 @@
+# LexiLingo Qwen3-1.7B Modelfile
+# Optimized for fast CPU inference on Intel Mac
+# Model: Qwen3-1.7B Q4_K_M (non-thinking, 1.1GB)
+
+FROM /tmp/Qwen3-1.7B-Q4_K_M.gguf
+
+# Proper Qwen3 chat template with /no_think to disable thinking mode
+TEMPLATE """{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{- range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+<think>
+</think>
+"""
+
+SYSTEM """You are Lexi, a friendly AI English Tutor for LexiLingo.
+Help users improve English skills (Vocabulary, Grammar, Communication).
+Be patient, encouraging, and concise. 
+Communicate in English. Use Vietnamese only when explicitly asked.
+When users make mistakes, gently correct with the fixed sentence and brief explanation.
+Ask follow-up questions to keep the conversation going."""
+
+# Performance parameters optimized for CPU
+PARAMETER temperature 0.7
+PARAMETER top_k 40
+PARAMETER top_p 0.9
+PARAMETER num_ctx 2048
+PARAMETER num_predict 256
+PARAMETER stop <|im_start|>
+PARAMETER stop <|im_end|>
