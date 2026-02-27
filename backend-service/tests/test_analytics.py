@@ -12,6 +12,25 @@ from app.models.user import User
 @pytest.fixture
 async def admin_token(db_session):
     """Create admin user and return JWT token."""
+    from app.core.database import get_db
+
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    # Seed the admin role if it doesn't exist
+    from sqlalchemy import select
+
+    admin_role = await db_session.execute(select(Role).where(Role.slug == "admin"))
+    role = admin_role.scalar_one_or_none()
+
+    if not role:
+        role = Role(name="Admin", slug="admin", description="Administrator")
+        db_session.add(role)
+        await db_session.commit()
+        await db_session.refresh(role)
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         await client.post(
             "/api/v1/auth/register",
@@ -23,19 +42,13 @@ async def admin_token(db_session):
             },
         )
 
-        from sqlalchemy import select
-
         result = await db_session.execute(
             select(User).where(User.email == "test_admin@test.com")
         )
         user = result.scalar_one()
 
-        admin_role = await db_session.execute(select(Role).where(Role.slug == "admin"))
-        role = admin_role.scalar_one_or_none()
-
-        if role:
-            user.role_id = role.id
-            await db_session.commit()
+        user.role_id = role.id
+        await db_session.commit()
 
         response = await client.post(
             "/api/v1/auth/login",
@@ -43,7 +56,10 @@ async def admin_token(db_session):
         )
 
         data = response.json()
-        return data["access_token"]
+        token = data["access_token"]
+
+    yield token
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio

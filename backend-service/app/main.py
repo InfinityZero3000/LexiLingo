@@ -144,7 +144,7 @@ app = FastAPI(
 # PNA must be OUTSIDE CORS so it can add PNA headers to CORS preflight responses.
 
 # 1. Trusted Host - Security (innermost, closest to app)
-if not settings.is_development:
+if settings.is_production:
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS
