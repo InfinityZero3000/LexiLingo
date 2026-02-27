@@ -129,6 +129,9 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create firebase_options.dart from example
+        run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+
       - name: Print Flutter and Dart versions
         run: |
           flutter --version

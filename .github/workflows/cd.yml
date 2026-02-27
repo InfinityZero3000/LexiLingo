@@ -32,6 +32,9 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create firebase_options.dart from example
+        run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+
       - name: Create .env for build
         run: |
           printf 'API_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
