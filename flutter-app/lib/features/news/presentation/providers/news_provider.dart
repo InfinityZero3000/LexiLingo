@@ -175,4 +175,15 @@ class NewsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  /// Fetch full article content from the original URL.
+  /// Returns the full text or null if scraping fails.
+  Future<String?> loadFullContent(String articleUrl) async {
+    try {
+      return await _repository.getFullContent(articleUrl);
+    } catch (e) {
+      debugPrint('Failed to load full article content: $e');
+      return null;
+    }
+  }
 }

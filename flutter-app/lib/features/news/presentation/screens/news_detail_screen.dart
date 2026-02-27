@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
+import '../providers/news_provider.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
@@ -24,11 +26,42 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   final _scrollController = ScrollController();
   double _readingProgress = 0.0;
   bool _showQuizButton = false;
+  String? _fullContent;
+  bool _isLoadingFullContent = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_trackProgress);
+    _loadFullContentIfNeeded();
+  }
+
+  /// Auto-fetch full article content if the current content looks truncated.
+  void _loadFullContentIfNeeded() {
+    final content = widget.article.content;
+    // NewsAPI free tier truncates to ~200 chars, often ending with "[+XXXX chars]"
+    final isTruncated = content.length < 500 ||
+        RegExp(r'\[\+\d+ chars\]$').hasMatch(content);
+    if (isTruncated && widget.article.url.isNotEmpty) {
+      _isLoadingFullContent = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final provider = context.read<NewsProvider>();
+          final fullContent =
+              await provider.loadFullContent(widget.article.url);
+          if (mounted && fullContent != null && fullContent.length > content.length) {
+            setState(() {
+              _fullContent = fullContent;
+              _isLoadingFullContent = false;
+            });
+          } else {
+            if (mounted) setState(() => _isLoadingFullContent = false);
+          }
+        } catch (_) {
+          if (mounted) setState(() => _isLoadingFullContent = false);
+        }
+      });
+    }
   }
 
   @override
@@ -307,10 +340,22 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       ],
 
                       // Article body
+                      if (_isLoadingFullContent)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
                       _buildArticleBody(
-                        widget.article.content.isNotEmpty
-                            ? widget.article.content
-                            : widget.article.description,
+                        _fullContent ??
+                            (widget.article.content.isNotEmpty
+                                ? widget.article.content
+                                : widget.article.description),
                         isDark,
                       ),
                     ],
@@ -355,17 +400,29 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   //  Article Body with Tappable Words
   // ──────────────────────────────────────
 
-  Widget _buildArticleBody(String text, bool isDark) {
-    if (text.isEmpty) {
+  Widget _buildArticleBody(String rawText, bool isDark) {
+    if (rawText.isEmpty) {
       return Text(
         'No content available.',
         style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey),
       );
     }
 
+    // Decode HTML entities that survive from backend scraping
+    final text = _decodeHtmlEntities(rawText);
+
     final highlightSet = widget.article.highlightedWords
         .map((w) => w.toLowerCase())
         .toSet();
+
+    final cefrColor = _cefrColor(widget.article.cefrLevel);
+    final baseStyle = TextStyle(
+      fontSize: 16,
+      height: 1.7,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.85)
+          : AppColors.textDark,
+    );
 
     // Split into paragraphs
     final paragraphs = text.split(RegExp(r'\n\n|\n'));
@@ -375,70 +432,92 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       children: paragraphs.map((paragraph) {
         if (paragraph.trim().isEmpty) return const SizedBox(height: 12);
 
-        final words = paragraph.split(RegExp(r'(\s+)'));
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: RichText(
-            text: TextSpan(
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.7,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.85)
-                    : AppColors.textDark,
-              ),
-              children: words.map((word) {
-                final cleanWord = word
-                    .replaceAll(RegExp(r'[^\w]'), '')
-                    .toLowerCase();
-                final isHighlighted = highlightSet.contains(cleanWord);
+        // Tokenise into non-space words while keeping track of spacing.
+        // Use TextSpan for plain text (preserves whitespace naturally)
+        // and WidgetSpan only for highlighted words (tappable + decorated).
+        final spans = <InlineSpan>[];
+        final tokenRegex = RegExp(r'(\S+)');
+        int lastEnd = 0;
 
-                return WidgetSpan(
-                  child: GestureDetector(
-                    onTap: isHighlighted ? () => _onWordTap(word) : null,
-                    child: Container(
-                      padding: isHighlighted
-                          ? const EdgeInsets.symmetric(
-                              horizontal: 2,
-                              vertical: 1,
-                            )
-                          : EdgeInsets.zero,
-                      decoration: isHighlighted
-                          ? BoxDecoration(
-                              color: _cefrColor(
-                                widget.article.cefrLevel,
-                              ).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: _cefrColor(widget.article.cefrLevel),
-                                  width: 2,
-                                ),
-                              ),
-                            )
-                          : null,
-                      child: Text(
-                        word,
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.7,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : AppColors.textDark,
-                          fontWeight: isHighlighted
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
+        for (final match in tokenRegex.allMatches(paragraph)) {
+          // Add any whitespace between the previous token and this one
+          if (match.start > lastEnd) {
+            spans.add(TextSpan(
+              text: paragraph.substring(lastEnd, match.start),
+            ));
+          }
+          lastEnd = match.end;
+
+          final word = match.group(0)!;
+          final cleanWord = word
+              .replaceAll(RegExp(r'[^\w]'), '')
+              .toLowerCase();
+          final isHighlighted =
+              cleanWord.isNotEmpty && highlightSet.contains(cleanWord);
+
+          if (isHighlighted) {
+            spans.add(WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: GestureDetector(
+                onTap: () => _onWordTap(word),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 2,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cefrColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: cefrColor,
+                        width: 2,
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
+                  child: Text(
+                    word,
+                    style: baseStyle.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ));
+          } else {
+            // Plain text — use TextSpan so whitespace flows naturally
+            spans.add(TextSpan(text: word));
+          }
+        }
+
+        // Trailing whitespace (unlikely, but safe)
+        if (lastEnd < paragraph.length) {
+          spans.add(TextSpan(
+            text: paragraph.substring(lastEnd),
+          ));
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: RichText(
+            text: TextSpan(style: baseStyle, children: spans),
           ),
         );
       }).toList(),
     );
+  }
+
+  /// Decode common HTML entities that survive from web scraping.
+  String _decodeHtmlEntities(String text) {
+    return text
+        .replaceAll('&#x27;', "'")
+        .replaceAll('&#39;', "'")
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&apos;', "'")
+        .replaceAll('&#x2F;', '/')
+        .replaceAll('&nbsp;', ' ');
   }
 
   // ──────────────────────────────────────

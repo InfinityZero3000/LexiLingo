@@ -7,8 +7,6 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
 /// Settings page for user preferences
-/// Implements Task 4.5.2: Language preferences
-/// Implements Task 4.5.3: Daily goal setting
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -136,6 +134,23 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 12),
               _buildThemeSelector(context, settings),
 
+              const SizedBox(height: 32),
+
+              // Account Section
+              AnimatedListItem(
+                index: 5,
+                duration: const Duration(milliseconds: 300),
+                delayPerItem: const Duration(milliseconds: 50),
+                child: _buildSectionHeader(
+                  context,
+                  icon: Icons.manage_accounts,
+                  title: 'settings.account'.tr(),
+                  subtitle: 'settings.account_subtitle'.tr(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildAccountSection(context),
+
               const SizedBox(height: 40),
             ],
           );
@@ -182,7 +197,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// Daily Goal Selector - Task 4.5.3
   Widget _buildDailyGoalSelector(
     BuildContext context,
     SettingsProvider settings,
@@ -325,7 +339,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// Language Selector - Task 4.5.2
   Widget _buildLanguageSelector(
     BuildContext context,
     SettingsProvider settings,
@@ -413,7 +426,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Daily Reminders'),
+                Text('settings.dailyReminder'.tr()),
                 Switch(
                   value: settings.notificationEnabled,
                   onChanged: (value) =>
@@ -453,7 +466,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Reminder Time'),
+                      Text('settings.reminderTime'.tr()),
                       Row(
                         children: [
                           Text(
@@ -487,13 +500,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Row(
-              children: [
-                Icon(Icons.volume_up, color: AppColors.primary),
-                SizedBox(width: 12),
-                Text('Sound Effects'),
-              ],
-            ),
+            Text('settings.sound_effects'.tr()),
             Switch(
               value: settings.soundEnabled,
               onChanged: settings.updateSoundEnabled,
@@ -513,9 +520,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
     final themes = [
-      {'code': 'light', 'name': 'Light', 'icon': Icons.light_mode},
-      {'code': 'dark', 'name': 'Dark', 'icon': Icons.dark_mode},
-      {'code': 'system', 'name': 'System', 'icon': Icons.settings_suggest},
+      {'code': 'light', 'name': 'settings.theme_light', 'icon': Icons.light_mode},
+      {'code': 'dark', 'name': 'settings.theme_dark', 'icon': Icons.dark_mode},
+      {'code': 'system', 'name': 'settings.theme_system', 'icon': Icons.settings_suggest},
     ];
 
     return Card(
@@ -553,7 +560,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      theme['name'] as String,
+                      (theme['name'] as String).tr(),
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.bold
@@ -570,5 +577,149 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildAccountSection(BuildContext context) {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.currentUser;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // User info row
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    child: Text(
+                      (user.displayName.isNotEmpty
+                              ? user.displayName[0]
+                              : user.email[0])
+                          .toUpperCase(),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.displayName.isNotEmpty
+                              ? user.displayName
+                              : user.username,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.email,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          if (user != null)
+            Divider(height: 1, color: Colors.grey.shade200),
+
+          // Sign out button
+          InkWell(
+            onTap: () => _confirmSignOut(context),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.logout, color: Colors.red.shade600, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'settings.sign_out'.tr(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('settings.sign_out'.tr()),
+        content: Text('settings.sign_out_confirm'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('settings.sign_out'.tr()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<AuthProvider>().signOut();
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    }
   }
 }

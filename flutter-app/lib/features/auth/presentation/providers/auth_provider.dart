@@ -286,7 +286,9 @@ class AuthProvider extends ChangeNotifier {
 
   // Convert Failure to user-friendly message
   String _getFailureMessage(Failure failure) {
-    if (failure is ServerFailure) {
+    if (failure is AuthFailure) {
+      return failure.message;
+    } else if (failure is ServerFailure) {
       return failure.message;
     } else if (failure is NetworkFailure) {
       return 'Network error. Please check your internet connection.';

@@ -188,10 +188,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.local_fire_department,
                           iconColor: Colors.orange,
-                          bgGradient: const [
-                            Color(0xFFFEF3C7),
-                            Color(0xFFFED7AA),
-                          ],
+                          bgColor: const Color(0xFFFFF3E0),
                           title: 'Streak',
                           value: '$streak',
                           subtitle: 'days',
@@ -218,10 +215,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.star,
                           iconColor: const Color(0xFFF59E0B),
-                          bgGradient: const [
-                            Color(0xFFFEF9C3),
-                            Color(0xFFFDE68A),
-                          ],
+                          bgColor: const Color(0xFFFEF9C3),
                           title: 'XP',
                           value: LevelCalculator.formatXP(xp),
                           subtitle: 'earned',
@@ -240,10 +234,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.diamond,
                           iconColor: const Color(0xFF8B5CF6),
-                          bgGradient: const [
-                            Color(0xFFEDE9FE),
-                            Color(0xFFDDD6FE),
-                          ],
+                          bgColor: const Color(0xFFEDE9FE),
                           title: 'Gems',
                           value: '$gems',
                           subtitle: null,
@@ -263,19 +254,11 @@ class _HomePageNewState extends State<HomePageNew> {
                           height: 100,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFFDBEAFE), Color(0xFFBFDBFE)],
-                            ),
+                            color: const Color(0xFFDBEAFE),
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                            ),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -317,10 +300,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.menu_book,
                           iconColor: const Color(0xFF10B981),
-                          bgGradient: const [
-                            Color(0xFFD1FAE5),
-                            Color(0xFFA7F3D0),
-                          ],
+                          bgColor: const Color(0xFFD1FAE5),
                           title: 'Today',
                           value: '$lessonsToday',
                           subtitle: 'lessons',
@@ -340,7 +320,7 @@ class _HomePageNewState extends State<HomePageNew> {
     BuildContext context, {
     required IconData icon,
     required Color iconColor,
-    required List<Color> bgGradient,
+    required Color bgColor,
     required String title,
     required String value,
     String? subtitle,
@@ -361,19 +341,9 @@ class _HomePageNewState extends State<HomePageNew> {
         height: height,
         padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: bgGradient,
-          ),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: iconColor.withValues(alpha: 0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: iconColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,32 +914,14 @@ class _HomePageNewState extends State<HomePageNew> {
         width: 280,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                : [Colors.white, const Color(0xFFF8FAFC)],
-          ),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.1)
-                : levelColor.withValues(alpha: 0.2),
+                : levelColor.withValues(alpha: 0.25),
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: levelColor.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1162,20 +1114,11 @@ class _HomePageNewState extends State<HomePageNew> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            levelColor,
-                            levelColor.withValues(alpha: 0.85),
-                          ],
-                        ),
+                        color: levelColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: levelColor.withValues(alpha: 0.35),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: levelColor.withValues(alpha: 0.6),
+                        ),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1608,7 +1551,7 @@ class _HomePageNewState extends State<HomePageNew> {
         ];
 
         return SizedBox(
-          height: 104,
+          height: 116,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),

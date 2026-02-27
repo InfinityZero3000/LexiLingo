@@ -25,3 +25,5 @@ export 'data/datasources/proficiency_data_source.dart';
 
 // Widgets
 export 'presentation/widgets/level_widgets.dart';
+export 'presentation/widgets/proficiency_radar_chart.dart';
+export 'presentation/widgets/proficiency_card.dart';

@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Get personalized greeting based on time of day
@@ -78,87 +77,69 @@ class PersonalizedGreetingHeader extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.all(16),
-      child: ClipRRect(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E293B)
+            : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        Colors.white.withValues(alpha: 0.1),
-                        Colors.white.withValues(alpha: 0.05),
-                      ]
-                    : [
-                        const Color(0xFF667eea).withValues(alpha: 0.15),
-                        const Color(0xFF764ba2).withValues(alpha: 0.1),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
-            child: Row(
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF6366F1).withValues(alpha: 0.2)
+              : const Color(0xFF6366F1).withValues(alpha: 0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar with animated ring
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: _AnimatedAvatarRing(avatarUrl: avatarUrl, size: 56),
+          ),
+          const SizedBox(width: 14),
+          // Greeting text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar with animated ring
-                GestureDetector(
-                  onTap: onAvatarTap,
-                  child: _AnimatedAvatarRing(avatarUrl: avatarUrl, size: 56),
+                Row(
+                  children: [
+                    Text(
+                      greeting,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(timeIcon, size: 16, color: iconColor),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                // Greeting text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            greeting,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(timeIcon, size: 16, color: iconColor),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      _AnimatedXPCounter(xp: totalXP),
-                    ],
+                const SizedBox(height: 2),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                // Notification bell
-                _NotificationBell(
-                  count: notificationCount,
-                  onTap: onNotificationTap,
-                ),
+                const SizedBox(height: 4),
+                _AnimatedXPCounter(xp: totalXP),
               ],
             ),
           ),
-        ),
+          // Notification bell
+          _NotificationBell(
+            count: notificationCount,
+            onTap: onNotificationTap,
+          ),
+        ],
       ),
     );
   }

@@ -397,7 +397,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 250,
+          height: 264,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: books.length,
@@ -418,7 +418,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.6,
+        childAspectRatio: 0.56,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),

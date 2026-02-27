@@ -102,6 +102,31 @@ class NewsRepository {
     return NewsQuiz.fromJson(data);
   }
 
+  // ──── Full Article Content ────
+
+  /// Scrape full article content from the original URL.
+  /// NewsAPI free tier truncates content to ~200 chars.
+  Future<String?> getFullContent(String articleUrl) async {
+    final cacheKey = 'news:full:$articleUrl';
+
+    final data = await _cache.getOrFetch(
+      key: cacheKey,
+      type: 'news',
+      fetchFn: () async {
+        final uri = Uri.parse('$_baseUrl/full-content');
+        final response = await _client.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'url': articleUrl}),
+        );
+        _checkResponse(response);
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      },
+    );
+
+    return data?['content'] as String?;
+  }
+
   // ──── Helpers ────
 
   void _checkResponse(http.Response response) {

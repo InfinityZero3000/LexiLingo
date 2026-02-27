@@ -51,8 +51,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(_mapApiErrorToFailure(e));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on UnauthorizedException catch (_) {
+      return Left(AuthFailure('Invalid email or password.'));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Login failed'));
+      return Left(AuthFailure('Invalid email or password.'));
     } catch (e) {
       return Left(ServerFailure('Login failed: $e'));
     }

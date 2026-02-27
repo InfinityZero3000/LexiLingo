@@ -167,7 +167,15 @@
     "dailyReminder": "Nhắc nhở hàng ngày",
     "reminderTime": "Thời gian nhắc nhở",
     "autoPlay": "Tự động phát âm thanh",
-    "hapticFeedback": "Phản hồi rung"
+    "hapticFeedback": "Phản hồi rung",
+    "sound_effects": "Hiệu ứng âm thanh",
+    "theme_light": "Sáng",
+    "theme_dark": "Tối",
+    "theme_system": "Hệ thống",
+    "account": "Tài khoản",
+    "account_subtitle": "Quản lý thông tin cá nhân",
+    "sign_out": "Đăng xuất",
+    "sign_out_confirm": "Bạn có chắc muốn đăng xuất khỏi tài khoản không?"
   },
   "notifications": {
     "reminderTitle": "Đừng quên học hôm nay!",

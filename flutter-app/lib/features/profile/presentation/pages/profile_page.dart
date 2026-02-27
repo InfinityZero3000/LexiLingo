@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/achievements/presentation/widgets/achieve
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_card.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
@@ -39,6 +40,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final progressProvider = context.read<ProgressProvider>();
     final profileProvider = context.read<ProfileProvider>();
     final gamificationProvider = context.read<GamificationProvider>();
+    final proficiencyProvider = context.read<ProficiencyProvider>();
 
     // Sync level with user XP
     if (authProvider.currentUser != null) {
@@ -53,6 +55,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Load gamification data (wallet, etc.)
     await gamificationProvider.loadWallet();
+
+    // Load proficiency data (AI-evaluated skill assessment)
+    await proficiencyProvider.loadProfile();
   }
 
   String _formatMemberSince(DateTime? createdAt) {
@@ -142,6 +147,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // Level Progress Card
               _buildLevelProgressCard(context),
+
+              // AI Proficiency Assessment (radar chart)
+              const ProficiencyCard(),
 
               // Learning Stats
               _buildLearningStats(context, user),

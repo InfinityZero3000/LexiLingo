@@ -374,11 +374,21 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (wordController.text.isNotEmpty &&
                   defController.text.isNotEmpty) {
-                provider.addWord(wordController.text, defController.text);
-                Navigator.pop(ctx);
+                await provider.addWord(wordController.text, defController.text);
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  if (provider.errorMessage != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(provider.errorMessage!),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
             },
             child: const Text('Save'),
