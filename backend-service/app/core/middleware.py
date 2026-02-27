@@ -46,7 +46,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Get client IP
         client_ip = request.client.host if request.client else "unknown"
         
-        # Skip rate limiting for health check
+        # Skip rate limiting for health checks and CORS preflight.
+        # Preflight should never be blocked; otherwise browser reports
+        # network-level "Failed to fetch" before the real request is sent.
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         if request.url.path in ["/health", "/api/v1/health"]:
             return await call_next(request)
         

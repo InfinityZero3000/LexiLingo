@@ -302,6 +302,24 @@ async def get_podcast_episodes(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(e),
         )
+    except httpx.TimeoutException:
+        logger.warning(f"RSS feed timed out: {feed_url}")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"RSS feed timed out after 20 seconds: {feed_url}",
+        )
+    except httpx.HTTPStatusError as e:
+        logger.warning(f"RSS feed HTTP error {e.response.status_code}: {feed_url}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"RSS feed returned HTTP {e.response.status_code}",
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch podcast episodes from {feed_url}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to fetch RSS feed: {str(e)}",
+        )
 
 
 # ============================================================================

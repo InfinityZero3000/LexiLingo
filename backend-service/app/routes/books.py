@@ -75,7 +75,7 @@ CURATED_BOOKS = [
             "and Gretel — perfect for beginner English learners."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739153-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/2591.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/2591/pg2591.txt",
         "language": "en",
         "cefr_level": "A1",
         "subject": "Fairy Tales",
@@ -92,7 +92,7 @@ CURATED_BOOKS = [
             "fantastical adventure in a world of nonsense and imagination."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739155-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/11.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/11/pg11.txt",
         "language": "en",
         "cefr_level": "A2",
         "subject": "Fantasy",
@@ -109,7 +109,7 @@ CURATED_BOOKS = [
             "in the mid-19th century, exploring caves and getting into mischief."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739160-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/74.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/74/pg74.txt",
         "language": "en",
         "cefr_level": "B1",
         "subject": "Adventure",
@@ -126,7 +126,7 @@ CURATED_BOOKS = [
             "and marriage in early 19th-century England."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739161-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/1342.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt",
         "language": "en",
         "cefr_level": "B1",
         "subject": "Romance",
@@ -143,7 +143,7 @@ CURATED_BOOKS = [
             "monstrous insect. A profound short novel exploring alienation."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739154-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/5200.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/5200/pg5200.txt",
         "language": "en",
         "cefr_level": "B2",
         "subject": "Literary Fiction",
@@ -160,7 +160,7 @@ CURATED_BOOKS = [
             "solution to economic problems — a masterclass in irony and argument."
         ),
         "cover_url": "https://covers.openlibrary.org/b/id/8739158-L.jpg",
-        "download_url": "https://www.gutenberg.org/ebooks/1080.txt.utf-8",
+        "download_url": "https://www.gutenberg.org/cache/epub/1080/pg1080.txt",
         "language": "en",
         "cefr_level": "C1",
         "subject": "Essay",
@@ -227,6 +227,12 @@ def _normalize_gutendex_book(book: dict) -> dict:
         or ""
     )
     cover_url = formats.get("image/jpeg") or ""
+
+    # Convert Gutenberg ebooks URL to direct cache URL to avoid 302 redirects
+    # e.g., https://www.gutenberg.org/ebooks/11.txt.utf-8 → https://www.gutenberg.org/cache/epub/11/pg11.txt
+    book_id = book.get("id", "")
+    if book_id and download_url and "gutenberg.org" in download_url:
+        download_url = f"https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt"
 
     cefr = _estimate_cefr_from_subjects(subjects) or _estimate_cefr_from_description(description)
 

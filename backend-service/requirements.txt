@@ -31,6 +31,12 @@ loguru>=0.7.2
 # HTTP Client (optional - for calling AI service)
 httpx>=0.26.0
 
+# RSS Feed Parsing (podcast episodes)
+feedparser>=6.0.0
+
+# News article full-text extraction
+trafilatura>=1.6.0
+
 # Redis (async client — used by quota manager and rate limiting)
 redis>=4.5.0
 

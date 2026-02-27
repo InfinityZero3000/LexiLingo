@@ -9,10 +9,11 @@ Phase 2: News Reading Feature.
 
 import logging
 import hashlib
+import re
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -152,6 +153,118 @@ async def get_categories():
 
 
 # ============================================================================
+# Full Article Content (Web Scraping)
+# ============================================================================
+
+@router.post("/full-content")
+async def get_full_article_content(
+    url: str = Body(..., embed=True, description="Original article URL to scrape"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Scrape full article text from the original URL.
+
+    NewsAPI free tier truncates content to ~200 characters.
+    This endpoint fetches the full article using trafilatura.
+
+    Cache: Redis 24h, DB 7 days (article content doesn't change).
+    """
+    if not url or not url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+
+    cache_key = f"news:full:{hashlib.md5(url.encode()).hexdigest()[:16]}"
+    cache_service = APICacheService(db)
+
+    try:
+        result = await cache_service.get_or_fetch(
+            cache_key=cache_key,
+            api_name="newsapi",
+            fetch_fn=lambda: _scrape_full_article(url),
+            priority=Priority.LOW,
+            redis_ttl=86400,     # 24 hours
+            db_ttl=604800,       # 7 days
+        )
+
+        return {
+            "content": result.data.get("content", ""),
+            "source": result.source,
+        }
+    except Exception as e:
+        logger.error(f"Failed to scrape article from {url}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch full article content",
+        )
+
+
+async def _scrape_full_article(url: str) -> dict:
+    """Fetch and extract full article text from a URL using trafilatura."""
+    import asyncio
+
+    try:
+        import trafilatura
+
+        async with httpx.AsyncClient(
+            timeout=15.0,
+            follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)"},
+        ) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            html = response.text
+
+        # trafilatura is synchronous — run in executor
+        loop = asyncio.get_event_loop()
+        content = await loop.run_in_executor(
+            None,
+            lambda: trafilatura.extract(
+                html,
+                include_comments=False,
+                include_tables=False,
+                no_fallback=False,
+            ),
+        )
+
+        if not content:
+            # Fallback: basic HTML tag stripping
+            content = _strip_html_basic(html)
+
+        return {"content": content or ""}
+
+    except ImportError:
+        # trafilatura not installed — basic fallback
+        logger.warning("trafilatura not installed, using basic HTML extraction")
+        async with httpx.AsyncClient(
+            timeout=15.0,
+            follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)"},
+        ) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            html = response.text
+
+        return {"content": _strip_html_basic(html)}
+
+
+def _strip_html_basic(html: str) -> str:
+    """Basic HTML to text conversion — fallback when trafilatura is unavailable."""
+    import html as html_module
+
+    # Remove script and style tags
+    html = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    # Remove HTML tags (replace with space to preserve word boundaries)
+    text = re.sub(r'<[^>]+>', ' ', html)
+    # Decode HTML entities (&#x27; → ', &amp; → &, etc.)
+    text = html_module.unescape(text)
+    # Clean up whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    # Take only the main content portion (skip navigation etc.)
+    if len(text) > 500:
+        return text[:10000]  # Cap at 10k chars
+    return text
+
+
+# ============================================================================
 # Article Quiz
 # ============================================================================
 
@@ -276,7 +389,7 @@ async def _fetch_from_newsapi(
             "id": article_id,
             "title": item.get("title", ""),
             "description": item.get("description", ""),
-            "content": item.get("content", ""),
+            "content": re.sub(r'\s*\[\+\d+ chars\]$', '', item.get("content", "")),
             "url": item.get("url", ""),
             "image_url": item.get("urlToImage", ""),
             "source_name": item.get("source", {}).get("name", ""),
