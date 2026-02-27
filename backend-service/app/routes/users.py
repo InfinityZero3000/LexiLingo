@@ -258,7 +258,7 @@ async def get_user_stats(
     wallet_query = select(UserWallet).where(UserWallet.user_id == current_user.id)
     wallet_result = await db.execute(wallet_query)
     wallet = wallet_result.scalar_one_or_none()
-    total_gems = wallet.gems_balance if wallet else 0
+    total_gems = wallet.gems if wallet else 0
     
     return ApiResponse(
         success=True,
