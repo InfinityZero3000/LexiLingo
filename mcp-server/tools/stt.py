@@ -6,8 +6,6 @@ import logging
 import base64
 import io
 from typing import Any, Dict
-import numpy as np
-import soundfile as sf
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +41,14 @@ async def execute(args: Dict[str, Any]) -> Dict[str, Any]:
     try:
         # Decode audio
         audio_bytes = base64.b64decode(audio_b64)
-        audio, sr = sf.read(io.BytesIO(audio_bytes))
+
+        try:
+            import numpy as np
+            import soundfile as sf
+            audio, sr = sf.read(io.BytesIO(audio_bytes))
+        except ImportError:
+            # If numpy/soundfile not available, pass raw bytes
+            audio = audio_bytes
         
         # Load Whisper handler
         if _whisper_handler is None:

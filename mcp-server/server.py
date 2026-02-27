@@ -18,6 +18,7 @@ from mcp import types
 sys.path.insert(0, str(Path(__file__).parent))
 
 from tools import chat, stt, pronunciation, tts, knowledge_graph, exercise, grammar
+from tools import model_gateway
 from resources import learner_profile, conversation, lesson_context
 from utils.config import Config
 from utils.logger import setup_logger
@@ -26,7 +27,7 @@ from utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 # Load config
-config = Config.load("config.yaml")
+config = Config.load(str(Path(__file__).parent / "config.yaml"))
 
 # Create MCP server instance
 server = Server("lexilingo-mcp")
@@ -221,6 +222,11 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["sentence"],
             },
         ),
+        types.Tool(
+            name=model_gateway.TOOL_DEFINITION["name"],
+            description=model_gateway.TOOL_DEFINITION["description"],
+            inputSchema=model_gateway.TOOL_DEFINITION["inputSchema"],
+        ),
     ]
 
 
@@ -248,6 +254,8 @@ async def handle_call_tool(
             result = await exercise.execute(arguments or {})
         elif name == "evaluate_grammar":
             result = await grammar.execute(arguments or {})
+        elif name == "model_gateway":
+            result = await model_gateway.execute(arguments or {})
         else:
             raise ValueError(f"Unknown tool: {name}")
         

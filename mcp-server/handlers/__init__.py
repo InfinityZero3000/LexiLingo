@@ -1,19 +1,20 @@
 """
 Model Handlers Package
-Contains lazy-loadable AI model handlers
+
+- GeminiHandler: Direct Gemini API calls (lightweight, primary backend)
+- QwenHandler: Proxies to ai-service for local Qwen inference
+- WhisperHandler: Proxies to ai-service for STT
+- PiperHandler: Proxies to ai-service for TTS
 """
 
-# Handlers will be imported lazily to avoid loading all models at startup
-# from .qwen import QwenHandler
-# from .whisper import WhisperHandler
-# from .hubert import HuBERTHandler
-# from .piper import PiperHandler
-# from .gemini import GeminiHandler
+from .gemini import GeminiHandler
+from .qwen import QwenHandler
+from .whisper import WhisperHandler
+from .piper import PiperHandler
 
 __all__ = [
-    "QwenHandler",
-    "WhisperHandler", 
-    "HuBERTHandler",
-    "PiperHandler",
     "GeminiHandler",
+    "QwenHandler",
+    "WhisperHandler",
+    "PiperHandler",
 ]

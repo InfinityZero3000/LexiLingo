@@ -1,59 +1,52 @@
 """
-Whisper Handler - Speech-to-Text
+Whisper Handler - Speech-to-Text via ai-service proxy
+
+Proxies transcription requests to ai-service at localhost:8001.
+Requires ai-service to be running with Whisper model loaded.
 """
 
+import io
 import logging
-import numpy as np
-from typing import Dict, Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
 
 class WhisperHandler:
-    """Handler for Faster-Whisper STT"""
-    
+    """Handler for Whisper STT via ai-service proxy"""
+
     def __init__(self):
-        self.model = None
         self.loaded = False
-    
+
     async def load(self):
-        """Load Whisper model"""
+        """Check ai-service availability"""
         if self.loaded:
             return
-        
-        try:
-            logger.info("Loading Whisper model...")
-            
-            # TODO: Implement actual model loading
-            # from faster_whisper import WhisperModel
-            # 
-            # self.model = WhisperModel(
-            #     "small",
-            #     device="cuda",
-            #     compute_type="int8",
-            # )
-            
-            self.loaded = True
-            logger.info("✅ Whisper model loaded")
-        
-        except Exception as e:
-            logger.error(f"Failed to load Whisper: {e}")
-            raise
-    
+
+        from utils.api_client import check_ai_service_health
+
+        available = await check_ai_service_health()
+        if available:
+            logger.info("Whisper handler ready (proxying to ai-service)")
+        else:
+            logger.warning("ai-service not available; STT will not work")
+
+        self.loaded = True
+
     async def transcribe(
         self,
-        audio: np.ndarray,
+        audio,
         language: str = "en",
         word_timestamps: bool = True,
     ) -> Dict[str, Any]:
         """
-        Transcribe audio to text
-        
+        Transcribe audio via ai-service STT endpoint.
+
         Args:
-            audio: Audio array
+            audio: Audio numpy array (16kHz) or raw bytes
             language: Language code
             word_timestamps: Include word-level timestamps
-        
+
         Returns:
             text: Transcribed text
             segments: Word segments with timestamps
@@ -62,36 +55,57 @@ class WhisperHandler:
         """
         if not self.loaded:
             await self.load()
-        
+
         try:
-            # TODO: Implement actual transcription
-            # segments, info = self.model.transcribe(
-            #     audio,
-            #     language=language,
-            #     word_timestamps=word_timestamps,
-            # )
-            # 
-            # text = " ".join([s.text for s in segments])
-            # ...
-            
-            # Placeholder
+            import numpy as np
+            import soundfile as sf
+            from utils.api_client import call_ai_service
+
+            # Convert numpy array to WAV bytes for upload
+            if isinstance(audio, np.ndarray):
+                buffer = io.BytesIO()
+                sf.write(buffer, audio, 16000, format="WAV")
+                wav_bytes = buffer.getvalue()
+            else:
+                wav_bytes = audio
+
+            # Call ai-service STT endpoint
+            result = await call_ai_service(
+                "POST",
+                "/api/v1/stt/transcribe",
+                files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+            )
+
             return {
-                "text": "This is a placeholder transcription. Implement with faster-whisper.",
-                "segments": [
-                    {"word": "This", "start": 0.0, "end": 0.3, "confidence": 0.95},
-                    {"word": "is", "start": 0.3, "end": 0.5, "confidence": 0.98},
-                ],
-                "language": language,
-                "confidence": 0.92,
+                "text": result.get("text", ""),
+                "segments": result.get("segments", []),
+                "language": result.get("language", language),
+                "confidence": result.get("confidence", 0.0),
             }
-        
+
+        except ConnectionError:
+            logger.error("ai-service not available for STT")
+            return {
+                "text": "",
+                "error": "ai-service not available. Start it on port 8001 for STT.",
+                "segments": [],
+                "language": language,
+                "confidence": 0.0,
+            }
+        except ImportError as e:
+            logger.error(f"Missing dependency for STT: {e}")
+            return {
+                "text": "",
+                "error": f"Missing dependency: {e}. Run: pip install numpy soundfile",
+                "segments": [],
+                "language": language,
+                "confidence": 0.0,
+            }
         except Exception as e:
             logger.error(f"Transcription error: {e}")
             raise
-    
+
     async def unload(self):
-        """Unload model"""
-        if self.loaded:
-            self.model = None
-            self.loaded = False
-            logger.info("Whisper model unloaded")
+        """Reset handler"""
+        self.loaded = False
+        logger.info("Whisper handler reset")
