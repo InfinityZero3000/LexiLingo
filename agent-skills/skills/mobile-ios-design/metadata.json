@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "LexiLingo Team",
+  "date": "February 2026",
+  "abstract": "Mobile UI design patterns adapted from Apple's Human Interface Guidelines for cross-platform Flutter development. Covers layout systems, navigation patterns, visual hierarchy, accessibility, and adaptive design for building polished mobile interfaces.",
+  "references": [
+    "https://developer.apple.com/design/human-interface-guidelines/",
+    "https://m3.material.io/",
+    "https://docs.flutter.dev/ui/design",
+    "https://github.com/wshobson/agents"
+  ]
+}
