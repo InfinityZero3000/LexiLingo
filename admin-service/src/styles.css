@@ -1286,6 +1286,42 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #ff6a1a 0%, var(--accent) 100%);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(255, 77, 0, 0.28);
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+  box-shadow: 0 5px 16px rgba(255, 77, 0, 0.38);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 77, 0, 0.22);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-secondary {
   border: 1px solid var(--line);
   background: var(--panel);
@@ -1299,6 +1335,9 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-secondary:hover {
@@ -1309,6 +1348,68 @@ textarea:focus {
 .btn-secondary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.btn-ghost {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-ghost:hover {
+  background: var(--panel-soft);
+  color: var(--accent);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+}
+
+.btn-danger {
+  border: none;
+  background: linear-gradient(135deg, #e8526a 0%, #c02040 100%);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(192, 32, 64, 0.25);
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ─── Segmented Control (Language Switcher) ── */
