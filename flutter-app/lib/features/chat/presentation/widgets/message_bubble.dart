@@ -21,6 +21,8 @@ class MessageBubble extends StatefulWidget {
   final bool showTimestamp;
   final VoidCallback? onRetry;
   final Function(String reaction)? onReaction;
+  /// Google/profile avatar URL for the logged-in user.
+  final String? userAvatarUrl;
 
   const MessageBubble({
     super.key,
@@ -29,6 +31,7 @@ class MessageBubble extends StatefulWidget {
     this.showTimestamp = true,
     this.onRetry,
     this.onReaction,
+    this.userAvatarUrl,
   });
 
   @override
@@ -440,7 +443,8 @@ class _MessageBubbleState extends State<MessageBubble>
         ),
       );
     } else {
-      // User Avatar - default icon like profile page
+      // User Avatar — show Google photo if available
+      final avatarUrl = widget.userAvatarUrl;
       return Container(
         width: 32,
         height: 32,
@@ -453,7 +457,19 @@ class _MessageBubbleState extends State<MessageBubble>
             width: 1.5,
           ),
         ),
-        child: const Icon(Icons.person, size: 18, color: AppColors.primary),
+        child: ClipOval(
+          child: avatarUrl != null && avatarUrl.isNotEmpty
+              ? Image.network(
+                  avatarUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.person,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                )
+              : const Icon(Icons.person, size: 18, color: AppColors.primary),
+        ),
       );
     }
   }

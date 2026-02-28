@@ -37,6 +37,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<NewsProvider>().loadMore();

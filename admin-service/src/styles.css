@@ -798,69 +798,28 @@ textarea:focus {
   padding: 32px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #ffe2d1 30%, #ffb899 60%, #ff4d00 100%);
-}
-
-/* Animated gradient blobs */
-.login-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.5;
-  pointer-events: none;
-  animation: blob-float 12s ease-in-out infinite;
-}
-.login-blob-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(255, 77, 0, 0.4) 0%, transparent 70%);
-  top: -150px;
-  right: -100px;
-  animation-delay: 0s;
-}
-.login-blob-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255, 77, 0, 0.25) 0%, transparent 70%);
-  bottom: -120px;
-  left: -80px;
-  animation-delay: -4s;
-}
-.login-blob-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255, 77, 0, 0.2) 0%, transparent 70%);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation-delay: -8s;
-  opacity: 0.3;
-}
-
-@keyframes blob-float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -20px) scale(1.05); }
-  50% { transform: translate(-20px, 30px) scale(0.95); }
-  75% { transform: translate(20px, 20px) scale(1.02); }
+  background: #0A0E1A;
 }
 
 .login-card {
   position: relative;
   z-index: 1;
   width: min(480px, calc(100% - 16px));
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(10, 14, 26, 0.75);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid rgba(255, 77, 0, 0.12);
+  border: 1px solid rgba(255, 77, 0, 0.2);
   border-radius: 28px;
   box-shadow:
-    0 24px 80px rgba(255, 77, 0, 0.1),
-    0 8px 32px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    0 24px 80px rgba(0, 0, 0, 0.4),
+    0 8px 32px rgba(255, 77, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Initial state for GSAP entrance — JS takes over from here */
+  opacity: 0;
+  transform: translateY(50px) scale(0.96);
 }
 
 @keyframes card-enter {
@@ -898,7 +857,7 @@ textarea:focus {
   font-family: "Space Grotesk", sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: #ffffff;
   letter-spacing: -0.01em;
 }
 
@@ -907,7 +866,7 @@ textarea:focus {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.45);
   margin-top: 1px;
 }
 
@@ -920,14 +879,14 @@ textarea:focus {
   font-family: "Space Grotesk", sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
 .login-subtitle {
   margin: 0 0 28px;
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.5;
 }
 
@@ -952,8 +911,8 @@ textarea:focus {
   gap: 10px;
   padding: 14px 24px;
   border-radius: 24px;
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
   font-weight: 500;
 }
@@ -980,7 +939,7 @@ textarea:focus {
 .login-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-top-color: #ff4d00;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -1003,7 +962,7 @@ textarea:focus {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.4);
   justify-content: center;
 }
 
@@ -1020,7 +979,7 @@ textarea:focus {
 .login-footer p {
   margin: 0;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .center-page {

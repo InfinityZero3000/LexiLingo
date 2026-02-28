@@ -530,9 +530,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
+        // easeOutBack overshoots above 1.0 — clamp to keep Opacity valid
+        final opacity = value.clamp(0.0, 1.0);
         return Transform.translate(
           offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(opacity: value, child: child),
+          child: Opacity(opacity: opacity, child: child),
         );
       },
       child: FilledButton.icon(

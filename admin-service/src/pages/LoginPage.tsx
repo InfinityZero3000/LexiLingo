@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthProvider";
 import { ENV } from "../lib/env";
 import { useI18n } from "../lib/i18n";
+import GlobeBackground from "../components/login-globe/GlobeBackground";
 
 export const LoginPage = () => {
   const { signInWithGoogle, loading } = useAuth();
@@ -82,10 +83,8 @@ export const LoginPage = () => {
 
   return (
     <div className="login-page">
-      {/* Decorative blobs */}
-      <div className="login-blob login-blob-1" />
-      <div className="login-blob login-blob-2" />
-      <div className="login-blob login-blob-3" />
+      {/* 3D Globe background */}
+      <GlobeBackground />
 
       <div className="login-card">
         <div className="login-header">

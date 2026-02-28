@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -58,23 +59,8 @@ class _WelcomePageState extends State<WelcomePage>
             children: [
               const Spacer(flex: 2),
 
-              // Welcome Animation
-              _buildWelcomeAnimation(),
-
-              const SizedBox(height: 32),
-
-              // Welcome Text
-              _buildWelcomeText(context),
-
-              const SizedBox(height: 16),
-
-              // User greeting
-              if (widget.userName != null) _buildUserGreeting(context),
-
-              const SizedBox(height: 24),
-
-              // Motivational message
-              _buildMotivationalMessage(context),
+              // Frosted glass card: animation + texts
+              _buildFrostedContentCard(context),
 
               const Spacer(flex: 2),
 
@@ -87,6 +73,50 @@ class _WelcomePageState extends State<WelcomePage>
 
               const SizedBox(height: 48),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Frosted glass panel that backs the animation + all text content
+  Widget _buildFrostedContentCard(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.40),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildWelcomeAnimation(),
+                const SizedBox(height: 24),
+                _buildWelcomeText(context),
+                const SizedBox(height: 12),
+                if (widget.userName != null) _buildUserGreeting(context),
+                const SizedBox(height: 16),
+                _buildMotivationalMessage(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -157,6 +187,18 @@ class _WelcomePageState extends State<WelcomePage>
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: AppColors.primary,
+          shadows: [
+            Shadow(
+              color: Colors.white.withValues(alpha: 0.85),
+              offset: const Offset(0, 0),
+              blurRadius: 14,
+            ),
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              offset: const Offset(1, 2),
+              blurRadius: 6,
+            ),
+          ],
         ),
         textAlign: TextAlign.center,
       ),
@@ -187,7 +229,18 @@ class _WelcomePageState extends State<WelcomePage>
           Text(
             'Hello, ',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: isDark ? Colors.white70 : Colors.grey[600],
+              color: isDark ? Colors.white70 : Colors.grey[700],
+              shadows: [
+                Shadow(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  blurRadius: 10,
+                ),
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  offset: const Offset(1, 1),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
           Text(
@@ -195,6 +248,17 @@ class _WelcomePageState extends State<WelcomePage>
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: AppColors.accentYellow,
+              shadows: [
+                Shadow(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  blurRadius: 10,
+                ),
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  offset: const Offset(1, 1),
+                  blurRadius: 5,
+                ),
+              ],
             ),
           ),
           Text(' ', style: theme.textTheme.titleLarge),
@@ -231,8 +295,19 @@ class _WelcomePageState extends State<WelcomePage>
         child: Text(
           message,
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: isDark ? Colors.white60 : Colors.grey[500],
+            color: isDark ? Colors.white70 : Colors.grey[700],
             fontStyle: FontStyle.italic,
+            shadows: [
+              Shadow(
+                color: Colors.white.withValues(alpha: 0.65),
+                blurRadius: 8,
+              ),
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                offset: const Offset(0, 1),
+                blurRadius: 4,
+              ),
+            ],
           ),
           textAlign: TextAlign.center,
         ),

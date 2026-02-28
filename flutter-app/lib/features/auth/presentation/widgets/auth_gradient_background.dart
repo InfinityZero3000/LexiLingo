@@ -1,8 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-/// Animated gradient background for auth pages (login, welcome)
-/// Features a colorful gradient with floating bubbles animation
+// ─────────────────────────────────────────────────────────────────────────────
+// AuthGradientBackground
+//
+// • login-background.svg  — static full-cover background
+// • Floating sparkle particles layered on top for depth
+// ─────────────────────────────────────────────────────────────────────────────
 class AuthGradientBackground extends StatefulWidget {
   final Widget child;
 
@@ -14,108 +19,148 @@ class AuthGradientBackground extends StatefulWidget {
 
 class _AuthGradientBackgroundState extends State<AuthGradientBackground>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _particleCtrl;
+  late final List<_Particle>     _particles;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 10),
+
+    _particleCtrl = AnimationController(
       vsync: this,
+      duration: const Duration(seconds: 12),
     )..repeat();
+
+    final rng = math.Random(42);
+    _particles = List.generate(18, (i) => _Particle.random(rng, i));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _particleCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: const [
-                Color(0xFF4FC3F7), // Light Blue
-                Color(0xFFE1F5FE), // Very Light Blue / White
-                Color(0xFFFFF9C4), // Light Yellow
-                Color(0xFFE8F5E9), // Very Light Green
-                Color(0xFF81C784), // Light Green
-              ],
-              stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Animated floating bubbles
-              ..._buildFloatingBubbles(),
-              // Content
-              child!,
-            ],
-          ),
-        );
-      },
-      child: widget.child,
+    final size = MediaQuery.sizeOf(context);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // ── 1. Static background ─────────────────────────────────────────
+        Image.asset(
+          'assets/login/login-background.png',
+          fit: BoxFit.cover,
+        ),
+
+        // ── 2. Floating sparkle particles ─────────────────────────────────────
+        AnimatedBuilder(
+          animation: _particleCtrl,
+          builder: (_, __) {
+            return Stack(
+              children: _particles.map((p) {
+                final t = (_particleCtrl.value + p.phaseOffset) % 1.0;
+                final x = p.startX * size.width;
+                final y = p.startY * size.height - t * p.travel * size.height;
+                final opacity = _particleOpacity(t);
+
+                return Positioned(
+                  left: x +
+                      math.sin(t * 2 * math.pi * p.swayFreq) * p.swayAmp,
+                  top: y,
+                  child: Opacity(
+                    opacity: opacity,
+                    child: _ParticleWidget(particle: p),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+
+        // ── 3. Page content ──────────────────────────────────────────────────
+        widget.child,
+      ],
     );
   }
 
-  List<Widget> _buildFloatingBubbles() {
-    return List.generate(8, (index) {
-      final random = math.Random(index);
-      final size = 40.0 + random.nextDouble() * 80;
-      final startX = random.nextDouble();
-      final startY = random.nextDouble();
-      final speed = 0.5 + random.nextDouble() * 0.5;
-
-      return Positioned(
-        left:
-            (startX +
-                math.sin((_controller.value * speed + index) * 2 * math.pi) *
-                    0.1) *
-            MediaQuery.of(context).size.width,
-        top:
-            (startY +
-                math.cos((_controller.value * speed + index) * 2 * math.pi) *
-                    0.1) *
-            MediaQuery.of(context).size.height,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [
-                _getBubbleColor(index).withValues(alpha: 0.3),
-                _getBubbleColor(index).withValues(alpha: 0.1),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-      );
-    });
+  /// Fade-in at bottom, hold, fade-out near top
+  double _particleOpacity(double t) {
+    if (t < 0.15) return t / 0.15;
+    if (t > 0.85) return (1.0 - t) / 0.15;
+    return 1.0;
   }
+}
 
-  Color _getBubbleColor(int index) {
-    final colors = [
-      const Color(0xFF4FC3F7), // Light Blue
-      const Color(0xFFFFEB3B), // Yellow
-      const Color(0xFF81C784), // Light Green
-      const Color(0xFFE1F5FE), // White-ish Blue
-      const Color(0xFFA5D6A7), // Mint Green
-      const Color(0xFFFFF176), // Light Yellow
-      const Color(0xFF4DD0E1), // Cyan
-      const Color(0xFFC5E1A5), // Light Green
+// ─────────────────────────────────────────────────────────────────────────────
+// Particle data + widget
+// ─────────────────────────────────────────────────────────────────────────────
+class _Particle {
+  final double startX;     // 0-1 relative to screen width
+  final double startY;     // start Y (0-1 from top – we start near bottom)
+  final double travel;     // fraction of screen height to travel upward
+  final double size;
+  final double phaseOffset;
+  final double swayAmp;    // horizontal sway pixels
+  final double swayFreq;   // sway cycles per loop
+  final Color color;
+
+  const _Particle({
+    required this.startX,
+    required this.startY,
+    required this.travel,
+    required this.size,
+    required this.phaseOffset,
+    required this.swayAmp,
+    required this.swayFreq,
+    required this.color,
+  });
+
+  factory _Particle.random(math.Random rng, int index) {
+    final colors = const [
+      Color(0xFFFFD700), // gold
+      Color(0xFF80DEEA), // cyan
+      Color(0xFFA5D6A7), // mint
+      Color(0xFFCE93D8), // lavender
+      Color(0xFFFFAB91), // peach
+      Color(0xFFE6EE9C), // lime
     ];
-    return colors[index % colors.length];
+    return _Particle(
+      startX: rng.nextDouble(),
+      startY: 0.8 + rng.nextDouble() * 0.35, // start in lower portion
+      travel: 0.45 + rng.nextDouble() * 0.4,
+      size: 4.0 + rng.nextDouble() * 7.0,
+      phaseOffset: rng.nextDouble(),
+      swayAmp: 8.0 + rng.nextDouble() * 20.0,
+      swayFreq: 0.5 + rng.nextDouble() * 1.5,
+      color: colors[index % colors.length],
+    );
+  }
+}
+
+class _ParticleWidget extends StatelessWidget {
+  final _Particle particle;
+
+  const _ParticleWidget({required this.particle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: particle.size,
+      height: particle.size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: particle.color.withValues(alpha: 0.65),
+        boxShadow: [
+          BoxShadow(
+            color: particle.color.withValues(alpha: 0.4),
+            blurRadius: particle.size * 1.5,
+            spreadRadius: particle.size * 0.3,
+          ),
+        ],
+      ),
+    );
   }
 }
 

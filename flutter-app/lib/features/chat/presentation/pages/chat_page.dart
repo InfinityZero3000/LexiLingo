@@ -455,13 +455,17 @@ class _ChatPageState extends State<ChatPage> {
                 if (messages.isEmpty) _buildWelcomeMessage(context),
 
                 ...messages.map((msg) {
+                  final avatarUrl = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  ).currentUser?.avatarUrl;
                   return MessageBubble(
                     message: msg,
                     showAvatar: true,
                     showTimestamp: true,
+                    userAvatarUrl: avatarUrl,
                     onRetry: msg.hasError
                         ? () {
-                            // Retry sending the message
                             chatProvider.sendMessage(
                               msg.content,
                               userId: _currentUserId(context),

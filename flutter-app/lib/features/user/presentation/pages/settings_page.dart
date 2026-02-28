@@ -609,17 +609,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    child: Text(
-                      (user.displayName.isNotEmpty
-                              ? user.displayName[0]
-                              : user.email[0])
-                          .toUpperCase(),
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
+                    backgroundImage: user.avatarUrl != null &&
+                            user.avatarUrl!.isNotEmpty
+                        ? NetworkImage(user.avatarUrl!)
+                        : null,
+                    child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                        ? Text(
+                            (user.displayName.isNotEmpty
+                                    ? user.displayName[0]
+                                    : user.email[0])
+                                .toUpperCase(),
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

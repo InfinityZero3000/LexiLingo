@@ -88,6 +88,9 @@ dependencies:
   # Web platform support
   web: ^1.1.0
   
+  # SVG support
+  flutter_svg: ^2.0.10+1
+
   # Localization
   easy_localization: ^3.0.7
 
@@ -121,6 +124,7 @@ flutter:
     - animation/
     - assets/badges/
     - assets/i18n/
+    - assets/login/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
