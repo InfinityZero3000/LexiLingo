@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
@@ -42,9 +44,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamificationProvider = context.read<GamificationProvider>();
     final proficiencyProvider = context.read<ProficiencyProvider>();
 
-    // Sync level with user XP
+    // Fetch authoritative level data from backend.
+    // Falls back to local formula if network is unavailable.
     if (authProvider.currentUser != null) {
-      levelProvider.updateLevel(authProvider.currentUser!.xp);
+      await levelProvider.fetchLevelFull(sl<ApiClient>());
     }
 
     // Load progress stats
@@ -73,14 +76,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        leading: GestureDetector(
-          onTap: () {}, // Back if needed
-          child: const Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.primary,
-            size: 20,
-          ),
-        ),
+        centerTitle: false,
+        automaticallyImplyLeading: false,
         actions: [
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
@@ -277,10 +274,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
-        final levelStatus = levelProvider.levelStatus;
-        final tierName =
-            '${levelStatus.currentTier.code} ${levelStatus.currentTier.name}';
-        final progress = levelStatus.progressPercentage / 100;
+        // Use numeric level progress, not CEFR-based
+        final progress = levelProvider.displayLevelProgress;
 
         return Container(
           margin: const EdgeInsets.all(16),
@@ -420,14 +415,34 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
-                            // Level Badge
+                            // Level Badge at avatar corner
                             Positioned(
                               top: 0,
                               right: 0,
-                              child: LevelBadge(
-                                tierCode: levelStatus.currentTier.code,
-                                tier: levelStatus.currentTier,
-                                progress: progress,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'Lv.${levelProvider.displayLevel}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -454,50 +469,48 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         const SizedBox(height: 12),
-                        // Tier Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                _getTierColor(levelStatus.currentTier.code),
-                                _getTierColor(
-                                  levelStatus.currentTier.code,
-                                ).withValues(alpha: 0.7),
+                        // Level Badge
+                        Consumer<LevelProvider>(
+                          builder: (_, lp, __) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withValues(alpha: 0.75),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _getTierColor(
-                                  levelStatus.currentTier.code,
-                                ).withValues(alpha: 0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _getTierIcon(levelStatus.currentTier.code),
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                tierName,
-                                style: const TextStyle(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.workspace_premium_rounded,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  size: 16,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Level ${lp.displayLevel}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -580,16 +593,15 @@ class _ProfilePageState extends State<ProfilePage> {
     return Consumer2<LevelProvider, ProfileProvider>(
       builder: (context, levelProvider, profileProvider, _) {
         final stats = profileProvider.stats;
-        final totalXP = levelProvider.levelStatus.totalXP;
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             AnimatedSocialStat(
-              value: LevelCalculator.formatXP(totalXP),
-              label: 'XP',
-              icon: Icons.star,
-              color: const Color(0xFFF59E0B),
+              value: 'Lv. ${levelProvider.displayLevel}',
+              label: 'Level',
+              icon: Icons.workspace_premium_rounded,
+              color: AppColors.primary,
             ),
             Container(
               height: 40,
@@ -641,18 +653,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildLevelProgressCard(BuildContext context) {
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
-        final levelStatus = levelProvider.levelStatus;
-        final currentTier = levelStatus.currentTier;
-        final nextTier = LevelCalculator.getNextTier(currentTier);
-        final xpToNext = nextTier != null
-            ? nextTier.minXP - levelStatus.totalXP
-            : 0;
-        final progressLabel = nextTier != null
-            ? 'Progress to ${nextTier.code} ${nextTier.name}'
-            : 'Maximum Level Reached';
-        final xpLabel = nextTier != null
-            ? '${levelProvider.getFormattedTotalXP()} / ${LevelCalculator.formatXP(nextTier.minXP)} XP'
-            : '${levelProvider.getFormattedTotalXP()} XP';
+        final level = levelProvider.displayLevel;
+        final xpIn = levelProvider.displayXpInLevel;
+        final xpFor = levelProvider.displayXpForNextLevel;
+        final progress = levelProvider.displayLevelProgress;
 
         return GlassmorphicContainer(
           child: Column(
@@ -661,19 +665,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    progressLabel,
+                    'Level $level  →  Level ${level + 1}',
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  Text(xpLabel, style: const TextStyle(fontSize: 14)),
+                  Text(
+                    '$xpIn / $xpFor XP',
+                    style: const TextStyle(fontSize: 14),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               AnimatedProgressBar(
-                progress: levelStatus.progressPercentage / 100,
-                primaryColor: _getTierColor(currentTier.code),
-                secondaryColor: _getTierColor(
-                  currentTier.code,
-                ).withValues(alpha: 0.6),
+                progress: progress,
+                primaryColor: AppColors.primary,
+                secondaryColor: AppColors.primary.withValues(alpha: 0.5),
                 height: 12,
               ),
               const SizedBox(height: 12),
@@ -681,16 +686,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    nextTier != null
-                        ? '${LevelCalculator.formatXP(xpToNext)} XP to go'
-                        : 'Master Level!',
+                    '${xpFor - xpIn} XP to Level ${level + 1}',
                     style: const TextStyle(
                       color: AppColors.textGrey,
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    '${levelStatus.progressPercentage.toStringAsFixed(0)}% complete',
+                    '${(progress * 100).toStringAsFixed(0)}% complete',
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,

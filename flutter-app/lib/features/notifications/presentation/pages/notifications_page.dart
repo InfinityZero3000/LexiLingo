@@ -28,26 +28,77 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        centerTitle: false,
-        actions: [
-          Consumer<NotificationProvider>(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: SafeArea(
+          child: Consumer<NotificationProvider>(
             builder: (context, provider, child) {
-              if (!provider.hasUnread) return const SizedBox.shrink();
-              return TextButton(
-                onPressed: () => provider.markAllAsRead(),
-                child: const Text(
-                  'Mark all as read',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+              final unread = provider.unreadCount;
+              return Container(
+                height: 72,
+                padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Notifications',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          unread > 0
+                              ? '$unread unread message${unread > 1 ? 's' : ''}'
+                              : 'All caught up',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (provider.hasUnread)
+                      TextButton(
+                        onPressed: () => provider.markAllAsRead(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                        ),
+                        child: const Text(
+                          'Mark all read',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             },
           ),
-        ],
+        ),
       ),
       body: Consumer<NotificationProvider>(
         builder: (context, provider, child) {

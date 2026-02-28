@@ -76,7 +76,15 @@ class StreakProvider extends ChangeNotifier {
       },
       (updateResult) {
         _lastUpdateResult = updateResult;
-        // Update local streak with new values
+        // Update local streak with new values.
+        // Mark today's slot in weeklyActivity as active (preserve existing days).
+        final todayIndex = DateTime.now().weekday - 1; // 0=Mon … 6=Sun
+        final updatedWeekly = List<bool>.from(
+          _streak?.weeklyActivity ?? List.filled(7, false),
+        );
+        if (todayIndex >= 0 && todayIndex < 7) {
+          updatedWeekly[todayIndex] = true;
+        }
         _streak = StreakEntity(
           currentStreak: updateResult.currentStreak,
           longestStreak: updateResult.longestStreak,
@@ -85,6 +93,7 @@ class StreakProvider extends ChangeNotifier {
           freezeCount: updateResult.freezeCount,
           isActiveToday: true,
           streakAtRisk: false,
+          weeklyActivity: updatedWeekly,
         );
         success = true;
       },

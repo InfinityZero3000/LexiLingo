@@ -25,6 +25,9 @@ class StreakEntity extends Equatable {
   /// Whether streak will be lost if no activity today
   final bool streakAtRisk;
 
+  /// Activity flags for each day of the current week (Mon=0 … Sun=6)
+  final List<bool> weeklyActivity;
+
   const StreakEntity({
     required this.currentStreak,
     required this.longestStreak,
@@ -33,7 +36,8 @@ class StreakEntity extends Equatable {
     required this.freezeCount,
     required this.isActiveToday,
     required this.streakAtRisk,
-  });
+    List<bool>? weeklyActivity,
+  }) : weeklyActivity = weeklyActivity ?? const [false, false, false, false, false, false, false];
 
   /// Factory constructor for empty/default streak
   factory StreakEntity.empty() {
@@ -45,6 +49,7 @@ class StreakEntity extends Equatable {
       freezeCount: 0,
       isActiveToday: false,
       streakAtRisk: false,
+      weeklyActivity: [false, false, false, false, false, false, false],
     );
   }
 
@@ -87,6 +92,7 @@ class StreakEntity extends Equatable {
     freezeCount,
     isActiveToday,
     streakAtRisk,
+    weeklyActivity,
   ];
 }
 

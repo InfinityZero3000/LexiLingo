@@ -12,10 +12,19 @@ class StreakModel extends StreakEntity {
     required super.freezeCount,
     required super.isActiveToday,
     required super.streakAtRisk,
+    super.weeklyActivity,
   });
 
   /// Factory constructor from JSON (API response)
   factory StreakModel.fromJson(Map<String, dynamic> json) {
+    List<bool> weeklyActivity = List.filled(7, false);
+    final rawWeekly = json['weekly_activity'];
+    if (rawWeekly is List) {
+      weeklyActivity = List.generate(
+        7,
+        (i) => i < rawWeekly.length ? (rawWeekly[i] as bool? ?? false) : false,
+      );
+    }
     return StreakModel(
       currentStreak: json['current_streak'] ?? 0,
       longestStreak: json['longest_streak'] ?? 0,
@@ -24,6 +33,7 @@ class StreakModel extends StreakEntity {
       freezeCount: json['freeze_count'] ?? 0,
       isActiveToday: json['is_active_today'] ?? false,
       streakAtRisk: json['streak_at_risk'] ?? false,
+      weeklyActivity: weeklyActivity,
     );
   }
 
@@ -37,6 +47,7 @@ class StreakModel extends StreakEntity {
       'freeze_count': freezeCount,
       'is_active_today': isActiveToday,
       'streak_at_risk': streakAtRisk,
+      'weekly_activity': weeklyActivity,
     };
   }
 
@@ -50,6 +61,7 @@ class StreakModel extends StreakEntity {
       freezeCount: freezeCount,
       isActiveToday: isActiveToday,
       streakAtRisk: streakAtRisk,
+      weeklyActivity: weeklyActivity,
     );
   }
 }
