@@ -447,6 +447,7 @@ class AnimatedStreakCard extends StatefulWidget {
   final int streakDays;
   final int longestStreak;
   final bool isActiveToday;
+  final List<bool>? weeklyActivity;
   final VoidCallback? onTap;
 
   const AnimatedStreakCard({
@@ -454,6 +455,7 @@ class AnimatedStreakCard extends StatefulWidget {
     required this.streakDays,
     this.longestStreak = 0,
     this.isActiveToday = false,
+    this.weeklyActivity,
     this.onTap,
   });
 
@@ -665,12 +667,15 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
 
+    // Use real per-day activity data when available; fall back to no highlights
+    final activity =
+        widget.weeklyActivity ?? List.filled(7, false);
+
     return Row(
       children: List.generate(7, (index) {
-        final dayNumber = index + 1;
-        final isPast = dayNumber < currentWeekday;
+        final dayNumber = index + 1; // 1=Mon … 7=Sun
         final isToday = dayNumber == currentWeekday;
-        final isActive = isPast || (isToday && widget.isActiveToday);
+        final isActive = activity[index];
 
         return Padding(
           padding: const EdgeInsets.only(right: 6),

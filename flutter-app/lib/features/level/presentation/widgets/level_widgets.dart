@@ -101,10 +101,14 @@ class LevelProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
-        final status = levelProvider.levelStatus;
+        final level = levelProvider.displayLevel;
+        final xpIn = levelProvider.displayXpInLevel;
+        final xpFor = levelProvider.displayXpForNextLevel;
+        final progress = levelProvider.displayLevelProgress;
+        final totalXp = levelProvider.levelStatus.totalXP;
 
         return GestureDetector(
-          onTap: onTap ?? () => _showLevelDetails(context, status),
+          onTap: onTap ?? () => _showLevelDetails(context, levelProvider.levelStatus),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -130,15 +134,13 @@ class LevelProgressCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _getTierColor(
-                              status.currentTier,
-                            ).withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            _getTierIcon(status.currentTier.iconIdentifier),
+                            Icons.workspace_premium_rounded,
                             size: 24,
-                            color: _getTierColor(status.currentTier),
+                            color: AppColors.primary,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -146,17 +148,14 @@ class LevelProgressCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              status.currentTier.code,
+                              'Level $level',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              status.currentTier.name,
+                              '$xpIn / $xpFor XP this level',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: _getTierColor(status.currentTier),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  ?.copyWith(color: AppColors.textGrey),
                             ),
                           ],
                         ),
@@ -166,7 +165,7 @@ class LevelProgressCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          LevelCalculator.formatXP(status.totalXP),
+                          LevelCalculator.formatXP(totalXp),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -191,35 +190,33 @@ class LevelProgressCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          status.nextTier != null
-                              ? 'Progress to ${status.nextTier!.code}'
-                              : 'Max Level Reached!',
+                          'Level $level  →  Level ${level + 1}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textGrey),
                         ),
-                        if (status.nextTier != null)
-                          Text(
-                            '${status.xpInCurrentLevel}/${status.xpToNextLevel + status.xpInCurrentLevel} XP',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
+                        Text(
+                          '${(progress * 100).toInt()}% complete',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: status.progressPercentage,
+                        value: progress,
                         backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _getTierColor(status.currentTier),
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         minHeight: 8,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${(status.progressPercentage * 100).toInt()}% complete',
+                      '${xpFor - xpIn} XP to Level ${level + 1}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textGrey,
                         fontSize: 11,

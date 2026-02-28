@@ -56,13 +56,52 @@ class LevelProvider with ChangeNotifier {
   double get rankScore => _rankScore;
   Map<String, dynamic> get rawLevelFull => _rawLevelFull;
 
-  /// Update level status based on total XP
+  /// Numeric level for display — uses API value if available, else computed
+  /// from XP using the same formula as backend: floor(100 * level^1.5).
+  int get displayLevel {
+    if (_numericLevel > 1) return _numericLevel;
+    return LevelCalculator.calculateNumericLevel(_levelStatus.totalXP);
+  }
+
+  /// Level progress percentage (0.0–1.0) for the numeric level system.
+  /// Uses API value if available, else computed with backend formula.
+  double get displayLevelProgress {
+    if (_levelProgressPercent > 0) return (_levelProgressPercent / 100).clamp(0.0, 1.0);
+    return LevelCalculator.numericLevelProgressPercent(_levelStatus.totalXP);
+  }
+
+  /// XP accumulated within the current numeric level.
+  int get displayXpInLevel {
+    if (_numericLevel > 1) return _currentXpInLevel;
+    return LevelCalculator.xpInCurrentNumericLevel(_levelStatus.totalXP);
+  }
+
+  /// XP needed to complete the current numeric level (= xp for that level).
+  int get displayXpForNextLevel {
+    if (_xpForNextLevel > 0 && _numericLevel > 1) return _xpForNextLevel;
+    return LevelCalculator.xpForSingleLevel(displayLevel);
+  }
+
+  /// Update level status from local XP — used as offline fallback.
   ///
-  /// This recalculates the level status and triggers notifications
-  /// if a level up occurred.
+  /// Syncs both the CEFR [_levelStatus] and the numeric level fields so that
+  /// the display getters (displayLevel, displayLevelProgress, etc.) work
+  /// correctly even without a network call.
+  ///
+  /// Prefer calling [fetchLevelFull] when a network connection is available so
+  /// the authoritative backend values are used instead.
   void updateLevel(int totalXP) {
     final oldTier = _levelStatus.currentTier;
     _levelStatus = LevelCalculator.calculateLevelStatus(totalXP);
+
+    // Also sync numeric fields as offline fallback.
+    // These will be overwritten by fetchLevelFull() when online.
+    _totalXp = totalXP;
+    _numericLevel = LevelCalculator.calculateNumericLevel(totalXP);
+    _currentXpInLevel = LevelCalculator.xpInCurrentNumericLevel(totalXP);
+    _xpForNextLevel = LevelCalculator.xpForSingleLevel(_numericLevel);
+    _levelProgressPercent =
+        LevelCalculator.numericLevelProgressPercent(totalXP) * 100;
 
     // Check for level up
     if (_levelStatus.currentTier.minXP > oldTier.minXP) {
@@ -76,9 +115,14 @@ class LevelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add XP and check for level changes
+  /// Add XP and check for level changes.
   ///
-  /// Returns true if the XP addition caused a level up
+  /// @deprecated XP is owned by the backend. Call the `/users/me/xp` endpoint
+  /// to award XP, then refresh via [fetchLevelFull]. This method only mutates
+  /// local state and will be out of sync with the server after a page reload.
+  @Deprecated(
+    'XP is owned by the backend. Award XP via the API and call fetchLevelFull() to refresh.',
+  )
   bool addXP(int xpToAdd) {
     if (xpToAdd <= 0) return false;
 
@@ -194,8 +238,8 @@ class LevelProvider with ChangeNotifier {
       _rankName = data['rank_name'] ?? 'Bronze';
       _rankScore = (data['rank_score'] ?? 0).toDouble();
 
-      // Also keep local LevelStatus in sync
-      updateLevel(_totalXp);
+      // Keep CEFR LevelStatus in sync for legacy display (no extra notifyListeners).
+      _levelStatus = LevelCalculator.calculateLevelStatus(_totalXp);
     } catch (e) {
       _errorMessage = e.toString();
       debugPrint('fetchLevelFull error: $e');

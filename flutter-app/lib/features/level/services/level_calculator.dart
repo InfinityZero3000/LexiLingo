@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../domain/entities/level_entity.dart';
 
 /// Level Calculator Service
@@ -177,5 +178,61 @@ class LevelCalculator {
     } else {
       return 'Almost there! Just ${status.xpToNextLevel} XP to ${status.nextTier?.code ?? 'next level'}!';
     }
+  }
+
+  // =========================================================================
+  // Numeric Level System (Gamification)
+  // Formula matches backend: floor(100 * level^1.5)
+  //
+  // Level 1  →  100 XP
+  // Level 5  →  1,118 XP
+  // Level 10 →  3,162 XP
+  // Level 20 →  8,944 XP
+  // Level 50 →  35,355 XP
+  // Level 100 → 100,000 XP
+  // =========================================================================
+
+  /// XP required to complete a single numeric level.
+  /// Formula: floor(100 * level^1.5)
+  static int xpForSingleLevel(int level) {
+    return (100 * math.pow(level, 1.5)).floor();
+  }
+
+  /// Total cumulative XP needed to *reach* a given numeric level (start of that level).
+  static int totalXpForLevel(int level) {
+    int total = 0;
+    for (int lvl = 1; lvl < level; lvl++) {
+      total += xpForSingleLevel(lvl);
+    }
+    return total;
+  }
+
+  /// Calculate current numeric level from total XP.
+  static int calculateNumericLevel(int totalXP) {
+    if (totalXP <= 0) return 1;
+    int remaining = totalXP;
+    int level = 1;
+    while (true) {
+      final needed = xpForSingleLevel(level);
+      if (remaining < needed) break;
+      remaining -= needed;
+      level++;
+    }
+    return level;
+  }
+
+  /// XP accumulated within the current numeric level.
+  static int xpInCurrentNumericLevel(int totalXP) {
+    final level = calculateNumericLevel(totalXP);
+    return totalXP - totalXpForLevel(level);
+  }
+
+  /// Progress percentage (0.0–1.0) within the current numeric level.
+  static double numericLevelProgressPercent(int totalXP) {
+    final level = calculateNumericLevel(totalXP);
+    final xpIn = xpInCurrentNumericLevel(totalXP);
+    final xpNeeded = xpForSingleLevel(level);
+    if (xpNeeded <= 0) return 0.0;
+    return (xpIn / xpNeeded).clamp(0.0, 1.0);
   }
 }
