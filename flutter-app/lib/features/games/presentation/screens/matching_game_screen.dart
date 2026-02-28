@@ -160,7 +160,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
             score: _correctCount,
             totalQuestions: total,
             correctAnswers: _correctCount,
-            xpEarned: finalXp,
+            xpEarned: xpResult?.xpAwarded ?? finalXp,
             durationSeconds: elapsed,
             xpResult: xpResult,
           ),

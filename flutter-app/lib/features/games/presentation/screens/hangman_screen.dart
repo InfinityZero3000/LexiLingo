@@ -161,7 +161,7 @@ class _HangmanScreenState extends State<HangmanScreen>
             score: correctAnswers,
             totalQuestions: 1,
             correctAnswers: correctAnswers,
-            xpEarned: _xpEarned.clamp(0, game.baseXp),
+            xpEarned: xpResult?.xpAwarded ?? _xpEarned.clamp(0, game.baseXp),
             durationSeconds: 0,
             xpResult: xpResult,
           ),

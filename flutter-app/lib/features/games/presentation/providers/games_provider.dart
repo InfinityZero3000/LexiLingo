@@ -243,6 +243,13 @@ class GamesProvider extends ChangeNotifier {
       );
       _lastXPResult = result;
 
+      // Sync actual awarded XP back into lastGameResult so callers reading
+      // lastGameResult.xpEarned get the server-confirmed value (after multipliers
+      // and daily cap) rather than the local estimate.
+      if (_lastGameResult != null) {
+        _lastGameResult = _lastGameResult!.copyWith(xpEarned: result.xpAwarded);
+      }
+
       // Update local XP snapshot
       if (_xpProfile != null) {
         _xpProfile = XPProfile(

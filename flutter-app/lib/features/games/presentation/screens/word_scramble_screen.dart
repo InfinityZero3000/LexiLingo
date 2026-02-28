@@ -188,7 +188,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       score: _correctCount,
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
-      xpEarned: _totalXpEarned,
+      xpEarned: xpResult?.xpAwarded ?? _totalXpEarned,
       durationSeconds: 0,
       xpResult: xpResult,
     );
