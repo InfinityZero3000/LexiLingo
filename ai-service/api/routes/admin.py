@@ -20,9 +20,21 @@ router = APIRouter()
 class AiConfig(BaseModel):
     """AI Service configuration model."""
     model_name: str = "gemini-1.5-flash"
+    gemini_model: Optional[str] = None          # alias from frontend
     temperature: float = 0.7
     max_tokens: int = 2048
+    top_p: float = 0.9
+    top_k: int = 40
     gemini_api_key: Optional[str] = None
+    use_mongodb: bool = True
+    enable_voice: bool = True
+    enable_grammar: bool = True
+    enable_topic: bool = True
+    chat_memory_turns: int = 10
+
+    def effective_model_name(self) -> str:
+        """Return the authoritative model name (prefer gemini_model if set)."""
+        return self.gemini_model or self.model_name
 
 
 def mask_api_key(api_key: Optional[str]) -> Optional[str]:
@@ -92,23 +104,30 @@ async def get_admin_config(db: AsyncIOMotorDatabase = Depends(get_database)):
             env_key = os.getenv("GEMINI_API_KEY")
             return AiConfig(
                 model_name="gemini-1.5-flash",
-                temperature=0.7,
-                max_tokens=2048,
+                gemini_model="gemini-1.5-flash",
                 gemini_api_key=mask_api_key(env_key) if env_key else None
             )
         
         # Return stored config with masked API key
         stored_key = config.get("gemini_api_key")
         if not stored_key:
-            # If stored config exists but no key, check env var
             env_key = os.getenv("GEMINI_API_KEY")
             stored_key = env_key
-        
+
+        effective_model = config.get("gemini_model") or config.get("model_name", "gemini-1.5-flash")
         return AiConfig(
-            model_name=config.get("model_name", "gemini-1.5-flash"),
+            model_name=effective_model,
+            gemini_model=effective_model,
             temperature=config.get("temperature", 0.7),
             max_tokens=config.get("max_tokens", 2048),
-            gemini_api_key=mask_api_key(stored_key)
+            top_p=config.get("top_p", 0.9),
+            top_k=config.get("top_k", 40),
+            gemini_api_key=mask_api_key(stored_key),
+            use_mongodb=config.get("use_mongodb", True),
+            enable_voice=config.get("enable_voice", True),
+            enable_grammar=config.get("enable_grammar", True),
+            enable_topic=config.get("enable_topic", True),
+            chat_memory_turns=config.get("chat_memory_turns", 10),
         )
     except Exception as e:
         logger.error(f"Error fetching admin config: {e}")
@@ -138,10 +157,18 @@ async def update_admin_config(
         # Prepare config document
         config_doc = {
             "_id": "ai_config",
-            "model_name": config.model_name,
+            "model_name": config.effective_model_name(),
+            "gemini_model": config.effective_model_name(),
             "temperature": config.temperature,
             "max_tokens": config.max_tokens,
-            "gemini_api_key": config.gemini_api_key,  # Can be None
+            "top_p": config.top_p,
+            "top_k": config.top_k,
+            "gemini_api_key": config.gemini_api_key,
+            "use_mongodb": config.use_mongodb,
+            "enable_voice": config.enable_voice,
+            "enable_grammar": config.enable_grammar,
+            "enable_topic": config.enable_topic,
+            "chat_memory_turns": config.chat_memory_turns,
         }
         
         # Upsert (update or insert) configuration
@@ -160,10 +187,18 @@ async def update_admin_config(
             "success": True,
             "message": "Configuration updated successfully",
             "config": {
-                "model_name": config.model_name,
+                "model_name": config.effective_model_name(),
+                "gemini_model": config.effective_model_name(),
                 "temperature": config.temperature,
                 "max_tokens": config.max_tokens,
-                "gemini_api_key": mask_api_key(config.gemini_api_key) if config.gemini_api_key else None
+                "top_p": config.top_p,
+                "top_k": config.top_k,
+                "gemini_api_key": mask_api_key(config.gemini_api_key) if config.gemini_api_key else None,
+                "use_mongodb": config.use_mongodb,
+                "enable_voice": config.enable_voice,
+                "enable_grammar": config.enable_grammar,
+                "enable_topic": config.enable_topic,
+                "chat_memory_turns": config.chat_memory_turns,
             }
         }
     except HTTPException:
