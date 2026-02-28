@@ -36,7 +36,16 @@ export const AiChatSettingsPage = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
       });
       const data = await response.json();
-      setConfig(data.data || getDefaultConfig());
+      // Backend returns flat AiConfig object; remap model_name → gemini_model
+      if (data && data.model_name) {
+        setConfig({
+          ...getDefaultConfig(),
+          ...data,
+          gemini_model: data.gemini_model ?? data.model_name,
+        });
+      } else {
+        setConfig(getDefaultConfig());
+      }
     } catch (error) {
       console.error("Failed to fetch AI config:", error);
       setConfig(getDefaultConfig());
@@ -62,18 +71,24 @@ export const AiChatSettingsPage = () => {
     if (!config) return;
     setSaving(true);
     try {
-      await fetch(`${import.meta.env.VITE_AI_URL}/admin/config`, {
+      // Remap gemini_model → model_name for backend compatibility
+      const payload = { ...config, model_name: config.gemini_model };
+      const response = await fetch(`${import.meta.env.VITE_AI_URL}/admin/config`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify(payload),
       });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || response.statusText);
+      }
       alert(t.common.success);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save config:", error);
-      alert(t.common.saveFailed);
+      alert(error.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
