@@ -31,7 +31,7 @@ function getSavedLocale(): Locale {
     const saved = localStorage.getItem(LOCALE_KEY);
     if (saved === "vi" || saved === "en") return saved;
   } catch {}
-  return "vi"; // Default: Vietnamese
+  return "en"; // Default: English
 }
 
 export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
