@@ -494,7 +494,33 @@ async def get_my_streak(
     if streak.last_activity_date and not is_active_today:
         yesterday = today - timedelta(days=1)
         streak_at_risk = streak.last_activity_date == yesterday
-    
+
+    # Build weekly_activity: 7 booleans Mon–Sun for the current ISO week
+    # today.weekday(): 0=Mon, 6=Sun
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    weekly_activity = [False] * 7
+
+    # Query DailyActivity records for this week
+    daily_result = await db.execute(
+        select(DailyActivity.activity_date).where(
+            and_(
+                DailyActivity.user_id == current_user.id,
+                DailyActivity.activity_date >= monday,
+                DailyActivity.activity_date <= sunday,
+            )
+        )
+    )
+    active_dates = {row[0] for row in daily_result.fetchall()}
+
+    # Also count today as active if is_active_today (based on streak record)
+    if is_active_today:
+        active_dates.add(today)
+
+    for i in range(7):
+        day = monday + timedelta(days=i)
+        weekly_activity[i] = day in active_dates
+
     response_data = {
         'current_streak': streak.current_streak,
         'longest_streak': streak.longest_streak,
@@ -503,6 +529,7 @@ async def get_my_streak(
         'freeze_count': streak.freeze_count,
         'is_active_today': is_active_today,
         'streak_at_risk': streak_at_risk and streak.current_streak > 0,
+        'weekly_activity': weekly_activity,
     }
     
     return ApiResponse(
@@ -600,6 +627,27 @@ async def update_streak(
             if streak.current_streak > streak.longest_streak:
                 streak.longest_streak = streak.current_streak
     
+    # Ensure a DailyActivity record exists for today so weekly_activity is accurate
+    daily_result = await db.execute(
+        select(DailyActivity).where(
+            and_(
+                DailyActivity.user_id == current_user.id,
+                DailyActivity.activity_date == today,
+            )
+        )
+    )
+    daily_activity = daily_result.scalar_one_or_none()
+    if not daily_activity:
+        daily_activity = DailyActivity(
+            user_id=current_user.id,
+            activity_date=today,
+            xp_earned=0,
+            lessons_completed=0,
+            study_time_minutes=0,
+            vocabulary_reviewed=0,
+        )
+        db.add(daily_activity)
+
     await db.commit()
     await db.refresh(streak)
     
