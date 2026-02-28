@@ -54,10 +54,10 @@ export function createGlobeDots(isMobile: boolean): GlobeDots {
     uniforms: {
       uLightDir: { value: new THREE.Vector3(0.7, 0.5, 1.0).normalize() },
       uTime: { value: 0 },
-      uScale: { value: isMobile ? 0.55 : 1.0 },
-      // Bright side: warm white; dim side: brand orange
-      uColorBright: { value: new THREE.Color("#FFF4E8") },
-      uColorDim: { value: new THREE.Color("#FF6A30") },
+      uScale: { value: isMobile ? 1.5 : 2.5 },
+      // Bright side: brand orange; dim side: darker/muted orange
+      uColorBright: { value: new THREE.Color("#FF7A00") },
+      uColorDim: { value: new THREE.Color("#B34700") },
       uMouseWorld: { value: new THREE.Vector3(999, 999, 999) },
       uMouseActive: { value: 0 },
     },

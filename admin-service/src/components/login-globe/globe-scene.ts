@@ -30,8 +30,9 @@ export function createGlobeScene(canvas: HTMLCanvasElement): GlobeScene {
     0.1,
     100
   );
-  camera.position.set(0, 0.6, 6.0);
-  camera.lookAt(0, -0.8, 0);
+  // Camera positioned to see globe center-right, slightly above equator
+  camera.position.set(0, 0.3, 5.5);
+  camera.lookAt(0, -0.3, 0);
 
   // ── Renderer ───────────────────────────────────────────────────
   const dpr = Math.min(window.devicePixelRatio, 2);
@@ -45,9 +46,9 @@ export function createGlobeScene(canvas: HTMLCanvasElement): GlobeScene {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 0);
 
-  // ── Globe group — centered slightly below viewport ─────────────
+  // ── Globe group — moved to left ──
   const globeGroup = new THREE.Group();
-  globeGroup.position.set(0, -1.8, 0);
+  globeGroup.position.set(0, -0.3, 0);  // centered, shifted down
   scene.add(globeGroup);
 
   // ── Lights — for MeshStandardMaterial / shell ──────────────────

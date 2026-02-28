@@ -5,7 +5,6 @@ import { createGlobeShell } from "./globe-shell";
 import { createGlobeDots } from "./globe-dots";
 import { createGlobeAtmosphere } from "./globe-atmosphere";
 import { createGlobeArcs } from "./globe-arcs";
-import { createGlobeParticles, updateParticles } from "./globe-particles";
 import { createGlobeInteraction } from "./globe-interaction";
 
 /** Globe auto-rotation speed in radians per second */
@@ -29,14 +28,16 @@ export default function GlobeBackground() {
     const dots       = createGlobeDots(isMobile);
     const atmo       = createGlobeAtmosphere(isMobile);
     const arcs       = createGlobeArcs(isMobile);
-    const particles  = createGlobeParticles(isMobile);
 
     // Add shell FIRST (renders behind), then dots on top
     scene.globeGroup.add(shell.mesh);
     scene.globeGroup.add(dots.points);
     scene.globeGroup.add(atmo.mesh);
     scene.globeGroup.add(arcs.group);
-    scene.scene.add(particles.points);
+
+    // Initial tilt — shows globe at an interesting angle
+    scene.globeGroup.rotation.x = 0.15;
+    scene.globeGroup.rotation.z = -0.08;
 
     // ── Interaction ───────────────────────────────────────────────────
     const interaction = createGlobeInteraction(
@@ -97,13 +98,14 @@ export default function GlobeBackground() {
       atmo.material.uniforms.cameraPosition.value.copy(scene.camera.position);
 
       // Arcs
-      arcs.materials.forEach((mat) => {
+      const progresses: number[] = [];
+      arcs.materials.forEach((mat, i) => {
+        const speed = 1.0 / (ARC_CYCLE_S + i * 2);
         mat.uniforms.uProgress.value =
-          (mat.uniforms.uProgress.value + delta / ARC_CYCLE_S) % 1;
+          (mat.uniforms.uProgress.value + delta * speed) % 1.0;
+        progresses.push(mat.uniforms.uProgress.value);
       });
-
-      // Particles
-      updateParticles(particles, elapsed);
+      arcs.updateHeads(progresses);
 
       // Interaction
       interaction.update();
@@ -122,7 +124,6 @@ export default function GlobeBackground() {
       dots.dispose();
       atmo.dispose();
       arcs.dispose();
-      particles.dispose();
       scene.dispose();
     };
   }, []);

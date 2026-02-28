@@ -19,8 +19,8 @@ void main() {
 // ═══════════════════════════════════════════════════════════════════
 // Atmosphere Fragment Shader
 // ─────────────────────────
-// Thin warm rim glow.  pow(3.5) = sharper/thinner than before.
-// Clamped to 0.45 max alpha so it never overpowers the dots.
+// Wider warm rim glow. pow(2.0) = broader falloff.
+// Clamped to 0.75 max alpha to keep it visible but smooth.
 // ═══════════════════════════════════════════════════════════════════
 export const atmosphereFragmentShader = /* glsl */ `
 uniform vec3  uGlowColor;
@@ -34,11 +34,11 @@ varying vec3 vWorldPos;
 void main() {
   vec3 viewDir  = normalize(cameraPosition - vWorldPos);
   float rim     = abs(dot(viewDir, normalize(vWorldNormal)));
-  float fresnel = pow(1.0 - rim, 3.5);
+  float fresnel = pow(1.0 - rim, 2.0);
 
   float pulse = 0.95 + sin(uTime * 0.3) * 0.05;
   float alpha = fresnel * uGlowIntensity * pulse;
-  alpha = clamp(alpha, 0.0, 0.45);
+  alpha = clamp(alpha, 0.0, 0.75);
 
   vec3 color = mix(uGlowColor * 0.6, uGlowColor, fresnel);
   gl_FragColor = vec4(color, alpha);

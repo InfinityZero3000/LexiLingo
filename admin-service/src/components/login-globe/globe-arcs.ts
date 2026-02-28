@@ -1,11 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════
-// Globe Arcs — Elegant connection lines between cities
+// Globe Arcs — Orbiting rings for shooting stars
 // ─────────────────────────────────────────────────────
 // Key improvements:
-//   • Thinner tubes (0.004 radius vs 0.007)
-//   • NormalBlending to avoid glow-blob appearance
-//   • All-hemisphere distribution (not just upper)
-//   • Fewer arcs for cleaner look
+//   • Uses TorusGeometry wrapped around the globe as continuous orbital rings
+//   • Randomly tilted orbits to look like satellites/comets
 // ═══════════════════════════════════════════════════════════════════
 import * as THREE from "three";
 import { arcVertexShader, arcFragmentShader } from "./shaders/arcShaders";
@@ -13,7 +11,28 @@ import { arcVertexShader, arcFragmentShader } from "./shaders/arcShaders";
 export interface GlobeArcs {
   group: THREE.Group;
   materials: THREE.ShaderMaterial[];
+  updateHeads: (progresses: number[]) => void;
   dispose: () => void;
+}
+
+/** Radial-gradient canvas texture for the comet head glow */
+function createGlowTexture(): THREE.CanvasTexture {
+  const sz = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = sz;
+  canvas.height = sz;
+  const ctx = canvas.getContext("2d")!;
+  const cx = sz / 2;
+  const grd = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
+  grd.addColorStop(0.00, "rgba(255, 245, 200, 1.0)");  // bright warm white core
+  grd.addColorStop(0.12, "rgba(255, 200,  80, 0.92)"); // golden yellow
+  grd.addColorStop(0.28, "rgba(255, 130,  20, 0.70)"); // orange mid
+  grd.addColorStop(0.50, "rgba(255,  80,   0, 0.35)"); // deep orange edge
+  grd.addColorStop(0.75, "rgba(255,  50,   0, 0.10)"); // faint halo
+  grd.addColorStop(1.00, "rgba(255,  30,   0, 0.00)"); // fully transparent
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, sz, sz);
+  return new THREE.CanvasTexture(canvas);
 }
 
 /** Seeded pseudo-random for reproducible arcs */
@@ -25,69 +44,32 @@ function seededRng(seed: number) {
   };
 }
 
-/** Random point on unit sphere (Marsaglia) */
-function randomOnSphere(rng: () => number): THREE.Vector3 {
-  let x: number, y: number, s: number;
-  do {
-    x = rng() * 2 - 1;
-    y = rng() * 2 - 1;
-    s = x * x + y * y;
-  } while (s >= 1);
-  const f = 2 * Math.sqrt(1 - s);
-  return new THREE.Vector3(x * f, y * f, 2 * s - 1);
-}
-
-function buildArc(
-  p1: THREE.Vector3,
-  p2: THREE.Vector3,
-  radius: number
-): THREE.CubicBezierCurve3 {
-  const a = p1.clone().multiplyScalar(radius);
-  const b = p2.clone().multiplyScalar(radius);
-
-  const mid = p1.clone().add(p2).normalize();
-  const cordalDist = p1.distanceTo(p2);
-  const liftFactor = 0.25 + cordalDist * 0.25;
-  const lift = radius * (1.0 + liftFactor);
-
-  const midPt = mid.clone().multiplyScalar(lift);
-  const cp1 = a.clone().lerp(midPt, 0.45);
-  const cp2 = b.clone().lerp(midPt, 0.45);
-
-  return new THREE.CubicBezierCurve3(a, cp1, cp2, b);
-}
-
 export function createGlobeArcs(isMobile: boolean): GlobeArcs {
-  const arcCount = isMobile ? 4 : 7;
+  const arcCount = isMobile ? 3 : 6;
   const radius = isMobile ? 1.7 : 2.0;
   const group = new THREE.Group();
   const materials: THREE.ShaderMaterial[] = [];
   const geometries: THREE.BufferGeometry[] = [];
 
   const rng = seededRng(42);
+  const orbitRadii: number[] = [];
+  const orbitMeshes: THREE.Mesh[] = [];
 
   for (let i = 0; i < arcCount; i++) {
-    let p1: THREE.Vector3, p2: THREE.Vector3;
-    let attempts = 0;
-    do {
-      p1 = randomOnSphere(rng).normalize();
-      p2 = randomOnSphere(rng).normalize();
-      attempts++;
-    } while (
-      (p1.distanceTo(p2) < 0.5 || p1.distanceTo(p2) > 1.6) &&
-      attempts < 20
-    );
-
-    const curve = buildArc(p1, p2, radius);
-    // Thinner tubes — 0.004 radius (was 0.007)
-    const geometry = new THREE.TubeGeometry(curve, 64, 0.004, 5, false);
+    // Generate an orbital ring slightly larger than the globe
+    const orbitRadius = radius * (1.05 + rng() * 0.15); 
+    const tubeRadius = 0.010; // Thicker for star head
+    
+    // TorusGeometry acts as a continuous loop. 
+    // TubularSegments should be high for smooth trails.
+    const geometry = new THREE.TorusGeometry(orbitRadius, tubeRadius, 8, 180);
     geometries.push(geometry);
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        uProgress: { value: i / arcCount },
-        uColorStart: { value: new THREE.Color("#FF6A30") },
-        uColorEnd: { value: new THREE.Color("#FFD4B0") },
+        uProgress: { value: rng() },
+        uColorStart: { value: new THREE.Color("#FF4D00") }, // Deep orange tail
+        uColorEnd: { value: new THREE.Color("#FFF2C8") }, // Bright yellow/white head
       },
       vertexShader: arcVertexShader,
       fragmentShader: arcFragmentShader,
@@ -98,13 +80,59 @@ export function createGlobeArcs(isMobile: boolean): GlobeArcs {
     });
     materials.push(material);
 
-    group.add(new THREE.Mesh(geometry, material));
+    const mesh = new THREE.Mesh(geometry, material);
+    
+    // Randomize the orbit plane orientation
+    mesh.rotation.x = rng() * Math.PI * 2;
+    mesh.rotation.y = rng() * Math.PI * 2;
+    mesh.rotation.z = rng() * Math.PI * 2;
+    
+    group.add(mesh);
+    orbitRadii.push(orbitRadius);
+    orbitMeshes.push(mesh);
   }
+
+  // ── Head glow sprites ───────────────────────────────────────────
+  const headPosArr = new Float32Array(arcCount * 3);
+  const headGeo = new THREE.BufferGeometry();
+  headGeo.setAttribute("position", new THREE.BufferAttribute(headPosArr, 3));
+
+  const glowTex = createGlowTexture();
+  const headMat = new THREE.PointsMaterial({
+    map: glowTex,
+    size: 0.55,
+    sizeAttenuation: true,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+    alphaTest: 0.01,
+  });
+  const headPoints = new THREE.Points(headGeo, headMat);
+  group.add(headPoints);
+  geometries.push(headGeo);
+
+  const _hv = new THREE.Vector3();
+  const updateHeads = (progresses: number[]) => {
+    const attr = headGeo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < arcCount; i++) {
+      const angle = progresses[i] * Math.PI * 2;
+      _hv.set(
+        orbitRadii[i] * Math.cos(angle),
+        orbitRadii[i] * Math.sin(angle),
+        0
+      );
+      _hv.applyEuler(orbitMeshes[i].rotation);
+      attr.setXYZ(i, _hv.x, _hv.y, _hv.z);
+    }
+    attr.needsUpdate = true;
+  };
 
   const dispose = () => {
     geometries.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
+    headMat.dispose();
+    glowTex.dispose();
   };
 
-  return { group, materials, dispose };
+  return { group, materials, updateHeads, dispose };
 }

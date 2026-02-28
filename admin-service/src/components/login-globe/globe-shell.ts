@@ -59,8 +59,8 @@ void main() {
   vec3 halfDir  = normalize(vViewDir + normalize(vec3(0.5, 0.6, 1.0)));
   float spec    = pow(max(dot(vNormal, halfDir), 0.0), 32.0);
 
-  // Base color: darker on shadow side
-  vec3 color = uBaseColor * (0.3 + 0.7 * lit);
+  // Base color: keep it relatively bright for white background
+  vec3 color = uBaseColor * (0.6 + 0.4 * lit);
 
   // Add warm specular highlight
   color += uHighlightColor * spec * 0.4;
@@ -68,9 +68,8 @@ void main() {
   // Fresnel edge: subtle limb brightening
   color += uHighlightColor * vFresnel * 0.15;
 
-  // Alpha: lit side more visible, dark side more transparent
-  // This lets dots show through while keeping sphere shape visible
-  float alpha = uOpacity * (0.4 + 0.6 * lit);
+  // Alpha: slightly more opaque so the white is clear
+  float alpha = uOpacity * (0.6 + 0.4 * lit);
 
   // Very subtle breathing
   alpha *= 0.97 + sin(uTime * 0.25) * 0.03;
@@ -94,9 +93,9 @@ export function createGlobeShell(isMobile: boolean): GlobeShell {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uLightDir:       { value: new THREE.Vector3(0.7, 0.5, 1.0).normalize() },
-      uBaseColor:      { value: new THREE.Color("#1a1e2e") },  // dark navy
-      uHighlightColor: { value: new THREE.Color("#FF8040") },  // warm orange
-      uOpacity:        { value: 0.22 },  // very translucent
+      uBaseColor:      { value: new THREE.Color("#1a1e2e") },  // revert to original just in case
+      uHighlightColor: { value: new THREE.Color("#FF8040") },
+      uOpacity:        { value: 0.0 },  // 0.0 = completely transparent inside shell
       uTime:           { value: 0 },
     },
     vertexShader: shellVertexShader,
