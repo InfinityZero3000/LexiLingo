@@ -4,6 +4,8 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -35,12 +37,11 @@ class _HomePageNewState extends State<HomePageNew> {
     // Load home data after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeProvider = context.read<HomeProvider>();
-      final authProvider = context.read<AuthProvider>();
       homeProvider.loadHomeData().then((_) {
-        // Sync XP to LevelProvider from AuthProvider (real user data)
+        // Fetch authoritative level data from backend.
+        // Falls back to local formula if network is unavailable.
         final levelProvider = context.read<LevelProvider>();
-        final userXP = authProvider.currentUser?.xp ?? 0;
-        levelProvider.updateLevel(userXP);
+        levelProvider.fetchLevelFull(sl<ApiClient>());
       });
     });
   }
@@ -172,7 +173,8 @@ class _HomePageNewState extends State<HomePageNew> {
             final gems = gamificationProvider.wallet?.gems ?? 0;
             final lessonsToday =
                 homeProvider.dailyXP ~/ 10; // Approximate lessons from XP
-            final progress = levelProvider.levelStatus.progressPercentage;
+            // Use numeric level progress, not CEFR-based
+            final progress = levelProvider.displayLevelProgress * 100;
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -411,6 +413,7 @@ class _HomePageNewState extends State<HomePageNew> {
             streakDays: currentStreak,
             longestStreak: longestStreak,
             isActiveToday: isActiveToday,
+            weeklyActivity: streak?.weeklyActivity,
             onTap: () {
               if (streak != null) {
                 showModalBottomSheet(

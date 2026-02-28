@@ -32,17 +32,31 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Consumer<NotificationProvider>(
         builder: (context, notificationProvider, child) {
           final unreadCount = notificationProvider.unreadCount;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : const Color(0xFFF0F2F4),
-                ),
+              color: isDark ? const Color(0xFF1C2A38) : Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
-            child: BottomNavigationBar(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+              child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) {
                 setState(() {
@@ -85,7 +99,8 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );
