@@ -31,11 +31,12 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: AuthGradientBackground(
         child: SafeArea(
-          child: Center(
+          child: Align(
+            alignment: const Alignment(0, 0.55),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
+                constraints: const BoxConstraints(maxWidth: 340),
                 child: GlassmorphicAuthCard(
                   child: Form(
                     key: _formKey,
@@ -43,25 +44,8 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Logo and Title
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF4FC3F7).withValues(alpha: 0.2),
-                                const Color(0xFF81C784).withValues(alpha: 0.2),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.language,
-                            size: 64,
-                            color: theme.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        // Title
+                        const SizedBox(height: 8),
                         Text(
                           'LexiLingo',
                           style: theme.textTheme.headlineMedium?.copyWith(

@@ -1,12 +1,20 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthGradientBackground
 //
-// • login-background.svg  — static full-cover background
-// • Floating sparkle particles layered on top for depth
+// Multi-layer parallax background for the login screen.
+//
+// Layer order (back → front):
+//  1. background.png  — full-screen sky background (static)
+//  2. left-top-island.png    — island anchored top-left, gentle float
+//  3. right-top-island.png   — island anchored top-right, opposite float phase
+//  4. bird.png               — centred in screen, soft up-down float
+//  5. big-bottom-land.png    — foreground ground strip pinned to bottom
+//  6. Sparkle particles      — animated rising sparkles
+//  7. child                  — login form content
 // ─────────────────────────────────────────────────────────────────────────────
 class AuthGradientBackground extends StatefulWidget {
   final Widget child;
@@ -18,13 +26,28 @@ class AuthGradientBackground extends StatefulWidget {
 }
 
 class _AuthGradientBackgroundState extends State<AuthGradientBackground>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  // Island + bird floating (loops back and forth)
+  late final AnimationController _floatCtrl;
+  // Bird has its own slightly different rhythm
+  late final AnimationController _birdCtrl;
+  // Rising sparkle particles
   late final AnimationController _particleCtrl;
-  late final List<_Particle>     _particles;
+  late final List<_Particle> _particles;
 
   @override
   void initState() {
     super.initState();
+
+    _floatCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+
+    _birdCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    )..repeat(reverse: true);
 
     _particleCtrl = AnimationController(
       vsync: this,
@@ -37,6 +60,8 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
 
   @override
   void dispose() {
+    _floatCtrl.dispose();
+    _birdCtrl.dispose();
     _particleCtrl.dispose();
     super.dispose();
   }
@@ -45,16 +70,93 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
 
+    // Island float: ±10 px vertical, eased in/out
+    final islandFloat = Tween<double>(begin: -10.0, end: 10.0).animate(
+      CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
+    );
+
+    // Bird float: ±14 px vertical, slightly different curve
+    final birdFloat = Tween<double>(begin: -14.0, end: 14.0).animate(
+      CurvedAnimation(parent: _birdCtrl, curve: Curves.easeInOut),
+    );
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        // ── 1. Static background ─────────────────────────────────────────
+        // ── Layer 1: Sky background (static, deepest) ─────────────────────
         Image.asset(
-          'assets/login/login-background.png',
+          'assets/login/background.png',
           fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
         ),
 
-        // ── 2. Floating sparkle particles ─────────────────────────────────────
+        // ── Layer 2: Left-top island (floats up/down) ─────────────────────
+        AnimatedBuilder(
+          animation: islandFloat,
+          builder: (_, child) => Positioned(
+            left: 0,
+            top: islandFloat.value,
+            child: child!,
+          ),
+          child: Image.asset(
+            'assets/login/left-top-island.png',
+            width: size.width * 0.48,
+            fit: BoxFit.contain,
+            alignment: Alignment.topLeft,
+          ),
+        ),
+
+        // ── Layer 3: Right-top island (opposite phase) ────────────────────
+        AnimatedBuilder(
+          animation: islandFloat,
+          builder: (_, child) => Positioned(
+            right: 0,
+            top: -islandFloat.value, // inverted for parallax feel
+            child: child!,
+          ),
+          child: Image.asset(
+            'assets/login/right-top-island.png',
+            width: size.width * 0.48,
+            fit: BoxFit.contain,
+            alignment: Alignment.topRight,
+          ),
+        ),
+
+        // ── Layer 4: Bird (centered, gentle float) ────────────────────────
+        AnimatedBuilder(
+          animation: birdFloat,
+          builder: (_, child) {
+            final birdW = size.width * 0.55;
+            return Positioned(
+              left: (size.width - birdW) / 2,
+              top: size.height * 0.10 + birdFloat.value,
+              child: child!,
+            );
+          },
+          child: Image.asset(
+            'assets/login/bird.png',
+            width: size.width * 0.55,
+            fit: BoxFit.contain,
+          ),
+        ),
+
+        // ── Layer 5: Big bottom land (foreground, pinned to bottom) ───────
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: FractionalTranslation(
+            translation: const Offset(0, 0.13),
+            child: Image.asset(
+              'assets/login/big-bottom-land.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+
+        // ── Layer 6: Floating sparkle particles ───────────────────────────
         AnimatedBuilder(
           animation: _particleCtrl,
           builder: (_, __) {
@@ -62,7 +164,8 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
               children: _particles.map((p) {
                 final t = (_particleCtrl.value + p.phaseOffset) % 1.0;
                 final x = p.startX * size.width;
-                final y = p.startY * size.height - t * p.travel * size.height;
+                final y =
+                    p.startY * size.height - t * p.travel * size.height;
                 final opacity = _particleOpacity(t);
 
                 return Positioned(
@@ -79,7 +182,7 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
           },
         ),
 
-        // ── 3. Page content ──────────────────────────────────────────────────
+        // ── Layer 7: Page content (login form) ────────────────────────────
         widget.child,
       ],
     );
@@ -218,25 +321,31 @@ class GlassmorphicAuthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding ?? const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            spreadRadius: 5,
-            offset: const Offset(0, 10),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(borderRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 24,
+                spreadRadius: 2,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.45),
+              width: 1.5,
+            ),
           ),
-        ],
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.5),
-          width: 1.5,
+          child: child,
         ),
       ),
-      child: child,
     );
   }
 }
