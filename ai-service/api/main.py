@@ -194,6 +194,21 @@ except Exception as e:
     logger.warning(f"Failed to register admin routes: {e}")
 
 # ============================================================
+# Include AI Analytics / Monitoring Router
+# ============================================================
+try:
+    _ai_module = importlib.import_module("api.routes.ai")
+    ai_router = _ai_module.router
+    app.include_router(
+        ai_router,
+        prefix="/api/v1/ai",
+        tags=["AI Analytics & Monitoring"],
+    )
+    logger.info("✓ AI analytics/monitoring routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register AI analytics routes: {e}")
+
+# ============================================================
 # Request & Response Models
 # ============================================================
 
