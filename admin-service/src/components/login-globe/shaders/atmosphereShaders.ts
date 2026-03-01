@@ -26,7 +26,7 @@ export const atmosphereFragmentShader = /* glsl */ `
 uniform vec3  uGlowColor;
 uniform float uGlowIntensity;
 uniform float uTime;
-uniform vec3  cameraPosition;
+// NOTE: cameraPosition is a Three.js built-in uniform — do NOT redeclare it.
 
 varying vec3 vWorldNormal;
 varying vec3 vWorldPos;

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
+import { apiFetch } from "../lib/api";
+import { ENV } from "../lib/env";
 import { Shield, UserPlus, Mail, Calendar, Activity } from "lucide-react";
 
 interface AdminUser {
@@ -29,12 +31,26 @@ export const AdminManagementPage = () => {
 
   const fetchAdmins = async () => {
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/users?role=admin,super_admin`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      // Backend accepts role as integer: 1=admin, 2=super_admin
+      const [res1, res2] = await Promise.all([
+        apiFetch<{ data: { users: any[] } }>(`${ENV.backendUrl}/admin/users?role=1&page_size=100`),
+        apiFetch<{ data: { users: any[] } }>(`${ENV.backendUrl}/admin/users?role=2&page_size=100`),
+      ]);
+      const mapUser = (u: any): AdminUser => ({
+        id: u.id,
+        email: u.email,
+        display_name: u.display_name ?? u.username,
+        role: u.role_slug as "admin" | "super_admin",
+        provider: u.provider ?? "—",
+        is_active: u.is_active,
+        created_at: u.created_at,
+        last_login_at: u.last_login ?? undefined,
       });
-      const data = await response.json();
-      setAdmins(data.data || []);
+      const all = [
+        ...(res1.data?.users ?? []).map(mapUser),
+        ...(res2.data?.users ?? []).map(mapUser),
+      ];
+      setAdmins(all);
     } catch (error) {
       console.error("Failed to fetch admins:", error);
     } finally {
@@ -45,32 +61,35 @@ export const AdminManagementPage = () => {
   const handleAddAdmin = async () => {
     if (!newEmail) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/promote-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({ email: newEmail, role: newRole }),
-      });
-      if (response.ok) {
-        setShowAddModal(false);
-        setNewEmail("");
-        fetchAdmins();
+      // Step 1: find user by email
+      const searchRes = await apiFetch<{ data: { users: any[] } }>(
+        `${ENV.backendUrl}/admin/users?search=${encodeURIComponent(newEmail)}&page_size=10`
+      );
+      const target = (searchRes.data?.users ?? []).find(
+        (u: any) => u.email.toLowerCase() === newEmail.toLowerCase()
+      );
+      if (!target) {
+        alert("User not found. Make sure they have registered first.");
+        return;
       }
-    } catch (error) {
+      // Step 2: promote to role (1=admin, 2=super_admin)
+      await apiFetch(`${ENV.backendUrl}/admin/users/${target.id}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ level: newRole === "super_admin" ? 2 : 1 }),
+      });
+      setShowAddModal(false);
+      setNewEmail("");
+      fetchAdmins();
+    } catch (error: any) {
       console.error("Failed to add admin:", error);
+      alert(error?.message || "Failed to promote user");
     }
   };
 
   const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/users/${userId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
+      await apiFetch(`${ENV.backendUrl}/admin/users/${userId}/status`, {
+        method: "PUT",
         body: JSON.stringify({ is_active: !currentStatus }),
       });
       fetchAdmins();

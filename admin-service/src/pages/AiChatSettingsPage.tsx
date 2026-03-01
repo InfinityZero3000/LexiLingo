@@ -3,6 +3,7 @@ import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
+import { authStore } from "../lib/auth";
 import { Bot, MessageSquare, Zap, Key, Database, Settings } from "lucide-react";
 
 interface AiChatConfig {
@@ -33,7 +34,7 @@ export const AiChatSettingsPage = () => {
   const fetchConfig = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_AI_URL}/admin/config`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        headers: { Authorization: `Bearer ${authStore.accessToken}` },
       });
       const data = await response.json();
       // Backend returns flat AiConfig object; remap model_name → gemini_model
@@ -77,7 +78,7 @@ export const AiChatSettingsPage = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${authStore.accessToken}`,
         },
         body: JSON.stringify(payload),
       });
