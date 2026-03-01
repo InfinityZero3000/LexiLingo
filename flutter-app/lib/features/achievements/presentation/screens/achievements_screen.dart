@@ -79,9 +79,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   child: _buildProgressHeader(provider, theme),
                 ),
 
-                // Category sections
+                // Category sections (skip 'xp' — covered by Level Milestones)
                 for (final entry in categories.entries)
-                  ..._buildCategorySection(
+                  if (entry.key.toLowerCase() != 'xp')
+                    ..._buildCategorySection(
                     context,
                     provider,
                     entry.key,

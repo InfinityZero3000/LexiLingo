@@ -57,12 +57,12 @@ class _WelcomePageState extends State<WelcomePage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 2),
+              const Spacer(flex: 3),
 
               // Frosted glass card: animation + texts
               _buildFrostedContentCard(context),
 
-              const Spacer(flex: 2),
+              const Spacer(flex: 1),
 
               // Continue button
               AnimatedOpacity(

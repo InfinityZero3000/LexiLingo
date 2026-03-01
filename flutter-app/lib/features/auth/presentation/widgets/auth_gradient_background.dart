@@ -96,7 +96,7 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
           animation: islandFloat,
           builder: (_, child) => Positioned(
             left: 0,
-            top: islandFloat.value,
+            top: islandFloat.value - 20,
             child: child!,
           ),
           child: Image.asset(
@@ -130,7 +130,7 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
             final birdW = size.width * 0.55;
             return Positioned(
               left: (size.width - birdW) / 2,
-              top: size.height * 0.10 + birdFloat.value,
+              top: size.height * 0.18 + birdFloat.value,
               child: child!,
             );
           },
