@@ -101,7 +101,9 @@ echo ""
 echo "${BLUE}Step 6: Setup iOS Dependencies${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-cd ios
+# Navigate to the ios directory relative to this script's location
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/ios"
 
 if [ -f "Podfile" ]; then
     echo "Chạy pod install..."
@@ -119,7 +121,7 @@ else
     echo "${YELLOW} Không tìm thấy Podfile${NC}"
 fi
 
-cd ..
+cd "$SCRIPT_DIR"
 
 echo ""
 echo "${BLUE}Step 7: Kiểm tra iOS Simulators${NC}"
