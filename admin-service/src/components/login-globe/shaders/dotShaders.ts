@@ -28,7 +28,7 @@ void main() {
   float NdL = dot(normal, normalize(uLightDir));
   //  -1 (back) → +1 (front)
   //  Remap to 0..1 with soft wrap-around lighting
-  float brightness = smoothstep(-0.3, 0.85, NdL);
+  float brightness = smoothstep(-0.6, 0.85, NdL);
 
   // Very subtle per-dot breathing
   float breathe = sin(uTime * 0.35 + normal.x * 4.1 + normal.z * 3.3) * 0.03;

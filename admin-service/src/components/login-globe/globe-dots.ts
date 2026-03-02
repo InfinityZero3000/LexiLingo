@@ -54,7 +54,7 @@ export function createGlobeDots(isMobile: boolean): GlobeDots {
     uniforms: {
       uLightDir: { value: new THREE.Vector3(0.7, 0.5, 1.0).normalize() },
       uTime: { value: 0 },
-      uScale: { value: isMobile ? 1.5 : 2.5 },
+      uScale: { value: isMobile ? 2.0 : 3.2 },
       // Bright side: brand orange; dim side: darker/muted orange
       uColorBright: { value: new THREE.Color("#FF7A00") },
       uColorDim: { value: new THREE.Color("#B34700") },

@@ -21,14 +21,14 @@ export interface GlobeAtmosphere {
 
 export function createGlobeAtmosphere(isMobile: boolean): GlobeAtmosphere {
   const globeRadius = isMobile ? 1.7 : 2.0;
-  const atmRadius = globeRadius * 1.35; // extended glow
+  const atmRadius = globeRadius * 1.12; // thin rim halo
 
   const geometry = new THREE.SphereGeometry(atmRadius, 64, 64);
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uGlowColor: { value: new THREE.Color("#FF7030") },
-      uGlowIntensity: { value: 1.0 },
+      uGlowIntensity: { value: 0.55 },
       uTime: { value: 0 },
       cameraPosition: { value: new THREE.Vector3() },
     },
@@ -37,7 +37,7 @@ export function createGlobeAtmosphere(isMobile: boolean): GlobeAtmosphere {
     transparent: true,
     depthWrite: false,
     side: THREE.BackSide,
-    blending: THREE.NormalBlending, // Normal blending prevents colors washing out on white bg
+    blending: THREE.AdditiveBlending,
   });
 
   const mesh = new THREE.Mesh(geometry, material);

@@ -3,7 +3,6 @@ import gsap from "gsap";
 import { createGlobeScene } from "./globe-scene";
 import { createGlobeShell } from "./globe-shell";
 import { createGlobeDots } from "./globe-dots";
-import { createGlobeAtmosphere } from "./globe-atmosphere";
 import { createGlobeArcs } from "./globe-arcs";
 import { createGlobeInteraction } from "./globe-interaction";
 
@@ -26,13 +25,11 @@ export default function GlobeBackground() {
     const scene      = createGlobeScene(canvas);
     const shell      = createGlobeShell(isMobile);
     const dots       = createGlobeDots(isMobile);
-    const atmo       = createGlobeAtmosphere(isMobile);
     const arcs       = createGlobeArcs(isMobile);
 
     // Add shell FIRST (renders behind), then dots on top
     scene.globeGroup.add(shell.mesh);
     scene.globeGroup.add(dots.points);
-    scene.globeGroup.add(atmo.mesh);
     scene.globeGroup.add(arcs.group);
 
     // Initial tilt — shows globe at an interesting angle
@@ -50,12 +47,8 @@ export default function GlobeBackground() {
     // ── Resize ────────────────────────────────────────────────────────
     const onResize = () => {
       scene.onResize();
-      atmo.material.uniforms.cameraPosition.value.copy(scene.camera.position);
     };
     window.addEventListener("resize", onResize);
-
-    // Set initial camera position uniform
-    atmo.material.uniforms.cameraPosition.value.copy(scene.camera.position);
 
     // ── GSAP card entrance ────────────────────────────────────────────
     const loginCard = document.querySelector<HTMLElement>(".login-card");
@@ -93,10 +86,6 @@ export default function GlobeBackground() {
       // Shell time uniform
       shell.material.uniforms.uTime.value = elapsed;
 
-      // Atmosphere
-      atmo.material.uniforms.uTime.value = elapsed;
-      atmo.material.uniforms.cameraPosition.value.copy(scene.camera.position);
-
       // Arcs
       const progresses: number[] = [];
       arcs.materials.forEach((mat, i) => {
@@ -122,7 +111,6 @@ export default function GlobeBackground() {
       interaction.dispose();
       shell.dispose();
       dots.dispose();
-      atmo.dispose();
       arcs.dispose();
       scene.dispose();
     };
