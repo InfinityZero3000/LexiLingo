@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "LexiLingo Team",
+  "date": "March 2026",
+  "abstract": "Firebase Cloud Messaging integration patterns for LexiLingo Flutter app. Covers FCM background message handler (@pragma entry point), FCM token registration with the backend device API, flutter_local_notifications foreground display, Dismissible swipe-to-delete pattern, and notification badge on the bottom navigation bar. The notification domain/data/provider layers are already implemented — these rules fill the remaining integration gaps.",
+  "references": [
+    "https://firebase.flutter.dev/docs/messaging/usage/",
+    "https://firebase.flutter.dev/docs/messaging/notifications/",
+    "https://pub.dev/packages/flutter_local_notifications",
+    "https://pub.dev/packages/firebase_messaging"
+  ]
+}

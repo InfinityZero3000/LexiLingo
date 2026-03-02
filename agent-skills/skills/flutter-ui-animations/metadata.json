@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "LexiLingo Team",
+  "date": "March 2026",
+  "abstract": "Animation patterns for LexiLingo Flutter app. Covers shimmer loading effects, staggered list animations, Hero course-card transitions, pull-to-refresh with custom animation, and the Level-Up celebration dialog. Use when implementing UI polish tasks: staggered home page loading, course card heroes, shimmer skeletons, and XP/level-up feedback.",
+  "references": [
+    "https://docs.flutter.dev/ui/animations",
+    "https://pub.dev/packages/shimmer",
+    "https://docs.flutter.dev/cookbook/animation/staggered-menu-animation",
+    "https://pub.dev/packages/lottie"
+  ]
+}

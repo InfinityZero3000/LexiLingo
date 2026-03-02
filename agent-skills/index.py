@@ -36,6 +36,59 @@ SKILLS = {
         ],
         'rules': 3,
         'path': 'skills/speech-processing-best-practices'
+    },
+    'flutter-clean-architecture': {
+        'name': 'Flutter Clean Architecture',
+        'version': '1.0.0',
+        'description': 'Domain/Data/Presentation layer patterns for all Flutter features',
+        'categories': [
+            'Domain Layer',
+            'Data Layer',
+            'Presentation Layer',
+            'Error Handling'
+        ],
+        'rules': 5,
+        'path': 'skills/flutter-clean-architecture'
+    },
+    'flutter-ui-animations': {
+        'name': 'Flutter UI Animations',
+        'version': '1.0.0',
+        'description': '60fps animation patterns: shimmer, staggered lists, Hero transitions, Level-Up dialog',
+        'categories': [
+            'Loading States',
+            'List Animation',
+            'Navigation',
+            'Celebration',
+            'Performance'
+        ],
+        'rules': 4,
+        'path': 'skills/flutter-ui-animations'
+    },
+    'fastapi-lexilingo-endpoints': {
+        'name': 'FastAPI LexiLingo Endpoints',
+        'version': '1.0.0',
+        'description': 'ApiResponse[T] envelope, Pydantic v2, async SQLAlchemy queries, Alembic migrations',
+        'categories': [
+            'Route Pattern',
+            'Schema Pattern',
+            'Query Pattern',
+            'Migration Pattern'
+        ],
+        'rules': 3,
+        'path': 'skills/fastapi-lexilingo-endpoints'
+    },
+    'flutter-notification-system': {
+        'name': 'Flutter Notification System',
+        'version': '1.0.0',
+        'description': 'FCM integration gaps: background handler, token registration, foreground display, swipe-to-delete',
+        'categories': [
+            'FCM Setup',
+            'Token Registration',
+            'Local Notifications',
+            'UI Patterns'
+        ],
+        'rules': 4,
+        'path': 'skills/flutter-notification-system'
     }
 }
 

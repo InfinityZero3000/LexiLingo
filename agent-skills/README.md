@@ -57,6 +57,89 @@ Technical guidelines for implementing high-quality speech features.
 
 ---
 
+### 3. [Flutter Clean Architecture](./skills/flutter-clean-architecture/) ✨ New
+
+Domain/Data/Presentation layer patterns for all LexiLingo Flutter features.
+
+**Use when:**
+- Creating any new feature (Notifications, Level, User Stats, Course Categories)
+- Adding a repository, use case, or Provider to an existing feature
+- Ensuring entities don't contain `fromJson` / no data leaking into widgets
+
+**Key topics:**
+- ✅ Domain entity + `Equatable` pattern (no serialization in domain)
+- ✅ Abstract repository interface (domain) + concrete impl (data)
+- ✅ Single-responsibility use case call objects
+- ✅ `ChangeNotifier` Provider with `isLoading` / `error` / `data` triad
+- ✅ Exception → typed `Failure` mapping at repository boundary
+- ✅ Complete `LevelCalculator` with A1–C2 XP thresholds
+
+[View full skill →](./skills/flutter-clean-architecture/SKILL.md)
+
+---
+
+### 4. [Flutter UI Animations](./skills/flutter-ui-animations/) ✨ New
+
+60fps animation patterns for shimmer skeletons, staggered lists, Hero transitions, and the Level-Up celebration dialog.
+
+**Use when:**
+- Adding shimmer loading skeletons to Home, Profile, or Course List
+- Implementing staggered entry animations for list/card content
+- Building Hero shared-element transitions between course card and detail
+- Triggering the Level-Up celebration on XP milestone
+
+**Key topics:**
+- ✅ `shimmer` package skeleton cards matching real widget dimensions
+- ✅ Staggered FadeSlide entry with 50ms per-item delay, capped at 300ms
+- ✅ Hero tag pattern: `'course-hero-${course.id}'` (never hardcoded)
+- ✅ Level-Up dialog: `ScaleTransition` + `Curves.elasticOut` + auto-dismiss
+- ✅ `RepaintBoundary` and `AnimatedBuilder` child-hoisting for 60fps
+
+[View full skill →](./skills/flutter-ui-animations/SKILL.md)
+
+---
+
+### 5. [FastAPI LexiLingo Endpoints](./skills/fastapi-lexilingo-endpoints/) ✨ New
+
+Backend endpoint conventions, Pydantic v2 schemas, async SQLAlchemy queries, and Alembic migration workflow.
+
+**Use when:**
+- Adding new routes to `backend-service/app/routes/`
+- Creating Pydantic schemas or service classes
+- Writing async SQLAlchemy 2.0 queries
+- Running Alembic migrations for new models
+
+**Key topics:**
+- ✅ `ApiResponse[T]` envelope — every endpoint returns this shape
+- ✅ Always `async/await` with `AsyncSession` (never sync)
+- ✅ Service-layer pattern — no DB queries in route functions
+- ✅ Existing endpoint map (check before adding duplicates)
+- ✅ Alembic `--autogenerate` → review → `upgrade head` workflow
+
+[View full skill →](./skills/fastapi-lexilingo-endpoints/SKILL.md)
+
+---
+
+### 6. [Flutter Notification System](./skills/flutter-notification-system/) ✨ New
+
+FCM integration gaps for the existing notification feature (domain/data/provider layers already done).
+
+**Use when:**
+- Wiring up FCM background/terminated message handling
+- Registering the FCM device token with the backend after login
+- Displaying heads-up banners when a message arrives while app is open
+- Implementing swipe-to-delete with Undo on the notifications page
+
+**Key topics:**
+- ✅ `@pragma('vm:entry-point')` on background handler (prevents release build tree-shaking)
+- ✅ FCM token → `POST /api/devices/token` with dedup via `SharedPreferences`
+- ✅ `flutter_local_notifications` foreground display with `Importance.high` channel
+- ✅ `Dismissible` + `ValueKey` + `SnackBar` Undo pattern
+
+[View full skill →](./skills/flutter-notification-system/SKILL.md)
+
+---
+
 ## 🚀 Quick Start
 
 ### For AI Agents
