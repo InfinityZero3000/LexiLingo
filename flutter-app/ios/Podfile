@@ -49,6 +49,28 @@ post_install do |installer|
       if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       end
+      # Fix Firestore 'hard_assert.h' file not found on Xcode 15/16+
+      # See: https://github.com/firebase/firebase-ios-sdk/issues/12390
+      unless (config.build_settings['HEADER_SEARCH_PATHS'] || '').include?('FirebaseFirestoreInternal')
+        config.build_settings['HEADER_SEARCH_PATHS'] = \
+          (config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)') + \
+          ' "${PODS_ROOT}/FirebaseFirestoreInternal"'
+      end
+    end
+  end
+
+  # Fix "resource fork, Finder information, or similar detritus not allowed"
+  # by adding a script phase to strip extended attributes before codesigning
+  main_target = installer.aggregate_targets.find { |t| t.label == 'Pods-Runner' }
+  if main_target
+    project = installer.pods_project
+    project.targets.each do |target|
+      if target.respond_to?(:build_phases)
+        # Remove any existing xattr strip phase to avoid duplicates
+        target.build_phases.reject! { |phase|
+          phase.respond_to?(:name) && phase.name == 'Strip Extended Attributes'
+        }
+      end
     end
   end
 end

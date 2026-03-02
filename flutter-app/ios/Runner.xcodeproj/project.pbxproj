@@ -196,6 +196,7 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				AABB001122334455DEADBEEF /* Strip Extended Attributes */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				B789DBAC99CF29FBB883112F /* [CP] Embed Pods Frameworks */,
 				6066F69FF2AD631799C77C20 /* [CP] Copy Pods Resources */,
@@ -378,6 +379,24 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		AABB001122334455DEADBEEF /* Strip Extended Attributes */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Strip Extended Attributes";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"Stripping extended attributes from build products...\"\nfind \"${TARGET_BUILD_DIR}\" -name '*.framework' -exec xattr -rc {} \\;\nfind \"${BUILT_PRODUCTS_DIR}\" -name '*.framework' -exec xattr -rc {} \\;\nif [ -d \"${PROJECT_DIR}/Flutter\" ]; then\n  xattr -rc \"${PROJECT_DIR}/Flutter\"\nfi\necho \"Done stripping extended attributes.\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
