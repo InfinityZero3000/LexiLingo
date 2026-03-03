@@ -209,6 +209,20 @@ except Exception as e:
     logger.warning(f"Failed to register AI analytics routes: {e}")
 
 # ============================================================
+# Include Lexi Chat Router (Story-driven parrot mascot chat)
+# ============================================================
+try:
+    _lexi_module = importlib.import_module("api.routes.lexi_chat")
+    lexi_chat_router = _lexi_module.router
+    app.include_router(
+        lexi_chat_router,
+        tags=["Lexi Chat — Story Adventure"],
+    )
+    logger.info("✓ Lexi Chat routes registered")
+except Exception as e:
+    logger.warning(f"Failed to register Lexi Chat routes: {e}")
+
+# ============================================================
 # Request & Response Models
 # ============================================================
 

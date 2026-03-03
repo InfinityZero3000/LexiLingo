@@ -41,6 +41,7 @@ numpy>=1.23.0,<2.0.0
 # STT / TTS
 faster-whisper>=1.1.0
 piper-tts>=1.2.0
+gTTS>=2.5.0
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
 transformers>=4.37.0

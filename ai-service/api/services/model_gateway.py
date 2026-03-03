@@ -478,10 +478,10 @@ class ModelGateway:
             "phoneme": "hubert",
             "accent": "hubert",
             
-            # Vietnamese
-            "translate_vi": "llama_vi",
-            "explain_vi": "llama_vi",
-            "vietnamese": "llama_vi",
+            # Vietnamese — routes to Qwen (llama_vi not registered)
+            "translate_vi": "qwen",
+            "explain_vi": "qwen",
+            "vietnamese": "qwen",
             
             # Embeddings
             "embed": "minilm",

@@ -43,28 +43,14 @@ def route_after_vietnamese(state: GraphCAGState) -> Literal["retrieve_node"]:
 
 def should_generate_tts(state: GraphCAGState) -> Literal["tts_node", "end"]:
     """
-    Decide whether to generate TTS audio.
+    Decide whether to generate TTS audio within the GraphCAG pipeline.
     
-    Skip TTS if:
-    - Response is empty
-    - Input was text-only and short response
-    - Error occurred
+    NOTE: TTS is handled by the caller (lexi_chat.py) using gTTS,
+    which is more reliable and doesn't require loading Piper model.
+    GraphCAG pipeline skips TTS to avoid duplicate audio generation
+    and unnecessary model loading (~100MB RAM for Piper).
     """
-    if state.get("error"):
-        return "end"
-    
-    if not state.get("tutor_response"):
-        return "end"
-    
-    # Always generate TTS for voice input
-    if state.get("input_type") == "voice":
-        return "tts_node"
-    
-    # For text input, generate TTS if response is meaningful
-    response_len = len(state.get("tutor_response", ""))
-    if response_len > 20:
-        return "tts_node"
-    
+    # Always skip — TTS is handled externally by lexi_chat.py
     return "end"
 
 

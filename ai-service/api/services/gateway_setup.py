@@ -41,6 +41,7 @@ async def setup_gateway(
     await _register_whisper(gateway)
     await _register_piper(gateway)
     await _register_hubert(gateway)
+    await _register_minilm(gateway)
     
     if use_gemini_fallback:
         await _register_gemini(gateway)
@@ -218,6 +219,41 @@ async def _register_gemini(gateway: ModelGateway) -> None:
     logger.info("Registered: gemini (chat-fallback)")
 
 
+async def _register_minilm(gateway: ModelGateway) -> None:
+    """Register MiniLM model for sentence embeddings / semantic search."""
+    from api.services.handlers.minilm_handler import MiniLMHandler, MiniLMConfig
+
+    async def loader():
+        config = MiniLMConfig(
+            model_id=os.getenv(
+                "MINILM_MODEL_ID", "sentence-transformers/all-MiniLM-L6-v2"
+            ),
+            model_path=os.getenv("MINILM_MODEL_PATH"),
+            device=os.getenv("EMBED_DEVICE", "cpu"),
+        )
+        handler = MiniLMHandler(config)
+        await handler.load()
+        return handler
+
+    async def unloader(instance):
+        if instance:
+            await instance.unload()
+
+    gateway.register(
+        name="minilm",
+        model_type="embedding",
+        loader_fn=loader,
+        unloader_fn=unloader,
+        description="all-MiniLM-L6-v2 for sentence embeddings and semantic search",
+        estimated_memory_mb=25,
+        priority=ModelPriority.NORMAL,
+        idle_timeout_seconds=600,  # 10 minutes — very lightweight
+        preload=False,
+    )
+
+    logger.info("Registered: minilm (embedding)")
+
+
 # Task routing configuration
 TASK_ROUTING = {
     # Task type -> Model name
@@ -233,6 +269,10 @@ TASK_ROUTING = {
     "synthesize": "piper",
     
     "pronunciation": "hubert",
+    
+    # Embeddings
+    "embed": "minilm",
+    "semantic_search": "minilm",
     
     # Vietnamese explanations use Gemini for now
     "explain_vi": "gemini",

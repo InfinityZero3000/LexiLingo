@@ -15,6 +15,7 @@ from api.services.graph_cag.state import GraphCAGState, create_initial_state
 # Using nodes_v2 with ModelGateway for lazy loading
 from api.services.graph_cag.nodes_v2 import (
     input_node,
+    cache_gate_node,
     kg_expand_node,
     diagnose_node,
     retrieve_node,
@@ -22,12 +23,11 @@ from api.services.graph_cag.nodes_v2 import (
     vietnamese_node,
     tts_node,
     ask_clarify_node,
-    stt_node,
-    pronunciation_node,
 )
 from api.services.graph_cag.edges import (
     route_after_diagnosis,
     should_generate_tts,
+    check_cache_hit,
 )
 from api.services.model_gateway import get_gateway
 
@@ -43,32 +43,32 @@ class GraphCAGPipeline:
     GraphCAG Pipeline using LangGraph StateGraph.
     
     Architecture:
-    ┌─────────┐   ┌──────────┐   ┌───────────┐
-    │  INPUT  │──▶│ KG_EXPAND│──▶│ DIAGNOSE  │
-    └─────────┘   └──────────┘   └─────┬─────┘
-                                       │
-           ┌───────────────────────────┼───────────────┐
-           ▼                           ▼               ▼
-    ┌────────────┐              ┌───────────┐   ┌─────────────┐
-    │ ASK_CLARIFY│              │VIETNAMESE │   │  RETRIEVE   │
-    └─────┬──────┘              └─────┬─────┘   └──────┬──────┘
-          │                           │                │
-          │                           └────────────────┤
-          │                                            ▼
-          │                                     ┌───────────┐
-          └────────────────────────────────────▶│ GENERATE  │
-                                                └─────┬─────┘
-                                                      │
-                                                ┌─────┴─────┐
-                                                ▼           ▼
-                                          ┌───────┐    ┌───────┐
-                                          │  TTS  │    │  END  │
-                                          └───┬───┘    └───────┘
-                                              │
-                                              ▼
-                                          ┌───────┐
-                                          │  END  │
-                                          └───────┘
+    ┌─────────┐   ┌───────────┐
+    │  INPUT  │──▶│CACHE GATE │──── hit ──▶ END
+    └─────────┘   └─────┬─────┘
+                        │ miss
+               ┌────────┴────────┐
+               ▼                 ▼
+         ┌──────────┐     ┌───────────┐
+         │ KG_EXPAND│     │ DIAGNOSE  │
+         └────┬─────┘     └─────┬─────┘
+              │                 │
+              └────────┬────────┘
+                       │
+           ┌───────────┼───────────────┐
+           ▼           ▼               ▼
+    ┌────────────┐┌───────────┐ ┌─────────────┐
+    │ ASK_CLARIFY││VIETNAMESE │ │  RETRIEVE   │
+    └─────┬──────┘└─────┬─────┘ └──────┬──────┘
+          │             └──────────────┤
+          │                            ▼
+          │                     ┌───────────┐
+          └────────────────────▶│ GENERATE  │
+                                └─────┬─────┘
+                                      ▼
+                                ┌───────────┐
+                                │    END    │
+                                └───────────┘
     """
     
     def __init__(self):
@@ -88,6 +88,7 @@ class GraphCAGPipeline:
         # ADD NODES
         # ============================================
         graph.add_node("input_node", input_node)
+        graph.add_node("cache_gate_node", cache_gate_node)
         graph.add_node("kg_expand_node", kg_expand_node)
         graph.add_node("diagnose_node", diagnose_node)
         graph.add_node("retrieve_node", retrieve_node)
@@ -105,8 +106,20 @@ class GraphCAGPipeline:
         # ADD EDGES
         # ============================================
         
-        # Linear flow: input → kg_expand → diagnose
-        graph.add_edge("input_node", "kg_expand_node")
+        # Input → Cache Gate (check for cached response first)
+        graph.add_edge("input_node", "cache_gate_node")
+        
+        # Cache Gate → (END if hit) or (kg_expand if miss)
+        graph.add_conditional_edges(
+            "cache_gate_node",
+            check_cache_hit,
+            {
+                "cache_hit": END,
+                "process": "kg_expand_node",
+            }
+        )
+        
+        # KG expand → diagnose
         graph.add_edge("kg_expand_node", "diagnose_node")
         
         # Conditional: diagnose → (retrieve | vietnamese | ask_clarify)
@@ -126,8 +139,8 @@ class GraphCAGPipeline:
         # Retrieve → generate
         graph.add_edge("retrieve_node", "generate_node")
         
-        # Ask clarify → generate (short circuit)
-        graph.add_edge("ask_clarify_node", "generate_node")
+        # Ask clarify → END (already has complete tutor_response, skip generate)
+        graph.add_edge("ask_clarify_node", END)
         
         # Conditional: generate → (tts | end)
         graph.add_conditional_edges(

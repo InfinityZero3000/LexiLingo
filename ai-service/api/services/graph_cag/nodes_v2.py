@@ -16,6 +16,7 @@ import time
 import asyncio
 import re
 import json
+import hashlib
 from typing import Dict, Any, List, Optional
 
 from api.services.graph_cag.state import GraphCAGState, DiagnosisError
@@ -101,6 +102,57 @@ async def input_node(state: GraphCAGState) -> Dict[str, Any]:
 
 
 # ============================================================
+# NODE 1.5: CACHE GATE (Response Cache Check)
+# ============================================================
+
+async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
+    """
+    Check Redis for a cached response before running the full pipeline.
+    
+    Cache key = MD5(normalized_input || learner_level || top_3_concepts)
+    If hit → sets cache_hit=True, tutor_response, path="fast"
+    If miss → sets cache_hit=False, path="slow"
+    """
+    logger.info("[cache_gate_node] Checking response cache...")
+    
+    user_input = state.get("user_input", "")
+    level = state.get("learner_profile", {}).get("level", "B1")
+    
+    # Build cache key
+    normalized = user_input.strip().lower()
+    cache_raw = f"{normalized}||{level}"
+    cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    
+    try:
+        from api.core.redis_client import RedisClient
+        
+        redis_client = await RedisClient.get_instance()
+        cached_json = await redis_client.get(f"v1:resp:{cache_key}")
+        
+        if cached_json:
+            import json as _json
+            cached = _json.loads(cached_json)
+            logger.info(f"[cache_gate_node] Cache HIT for key {cache_key[:8]}...")
+            return {
+                "cache_hit": True,
+                "tutor_response": cached.get("tutor_response", ""),
+                "strategy": cached.get("strategy", "feedback"),
+                "diagnosis_errors": cached.get("diagnosis_errors", []),
+                "overall_score": cached.get("overall_score", 0.8),
+                "path": "fast",
+                "models_used": ["response_cache"],
+            }
+    except Exception as e:
+        logger.debug(f"[cache_gate_node] Redis unavailable: {e}")
+    
+    logger.info(f"[cache_gate_node] Cache MISS for key {cache_key[:8]}...")
+    return {
+        "cache_hit": False,
+        "path": "slow",
+    }
+
+
+# ============================================================
 # NODE 2: KNOWLEDGE GRAPH EXPANSION
 # ============================================================
 
@@ -118,9 +170,9 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
     start_time = time.time()
     
     try:
-        from api.services.kg_service_v3 import KnowledgeGraphServiceV3
+        from api.services.kg_service_v3 import get_kg_service
         
-        kg = KnowledgeGraphServiceV3()
+        kg = get_kg_service()
         
         # Simple keyword matching to find seed concepts
         user_text = state.get("user_input", "").lower()
@@ -154,12 +206,23 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
         
         if seed_concepts:
             kg_result = await kg.expand(seed_concepts, hops=1)
+            # KGExpandedNode from v3_schemas has: id, type, properties
             expanded_nodes = [
-                {"id": n.id, "relation": n.relation, "title": "", "keywords": ""}
+                {
+                    "id": n.id,
+                    "relation": n.properties.get("relation", n.type),
+                    "title": n.properties.get("title", ""),
+                    "keywords": n.properties.get("keywords", ""),
+                }
                 for n in kg_result.expanded_nodes
             ]
+            # KGPath from v3_schemas has: nodes (list[str]), edges (list[str])
             paths = [
-                {"from_id": p.from_id, "to_id": p.to_id, "hops": p.hops}
+                {
+                    "from_id": p.nodes[0] if len(p.nodes) > 0 else "",
+                    "to_id": p.nodes[1] if len(p.nodes) > 1 else "",
+                    "hops": len(p.edges),
+                }
                 for p in kg_result.paths
             ]
         
@@ -359,7 +422,11 @@ def _rule_based_diagnosis(text: str) -> tuple:
 
 async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Combine vector search + KG context for response generation.
+    Combine vector search (MiniLM) + KG context for response generation.
+    
+    Hybrid retrieval:
+    1. KG structural context  (from kg_expand_node + diagnose_node)
+    2. Semantic vector search  (MiniLM cosine-sim against concept labels)
     """
     logger.info("[retrieve_node] Retrieving context...")
     start_time = time.time()
@@ -383,7 +450,47 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     for error in state.get("diagnosis_errors", [])[:2]:
         context_parts.append(f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}'")
     
+    # ── Vector search via MiniLM ─────────────────────────────────────────
     vector_hits = []
+    try:
+        from api.services.model_gateway import get_gateway
+        
+        gateway = await get_gateway()
+        
+        # Build candidate texts from KG concepts for semantic matching
+        candidate_labels = []
+        for c in kg_concepts:
+            if isinstance(c, dict):
+                candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
+            else:
+                candidate_labels.append(str(c))
+        for node in kg_expanded[:10]:
+            label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
+            if label.strip() and label not in candidate_labels:
+                candidate_labels.append(label)
+        
+        if candidate_labels:
+            user_input = state.get("user_input", "")
+            result = await gateway.invoke(
+                "minilm", "invoke",
+                {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+            )
+            if result.get("success"):
+                sim_results = result.get("data", {}).get("results", [])
+                # Keep hits above threshold 0.3
+                vector_hits = [
+                    {"text": r["text"], "score": r["score"]}
+                    for r in sim_results
+                    if r["score"] >= 0.3
+                ][:5]
+                
+                for hit in vector_hits:
+                    context_parts.append(f"Semantic match ({hit['score']:.2f}): {hit['text']}")
+                
+                logger.info(f"[retrieve_node] MiniLM found {len(vector_hits)} semantic hits")
+    except Exception as e:
+        logger.warning(f"[retrieve_node] Vector search skipped: {e}")
+    
     retrieved_context = "\n".join(context_parts) if context_parts else ""
     
     latency_ms = int((time.time() - start_time) * 1000)
@@ -391,32 +498,32 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     return {
         "vector_hits": vector_hits,
         "retrieved_context": retrieved_context,
-        "models_used": ["retrieval"],
+        "models_used": ["retrieval"] + (["minilm"] if vector_hits else []),
     }
 
 
 # ============================================================
-# NODE 5: GENERATE RESPONSE (AI-POWERED via ModelGateway)
+# NODE 5: GROUNDED GENERATION (LLM call with context)
 # ============================================================
 
 async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Generate personalized tutor response using AI.
+    Generate the tutor response using LLM grounded in KG evidence.
     
-    Uses ModelGateway to:
-    - Reuse Qwen (already loaded from diagnose_node)
-    - Generate contextual, encouraging responses
-    - Adapt to learner level
+    This node calls the LLM fallback chain (Groq → Gemini → Ollama)
+    with the Lexi persona, KG context, and diagnosis data injected
+    into the system prompt. This is the SINGLE place where LLM
+    generation happens — callers should NOT make a separate LLM call.
     """
-    logger.info("[generate_node] Generating AI response...")
+    logger.info("[generate_node] Generating grounded tutor response...")
     start_time = time.time()
     
     errors = state.get("diagnosis_errors", [])
     intent = state.get("diagnosis_intent", "correct")
     level = state.get("learner_profile", {}).get("level", "B1")
-    confidence = state.get("diagnosis_confidence", 0.9)
     user_input = state.get("user_input", "")
     context = state.get("retrieved_context", "")
+    vietnamese_hint = state.get("vietnamese_hint")
     
     # Determine strategy
     error_count = len(errors)
@@ -427,88 +534,152 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     else:
         strategy = "scaffold"
     
+    # Build system prompt with Lexi persona + grounded context
+    system_prompt = (
+        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
+        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
+        "Gently correct mistakes with encouraging context.\n"
+        f"The learner's current CEFR level is: {level}\n"
+    )
+    
+    if context:
+        system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
+    
+    if errors:
+        errors_text = "\n".join([
+            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
+            for e in errors[:3]
+        ])
+        system_prompt += f"\n--- Errors Found ---\n{errors_text}\n"
+        system_prompt += f"Strategy: {strategy}. Weave corrections naturally into your response.\n"
+    else:
+        system_prompt += "\nNo errors found — praise the learner's effort!\n"
+    
+    if vietnamese_hint:
+        system_prompt += f"\n--- Vietnamese Hint (for reference) ---\n{vietnamese_hint}\n"
+    
+    # Call LLM via fallback chain (Groq → Gemini → Ollama)
+    response = ""
+    model_used = "template_fallback"
+    
     try:
-        gateway = await get_gateway()
+        import os
+        import httpx
         
-        # Build generation prompt
-        errors_text = ""
-        if errors:
-            errors_text = "\n".join([
-                f"- '{e.get('span', '')}' should be '{e.get('correction', '')}' ({e.get('explanation', '')})"
-                for e in errors[:3]
-            ])
-        # Build grammar issues text (avoiding backslash in f-string)
-        grammar_section = f"Grammar issues found:\n{errors_text}" if errors_text else "No grammar issues found!"
-        correction_instruction = "Gently corrects the errors with clear explanations" if errors else "Praises their good work"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input},
+        ]
         
-        generation_prompt = f"""You are a friendly English tutor helping a {level} level learner.
-
-Student said: "{user_input}"
-
-{grammar_section}
-
-Context: {context if context else "General conversation practice"}
-
-Task: Generate a helpful, encouraging response that:
-1. Acknowledges their effort
-2. {correction_instruction}
-3. Provides a corrected version if needed
-4. Suggests what to practice next
-5. Uses simple language appropriate for {level} level
-
-Be warm, supportive, and concise (2-3 sentences for correction, more for explanation if asked)."""
-
-        # Call Qwen via ModelGateway (reuses loaded model!)
-        result = await gateway.execute_task(
-            "chat",
-            {
-                "message": generation_prompt,
-                "system": f"You are an encouraging English tutor for {level} level students. Be warm and supportive.",
-                "max_tokens": 300,
-            }
-        )
+        # 1. Try Groq
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        if groq_key:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                        json={"model": groq_model, "messages": messages, "max_tokens": 512, "temperature": 0.7},
+                    )
+                    if resp.status_code == 200:
+                        response = resp.json()["choices"][0]["message"]["content"]
+                        model_used = f"groq/{groq_model}"
+            except Exception as e:
+                logger.warning(f"[generate_node] Groq failed: {e}")
         
-        if result.get("success") and result.get("data"):
-            response = result["data"]
-            if isinstance(response, dict):
-                response = response.get("text", response.get("response", str(response)))
-        else:
-            # Fallback to template
-            response = _generate_template_response(errors, strategy, user_input)
+        # 2. Try Gemini
+        if not response:
+            gemini_key = os.getenv("GEMINI_API_KEY", "")
+            if gemini_key:
+                try:
+                    gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                    request_body = {
+                        "contents": gemini_contents,
+                        "systemInstruction": {"parts": [{"text": system_prompt}]},
+                    }
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        resp = await client.post(url, json=request_body)
+                        if resp.status_code == 200:
+                            candidates = resp.json().get("candidates", [])
+                            if candidates:
+                                response = candidates[0]["content"]["parts"][0]["text"]
+                                model_used = "gemini-2.0-flash"
+                except Exception as e:
+                    logger.warning(f"[generate_node] Gemini failed: {e}")
         
-        # Determine next action
-        if error_count == 0:
-            next_action = "continue"
-        elif error_count <= 2:
-            next_action = "hint"
-        else:
-            next_action = "correct"
-        
-        # Calculate overall score
-        grammar_score = state.get("grammar_score", 0.8)
-        fluency_score = state.get("fluency_score", 0.8)
-        overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
-        
-        latency_ms = int((time.time() - start_time) * 1000)
-        
-        return {
-            "tutor_response": response,
-            "strategy": strategy,
-            "next_action": next_action,
-            "overall_score": overall_score,
-            "models_used": ["qwen_tutor"],
-        }
-        
+        # 3. Try Ollama
+        if not response:
+            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    resp = await client.post(
+                        f"{ollama_url}/api/chat",
+                        json={"model": ollama_model, "messages": messages, "stream": False,
+                              "options": {"num_predict": 256, "temperature": 0.7}},
+                    )
+                    if resp.status_code == 200:
+                        response = resp.json().get("message", {}).get("content", "")
+                        model_used = f"ollama/{ollama_model}"
+            except Exception as e:
+                logger.warning(f"[generate_node] Ollama failed: {e}")
+    
     except Exception as e:
-        logger.error(f"[generate_node] Error: {e}")
+        logger.error(f"[generate_node] LLM chain error: {e}")
+    
+    # 4. Template fallback
+    if not response:
         response = _generate_template_response(errors, strategy, user_input)
-        return {
+        model_used = "template_fallback"
+    
+    # Determine next action
+    if error_count == 0:
+        next_action = "continue"
+    elif error_count <= 2:
+        next_action = "hint"
+    else:
+        next_action = "correct"
+    
+    # Calculate overall score
+    grammar_score = state.get("grammar_score", 0.8)
+    fluency_score = state.get("fluency_score", 0.8)
+    overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
+    
+    # Store response in Redis cache for future hits
+    try:
+        from api.core.redis_client import RedisClient
+        
+        normalized = user_input.strip().lower()
+        cache_raw = f"{normalized}||{level}"
+        cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+        
+        redis_client = await RedisClient.get_instance()
+        cache_data = json.dumps({
             "tutor_response": response,
             "strategy": strategy,
-            "next_action": "hint",
-            "overall_score": 0.7,
-            "models_used": ["template_fallback"],
-        }
+            "diagnosis_errors": [dict(e) for e in errors] if errors else [],
+            "overall_score": overall_score,
+        })
+        # TTL: 1 hour for grammar corrections, 30 min for dialogues
+        ttl = 3600 if errors else 1800
+        await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
+        logger.debug(f"[generate_node] Cached response with key {cache_key[:8]}...")
+    except Exception as e:
+        logger.debug(f"[generate_node] Redis cache write failed: {e}")
+    
+    latency_ms = int((time.time() - start_time) * 1000)
+    logger.info(f"[generate_node] Generated response via {model_used} in {latency_ms}ms")
+    
+    return {
+        "tutor_response": response,
+        "strategy": strategy,
+        "next_action": next_action,
+        "overall_score": overall_score,
+        "models_used": [model_used],
+    }
 
 
 def _generate_template_response(errors: list, strategy: str, user_input: str) -> str:
@@ -572,25 +743,15 @@ Yêu cầu:
         else:
             vi_prompt = f"Khen ngợi học sinh bằng tiếng Việt vì họ đã viết đúng ngữ pháp. Tối đa 1-2 câu."
         
-        # Try LLaMA-VI first, fallback to Qwen
-        try:
-            result = await gateway.execute_task(
-                "explain_vi",  # Routes to LLaMA-VI
-                {
-                    "message": vi_prompt,
-                    "max_tokens": 200,
-                }
-            )
-        except Exception:
-            # Fallback to Qwen for Vietnamese
-            result = await gateway.execute_task(
-                "chat",
-                {
-                    "message": vi_prompt,
-                    "system": "You are a Vietnamese language teacher. Respond in Vietnamese only.",
-                    "max_tokens": 200,
-                }
-            )
+        # Use Qwen with Vietnamese system prompt (llama_vi is not registered)
+        result = await gateway.execute_task(
+            "chat",
+            {
+                "message": vi_prompt,
+                "system": "You are a Vietnamese language teacher. Respond in Vietnamese only.",
+                "max_tokens": 200,
+            }
+        )
         
         if result.get("success") and result.get("data"):
             vietnamese_hint = result["data"]
@@ -604,7 +765,7 @@ Yêu cầu:
         
         return {
             "vietnamese_hint": vietnamese_hint,
-            "models_used": ["llama_vi"],
+            "models_used": ["qwen_vietnamese"],
         }
         
     except Exception as e:

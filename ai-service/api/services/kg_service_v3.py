@@ -1,14 +1,16 @@
-"""V3 Knowledge Graph service (skeleton).
+"""V3 Knowledge Graph service.
 
 This is a thin interface for:
 - Expanding concepts (graph hops)
 - Writing/learning edges after each interaction
 
-Replace internals with KuzuDB/Neo4j/NetworkX later.
+Uses KuzuDB as the graph database backend.
+Singleton pattern ensures the database is created once and reused.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 import os
 
@@ -17,9 +19,22 @@ import kuzu
 from api.core.config import settings
 from api.models.v3_schemas import KGHits, KGExpandedNode, KGPath
 
+logger = logging.getLogger(__name__)
+
+# ── Singleton instance ────────────────────────────────────────────────────────
+_kg_instance: Optional["KnowledgeGraphServiceV3"] = None
+
+
+def get_kg_service() -> "KnowledgeGraphServiceV3":
+    """Get or create the singleton KnowledgeGraphServiceV3 instance."""
+    global _kg_instance
+    if _kg_instance is None:
+        _kg_instance = KnowledgeGraphServiceV3()
+    return _kg_instance
+
 
 class KnowledgeGraphServiceV3:
-    """KuzuDB-backed KG service for V3 pipeline."""
+    """KuzuDB-backed KG service for V3 pipeline (singleton via get_kg_service())."""
 
     def __init__(self) -> None:
         db_path = getattr(settings, "KUZU_DB_PATH", None) or os.path.join(
@@ -31,15 +46,33 @@ class KnowledgeGraphServiceV3:
         parent_dir = os.path.dirname(db_path)
         os.makedirs(parent_dir, exist_ok=True)
         
-        # Remove if it's a directory (Kuzu needs the path to not exist or be a valid DB)
-        if os.path.isdir(db_path):
-            import shutil
-            shutil.rmtree(db_path)
-
-        self._db = kuzu.Database(db_path)
-        self._conn = kuzu.Connection(self._db)
-        self._ensure_schema()
-        self._seed_default_graph()
+        # Only destroy and recreate if the DB is corrupted or missing.
+        # Check if schema already exists to avoid unnecessary re-seed.
+        needs_seed = False
+        if not os.path.isdir(db_path):
+            needs_seed = True
+        
+        try:
+            self._db = kuzu.Database(db_path)
+            self._conn = kuzu.Connection(self._db)
+            self._ensure_schema()
+            
+            # Only seed if this is a fresh database
+            if needs_seed or self.get_concept_count() == 0:
+                logger.info("[KG] Seeding default knowledge graph...")
+                self._seed_default_graph()
+            else:
+                logger.info(f"[KG] Reusing existing KG with {self.get_concept_count()} concepts")
+        except Exception as e:
+            logger.warning(f"[KG] DB may be corrupted, rebuilding: {e}")
+            # Only destroy if we can't open it
+            if os.path.isdir(db_path):
+                import shutil
+                shutil.rmtree(db_path)
+            self._db = kuzu.Database(db_path)
+            self._conn = kuzu.Connection(self._db)
+            self._ensure_schema()
+            self._seed_default_graph()
 
     def _ensure_schema(self) -> None:
         # Create tables if they do not exist.
