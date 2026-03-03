@@ -8,7 +8,6 @@ import 'package:lexilingo_app/features/achievements/presentation/widgets/achieve
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
-import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_card.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
@@ -95,7 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                      colors: AppColors.purpleGradient,
                     ),
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -175,8 +174,8 @@ class _ProfilePageState extends State<ProfilePage> {
             context,
             icon: Icons.store,
             label: 'Shop',
-            color: const Color(0xFFF59E0B),
-            gradient: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
+            color: const Color(0xFFFF9F0A),
+            gradient: AppColors.warmGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ShopScreen()),
@@ -188,7 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.leaderboard,
             label: 'Ranks',
             color: const Color(0xFF10B981),
-            gradient: const [Color(0xFF10B981), Color(0xFF059669)],
+            gradient: AppColors.successGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
@@ -200,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.people,
             label: 'Friends',
             color: const Color(0xFF3B82F6),
-            gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+            gradient: AppColors.indigoGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SocialScreen()),
@@ -212,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.account_balance_wallet,
             label: 'Wallet',
             color: const Color(0xFF8B5CF6),
-            gradient: const [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+            gradient: AppColors.purpleGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const WalletScreen()),
@@ -415,36 +414,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
-                            // Level Badge at avatar corner
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.4),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  'Lv.${levelProvider.displayLevel}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                            ),
+
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -469,48 +439,117 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         const SizedBox(height: 12),
-                        // Level Badge
+                        // Level Badge + CEFR Proficiency Badge
                         Consumer<LevelProvider>(
-                          builder: (_, lp, __) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primary,
-                                  AppColors.primary.withValues(alpha: 0.75),
-                                ],
+                          builder: (_, lp, __) => Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              // Numeric Level badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: AppColors.primaryGradient,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.workspace_premium_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Level ${lp.displayLevel}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                              // CEFR Proficiency Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.workspace_premium_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Level ${lp.displayLevel}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                decoration: BoxDecoration(
+                                  color: _getTierColor(
+                                    lp.proficiencyLevel,
+                                  ).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _getTierColor(
+                                      lp.proficiencyLevel,
+                                    ).withValues(alpha: 0.5),
                                   ),
                                 ),
-                              ],
-                            ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getTierIcon(lp.proficiencyLevel),
+                                      size: 14,
+                                      color: _getTierColor(
+                                        lp.proficiencyLevel,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      lp.proficiencyLevel,
+                                      style: TextStyle(
+                                        color: _getTierColor(
+                                          lp.proficiencyLevel,
+                                        ),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '·',
+                                      style: TextStyle(
+                                        color: _getTierColor(
+                                          lp.proficiencyLevel,
+                                        ).withValues(alpha: 0.6),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      lp.proficiencyName,
+                                      style: TextStyle(
+                                        color: _getTierColor(
+                                          lp.proficiencyLevel,
+                                        ),
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -543,7 +582,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
+                                colors: AppColors.primaryGradient,
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
@@ -590,18 +629,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// Social stats row showing XP, followers, following
   Widget _buildSocialStatsRow(BuildContext context) {
-    return Consumer2<LevelProvider, ProfileProvider>(
-      builder: (context, levelProvider, profileProvider, _) {
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, _) {
         final stats = profileProvider.stats;
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             AnimatedSocialStat(
-              value: 'Lv. ${levelProvider.displayLevel}',
-              label: 'Level',
-              icon: Icons.workspace_premium_rounded,
-              color: AppColors.primary,
+              value: '${stats?.totalVocabularyMastered ?? 0}',
+              label: 'Words',
+              icon: Icons.spellcheck_rounded,
+              color: const Color(0xFF10B981),
             ),
             Container(
               height: 40,
@@ -677,8 +716,8 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 12),
               AnimatedProgressBar(
                 progress: progress,
-                primaryColor: AppColors.primary,
-                secondaryColor: AppColors.primary.withValues(alpha: 0.5),
+                primaryColor: AppColors.primaryGradient[0],
+                secondaryColor: AppColors.primaryGradient[1],
                 height: 12,
               ),
               const SizedBox(height: 12),

@@ -41,6 +41,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    if (Navigator.canPop(context))
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                        tooltip: 'Back',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      ),
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -198,12 +206,48 @@ class _NotificationsPageState extends State<NotificationsPage> {
               notification: notification,
               onTap: () =>
                   _handleNotificationTap(context, notification, provider),
-              onDismiss: () => provider.deleteNotification(notification.id),
+              onDismiss: () =>
+                  _dismissNotification(context, notification, provider),
             ),
           );
         }),
       ],
     );
+  }
+
+  void _dismissNotification(
+    BuildContext context,
+    NotificationEntity notification,
+    NotificationProvider provider,
+  ) {
+    // Delete with undo buffer
+    provider.deleteNotification(notification.id, forUndo: true);
+
+    // Show Undo SnackBar
+    final snackBar = SnackBar(
+      content: const Text('Notification removed'),
+      duration: const Duration(seconds: 4),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.textDark,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      action: SnackBarAction(
+        label: 'Undo',
+        textColor: AppColors.accentYellow,
+        onPressed: () => provider.undoDelete(),
+      ),
+    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar).closed.then((reason) {
+        // Only commit (permanent delete) when SnackBar times out or is
+        // manually dismissed — NOT when it is replaced by a newer SnackBar
+        // (SnackBarClosedReason.hide), which would clear the new deletion's
+        // undo buffer before its own SnackBar can be acted upon.
+        if (reason != SnackBarClosedReason.hide) {
+          provider.commitDelete();
+        }
+      });
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
@@ -233,10 +277,30 @@ class _NotificationsPageState extends State<NotificationsPage> {
       direction: DismissDirection.endToStart,
       onDismissed: (_) => onDismiss(),
       background: Container(
-        color: Colors.red,
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.only(right: 24),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+            SizedBox(height: 4),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
       child: InkWell(
         onTap: onTap,

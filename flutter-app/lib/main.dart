@@ -62,6 +62,10 @@ import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
 
+// Phase 6: Lexi Chat — Story Adventure
+import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -211,6 +215,8 @@ class LexiLingoApp extends StatelessWidget {
         ),
         // Phase 5: Book Reading
         ChangeNotifierProvider(create: (_) => di.sl<BookProvider>()),
+        // Phase 6: Lexi Chat — Story Adventure
+        ChangeNotifierProvider(create: (_) => di.sl<LexiChatProvider>()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
@@ -263,6 +269,8 @@ class LexiLingoApp extends StatelessWidget {
               },
               // Phase 5: Books
               '/books': (context) => const BookLibraryScreen(),
+              // Phase 6: Lexi Chat
+              '/lexi': (context) => const LexiChatPage(),
             },
           );
         },

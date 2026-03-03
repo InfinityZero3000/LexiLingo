@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/record_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
@@ -312,6 +313,17 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  if (_isProcessing) ...[
+                    const LottieAnimationWidget.pulse(width: 88, height: 88),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Đang phân tích phát âm...',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   RecordButton(
                     isRecording: _isRecording,
                     isProcessing: _isProcessing,
@@ -375,6 +387,22 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
                 // Pronunciation score
                 if (voiceProvider.lastPronunciationScore != null) ...[
+                  if (voiceProvider.lastPronunciationScore!.overallScore >= 80) ...[
+                    const LottieAnimationWidget.success(
+                      width: 100,
+                      height: 100,
+                      repeat: false,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Phát âm xuất sắc! 🎉',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   PronunciationScoreCard(
                     score: voiceProvider.lastPronunciationScore!,
                     onTryAgain: () {

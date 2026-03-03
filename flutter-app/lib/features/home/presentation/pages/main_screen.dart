@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
-import '../../../notifications/presentation/pages/notifications_page.dart';
-import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,7 +18,6 @@ class _MainScreenState extends State<MainScreen> {
     const HomePageNew(),
     const CourseListScreen(),
     const ChatPage(),
-    const NotificationsPage(),
     const ProfilePage(),
   ];
 
@@ -29,9 +25,9 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: Consumer<NotificationProvider>(
-        builder: (context, notificationProvider, child) {
-          final unreadCount = notificationProvider.unreadCount;
+      floatingActionButton: _buildLexiFab(context),
+      bottomNavigationBar: Builder(
+        builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             decoration: BoxDecoration(
@@ -57,74 +53,58 @@ class _MainScreenState extends State<MainScreen> {
                 topRight: Radius.circular(24),
               ),
               child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              items: [
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.explore_outlined),
-                  activeIcon: Icon(Icons.explore),
-                  label: 'Discovery',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.menu_book_outlined),
-                  activeIcon: Icon(Icons.menu_book),
-                  label: 'Learning',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  activeIcon: Icon(Icons.chat_bubble),
-                  label: 'Chat',
-                ),
-                BottomNavigationBarItem(
-                  icon: _buildNotificationIcon(
-                    Icons.notifications_outlined,
-                    unreadCount,
-                    context,
+                currentIndex: _currentIndex,
+                onTap: (index) => setState(() => _currentIndex = index),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.explore_outlined),
+                    activeIcon: Icon(Icons.explore),
+                    label: 'Discovery',
                   ),
-                  activeIcon: _buildNotificationIcon(
-                    Icons.notifications,
-                    unreadCount,
-                    context,
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.menu_book_outlined),
+                    activeIcon: Icon(Icons.menu_book),
+                    label: 'Learning',
                   ),
-                  label: 'Notification',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.account_circle_outlined),
-                  activeIcon: Icon(Icons.account_circle),
-                  label: 'Account',
-                ),
-              ],
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.chat_bubble_outline),
+                    activeIcon: Icon(Icons.chat_bubble),
+                    label: 'Chat',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.account_circle_outlined),
+                    activeIcon: Icon(Icons.account_circle),
+                    label: 'Account',
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
         },
       ),
     );
   }
 
-  Widget _buildNotificationIcon(
-    IconData icon,
-    int unreadCount,
-    BuildContext context,
-  ) {
-    if (unreadCount <= 0) {
-      return Icon(icon);
-    }
-    return Badge(
-      label: Text(
-        unreadCount > 99 ? '99+' : '$unreadCount',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+  /// Floating action button to open Lexi Chat adventure.
+  Widget _buildLexiFab(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () => Navigator.pushNamed(context, '/lexi'),
+      tooltip: 'Chat with Lexi 🦜',
+      backgroundColor: const Color(0xFF43E97B),
+      elevation: 6,
+      child: ClipOval(
+        child: Image.asset(
+          'assets/avatar/avatar-ai-chat.png',
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Text(
+            '🦜',
+            style: TextStyle(fontSize: 24),
+          ),
         ),
       ),
-      backgroundColor: Colors.red,
-      child: Icon(icon),
     );
   }
+
 }

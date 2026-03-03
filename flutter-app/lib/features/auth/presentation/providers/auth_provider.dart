@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
@@ -117,6 +120,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true; // Set flag for welcome screen
+          // Register FCM token with backend after successful Google sign-in
+          FirebaseMessagingService.instance
+              .registerTokenWithBackend(sl<ApiClient>());
         },
       );
     } catch (e) {
@@ -154,6 +160,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true; // Set flag for welcome screen
+          // Register FCM token with backend after successful email sign-in
+          FirebaseMessagingService.instance
+              .registerTokenWithBackend(sl<ApiClient>());
         },
       );
     } catch (e) {
@@ -175,6 +184,8 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       await signOutUseCase(NoParams());
+      // Clear stored FCM token so it gets re-registered on next login
+      await FirebaseMessagingService.instance.clearRegisteredToken();
       _user = null;
     } catch (e) {
       debugPrint("Sign out error: $e");

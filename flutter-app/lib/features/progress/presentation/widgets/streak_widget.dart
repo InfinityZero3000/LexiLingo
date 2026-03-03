@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../providers/streak_provider.dart';
 import '../../domain/entities/streak_entity.dart';
 
@@ -68,11 +69,17 @@ class StreakWidget extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  _getStreakIcon(streak.streakIcon),
-                  color: Colors.white,
-                  size: 18,
-                ),
+                if (streak.streakAtRisk)
+                  const LottieAnimationWidget.heartbeat(
+                    width: 22,
+                    height: 22,
+                  )
+                else
+                  Icon(
+                    _getStreakIcon(streak.streakIcon),
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 const SizedBox(width: 4),
                 Text(
                   '${streak.currentStreak}',
@@ -153,11 +160,7 @@ class StreakCard extends StatelessWidget {
                   const Text('Start your streak today!'),
                   const Spacer(),
                   if (provider.isLoading)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+                    const LottieAnimationWidget.pulse(width: 24, height: 24),
                 ],
               ),
             ),
@@ -188,11 +191,16 @@ class StreakCard extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          _getStreakIcon(streak.streakIcon),
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        child: streak.streakAtRisk
+                            ? const LottieAnimationWidget.heartbeat(
+                                width: 32,
+                                height: 32,
+                              )
+                            : Icon(
+                                _getStreakIcon(streak.streakIcon),
+                                color: Colors.white,
+                                size: 24,
+                              ),
                       ),
                       const SizedBox(width: 12),
 

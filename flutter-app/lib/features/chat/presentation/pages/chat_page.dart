@@ -667,7 +667,7 @@ class _ChatPageState extends State<ChatPage> {
           const SizedBox(width: 12),
           // Typing bubble
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.grey[800]
@@ -679,7 +679,7 @@ class _ChatPageState extends State<ChatPage> {
                 bottomLeft: Radius.circular(0),
               ),
             ),
-            child: const TypingIndicator(color: AppColors.primary, dotSize: 8),
+            child: const LottieAnimationWidget.loading(width: 64, height: 40),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../widgets/auth_gradient_background.dart';
 
 /// Welcome page shown after successful login
@@ -57,7 +58,21 @@ class _WelcomePageState extends State<WelcomePage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 3),
+              // Live Love Learn animation floating above the card
+              Expanded(
+                flex: 3,
+                child: Center(
+                  child: Opacity(
+                    opacity: 0.75,
+                    child: LottieAnimationWidget(
+                      animation: LottieAnimation.liveLoveLearn,
+                      width: 220,
+                      height: 130,
+                      repeat: true,
+                    ),
+                  ),
+                ),
+              ),
 
               // Frosted glass card: animation + texts
               _buildFrostedContentCard(context),

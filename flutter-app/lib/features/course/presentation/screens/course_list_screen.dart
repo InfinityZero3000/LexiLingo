@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
@@ -72,7 +73,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF3B82F6),
+                                    color: AppColors.primary,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -307,13 +308,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
   Color _getLevelColor(String level) {
     switch (level.toLowerCase()) {
       case 'beginner':
-        return Colors.green;
+        return AppColors.greenSuccess;
       case 'intermediate':
-        return Colors.orange;
+        return const Color(0xFF3B82F6); // blue — on-theme
       case 'advanced':
-        return Colors.red;
+        return const Color(0xFF8B5CF6); // violet — premium feel
       default:
-        return Colors.blue;
+        return AppColors.primary;
     }
   }
 

@@ -3,14 +3,62 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primary = Color(0xFF137FEC);
+  static const Color primaryDark = Color(0xFF0D5FC4);
   static const Color backgroundLight = Color(0xFFF6F7F8);
   static const Color backgroundDark = Color(0xFF101922);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceDark = Color(0xFF1C2A38);
   static const Color textDark = Color(0xFF111418);
   static const Color textGrey = Color(0xFF617589);
   static const Color accentYellow = Color(0xFFFFD644);
   static const Color greenSuccess = Color(0xFF078838);
   static const Color grey200 = Color(0xFFEEEEEE);
   static const Color grey300 = Color(0xFFE0E0E0);
+
+  // ── Harmonious gradient pairs ──────────────────────────────────────────────
+  // Rule: each pair stays within the same hue family (≤30° apart on color wheel)
+
+  /// Blue → Indigo (primary family, used for Edit Profile, Level badge, headers)
+  static const List<Color> primaryGradient = [
+    Color(0xFF137FEC),
+    Color(0xFF3B5BDB),
+  ];
+
+  /// Amber → Deep-Orange (warm, used for XP / Shop actions)
+  static const List<Color> warmGradient = [
+    Color(0xFFFF9F0A),
+    Color(0xFFE05D00),
+  ];
+
+  /// Emerald → Teal (green family, used for Ranks / success)
+  static const List<Color> successGradient = [
+    Color(0xFF10B981),
+    Color(0xFF0D9668),
+  ];
+
+  /// Violet → Purple (cool-warm, used for Wallet / Gems)
+  static const List<Color> purpleGradient = [
+    Color(0xFF8B5CF6),
+    Color(0xFF7C3AED),
+  ];
+
+  /// Indigo → Blue (cool, used for Friends / Social)
+  static const List<Color> indigoGradient = [
+    Color(0xFF3B82F6),
+    Color(0xFF1D4ED8),
+  ];
+
+  /// Red → Crimson (danger/delete, kept within red family)
+  static const List<Color> dangerGradient = [
+    Color(0xFFEF4444),
+    Color(0xFFDC2626),
+  ];
+
+  /// XP / Achievement gold
+  static const List<Color> goldGradient = [
+    Color(0xFFFFD644),
+    Color(0xFFFF9F0A),
+  ];
 }
 
 class AppTheme {
@@ -22,7 +70,6 @@ class AppTheme {
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         surface: AppColors.backgroundLight,
-        background: AppColors.backgroundLight,
       ),
       textTheme: GoogleFonts.lexendTextTheme().apply(
         bodyColor: AppColors.textDark,
@@ -61,7 +108,6 @@ class AppTheme {
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         surface: AppColors.backgroundDark,
-        background: AppColors.backgroundDark,
         brightness: Brightness.dark,
       ),
       textTheme: GoogleFonts.lexendTextTheme().apply(

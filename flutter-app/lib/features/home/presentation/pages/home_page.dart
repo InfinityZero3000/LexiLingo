@@ -18,6 +18,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 import 'package:lexilingo_app/features/level/level.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
@@ -31,18 +32,48 @@ class HomePageNew extends StatefulWidget {
 }
 
 class _HomePageNewState extends State<HomePageNew> {
+  LevelProvider? _levelProvider;
+
   @override
   void initState() {
     super.initState();
     // Load home data after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeProvider = context.read<HomeProvider>();
+      // Capture LevelProvider reference HERE (synchronously), before any
+      // async gap, and store as a field so dispose() can safely remove the
+      // listener without touching context.
+      _levelProvider = context.read<LevelProvider>();
       homeProvider.loadHomeData().then((_) {
         // Fetch authoritative level data from backend.
         // Falls back to local formula if network is unavailable.
-        final levelProvider = context.read<LevelProvider>();
-        levelProvider.fetchLevelFull(sl<ApiClient>());
+        if (mounted) _levelProvider?.fetchLevelFull(sl<ApiClient>());
       });
+      // Listen for level-up events triggered by fetchLevelFull
+      _levelProvider?.addListener(_onLevelProviderChange);
+    });
+  }
+
+  @override
+  void dispose() {
+    _levelProvider?.removeListener(_onLevelProviderChange);
+    super.dispose();
+  }
+
+  /// Shows the Level-Up celebration dialog when the provider signals a level up.
+  void _onLevelProviderChange() {
+    final levelProvider = _levelProvider;
+    if (levelProvider == null || !levelProvider.showLevelUpDialog || !mounted) {
+      return;
+    }
+    levelProvider.dismissLevelUpDialog();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      LevelUpDialog.show(
+        context,
+        newLevel: levelProvider.displayLevel,
+        xpAwarded: levelProvider.displayXpForNextLevel,
+      );
     });
   }
 
@@ -1363,7 +1394,19 @@ class _HomePageNewState extends State<HomePageNew> {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(child: const SizedBox.shrink()),
+              Expanded(
+                child: _buildQuickActionCard(
+                  context,
+                  icon: Icons.pets,
+                  title: 'Lexi',
+                  subtitle: 'Chat adventure',
+                  color: const Color(0xFF43E97B), // Parrot green
+                  bgColor: const Color(0xFFE8FFF0),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/lexi');
+                  },
+                ),
+              ),
             ],
           ),
         ],

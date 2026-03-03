@@ -16,6 +16,9 @@ class NotificationProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Undo-delete buffer: stores the last deleted notification temporarily
+  NotificationEntity? _pendingDeletedNotification;
+
   // Subscriptions
   StreamSubscription<List<NotificationEntity>>? _notificationsSubscription;
   StreamSubscription<int>? _unreadCountSubscription;
@@ -34,6 +37,7 @@ class NotificationProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasNotifications => _notifications.isNotEmpty;
   bool get hasUnread => _unreadCount > 0;
+  NotificationEntity? get pendingDeletedNotification => _pendingDeletedNotification;
 
   /// Initialize provider and set up listeners
   void _init() {
@@ -147,15 +151,45 @@ class NotificationProvider with ChangeNotifier {
     }
   }
 
-  /// Delete a notification
-  Future<void> deleteNotification(String notificationId) async {
+  /// Delete a notification with optional undo buffer.
+  /// Pass [forUndo] = true (default) to buffer for undo-SnackBar.
+  Future<void> deleteNotification(
+    String notificationId, {
+    bool forUndo = true,
+  }) async {
+    if (forUndo) {
+      // Snapshot the entity BEFORE deletion so undo can restore it.
+      // Use firstWhereOrNull-style guard to avoid throwing on missing id.
+      final match = _notifications.where((n) => n.id == notificationId);
+      _pendingDeletedNotification = match.isNotEmpty ? match.first : null;
+    }
     try {
       await _repository.deleteNotification(notificationId);
       await loadNotifications();
     } catch (e) {
       _errorMessage = 'Failed to delete notification: $e';
+      _pendingDeletedNotification = null;
       notifyListeners();
     }
+  }
+
+  /// Restore the last deleted notification (undo swipe-to-delete).
+  Future<void> undoDelete() async {
+    final n = _pendingDeletedNotification;
+    if (n == null) return;
+    _pendingDeletedNotification = null;
+    try {
+      await _repository.addNotification(n);
+      await loadNotifications();
+    } catch (e) {
+      _errorMessage = 'Failed to restore notification: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Clear the undo buffer (called when SnackBar times out without Undo).
+  void commitDelete() {
+    _pendingDeletedNotification = null;
   }
 
   /// Delete all notifications

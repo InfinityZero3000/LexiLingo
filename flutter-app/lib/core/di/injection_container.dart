@@ -21,6 +21,7 @@ import 'package:lexilingo_app/features/news/di/news_di.dart';
 import 'package:lexilingo_app/features/games/di/games_di.dart';
 import 'package:lexilingo_app/features/podcast/di/podcast_di.dart';
 import 'package:lexilingo_app/features/books/di/books_di.dart';
+import 'package:lexilingo_app/features/lexi_chat/di/lexi_chat_di.dart';
 
 export 'service_locator.dart';
 
@@ -49,4 +50,5 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerGamesModule(); // Phase 3: English Games + XP System
   await registerPodcastModule(); // Phase 4: Podcast — async (AudioService.init)
   registerBooksModule(); // Phase 5: Book Reading
+  registerLexiChatModule(); // Phase 6: Lexi Chat — Story Adventure
 }
