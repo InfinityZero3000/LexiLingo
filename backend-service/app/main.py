@@ -163,6 +163,7 @@ app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https?://.*\.devtunnels\.ms.*|https?://.*\.github\.dev.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
