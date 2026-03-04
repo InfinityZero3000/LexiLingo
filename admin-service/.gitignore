@@ -50,6 +50,7 @@ logs/
 *.orig
 *.rej
 *.swp
+dist
 
 # Firebase & Google Services - SENSITIVE DATA
 **/google-services.json
