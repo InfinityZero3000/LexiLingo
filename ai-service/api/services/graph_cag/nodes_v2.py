@@ -25,6 +25,14 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
+# IN-PROCESS CACHE (Fallback when Redis is unavailable)
+# ============================================================
+
+_MEM_RESPONSE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+_MEM_RESPONSE_CACHE_MAX_ITEMS = 1024
+
+
+# ============================================================
 # MODEL GATEWAY INTEGRATION
 # ============================================================
 
@@ -114,6 +122,13 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
     If miss → sets cache_hit=False, path="slow"
     """
     logger.info("[cache_gate_node] Checking response cache...")
+
+    cache_policy = state.get("cache_policy", "on")
+    if cache_policy != "on":
+        return {
+            "cache_hit": False,
+            "path": "slow",
+        }
     
     user_input = state.get("user_input", "")
     level = state.get("learner_profile", {}).get("level", "B1")
@@ -122,6 +137,25 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+
+    # In-process cache fallback
+    now = time.monotonic()
+    mem_entry = _MEM_RESPONSE_CACHE.get(cache_key)
+    if mem_entry:
+        expires_at, cached = mem_entry
+        if expires_at > now:
+            logger.info(f"[cache_gate_node] In-process cache HIT for key {cache_key[:8]}...")
+            return {
+                "cache_hit": True,
+                "tutor_response": cached.get("tutor_response", ""),
+                "strategy": cached.get("strategy", "feedback"),
+                "diagnosis_errors": cached.get("diagnosis_errors", []),
+                "overall_score": cached.get("overall_score", 0.8),
+                "path": "fast",
+                "models_used": ["response_cache_mem"],
+            }
+        else:
+            _MEM_RESPONSE_CACHE.pop(cache_key, None)
     
     try:
         from api.core.redis_client import RedisClient
@@ -133,6 +167,8 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
             import json as _json
             cached = _json.loads(cached_json)
             logger.info(f"[cache_gate_node] Cache HIT for key {cache_key[:8]}...")
+            # Also populate in-process cache for resilience
+            _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + 3600, cached)
             return {
                 "cache_hit": True,
                 "tutor_response": cached.get("tutor_response", ""),
@@ -266,6 +302,22 @@ async def diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
     
     user_text = state.get("user_input", "")
     learner_level = state.get("learner_profile", {}).get("level", "B1")
+
+    if state.get("diagnosis_policy", "auto") == "rules":
+        errors, root_causes = _rule_based_diagnosis(user_text)
+        error_count = len(errors)
+        confidence = 0.9 if error_count == 0 else (0.75 if error_count <= 2 else 0.65)
+        grammar_score = 0.95 if error_count == 0 else 0.7
+        fluency_score = 0.9 if error_count == 0 else 0.75
+        return {
+            "diagnosis_intent": "correct",
+            "diagnosis_errors": errors,
+            "diagnosis_root_causes": root_causes,
+            "diagnosis_confidence": confidence,
+            "grammar_score": grammar_score,
+            "fluency_score": fluency_score,
+            "models_used": ["rule_forced"],
+        }
     
     try:
         gateway = await get_gateway()
@@ -430,6 +482,8 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     """
     logger.info("[retrieve_node] Retrieving context...")
     start_time = time.time()
+
+    retrieval_policy = state.get("retrieval_policy", "full")
     
     # Get relevant concepts from KG expansion
     kg_concepts = state.get("kg_seed_concepts", [])
@@ -457,37 +511,53 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
         
         gateway = await get_gateway()
         
-        # Build candidate texts from KG concepts for semantic matching
-        candidate_labels = []
-        for c in kg_concepts:
-            if isinstance(c, dict):
-                candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
-            else:
-                candidate_labels.append(str(c))
-        for node in kg_expanded[:10]:
-            label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
-            if label.strip() and label not in candidate_labels:
-                candidate_labels.append(label)
-        
-        if candidate_labels:
-            user_input = state.get("user_input", "")
-            result = await gateway.invoke(
-                "minilm", "invoke",
-                {"task": "similarity", "query": user_input, "candidates": candidate_labels},
-            )
-            if result.get("success"):
-                sim_results = result.get("data", {}).get("results", [])
-                # Keep hits above threshold 0.3
-                vector_hits = [
-                    {"text": r["text"], "score": r["score"]}
-                    for r in sim_results
-                    if r["score"] >= 0.3
-                ][:5]
-                
-                for hit in vector_hits:
-                    context_parts.append(f"Semantic match ({hit['score']:.2f}): {hit['text']}")
-                
-                logger.info(f"[retrieve_node] MiniLM found {len(vector_hits)} semantic hits")
+        errors = state.get("diagnosis_errors", [])
+        confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
+
+        do_vector_search = True
+        max_expanded = 10
+        max_hits = 5
+        threshold = 0.3
+
+        if retrieval_policy == "rapid":
+            if len(errors) == 0 and confidence >= 0.8:
+                do_vector_search = False
+            elif len(errors) <= 2 and confidence >= 0.7:
+                max_expanded = 5
+                max_hits = 2
+                threshold = 0.35
+
+        if do_vector_search:
+            # Build candidate texts from KG concepts for semantic matching
+            candidate_labels = []
+            for c in kg_concepts:
+                if isinstance(c, dict):
+                    candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
+                else:
+                    candidate_labels.append(str(c))
+            for node in kg_expanded[:max_expanded]:
+                label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
+                if label.strip() and label not in candidate_labels:
+                    candidate_labels.append(label)
+
+            if candidate_labels:
+                user_input = state.get("user_input", "")
+                result = await gateway.invoke(
+                    "minilm", "invoke",
+                    {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                )
+                if result.get("success"):
+                    sim_results = result.get("data", {}).get("results", [])
+                    vector_hits = [
+                        {"text": r["text"], "score": r["score"]}
+                        for r in sim_results
+                        if r["score"] >= threshold
+                    ][:max_hits]
+
+                    for hit in vector_hits:
+                        context_parts.append(f"Semantic match ({hit['score']:.2f}): {hit['text']}")
+
+                    logger.info(f"[retrieve_node] MiniLM found {len(vector_hits)} semantic hits")
     except Exception as e:
         logger.warning(f"[retrieve_node] Vector search skipped: {e}")
     
@@ -533,6 +603,64 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         strategy = "feedback"
     else:
         strategy = "scaffold"
+
+    generation_policy = state.get("generation_policy", "auto")
+    if generation_policy == "template":
+        response = _generate_template_response(errors, strategy, user_input)
+        model_used = "template_forced"
+
+        if error_count == 0:
+            next_action = "continue"
+        elif error_count <= 2:
+            next_action = "hint"
+        else:
+            next_action = "correct"
+
+        grammar_score = state.get("grammar_score", 0.8)
+        fluency_score = state.get("fluency_score", 0.8)
+        overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
+
+        # Store response in cache even when generation is forced to template.
+        # This keeps benchmark runs deterministic while still measuring cache wins.
+        if state.get("cache_policy", "on") == "on":
+            try:
+                from api.core.redis_client import RedisClient
+
+                normalized = user_input.strip().lower()
+                cache_raw = f"{normalized}||{level}"
+                cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+
+                payload: dict[str, Any] = {
+                    "tutor_response": response,
+                    "strategy": strategy,
+                    "diagnosis_errors": [dict(e) for e in errors] if errors else [],
+                    "overall_score": overall_score,
+                }
+                cache_data = json.dumps(payload)
+                ttl = 3600 if errors else 1800
+
+                if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
+                    _MEM_RESPONSE_CACHE.clear()
+                _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + ttl, payload)
+
+                try:
+                    redis_client = await RedisClient.get_instance()
+                    await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
+                except Exception as e:
+                    logger.debug(f"[generate_node] Redis cache write failed: {e}")
+            except Exception as e:
+                logger.debug(f"[generate_node] Cache write failed: {e}")
+
+        latency_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"[generate_node] Generated response via {model_used} in {latency_ms}ms")
+
+        return {
+            "tutor_response": response,
+            "strategy": strategy,
+            "next_action": next_action,
+            "overall_score": overall_score,
+            "models_used": [model_used],
+        }
     
     # Build system prompt with Lexi persona + grounded context
     system_prompt = (
@@ -649,26 +777,33 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
     
     # Store response in Redis cache for future hits
-    try:
-        from api.core.redis_client import RedisClient
-        
-        normalized = user_input.strip().lower()
-        cache_raw = f"{normalized}||{level}"
-        cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
-        
-        redis_client = await RedisClient.get_instance()
-        cache_data = json.dumps({
-            "tutor_response": response,
-            "strategy": strategy,
-            "diagnosis_errors": [dict(e) for e in errors] if errors else [],
-            "overall_score": overall_score,
-        })
-        # TTL: 1 hour for grammar corrections, 30 min for dialogues
-        ttl = 3600 if errors else 1800
-        await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
-        logger.debug(f"[generate_node] Cached response with key {cache_key[:8]}...")
-    except Exception as e:
-        logger.debug(f"[generate_node] Redis cache write failed: {e}")
+    if state.get("cache_policy", "on") == "on":
+        try:
+            from api.core.redis_client import RedisClient
+
+            normalized = user_input.strip().lower()
+            cache_raw = f"{normalized}||{level}"
+            cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+
+            redis_client = await RedisClient.get_instance()
+            cache_data = json.dumps({
+                "tutor_response": response,
+                "strategy": strategy,
+                "diagnosis_errors": [dict(e) for e in errors] if errors else [],
+                "overall_score": overall_score,
+            })
+            # TTL: 1 hour for grammar corrections, 30 min for dialogues
+            ttl = 3600 if errors else 1800
+
+            # Always write to in-process cache (best-effort, TTL-based)
+            if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
+                _MEM_RESPONSE_CACHE.clear()
+            _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + ttl, json.loads(cache_data))
+
+            await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
+            logger.debug(f"[generate_node] Cached response with key {cache_key[:8]}...")
+        except Exception as e:
+            logger.debug(f"[generate_node] Redis cache write failed: {e}")
     
     latency_ms = int((time.time() - start_time) * 1000)
     logger.info(f"[generate_node] Generated response via {model_used} in {latency_ms}ms")

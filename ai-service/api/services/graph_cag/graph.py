@@ -164,6 +164,11 @@ class GraphCAGPipeline:
         user_id: Optional[str] = None,
         input_type: str = "text",
         learner_profile: Optional[Dict[str, Any]] = None,
+        *,
+        cache_policy: str = "on",
+        retrieval_policy: str = "full",
+        diagnosis_policy: str = "auto",
+        generation_policy: str = "auto",
     ) -> Dict[str, Any]:
         """
         Run the GraphCAG pipeline.
@@ -187,6 +192,10 @@ class GraphCAGPipeline:
             user_id=user_id,
             input_type=input_type,
             learner_profile=learner_profile,
+            cache_policy=cache_policy,
+            retrieval_policy=retrieval_policy,
+            diagnosis_policy=diagnosis_policy,
+            generation_policy=generation_policy,
         )
         
         logger.info(f"[GraphCAG] Starting analysis: {user_input[:50]}...")

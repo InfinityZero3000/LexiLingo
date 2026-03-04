@@ -110,6 +110,11 @@ class GraphCAGState(TypedDict, total=False):
     # ============================================
     # Metadata
     # ============================================
+    # Policy controls (used for benchmarking/experiments)
+    cache_policy: str  # "on" | "off"
+    retrieval_policy: str  # "full" | "rapid"
+    diagnosis_policy: str  # "auto" | "rules"
+    generation_policy: str  # "auto" | "template"
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
     cache_hit: bool
@@ -123,6 +128,11 @@ def create_initial_state(
     user_id: Optional[str] = None,
     input_type: str = "text",
     learner_profile: Optional[Dict[str, Any]] = None,
+    *,
+    cache_policy: str = "on",
+    retrieval_policy: str = "full",
+    diagnosis_policy: str = "auto",
+    generation_policy: str = "auto",
 ) -> GraphCAGState:
     """
     Create initial state for GraphCAG pipeline.
@@ -182,6 +192,10 @@ def create_initial_state(
         tts_audio_url=None,
         
         # Metadata
+        cache_policy=cache_policy,
+        retrieval_policy=retrieval_policy,
+        diagnosis_policy=diagnosis_policy,
+        generation_policy=generation_policy,
         models_used=[],
         latency_ms=0,
         cache_hit=False,
