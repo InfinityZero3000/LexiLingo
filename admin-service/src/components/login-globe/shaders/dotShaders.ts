@@ -43,9 +43,9 @@ void main() {
   vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
 
   // ── Size ───────────────────────────────────────
-  // Base from lighting: adjust size so the difference isn't extreme
+  // Base from lighting: narrow range so large dots spread more evenly
   // aSize attribute adds per-dot variation
-  float sizeBase = mix(6.0, 11.0, brightness) * aSize;
+  float sizeBase = mix(7.5, 10.0, brightness) * aSize;
   sizeBase += vMouseProx * 2.0;
   gl_PointSize = sizeBase * uScale;
 

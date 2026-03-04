@@ -96,6 +96,7 @@ export const AppShell = ({
             <span></span>
             <span></span>
           </button>
+          <span className="topbar-brand">LexiLingo</span>
         </div>
         <div className="topbar-line" />
 

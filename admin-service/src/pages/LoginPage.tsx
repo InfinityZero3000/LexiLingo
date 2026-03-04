@@ -51,13 +51,18 @@ export const LoginPage = () => {
         ux_mode: "popup",
       });
       if (googleBtnRef.current) {
+        // Use container width capped at 360px so button fits all screen sizes
+        const containerW = Math.min(
+          googleBtnRef.current.offsetWidth || 300,
+          360
+        );
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           type: "standard",
           theme: "filled_black",
           size: "large",
           text: "signin_with",
           shape: "pill",
-          width: "380",
+          width: String(containerW),
           logo_alignment: "left",
         });
       }

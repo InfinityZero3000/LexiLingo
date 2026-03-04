@@ -233,6 +233,22 @@ h3,
   min-height: 28px;
 }
 
+/* Brand shown only in mobile topbar (sidebar is hidden on small screens) */
+.topbar-brand {
+  font-family: "Space Grotesk", "Instrument Sans", sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .topbar-brand {
+    display: block;
+  }
+}
+
 .topbar-line {
   height: 4px;
   width: 100%;
@@ -869,6 +885,37 @@ textarea:focus {
   .login-topbar span { display: none; }
   .login-topbar { right: 5%; padding: 7px 10px; gap: 0; }
   .login-topbar-link { padding: 5px 8px; }
+
+  /* Center the login card on mobile instead of right-aligned */
+  .login-page {
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .login-card {
+    width: min(440px, 100%);
+  }
+
+  /* Tighten inner card padding so button doesn't overflow */
+  .login-header {
+    padding: 24px 20px 0;
+  }
+
+  .login-body {
+    padding: 20px 20px 8px;
+  }
+
+  .login-footer {
+    padding: 16px 20px 20px;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
+
+  .login-hero {
+    display: none !important;
+  }
 }
 
 /* ── Hero text panel (left side) ──────────────────────────────── */
@@ -1228,25 +1275,9 @@ textarea:focus {
   gap: 12px;
 }
 
-@media (max-width: 960px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    position: sticky;
-    top: 0;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    overflow-x: auto;
-  }
-
-  .nav-links {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-}
+/* NOTE: sidebar layout at ≤960px was intentionally removed — it
+   conflicted with the slide-in drawer behaviour defined in the
+   ≤1024px responsive block below. No change needed here. */
 
 @media (max-width: 640px) {
   .main {
@@ -1964,6 +1995,18 @@ textarea:focus {
 @media (max-width: 480px) {
   .stat-card {
     padding: 16px !important;
+  }
+
+  /* Prevent long monospace values (e.g. URLs) from overflowing tables */
+  .panel table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .panel td,
+  .panel th {
+    word-break: break-all;
   }
 }
 
