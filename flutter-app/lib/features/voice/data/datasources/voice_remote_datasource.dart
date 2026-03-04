@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/exceptions.dart';
-import 'package:lexilingo_app/core/utils/constants.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'dart:convert';
 
 /// Voice Remote DataSource
@@ -24,7 +24,7 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
 
   VoiceRemoteDataSourceImpl({http.Client? client, String? baseUrl})
     : client = client ?? http.Client(),
-      baseUrl = baseUrl ?? AppConstants.aiServiceUrl;
+      baseUrl = baseUrl ?? ApiConfig.aiServiceUrl;
 
   @override
   Future<Map<String, dynamic>> transcribeAudio({

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/utils/app_logger.dart';
-import '../../../../core/utils/constants.dart';
+import '../../../../core/network/api_config.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/story_model.dart';
 import '../models/topic_session_model.dart';
@@ -16,7 +16,7 @@ class StoryApiDataSource {
   final http.Client _client;
 
   StoryApiDataSource({String? baseUrl, http.Client? client})
-    : baseUrl = baseUrl ?? AppConstants.aiServiceUrl,
+    : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
       _client = client ?? http.Client();
 
   /// Get all available stories

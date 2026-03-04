@@ -10,6 +10,7 @@ import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
 import 'package:lexilingo_app/core/services/dictionary_service.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Disabled - old schema
 import 'service_locator.dart';
@@ -65,5 +66,5 @@ Future<void> registerCore({required bool skipDatabase}) async {
 /// AI API Client - connects to AI Service for chat, STT, TTS
 class AiApiClient extends ApiClient {
   AiApiClient({super.networkInfo, super.interceptors, super.authHeaderProvider})
-    : super(baseUrl: AppConstants.aiServiceUrl);
+    : super(baseUrl: ApiConfig.aiServiceUrl);
 }
