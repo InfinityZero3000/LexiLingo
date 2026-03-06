@@ -4,9 +4,10 @@ Phase 4: Database operations for Achievements, Leaderboards, Shop, and Social Fe
 """
 
 from typing import List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy import select, func, and_, or_, desc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.gamification import (
@@ -70,32 +71,47 @@ class AchievementCRUD:
         return list(result.scalars().all())
     
     @staticmethod
+    async def get_user_achievements_with_details(
+        db: AsyncSession,
+        user_id: UUID,
+        order_by_recent: bool = True,
+        limit: Optional[int] = None
+    ) -> List[tuple]:
+        """
+        Get user achievements with achievement details in a single JOIN query.
+        Returns list of (UserAchievement, Achievement) tuples.
+        """
+        query = (
+            select(UserAchievement, Achievement)
+            .join(Achievement, Achievement.id == UserAchievement.achievement_id)
+            .where(UserAchievement.user_id == user_id)
+        )
+        if order_by_recent:
+            query = query.order_by(desc(UserAchievement.unlocked_at))
+        if limit:
+            query = query.limit(limit)
+        result = await db.execute(query)
+        return list(result.all())
+
+    @staticmethod
     async def unlock_achievement(
         db: AsyncSession,
         user_id: UUID,
         achievement_id: UUID
     ) -> Optional[UserAchievement]:
-        """Unlock an achievement for user (idempotent)"""
-        # Check if already unlocked
-        existing = await db.execute(
-            select(UserAchievement).where(
-                and_(
-                    UserAchievement.user_id == user_id,
-                    UserAchievement.achievement_id == achievement_id
-                )
-            )
-        )
-        if existing.scalar_one_or_none():
-            return None  # Already unlocked
-        
+        """Unlock an achievement for user (idempotent, race-safe)"""
         user_achievement = UserAchievement(
             user_id=user_id,
             achievement_id=achievement_id
         )
         db.add(user_achievement)
-        await db.commit()
-        await db.refresh(user_achievement)
-        return user_achievement
+        try:
+            await db.commit()
+            await db.refresh(user_achievement)
+            return user_achievement
+        except IntegrityError:
+            await db.rollback()
+            return None  # Already unlocked
 
 
 # ============================================================================
@@ -159,8 +175,19 @@ class WalletCRUD:
         reference_id: str = None,
         description: str = None
     ) -> Tuple[Optional[UserWallet], Optional[WalletTransaction]]:
-        """Spend gems from wallet. Returns None if insufficient balance."""
-        wallet = await WalletCRUD.get_or_create_wallet(db, user_id)
+        """Spend gems from wallet. Returns None if insufficient balance.
+        Uses SELECT FOR UPDATE to prevent double-spending race conditions."""
+        # Lock the wallet row to prevent concurrent spending
+        result = await db.execute(
+            select(UserWallet)
+            .where(UserWallet.user_id == user_id)
+            .with_for_update()
+        )
+        wallet = result.scalar_one_or_none()
+        if not wallet:
+            wallet = UserWallet(user_id=user_id, gems=0)
+            db.add(wallet)
+            await db.flush()
         
         if wallet.gems < amount:
             return None, None
@@ -210,7 +237,7 @@ class LeaderboardCRUD:
     @staticmethod
     def get_current_week_range() -> Tuple[datetime, datetime]:
         """Get current week's start and end dates (Monday-Sunday)"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         week_start = now - timedelta(days=now.weekday())
         week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
         week_end = week_start + timedelta(days=7)
@@ -404,6 +431,18 @@ class ShopCRUD:
             .order_by(desc(UserInventory.purchased_at))
         )
         return list(result.scalars().all())
+    
+    @staticmethod
+    async def get_user_inventory_with_items(db: AsyncSession, user_id: UUID) -> List[tuple]:
+        """Get user's inventory with shop item details in a single JOIN query.
+        Returns list of (UserInventory, ShopItem) tuples."""
+        result = await db.execute(
+            select(UserInventory, ShopItem)
+            .join(ShopItem, ShopItem.id == UserInventory.shop_item_id)
+            .where(UserInventory.user_id == user_id)
+            .order_by(desc(UserInventory.purchased_at))
+        )
+        return list(result.all())
 
 
 # ============================================================================
@@ -485,6 +524,25 @@ class SocialCRUD:
             )
         )
         return result.scalar_one_or_none() is not None
+    
+    @staticmethod
+    async def get_following_ids(
+        db: AsyncSession,
+        follower_id: UUID,
+        target_ids: List[UUID]
+    ) -> set:
+        """Batch check: return set of user_ids from target_ids that follower_id follows."""
+        if not target_ids:
+            return set()
+        result = await db.execute(
+            select(UserFollowing.following_id).where(
+                and_(
+                    UserFollowing.follower_id == follower_id,
+                    UserFollowing.following_id.in_(target_ids)
+                )
+            )
+        )
+        return {row[0] for row in result.all()}
     
     @staticmethod
     async def get_followers(

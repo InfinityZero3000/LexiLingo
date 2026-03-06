@@ -4,7 +4,7 @@ Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -138,7 +138,7 @@ class VocabularyCRUD:
             ease_factor=2.5,
             interval=1,
             repetitions=0,
-            next_review_date=datetime.utcnow() + timedelta(days=1)
+            next_review_date=datetime.now(timezone.utc) + timedelta(days=1)
         )
         
         db.add(user_vocab)
@@ -160,7 +160,7 @@ class VocabularyCRUD:
         query = select(UserVocabulary).where(
             and_(
                 UserVocabulary.user_id == user_id,
-                UserVocabulary.next_review_date <= datetime.utcnow(),
+                UserVocabulary.next_review_date <= datetime.now(timezone.utc),
                 UserVocabulary.status != VocabularyStatus.ARCHIVED
             )
         ).order_by(UserVocabulary.next_review_date).limit(limit)
@@ -178,7 +178,7 @@ class VocabularyCRUD:
             select(func.count()).select_from(UserVocabulary).where(
                 and_(
                     UserVocabulary.user_id == user_id,
-                    UserVocabulary.next_review_date <= datetime.utcnow(),
+                    UserVocabulary.next_review_date <= datetime.now(timezone.utc),
                     UserVocabulary.status != VocabularyStatus.ARCHIVED
                 )
             )
@@ -226,7 +226,7 @@ class VocabularyCRUD:
         ease_factor = max(1.3, ease_factor)  # Minimum ease factor
         
         # Calculate next review date
-        next_review_date = datetime.utcnow() + timedelta(days=interval)
+        next_review_date = datetime.now(timezone.utc) + timedelta(days=interval)
         
         return ease_factor, interval, repetitions, next_review_date
     
@@ -275,7 +275,7 @@ class VocabularyCRUD:
         user_vocab.interval = new_interval
         user_vocab.repetitions = new_reps
         user_vocab.next_review_date = next_review
-        user_vocab.last_reviewed_at = datetime.utcnow()
+        user_vocab.last_reviewed_at = datetime.now(timezone.utc)
         user_vocab.total_reviews += 1
         
         # Update streak and stats

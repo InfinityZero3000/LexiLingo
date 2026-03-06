@@ -4,7 +4,7 @@ Extended for Phase 3: Smart Learning Engine & Spaced Repetition
 """
 
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy import String, Integer, DateTime, Date, ForeignKey, Boolean, Float, JSON, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -44,11 +44,11 @@ class UserCourseProgress(Base):
     lessons_completed: Mapped[int] = mapped_column(Integer, default=0)
     total_xp_earned: Mapped[int] = mapped_column(Integer, default=0)
     
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_activity_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     # Unique constraint: one enrollment per user per course
@@ -90,7 +90,7 @@ class LessonCompletion(Base):
     
     is_passed: Mapped[bool] = mapped_column(Boolean, default=False)
     best_score: Mapped[int] = mapped_column(Integer, default=0)  # 0-100
-    completed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    completed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Unique constraint: one completion record per user per lesson
     __table_args__ = (
@@ -144,11 +144,11 @@ class UserProgress(Base):
     time_spent_seconds: Mapped[int] = mapped_column(Integer, default=0)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     def __repr__(self) -> str:
@@ -184,7 +184,7 @@ class LessonAttempt(Base):
     )
     
     # Attempt details
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     finished_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     score: Mapped[int] = mapped_column(Integer, default=0)  # 0-100
     passed: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -245,7 +245,7 @@ class QuestionAttempt(Base):
     confidence_score: Mapped[float] = mapped_column(Float, nullable=True)  # 0.0-1.0
     difficulty_rating: Mapped[str] = mapped_column(String(20), nullable=True)  # easy, medium, hard
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<QuestionAttempt {self.question_id} correct={self.is_correct}>"
@@ -295,11 +295,11 @@ class UserVocabKnowledge(Base):
     # Status
     mastery_level: Mapped[str] = mapped_column(String(20), default="learning")  # learning, reviewing, mastered
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     def __repr__(self) -> str:
@@ -342,7 +342,7 @@ class DailyReviewSession(Base):
     # Vocabulary IDs in this session (JSON array)
     vocab_list: Mapped[dict] = mapped_column(JSON, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<DailyReviewSession {self.review_date} {self.completed_words}/{self.total_words}>"
@@ -375,11 +375,11 @@ class Streak(Base):
     # Streak freeze (gamification)
     freeze_count: Mapped[int] = mapped_column(Integer, default=0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     def __repr__(self) -> str:
@@ -422,11 +422,11 @@ class DailyActivity(Base):
     daily_goal_met: Mapped[bool] = mapped_column(Boolean, default=False)
     daily_goal_xp: Mapped[int] = mapped_column(Integer, default=20)  # Target XP for the day
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     # Unique constraint: one record per user per day

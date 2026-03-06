@@ -3,7 +3,7 @@ Authentication Routes
 """
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -108,7 +108,7 @@ async def login(
         )
     
     # Update last login
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     await db.commit()
     
     # Create tokens
@@ -339,7 +339,7 @@ async def google_login(
         )
     
     # Update last login
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     await db.commit()
     
     # Create tokens
@@ -384,7 +384,7 @@ async def change_password(
     
     # Update password
     current_user.hashed_password = get_password_hash(request.new_password)
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     
     return MessageResponse(
@@ -474,7 +474,7 @@ async def reset_password(
     
     # Update password
     user.hashed_password = get_password_hash(request.new_password)
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     
     return MessageResponse(
@@ -521,7 +521,7 @@ async def verify_email(
     
     # Verify user
     user.is_verified = True
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     
     return VerifyEmailResponse(

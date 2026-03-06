@@ -2,7 +2,7 @@
 User Management Routes (Admin Panel - Phase 2)
 Provides user CRUD operations, role management, and activity tracking.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -542,7 +542,7 @@ async def get_user_activity(
         )
     
     # Get activity from last N days
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Daily activities
     activities_result = await db.execute(

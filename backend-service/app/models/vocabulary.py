@@ -101,11 +101,11 @@ class VocabularyItem(Base):
     usage_frequency: Mapped[int] = mapped_column(Integer, default=0)  # How often word appears
     tags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # ["business", "travel", "casual"]
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     # Indexes for performance
@@ -163,7 +163,7 @@ class UserVocabulary(Base):
     
     next_review_date: Mapped[datetime] = mapped_column(
         DateTime,
-        default=lambda: datetime.utcnow() + timedelta(days=1),
+        default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
         index=True
     )
     
@@ -181,7 +181,7 @@ class UserVocabulary(Base):
     # User notes
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    added_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     vocabulary: Mapped["VocabularyItem"] = relationship("VocabularyItem")
@@ -196,7 +196,7 @@ class UserVocabulary(Base):
     @property
     def is_due(self) -> bool:
         """Check if vocabulary is due for review"""
-        return datetime.utcnow() >= self.next_review_date
+        return datetime.now(timezone.utc) >= self.next_review_date
     
     @property
     def accuracy(self) -> float:
@@ -246,7 +246,7 @@ class VocabularyReview(Base):
     ease_factor_after: Mapped[float] = mapped_column(Float, nullable=True)
     interval_after: Mapped[int] = mapped_column(Integer, nullable=True)
     
-    reviewed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Indexes
     __table_args__ = (
@@ -282,11 +282,11 @@ class VocabularyDeck(Base):
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)  # Future: Share decks
     color: Mapped[str] = mapped_column(String(7), default="#2196F3")  # Hex color
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
     
     __table_args__ = (
@@ -324,7 +324,7 @@ class VocabularyDeckItem(Base):
     
     order: Mapped[int] = mapped_column(Integer, default=0)  # Custom ordering in deck
     
-    added_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index("ix_vocabulary_deck_items_unique", "deck_id", "user_vocabulary_id", unique=True),

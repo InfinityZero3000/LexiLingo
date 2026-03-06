@@ -5,7 +5,7 @@ Endpoints for device registration and FCM token management
 """
 
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -51,7 +51,7 @@ async def register_device(
         # Update existing device
         existing.fcm_token = request.fcm_token
         existing.device_name = request.device_name or existing.device_name
-        existing.last_active = datetime.utcnow()
+        existing.last_active = datetime.now(timezone.utc)
         await db.commit()
         await db.refresh(existing)
         
@@ -76,7 +76,7 @@ async def register_device(
         device_type=request.device_type,
         device_name=request.device_name,
         fcm_token=request.fcm_token,
-        last_active=datetime.utcnow()
+        last_active=datetime.now(timezone.utc)
     )
     
     db.add(device)
@@ -130,7 +130,7 @@ async def update_device(
         device.fcm_token = request.fcm_token
     if request.device_name is not None:
         device.device_name = request.device_name
-    device.last_active = datetime.utcnow()
+    device.last_active = datetime.now(timezone.utc)
     
     await db.commit()
     await db.refresh(device)

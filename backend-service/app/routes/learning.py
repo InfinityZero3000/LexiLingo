@@ -3,12 +3,13 @@ Learning Session Routes
 Endpoints for lesson attempts and learning sessions (Start/Submit/Complete)
 """
 
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from app.core.database import get_db
@@ -35,6 +36,8 @@ from app.schemas.progress import (
 from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
@@ -83,7 +86,7 @@ async def start_lesson(
     new_attempt = LessonAttempt(
         user_id=current_user.id,
         lesson_id=lesson_id,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
         total_questions=10,  # TODO: Get from lesson content
         lives_remaining=3,
         hints_used=0,
@@ -443,7 +446,7 @@ async def complete_lesson(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
     
     # Complete
-    attempt.finished_at = datetime.utcnow()
+    attempt.finished_at = datetime.now(timezone.utc)
     attempt.passed = attempt.score >= 70.0
     
     # Stars
@@ -474,7 +477,7 @@ async def complete_lesson(
             course_id=lesson.course_id,
             status="completed" if attempt.passed else "in_progress",
             score=attempt.score,
-            completed_at=datetime.utcnow() if attempt.passed else None,
+            completed_at=datetime.now(timezone.utc) if attempt.passed else None,
             time_spent_seconds=attempt.time_spent_ms // 1000,
             attempts=1
         )
@@ -482,7 +485,7 @@ async def complete_lesson(
     else:
         if attempt.passed:
             progress.status = "completed"
-            progress.completed_at = datetime.utcnow()
+            progress.completed_at = datetime.now(timezone.utc)
         progress.score = max(progress.score, attempt.score)
         progress.time_spent_seconds += attempt.time_spent_ms // 1000
         progress.attempts += 1
@@ -510,7 +513,7 @@ async def complete_lesson(
             unlocked_achievements.extend(perfect_achievements)
     except Exception as e:
         # Don't fail the lesson completion if achievement check fails
-        print(f"Achievement check error: {e}")
+        logger.warning("Achievement check error: %s", e)
     
     await db.commit()
 
@@ -666,7 +669,7 @@ async def _update_streak(db: AsyncSession, user_id: UUID):
     result = await db.execute(select(Streak).where(Streak.user_id == user_id))
     streak = result.scalar_one_or_none()
     
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     
     if not streak:
         streak = Streak(

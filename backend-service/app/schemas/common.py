@@ -6,7 +6,7 @@ Following the standardized envelope pattern from APP_DEVELOPMENT_PLAN.md
 """
 
 from typing import Any, Dict, Generic, Optional, TypeVar
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 import uuid
 
@@ -17,7 +17,7 @@ DataT = TypeVar("DataT")
 class RequestMeta(BaseModel):
     """Metadata for all API responses."""
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class PaginationMeta(BaseModel):

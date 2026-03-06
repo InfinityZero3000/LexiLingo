@@ -7,10 +7,13 @@ Supports pagination, filtering, and user-specific data.
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.models.progress import UserCourseProgress
 from app.crud.course import CourseCRUD, UnitCRUD, LessonCRUD
@@ -24,7 +27,7 @@ from app.schemas.course import (
 )
 from app.schemas.common import ApiResponse, PaginatedResponse, PaginationMeta
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(tags=["courses"])
 
@@ -53,40 +56,56 @@ async def get_courses(
     Returns enrollment status if user is authenticated.
     """
     skip = (page - 1) * page_size
-    courses, total = await CourseCRUD.get_courses(
-        db,
-        skip=skip,
-        limit=page_size,
-        language=language,
-        level=level,
-        published_only=True
-    )
     
-    # Convert to response models
+    # Cache public course data (TTL 60s) — enrollment overlay is per-user
+    cache_key = build_cache_key("courses", page=page, page_size=page_size,
+                                language=language, level=level)
+    cached = await get_cached(cache_key)
+    
+    if cached:
+        course_dicts = cached["items"]
+        total = cached["total"]
+    else:
+        courses, total = await CourseCRUD.get_courses(
+            db,
+            skip=skip,
+            limit=page_size,
+            language=language,
+            level=level,
+            published_only=True
+        )
+        course_dicts = [
+            {
+                "id": str(course.id),
+                "title": course.title,
+                "description": course.description,
+                "language": course.language,
+                "level": course.level,
+                "tags": course.tags or [],
+                "thumbnail_url": course.thumbnail_url,
+                "total_lessons": course.total_lessons,
+                "total_xp": course.total_xp,
+                "estimated_duration": course.estimated_duration,
+            }
+            for course in courses
+        ]
+        await set_cached(cache_key, {"items": course_dicts, "total": total}, ttl=60)
+    
+    # Overlay enrollment status (per-user, not cached)
+    enrolled_ids = set()
+    if current_user:
+        course_ids = [uuid.UUID(c["id"]) for c in course_dicts]
+        enrolled_ids = await CourseCRUD.get_enrolled_course_ids(
+            db, current_user.id, course_ids
+        )
+    
     course_items = []
-    for course in courses:
-        item_dict = {
-            "id": course.id,
-            "title": course.title,
-            "description": course.description,
-            "language": course.language,
-            "level": course.level,
-            "tags": course.tags or [],
-            "thumbnail_url": course.thumbnail_url,
-            "total_lessons": course.total_lessons,
-            "total_xp": course.total_xp,
-            "estimated_duration": course.estimated_duration,
-            "is_enrolled": None
-        }
-        
-        item = CourseListItem(**item_dict)
-        
-        # Add enrollment status if user is authenticated
-        if current_user:
-            item.is_enrolled = await CourseCRUD.is_user_enrolled(
-                db, current_user.id, course.id
-            )
-        
+    for c in course_dicts:
+        c_id = uuid.UUID(c["id"])
+        item = CourseListItem(
+            **{**c, "id": c_id,
+               "is_enrolled": c_id in enrolled_ids if current_user else None}
+        )
         course_items.append(item)
     
     # Calculate pagination
@@ -221,6 +240,19 @@ async def get_course(
         )
     
     # Build units with lessons
+    # Pre-fetch all completed lesson IDs in 1 query (avoid N+1)
+    completed_lesson_ids: set = set()
+    if current_user:
+        all_lesson_ids = []
+        for unit in course.units:
+            for lesson in unit.lessons:
+                all_lesson_ids.append(lesson.id)
+                if lesson.prerequisites:
+                    all_lesson_ids.extend(lesson.prerequisites)
+        completed_lesson_ids = await LessonCRUD.get_completed_lesson_ids(
+            db, current_user.id, list(set(all_lesson_ids))
+        )
+
     units_with_lessons = []
     for unit in sorted(course.units, key=lambda u: u.order_index):
         lessons = []
@@ -229,20 +261,16 @@ async def get_course(
             
             # Check if lesson is locked (prerequisites not met)
             if current_user and lesson.prerequisites:
-                prerequisites_met = True
-                for prereq_id in lesson.prerequisites:
-                    if not await LessonCRUD.is_lesson_completed(db, current_user.id, prereq_id):
-                        prerequisites_met = False
-                        break
+                prerequisites_met = all(
+                    pid in completed_lesson_ids for pid in lesson.prerequisites
+                )
                 lesson_data.is_locked = not prerequisites_met
             else:
                 lesson_data.is_locked = bool(lesson.prerequisites)  # Locked if has prerequisites
             
             # Check if lesson is completed
             if current_user:
-                lesson_data.is_completed = await LessonCRUD.is_lesson_completed(
-                    db, current_user.id, lesson.id
-                )
+                lesson_data.is_completed = lesson.id in completed_lesson_ids
             
             lessons.append(lesson_data)
         
@@ -299,19 +327,30 @@ async def enroll_in_course(
             data=EnrollmentResponse(
                 course_id=course_id,
                 user_id=current_user.id,
-                enrolled_at=datetime.utcnow(),
+                enrolled_at=datetime.now(timezone.utc),
                 message="Already enrolled in course"
             )
         )
     
-    # Create enrollment
+    # Create enrollment — use IntegrityError to handle race condition
     progress = UserCourseProgress(
         user_id=current_user.id,
         course_id=course_id,
         progress_percentage=0.0
     )
     db.add(progress)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return ApiResponse(
+            data=EnrollmentResponse(
+                course_id=course_id,
+                user_id=current_user.id,
+                enrolled_at=datetime.now(timezone.utc),
+                message="Already enrolled in course"
+            )
+        )
     await db.refresh(progress)
     
     return ApiResponse(

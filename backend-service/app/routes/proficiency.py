@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -435,7 +435,7 @@ async def record_exercise_results(
         skill_score.confidence = confidence
         skill_score.exercises_completed = (skill_score.exercises_completed or 0) + len(skill_results)
         skill_score.correct_exercises = (skill_score.correct_exercises or 0) + sum(1 for r in skill_results if r.is_correct)
-        skill_score.last_updated = datetime.utcnow()
+        skill_score.last_updated = datetime.now(timezone.utc)
         
         skill_updates[skill_type.value] = {
             "previous_score": old_score,
@@ -481,7 +481,7 @@ async def record_exercise_results(
         db.add(history)
         
         profile.assessed_level = new_level.value
-        profile.last_level_change_at = datetime.utcnow()
+        profile.last_level_change_at = datetime.now(timezone.utc)
     
     # Calculate XP earned (separate from proficiency)
     xp_earned = ProficiencyService._calculate_xp_from_exercises(results)
@@ -491,7 +491,7 @@ async def record_exercise_results(
     if all_skill_scores:
         profile.overall_score = sum(s.score for s in all_skill_scores) / len(all_skill_scores)
     
-    profile.last_assessment_at = datetime.utcnow()
+    profile.last_assessment_at = datetime.now(timezone.utc)
     
     await db.commit()
     
@@ -745,13 +745,13 @@ async def submit_placement_test(
     if profile:
         profile.assessed_level = assessed_level
         profile.overall_score = round(pct, 2)
-        profile.last_assessment_at = datetime.utcnow()
+        profile.last_assessment_at = datetime.now(timezone.utc)
     else:
         profile = UserProficiencyProfile(
             user_id=current_user.id,
             assessed_level=assessed_level,
             overall_score=round(pct, 2),
-            last_assessment_at=datetime.utcnow(),
+            last_assessment_at=datetime.now(timezone.utc),
         )
         db.add(profile)
 

@@ -4,7 +4,7 @@ Roles, Permissions, and Role-Permission mappings for admin/super_admin system.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,9 +33,9 @@ class Role(Base):
     is_system: Mapped[bool] = mapped_column(Boolean, default=True)  # System roles can't be deleted
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -66,7 +66,7 @@ class Permission(Base):
     action: Mapped[str] = mapped_column(String(50), nullable=False)  # create, read, update, delete, manage
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     roles = relationship("RolePermission", back_populates="permission", lazy="noload")
@@ -97,7 +97,7 @@ class RolePermission(Base):
         GUID(), ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
-    granted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    granted_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     role = relationship("Role", back_populates="permissions")
@@ -135,7 +135,7 @@ class AuditLog(Base):
     ip_address: Mapped[str] = mapped_column(String(50), nullable=True)
     user_agent: Mapped[str] = mapped_column(String(500), nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     __table_args__ = (
         Index("idx_audit_user_action", "user_id", "action"),

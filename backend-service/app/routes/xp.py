@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -103,7 +103,7 @@ class XPProfileResponse(BaseModel):
 
 async def _get_daily_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
     """Get XP earned today for a user from XPTransaction log."""
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     result = await db.execute(
         select(func.coalesce(func.sum(XPTransaction.amount), 0))
         .where(
@@ -357,7 +357,7 @@ async def get_xp_profile(
 
 @router.get("/leaderboard")
 async def get_leaderboard(
-    limit: int = 20,
+    limit: int = Query(20, ge=1, le=100, description="Max entries to return"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -365,7 +365,7 @@ async def get_leaderboard(
     Get weekly XP leaderboard — top users by XP earned this week.
     Also returns current user's rank.
     """
-    week_start = datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())
+    week_start = datetime.now(timezone.utc) - timedelta(days=datetime.now(timezone.utc).weekday())
     week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Weekly XP per user
@@ -438,5 +438,5 @@ async def get_leaderboard(
             "rank": user_rank,
         },
         "week_start": week_start.isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }

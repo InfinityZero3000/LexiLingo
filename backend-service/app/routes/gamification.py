@@ -5,7 +5,7 @@ Phase 4: Endpoints for Achievements, Leaderboards, Shop, and Social Features
 
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,20 +67,17 @@ async def get_my_achievements(
     
     Returns all achievements the user has earned with unlock dates.
     """
-    user_achievements = await AchievementCRUD.get_user_achievements(db, current_user.id)
+    user_achievements = await AchievementCRUD.get_user_achievements_with_details(db, current_user.id)
     
     response_data = []
-    for ua in user_achievements:
-        # Get the achievement details
-        achievement = await AchievementCRUD.get_achievement(db, ua.achievement_id)
-        if achievement:
-            response_data.append({
-                "id": ua.id,
-                "achievement": AchievementResponse.model_validate(achievement),
-                "unlocked_at": ua.unlocked_at,
-                "progress": ua.progress,
-                "is_showcased": ua.is_showcased
-            })
+    for ua, achievement in user_achievements:
+        response_data.append({
+            "id": ua.id,
+            "achievement": AchievementResponse.model_validate(achievement),
+            "unlocked_at": ua.unlocked_at,
+            "progress": ua.progress,
+            "is_showcased": ua.is_showcased
+        })
     
     return ApiResponse(
         success=True,
@@ -104,23 +101,21 @@ async def get_recent_achievements(
     Returns badges sorted by unlocked_at DESC, limited to specified count.
     Used for profile page "Recent Badges" section.
     """
-    user_achievements = await AchievementCRUD.get_user_achievements(
+    user_achievements = await AchievementCRUD.get_user_achievements_with_details(
         db, current_user.id, 
         order_by_recent=True, 
         limit=limit
     )
     
     response_data = []
-    for ua in user_achievements:
-        achievement = await AchievementCRUD.get_achievement(db, ua.achievement_id)
-        if achievement:
-            response_data.append({
-                "id": ua.id,
-                "achievement": AchievementResponse.model_validate(achievement),
-                "unlocked_at": ua.unlocked_at,
-                "progress": ua.progress,
-                "is_showcased": ua.is_showcased
-            })
+    for ua, achievement in user_achievements:
+        response_data.append({
+            "id": ua.id,
+            "achievement": AchievementResponse.model_validate(achievement),
+            "unlocked_at": ua.unlocked_at,
+            "progress": ua.progress,
+            "is_showcased": ua.is_showcased
+        })
     
     return ApiResponse(
         success=True,
@@ -281,7 +276,7 @@ async def get_my_league_status(
     rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
     _, week_end = LeaderboardCRUD.get_current_week_range()
     
-    hours_remaining = int((week_end - datetime.utcnow()).total_seconds() / 3600)
+    hours_remaining = int((week_end - datetime.now(timezone.utc)).total_seconds() / 3600)
     
     return ApiResponse(
         success=True,
@@ -371,21 +366,19 @@ async def get_my_inventory(
     
     Returns all purchased items with quantities.
     """
-    inventory_items = await ShopCRUD.get_user_inventory(db, current_user.id)
+    inventory_items = await ShopCRUD.get_user_inventory_with_items(db, current_user.id)
     
     response_items = []
-    for inv in inventory_items:
-        item = await ShopCRUD.get_item(db, inv.shop_item_id)
-        if item:
-            response_items.append(UserInventoryItemResponse(
-                id=inv.id,
-                item=ShopItemResponse.model_validate(item),
-                quantity=inv.quantity,
-                is_active=inv.is_active,
-                activated_at=inv.activated_at,
-                expires_at=inv.expires_at,
-                purchased_at=inv.purchased_at
-            ))
+    for inv, item in inventory_items:
+        response_items.append(UserInventoryItemResponse(
+            id=inv.id,
+            item=ShopItemResponse.model_validate(item),
+            quantity=inv.quantity,
+            is_active=inv.is_active,
+            activated_at=inv.activated_at,
+            expires_at=inv.expires_at,
+            purchased_at=inv.purchased_at
+        ))
     
     return ApiResponse(
         success=True,
@@ -555,14 +548,16 @@ async def get_user_followers(
     """
     followers, total = await SocialCRUD.get_followers(db, user_id, limit, offset)
     
+    following_ids = await SocialCRUD.get_following_ids(
+        db, current_user.id, [u.id for u in followers]
+    )
     profiles = []
     for user in followers:
-        is_following = await SocialCRUD.is_following(db, current_user.id, user.id)
         profiles.append(UserSocialProfile(
             user_id=user.id,
             username=user.username,
             display_name=user.display_name,
-            is_following=is_following
+            is_following=user.id in following_ids
         ))
     
     return ApiResponse(
@@ -587,14 +582,16 @@ async def get_user_following(
     """
     following, total = await SocialCRUD.get_following(db, user_id, limit, offset)
     
+    following_ids = await SocialCRUD.get_following_ids(
+        db, current_user.id, [u.id for u in following]
+    )
     profiles = []
     for user in following:
-        is_following = await SocialCRUD.is_following(db, current_user.id, user.id)
         profiles.append(UserSocialProfile(
             user_id=user.id,
             username=user.username,
             display_name=user.display_name,
-            is_following=is_following
+            is_following=user.id in following_ids
         ))
     
     return ApiResponse(

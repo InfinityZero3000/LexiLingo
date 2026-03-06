@@ -141,6 +141,26 @@ class CourseCRUD:
         )
         return result.scalar_one_or_none() is not None
 
+    @staticmethod
+    async def get_enrolled_course_ids(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        course_ids: List[uuid.UUID]
+    ) -> set[uuid.UUID]:
+        """Batch check enrollment — returns set of enrolled course IDs."""
+        if not course_ids:
+            return set()
+        result = await db.execute(
+            select(UserCourseProgress.course_id)
+            .where(
+                and_(
+                    UserCourseProgress.user_id == user_id,
+                    UserCourseProgress.course_id.in_(course_ids)
+                )
+            )
+        )
+        return set(result.scalars().all())
+
 
 # =====================
 # Unit CRUD
@@ -312,3 +332,24 @@ class LessonCRUD:
             )
         )
         return result.scalar_one_or_none() is not None
+
+    @staticmethod
+    async def get_completed_lesson_ids(
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        lesson_ids: List[uuid.UUID]
+    ) -> set[uuid.UUID]:
+        """Batch check completion — returns set of passed lesson IDs."""
+        if not lesson_ids:
+            return set()
+        result = await db.execute(
+            select(LessonCompletion.lesson_id)
+            .where(
+                and_(
+                    LessonCompletion.user_id == user_id,
+                    LessonCompletion.lesson_id.in_(lesson_ids),
+                    LessonCompletion.is_passed == True
+                )
+            )
+        )
+        return set(result.scalars().all())

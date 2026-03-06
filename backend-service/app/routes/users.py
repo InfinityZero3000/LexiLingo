@@ -5,7 +5,7 @@ User Routes
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -294,7 +294,7 @@ async def get_weekly_activity(
     - Study time
     """
     # Calculate date range (last 7 days)
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     week_ago = today - timedelta(days=6)
     
     # Initialize data for each day

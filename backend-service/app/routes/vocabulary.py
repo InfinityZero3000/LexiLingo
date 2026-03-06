@@ -15,10 +15,12 @@ Endpoints:
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
 from app.schemas.vocabulary import (
@@ -48,7 +50,7 @@ async def get_vocabulary_items(
     course_id: Optional[uuid.UUID] = Query(None, description="Filter by course"),
     lesson_id: Optional[uuid.UUID] = Query(None, description="Filter by lesson"),
     difficulty_level: Optional[str] = Query(None, description="A1, A2, B1, B2, C1, C2"),
-    search: Optional[str] = Query(None, description="Search by word"),
+    search: Optional[str] = Query(None, min_length=1, max_length=100, description="Search by word"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -66,6 +68,18 @@ async def get_vocabulary_items(
         # Search by word
         items = await vocabulary_crud.search_vocabulary(db, search, limit)
     else:
+        # Check cache for non-search queries (TTL 120s)
+        cache_key = build_cache_key("vocab_items", course_id=course_id,
+                                    lesson_id=lesson_id,
+                                    difficulty_level=difficulty_level,
+                                    limit=limit, offset=offset)
+        cached = await get_cached(cache_key)
+        if cached is not None:
+            return JSONResponse(
+                content=cached,
+                headers={"Cache-Control": "public, max-age=120"},
+            )
+        
         # List with filters
         items = await vocabulary_crud.get_vocabulary_items(
             db,
@@ -75,6 +89,13 @@ async def get_vocabulary_items(
             limit=limit,
             offset=offset
         )
+        
+        # Cache the serialized result
+        serialized = [
+            VocabularyItemResponse.model_validate(item).model_dump(mode="json")
+            for item in items
+        ]
+        await set_cached(cache_key, serialized, ttl=120)
     
     return items
 

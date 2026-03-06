@@ -2,9 +2,10 @@
 Progress CRUD Operations
 Database operations for tracking user progress
 """
-from typing import Optional
-from datetime import datetime, timedelta
+from typing import Optional, List
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, func, and_, desc
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.progress import UserCourseProgress, LessonCompletion
@@ -43,7 +44,23 @@ class ProgressCRUD:
             .order_by(desc(UserCourseProgress.last_activity_at))
         )
         return result.scalars().all()
-    
+
+    @staticmethod
+    async def get_user_progress_with_courses(
+        db: AsyncSession,
+        user_id: str,
+        limit: int = 10,
+    ) -> List[tuple[UserCourseProgress, Course]]:
+        """Get user progress joined with course data in a single query."""
+        result = await db.execute(
+            select(UserCourseProgress, Course)
+            .join(Course, Course.id == UserCourseProgress.course_id)
+            .where(UserCourseProgress.user_id == user_id)
+            .order_by(desc(UserCourseProgress.last_activity_at))
+            .limit(limit)
+        )
+        return result.all()
+
     @staticmethod
     async def update_course_progress(
         db: AsyncSession,
@@ -63,15 +80,15 @@ class ProgressCRUD:
                 progress_percentage=progress_percentage,
                 lessons_completed=1,
                 total_xp_earned=xp_earned,
-                started_at=datetime.utcnow(),
-                last_activity_at=datetime.utcnow()
+                started_at=datetime.now(timezone.utc),
+                last_activity_at=datetime.now(timezone.utc)
             )
             db.add(progress)
         else:
             # Update existing progress
             progress.progress_percentage = progress_percentage
             progress.total_xp_earned += xp_earned
-            progress.last_activity_at = datetime.utcnow()
+            progress.last_activity_at = datetime.now(timezone.utc)
         
         await db.commit()
         await db.refresh(progress)
@@ -127,7 +144,7 @@ class ProgressCRUD:
                 old_passed = existing.is_passed
                 existing.best_score = score
                 existing.is_passed = is_passed
-                existing.completed_at = datetime.utcnow()
+                existing.completed_at = datetime.now(timezone.utc)
                 
                 # Award XP only if wasn't passed before but is now
                 if is_passed and not old_passed:
@@ -146,7 +163,7 @@ class ProgressCRUD:
                 lesson_id=lesson_id,
                 is_passed=is_passed,
                 best_score=score,
-                completed_at=datetime.utcnow()
+                completed_at=datetime.now(timezone.utc)
             )
             db.add(completion)
             

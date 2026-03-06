@@ -14,7 +14,7 @@ Phase 0 Infrastructure: Required by all content features.
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 
 from sqlalchemy import select
@@ -232,7 +232,7 @@ class APICacheService:
             if existing is not None:
                 existing.data = data_json
                 existing.api_name = api_name
-                existing.updated_at = datetime.utcnow()
+                existing.updated_at = datetime.now(timezone.utc)
                 existing.hit_count = (existing.hit_count or 0) + 1
             else:
                 entry = APICacheEntry(

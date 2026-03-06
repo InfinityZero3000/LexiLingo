@@ -25,8 +25,8 @@ Base = declarative_base()
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DB_ECHO,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_size=settings.effective_pool_size,
+    max_overflow=settings.effective_max_overflow,
     pool_pre_ping=True,  # Verify connections before using
 )
 

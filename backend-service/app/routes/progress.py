@@ -54,23 +54,23 @@ async def get_my_progress(
     # Get user stats
     stats = await ProgressCRUD.get_user_stats(db, str(current_user.id))
     
-    # Get all course progress
-    all_progress = await ProgressCRUD.get_all_user_progress(db, str(current_user.id))
+    # Get progress with course data in a single JOIN query (no N+1)
+    rows = await ProgressCRUD.get_user_progress_with_courses(
+        db, str(current_user.id), limit=10
+    )
     
     course_progress_list = []
-    for progress in all_progress[:10]:  # Limit to 10 most recent
-        course = await CourseCRUD.get_course(db, progress.course_id)
-        if course:
-            course_progress_list.append({
-                'course_id': str(course.id),
-                'course_title': course.title,
-                'progress_percentage': progress.progress_percentage,
-                'lessons_completed': progress.lessons_completed,
-                'total_lessons': course.total_lessons or 0,
-                'total_xp_earned': progress.total_xp_earned,
-                'started_at': progress.started_at,
-                'last_activity_at': progress.last_activity_at,
-            })
+    for progress, course in rows:
+        course_progress_list.append({
+            'course_id': str(course.id),
+            'course_title': course.title,
+            'progress_percentage': progress.progress_percentage,
+            'lessons_completed': progress.lessons_completed,
+            'total_lessons': course.total_lessons or 0,
+            'total_xp_earned': progress.total_xp_earned,
+            'started_at': progress.started_at,
+            'last_activity_at': progress.last_activity_at,
+        })
     
     response_data = {
         'summary': stats,

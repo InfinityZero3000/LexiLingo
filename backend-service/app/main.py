@@ -12,13 +12,14 @@ Architecture: Clean Architecture
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.redis import RedisClient
 from app.core.middleware import (
     RateLimitMiddleware,
     ErrorHandlerMiddleware,
@@ -77,10 +78,17 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
     
+    # Initialize Redis (rate limiting, token blacklist, caching)
+    try:
+        await RedisClient.connect()
+    except Exception as e:
+        logger.warning(f"Redis unavailable — rate limiting will use in-memory fallback: {e}")
+    
     yield
     
     # Shutdown
     logger.info("Shutting down...")
+    await RedisClient.close()
     await close_db()
     logger.info("Shutdown complete")
 
@@ -172,12 +180,25 @@ app.add_middleware(
 # 6. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
 app.add_middleware(PrivateNetworkAccessMiddleware)
 
-# 6. Rate Limiting - Prevent abuse (Phase 1: Security)
+# 7. Rate Limiting - Prevent abuse (Phase 1: Security)
 app.add_middleware(
     RateLimitMiddleware,
     requests_per_minute=60,
     requests_per_hour=1000
 )
+
+
+# ===== Request Body Size Limit (Phase 4) =====
+@app.middleware("http")
+async def limit_request_body(request: Request, call_next):
+    """Reject requests with bodies larger than MAX_REQUEST_BODY_BYTES."""
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > settings.MAX_REQUEST_BODY_BYTES:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={"detail": "Request body too large"},
+        )
+    return await call_next(request)
 
 # Include routers
 app.include_router(health_router, tags=["Health"])
@@ -222,10 +243,14 @@ async def root():
 
 
 if __name__ == "__main__":
+    import multiprocessing
     import uvicorn
+
+    workers = 1 if settings.DEBUG else (multiprocessing.cpu_count() * 2 + 1)
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=settings.PORT,
-        reload=settings.DEBUG
+        reload=settings.DEBUG,
+        workers=1 if settings.DEBUG else workers,
     )

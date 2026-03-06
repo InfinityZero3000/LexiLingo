@@ -533,7 +533,7 @@ async def claim_daily_bonus(
         data={
             "xp_reward": boosted_xp,
             "gems_reward": bonus_gems,
-            "claimed_at": datetime.utcnow().isoformat(),
+            "claimed_at": datetime.now(timezone.utc).isoformat(),
         }
     )
 
@@ -649,7 +649,7 @@ async def claim_challenge_reward(
             "xp_base": xp_reward,
             "xp_multiplier": multiplier,
             "gems_reward": gems_reward,
-            "claimed_at": datetime.utcnow().isoformat(),
+            "claimed_at": datetime.now(timezone.utc).isoformat(),
         }
     )
 

@@ -6,7 +6,7 @@ Blacklisted tokens are automatically expired based on their remaining TTL.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from app.core.redis import RedisClient
@@ -56,7 +56,7 @@ class TokenBlacklist:
         try:
             # Calculate TTL - either from token expiry or config default
             if expires_at:
-                ttl_seconds = int((expires_at - datetime.utcnow()).total_seconds())
+                ttl_seconds = int((expires_at - datetime.now(timezone.utc)).total_seconds())
                 # Add buffer to ensure blacklist outlives token
                 ttl_seconds = max(ttl_seconds + 60, 60)
             else:

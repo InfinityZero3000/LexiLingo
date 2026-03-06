@@ -8,7 +8,7 @@ Phase 0 Infrastructure: Required by APICacheService.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -57,12 +57,12 @@ class APICacheEntry(Base):
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False,
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
     
@@ -73,7 +73,7 @@ class APICacheEntry(Base):
         """Check if this entry is older than the given TTL."""
         if self.updated_at is None:
             return True
-        age = (datetime.utcnow() - self.updated_at).total_seconds()
+        age = (datetime.now(timezone.utc) - self.updated_at).total_seconds()
         return age > ttl_seconds
     
     @property
@@ -81,7 +81,7 @@ class APICacheEntry(Base):
         """Get age of this cache entry in seconds."""
         if self.updated_at is None:
             return float('inf')
-        return (datetime.utcnow() - self.updated_at).total_seconds()
+        return (datetime.now(timezone.utc) - self.updated_at).total_seconds()
     
     def __repr__(self) -> str:
         return (

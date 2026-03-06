@@ -8,14 +8,18 @@ when conditions are met. It's designed to be called after specific user actions.
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
+import logging
 from sqlalchemy import select, func, and_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.gamification import Achievement, UserAchievement, ChallengeRewardClaim
 from app.models.progress import UserCourseProgress, LessonCompletion, Streak, DailyActivity
 from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 # Mapping of triggers to achievement condition types
@@ -356,7 +360,7 @@ class AchievementCheckerService:
             return evaluator()
         
         # Unknown condition type - log warning and return False
-        print(f"Warning: Unknown achievement condition type: {condition_type}")
+        logger.warning("Unknown achievement condition type: %s", condition_type)
         return False
     
     async def _unlock_achievement(
@@ -366,34 +370,29 @@ class AchievementCheckerService:
     ) -> Optional[UserAchievement]:
         """
         Unlock achievement for user (idempotent).
-        Also awards XP and gems if configured.
+        Also awards gems if configured.
+        
+        Uses flush + IntegrityError to safely handle race conditions
+        where two concurrent requests try to unlock the same achievement.
         
         Returns UserAchievement if newly unlocked, None if already had.
         """
-        # Check if already unlocked (double-check for race conditions)
-        result = await self.db.execute(
-            select(UserAchievement).where(
-                and_(
-                    UserAchievement.user_id == user_id,
-                    UserAchievement.achievement_id == achievement.id
-                )
-            )
-        )
-        if result.scalar_one_or_none():
-            return None
-        
         # Create unlock record
         user_achievement = UserAchievement(
             user_id=user_id,
             achievement_id=achievement.id,
-            unlocked_at=datetime.utcnow()
+            unlocked_at=datetime.now(timezone.utc)
         )
         self.db.add(user_achievement)
         
-        # Note: XP reward is tracked via UserCourseProgress.total_xp_earned
-        # Achievement XP is already part of the achievement record for display
+        try:
+            await self.db.flush()
+        except IntegrityError:
+            # Another request already unlocked this — safe to ignore
+            await self.db.rollback()
+            return None
         
-        # Award gems (if WalletCRUD is available)
+        # Award gems (if configured)
         if achievement.gems_reward > 0:
             from app.crud.gamification import WalletCRUD
             await WalletCRUD.add_gems(
@@ -403,9 +402,6 @@ class AchievementCheckerService:
                 source="achievement",
                 description=f"Unlocked: {achievement.name}"
             )
-        
-        await self.db.commit()
-        await self.db.refresh(user_achievement)
         
         return user_achievement
 

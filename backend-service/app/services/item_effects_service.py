@@ -10,7 +10,7 @@ Handles activation and effects of shop items like:
 
 from typing import Optional, Dict, Any, Tuple, List
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 
@@ -99,8 +99,8 @@ class ItemEffectsService:
             if shop_item.effects and shop_item.effects.get('duration_hours'):
                 duration = shop_item.effects['duration_hours']
                 inventory.is_active = True
-                inventory.activated_at = datetime.utcnow()
-                inventory.expires_at = datetime.utcnow() + timedelta(hours=duration)
+                inventory.activated_at = datetime.now(timezone.utc)
+                inventory.expires_at = datetime.now(timezone.utc) + timedelta(hours=duration)
             
             await self.db.commit()
         
@@ -143,7 +143,7 @@ class ItemEffectsService:
         duration = effects.get('duration_hours', 1)
         multiplier = effects.get('multiplier', 2)
         
-        expires_at = datetime.utcnow() + timedelta(hours=duration)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=duration)
         
         return True, f"Double XP activated! {multiplier}x XP for {duration} hour(s)", {
             "multiplier": multiplier,
@@ -200,7 +200,7 @@ class ItemEffectsService:
         
         Returns list of active boosts with their effects and expiration times.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         result = await self.db.execute(
             select(UserInventory, ShopItem)
@@ -254,7 +254,7 @@ class ItemEffectsService:
         
         Returns number of boosts deactivated.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         result = await self.db.execute(
             update(UserInventory)
@@ -316,5 +316,5 @@ class DailyChallengeService:
             "xp_earned": xp_reward,
             "gems_earned": gems_reward,
             "challenge_id": challenge_id,
-            "claimed_at": datetime.utcnow().isoformat()
+            "claimed_at": datetime.now(timezone.utc).isoformat()
         }

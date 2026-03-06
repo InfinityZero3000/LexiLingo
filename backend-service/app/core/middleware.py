@@ -5,9 +5,9 @@ Phase 1 & 5: System Reliability & Security
 
 import time
 import logging
-from typing import Callable
+from typing import Callable, Dict, List, Optional
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
@@ -18,14 +18,27 @@ from app.schemas.common import ErrorResponse, ErrorDetail, RequestMeta, ErrorCod
 logger = logging.getLogger(__name__)
 
 
+# ── Sensitive endpoints that get stricter per-route limits ──
+_STRICT_RATE_LIMITS: Dict[str, int] = {
+    "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
+    "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
+    "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+}
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
-    Simple in-memory rate limiting middleware.
-    Phase 1: Protect against spam and brute force attacks.
-    
-    For production, consider using Redis for distributed rate limiting.
+    Distributed rate limiting middleware.
+
+    Uses Redis (via RedisClient singleton) for distributed counters when
+    available, falling back to in-memory counters so rate limiting still
+    works during Redis outages or local development without Redis.
+
+    Two tiers:
+      * Global: requests_per_minute / requests_per_hour (all endpoints)
+      * Strict: per-path override for sensitive endpoints (login, register…)
     """
-    
+
     def __init__(
         self,
         app,
@@ -35,74 +48,177 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.requests_per_hour = requests_per_hour
-        
-        # In-memory storage: {client_ip: [(timestamp, count), ...]}
-        self.request_counts_minute = defaultdict(list)
-        self.request_counts_hour = defaultdict(list)
-    
+
+        # In-memory fallback storage (used only when Redis is unavailable)
+        self._mem_minute: Dict[str, List[datetime]] = defaultdict(list)
+        self._mem_hour: Dict[str, List[datetime]] = defaultdict(list)
+
+    # ── helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    def _client_ip(request: Request) -> str:
+        # Respect X-Forwarded-For when behind a reverse proxy
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+
+    # ── Redis-backed counting ────────────────────────────────
+
+    async def _redis_check_and_increment(
+        self, redis_client, key: str, limit: int, window_seconds: int
+    ) -> tuple[bool, int]:
+        """
+        Atomically increment a sliding-window counter in Redis.
+        Returns (allowed: bool, current_count: int).
+        """
+        pipe = redis_client.pipeline(transaction=True)
+        try:
+            pipe.incr(key)
+            pipe.ttl(key)
+            results = await pipe.execute()
+            current = int(results[0])
+            ttl = int(results[1])
+
+            # First request in window — set expiry
+            if ttl == -1:
+                await redis_client.expire(key, window_seconds)
+
+            return current <= limit, current
+        except Exception as exc:
+            logger.debug(f"Redis rate-limit pipeline error: {exc}")
+            return True, 0  # fail-open
+
+    async def _check_redis(self, client_ip: str, path: str):
+        """
+        Check global + strict limits via Redis.
+        Returns (allowed, minute_remaining, hour_remaining) or None if Redis
+        is unavailable.
+        """
+        from app.core.redis import RedisClient
+        redis_client = await RedisClient.get_instance()
+        if redis_client is None:
+            return None
+
+        try:
+            now_minute = int(time.time() // 60)
+            now_hour = int(time.time() // 3600)
+
+            min_key = f"rl:min:{client_ip}:{now_minute}"
+            hr_key = f"rl:hr:{client_ip}:{now_hour}"
+
+            min_ok, min_count = await self._redis_check_and_increment(
+                redis_client, min_key, self.requests_per_minute, 60
+            )
+            hr_ok, hr_count = await self._redis_check_and_increment(
+                redis_client, hr_key, self.requests_per_hour, 3600
+            )
+
+            if not min_ok:
+                return False, 0, max(0, self.requests_per_hour - hr_count)
+            if not hr_ok:
+                return False, max(0, self.requests_per_minute - min_count), 0
+
+            # Strict per-path limit (login, register, etc.)
+            strict_limit = _STRICT_RATE_LIMITS.get(path)
+            if strict_limit is not None:
+                strict_key = f"rl:strict:{client_ip}:{path}:{now_minute}"
+                strict_ok, _ = await self._redis_check_and_increment(
+                    redis_client, strict_key, strict_limit, 60
+                )
+                if not strict_ok:
+                    return False, 0, max(0, self.requests_per_hour - hr_count)
+
+            return (
+                True,
+                max(0, self.requests_per_minute - min_count),
+                max(0, self.requests_per_hour - hr_count),
+            )
+        except Exception as exc:
+            logger.warning(f"Redis rate-limit check failed, falling back to memory: {exc}")
+            return None
+
+    # ── In-memory fallback ───────────────────────────────────
+
+    def _check_memory(self, client_ip: str, path: str):
+        """
+        Fallback in-memory rate limiting (single-instance only).
+        Returns (allowed, minute_remaining, hour_remaining).
+        """
+        now = datetime.now(timezone.utc)
+        one_min_ago = now - timedelta(minutes=1)
+        one_hr_ago = now - timedelta(hours=1)
+
+        # Prune stale entries
+        self._mem_minute[client_ip] = [
+            ts for ts in self._mem_minute[client_ip] if ts > one_min_ago
+        ]
+        self._mem_hour[client_ip] = [
+            ts for ts in self._mem_hour[client_ip] if ts > one_hr_ago
+        ]
+
+        min_count = len(self._mem_minute[client_ip])
+        hr_count = len(self._mem_hour[client_ip])
+
+        if min_count >= self.requests_per_minute:
+            return False, 0, max(0, self.requests_per_hour - hr_count)
+        if hr_count >= self.requests_per_hour:
+            return False, max(0, self.requests_per_minute - min_count), 0
+
+        # Strict per-path limit
+        strict_limit = _STRICT_RATE_LIMITS.get(path)
+        if strict_limit is not None:
+            path_key = f"{client_ip}:{path}"
+            self._mem_minute[path_key] = [
+                ts for ts in self._mem_minute.get(path_key, []) if ts > one_min_ago
+            ]
+            if len(self._mem_minute[path_key]) >= strict_limit:
+                return False, 0, max(0, self.requests_per_hour - hr_count)
+            self._mem_minute[path_key].append(now)
+
+        self._mem_minute[client_ip].append(now)
+        self._mem_hour[client_ip].append(now)
+
+        return (
+            True,
+            max(0, self.requests_per_minute - min_count - 1),
+            max(0, self.requests_per_hour - hr_count - 1),
+        )
+
+    # ── dispatch ─────────────────────────────────────────────
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Rate limit based on client IP."""
-        
-        # Get client IP
-        client_ip = request.client.host if request.client else "unknown"
-        
-        # Skip rate limiting for health checks and CORS preflight.
-        # Preflight should never be blocked; otherwise browser reports
-        # network-level "Failed to fetch" before the real request is sent.
+        """Rate limit based on client IP with Redis → memory fallback."""
+
+        # Skip preflight and health checks
         if request.method == "OPTIONS":
             return await call_next(request)
-
-        if request.url.path in ["/health", "/api/v1/health"]:
+        if request.url.path in ("/health", "/api/v1/health"):
             return await call_next(request)
-        
-        # Current time
-        now = datetime.utcnow()
-        one_minute_ago = now - timedelta(minutes=1)
-        one_hour_ago = now - timedelta(hours=1)
-        
-        # Clean old entries
-        self.request_counts_minute[client_ip] = [
-            ts for ts in self.request_counts_minute[client_ip]
-            if ts > one_minute_ago
-        ]
-        self.request_counts_hour[client_ip] = [
-            ts for ts in self.request_counts_hour[client_ip]
-            if ts > one_hour_ago
-        ]
-        
-        # Check rate limits
-        minute_count = len(self.request_counts_minute[client_ip])
-        hour_count = len(self.request_counts_hour[client_ip])
-        
-        if minute_count >= self.requests_per_minute:
-            logger.warning(f"Rate limit exceeded (minute) for IP: {client_ip}")
+
+        client_ip = self._client_ip(request)
+        path = request.url.path
+
+        # Try Redis first, fallback to memory
+        result = await self._check_redis(client_ip, path)
+        if result is None:
+            result = self._check_memory(client_ip, path)
+
+        allowed, min_remaining, hr_remaining = result
+
+        if not allowed:
+            logger.warning(f"Rate limit exceeded for IP: {client_ip} on {path}")
             return self._rate_limit_response(
-                f"Rate limit exceeded: {self.requests_per_minute} requests per minute"
+                "Too many requests. Please try again later."
             )
-        
-        if hour_count >= self.requests_per_hour:
-            logger.warning(f"Rate limit exceeded (hour) for IP: {client_ip}")
-            return self._rate_limit_response(
-                f"Rate limit exceeded: {self.requests_per_hour} requests per hour"
-            )
-        
-        # Record request
-        self.request_counts_minute[client_ip].append(now)
-        self.request_counts_hour[client_ip].append(now)
-        
-        # Add rate limit headers
+
         response = await call_next(request)
         response.headers["X-RateLimit-Limit-Minute"] = str(self.requests_per_minute)
-        response.headers["X-RateLimit-Remaining-Minute"] = str(
-            self.requests_per_minute - minute_count - 1
-        )
+        response.headers["X-RateLimit-Remaining-Minute"] = str(min_remaining)
         response.headers["X-RateLimit-Limit-Hour"] = str(self.requests_per_hour)
-        response.headers["X-RateLimit-Remaining-Hour"] = str(
-            self.requests_per_hour - hour_count - 1
-        )
-        
+        response.headers["X-RateLimit-Remaining-Hour"] = str(hr_remaining)
         return response
-    
+
     def _rate_limit_response(self, message: str) -> JSONResponse:
         """Return standardized rate limit error response."""
         error_response = ErrorResponse(
@@ -114,7 +230,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         )
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content=error_response.model_dump(mode="json")
+            content=error_response.model_dump(mode="json"),
+            headers={"Retry-After": "60"},
         )
 
 

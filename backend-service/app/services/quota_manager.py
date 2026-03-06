@@ -204,7 +204,7 @@ class QuotaManager:
     @classmethod
     def get_reset_time(cls) -> str:
         """Return human-readable time until daily quota resets (midnight UTC)."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         reset = (now + timedelta(days=1)).replace(
             hour=0, minute=0, second=0, microsecond=0
         )

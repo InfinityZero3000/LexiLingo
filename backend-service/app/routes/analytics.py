@@ -3,7 +3,7 @@ Admin Analytics Routes
 Endpoints for dashboard charts, user metrics, content performance, and vocabulary analytics.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ async def get_dashboard_kpis(
     total_users = await db.scalar(select(func.count(User.id)))
 
     # Active users in last 7 days
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
     active_users_7d = await db.scalar(
         select(func.count(func.distinct(DailyActivity.user_id)))
         .where(DailyActivity.activity_date >= seven_days_ago.date())
@@ -49,14 +49,14 @@ async def get_dashboard_kpis(
     )
 
     # Total lessons completed today
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     lessons_completed_today = await db.scalar(
         select(func.count(LessonCompletion.id))
         .where(func.date(LessonCompletion.completed_at) == today)
     )
 
     # Average DAU in last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     dau_data = await db.execute(
         select(
             DailyActivity.activity_date,
@@ -89,7 +89,7 @@ async def get_user_growth(
     Get user growth data for the specified number of days.
     Returns daily new users and cumulative total users.
     """
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).date()
     start_date = end_date - timedelta(days=days)
 
     # Get daily registrations
@@ -138,7 +138,7 @@ async def get_engagement(
     """
     Get DAU, WAU, MAU engagement metrics by week.
     """
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).date()
     start_date = end_date - timedelta(weeks=weeks)
 
     data = []
@@ -302,7 +302,7 @@ async def get_user_metrics(
     if end_date:
         end = datetime.fromisoformat(end_date).date()
     else:
-        end = datetime.utcnow().date()
+        end = datetime.now(timezone.utc).date()
 
     if start_date:
         start = datetime.fromisoformat(start_date).date()
@@ -382,7 +382,7 @@ async def get_retention_cohorts(
     Cohorts are grouped by signup week.
     """
     # Get cohorts from last 12 weeks
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).date()
     start_date = end_date - timedelta(weeks=12)
 
     # This is a simplified version - full implementation would require more complex queries
