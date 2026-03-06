@@ -112,3 +112,5 @@ temp/
 tmp/
 *_log.txtsha256-*
 
+mcp-server
+agent-skills

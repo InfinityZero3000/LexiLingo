@@ -13,10 +13,15 @@ from alembic import context
 
 # Import Base and all models for auto-detection
 from app.core.database import Base
+from app.core.config import settings
 from app.models import *  # Import all models
 
 # this is the Alembic Config object
 config = context.config
+
+# Override sqlalchemy.url from settings so Alembic always uses the same DB as the app.
+# This takes precedence over alembic.ini's sqlalchemy.url.
+config.set_main_option("sqlalchemy.url", settings.async_database_url)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
@@ -25,15 +30,10 @@ if config.config_file_name is not None:
 # add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    url = settings.async_database_url
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -54,8 +54,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
+    cfg = config.get_section(config.config_ini_section, {})
+    cfg["sqlalchemy.url"] = settings.async_database_url
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        cfg,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -75,3 +77,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

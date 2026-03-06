@@ -11,7 +11,8 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+      chmod +x scripts/entrypoint.sh
+    startCommand: bash scripts/entrypoint.sh
     healthCheckPath: /health
     
     # Auto-deploy on git push
@@ -30,10 +31,10 @@ services:
         # UPDATE THIS sau khi setup tunnel!
       
       # JWT Secret
-      - key: JWT_SECRET_KEY
+      - key: SECRET_KEY
         generateValue: true  # Auto-generate random secret
       
-      - key: JWT_ALGORITHM
+      - key: ALGORITHM
         value: HS256
       
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -53,9 +54,11 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://your-app.vercel.app,https://your-admin.netlify.app
         # UPDATE sau khi deploy frontend!
+      - key: CORS_ALLOW_ORIGIN_REGEX
+        value: https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?|https?://.*\.devtunnels\.ms(:\d+)?|https?://.*\.github\.dev(:\d+)?
       
       # Environment
-      - key: ENVIRONMENT
+      - key: APP_ENV
         value: production
       
       - key: LOG_LEVEL

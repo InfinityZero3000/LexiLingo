@@ -23,9 +23,9 @@
     }
   ],
   "env": {
-    "VITE_BACKEND_URL": "http://localhost:8000/api/v1",
-    "VITE_AI_URL": "http://localhost:8001/api/v1",
-    "VITE_GOOGLE_CLIENT_ID": "432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com",
+    "VITE_BACKEND_URL": "https://lexilingo-backend.onrender.com/api/v1",
+    "VITE_AI_URL": "https://lexilingo-ai.onrender.com/api/v1",
+    "VITE_GOOGLE_CLIENT_ID": "706480877582-4ukvcqqtbne4r1gmpddu6f0ia9lhaoq0.apps.googleusercontent.com",
     "VITE_ADMIN_EMAILS": "thefirestar312@gmail.com",
     "VITE_SUPER_ADMIN_EMAILS": "nhthang312@gmail.com",
     "VITE_APP_NAME": "LexiLingo Admin",

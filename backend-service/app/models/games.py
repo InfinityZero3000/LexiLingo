@@ -10,11 +10,11 @@ Models:
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text, JSON, Float, Index
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Float, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID
+from app.core.db_types import GUID, TZDateTime
 
 
 class GameWord(Base):
@@ -46,7 +46,7 @@ class GameWord(Base):
     letter_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     xp_value: Mapped[int] = mapped_column(Integer, default=10)  # Base XP for this word
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("idx_game_words_level_category", "cefr_level", "category"),
@@ -91,14 +91,14 @@ class GameSession(Base):
     duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True)  # Actual play time
 
     # Anti-cheat fields
-    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
+    completed_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
     xp_awarded: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Extra data (hints used, streak at time of game, etc.)
     session_data: Mapped[dict] = mapped_column(JSON, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("idx_game_sessions_user_type", "user_id", "game_type"),
@@ -144,7 +144,7 @@ class XPTransaction(Base):
     level_after: Mapped[int] = mapped_column(Integer, nullable=True)
     leveled_up: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     __table_args__ = (
         Index("idx_xp_transactions_user_created", "user_id", "created_at"),

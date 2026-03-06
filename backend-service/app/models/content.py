@@ -4,11 +4,11 @@ Content models for admin-managed grammar, questions, and test exams.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text, JSON, Index
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID
+from app.core.db_types import GUID, TZDateTime
 
 
 class GrammarItem(Base):
@@ -24,8 +24,8 @@ class GrammarItem(Base):
     tags: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of tags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     questions = relationship("QuestionItem", back_populates="grammar", lazy="noload")
 
@@ -52,8 +52,8 @@ class QuestionItem(Base):
         GUID(), ForeignKey("grammar_items.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     grammar = relationship("GrammarItem", back_populates="questions", lazy="selectin")
 
@@ -75,8 +75,8 @@ class TestExam(Base):
     question_ids: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of question UUIDs
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("ix_test_exams_level", "level"),

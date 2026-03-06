@@ -5,11 +5,11 @@ Phase 4: Integrated Gamification & Social Features
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text, JSON, Index, UniqueConstraint
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray
+from app.core.db_types import GUID, GUIDArray, TZDateTime
 
 
 class Achievement(Base):
@@ -48,7 +48,7 @@ class Achievement(Base):
     rarity: Mapped[str] = mapped_column(String(20), default="common")  # common, rare, epic, legendary
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)  # Hidden until unlocked
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<Achievement {self.name}>"
@@ -85,7 +85,7 @@ class UserAchievement(Base):
         index=True
     )
     
-    unlocked_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    unlocked_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     progress: Mapped[int] = mapped_column(Integer, default=0)  # For progressive achievements
     is_showcased: Mapped[bool] = mapped_column(Boolean, default=False)  # Display on profile
     
@@ -119,9 +119,9 @@ class UserWallet(Base):
     total_gems_earned: Mapped[int] = mapped_column(Integer, default=0)
     total_gems_spent: Mapped[int] = mapped_column(Integer, default=0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -167,7 +167,7 @@ class WalletTransaction(Base):
     reference_id: Mapped[str] = mapped_column(String(255), nullable=True)  # ID of related entity
     description: Mapped[str] = mapped_column(Text, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     def __repr__(self) -> str:
         return f"<WalletTransaction {self.transaction_type} {self.amount}>"
@@ -195,8 +195,8 @@ class LeaderboardEntry(Base):
     )
     
     # Weekly competition
-    week_start: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    week_end: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    week_start: Mapped[datetime] = mapped_column(TZDateTime, nullable=False, index=True)
+    week_end: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     
     # League system
     league: Mapped[str] = mapped_column(String(20), default="bronze")  # bronze, silver, gold, platinum, diamond
@@ -210,9 +210,9 @@ class LeaderboardEntry(Base):
     is_promoted: Mapped[bool] = mapped_column(Boolean, default=False)
     is_demoted: Mapped[bool] = mapped_column(Boolean, default=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -252,7 +252,7 @@ class UserFollowing(Base):
         index=True
     )
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<UserFollowing {self.follower_id} -> {self.following_id}>"
@@ -290,7 +290,7 @@ class ActivityFeed(Base):
     # Visibility
     is_public: Mapped[bool] = mapped_column(Boolean, default=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     def __repr__(self) -> str:
         return f"<ActivityFeed {self.activity_type} by {self.user_id}>"
@@ -326,7 +326,7 @@ class ShopItem(Base):
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
     stock_quantity: Mapped[int] = mapped_column(Integer, nullable=True)  # Null = unlimited
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<ShopItem {self.name} - {self.price_gems} gems>"
@@ -363,10 +363,10 @@ class UserInventory(Base):
     
     # Usage tracking
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)  # For time-based items
-    activated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    activated_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
     
-    purchased_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    purchased_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<UserInventory user={self.user_id} item={self.shop_item_id} qty={self.quantity}>"
@@ -394,12 +394,12 @@ class ChallengeRewardClaim(Base):
     )
     
     challenge_id: Mapped[str] = mapped_column(String(100), nullable=False)  # Challenge template ID
-    claim_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)  # Date of claim (for daily reset)
+    claim_date: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)  # Date of claim (for daily reset)
     
     xp_reward: Mapped[int] = mapped_column(Integer, default=0)
     gems_reward: Mapped[int] = mapped_column(Integer, default=0)
     
-    claimed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    claimed_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index('idx_challenge_claim_user_date', 'user_id', 'challenge_id', 'claim_date', unique=True),

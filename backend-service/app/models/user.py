@@ -5,11 +5,11 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, Integer, ForeignKey
+from sqlalchemy import String, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID
+from app.core.db_types import GUID, TZDateTime
 
 
 class User(Base):
@@ -81,13 +81,13 @@ class User(Base):
         return self.role_level >= 2
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
-    last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    last_login: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
     last_login_ip: Mapped[str] = mapped_column(String(50), nullable=True)
     
     def __repr__(self) -> str:
@@ -116,8 +116,8 @@ class UserDevice(Base):
     device_type: Mapped[str] = mapped_column(String(20), nullable=False)  # ios, android, web
     device_name: Mapped[str] = mapped_column(String(100), nullable=True)
     
-    last_active: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_active: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<UserDevice {self.device_type} - {self.device_id[:8]}>"
@@ -146,9 +146,9 @@ class RefreshToken(Base):
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
     
-    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    revoked_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    revoked_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
     
     def __repr__(self) -> str:
         return f"<RefreshToken {self.token[:16]}...>"
