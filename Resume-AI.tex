@@ -1,0 +1,155 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[pdftex]{hyperref}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.375in}
+\addtolength{\evensidemargin}{-0.375in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[2]{
+  \item\small{
+    \textbf{#1}{: #2 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1pt}\item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\newcommand{\resumeSubItem}[2]{\resumeItem{#1}{#2}\vspace{-4pt}}
+
+\renewcommand{\labelitemii}{$\circ$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=*]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  CV STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%----------HEADING-----------------
+\begin{center}
+    {\Huge \textbf{Nguyen Huu Thang}} \\[6pt]
+    {\large \textbf{Software Engineer Intern}} \\[10pt]
+
+    Email: \href{mailto:nhthang312@gmail.com}{nhthang312@gmail.com}
+    \ $|$\ 
+    Phone: +84 84993 3375
+    \\ 
+    GitHub: \href{https://github.com/InfinityZero3000}{github.com/InfinityZero3000}
+    \ $|$\ 
+    Portfolio: \href{https://zero.vercel.app}{zero3000.vercel.app}
+\end{center}
+
+%-----------CAREER OBJECTIVE----------
+\section{Career Objective}
+Software Engineering student seeking a Software Engineer Internship where I can grow into a strong, production-ready engineer. I have built end-to-end products and have hands-on experience integrating LLMs and knowledge graphs into real services. My goal is to deepen my skills in system design, reliability, testing, and deployment, learn from experienced teammates, and contribute measurable improvements to user-facing features and engineering quality.
+
+%-----------EDUCATION-----------------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Ho Chi Minh City University of Industry and Trade (HUIT)}{Ho Chi Minh City, VN}
+      {Bachelor of Information Technology; Major: Software Engineering; GPA: 3.0/4.0}{Sep 2023 -- Present}
+  \resumeSubHeadingListEnd
+
+%-----------SKILLS-----------------
+\section{Skills}
+ \resumeSubHeadingListStart
+    \item{
+     \textbf{Languages}{: Python, Dart, SQL, JavaScript/TypeScript, C++}
+    }
+    \item{
+     \textbf{Frameworks}{: FastAPI, Flutter, React, LangGraph, HuggingFace Transformers}
+    }
+    \item{
+     \textbf{AI/ML}{: LLM integration, LoRA fine-tuning, Knowledge Graphs (KuzuDB), Vision Transformer }
+    }
+    \item{
+     \textbf{Tools \& Infra}{: Git/GitHub, Docker, PostgreSQL, MongoDB, Redis, Firebase, Swagger}
+    }
+ \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------------
+\section{Projects}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {LexiLingo – AI Language Learning Platform}
+      {GitHub: \href{https://github.com/InfinityZero3000/LexiLingo}{Link}}
+      {Personal Project | Python, FastAPI, Flutter, PostgreSQL, LangGraph}
+      {AI / Mobile Development}
+        \resumeItemListStart
+          \resumeItem{AI Pipeline GraphCAG (Self-developed - not yet published)}{
+            Built a LangGraph StateGraph tutoring pipeline with cache gating, KG expansion, diagnosis, retrieval, generation, and conditional routing.
+          }
+          \resumeItem{Reliability \& Observability}{
+            Implemented Redis-backed chat session storage with in-memory fallback for local dev, plus structured per-request metadata (pipeline steps, models used, end-to-end latency) to support profiling and debugging.
+          }
+          \resumeItem{Architecture}{
+            Structured the project as two FastAPI services (backend + AI), a Flutter cross-platform app, and a React admin dashboard. Implemented Firebase Auth, async PostgreSQL (SQLAlchemy), Redis caching.
+          }
+          \resumeItem{Voice \& LLM Integration}{
+           Integrated Whisper STT via the ModelGateway for voice input and gTTS for speech output; added an automatic fallback to a standalone LLM when the GraphCAG pipeline is unavailable; built a Piper TTS handler and LoRA/PEFT infrastructure for adapter loading and training-data curation/export.
+          }
+    \resumeItemListEnd
+    
+    \resumeSubheading
+      {Hybrid CNN-CBAM-ViT for Skin Cancer Classification}{GitHub: \href{https://github.com/InfinityZero3000/Skincancer_classification}{Link}}
+      {Research Project | Python, TensorFlow, Computer Vision}{Deep Learning / Computer Vision}
+      \resumeItemListStart
+        \resumeItem{Novel Architecture}{Developed a hybrid model combining CNN (local features), CBAM (spatial/channel attention), and Vision Transformer (ViT) for global context.}
+        \resumeItem{Performance}{Achieved \textbf{92.49\% F1-score} and \textbf{92.65\% accuracy} on ISIC validation datasets.}
+        \resumeItem{Generalization}{Tested on clinical image datasets with sustained \textbf{70\%+} average accuracy, outperforming baseline CNN models.}
+            \resumeItem{Contribution}{Iterated on the attention-enhanced pipeline and evaluation workflow to reduce false negatives and improve early-stage diagnosis support.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------ACTIVITIES-----------------
+\section{Activities}
+  \resumeSubHeadingListStart
+    \resumeSubItem{Data Science Challenge Finalist}{
+  Reached the final round in a Data Science competition. Contributed to data preprocessing, feature analysis, and model evaluation, and presented the approach and results to judges. Certificate: \href{https://raw.githubusercontent.com/InfinityZero3000/Portfolio_zero/refs/heads/main/public/Data-Science-Certificate.png}{Link}}
+    \resumeSubItem{Research Member}{Aspect-Based Sentiment Analysis using Knowledge Graphs. University-Level Project (Jul 2025 – Jun 2026)}
+  \resumeSubHeadingListEnd
+
+%-------------------------------------------
+\end{document}
