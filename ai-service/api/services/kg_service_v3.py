@@ -77,7 +77,7 @@ class KnowledgeGraphServiceV3:
     def _ensure_schema(self) -> None:
         # Create tables if they do not exist.
         statements = [
-            "CREATE NODE TABLE IF NOT EXISTS Concept(id STRING, title STRING, keywords STRING, PRIMARY KEY(id))",
+            "CREATE NODE TABLE IF NOT EXISTS Concept(id STRING, title STRING, keywords STRING, level STRING DEFAULT 'B1', PRIMARY KEY(id))",
             "CREATE NODE TABLE IF NOT EXISTS User(id STRING, PRIMARY KEY(id))",
             "CREATE REL TABLE IF NOT EXISTS Edge(FROM Concept TO Concept, relation STRING)",
             "CREATE REL TABLE IF NOT EXISTS Mastery(FROM User TO Concept, score DOUBLE)",
@@ -88,6 +88,11 @@ class KnowledgeGraphServiceV3:
             except Exception:
                 # Ignore schema creation errors if already exists
                 continue
+        # Add level column to existing Concept table if it was created without it
+        try:
+            self._conn.execute("ALTER TABLE Concept ADD level STRING DEFAULT 'B1'")
+        except Exception:
+            pass  # column already exists
 
     def _seed_default_graph(self) -> None:
         """
@@ -338,14 +343,17 @@ class KnowledgeGraphServiceV3:
             ],
         }
 
-        # Insert nodes
+        # Insert nodes (with level)
         for node_id, meta in nodes.items():
             title = meta.get("title", "")
             keywords = meta.get("keywords", "")
+            level = meta.get("level", "B1")
             try:
                 self._conn.execute(
-                    "MERGE (c:Concept {id: $id, title: $title, keywords: $keywords})",
-                    {"id": node_id, "title": title, "keywords": keywords},
+                    "MERGE (c:Concept {id: $id}) "
+                    "ON CREATE SET c.title = $title, c.keywords = $keywords, c.level = $level "
+                    "ON MATCH SET c.title = $title, c.keywords = $keywords, c.level = $level",
+                    {"id": node_id, "title": title, "keywords": keywords, "level": level},
                 )
             except Exception:
                 continue
@@ -365,12 +373,13 @@ class KnowledgeGraphServiceV3:
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         concepts: Dict[str, Dict[str, str]] = {}
         try:
-            result = self._conn.execute("MATCH (c:Concept) RETURN c.id, c.title, c.keywords")
+            result = self._conn.execute("MATCH (c:Concept) RETURN c.id, c.title, c.keywords, c.level")
             while result.has_next():  # type: ignore[union-attr]
                 row: list = result.get_next()  # type: ignore[union-attr]
                 concepts[row[0]] = {
                     "title": row[1],
                     "keywords": row[2] or "",
+                    "level": row[3] or "B1",
                 }
         except Exception:
             return concepts
@@ -387,15 +396,91 @@ class KnowledgeGraphServiceV3:
             for seed in seed_nodes:
                 result = self._conn.execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $seed RETURN b.id, e.relation",
+                    "WHERE a.id = $seed RETURN b.id, e.relation, b.level",
                     {"seed": seed},
                 )
                 while result.has_next():  # type: ignore[union-attr]
                     row: list = result.get_next()  # type: ignore[union-attr]
-                    expanded_nodes.append(KGExpandedNode(id=row[0], type=row[1], properties={"relation": row[1]}))
+                    expanded_nodes.append(KGExpandedNode(
+                        id=row[0], type=row[1],
+                        properties={"relation": row[1], "level": row[2] or "B1"},
+                    ))
                     paths.append(KGPath(nodes=[seed, row[0]], edges=[row[1]]))
         except Exception:
             return KGHits(seed_nodes=seed_nodes, expanded_nodes=[], paths=[])
+
+        return KGHits(seed_nodes=seed_nodes, expanded_nodes=expanded_nodes, paths=paths)
+
+    async def expand_best_first(
+        self,
+        seed_nodes: List[str],
+        learner_level: str = "B1",
+        max_hops: int = 2,
+        max_nodes: int = 10,
+    ) -> KGHits:
+        """
+        Level-aware best-first graph expansion (paper Alg. 4).
+
+        Uses PedWeight priority: concepts at the learner's level get
+        highest priority (1.0), ±1 level get 0.7, others 0.3.
+        """
+        import heapq
+
+        CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+        learner_ord = CEFR_ORD.get(learner_level, 3)
+
+        def ped_weight(neighbor_level: str) -> float:
+            n_ord = CEFR_ORD.get(neighbor_level, 3)
+            diff = abs(n_ord - learner_ord)
+            if diff == 0:
+                return 1.0
+            elif diff == 1:
+                return 0.7
+            return 0.3
+
+        expanded_nodes: List[KGExpandedNode] = []
+        paths: List[KGPath] = []
+        visited: set = set(seed_nodes)
+
+        if not seed_nodes:
+            return KGHits(seed_nodes=[], expanded_nodes=[], paths=[])
+
+        # Priority queue: (-weight, hop_depth, concept_id, parent_id, relation)
+        # Negate weight because heapq is a min-heap
+        frontier: list = []
+        for s in seed_nodes:
+            heapq.heappush(frontier, (-1.0, 0, s, None, None))
+
+        try:
+            while frontier and len(expanded_nodes) < max_nodes:
+                neg_w, depth, cid, parent, rel = heapq.heappop(frontier)
+
+                if depth > 0:  # don't add seeds themselves as expanded
+                    expanded_nodes.append(KGExpandedNode(
+                        id=cid, type=rel or "related_to",
+                        properties={"relation": rel or "related_to", "depth": depth},
+                    ))
+                    if parent:
+                        paths.append(KGPath(nodes=[parent, cid], edges=[rel or "related_to"]))
+
+                if depth >= max_hops:
+                    continue
+
+                # Expand neighbors
+                result = self._conn.execute(
+                    "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
+                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level",
+                    {"cid": cid},
+                )
+                while result.has_next():  # type: ignore[union-attr]
+                    row = result.get_next()  # type: ignore[union-attr]
+                    neighbor_id, edge_rel, neighbor_level = row[0], row[1], row[2] or "B1"
+                    if neighbor_id not in visited:
+                        visited.add(neighbor_id)
+                        w = ped_weight(neighbor_level)
+                        heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
+        except Exception as e:
+            logger.warning(f"[KG] expand_best_first error: {e}")
 
         return KGHits(seed_nodes=seed_nodes, expanded_nodes=expanded_nodes, paths=paths)
 

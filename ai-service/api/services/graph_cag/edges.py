@@ -56,9 +56,12 @@ def should_generate_tts(state: GraphCAGState) -> Literal["tts_node", "end"]:
 
 def check_cache_hit(state: GraphCAGState) -> Literal["cache_hit", "process"]:
     """
-    Check if we have a cached response.
-    Called early in the pipeline.
+    RAPID cache gate (paper Alg. 1).
+
+    Both 'reuse' and 'patch' decisions are considered cache hits —
+    the ternary decision was already resolved inside cache_gate_node.
     """
-    if state.get("cache_hit"):
+    decision = state.get("cache_decision", "full")
+    if decision in ("reuse", "patch"):
         return "cache_hit"
     return "process"

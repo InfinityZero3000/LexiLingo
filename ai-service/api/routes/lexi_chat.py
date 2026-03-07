@@ -287,7 +287,7 @@ async def _get_lexi_llm_response(messages: List[Dict[str, str]]) -> tuple[str, s
 
     # ── 3. Ollama local (offline fallback) ──
     ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
+    ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(

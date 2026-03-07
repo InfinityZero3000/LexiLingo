@@ -41,6 +41,28 @@ class VectorHit(TypedDict):
     content: str
 
 
+class CacheFingerprint(TypedDict, total=False):
+    """Fingerprint for PCC-aware cache keying (paper Alg. 1)."""
+    query_norm: str          # normalized user input
+    intent: str              # diagnosed intent
+    level: str               # CEFR level
+    root_concepts: List[str] # root-cause concept IDs
+    session_turn: int        # turn number within session
+
+
+class CacheEntry(TypedDict, total=False):
+    """Structured cache entry ⟨F, P_c, R, B, σ, t_c⟩ (paper §4.1)."""
+    fingerprint: CacheFingerprint
+    profile_snapshot: Dict[str, Any]   # P_c: profile at creation time
+    response: str                      # R: tutor response text
+    evidence_bundle: List[Dict[str, Any]]  # B: KG snippets, examples
+    execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
+    diagnosis_errors: List[Dict[str, Any]]
+    overall_score: float
+    created_at: float                  # t_c: timestamp (monotonic)
+    ttl: int                           # seconds
+
+
 class GraphCAGState(TypedDict, total=False):
     """
     Central state for GraphCAG pipeline.
@@ -107,6 +129,13 @@ class GraphCAGState(TypedDict, total=False):
     tts_audio_bytes: Optional[bytes]
     tts_audio_url: Optional[str]
     
+    # ============================================
+    # RAPID Cache Control (paper §4.1)
+    # ============================================
+    cache_fingerprint: Optional[CacheFingerprint]
+    cache_decision: str  # "reuse" | "patch" | "full"
+    reuse_risk: float    # ρ ∈ [0,1] from Eq. 2
+
     # ============================================
     # Metadata
     # ============================================
@@ -190,6 +219,11 @@ def create_initial_state(
         # TTS
         tts_audio_bytes=None,
         tts_audio_url=None,
+
+        # RAPID cache control
+        cache_fingerprint=None,
+        cache_decision="full",
+        reuse_risk=1.0,
         
         # Metadata
         cache_policy=cache_policy,

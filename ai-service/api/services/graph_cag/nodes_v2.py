@@ -19,17 +19,186 @@ import json
 import hashlib
 from typing import Dict, Any, List, Optional
 
-from api.services.graph_cag.state import GraphCAGState, DiagnosisError
+from api.services.graph_cag.state import (
+    GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry,
+)
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# IN-PROCESS CACHE (Fallback when Redis is unavailable)
+# CEFR LEVEL UTILITIES
 # ============================================================
 
-_MEM_RESPONSE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+_CEFR_ORD: Dict[str, int] = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+
+
+def _cefr_distance(a: str, b: str) -> int:
+    """Absolute ordinal distance between two CEFR levels."""
+    return abs(_CEFR_ORD.get(a, 3) - _CEFR_ORD.get(b, 3))
+
+
+# ============================================================
+# PCC RISK SCORING (paper §4.1, Eq. 2)
+# ============================================================
+
+# Reuse-risk weights (tunable, sum to ~1.0)
+_W_INTENT = 0.30     # w1: intent mismatch (0/1)
+_W_CONCEPT = 0.25    # w2: concept drift (1-Jaccard)
+_W_LEVEL = 0.20      # w3: normalized level drift
+_W_PROGRESS = 0.10   # w4: profile progress drift
+_W_STALENESS = 0.15  # w5: staleness ratio
+
+# Thresholds for ternary decision
+_TAU_REUSE = 0.25    # τ₀: max risk for direct reuse
+_TAU_PATCH = 0.55    # τ₁: max risk for delta patching
+
+
+def _compute_reuse_risk(
+    fingerprint: CacheFingerprint,
+    entry: CacheEntry,
+    now: float,
+) -> float:
+    """
+    Compute scalar reuse risk ρ ∈ [0, 1] (paper Eq. 2).
+
+    ρ = clip[0,1]( w1·ΔI + w2·ΔC + w3·Δℓ + w4·Δprog + w5·s )
+    """
+    # ΔI: intent mismatch (binary)
+    cached_plan = entry.get("execution_plan") or {}
+    delta_i = 0.0 if fingerprint.get("intent", "unknown") == cached_plan.get("intent", "unknown") else 1.0
+
+    # ΔC: concept drift (1 - Jaccard)
+    cur_concepts = set(fingerprint.get("root_concepts") or [])
+    cached_concepts = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
+    if cur_concepts or cached_concepts:
+        jaccard = len(cur_concepts & cached_concepts) / max(len(cur_concepts | cached_concepts), 1)
+        delta_c = 1.0 - jaccard
+    else:
+        delta_c = 0.0  # both empty — no drift
+
+    # Δℓ: normalized level drift
+    cur_level = fingerprint.get("level", "B1")
+    cached_level = (entry.get("fingerprint") or {}).get("level", "B1")
+    delta_l = _cefr_distance(cur_level, cached_level) / 5.0  # max distance = 5
+
+    # Δprog: profile progress drift (session turn difference, normalized)
+    cur_turn = fingerprint.get("session_turn", 0)
+    cached_turn = (entry.get("fingerprint") or {}).get("session_turn", 0)
+    delta_prog = min(abs(cur_turn - cached_turn) / 10.0, 1.0)
+
+    # s: staleness ratio
+    created = entry.get("created_at", now)
+    ttl = entry.get("ttl", 3600)
+    staleness = min((now - created) / max(ttl, 1), 1.0)
+
+    rho = (
+        _W_INTENT * delta_i
+        + _W_CONCEPT * delta_c
+        + _W_LEVEL * delta_l
+        + _W_PROGRESS * delta_prog
+        + _W_STALENESS * staleness
+    )
+    return max(0.0, min(1.0, rho))
+
+
+def _build_fingerprint(state: GraphCAGState) -> CacheFingerprint:
+    """Build a cache fingerprint from current pipeline state."""
+    return CacheFingerprint(
+        query_norm=state.get("user_input", "").strip().lower(),
+        intent=state.get("diagnosis_intent", "unknown"),
+        level=state.get("learner_profile", {}).get("level", "B1"),
+        root_concepts=state.get("diagnosis_root_causes", []),
+        session_turn=len(state.get("conversation_history", [])),
+    )
+
+
+def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
+    """
+    Delta-patch a cached response for moderate drift (paper Alg. 1 line 13).
+
+    Applies lightweight adjustments:
+    - Re-target CEFR level vocabulary hints
+    - Append changed concept references
+    """
+    response = entry.get("response", "")
+    plan = entry.get("execution_plan") or {}
+
+    # Adjust level reference if level drifted by 1
+    cached_level = (entry.get("fingerprint") or {}).get("level", "B1")
+    cur_level = fingerprint.get("level", "B1")
+    if cached_level != cur_level:
+        response = response.replace(f"({cached_level})", f"({cur_level})")
+
+    # Append new concept references not in original evidence
+    cur_concepts = set(fingerprint.get("root_concepts") or [])
+    cached_concepts = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
+    new_concepts = cur_concepts - cached_concepts
+    if new_concepts:
+        extras = ", ".join(c.split(".")[-1].replace("_", " ") for c in new_concepts)
+        response += f"\n\n(Also related: {extras})"
+
+    return response
+
+
+# ============================================================
+# IN-PROCESS CACHE (Structured CacheEntry, fallback when Redis unavailable)
+# ============================================================
+
+_MEM_RESPONSE_CACHE: dict[str, tuple[float, CacheEntry]] = {}
 _MEM_RESPONSE_CACHE_MAX_ITEMS = 1024
+
+
+async def _write_cache_entry(
+    state: GraphCAGState,
+    response: str,
+    strategy: str,
+    errors: list,
+    overall_score: float,
+    context: str = "",
+) -> None:
+    """Write a structured CacheEntry to both in-process and Redis caches."""
+    user_input = state.get("user_input", "")
+    level = state.get("learner_profile", {}).get("level", "B1")
+
+    normalized = user_input.strip().lower()
+    cache_raw = f"{normalized}||{level}"
+    cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+
+    ttl = 3600 if errors else 1800
+    now = time.monotonic()
+
+    entry = CacheEntry(
+        fingerprint=_build_fingerprint(state),
+        profile_snapshot=dict(state.get("learner_profile", {})),
+        response=response,
+        evidence_bundle=[
+            {"type": "kg", "content": c}
+            for c in (context or "").split("\n") if c.strip()
+        ],
+        execution_plan={
+            "strategy": strategy,
+            "intent": state.get("diagnosis_intent", "correct"),
+        },
+        diagnosis_errors=[dict(e) for e in errors] if errors else [],
+        overall_score=overall_score,
+        created_at=now,
+        ttl=ttl,
+    )
+
+    # In-process cache
+    if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
+        _MEM_RESPONSE_CACHE.clear()
+    _MEM_RESPONSE_CACHE[cache_key] = (now + ttl, entry)
+
+    # Redis
+    try:
+        from api.core.redis_client import RedisClient
+        redis_client = await RedisClient.get_instance()
+        await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
+        logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
+    except Exception as e:
+        logger.debug(f"[_write_cache_entry] Redis write failed: {e}")
 
 
 # ============================================================
@@ -115,75 +284,151 @@ async def input_node(state: GraphCAGState) -> Dict[str, Any]:
 
 async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Check Redis for a cached response before running the full pipeline.
-    
-    Cache key = MD5(normalized_input || learner_level || top_3_concepts)
-    If hit → sets cache_hit=True, tutor_response, path="fast"
-    If miss → sets cache_hit=False, path="slow"
+    RAPID Risk-Aware Cache Gate (paper Alg. 1).
+
+    Ternary decision:
+      reuse  — ρ ≤ τ₀ and PCC-valid   → return cached response directly
+      patch  — ρ ≤ τ₁ and PCC-patchable → delta-patch cached response
+      full   — otherwise                → run full pipeline
+
+    Cache key = MD5(normalized_input || level)
+    Structured entry stores ⟨F, P_c, R, B, σ, t_c⟩
     """
-    logger.info("[cache_gate_node] Checking response cache...")
+    logger.info("[cache_gate_node] RAPID risk-aware cache check...")
 
     cache_policy = state.get("cache_policy", "on")
     if cache_policy != "on":
         return {
             "cache_hit": False,
+            "cache_decision": "full",
+            "reuse_risk": 1.0,
             "path": "slow",
         }
-    
+
     user_input = state.get("user_input", "")
     level = state.get("learner_profile", {}).get("level", "B1")
-    
-    # Build cache key
+
+    # Build lightweight fingerprint (pre-diagnosis: intent/root_concepts unknown)
+    fingerprint = CacheFingerprint(
+        query_norm=user_input.strip().lower(),
+        intent="unknown",  # not yet diagnosed
+        level=level,
+        root_concepts=[],
+        session_turn=len(state.get("conversation_history", [])),
+    )
+
+    # Cache key (compatible with v1 scheme)
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
 
-    # In-process cache fallback
+    # --- Try in-process cache ---
     now = time.monotonic()
     mem_entry = _MEM_RESPONSE_CACHE.get(cache_key)
     if mem_entry:
-        expires_at, cached = mem_entry
+        expires_at, entry = mem_entry
         if expires_at > now:
-            logger.info(f"[cache_gate_node] In-process cache HIT for key {cache_key[:8]}...")
-            return {
-                "cache_hit": True,
-                "tutor_response": cached.get("tutor_response", ""),
-                "strategy": cached.get("strategy", "feedback"),
-                "diagnosis_errors": cached.get("diagnosis_errors", []),
-                "overall_score": cached.get("overall_score", 0.8),
-                "path": "fast",
-                "models_used": ["response_cache_mem"],
-            }
+            rho = _compute_reuse_risk(fingerprint, entry, now)
+            logger.info(f"[cache_gate_node] In-mem HIT key={cache_key[:8]} ρ={rho:.3f}")
+
+            if rho <= _TAU_REUSE:
+                return {
+                    "cache_hit": True,
+                    "cache_decision": "reuse",
+                    "reuse_risk": rho,
+                    "cache_fingerprint": fingerprint,
+                    "tutor_response": entry.get("response", ""),
+                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                    "diagnosis_errors": entry.get("diagnosis_errors", []),
+                    "overall_score": entry.get("overall_score", 0.8),
+                    "path": "fast",
+                    "models_used": ["rapid_reuse_mem"],
+                }
+            elif rho <= _TAU_PATCH:
+                patched = _patch_response(entry, fingerprint)
+                return {
+                    "cache_hit": True,
+                    "cache_decision": "patch",
+                    "reuse_risk": rho,
+                    "cache_fingerprint": fingerprint,
+                    "tutor_response": patched,
+                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                    "diagnosis_errors": entry.get("diagnosis_errors", []),
+                    "overall_score": entry.get("overall_score", 0.8),
+                    "path": "fast",
+                    "models_used": ["rapid_patch_mem"],
+                }
+            # else: risk too high → fall through to full pipeline
         else:
             _MEM_RESPONSE_CACHE.pop(cache_key, None)
-    
+
+    # --- Try Redis ---
     try:
         from api.core.redis_client import RedisClient
-        
+
         redis_client = await RedisClient.get_instance()
         cached_json = await redis_client.get(f"v1:resp:{cache_key}")
-        
+
         if cached_json:
-            import json as _json
-            cached = _json.loads(cached_json)
-            logger.info(f"[cache_gate_node] Cache HIT for key {cache_key[:8]}...")
-            # Also populate in-process cache for resilience
-            _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + 3600, cached)
-            return {
-                "cache_hit": True,
-                "tutor_response": cached.get("tutor_response", ""),
-                "strategy": cached.get("strategy", "feedback"),
-                "diagnosis_errors": cached.get("diagnosis_errors", []),
-                "overall_score": cached.get("overall_score", 0.8),
-                "path": "fast",
-                "models_used": ["response_cache"],
+            raw = json.loads(cached_json)
+            # Upgrade legacy response-only entries to CacheEntry shape
+            entry: CacheEntry = {
+                "fingerprint": raw.get("fingerprint", {"level": level}),
+                "profile_snapshot": raw.get("profile_snapshot", {}),
+                "response": raw.get("response", raw.get("tutor_response", "")),
+                "evidence_bundle": raw.get("evidence_bundle", []),
+                "execution_plan": raw.get("execution_plan", {"strategy": raw.get("strategy", "feedback")}),
+                "diagnosis_errors": raw.get("diagnosis_errors", []),
+                "overall_score": raw.get("overall_score", 0.8),
+                "created_at": raw.get("created_at", now - 60),
+                "ttl": raw.get("ttl", 3600),
             }
+
+            rho = _compute_reuse_risk(fingerprint, entry, now)
+            logger.info(f"[cache_gate_node] Redis HIT key={cache_key[:8]} ρ={rho:.3f}")
+
+            # Populate in-process cache for resilience
+            ttl_remaining = max(entry["ttl"] - (now - entry.get("created_at", now)), 60)
+            _MEM_RESPONSE_CACHE[cache_key] = (now + ttl_remaining, entry)
+
+            if rho <= _TAU_REUSE:
+                return {
+                    "cache_hit": True,
+                    "cache_decision": "reuse",
+                    "reuse_risk": rho,
+                    "cache_fingerprint": fingerprint,
+                    "tutor_response": entry["response"],
+                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                    "diagnosis_errors": entry.get("diagnosis_errors", []),
+                    "overall_score": entry.get("overall_score", 0.8),
+                    "path": "fast",
+                    "models_used": ["rapid_reuse"],
+                }
+            elif rho <= _TAU_PATCH:
+                patched = _patch_response(entry, fingerprint)
+                return {
+                    "cache_hit": True,
+                    "cache_decision": "patch",
+                    "reuse_risk": rho,
+                    "cache_fingerprint": fingerprint,
+                    "tutor_response": patched,
+                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                    "diagnosis_errors": entry.get("diagnosis_errors", []),
+                    "overall_score": entry.get("overall_score", 0.8),
+                    "path": "fast",
+                    "models_used": ["rapid_patch"],
+                }
+            else:
+                logger.info(f"[cache_gate_node] Risk too high (ρ={rho:.3f}), full pipeline")
     except Exception as e:
         logger.debug(f"[cache_gate_node] Redis unavailable: {e}")
-    
+
     logger.info(f"[cache_gate_node] Cache MISS for key {cache_key[:8]}...")
     return {
         "cache_hit": False,
+        "cache_decision": "full",
+        "reuse_risk": 1.0,
+        "cache_fingerprint": fingerprint,
         "path": "slow",
     }
 
@@ -194,26 +439,24 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
 
 async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Query Knowledge Graph for relevant concepts.
-    
-    Responsibilities:
-    - Extract keywords from user input
-    - Match to KG concepts
-    - Expand via graph hops
-    - Return linked concepts for context
+    Level-aware best-first KG expansion (paper Alg. 4).
+
+    Phase 1: Seed concept matching (keyword + regex patterns)
+    Phase 2: Best-first expansion with PedWeight priority queue
     """
-    logger.info("[kg_expand_node] Expanding knowledge graph...")
+    logger.info("[kg_expand_node] Expanding knowledge graph (best-first)...")
     start_time = time.time()
-    
+
     try:
         from api.services.kg_service_v3 import get_kg_service
-        
+
         kg = get_kg_service()
-        
-        # Simple keyword matching to find seed concepts
+        learner_level = state.get("learner_profile", {}).get("level", "B1")
+
+        # ── Phase 1: Seed concept matching ───────────────────────────
         user_text = state.get("user_input", "").lower()
         all_concepts = kg.get_concepts()
-        
+
         seed_concepts = []
         for concept_id, meta in all_concepts.items():
             keywords = meta.get("keywords", "").lower()
@@ -221,8 +464,8 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
                 if kw in user_text or user_text in kw:
                     seed_concepts.append(concept_id)
                     break
-        
-        # Grammar error patterns
+
+        # Grammar error patterns (Phase 1b)
         grammar_patterns = {
             r"\bi goes\b": "concept:grammar.subject_verb_agreement",
             r"\bhe go\b": "concept:grammar.third_person_s",
@@ -230,19 +473,23 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
             r"\bhave went\b": "concept:grammar.present_perfect",
             r"\bmore better\b": "concept:grammar.comparatives",
         }
-        
+
         for pattern, concept in grammar_patterns.items():
             if re.search(pattern, user_text, re.IGNORECASE):
                 if concept not in seed_concepts:
                     seed_concepts.append(concept)
-        
-        # Expand via graph hops
+
+        # ── Phase 2: Level-aware best-first expansion ────────────────
         expanded_nodes = []
         paths = []
-        
+
         if seed_concepts:
-            kg_result = await kg.expand(seed_concepts, hops=1)
-            # KGExpandedNode from v3_schemas has: id, type, properties
+            kg_result = await kg.expand_best_first(
+                seed_nodes=seed_concepts,
+                learner_level=learner_level,
+                max_hops=2,
+                max_nodes=10,
+            )
             expanded_nodes = [
                 {
                     "id": n.id,
@@ -252,7 +499,6 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
                 }
                 for n in kg_result.expanded_nodes
             ]
-            # KGPath from v3_schemas has: nodes (list[str]), edges (list[str])
             paths = [
                 {
                     "from_id": p.nodes[0] if len(p.nodes) > 0 else "",
@@ -261,17 +507,17 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
                 }
                 for p in kg_result.paths
             ]
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        logger.info(f"[kg_expand_node] Found {len(seed_concepts)} seed, {len(expanded_nodes)} expanded")
-        
+        logger.info(f"[kg_expand_node] Found {len(seed_concepts)} seed, {len(expanded_nodes)} expanded (level={learner_level})")
+
         return {
             "kg_seed_concepts": seed_concepts,
             "kg_expanded_nodes": expanded_nodes,
             "kg_paths": paths,
-            "models_used": ["kuzu_kg"],
+            "models_used": ["kuzu_kg_bestfirst"],
         }
-        
+
     except Exception as e:
         logger.error(f"[kg_expand_node] Error: {e}")
         return {
@@ -469,48 +715,91 @@ def _rule_based_diagnosis(text: str) -> tuple:
 
 
 # ============================================================
-# NODE 4: RETRIEVAL
+# FUSION SCORING (paper Eq. 8: score(e) = α·s_kg + β·s_vec + γ·s_rec)
+# ============================================================
+
+_FUSION_ALPHA = 0.5   # KG structural relevance weight
+_FUSION_BETA = 0.3    # Vector similarity weight
+_FUSION_GAMMA = 0.2   # Recency bonus weight
+_RECENCY_LAMBDA = 0.01  # Decay rate for recency bonus
+
+
+def _fusion_score(
+    kg_depth: int,
+    vec_sim: float,
+    last_used_turns_ago: int,
+) -> float:
+    """
+    Compute fusion score for a retrieved evidence item (paper Eq. 8).
+
+    s_kg  = 1 / (1 + depth)         — inverse hop distance
+    s_vec = cosine similarity        — from MiniLM
+    s_rec = exp(-λ · Δt)            — recency bonus
+    """
+    import math
+    s_kg = 1.0 / (1.0 + kg_depth)
+    s_vec = vec_sim
+    s_rec = math.exp(-_RECENCY_LAMBDA * last_used_turns_ago)
+    return _FUSION_ALPHA * s_kg + _FUSION_BETA * s_vec + _FUSION_GAMMA * s_rec
+
+
+# ============================================================
+# NODE 4: BUDGETED HYBRID RETRIEVAL (paper Alg. 5)
 # ============================================================
 
 async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Combine vector search (MiniLM) + KG context for response generation.
-    
-    Hybrid retrieval:
-    1. KG structural context  (from kg_expand_node + diagnose_node)
-    2. Semantic vector search  (MiniLM cosine-sim against concept labels)
+    Budgeted hybrid retrieval with fusion scoring (paper Alg. 5).
+
+    Stage 1: Graph-local evidence (cheap) — KG concepts + diagnosis
+    Stage 2: Optional vector evidence (budgeted) — MiniLM similarity
+    Fusion:  score(e) = α·s_kg + β·s_vec + γ·s_rec  (Eq. 8)
     """
-    logger.info("[retrieve_node] Retrieving context...")
+    logger.info("[retrieve_node] Budgeted hybrid retrieval...")
     start_time = time.time()
 
     retrieval_policy = state.get("retrieval_policy", "full")
-    
-    # Get relevant concepts from KG expansion
+
     kg_concepts = state.get("kg_seed_concepts", [])
     kg_expanded = state.get("kg_expanded_nodes", [])
-    
-    # Build context from KG
-    context_parts = []
-    
-    # Add root cause concepts
+    session_turn = len(state.get("conversation_history", []))
+
+    # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
+    # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
+    evidence_items: List[Dict[str, Any]] = []
+
     for concept_id in state.get("diagnosis_root_causes", []):
-        context_parts.append(f"Grammar concept: {concept_id}")
-    
-    # Add expanded concepts
-    for node in kg_expanded[:3]:
-        context_parts.append(f"Related: {node.get('id', '')} ({node.get('relation', '')})")
-    
-    # Add error context
-    for error in state.get("diagnosis_errors", [])[:2]:
-        context_parts.append(f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}'")
-    
-    # ── Vector search via MiniLM ─────────────────────────────────────────
+        evidence_items.append({
+            "text": f"Grammar concept: {concept_id}",
+            "kg_depth": 0,
+            "vec_sim": 0.0,
+            "turns_ago": 0,
+        })
+
+    for node in kg_expanded:
+        depth = node.get("depth", 1) if isinstance(node, dict) else 1
+        evidence_items.append({
+            "text": f"Related: {node.get('id', '')} ({node.get('relation', '')})",
+            "kg_depth": depth,
+            "vec_sim": 0.0,
+            "turns_ago": session_turn,
+        })
+
+    for error in state.get("diagnosis_errors", [])[:3]:
+        evidence_items.append({
+            "text": f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
+            "kg_depth": 0,
+            "vec_sim": 0.0,
+            "turns_ago": 0,
+        })
+
+    # ── Stage 2: Optional vector evidence (budgeted) ─────────────────
     vector_hits = []
     try:
         from api.services.model_gateway import get_gateway
-        
+
         gateway = await get_gateway()
-        
+
         errors = state.get("diagnosis_errors", [])
         confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
 
@@ -528,7 +817,6 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                 threshold = 0.35
 
         if do_vector_search:
-            # Build candidate texts from KG concepts for semantic matching
             candidate_labels = []
             for c in kg_concepts:
                 if isinstance(c, dict):
@@ -548,27 +836,42 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                 )
                 if result.get("success"):
                     sim_results = result.get("data", {}).get("results", [])
-                    vector_hits = [
-                        {"text": r["text"], "score": r["score"]}
-                        for r in sim_results
-                        if r["score"] >= threshold
-                    ][:max_hits]
+                    for r in sim_results:
+                        if r["score"] >= threshold:
+                            vector_hits.append({"text": r["text"], "score": r["score"]})
+                            evidence_items.append({
+                                "text": f"Semantic match: {r['text']}",
+                                "kg_depth": 2,  # treat vector hits as depth-2
+                                "vec_sim": r["score"],
+                                "turns_ago": session_turn,
+                            })
 
-                    for hit in vector_hits:
-                        context_parts.append(f"Semantic match ({hit['score']:.2f}): {hit['text']}")
-
+                    vector_hits = vector_hits[:max_hits]
                     logger.info(f"[retrieve_node] MiniLM found {len(vector_hits)} semantic hits")
     except Exception as e:
         logger.warning(f"[retrieve_node] Vector search skipped: {e}")
-    
+
+    # ── Fusion scoring and ranking ───────────────────────────────────
+    for item in evidence_items:
+        item["fusion_score"] = _fusion_score(
+            kg_depth=item["kg_depth"],
+            vec_sim=item["vec_sim"],
+            last_used_turns_ago=item["turns_ago"],
+        )
+
+    evidence_items.sort(key=lambda x: x["fusion_score"], reverse=True)
+    top_evidence = evidence_items[:5]  # budget: top-5
+
+    context_parts = [item["text"] for item in top_evidence]
     retrieved_context = "\n".join(context_parts) if context_parts else ""
-    
+
     latency_ms = int((time.time() - start_time) * 1000)
-    
+    logger.info(f"[retrieve_node] {len(evidence_items)} candidates → top {len(top_evidence)} via fusion scoring")
+
     return {
         "vector_hits": vector_hits,
         "retrieved_context": retrieved_context,
-        "models_used": ["retrieval"] + (["minilm"] if vector_hits else []),
+        "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
     }
 
 
@@ -595,9 +898,13 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     context = state.get("retrieved_context", "")
     vietnamese_hint = state.get("vietnamese_hint")
     
-    # Determine strategy
+    # Determine strategy (paper Eq. strategy)
     error_count = len(errors)
-    if error_count == 0:
+    fluency_score = state.get("fluency_score", 0.8)
+
+    if intent == "explain" and fluency_score > 0.7:
+        strategy = "socratic"
+    elif error_count == 0:
         strategy = "praise"
     elif error_count <= 2:
         strategy = "feedback"
@@ -609,7 +916,9 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         response = _generate_template_response(errors, strategy, user_input)
         model_used = "template_forced"
 
-        if error_count == 0:
+        if strategy == "socratic":
+            next_action = "ask"
+        elif error_count == 0:
             next_action = "continue"
         elif error_count <= 2:
             next_action = "hint"
@@ -624,30 +933,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         # This keeps benchmark runs deterministic while still measuring cache wins.
         if state.get("cache_policy", "on") == "on":
             try:
-                from api.core.redis_client import RedisClient
-
-                normalized = user_input.strip().lower()
-                cache_raw = f"{normalized}||{level}"
-                cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
-
-                payload: dict[str, Any] = {
-                    "tutor_response": response,
-                    "strategy": strategy,
-                    "diagnosis_errors": [dict(e) for e in errors] if errors else [],
-                    "overall_score": overall_score,
-                }
-                cache_data = json.dumps(payload)
-                ttl = 3600 if errors else 1800
-
-                if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
-                    _MEM_RESPONSE_CACHE.clear()
-                _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + ttl, payload)
-
-                try:
-                    redis_client = await RedisClient.get_instance()
-                    await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
-                except Exception as e:
-                    logger.debug(f"[generate_node] Redis cache write failed: {e}")
+                await _write_cache_entry(state, response, strategy, errors, overall_score, context)
             except Exception as e:
                 logger.debug(f"[generate_node] Cache write failed: {e}")
 
@@ -674,7 +960,19 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     if context:
         system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
     
-    if errors:
+    if strategy == "socratic":
+        system_prompt += (
+            "\nStrategy: SOCRATIC. The learner asked for an explanation and is fairly fluent.\n"
+            "Guide them through a chain of short questions so they discover the answer themselves.\n"
+            "Do NOT give the answer directly — instead ask 1-2 leading questions.\n"
+        )
+        if errors:
+            errors_text = "\n".join([
+                f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
+                for e in errors[:3]
+            ])
+            system_prompt += f"\n--- Errors Found (use as hints, don't reveal directly) ---\n{errors_text}\n"
+    elif errors:
         errors_text = "\n".join([
             f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
             for e in errors[:3]
@@ -741,7 +1039,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         # 3. Try Ollama
         if not response:
             ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-            ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
+            ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
             try:
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     resp = await client.post(
@@ -764,7 +1062,9 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         model_used = "template_fallback"
     
     # Determine next action
-    if error_count == 0:
+    if strategy == "socratic":
+        next_action = "ask"
+    elif error_count == 0:
         next_action = "continue"
     elif error_count <= 2:
         next_action = "hint"
@@ -779,31 +1079,9 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on":
         try:
-            from api.core.redis_client import RedisClient
-
-            normalized = user_input.strip().lower()
-            cache_raw = f"{normalized}||{level}"
-            cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
-
-            redis_client = await RedisClient.get_instance()
-            cache_data = json.dumps({
-                "tutor_response": response,
-                "strategy": strategy,
-                "diagnosis_errors": [dict(e) for e in errors] if errors else [],
-                "overall_score": overall_score,
-            })
-            # TTL: 1 hour for grammar corrections, 30 min for dialogues
-            ttl = 3600 if errors else 1800
-
-            # Always write to in-process cache (best-effort, TTL-based)
-            if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
-                _MEM_RESPONSE_CACHE.clear()
-            _MEM_RESPONSE_CACHE[cache_key] = (time.monotonic() + ttl, json.loads(cache_data))
-
-            await redis_client.set(f"v1:resp:{cache_key}", cache_data, ex=ttl)
-            logger.debug(f"[generate_node] Cached response with key {cache_key[:8]}...")
+            await _write_cache_entry(state, response, strategy, errors, overall_score, context)
         except Exception as e:
-            logger.debug(f"[generate_node] Redis cache write failed: {e}")
+            logger.debug(f"[generate_node] Cache write failed: {e}")
     
     latency_ms = int((time.time() - start_time) * 1000)
     logger.info(f"[generate_node] Generated response via {model_used} in {latency_ms}ms")
@@ -821,6 +1099,14 @@ def _generate_template_response(errors: list, strategy: str, user_input: str) ->
     """Fallback template response when AI is unavailable"""
     if strategy == "praise":
         return "Great job! Your sentence is grammatically correct. Keep up the excellent work! 🎉"
+    elif strategy == "socratic":
+        if errors:
+            error = errors[0]
+            return (
+                f"Interesting sentence! Let me ask you something: look at '{error.get('span', '')}' "
+                f"— can you think of another way to phrase that? What rule might apply here? 🤔"
+            )
+        return "Good question! Before I explain, what do you already know about this topic? 🤔"
     elif errors:
         error = errors[0]
         corrected = user_input.replace(error.get("span", ""), error.get("correction", ""))
