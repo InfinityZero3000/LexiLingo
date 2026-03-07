@@ -44327,10 +44327,10 @@ return A.i(null,r)}})
 return A.j($async$ayr,r)},
 kP(){var s=$.ayQ().gYR().h(0,"API_BASE_URL"),r=s==null?null:B.c.d8(s)
 if(r!=null&&r.length!==0)return B.c.hs(r,"/")?B.c.Z(r,0,r.length-1):r
-return"http://localhost:8000/api/v1"},
+return"https://lexilingo-4gu6.onrender.com/api/v1"},
 bE7(){var s=$.ayQ().gYR().h(0,"AI_SERVICE_URL"),r=s==null?null:B.c.d8(s)
 if(r!=null&&r.length!==0)return B.c.hs(r,"/")?B.c.Z(r,0,r.length-1):r
-return"http://localhost:8001/api/v1"},
+return"https://enable-tell-memphis-wing.trycloudflare.com/api/v1"},
 bKC(a){var s=B.N7.h(0,a.toLowerCase())
 if(s==null)return null
 return"assets/badges/"+s},
