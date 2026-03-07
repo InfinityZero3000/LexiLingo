@@ -31,8 +31,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/*
-!/build/web
+/build/
 .metadata
 # pubspec.lock is intentionally tracked for apps (not libraries) to ensure
 # reproducible CI builds with the same package versions as local development.
