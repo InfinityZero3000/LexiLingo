@@ -400,7 +400,7 @@ fi
 if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
     (
         cd "$PROJECT_ROOT/flutter-app"
-        flutter run -d chrome --web-port=8080 >> "$LOG_DIR/flutter.log" 2>&1
+        flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 --web-allowed-hosts all >> "$LOG_DIR/flutter.log" 2>&1
     ) &
     FLUTTER_PID=$!
     echo $FLUTTER_PID > "$PID_DIR/flutter.pid"
