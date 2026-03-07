@@ -23,8 +23,8 @@
     }
   ],
   "env": {
-    "VITE_BACKEND_URL": "https://lexilingo-backend.onrender.com/api/v1",
-    "VITE_AI_URL": "https://lexilingo-ai.onrender.com/api/v1",
+    "VITE_BACKEND_URL": "https://lexilingo-4gu6.onrender.com/api/v1",
+    "VITE_AI_URL": "https://enable-tell-memphis-wing.trycloudflare.com/api/v1",
     "VITE_GOOGLE_CLIENT_ID": "706480877582-4ukvcqqtbne4r1gmpddu6f0ia9lhaoq0.apps.googleusercontent.com",
     "VITE_ADMIN_EMAILS": "thefirestar312@gmail.com",
     "VITE_SUPER_ADMIN_EMAILS": "nhthang312@gmail.com",
