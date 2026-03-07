@@ -24,6 +24,26 @@ from app.schemas.common import MessageResponse
 router = APIRouter()
 
 
+async def _get_role_id(db: AsyncSession, role_slug: str) -> uuid.UUID | None:
+    """Load a role id from its slug."""
+    result = await db.execute(select(Role).where(Role.slug == role_slug))
+    role = result.scalar_one_or_none()
+    return role.id if role else None
+
+
+async def _ensure_unique_username(db: AsyncSession, base_username: str) -> str:
+    """Keep usernames unique for Google-first accounts."""
+    username = base_username
+    counter = 1
+
+    while True:
+        result = await db.execute(select(User).where(User.username == username))
+        if not result.scalar_one_or_none():
+            return username
+        username = f"{base_username}{counter}"
+        counter += 1
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
@@ -263,6 +283,9 @@ async def google_login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email not provided by Google"
         )
+
+    allowlisted_admin_role = settings.get_admin_role_for_email(email)
+    email_verified = bool(google_info.get("email_verified", False))
     
     # Check if user exists
     result = await db.execute(
@@ -271,34 +294,15 @@ async def google_login(
     user = result.scalar_one_or_none()
     
     if not user:
-        # For admin source, do not create new users - must be existing admin
-        if request.source == "admin":
+        if request.source == "admin" and not allowlisted_admin_role:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="No admin account found with this email. Only existing admins can login."
+                detail="Email is not allowlisted for admin access."
             )
-        
-        # Create new user from Google info (app source only)
-        username = email.split("@")[0]
-        
-        # Ensure unique username
-        base_username = username
-        counter = 1
-        while True:
-            result = await db.execute(
-                select(User).where(User.username == username)
-            )
-            if not result.scalar_one_or_none():
-                break
-            username = f"{base_username}{counter}"
-            counter += 1
-        
-        # Get default "user" role
-        role_id = None
-        result = await db.execute(select(Role).where(Role.slug == "user"))
-        role = result.scalar_one_or_none()
-        if role:
-            role_id = role.id
+
+        username = await _ensure_unique_username(db, email.split("@")[0])
+        role_slug = allowlisted_admin_role if request.source == "admin" else "user"
+        role_id = await _get_role_id(db, role_slug)
         
         user = User(
             email=email,
@@ -307,21 +311,32 @@ async def google_login(
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
             provider="google",
-            is_verified=google_info.get("email_verified", False),
-            role_id=role_id  # Assign default user role
+            is_verified=email_verified,
+            role_id=role_id,
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
     elif user.provider != "google":
-        # User exists but registered with different provider
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered with email/password. Please login with password."
-        )
+        if request.source != "admin" or not allowlisted_admin_role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered with email/password. Please login with password."
+            )
+
+        user.provider = "google"
+        user.is_verified = email_verified or user.is_verified
+        user.avatar_url = google_info.get("picture") or user.avatar_url
+
+    if request.source == "admin" and allowlisted_admin_role:
+        target_role_id = await _get_role_id(db, allowlisted_admin_role)
+        if target_role_id and user.role_id != target_role_id:
+            user.role_id = target_role_id
     
     # For admin source, verify user has admin or super_admin role
     if request.source == "admin":
+        await db.commit()
+
         # Load user with role relationship to get role_slug
         await db.refresh(user, ["role"])
         user_role = user.role.slug if user.role else None

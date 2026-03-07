@@ -3,9 +3,12 @@ fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
 
-# PostgreSQL
+# PostgreSQL (production)
 asyncpg>=0.29.0
 psycopg2-binary>=2.9.9
+
+# SQLite (dev/test only)
+aiosqlite>=0.19.0
 
 # SQLAlchemy (Async ORM)
 sqlalchemy[asyncio]>=2.0.25

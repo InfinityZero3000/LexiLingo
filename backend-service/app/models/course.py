@@ -5,12 +5,12 @@ Extended for Phase 2: Advanced Content Management System
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, ForeignKey, JSON, Index
+from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray
+from app.core.db_types import GUID, GUIDArray, TZDateTime
 
 
 class Course(Base):
@@ -51,9 +51,9 @@ class Course(Base):
     
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -97,9 +97,9 @@ class Unit(Base):
     
     total_lessons: Mapped[int] = mapped_column(Integer, default=0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -158,9 +158,9 @@ class Lesson(Base):
     
     lesson_type: Mapped[str] = mapped_column(String(50), default="lesson")  # lesson, practice, review, test
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -198,7 +198,7 @@ class MediaResource(Base):
     # Usage tracking
     reference_count: Mapped[int] = mapped_column(Integer, default=0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self) -> str:
         return f"<MediaResource {self.filename}>"

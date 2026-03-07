@@ -1,5 +1,5 @@
 # Multi-stage build for optimized image size
-FROM python:3.11-slim as builder
+FROM python:3.13-slim as builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final stage
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -29,11 +29,14 @@ COPY --from=builder /root/.local /root/.local
 # Copy application code
 COPY . .
 
+# Make scripts executable
+RUN chmod +x scripts/entrypoint.sh
+
 # Make sure scripts in .local are usable
 ENV PATH=/root/.local/bin:$PATH
 
 # Expose port
 EXPOSE 8000
 
-# Run the application with multiple workers for production
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-$(python -c 'import multiprocessing; print(multiprocessing.cpu_count() * 2 + 1)')}"]
+# Run via entrypoint: detects fresh DB vs re-deploy and handles migrations automatically.
+CMD ["scripts/entrypoint.sh"]

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker
 )
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -21,14 +22,24 @@ logger = logging.getLogger(__name__)
 # Base class for SQLAlchemy models
 Base = declarative_base()
 
-# Async engine
-engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DB_ECHO,
-    pool_size=settings.effective_pool_size,
-    max_overflow=settings.effective_max_overflow,
-    pool_pre_ping=True,  # Verify connections before using
-)
+# SQLite does not support connection pooling — use NullPool instead.
+_is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+_db_url = settings.async_database_url  # normalises postgres:// → postgresql+asyncpg://
+
+if _is_sqlite:
+    engine: AsyncEngine = create_async_engine(
+        _db_url,
+        echo=settings.DB_ECHO,
+        poolclass=NullPool,
+    )
+else:
+    engine: AsyncEngine = create_async_engine(
+        _db_url,
+        echo=settings.DB_ECHO,
+        pool_size=settings.effective_pool_size,
+        max_overflow=settings.effective_max_overflow,
+        pool_pre_ping=True,
+    )
 
 # Session factory
 AsyncSessionLocal = async_sessionmaker(

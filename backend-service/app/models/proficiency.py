@@ -5,9 +5,10 @@ Database models for tracking user proficiency across multiple language skills.
 This system provides a more accurate CEFR level assessment than simple XP accumulation.
 """
 
-from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Text, Boolean, Enum as SQLEnum, JSON
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from app.core.db_types import TZDateTime
 from datetime import datetime, timezone
 import uuid
 import enum
@@ -51,10 +52,10 @@ class UserProficiencyProfile(Base):
     total_lessons_completed = Column(Integer, default=0)
     
     # Timestamps
-    last_assessment_at = Column(DateTime, nullable=True)
-    last_level_change_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_assessment_at = Column(TZDateTime, nullable=True)
+    last_level_change_at = Column(TZDateTime, nullable=True)
+    created_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     skill_scores = relationship("UserSkillScore", back_populates="profile", cascade="all, delete-orphan")
@@ -93,7 +94,7 @@ class UserSkillScore(Base):
     score_7d_ago = Column(Float, nullable=True)  # Score snapshot from 7 days ago
     score_30d_ago = Column(Float, nullable=True)  # Score snapshot from 30 days ago
     
-    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_updated = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     profile = relationship("UserProficiencyProfile", back_populates="skill_scores")
@@ -141,7 +142,7 @@ class UserLevelHistory(Base):
     accuracy = Column(Float, nullable=True)
     
     reason = Column(Text, nullable=True)  # Description of why level changed
-    triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    triggered_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     profile = relationship("UserProficiencyProfile", back_populates="level_history")
@@ -174,7 +175,7 @@ class ExerciseAttempt(Base):
     course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id", ondelete="SET NULL"), nullable=True)
     
     # Metadata
-    attempted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    attempted_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Additional data (wrong answer, hints used, etc.)
     attempt_metadata = Column(JSON, nullable=True)
@@ -204,8 +205,8 @@ class LevelAssessmentTest(Base):
     correct_count = Column(Integer, nullable=False)
     time_taken_seconds = Column(Integer, nullable=True)
     
-    started_at = Column(DateTime, nullable=False)
-    completed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    started_at = Column(TZDateTime, nullable=False)
+    completed_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     # Whether this assessment resulted in a level change
     level_changed = Column(Boolean, default=False)

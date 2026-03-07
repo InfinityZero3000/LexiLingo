@@ -10,11 +10,11 @@ Phase 0 Infrastructure: Required by APICacheService.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Index, Integer, String, Text
+from sqlalchemy import Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID
+from app.core.db_types import GUID, TZDateTime
 
 
 class APICacheEntry(Base):
@@ -57,10 +57,11 @@ class APICacheEntry(Base):
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False,
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc), nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,

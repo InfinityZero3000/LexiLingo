@@ -5,13 +5,13 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 
 import uuid
 from datetime import datetime, timedelta
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Float, JSON, Text, Index, Enum as SQLEnum, Boolean
+from sqlalchemy import String, Integer, ForeignKey, Float, JSON, Text, Index, Enum as SQLEnum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray
+from app.core.db_types import GUID, GUIDArray, TZDateTime
 
 
 class VocabularyStatus(str, enum.Enum):
@@ -101,9 +101,9 @@ class VocabularyItem(Base):
     usage_frequency: Mapped[int] = mapped_column(Integer, default=0)  # How often word appears
     tags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # ["business", "travel", "casual"]
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -162,12 +162,12 @@ class UserVocabulary(Base):
     # Number of consecutive correct reviews
     
     next_review_date: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
         index=True
     )
     
-    last_reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_reviewed_at: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
     
     # ===== Statistics =====
     total_reviews: Mapped[int] = mapped_column(Integer, default=0)
@@ -181,7 +181,7 @@ class UserVocabulary(Base):
     # User notes
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    added_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     vocabulary: Mapped["VocabularyItem"] = relationship("VocabularyItem")
@@ -246,7 +246,7 @@ class VocabularyReview(Base):
     ease_factor_after: Mapped[float] = mapped_column(Float, nullable=True)
     interval_after: Mapped[int] = mapped_column(Integer, nullable=True)
     
-    reviewed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    reviewed_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Indexes
     __table_args__ = (
@@ -282,9 +282,9 @@ class VocabularyDeck(Base):
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)  # Future: Share decks
     color: Mapped[str] = mapped_column(String(7), default="#2196F3")  # Hex color
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -324,7 +324,7 @@ class VocabularyDeckItem(Base):
     
     order: Mapped[int] = mapped_column(Integer, default=0)  # Custom ordering in deck
     
-    added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    added_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         Index("ix_vocabulary_deck_items_unique", "deck_id", "user_vocabulary_id", unique=True),

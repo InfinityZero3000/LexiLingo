@@ -29,6 +29,23 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
+
+    @property
+    def async_database_url(self) -> str:
+        """
+        Return an async-compatible DATABASE_URL.
+
+        Render/Supabase/Heroku often provide ``postgres://`` or
+        ``postgresql://`` URLs.  SQLAlchemy async requires the
+        ``postgresql+asyncpg://`` scheme.  This property normalises that so
+        env-vars from hosting providers work without manual editing.
+        """
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
     
     # Request limits
     MAX_REQUEST_BODY_BYTES: int = 10 * 1024 * 1024  # 10 MB
@@ -51,12 +68,22 @@ class Settings(BaseSettings):
     
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
+    CORS_ALLOW_ORIGIN_REGEX: str = (
+        r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
+        r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
+        r"|https?://.*\.devtunnels\.ms(:\d+)?"
+        r"|https?://.*\.github\.dev(:\d+)?"
+    )
     ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1", "*.lexilingo.com"]
     
     @property
     def cors_origins(self) -> List[str]:
         """Parse ALLOWED_ORIGINS string to list"""
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        return [
+            origin.strip()
+            for origin in self.ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
     
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -67,6 +94,39 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_ADMIN_CLIENT_ID: str | None = None
+    ADMIN_EMAIL_WHITELIST: str = ""
+    SUPER_ADMIN_EMAIL_WHITELIST: str = ""
+
+    @staticmethod
+    def _parse_email_list(raw_value: str) -> List[str]:
+        """Normalize a comma-separated email allowlist."""
+        return [
+            email.strip().lower()
+            for email in raw_value.split(",")
+            if email.strip()
+        ]
+
+    @property
+    def admin_email_whitelist(self) -> List[str]:
+        """Emails allowed to access the admin application."""
+        return self._parse_email_list(self.ADMIN_EMAIL_WHITELIST)
+
+    @property
+    def super_admin_email_whitelist(self) -> List[str]:
+        """Emails that should receive super_admin on first Google login."""
+        return self._parse_email_list(self.SUPER_ADMIN_EMAIL_WHITELIST)
+
+    def get_admin_role_for_email(self, email: str | None) -> str | None:
+        """Return the allowlisted admin role for an email, if any."""
+        if not email:
+            return None
+
+        normalized_email = email.strip().lower()
+        if normalized_email in self.super_admin_email_whitelist:
+            return "super_admin"
+        if normalized_email in self.admin_email_whitelist:
+            return "admin"
+        return None
 
     # Firebase (optional, for ID token verification from Flutter app)
     FIREBASE_PROJECT_ID: str | None = None

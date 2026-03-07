@@ -2,11 +2,12 @@
 Cross-database compatible type definitions.
 
 This module provides type helpers that work with both PostgreSQL and SQLite.
-Import GUID from here instead of using SQLAlchemy's PostgreSQL UUID directly.
+Import GUID and TZDateTime from here instead of using SQLAlchemy types directly.
 """
 
 import uuid
-from sqlalchemy import TypeDecorator, CHAR, Text
+from datetime import datetime, timezone
+from sqlalchemy import TypeDecorator, CHAR, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY as PG_ARRAY
 
 
@@ -47,6 +48,44 @@ class GUID(TypeDecorator):
         if isinstance(value, uuid.UUID):
             return value
         return uuid.UUID(value)
+
+
+class TZDateTime(TypeDecorator):
+    """Timezone-safe DateTime type.
+
+    Stores datetimes as UTC in a TIMESTAMP WITHOUT TIME ZONE column (the
+    SQLAlchemy / asyncpg default).  asyncpg rejects timezone-aware Python
+    datetimes in such columns, so we strip the offset on write and re-attach
+    UTC on read.
+
+    Works transparently with both PostgreSQL and SQLite.
+
+    Usage:
+        from app.core.db_types import TZDateTime
+
+        created_at: Mapped[datetime] = mapped_column(
+            TZDateTime, default=lambda: datetime.now(timezone.utc)
+        )
+    """
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is not None:
+            # Normalise to UTC then strip offset before writing
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value: datetime | None, dialect) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            # Re-attach UTC so callers always get aware datetimes
+            return value.replace(tzinfo=timezone.utc)
+        return value
+
 
 
 class GUIDArray(TypeDecorator):

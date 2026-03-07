@@ -6,12 +6,12 @@ Categories for organizing courses (e.g., Grammar, Vocabulary, Business English, 
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, Index
+from sqlalchemy import String, Integer, Boolean, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Optional
 
 from app.core.database import Base
-from app.core.db_types import GUID
+from app.core.db_types import GUID, TZDateTime
 
 
 class CourseCategory(Base):
@@ -43,9 +43,9 @@ class CourseCategory(Base):
     # Metadata
     course_count: Mapped[int] = mapped_column(Integer, default=0)  # Denormalized count
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        TZDateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc)
     )
