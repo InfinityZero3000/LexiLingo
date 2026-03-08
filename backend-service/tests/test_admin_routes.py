@@ -21,7 +21,7 @@ class TestAdminCourses:
     async def test_create_course(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test creating a new course"""
         course_data = {
@@ -34,7 +34,7 @@ class TestAdminCourses:
         
         response = await async_client.post(
             "/api/v1/admin/courses",
-            headers=auth_headers,
+            headers=admin_headers,
             json=course_data
         )
         
@@ -47,7 +47,7 @@ class TestAdminCourses:
     async def test_update_course(
         self,
         async_client: AsyncClient,
-        auth_headers: dict,
+        admin_headers: dict,
         db_session: AsyncSession
     ):
         """Test updating a course"""
@@ -70,7 +70,7 @@ class TestAdminCourses:
         
         response = await async_client.put(
             f"/api/v1/admin/courses/{course.id}",
-            headers=auth_headers,
+            headers=admin_headers,
             json=update_data
         )
         
@@ -82,7 +82,7 @@ class TestAdminCourses:
     async def test_delete_course(
         self,
         async_client: AsyncClient,
-        auth_headers: dict,
+        admin_headers: dict,
         db_session: AsyncSession
     ):
         """Test deleting a course"""
@@ -99,7 +99,7 @@ class TestAdminCourses:
         
         response = await async_client.delete(
             f"/api/v1/admin/courses/{course.id}",
-            headers=auth_headers
+            headers=admin_headers
         )
         
         assert response.status_code == 200
@@ -114,7 +114,7 @@ class TestAdminUnits:
     async def test_create_unit(
         self,
         async_client: AsyncClient,
-        auth_headers: dict,
+        admin_headers: dict,
         db_session: AsyncSession
     ):
         """Test creating a new unit"""
@@ -139,7 +139,7 @@ class TestAdminUnits:
         
         response = await async_client.post(
             "/api/v1/admin/units",
-            headers=auth_headers,
+            headers=admin_headers,
             json=unit_data
         )
         
@@ -155,7 +155,7 @@ class TestAdminLessons:
     async def test_create_lesson(
         self,
         async_client: AsyncClient,
-        auth_headers: dict,
+        admin_headers: dict,
         db_session: AsyncSession
     ):
         """Test creating a new lesson"""
@@ -191,7 +191,7 @@ class TestAdminLessons:
         
         response = await async_client.post(
             "/api/v1/admin/lessons",
-            headers=auth_headers,
+            headers=admin_headers,
             json=lesson_data
         )
         
@@ -207,12 +207,12 @@ class TestAdminVocabulary:
     async def test_list_vocabulary(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test listing vocabulary items"""
         response = await async_client.get(
             "/api/v1/admin/vocabulary",
-            headers=auth_headers
+            headers=admin_headers
         )
         
         assert response.status_code == 200
@@ -224,12 +224,12 @@ class TestAdminVocabulary:
     async def test_create_vocabulary(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test creating vocabulary item"""
         response = await async_client.post(
             "/api/v1/admin/vocabulary",
-            headers=auth_headers,
+            headers=admin_headers,
             params={
                 "word": "test",
                 "definition": "a test word",
@@ -250,12 +250,12 @@ class TestAdminAchievements:
     async def test_list_achievements(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test listing achievements (admin)"""
         response = await async_client.get(
             "/api/v1/admin/achievements",
-            headers=auth_headers
+            headers=admin_headers
         )
         
         assert response.status_code == 200
@@ -267,12 +267,12 @@ class TestAdminAchievements:
     async def test_create_achievement(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test creating an achievement"""
         response = await async_client.post(
             "/api/v1/admin/achievements",
-            headers=auth_headers,
+            headers=admin_headers,
             params={
                 "name": f"Test Achievement {uuid4().hex[:8]}",
                 "description": "Test description",
@@ -295,12 +295,12 @@ class TestAdminShop:
     async def test_list_shop_items(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test listing shop items (admin)"""
         response = await async_client.get(
             "/api/v1/admin/shop",
-            headers=auth_headers
+            headers=admin_headers
         )
         
         assert response.status_code == 200
@@ -312,12 +312,12 @@ class TestAdminShop:
     async def test_create_shop_item(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test creating a shop item"""
         response = await async_client.post(
             "/api/v1/admin/shop",
-            headers=auth_headers,
+            headers=admin_headers,
             params={
                 "name": "Test Shop Item",
                 "description": "Test item",
@@ -338,12 +338,12 @@ class TestAdminSeed:
     async def test_seed_data(
         self,
         async_client: AsyncClient,
-        auth_headers: dict
+        admin_headers: dict
     ):
         """Test seeding sample data"""
         response = await async_client.post(
             "/api/v1/admin/seed",
-            headers=auth_headers
+            headers=admin_headers
         )
         
         assert response.status_code == 200

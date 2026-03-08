@@ -35,7 +35,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 .metadata
-pubspec.lock
 
 # Python
 __pycache__/
@@ -114,3 +113,4 @@ tmp/
 
 mcp-server
 agent-skills
+GraphCAG_Paper.tex

@@ -37,7 +37,8 @@ class NotificationProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasNotifications => _notifications.isNotEmpty;
   bool get hasUnread => _unreadCount > 0;
-  NotificationEntity? get pendingDeletedNotification => _pendingDeletedNotification;
+  NotificationEntity? get pendingDeletedNotification =>
+      _pendingDeletedNotification;
 
   /// Initialize provider and set up listeners
   void _init() {

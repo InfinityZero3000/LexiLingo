@@ -17,7 +17,8 @@ class ProficiencyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ProficiencyProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading && provider.profile == ProficiencyProfile.empty()) {
+        if (provider.isLoading &&
+            provider.profile == ProficiencyProfile.empty()) {
           return _buildLoadingState(context);
         }
 
@@ -29,7 +30,8 @@ class ProficiencyCard extends StatelessWidget {
   Widget _buildContent(BuildContext context, ProficiencyProvider provider) {
     final profile = provider.profile;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasEnoughData = profile.exercisesCompleted >= unlockThreshold ||
+    final hasEnoughData =
+        profile.exercisesCompleted >= unlockThreshold ||
         profile.lessonsCompleted >= unlockThreshold;
 
     // Map backend 6 skills → 5 display dimensions
@@ -42,9 +44,9 @@ class ProficiencyCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Text(
             'Your Proficiency',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
         Container(
@@ -115,7 +117,9 @@ class ProficiencyCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF6366F1).withValues(alpha: 0.3)
+                                  ? const Color(
+                                      0xFF6366F1,
+                                    ).withValues(alpha: 0.3)
                                   : const Color(0xFFE2E8F0),
                               width: 1.5,
                             ),
@@ -125,7 +129,9 @@ class ProficiencyCard extends StatelessWidget {
                             size: 28,
                             color: isDark
                                 ? const Color(0xFF6366F1).withValues(alpha: 0.6)
-                                : const Color(0xFF6366F1).withValues(alpha: 0.4),
+                                : const Color(
+                                    0xFF6366F1,
+                                  ).withValues(alpha: 0.4),
                           ),
                         ),
                     ],
@@ -243,9 +249,9 @@ class ProficiencyCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Text(
             'Your Proficiency',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
         Container(

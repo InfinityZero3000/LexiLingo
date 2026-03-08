@@ -71,14 +71,16 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
     final size = MediaQuery.sizeOf(context);
 
     // Island float: ±10 px vertical, eased in/out
-    final islandFloat = Tween<double>(begin: -10.0, end: 10.0).animate(
-      CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
-    );
+    final islandFloat = Tween<double>(
+      begin: -10.0,
+      end: 10.0,
+    ).animate(CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
 
     // Bird float: ±14 px vertical, slightly different curve
-    final birdFloat = Tween<double>(begin: -14.0, end: 14.0).animate(
-      CurvedAnimation(parent: _birdCtrl, curve: Curves.easeInOut),
-    );
+    final birdFloat = Tween<double>(
+      begin: -14.0,
+      end: 14.0,
+    ).animate(CurvedAnimation(parent: _birdCtrl, curve: Curves.easeInOut));
 
     return Stack(
       fit: StackFit.expand,
@@ -94,11 +96,8 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
         // ── Layer 2: Left-top island (floats up/down) ─────────────────────
         AnimatedBuilder(
           animation: islandFloat,
-          builder: (_, child) => Positioned(
-            left: 0,
-            top: islandFloat.value - 20,
-            child: child!,
-          ),
+          builder: (_, child) =>
+              Positioned(left: 0, top: islandFloat.value - 20, child: child!),
           child: Image.asset(
             'assets/login/left-top-island.png',
             width: size.width * 0.48,
@@ -164,13 +163,11 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
               children: _particles.map((p) {
                 final t = (_particleCtrl.value + p.phaseOffset) % 1.0;
                 final x = p.startX * size.width;
-                final y =
-                    p.startY * size.height - t * p.travel * size.height;
+                final y = p.startY * size.height - t * p.travel * size.height;
                 final opacity = _particleOpacity(t);
 
                 return Positioned(
-                  left: x +
-                      math.sin(t * 2 * math.pi * p.swayFreq) * p.swayAmp,
+                  left: x + math.sin(t * 2 * math.pi * p.swayFreq) * p.swayAmp,
                   top: y,
                   child: Opacity(
                     opacity: opacity,
@@ -200,13 +197,13 @@ class _AuthGradientBackgroundState extends State<AuthGradientBackground>
 // Particle data + widget
 // ─────────────────────────────────────────────────────────────────────────────
 class _Particle {
-  final double startX;     // 0-1 relative to screen width
-  final double startY;     // start Y (0-1 from top – we start near bottom)
-  final double travel;     // fraction of screen height to travel upward
+  final double startX; // 0-1 relative to screen width
+  final double startY; // start Y (0-1 from top – we start near bottom)
+  final double travel; // fraction of screen height to travel upward
   final double size;
   final double phaseOffset;
-  final double swayAmp;    // horizontal sway pixels
-  final double swayFreq;   // sway cycles per loop
+  final double swayAmp; // horizontal sway pixels
+  final double swayFreq; // sway cycles per loop
   final Color color;
 
   const _Particle({

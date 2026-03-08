@@ -98,10 +98,10 @@ class _ProficiencyRadarChartState extends State<ProficiencyRadarChart>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectiveGridColor =
-        isDark ? Colors.white.withValues(alpha: 0.12) : widget.gridColor;
-    final effectiveLabelColor =
-        isDark ? Colors.grey[400]! : widget.labelColor;
+    final effectiveGridColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : widget.gridColor;
+    final effectiveLabelColor = isDark ? Colors.grey[400]! : widget.labelColor;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -165,14 +165,7 @@ class _RadarChartPainter extends CustomPainter {
     _drawGridRings(canvas, center, radius, count, angleStep, startAngle);
 
     // Draw data polygon
-    _drawDataPolygon(
-      canvas,
-      center,
-      radius,
-      entries,
-      angleStep,
-      startAngle,
-    );
+    _drawDataPolygon(canvas, center, radius, entries, angleStep, startAngle);
 
     // Draw axis lines
     _drawAxisLines(canvas, center, radius, count, angleStep, startAngle);
@@ -181,14 +174,7 @@ class _RadarChartPainter extends CustomPainter {
     _drawLabels(canvas, center, radius, entries, angleStep, startAngle, size);
 
     // Draw data points
-    _drawDataPoints(
-      canvas,
-      center,
-      radius,
-      entries,
-      angleStep,
-      startAngle,
-    );
+    _drawDataPoints(canvas, center, radius, entries, angleStep, startAngle);
   }
 
   void _drawGridRings(

@@ -79,9 +79,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E293B)
-            : const Color(0xFFEEF2FF),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
@@ -108,9 +106,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                       greeting,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark
-                            ? Colors.grey[400]
-                            : Colors.grey[600],
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -135,10 +131,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
             ),
           ),
           // Notification bell
-          _NotificationBell(
-            count: notificationCount,
-            onTap: onNotificationTap,
-          ),
+          _NotificationBell(count: notificationCount, onTap: onNotificationTap),
         ],
       ),
     );
@@ -668,8 +661,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
 
     // Use real per-day activity data when available; fall back to no highlights
-    final activity =
-        widget.weeklyActivity ?? List.filled(7, false);
+    final activity = widget.weeklyActivity ?? List.filled(7, false);
 
     return Row(
       children: List.generate(7, (index) {

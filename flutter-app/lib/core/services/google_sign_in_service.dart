@@ -54,8 +54,9 @@ class GoogleSignInService {
       ..addScope('email')
       ..addScope('profile');
 
-    final userCredential =
-        await FirebaseAuth.instance.signInWithPopup(provider);
+    final userCredential = await FirebaseAuth.instance.signInWithPopup(
+      provider,
+    );
 
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;

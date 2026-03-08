@@ -5,6 +5,12 @@ from app.core.database import engine, Base
 from app.models import user, course, progress, vocabulary
 from app.models import games  # Phase 3: Games + XP
 from app.models import api_cache  # Phase 0: Cache + Quota tables
+from app.models import proficiency  # Phase 2: Proficiency system
+from app.models import gamification  # Phase 4: Gamification
+from app.models import rbac  # Role-based access control
+from app.models import content  # Content metadata
+from app.models import course_category  # Course categories
+from app.models import notification  # Notifications
 import sqlalchemy as sa
 
 

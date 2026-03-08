@@ -74,7 +74,13 @@ class Settings(BaseSettings):
         r"|https?://.*\.devtunnels\.ms(:\d+)?"
         r"|https?://.*\.github\.dev(:\d+)?"
     )
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1", "*.lexilingo.com"]
+    ALLOWED_HOSTS: List[str] = [
+        "localhost",
+        "127.0.0.1",
+        "*.lexilingo.com",
+        "*.onrender.com",
+        "*.vercel.app",
+    ]
     
     @property
     def cors_origins(self) -> List[str]:

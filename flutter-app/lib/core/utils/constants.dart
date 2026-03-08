@@ -10,10 +10,13 @@ class AppConstants {
   static const String firstTimeUserKey = 'first_time_user';
 
   // API Config - Backend Service (Auth, Courses, Gamification)
-  static const String apiBaseUrl = 'http://localhost:8000/api/v1';
+  static const String localApiBaseUrl = 'http://localhost:8000/api/v1';
+  static const String apiBaseUrl = 'https://lexilingo-4gu6.onrender.com/api/v1';
 
   // AI Service (Chat, STT, TTS, AI Analysis)
-  static const String aiServiceUrl = 'http://localhost:8001/api/v1';
+  static const String localAiServiceUrl = 'http://localhost:8001/api/v1';
+  static const String aiServiceUrl =
+      'https://enable-tell-memphis-wing.trycloudflare.com/api/v1';
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

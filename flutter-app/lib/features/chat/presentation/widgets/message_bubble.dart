@@ -21,6 +21,7 @@ class MessageBubble extends StatefulWidget {
   final bool showTimestamp;
   final VoidCallback? onRetry;
   final Function(String reaction)? onReaction;
+
   /// Google/profile avatar URL for the logged-in user.
   final String? userAvatarUrl;
 

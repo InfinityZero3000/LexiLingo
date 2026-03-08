@@ -98,13 +98,10 @@ class _MainScreenState extends State<MainScreen> {
           width: 40,
           height: 40,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Text(
-            '🦜',
-            style: TextStyle(fontSize: 24),
-          ),
+          errorBuilder: (_, __, ___) =>
+              const Text('🦜', style: TextStyle(fontSize: 24)),
         ),
       ),
     );
   }
-
 }

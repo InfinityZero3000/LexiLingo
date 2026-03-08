@@ -341,7 +341,8 @@ class _LexiChatPageState extends State<LexiChatPage>
               onPlayAudio: message.hasAudio
                   ? () => provider.replayAudio(message)
                   : null,
-              onShowCorrections: (message.hasCorrections ||
+              onShowCorrections:
+                  (message.hasCorrections ||
                       message.vietnameseHint != null ||
                       message.linkedConcepts.isNotEmpty)
                   ? () => LexiCorrectionsSheet.show(context, message)
@@ -388,9 +389,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     : const Color(0xFFF6F7F8),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF2A3A4A)
-                      : AppColors.grey300,
+                  color: isDark ? const Color(0xFF2A3A4A) : AppColors.grey300,
                 ),
               ),
               child: Row(

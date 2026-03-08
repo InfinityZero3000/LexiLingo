@@ -67,14 +67,8 @@ class LexiDialogueBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: isDark
-                          ? [
-                              const Color(0xFF1E3A5F),
-                              const Color(0xFF14304D),
-                            ]
-                          : [
-                              const Color(0xFFF0F7FF),
-                              const Color(0xFFE8F4FD),
-                            ],
+                          ? [const Color(0xFF1E3A5F), const Color(0xFF14304D)]
+                          : [const Color(0xFFF0F7FF), const Color(0xFFE8F4FD)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -92,7 +86,9 @@ class LexiDialogueBubble extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.25 : 0.06,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -158,10 +154,7 @@ class LexiDialogueBubble extends StatelessWidget {
         children: [
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: AppColors.primaryGradient,
@@ -220,9 +213,8 @@ class LexiDialogueBubble extends StatelessWidget {
         child: Image.asset(
           'assets/avatar/avatar-ai-chat.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Center(
-            child: Text('🦜', style: TextStyle(fontSize: 22)),
-          ),
+          errorBuilder: (_, __, ___) =>
+              const Center(child: Text('🦜', style: TextStyle(fontSize: 22))),
         ),
       ),
     );
@@ -246,10 +238,7 @@ class LexiDialogueBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: chipColor.withValues(alpha: isDark ? 0.2 : 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: chipColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          border: Border.all(color: chipColor.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -24,6 +24,7 @@ from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import LessonAttempt, UserProgress, Streak
 from app.models.vocabulary import VocabularyItem
+from app.models.rbac import Role
 
 
 @pytest.fixture(autouse=True)
@@ -124,6 +125,42 @@ async def test_user(db_session: AsyncSession) -> User:
 def auth_headers(test_user: User) -> dict:
     """Create authentication headers with JWT token"""
     access_token = create_access_token(data={"sub": str(test_user.id)})
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+async def admin_user(db_session: AsyncSession) -> User:
+    """Create a test admin user with admin role for testing admin endpoints."""
+    admin_role = Role(
+        name="Admin", slug="admin", level=1,
+        description="Admin role", is_system=True, is_active=True
+    )
+    db_session.add(admin_role)
+    await db_session.commit()
+    await db_session.refresh(admin_role)
+
+    user = User(
+        email="admin@example.com",
+        username="adminuser",
+        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+        display_name="Admin User",
+        is_active=True,
+        is_verified=True,
+        native_language="vi",
+        target_language="en",
+        level="beginner",
+        role_id=admin_role.id,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def admin_headers(admin_user: User) -> dict:
+    """Create authentication headers with JWT token for an admin user."""
+    access_token = create_access_token(data={"sub": str(admin_user.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
 

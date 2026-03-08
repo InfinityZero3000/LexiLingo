@@ -108,9 +108,11 @@ Data Source
 
 ```dart
 // Environment configuration
-API_BASE_URL=http://localhost:8000/api/v1
+API_BASE_URL=https://lexilingo-4gu6.onrender.com/api/v1
 GEMINI_API_KEY=your_key
 ```
+
+For local development, you can override `API_BASE_URL` to `http://localhost:8000/api/v1`.
 
 The app connects to:
 - **Backend Service** (port 8000) — User, courses, progress

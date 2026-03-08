@@ -57,16 +57,18 @@ class LexiChatProvider extends ChangeNotifier {
       _messages.clear();
 
       // Add Lexi's greeting
-      _messages.add(LexiMessage(
-        id: 'greeting',
-        role: 'assistant',
-        content:
-            "Squawk! 🦜 Hey there, adventurer! I'm **Lexi**, your English buddy. "
-            "Let's go on a learning adventure together!\n\n"
-            "You can type or speak — I'll help you practice English. "
-            "What would you like to talk about?",
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        LexiMessage(
+          id: 'greeting',
+          role: 'assistant',
+          content:
+              "Squawk! 🦜 Hey there, adventurer! I'm **Lexi**, your English buddy. "
+              "Let's go on a learning adventure together!\n\n"
+              "You can type or speak — I'll help you practice English. "
+              "What would you like to talk about?",
+          timestamp: DateTime.now(),
+        ),
+      );
 
       _isLoading = false;
       notifyListeners();
@@ -123,13 +125,16 @@ class LexiChatProvider extends ChangeNotifier {
       logError(_tag, _error!);
 
       // Add error message from Lexi
-      _messages.add(LexiMessage(
-        id: 'error_${DateTime.now().millisecondsSinceEpoch}',
-        role: 'assistant',
-        content: "Squawk! 🦜 Oops, my feathers got tangled! "
-            "Could you try again?",
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        LexiMessage(
+          id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          content:
+              "Squawk! 🦜 Oops, my feathers got tangled! "
+              "Could you try again?",
+          timestamp: DateTime.now(),
+        ),
+      );
       notifyListeners();
     }
   }
@@ -146,12 +151,14 @@ class LexiChatProvider extends ChangeNotifier {
     _error = null;
 
     // Show recording indicator
-    _messages.add(LexiMessage(
-      id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
-      role: 'user',
-      content: '🎤 Voice message...',
-      timestamp: DateTime.now(),
-    ));
+    _messages.add(
+      LexiMessage(
+        id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
+        role: 'user',
+        content: '🎤 Voice message...',
+        timestamp: DateTime.now(),
+      ),
+    );
     notifyListeners();
 
     try {

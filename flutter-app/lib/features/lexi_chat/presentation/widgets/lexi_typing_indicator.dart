@@ -33,9 +33,10 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
     }
 
     _animations = _controllers.map((c) {
-      return Tween<double>(begin: 0, end: -8).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeInOut),
-      );
+      return Tween<double>(
+        begin: 0,
+        end: -8,
+      ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut));
     }).toList();
   }
 
@@ -58,9 +59,7 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1E3A5F)
-                  : const Color(0xFFF0F7FF),
+              color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFF0F7FF),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(18),
