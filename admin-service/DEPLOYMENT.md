@@ -18,7 +18,7 @@ npm install -g vercel
 vercel login
 
 # Deploy to production
-cd web-admin
+cd admin-service
 vercel --prod
 ```
 
