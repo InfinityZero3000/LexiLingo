@@ -4,7 +4,7 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import String, Integer, ForeignKey, Float, JSON, Text, Index, Enum as SQLEnum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
