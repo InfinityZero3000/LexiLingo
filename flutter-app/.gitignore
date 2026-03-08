@@ -120,6 +120,8 @@ logs/
 
 # firebase
 firebase-debug.log
-firebase.json
 .vercel
 .env*.local
+
+# coverage
+coverage/

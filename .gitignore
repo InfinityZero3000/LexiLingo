@@ -35,7 +35,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 .metadata
-pubspec.lock
 
 # Python
 __pycache__/
