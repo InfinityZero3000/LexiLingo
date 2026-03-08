@@ -25,7 +25,7 @@
   "env": {
     "VITE_BACKEND_URL": "https://lexilingo-4gu6.onrender.com/api/v1",
     "VITE_AI_URL": "https://enable-tell-memphis-wing.trycloudflare.com/api/v1",
-    "VITE_GOOGLE_CLIENT_ID": "706480877582-4ukvcqqtbne4r1gmpddu6f0ia9lhaoq0.apps.googleusercontent.com",
+    "VITE_GOOGLE_CLIENT_ID": "51160269052-qmeehd6b9bfe55di9csu0tvhlokcenf9.apps.googleusercontent.com",
     "VITE_ADMIN_EMAILS": "nhthang312@gmail.com",
     "VITE_SUPER_ADMIN_EMAILS": "thefirestar312@gmail.com",
     "VITE_APP_NAME": "LexiLingo Admin",

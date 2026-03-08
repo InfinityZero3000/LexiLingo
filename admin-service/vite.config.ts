@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
+    port: 5176,
     headers: {
       // Only allow resources from own origin + Google GSI + fonts + backend API
       "Content-Security-Policy": [
