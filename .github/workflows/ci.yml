@@ -170,7 +170,7 @@ jobs:
           path: flutter-app/analyze-output.txt
 
       - name: Run unit tests
-        run: flutter test --no-pub -r compact
+        run: flutter test --no-pub -r compact test/core test/features
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib/

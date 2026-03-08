@@ -387,7 +387,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
                 // Pronunciation score
                 if (voiceProvider.lastPronunciationScore != null) ...[
-                  if (voiceProvider.lastPronunciationScore!.overallScore >= 80) ...[
+                  if (voiceProvider.lastPronunciationScore!.overallScore >=
+                      80) ...[
                     const LottieAnimationWidget.success(
                       width: 100,
                       height: 100,

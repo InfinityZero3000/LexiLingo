@@ -108,7 +108,9 @@ class LevelProgressCard extends StatelessWidget {
         final totalXp = levelProvider.levelStatus.totalXP;
 
         return GestureDetector(
-          onTap: onTap ?? () => _showLevelDetails(context, levelProvider.levelStatus),
+          onTap:
+              onTap ??
+              () => _showLevelDetails(context, levelProvider.levelStatus),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -210,7 +212,9 @@ class LevelProgressCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
                         minHeight: 8,
                       ),
                     ),

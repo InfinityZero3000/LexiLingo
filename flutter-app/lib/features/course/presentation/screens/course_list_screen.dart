@@ -107,7 +107,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 const Spacer(),
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                                    color: const Color(
+                                      0xFF3B82F6,
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: IconButton(
@@ -589,9 +591,13 @@ class _HorizontalCourseCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Theme.of(context).colorScheme.primaryContainer
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
                                         .withValues(alpha: 0.7),
-                                    Theme.of(context).colorScheme.primaryContainer
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
                                         .withValues(alpha: 0.5),
                                   ],
                                 ),
@@ -607,7 +613,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: Theme.of(context)
-                                          .colorScheme.primary
+                                          .colorScheme
+                                          .primary
                                           .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -616,7 +623,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                       ),
                                     ),
                                   ),
@@ -626,45 +635,48 @@ class _HorizontalCourseCard extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: Theme.of(context)
-                                          .colorScheme.onPrimaryContainer,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             // Extra course.tags chips
-                            ...course.tags.map((tag) => Padding(
-                              padding: const EdgeInsets.only(left: 5),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: isDark
-                                        ? Colors.white24
-                                        : Colors.grey.shade300,
-                                    width: 0.8,
+                            ...course.tags.map(
+                              (tag) => Padding(
+                                padding: const EdgeInsets.only(left: 5),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
                                   ),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
+                                  decoration: BoxDecoration(
                                     color: isDark
-                                        ? Colors.white70
-                                        : Colors.grey.shade700,
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.white24
+                                          : Colors.grey.shade300,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.grey.shade700,
+                                    ),
                                   ),
                                 ),
                               ),
-                            )),
+                            ),
                           ],
                         ),
                       ),

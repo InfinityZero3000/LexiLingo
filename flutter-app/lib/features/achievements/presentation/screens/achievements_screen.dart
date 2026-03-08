@@ -83,11 +83,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 for (final entry in categories.entries)
                   if (entry.key.toLowerCase() != 'xp')
                     ..._buildCategorySection(
-                    context,
-                    provider,
-                    entry.key,
-                    entry.value,
-                  ),
+                      context,
+                      provider,
+                      entry.key,
+                      entry.value,
+                    ),
 
                 // Bottom padding
                 const SliverPadding(padding: EdgeInsets.only(bottom: 24)),

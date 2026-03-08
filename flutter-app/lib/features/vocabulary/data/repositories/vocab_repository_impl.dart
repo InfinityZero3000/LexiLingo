@@ -67,8 +67,9 @@ class VocabRepositoryImpl implements VocabRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey);
-      final List<dynamic> list =
-          (raw != null && raw.isNotEmpty) ? jsonDecode(raw) as List<dynamic> : [];
+      final List<dynamic> list = (raw != null && raw.isNotEmpty)
+          ? jsonDecode(raw) as List<dynamic>
+          : [];
 
       list.add({
         'word': word.word,

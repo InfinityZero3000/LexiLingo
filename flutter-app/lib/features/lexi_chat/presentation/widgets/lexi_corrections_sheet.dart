@@ -18,7 +18,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
   static void show(BuildContext context, LexiMessage message) {
     if (!message.hasCorrections &&
         message.vietnameseHint == null &&
-        message.linkedConcepts.isEmpty) return;
+        message.linkedConcepts.isEmpty)
+      return;
 
     showModalBottomSheet(
       context: context,
@@ -119,12 +120,17 @@ class LexiCorrectionsSheet extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: linkedConcepts
-                        .map((c) => Chip(
-                              label: Text(c, style: const TextStyle(fontSize: 12)),
-                              backgroundColor: isDark
-                                  ? const Color(0xFF2A3A4A)
-                                  : AppColors.primary.withValues(alpha: 0.1),
-                            ))
+                        .map(
+                          (c) => Chip(
+                            label: Text(
+                              c,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: isDark
+                                ? const Color(0xFF2A3A4A)
+                                : AppColors.primary.withValues(alpha: 0.1),
+                          ),
+                        )
                         .toList(),
                   ),
                 ],

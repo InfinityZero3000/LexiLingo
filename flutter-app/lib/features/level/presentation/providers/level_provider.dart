@@ -66,7 +66,8 @@ class LevelProvider with ChangeNotifier {
   /// Level progress percentage (0.0–1.0) for the numeric level system.
   /// Uses API value if available, else computed with backend formula.
   double get displayLevelProgress {
-    if (_levelProgressPercent > 0) return (_levelProgressPercent / 100).clamp(0.0, 1.0);
+    if (_levelProgressPercent > 0)
+      return (_levelProgressPercent / 100).clamp(0.0, 1.0);
     return LevelCalculator.numericLevelProgressPercent(_levelStatus.totalXP);
   }
 

@@ -43,11 +43,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   children: [
                     if (Navigator.canPop(context))
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(context),
                         tooltip: 'Back',
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                        constraints: const BoxConstraints(
+                          minWidth: 36,
+                          minHeight: 36,
+                        ),
                       ),
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -68,18 +74,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       children: [
                         Text(
                           'Notifications',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           unread > 0
                               ? '$unread unread message${unread > 1 ? 's' : ''}'
                               : 'All caught up',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.grey[600]),
                         ),
                       ],
@@ -91,7 +93,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                         ),
                         child: const Text(
                           'Mark all read',

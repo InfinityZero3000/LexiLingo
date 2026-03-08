@@ -25,7 +25,8 @@ class LexiChatDataSource {
       return LexiSession(
         sessionId: data['session_id'] ?? '',
         userId: userId,
-        createdAt: DateTime.tryParse(data['created_at'] ?? '') ?? DateTime.now(),
+        createdAt:
+            DateTime.tryParse(data['created_at'] ?? '') ?? DateTime.now(),
       );
     } catch (e) {
       logError(_tag, 'createSession failed: $e');
@@ -74,12 +75,14 @@ class LexiChatDataSource {
     final rawCorrections = data['corrections'] as List?;
     if (rawCorrections != null) {
       for (final c in rawCorrections) {
-        corrections.add(LexiCorrection(
-          errorSpan: c['error_span'] ?? '',
-          correction: c['correction'] ?? '',
-          errorType: c['error_type'] ?? '',
-          explanation: c['explanation'] ?? '',
-        ));
+        corrections.add(
+          LexiCorrection(
+            errorSpan: c['error_span'] ?? '',
+            correction: c['correction'] ?? '',
+            errorType: c['error_type'] ?? '',
+            explanation: c['explanation'] ?? '',
+          ),
+        );
       }
     }
 
@@ -97,9 +100,14 @@ class LexiChatDataSource {
     }
 
     return LexiMessage(
-      id: data['message_id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          data['message_id'] ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       role: 'assistant',
-      content: data['lexi_response'] ?? data['response'] ?? 'Squawk! Something went wrong.',
+      content:
+          data['lexi_response'] ??
+          data['response'] ??
+          'Squawk! Something went wrong.',
       timestamp: DateTime.now(),
       audioBase64: data['audio_base64'],
       corrections: corrections,

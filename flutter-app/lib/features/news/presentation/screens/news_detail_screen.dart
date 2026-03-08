@@ -40,16 +40,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   void _loadFullContentIfNeeded() {
     final content = widget.article.content;
     // NewsAPI free tier truncates to ~200 chars, often ending with "[+XXXX chars]"
-    final isTruncated = content.length < 500 ||
-        RegExp(r'\[\+\d+ chars\]$').hasMatch(content);
+    final isTruncated =
+        content.length < 500 || RegExp(r'\[\+\d+ chars\]$').hasMatch(content);
     if (isTruncated && widget.article.url.isNotEmpty) {
       _isLoadingFullContent = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
           final provider = context.read<NewsProvider>();
-          final fullContent =
-              await provider.loadFullContent(widget.article.url);
-          if (mounted && fullContent != null && fullContent.length > content.length) {
+          final fullContent = await provider.loadFullContent(
+            widget.article.url,
+          );
+          if (mounted &&
+              fullContent != null &&
+              fullContent.length > content.length) {
             setState(() {
               _fullContent = fullContent;
               _isLoadingFullContent = false;
@@ -419,9 +422,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     final baseStyle = TextStyle(
       fontSize: 16,
       height: 1.7,
-      color: isDark
-          ? Colors.white.withValues(alpha: 0.85)
-          : AppColors.textDark,
+      color: isDark ? Colors.white.withValues(alpha: 0.85) : AppColors.textDark,
     );
 
     // Split into paragraphs
@@ -442,47 +443,44 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         for (final match in tokenRegex.allMatches(paragraph)) {
           // Add any whitespace between the previous token and this one
           if (match.start > lastEnd) {
-            spans.add(TextSpan(
-              text: paragraph.substring(lastEnd, match.start),
-            ));
+            spans.add(
+              TextSpan(text: paragraph.substring(lastEnd, match.start)),
+            );
           }
           lastEnd = match.end;
 
           final word = match.group(0)!;
-          final cleanWord = word
-              .replaceAll(RegExp(r'[^\w]'), '')
-              .toLowerCase();
+          final cleanWord = word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
           final isHighlighted =
               cleanWord.isNotEmpty && highlightSet.contains(cleanWord);
 
           if (isHighlighted) {
-            spans.add(WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: GestureDetector(
-                onTap: () => _onWordTap(word),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cefrColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: cefrColor,
-                        width: 2,
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: GestureDetector(
+                  onTap: () => _onWordTap(word),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cefrColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border(
+                        bottom: BorderSide(color: cefrColor, width: 2),
                       ),
                     ),
-                  ),
-                  child: Text(
-                    word,
-                    style: baseStyle.copyWith(fontWeight: FontWeight.w600),
+                    child: Text(
+                      word,
+                      style: baseStyle.copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ),
-            ));
+            );
           } else {
             // Plain text — use TextSpan so whitespace flows naturally
             spans.add(TextSpan(text: word));
@@ -491,9 +489,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
 
         // Trailing whitespace (unlikely, but safe)
         if (lastEnd < paragraph.length) {
-          spans.add(TextSpan(
-            text: paragraph.substring(lastEnd),
-          ));
+          spans.add(TextSpan(text: paragraph.substring(lastEnd)));
         }
 
         return Padding(

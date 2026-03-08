@@ -70,10 +70,7 @@ class StreakWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (streak.streakAtRisk)
-                  const LottieAnimationWidget.heartbeat(
-                    width: 22,
-                    height: 22,
-                  )
+                  const LottieAnimationWidget.heartbeat(width: 22, height: 22)
                 else
                   Icon(
                     _getStreakIcon(streak.streakIcon),

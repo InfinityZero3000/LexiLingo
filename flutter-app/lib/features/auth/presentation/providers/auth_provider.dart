@@ -121,8 +121,9 @@ class AuthProvider extends ChangeNotifier {
           _errorMessage = null;
           _isJustLoggedIn = true; // Set flag for welcome screen
           // Register FCM token with backend after successful Google sign-in
-          FirebaseMessagingService.instance
-              .registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
         },
       );
     } catch (e) {
@@ -161,8 +162,9 @@ class AuthProvider extends ChangeNotifier {
           _errorMessage = null;
           _isJustLoggedIn = true; // Set flag for welcome screen
           // Register FCM token with backend after successful email sign-in
-          FirebaseMessagingService.instance
-              .registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
         },
       );
     } catch (e) {

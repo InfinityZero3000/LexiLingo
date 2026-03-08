@@ -523,9 +523,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
     final themes = [
-      {'code': 'light', 'name': 'settings.theme_light', 'icon': Icons.light_mode},
+      {
+        'code': 'light',
+        'name': 'settings.theme_light',
+        'icon': Icons.light_mode,
+      },
       {'code': 'dark', 'name': 'settings.theme_dark', 'icon': Icons.dark_mode},
-      {'code': 'system', 'name': 'settings.theme_system', 'icon': Icons.settings_suggest},
+      {
+        'code': 'system',
+        'name': 'settings.theme_system',
+        'icon': Icons.settings_suggest,
+      },
     ];
 
     return Card(
@@ -609,8 +617,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    backgroundImage: user.avatarUrl != null &&
-                            user.avatarUrl!.isNotEmpty
+                    backgroundImage:
+                        user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                         ? NetworkImage(user.avatarUrl!)
                         : null,
                     child: user.avatarUrl == null || user.avatarUrl!.isEmpty
@@ -656,8 +664,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
 
-          if (user != null)
-            Divider(height: 1, color: Colors.grey.shade200),
+          if (user != null) Divider(height: 1, color: Colors.grey.shade200),
 
           // Sign out button
           InkWell(
@@ -675,7 +682,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       color: Colors.red.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.logout, color: Colors.red.shade600, size: 20),
+                    child: Icon(
+                      Icons.logout,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -687,7 +698,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
                 ],
               ),
             ),

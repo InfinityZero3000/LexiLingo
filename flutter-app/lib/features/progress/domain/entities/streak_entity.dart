@@ -37,7 +37,9 @@ class StreakEntity extends Equatable {
     required this.isActiveToday,
     required this.streakAtRisk,
     List<bool>? weeklyActivity,
-  }) : weeklyActivity = weeklyActivity ?? const [false, false, false, false, false, false, false];
+  }) : weeklyActivity =
+           weeklyActivity ??
+           const [false, false, false, false, false, false, false];
 
   /// Factory constructor for empty/default streak
   factory StreakEntity.empty() {

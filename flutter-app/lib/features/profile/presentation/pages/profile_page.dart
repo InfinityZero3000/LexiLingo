@@ -414,7 +414,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
-
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -510,9 +509,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     Icon(
                                       _getTierIcon(lp.proficiencyLevel),
                                       size: 14,
-                                      color: _getTierColor(
-                                        lp.proficiencyLevel,
-                                      ),
+                                      color: _getTierColor(lp.proficiencyLevel),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
