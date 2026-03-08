@@ -5,50 +5,51 @@ from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.main import app
+from app.core.database import get_db
+from app.core.security import create_access_token, get_password_hash
 from app.models.rbac import Role
 from app.models.user import User
 
 
 @pytest.fixture
 async def admin_token(db_session):
-    """Create admin user and return JWT token."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        await client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "test_admin@test.com",
-                "username": "testadmin",
-                "password": "testpass123",
-                "display_name": "Test Admin",
-            },
-        )
+    """Create admin user directly in DB and return JWT token.
 
-        from sqlalchemy import select
+    Bypasses HTTP registration to avoid session-isolation issues between the
+    test db_session and the app's own get_db connection pool.  Both share the
+    same physical database in CI, so we override get_db to ensure the request
+    handlers see the same session (and therefore the committed user + role).
+    """
+    admin_role = Role(
+        name="Admin", slug="admin", level=1,
+        description="Admin role", is_system=True, is_active=True,
+    )
+    db_session.add(admin_role)
+    await db_session.commit()
+    await db_session.refresh(admin_role)
 
-        result = await db_session.execute(
-            select(User).where(User.email == "test_admin@test.com")
-        )
-        user = result.scalar_one_or_none()
-        if user is None:
-            pytest.fail(
-                "User 'test_admin@test.com' was not created by /auth/register. "
-                "Check that the endpoint returns 200 and commits the user."
-            )
+    admin_user = User(
+        email="test_admin@test.com",
+        username="testadmin",
+        hashed_password=get_password_hash("testpass123"),
+        display_name="Test Admin",
+        is_active=True,
+        is_verified=True,
+        role_id=admin_role.id,
+    )
+    db_session.add(admin_user)
+    await db_session.commit()
+    await db_session.refresh(admin_user)
 
-        admin_role = await db_session.execute(select(Role).where(Role.slug == "admin"))
-        role = admin_role.scalar_one_or_none()
+    async def override_get_db():
+        yield db_session
 
-        if role:
-            user.role_id = role.id
-            await db_session.commit()
+    app.dependency_overrides[get_db] = override_get_db
 
-        response = await client.post(
-            "/api/v1/auth/login",
-            json={"email": "test_admin@test.com", "password": "testpass123"},
-        )
+    access_token = create_access_token(data={"sub": str(admin_user.id)})
+    yield access_token
 
-        data = response.json()
-        return data["access_token"]
+    app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.mark.asyncio

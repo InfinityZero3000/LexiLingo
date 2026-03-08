@@ -3,7 +3,7 @@ Daily Challenges Routes
 Phase 4: Gamification - Daily challenge system for user engagement
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
