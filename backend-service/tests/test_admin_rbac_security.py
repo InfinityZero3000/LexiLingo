@@ -422,10 +422,8 @@ class TestContentCRUD:
             "title": "Test English Course",
             "description": "A comprehensive English course",
             "language": "en",
-            "level": "beginner",
+            "level": "A1",
             "is_published": True,
-            "total_xp": 1000,
-            "estimated_duration": 30
         })
         assert response.status_code == 200
         data = response.json()
