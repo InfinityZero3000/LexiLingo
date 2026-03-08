@@ -9,7 +9,6 @@ import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/streak_service.dart';
 import 'package:lexilingo_app/core/services/dictionary_service.dart';
-import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Disabled - old schema

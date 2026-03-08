@@ -9,6 +9,7 @@ import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Already disabled
 import 'package:lexilingo_app/core/services/health_check_service.dart';
@@ -82,6 +83,9 @@ void main() async {
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
+
+  debugPrint('Backend API base URL: ${ApiConfig.baseUrl}');
+  debugPrint('AI service base URL: ${ApiConfig.aiServiceUrl}');
 
   // Initialize Firebase
   try {
