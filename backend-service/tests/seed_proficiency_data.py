@@ -128,17 +128,26 @@ async def seed(database_url: str | None = None):
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
-        # 1. Find or fail — user must already exist
+        # 1. Find or create the test user
         result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
         user = result.scalar_one_or_none()
         if not user:
-            print(f"❌  User with email '{TARGET_EMAIL}' not found in database.")
-            print("   Create the user first (register via app or create_test_user.py).")
-            await engine.dispose()
-            return False
+            # Auto-create for CI / fresh environments
+            from app.core.security import get_password_hash
+            user = User(
+                email=TARGET_EMAIL,
+                username="nhthang312",
+                hashed_password=get_password_hash("SeedUser_testpass123!"),
+                display_name="Nguyen Huu Thang (seed)",
+            )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            print(f"✅  Created test user: {TARGET_EMAIL}")
+        else:
+            print(f"✅  Found user: {user.display_name or user.username} (id={user.id})")
 
         user_id = user.id
-        print(f"✅  Found user: {user.display_name or user.username} (id={user_id})")
 
         # 2. Clean any existing proficiency data for this user
         await _clean_user_proficiency(session, user_id)

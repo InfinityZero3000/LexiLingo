@@ -28,7 +28,12 @@ async def admin_token(db_session):
         result = await db_session.execute(
             select(User).where(User.email == "test_admin@test.com")
         )
-        user = result.scalar_one()
+        user = result.scalar_one_or_none()
+        if user is None:
+            pytest.fail(
+                "User 'test_admin@test.com' was not created by /auth/register. "
+                "Check that the endpoint returns 200 and commits the user."
+            )
 
         admin_role = await db_session.execute(select(Role).where(Role.slug == "admin"))
         role = admin_role.scalar_one_or_none()

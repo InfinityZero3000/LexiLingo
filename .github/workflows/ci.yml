@@ -70,6 +70,12 @@ jobs:
       - name: Install test dependencies
         run: pip install pytest-cov
 
+      - name: Create all DB tables
+        run: python create_tables.py
+
+      - name: Seed proficiency integration test data
+        run: python -m tests.seed_proficiency_data
+
       - name: Check app import
         run: |
           python -c "
@@ -82,9 +88,16 @@ jobs:
               sys.exit(1)
           "
 
+      - name: Run proficiency integration tests
+        run: |
+          pytest tests/test_proficiency_api_integration.py \
+            --tb=long -v 2>&1 | tee proficiency-output.txt
+          exit ${PIPESTATUS[0]}
+
       - name: Run tests with coverage
         run: |
           pytest \
+            --ignore=tests/test_proficiency_api_integration.py \
             --tb=long \
             --cov=app \
             --cov-report=term-missing \
@@ -131,6 +144,9 @@ jobs:
 
       - name: Create firebase_options.dart from example
         run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+
+      - name: Create .env asset placeholder
+        run: touch .env
 
       - name: Print Flutter and Dart versions
         run: |
