@@ -1,0 +1,26 @@
+# Local metadata
+.git/
+.vercel/
+.vscode/
+.idea/
+.DS_Store
+
+# Local env and secrets
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Node generated files
+node_modules/
+dist/
+coverage/
+
+# Logs and temp files
+logs/
+*.log
+*.log.*
+*.tmp
+*.temp
+*~
+*.swp
