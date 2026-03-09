@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "LexiLingo Backend Service"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
-    DEBUG: bool = True
+    DEBUG: bool = False
     PORT: int = 8000
     
     # Database

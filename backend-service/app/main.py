@@ -231,9 +231,9 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    """Root endpoint."""
+    """Root endpoint. Supports HEAD for Render/load-balancer health probes."""
     return {
         "message": f"Welcome to {settings.APP_NAME}",
         "version": "1.0.0",
