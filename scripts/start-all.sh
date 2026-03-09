@@ -277,6 +277,24 @@ echo ""
 # Clean up old PID files
 rm -f "$PID_DIR"/*.pid
 
+# ============ PostgreSQL (via Docker) ============
+if command -v docker &>/dev/null; then
+    if ! lsof -ti :5432 >/dev/null 2>&1; then
+        echo -e "${BLUE}[START] Starting PostgreSQL container...${NC}"
+        docker compose -f "$PROJECT_ROOT/docker-compose.yml" up -d postgres >> "$LOG_DIR/postgres.log" 2>&1
+        # Wait up to 15s for postgres to be ready
+        for i in $(seq 1 15); do
+            docker compose -f "$PROJECT_ROOT/docker-compose.yml" exec -T postgres pg_isready -U lexilingo >/dev/null 2>&1 && break
+            sleep 1
+        done
+    fi
+else
+    if ! lsof -ti :5432 >/dev/null 2>&1; then
+        echo -e "   ${YELLOW}[WARN] Docker not found and PostgreSQL not running on port 5432.${NC}"
+        echo -e "   ${YELLOW}       Install Docker or start PostgreSQL manually.${NC}"
+    fi
+fi
+
 # ============ Backend Service ============
 # echo -e "${BLUE}[START] Starting Backend Service (port 8000)...${NC}"
 
@@ -400,7 +418,7 @@ fi
 if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
     (
         cd "$PROJECT_ROOT/flutter-app"
-        flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 --web-allowed-hosts all >> "$LOG_DIR/flutter.log" 2>&1
+        flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1
     ) &
     FLUTTER_PID=$!
     echo $FLUTTER_PID > "$PID_DIR/flutter.pid"

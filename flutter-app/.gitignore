@@ -122,6 +122,7 @@ logs/
 firebase-debug.log
 .vercel
 .env*.local
+*plist
 
 # coverage
 coverage/

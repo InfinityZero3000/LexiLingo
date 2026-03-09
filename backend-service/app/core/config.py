@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5176"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
         r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"

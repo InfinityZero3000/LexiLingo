@@ -6,6 +6,8 @@ export default defineConfig({
   server: {
     port: 5176,
     headers: {
+      // Required for Google OAuth popup to postMessage back to opener
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
       // Only allow resources from own origin + Google GSI + fonts + backend API
       "Content-Security-Policy": [
         "default-src 'self'",
@@ -14,7 +16,7 @@ export default defineConfig({
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: https://*.googleusercontent.com https://accounts.google.com",
         "frame-src https://accounts.google.com",
-        "connect-src 'self' http://localhost:8000 http://localhost:8001 https://accounts.google.com",
+        "connect-src 'self' http://localhost:8000 http://localhost:8001 https://lexilingo-4gu6.onrender.com https://accounts.google.com https://oauth2.googleapis.com",
       ].join("; "),
       // Prevent clickjacking — no embedding in iframes from other origins
       "X-Frame-Options": "SAMEORIGIN",

@@ -13,6 +13,15 @@
   ],
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {
@@ -25,7 +34,7 @@
   "env": {
     "VITE_BACKEND_URL": "https://lexilingo-4gu6.onrender.com/api/v1",
     "VITE_AI_URL": "https://enable-tell-memphis-wing.trycloudflare.com/api/v1",
-    "VITE_GOOGLE_CLIENT_ID": "51160269052-qmeehd6b9bfe55di9csu0tvhlokcenf9.apps.googleusercontent.com",
+    "VITE_GOOGLE_CLIENT_ID": "432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com",
     "VITE_ADMIN_EMAILS": "nhthang312@gmail.com",
     "VITE_SUPER_ADMIN_EMAILS": "thefirestar312@gmail.com",
     "VITE_APP_NAME": "LexiLingo Admin",

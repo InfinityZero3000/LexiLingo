@@ -261,7 +261,10 @@ async def google_login(
                 detail="Admin Google OAuth not configured"
             )
     else:
-        audience = settings.GOOGLE_CLIENT_ID
+        # For Flutter app: mobile sends token with aud=GOOGLE_CLIENT_ID;
+        # Flutter web (Firebase Auth) sends token with aud=Firebase web client ID.
+        # We try strict audience first, then fall back to no-audience check.
+        audience = settings.GOOGLE_CLIENT_ID  # None is also accepted below
     
     # Verify Google token with the correct audience
     import logging
@@ -270,6 +273,13 @@ async def google_login(
     logger.info(f"id_token length={len(request.id_token)}, first_50={request.id_token[:50]}...")
     
     google_info = await verify_google_token(request.id_token, audience=audience)
+
+    # For non-admin sources, if strict-audience check failed, retry without audience
+    # (handles Firebase Web id_tokens whose aud != GOOGLE_CLIENT_ID)
+    if not google_info and request.source != "admin":
+        logger.info("Retrying token verification without audience restriction (Flutter web / Firebase)")
+        google_info = await verify_google_token(request.id_token, audience=None)
+
     if not google_info:
         logger.error(f"Google token verification returned None for source={request.source}")
         raise HTTPException(
