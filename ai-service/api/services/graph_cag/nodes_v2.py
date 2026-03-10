@@ -54,6 +54,26 @@ _TAU_REUSE = 0.25    # τ₀: max risk for direct reuse
 _TAU_PATCH = 0.55    # τ₁: max risk for delta patching
 
 
+def _is_exact_reuse_match(fingerprint: CacheFingerprint, entry: CacheEntry) -> bool:
+    cached_fingerprint = entry.get("fingerprint") or {}
+    if fingerprint.get("query_norm") != cached_fingerprint.get("query_norm"):
+        return False
+    if fingerprint.get("level") != cached_fingerprint.get("level"):
+        return False
+
+    current_intent = fingerprint.get("intent", "unknown")
+    cached_intent = cached_fingerprint.get("intent", "unknown")
+    if current_intent != "unknown" and cached_intent != "unknown" and current_intent != cached_intent:
+        return False
+
+    current_concepts = set(fingerprint.get("root_concepts") or [])
+    cached_concepts = set(cached_fingerprint.get("root_concepts") or [])
+    if current_concepts and cached_concepts and current_concepts != cached_concepts:
+        return False
+
+    return True
+
+
 def _compute_reuse_risk(
     fingerprint: CacheFingerprint,
     entry: CacheEntry,
@@ -110,6 +130,11 @@ def _compute_reuse_risk(
         + _W_PROGRESS * delta_prog
         + _W_STALENESS * staleness
     )
+
+    # L0 exact repeats should remain direct reuses while the cache entry is live.
+    if _is_exact_reuse_match(fingerprint, entry):
+        rho -= _W_STALENESS * staleness
+
     return max(0.0, min(1.0, rho))
 
 
