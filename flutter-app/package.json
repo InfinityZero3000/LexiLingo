@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "scripts": {
     "vercel-build": "test -f build/web/index.html || (echo 'Missing build/web/index.html. Run flutter build web before deploying.' && exit 1)",
-    "deploy:prod": "flutter build web --release && vercel build --prod && vercel deploy --prebuilt --prod"
+    "deploy:prod": "flutter build web --release --no-tree-shake-icons && vercel build --prod && vercel deploy --prebuilt --prod"
   }
 }
