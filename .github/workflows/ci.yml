@@ -148,6 +148,9 @@ jobs:
       - name: Create .env asset placeholder
         run: touch .env
 
+      - name: Create .env.production asset placeholder
+        run: touch .env.production
+
       - name: Print Flutter and Dart versions
         run: |
           flutter --version
