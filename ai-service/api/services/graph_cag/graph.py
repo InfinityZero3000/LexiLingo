@@ -258,6 +258,11 @@ class GraphCAGPipeline:
                 "models_used": state.get("models_used", []),
                 "path": state.get("path", "slow"),
                 "cache_hit": state.get("cache_hit", False),
+                "cache_decision": state.get("cache_decision", "full"),
+                "cache_layer": state.get("cache_layer", "none"),
+                "cache_bucket": state.get("cache_bucket", ""),
+                "reuse_risk": state.get("reuse_risk", 1.0),
+                "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
             },
             "audio": {

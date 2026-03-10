@@ -64,14 +64,25 @@ def _compute_reuse_risk(
 
     ρ = clip[0,1]( w1·ΔI + w2·ΔC + w3·Δℓ + w4·Δprog + w5·s )
     """
-    # ΔI: intent mismatch (binary)
+    # ΔI: intent mismatch (binary).
+    # During the pre-diagnosis cache gate, intent may be unavailable; treat that
+    # as "not yet observed" instead of penalizing the request immediately.
     cached_plan = entry.get("execution_plan") or {}
-    delta_i = 0.0 if fingerprint.get("intent", "unknown") == cached_plan.get("intent", "unknown") else 1.0
+    cur_intent = fingerprint.get("intent", "unknown")
+    cached_intent = cached_plan.get("intent", "unknown")
+    if cur_intent == "unknown" or cached_intent == "unknown":
+        delta_i = 0.0
+    else:
+        delta_i = 0.0 if cur_intent == cached_intent else 1.0
 
-    # ΔC: concept drift (1 - Jaccard)
+    # ΔC: concept drift (1 - Jaccard).
+    # Root-cause concepts are also unavailable before diagnosis, so keep this
+    # component neutral until the current request actually exposes concepts.
     cur_concepts = set(fingerprint.get("root_concepts") or [])
     cached_concepts = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
-    if cur_concepts or cached_concepts:
+    if not cur_concepts:
+        delta_c = 0.0
+    elif cur_concepts or cached_concepts:
         jaccard = len(cur_concepts & cached_concepts) / max(len(cur_concepts | cached_concepts), 1)
         delta_c = 1.0 - jaccard
     else:
@@ -146,7 +157,129 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
 # ============================================================
 
 _MEM_RESPONSE_CACHE: dict[str, tuple[float, CacheEntry]] = {}
+_MEM_GRAPH_BUCKETS: dict[str, list[str]] = {}
 _MEM_RESPONSE_CACHE_MAX_ITEMS = 1024
+_MEM_BUCKET_MAX_ITEMS = 8
+
+
+def _extract_lightweight_graph_concepts(user_input: str) -> list[str]:
+    """Approximate root concepts before diagnosis for L1 bucket lookup."""
+    text = user_input.lower()
+    concepts: set[str] = set()
+
+    pattern_map = {
+        r"\b(i|you|we|they)\s+(is|was)\b": "concept:grammar.subject_verb_agreement",
+        r"\b(he|she|it)\s+(go|want|need|have|do)\b": "concept:grammar.third_person_s",
+        r"\byesterday\b.*\b(go|come|eat|buy|need|want)\b": "concept:grammar.past_time_markers",
+        r"\b(have|has)\s+went\b": "concept:grammar.present_perfect",
+        r"\bmore\s+better\b|\bmore\s+worse\b": "concept:grammar.comparatives",
+        r"\bexplain\b|\bwhy\b|\bwhat does\b": "intent:explain",
+        r"\bpractice\b|\bexercise\b|\bquiz\b": "intent:practice",
+    }
+    for pattern, concept in pattern_map.items():
+        if re.search(pattern, text, re.IGNORECASE):
+            concepts.add(concept)
+
+    lexical_tokens = re.findall(r"[a-z]{4,}", text)
+    for token in lexical_tokens[:8]:
+        concepts.add(f"token:{token}")
+
+    return sorted(concepts)
+
+
+def _build_graph_bucket(user_input: str, level: str, conversation_history: list[dict[str, Any]]) -> str:
+    """Cheap graph-aware bucket used for L1 candidate lookup."""
+    concepts = _extract_lightweight_graph_concepts(user_input)
+    if not concepts:
+        concepts = ["token:generic"]
+    bucket_material = "|".join([level, str(len(conversation_history) // 2)] + concepts[:5])
+    return hashlib.md5(bucket_material.encode()).hexdigest()
+
+
+def _register_graph_bucket(bucket: str, cache_key: str) -> None:
+    if not bucket:
+        return
+    keys = [item for item in _MEM_GRAPH_BUCKETS.get(bucket, []) if item != cache_key]
+    keys.insert(0, cache_key)
+    _MEM_GRAPH_BUCKETS[bucket] = keys[:_MEM_BUCKET_MAX_ITEMS]
+
+
+async def _register_graph_bucket_redis(bucket: str, cache_key: str, ttl: int) -> None:
+    if not bucket:
+        return
+    try:
+        from api.core.redis_client import RedisClient
+
+        redis_client = await RedisClient.get_instance()
+        bucket_key = f"v1:resp_bucket:{bucket}"
+        raw = await redis_client.get(bucket_key)
+        keys = json.loads(raw) if raw else []
+        if not isinstance(keys, list):
+            keys = []
+        keys = [item for item in keys if isinstance(item, str) and item != cache_key]
+        keys.insert(0, cache_key)
+        await redis_client.set(bucket_key, json.dumps(keys[:_MEM_BUCKET_MAX_ITEMS]), ex=ttl)
+    except Exception as e:
+        logger.debug(f"[_register_graph_bucket_redis] Redis write failed: {e}")
+
+
+async def _get_bucket_candidate_keys(bucket: str) -> list[str]:
+    keys = list(_MEM_GRAPH_BUCKETS.get(bucket, []))
+    if keys:
+        return keys[:_MEM_BUCKET_MAX_ITEMS]
+
+    try:
+        from api.core.redis_client import RedisClient
+
+        redis_client = await RedisClient.get_instance()
+        raw = await redis_client.get(f"v1:resp_bucket:{bucket}")
+        parsed = json.loads(raw) if raw else []
+        if isinstance(parsed, list):
+            parsed_keys = [item for item in parsed if isinstance(item, str)]
+            if parsed_keys:
+                _MEM_GRAPH_BUCKETS[bucket] = parsed_keys[:_MEM_BUCKET_MAX_ITEMS]
+                return parsed_keys[:_MEM_BUCKET_MAX_ITEMS]
+    except Exception as e:
+        logger.debug(f"[_get_bucket_candidate_keys] Redis read failed: {e}")
+    return []
+
+
+async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry | None:
+    mem_entry = _MEM_RESPONSE_CACHE.get(cache_key)
+    if mem_entry:
+        expires_at, entry = mem_entry
+        if expires_at > now:
+            return entry
+        _MEM_RESPONSE_CACHE.pop(cache_key, None)
+
+    try:
+        from api.core.redis_client import RedisClient
+
+        redis_client = await RedisClient.get_instance()
+        cached_json = await redis_client.get(f"v1:resp:{cache_key}")
+        if not cached_json:
+            return None
+        raw = json.loads(cached_json)
+        entry: CacheEntry = {
+            "fingerprint": raw.get("fingerprint", {"level": level}),
+            "graph_bucket": raw.get("graph_bucket", ""),
+            "profile_snapshot": raw.get("profile_snapshot", {}),
+            "response": raw.get("response", raw.get("tutor_response", "")),
+            "evidence_bundle": raw.get("evidence_bundle", []),
+            "execution_plan": raw.get("execution_plan", {"strategy": raw.get("strategy", "feedback")}),
+            "diagnosis_errors": raw.get("diagnosis_errors", []),
+            "overall_score": raw.get("overall_score", 0.8),
+            "created_at": raw.get("created_at", now - 60),
+            "ttl": raw.get("ttl", 3600),
+        }
+        ttl_remaining = max(entry["ttl"] - (now - entry.get("created_at", now)), 60)
+        _MEM_RESPONSE_CACHE[cache_key] = (now + ttl_remaining, entry)
+        if entry.get("graph_bucket"):
+            _register_graph_bucket(entry["graph_bucket"], cache_key)
+        return entry
+    except Exception as e:
+        logger.debug(f"[_get_cache_entry] Redis read failed: {e}")
+        return None
 
 
 async def _write_cache_entry(
@@ -164,18 +297,27 @@ async def _write_cache_entry(
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    graph_bucket = _build_graph_bucket(
+        user_input,
+        level,
+        state.get("conversation_history", []),
+    )
 
     ttl = 3600 if errors else 1800
     now = time.monotonic()
 
+    # Truncate evidence_bundle to prevent large entries (max 10 items ~2KB)
+    raw_bundle = [
+        {"type": "kg", "content": c}
+        for c in (context or "").split("\n") if c.strip()
+    ]
+
     entry = CacheEntry(
         fingerprint=_build_fingerprint(state),
+        graph_bucket=graph_bucket,
         profile_snapshot=dict(state.get("learner_profile", {})),
         response=response,
-        evidence_bundle=[
-            {"type": "kg", "content": c}
-            for c in (context or "").split("\n") if c.strip()
-        ],
+        evidence_bundle=raw_bundle[:10],
         execution_plan={
             "strategy": strategy,
             "intent": state.get("diagnosis_intent", "correct"),
@@ -186,16 +328,27 @@ async def _write_cache_entry(
         ttl=ttl,
     )
 
-    # In-process cache
+    # In-process cache — LRU eviction instead of naive clear()
     if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
-        _MEM_RESPONSE_CACHE.clear()
+        # First evict all expired entries
+        expired_keys = [k for k, (exp, _) in _MEM_RESPONSE_CACHE.items() if exp <= now]
+        for k in expired_keys:
+            _MEM_RESPONSE_CACHE.pop(k, None)
+        # If still at capacity, evict oldest 25% by expiry time
+        if len(_MEM_RESPONSE_CACHE) >= _MEM_RESPONSE_CACHE_MAX_ITEMS:
+            evict_count = _MEM_RESPONSE_CACHE_MAX_ITEMS // 4
+            oldest = sorted(_MEM_RESPONSE_CACHE.items(), key=lambda kv: kv[1][0])[:evict_count]
+            for k, _ in oldest:
+                _MEM_RESPONSE_CACHE.pop(k, None)
     _MEM_RESPONSE_CACHE[cache_key] = (now + ttl, entry)
+    _register_graph_bucket(graph_bucket, cache_key)
 
     # Redis
     try:
         from api.core.redis_client import RedisClient
         redis_client = await RedisClient.get_instance()
         await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
+        await _register_graph_bucket_redis(graph_bucket, cache_key, ttl)
         logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
     except Exception as e:
         logger.debug(f"[_write_cache_entry] Redis write failed: {e}")
@@ -307,14 +460,16 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
 
     user_input = state.get("user_input", "")
     level = state.get("learner_profile", {}).get("level", "B1")
+    conversation_history = state.get("conversation_history", [])
+    bucket = _build_graph_bucket(user_input, level, conversation_history)
 
     # Build lightweight fingerprint (pre-diagnosis: intent/root_concepts unknown)
     fingerprint = CacheFingerprint(
         query_norm=user_input.strip().lower(),
         intent="unknown",  # not yet diagnosed
         level=level,
-        root_concepts=[],
-        session_turn=len(state.get("conversation_history", [])),
+        root_concepts=_extract_lightweight_graph_concepts(user_input),
+        session_turn=len(conversation_history),
     )
 
     # Cache key (compatible with v1 scheme)
@@ -324,109 +479,96 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
 
     # --- Try in-process cache ---
     now = time.monotonic()
-    mem_entry = _MEM_RESPONSE_CACHE.get(cache_key)
-    if mem_entry:
-        expires_at, entry = mem_entry
-        if expires_at > now:
-            rho = _compute_reuse_risk(fingerprint, entry, now)
-            logger.info(f"[cache_gate_node] In-mem HIT key={cache_key[:8]} ρ={rho:.3f}")
+    entry = await _get_cache_entry(cache_key, level, now)
+    if entry:
+        rho = _compute_reuse_risk(fingerprint, entry, now)
+        logger.info(f"[cache_gate_node] L0 HIT key={cache_key[:8]} ρ={rho:.3f}")
 
-            if rho <= _TAU_REUSE:
-                return {
-                    "cache_hit": True,
-                    "cache_decision": "reuse",
-                    "reuse_risk": rho,
-                    "cache_fingerprint": fingerprint,
-                    "tutor_response": entry.get("response", ""),
-                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                    "diagnosis_errors": entry.get("diagnosis_errors", []),
-                    "overall_score": entry.get("overall_score", 0.8),
-                    "path": "fast",
-                    "models_used": ["rapid_reuse_mem"],
-                }
-            elif rho <= _TAU_PATCH:
-                patched = _patch_response(entry, fingerprint)
-                return {
-                    "cache_hit": True,
-                    "cache_decision": "patch",
-                    "reuse_risk": rho,
-                    "cache_fingerprint": fingerprint,
-                    "tutor_response": patched,
-                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                    "diagnosis_errors": entry.get("diagnosis_errors", []),
-                    "overall_score": entry.get("overall_score", 0.8),
-                    "path": "fast",
-                    "models_used": ["rapid_patch_mem"],
-                }
-            # else: risk too high → fall through to full pipeline
-        else:
-            _MEM_RESPONSE_CACHE.pop(cache_key, None)
-
-    # --- Try Redis ---
-    try:
-        from api.core.redis_client import RedisClient
-
-        redis_client = await RedisClient.get_instance()
-        cached_json = await redis_client.get(f"v1:resp:{cache_key}")
-
-        if cached_json:
-            raw = json.loads(cached_json)
-            # Upgrade legacy response-only entries to CacheEntry shape
-            entry: CacheEntry = {
-                "fingerprint": raw.get("fingerprint", {"level": level}),
-                "profile_snapshot": raw.get("profile_snapshot", {}),
-                "response": raw.get("response", raw.get("tutor_response", "")),
-                "evidence_bundle": raw.get("evidence_bundle", []),
-                "execution_plan": raw.get("execution_plan", {"strategy": raw.get("strategy", "feedback")}),
-                "diagnosis_errors": raw.get("diagnosis_errors", []),
-                "overall_score": raw.get("overall_score", 0.8),
-                "created_at": raw.get("created_at", now - 60),
-                "ttl": raw.get("ttl", 3600),
+        if rho <= _TAU_REUSE:
+            return {
+                "cache_hit": True,
+                "cache_decision": "reuse",
+                "cache_layer": "L0",
+                "cache_bucket": bucket,
+                "reuse_risk": rho,
+                "cache_fingerprint": fingerprint,
+                "tutor_response": entry.get("response", ""),
+                "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "overall_score": entry.get("overall_score", 0.8),
+                "path": "fast",
+                "models_used": ["rapid_reuse_l0"],
+            }
+        elif rho <= _TAU_PATCH:
+            patched = _patch_response(entry, fingerprint)
+            return {
+                "cache_hit": True,
+                "cache_decision": "patch",
+                "cache_layer": "L0",
+                "cache_bucket": bucket,
+                "reuse_risk": rho,
+                "cache_fingerprint": fingerprint,
+                "tutor_response": patched,
+                "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "overall_score": entry.get("overall_score", 0.8),
+                "path": "fast",
+                "models_used": ["rapid_patch_l0"],
             }
 
-            rho = _compute_reuse_risk(fingerprint, entry, now)
-            logger.info(f"[cache_gate_node] Redis HIT key={cache_key[:8]} ρ={rho:.3f}")
+    # --- Try graph-bucket near-hit lookup (L1) ---
+    candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
+    best_candidate: tuple[str, CacheEntry, float] | None = None
+    for candidate_key in candidate_keys:
+        candidate_entry = await _get_cache_entry(candidate_key, level, now)
+        if not candidate_entry:
+            continue
+        rho = _compute_reuse_risk(fingerprint, candidate_entry, now)
+        if rho > _TAU_PATCH:
+            continue
+        if best_candidate is None or rho < best_candidate[2]:
+            best_candidate = (candidate_key, candidate_entry, rho)
 
-            # Populate in-process cache for resilience
-            ttl_remaining = max(entry["ttl"] - (now - entry.get("created_at", now)), 60)
-            _MEM_RESPONSE_CACHE[cache_key] = (now + ttl_remaining, entry)
-
-            if rho <= _TAU_REUSE:
-                return {
-                    "cache_hit": True,
-                    "cache_decision": "reuse",
-                    "reuse_risk": rho,
-                    "cache_fingerprint": fingerprint,
-                    "tutor_response": entry["response"],
-                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                    "diagnosis_errors": entry.get("diagnosis_errors", []),
-                    "overall_score": entry.get("overall_score", 0.8),
-                    "path": "fast",
-                    "models_used": ["rapid_reuse"],
-                }
-            elif rho <= _TAU_PATCH:
-                patched = _patch_response(entry, fingerprint)
-                return {
-                    "cache_hit": True,
-                    "cache_decision": "patch",
-                    "reuse_risk": rho,
-                    "cache_fingerprint": fingerprint,
-                    "tutor_response": patched,
-                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                    "diagnosis_errors": entry.get("diagnosis_errors", []),
-                    "overall_score": entry.get("overall_score", 0.8),
-                    "path": "fast",
-                    "models_used": ["rapid_patch"],
-                }
-            else:
-                logger.info(f"[cache_gate_node] Risk too high (ρ={rho:.3f}), full pipeline")
-    except Exception as e:
-        logger.debug(f"[cache_gate_node] Redis unavailable: {e}")
+    if best_candidate is not None:
+        _, entry, rho = best_candidate
+        logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} ρ={rho:.3f}")
+        if rho <= _TAU_REUSE:
+            return {
+                "cache_hit": True,
+                "cache_decision": "reuse",
+                "cache_layer": "L1",
+                "cache_bucket": bucket,
+                "reuse_risk": rho,
+                "cache_fingerprint": fingerprint,
+                "tutor_response": entry.get("response", ""),
+                "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+                "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "overall_score": entry.get("overall_score", 0.8),
+                "path": "fast",
+                "models_used": ["rapid_reuse_l1"],
+            }
+        patched = _patch_response(entry, fingerprint)
+        return {
+            "cache_hit": True,
+            "cache_decision": "patch",
+            "cache_layer": "L1",
+            "cache_bucket": bucket,
+            "reuse_risk": rho,
+            "cache_fingerprint": fingerprint,
+            "tutor_response": patched,
+            "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+            "diagnosis_errors": entry.get("diagnosis_errors", []),
+            "overall_score": entry.get("overall_score", 0.8),
+            "path": "fast",
+            "models_used": ["rapid_patch_l1"],
+        }
 
     logger.info(f"[cache_gate_node] Cache MISS for key {cache_key[:8]}...")
     return {
         "cache_hit": False,
         "cache_decision": "full",
+        "cache_layer": "none",
+        "cache_bucket": bucket,
         "reuse_risk": 1.0,
         "cache_fingerprint": fingerprint,
         "path": "slow",

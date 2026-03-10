@@ -53,6 +53,7 @@ class CacheFingerprint(TypedDict, total=False):
 class CacheEntry(TypedDict, total=False):
     """Structured cache entry ⟨F, P_c, R, B, σ, t_c⟩ (paper §4.1)."""
     fingerprint: CacheFingerprint
+    graph_bucket: str                  # cheap concept-state bucket for L1 lookup
     profile_snapshot: Dict[str, Any]   # P_c: profile at creation time
     response: str                      # R: tutor response text
     evidence_bundle: List[Dict[str, Any]]  # B: KG snippets, examples
@@ -134,6 +135,8 @@ class GraphCAGState(TypedDict, total=False):
     # ============================================
     cache_fingerprint: Optional[CacheFingerprint]
     cache_decision: str  # "reuse" | "patch" | "full"
+    cache_layer: str     # "none" | "L0" | "L1"
+    cache_bucket: str    # graph-aware bucket identifier for L1 lookup
     reuse_risk: float    # ρ ∈ [0,1] from Eq. 2
 
     # ============================================
@@ -223,6 +226,8 @@ def create_initial_state(
         # RAPID cache control
         cache_fingerprint=None,
         cache_decision="full",
+        cache_layer="none",
+        cache_bucket="",
         reuse_risk=1.0,
         
         # Metadata

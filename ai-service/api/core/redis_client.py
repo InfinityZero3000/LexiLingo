@@ -73,7 +73,7 @@ class LearnerProfileCache:
     
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
-        self.ttl = timedelta(days=30)
+        self.ttl = timedelta(days=7)  # 7 days is sufficient; 30 days wastes memory
     
     async def get_level(self, user_id: str) -> Optional[str]:
         """Get learner's English level."""
@@ -135,7 +135,7 @@ class ResponseCache:
     
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
-        self.ttl = timedelta(hours=24)
+        self.ttl = timedelta(hours=2)  # 2 hours; 24h caused unbounded accumulation
     
     async def get(self, key: str) -> Optional[Dict[str, Any]]:
         """Get cached response."""
