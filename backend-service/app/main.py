@@ -181,10 +181,14 @@ app.add_middleware(
 app.add_middleware(PrivateNetworkAccessMiddleware)
 
 # 7. Rate Limiting - Prevent abuse (Phase 1: Security)
+# Higher limits in development to avoid blocking local testing
+# Production: 120 RPM / 5000 RPH supports ~10k concurrent users (NAT-friendly)
+_rate_rpm = 300 if settings.is_development else 120
+_rate_rph = 5000 if settings.is_development else 5000
 app.add_middleware(
     RateLimitMiddleware,
-    requests_per_minute=60,
-    requests_per_hour=1000
+    requests_per_minute=_rate_rpm,
+    requests_per_hour=_rate_rph,
 )
 
 
@@ -253,4 +257,5 @@ if __name__ == "__main__":
         port=settings.PORT,
         reload=settings.DEBUG,
         workers=1 if settings.DEBUG else workers,
+        timeout_keep_alive=5,
     )

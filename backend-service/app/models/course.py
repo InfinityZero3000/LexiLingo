@@ -206,5 +206,8 @@ class MediaResource(Base):
 
 # Create composite indexes for efficient queries
 Index('idx_course_level_published', Course.level, Course.is_published)
+Index('idx_course_published_lang_level', Course.is_published, Course.language, Course.level)
+Index('idx_course_published_created_at', Course.is_published, Course.created_at)
 Index('idx_unit_course_order', Unit.course_id, Unit.order_index)
 Index('idx_lesson_unit_order', Lesson.unit_id, Lesson.order_index)
+Index('idx_lesson_course_order', Lesson.course_id, Lesson.order_index)

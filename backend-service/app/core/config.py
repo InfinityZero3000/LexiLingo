@@ -52,13 +52,13 @@ class Settings(BaseSettings):
 
     @property
     def effective_pool_size(self) -> int:
-        """Return larger pool in production."""
-        return 50 if self.is_production else self.DB_POOL_SIZE
+        """Return larger pool in production (sized for 10k concurrent users)."""
+        return 100 if self.is_production else self.DB_POOL_SIZE
 
     @property
     def effective_max_overflow(self) -> int:
         """Return larger overflow in production."""
-        return 20 if self.is_production else self.DB_MAX_OVERFLOW
+        return 50 if self.is_production else self.DB_MAX_OVERFLOW
     
     # Security
     SECRET_KEY: str
