@@ -19,11 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 # ── Sensitive endpoints that get stricter per-route limits ──
-_STRICT_RATE_LIMITS: Dict[str, int] = {
-    "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
-    "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
-    "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
-}
+# Scale with global limit: production tight values / development relaxed for load testing
+def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
+    if is_dev:
+        return {
+            "/api/v1/auth/login": 300,          # relaxed — load testing from single IP
+            "/api/v1/auth/register": 100,
+            "/api/v1/auth/forgot-password": 50,
+        }
+    return {
+        "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
+        "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
+        "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+    }
+
+try:
+    from app.core.config import settings as _settings
+    _STRICT_RATE_LIMITS: Dict[str, int] = _build_strict_limits(_settings.is_development)
+except Exception:
+    _STRICT_RATE_LIMITS = _build_strict_limits(False)
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -187,16 +201,25 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     # ── dispatch ─────────────────────────────────────────────
 
+    # Paths exempt from rate limiting
+    _EXEMPT_PATHS = {
+        "/health", "/health/ready", "/ping",
+        "/api/v1/health", "/api/v1/health/ready", "/api/v1/ping",
+        "/docs", "/redoc", "/openapi.json",
+        "/",
+    }
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Rate limit based on client IP with Redis → memory fallback."""
 
-        # Skip preflight and health checks
+        # Skip preflight and exempt paths (health, docs, etc.)
         if request.method == "OPTIONS":
             return await call_next(request)
-        if request.url.path in ("/health", "/api/v1/health"):
+        if request.url.path in self._EXEMPT_PATHS:
             return await call_next(request)
 
         client_ip = self._client_ip(request)
+
         path = request.url.path
 
         # Try Redis first, fallback to memory
