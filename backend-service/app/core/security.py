@@ -4,6 +4,7 @@ Security utilities
 JWT token creation/validation and password hashing
 """
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
@@ -12,27 +13,49 @@ import bcrypt
 from app.core.config import settings
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain password against hashed password."""
-    if not hashed_password:
-        return False
+def _verify_password_sync(plain_password: str, hashed_password: str) -> bool:
+    """Synchronous bcrypt verify — CPU-intensive, must be called in a thread."""
     try:
         return bcrypt.checkpw(
             plain_password.encode('utf-8'),
             hashed_password.encode('utf-8')
         )
     except (ValueError, TypeError):
-        # Invalid salt or hash format (e.g., user registered via OAuth without password)
         return False
 
 
-def get_password_hash(password: str) -> str:
-    """Hash a password."""
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify plain password against hashed password (sync wrapper for non-async callers)."""
+    if not hashed_password:
+        return False
+    return _verify_password_sync(plain_password, hashed_password)
+
+
+async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
+    """Verify password in a thread pool to avoid blocking the event loop."""
+    if not hashed_password:
+        return False
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _verify_password_sync, plain_password, hashed_password)
+
+
+def _hash_password_sync(password: str) -> str:
+    """Synchronous bcrypt hash — CPU-intensive."""
     return bcrypt.hashpw(
         password.encode('utf-8'),
         bcrypt.gensalt()
     ).decode('utf-8')
 
+
+def get_password_hash(password: str) -> str:
+    """Hash a password (sync)."""
+    return _hash_password_sync(password)
+
+
+async def get_password_hash_async(password: str) -> str:
+    """Hash a password in a thread pool to avoid blocking the event loop."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _hash_password_sync, password)
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """

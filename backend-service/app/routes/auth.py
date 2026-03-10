@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
+from app.core.security import verify_password_async, get_password_hash_async, create_access_token, create_refresh_token
 from app.models.user import User
 from app.models.rbac import Role
 from app.schemas.auth import (
@@ -86,7 +86,7 @@ async def register(
     user = User(
         email=request.email,
         username=request.username,
-        hashed_password=get_password_hash(request.password),
+        hashed_password=await get_password_hash_async(request.password),
         display_name=request.display_name or request.username,
         role_id=role_id,
     )
@@ -114,7 +114,7 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not user.hashed_password or not verify_password(request.password, user.hashed_password):
+    if not user or not user.hashed_password or not await verify_password_async(request.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -127,22 +127,31 @@ async def login(
             detail="User account is inactive"
         )
     
-    # Update last login
-    user.last_login = datetime.now(timezone.utc)
-    await db.commit()
+    # Cache user fields before the commit so they survive a rollback
+    user_id = str(user.id)
+    username = user.username
+    email = user.email
+    role = user.role_slug if hasattr(user, 'role_slug') else "user"
+
+    # Update last login — best-effort, don't fail the login if DB is locked under load
+    try:
+        user.last_login = datetime.now(timezone.utc)
+        await db.commit()
+    except Exception:
+        await db.rollback()
     
     # Create tokens
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    access_token = create_access_token({"sub": user_id})
+    refresh_token = create_refresh_token({"sub": user_id})
     
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        user_id=str(user.id),
-        username=user.username,
-        email=user.email,
-        role=user.role_slug if hasattr(user, 'role_slug') else "user",
+        user_id=user_id,
+        username=username,
+        email=email,
+        role=role,
     )
 
 
@@ -317,7 +326,7 @@ async def google_login(
         user = User(
             email=email,
             username=username,
-            hashed_password=get_password_hash("OAUTH_USER_NO_PASSWORD"),
+            hashed_password=await get_password_hash_async("OAUTH_USER_NO_PASSWORD"),
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
             provider="google",
@@ -394,7 +403,7 @@ async def change_password(
     Requires current password verification.
     """
     # Verify current password
-    if not verify_password(request.current_password, current_user.hashed_password):
+    if not await verify_password_async(request.current_password, current_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
@@ -408,7 +417,7 @@ async def change_password(
         )
     
     # Update password
-    current_user.hashed_password = get_password_hash(request.new_password)
+    current_user.hashed_password = await get_password_hash_async(request.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     
@@ -498,7 +507,7 @@ async def reset_password(
         )
     
     # Update password
-    user.hashed_password = get_password_hash(request.new_password)
+    user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     

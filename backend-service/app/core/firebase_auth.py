@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash_async
 from app.models.rbac import Role
 from app.models.user import User
 
@@ -124,7 +124,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     user = User(
         email=email,
         username=generated_username,
-        hashed_password=get_password_hash(uuid.uuid4().hex),
+        hashed_password=await get_password_hash_async(uuid.uuid4().hex),
         display_name=display_name,
         avatar_url=avatar_url,
         provider="google",
