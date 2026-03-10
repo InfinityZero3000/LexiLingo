@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
@@ -67,17 +68,28 @@ async def get_my_achievements(
     
     Returns all achievements the user has earned with unlock dates.
     """
+    cache_key = build_cache_key("achievements_me", user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        return ApiResponse(
+            success=True,
+            message=f"Retrieved {len(cached)} achievements",
+            data=cached
+        )
+    
     user_achievements = await AchievementCRUD.get_user_achievements_with_details(db, current_user.id)
     
     response_data = []
     for ua, achievement in user_achievements:
         response_data.append({
             "id": ua.id,
-            "achievement": AchievementResponse.model_validate(achievement),
-            "unlocked_at": ua.unlocked_at,
+            "achievement": AchievementResponse.model_validate(achievement).model_dump(mode="json"),
+            "unlocked_at": ua.unlocked_at.isoformat() if ua.unlocked_at else None,
             "progress": ua.progress,
             "is_showcased": ua.is_showcased
         })
+    
+    await set_cached(cache_key, response_data, ttl=30)
     
     return ApiResponse(
         success=True,
@@ -178,12 +190,23 @@ async def get_my_wallet(
     
     Returns gem balance and totals.
     """
+    cache_key = build_cache_key("wallet", user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        return ApiResponse(
+            success=True,
+            message="Wallet retrieved successfully",
+            data=cached
+        )
+    
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+    wallet_data = WalletResponse.model_validate(wallet).model_dump(mode="json")
+    await set_cached(cache_key, wallet_data, ttl=30)
     
     return ApiResponse(
         success=True,
         message="Wallet retrieved successfully",
-        data=WalletResponse.model_validate(wallet)
+        data=wallet_data
     )
 
 
@@ -226,6 +249,15 @@ async def get_leaderboard(
     
     Returns top players in the league with XP earned this week.
     """
+    cache_key = build_cache_key("leaderboard", league=league, user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        return ApiResponse(
+            success=True,
+            message="Leaderboard retrieved successfully",
+            data=cached
+        )
+    
     entries = await LeaderboardCRUD.get_leaderboard(db, league)
     week_start, week_end = LeaderboardCRUD.get_current_week_range()
     
@@ -248,17 +280,20 @@ async def get_leaderboard(
             is_current_user=is_current
         ))
     
+    leaderboard_data = LeaderboardResponse(
+        league=league,
+        week_start=week_start,
+        week_end=week_end,
+        entries=leaderboard_entries,
+        current_user_rank=current_user_rank,
+        total_participants=len(leaderboard_entries)
+    ).model_dump(mode="json")
+    await set_cached(cache_key, leaderboard_data, ttl=30)
+    
     return ApiResponse(
         success=True,
         message="Leaderboard retrieved successfully",
-        data=LeaderboardResponse(
-            league=league,
-            week_start=week_start,
-            week_end=week_end,
-            entries=leaderboard_entries,
-            current_user_rank=current_user_rank,
-            total_participants=len(leaderboard_entries)
-        )
+        data=leaderboard_data
     )
 
 

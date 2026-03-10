@@ -155,7 +155,7 @@ async def get_user_collection(
                 detail=f"Invalid status. Must be one of: learning, reviewing, mastered, archived"
             )
     
-    # Get user vocabulary
+    # Get user vocabulary with vocabulary items eager-loaded (no N+1)
     user_vocab_list = await vocabulary_crud.get_user_vocabulary_list(
         db,
         user_id=current_user.id,
@@ -163,11 +163,11 @@ async def get_user_collection(
         limit=limit,
         offset=offset
     )
-    
-    # Load vocabulary items
+
+    # Build response using the already-loaded relationship
     items_with_vocab = []
     for uv in user_vocab_list:
-        vocab_item = await vocabulary_crud.get_vocabulary_item(db, uv.vocabulary_id)
+        vocab_item = uv.vocabulary  # loaded via joinedload — no extra query
         if vocab_item:
             items_with_vocab.append({
                 **uv.__dict__,
@@ -406,9 +406,17 @@ async def get_vocabulary_stats(
     - Total XP earned
     - Best streak
     """
+    cache_key = build_cache_key("vocab_stats", user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        return VocabularyStatsResponse(**cached)
+    
     stats = await vocabulary_crud.get_user_vocabulary_stats(db, current_user.id)
     
-    return VocabularyStatsResponse(**stats)
+    result = VocabularyStatsResponse(**stats)
+    await set_cached(cache_key, result.model_dump(mode="json"), ttl=30)
+    
+    return result
 
 
 # ===== Vocabulary Decks (Custom Collections) =====

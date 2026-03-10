@@ -48,6 +48,17 @@ async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
         logger.debug(f"Cache write error: {exc}")
 
 
+async def delete_cached(key: str) -> None:
+    """Delete a single cache entry by exact key. Silently ignores errors."""
+    redis = await RedisClient.get_instance()
+    if redis is None:
+        return
+    try:
+        await redis.delete(key)
+    except Exception as exc:
+        logger.debug(f"Cache delete error: {exc}")
+
+
 async def invalidate_cache(prefix: str) -> int:
     """
     Delete all cache keys matching a prefix.
