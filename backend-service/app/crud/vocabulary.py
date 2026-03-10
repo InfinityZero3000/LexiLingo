@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy import select, func, and_, or_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.vocabulary import (
@@ -104,14 +106,18 @@ class VocabularyCRUD:
         limit: int = 50,
         offset: int = 0
     ) -> List[UserVocabulary]:
-        """Get user's vocabulary collection"""
-        query = select(UserVocabulary).where(UserVocabulary.user_id == user_id)
-        
+        """Get user's vocabulary collection with vocabulary items eager-loaded."""
+        query = (
+            select(UserVocabulary)
+            .options(joinedload(UserVocabulary.vocabulary))  # avoid N+1
+            .where(UserVocabulary.user_id == user_id)
+        )
+
         if status:
             query = query.where(UserVocabulary.status == status)
-        
+
         query = query.limit(limit).offset(offset).order_by(UserVocabulary.added_at.desc())
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
     
@@ -122,30 +128,75 @@ class VocabularyCRUD:
         vocabulary_id: uuid.UUID
     ) -> UserVocabulary:
         """
-        Add vocabulary to user's collection.
-        Idempotent: Returns existing entry if already added.
+        Add vocabulary to user's collection using UPSERT (atomic, no race condition).
+        Returns existing entry if already added.
         """
-        # Check if already exists
-        existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
-        if existing:
-            return existing
-        
-        # Create new entry
-        user_vocab = UserVocabulary(
-            user_id=user_id,
-            vocabulary_id=vocabulary_id,
-            status=VocabularyStatus.LEARNING,
-            ease_factor=2.5,
-            interval=1,
-            repetitions=0,
-            next_review_date=datetime.now(timezone.utc) + timedelta(days=1)
+        now = datetime.now(timezone.utc)
+        next_review = now + timedelta(days=1)
+
+        # Try PostgreSQL INSERT … ON CONFLICT DO NOTHING first
+        try:
+            stmt = (
+                pg_insert(UserVocabulary)
+                .values(
+                    id=uuid.uuid4(),
+                    user_id=user_id,
+                    vocabulary_id=vocabulary_id,
+                    status=VocabularyStatus.LEARNING,
+                    ease_factor=2.5,
+                    interval=1,
+                    repetitions=0,
+                    next_review_date=next_review,
+                    added_at=now,
+                    total_reviews=0,
+                    correct_reviews=0,
+                    streak=0,
+                    longest_streak=0,
+                    total_xp_earned=0,
+                )
+                .on_conflict_do_nothing(index_elements=["user_id", "vocabulary_id"])
+                .returning(UserVocabulary.id)
+            )
+            await db.execute(stmt)
+            await db.commit()
+        except Exception:
+            # Fallback for SQLite / generic engines
+            await db.rollback()
+            existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
+            if existing:
+                return existing
+            try:
+                user_vocab = UserVocabulary(
+                    user_id=user_id,
+                    vocabulary_id=vocabulary_id,
+                    status=VocabularyStatus.LEARNING,
+                    ease_factor=2.5,
+                    interval=1,
+                    repetitions=0,
+                    next_review_date=next_review,
+                )
+                db.add(user_vocab)
+                await db.commit()
+                await db.refresh(user_vocab)
+                return user_vocab
+            except Exception:
+                await db.rollback()
+                # Race condition: another request inserted the same row
+                existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
+                if existing:
+                    return existing
+                raise
+
+        # Re-fetch so the ORM object is fully loaded
+        result = await db.execute(
+            select(UserVocabulary).where(
+                and_(
+                    UserVocabulary.user_id == user_id,
+                    UserVocabulary.vocabulary_id == vocabulary_id,
+                )
+            )
         )
-        
-        db.add(user_vocab)
-        await db.commit()
-        await db.refresh(user_vocab)
-        
-        return user_vocab
+        return result.scalar_one()
     
     async def get_due_vocabulary(
         self,

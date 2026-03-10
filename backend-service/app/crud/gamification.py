@@ -123,17 +123,27 @@ class WalletCRUD:
     
     @staticmethod
     async def get_or_create_wallet(db: AsyncSession, user_id: UUID) -> UserWallet:
-        """Get user's wallet, create if not exists"""
+        """Get user's wallet, create if not exists (handles race condition)."""
         result = await db.execute(
             select(UserWallet).where(UserWallet.user_id == user_id)
         )
         wallet = result.scalar_one_or_none()
         
         if not wallet:
-            wallet = UserWallet(user_id=user_id, gems=0)
-            db.add(wallet)
-            await db.commit()
-            await db.refresh(wallet)
+            try:
+                wallet = UserWallet(user_id=user_id, gems=0)
+                db.add(wallet)
+                await db.commit()
+                await db.refresh(wallet)
+            except Exception:
+                await db.rollback()
+                # Another request created it concurrently — re-fetch
+                result = await db.execute(
+                    select(UserWallet).where(UserWallet.user_id == user_id)
+                )
+                wallet = result.scalar_one_or_none()
+                if not wallet:
+                    raise
         
         return wallet
     
