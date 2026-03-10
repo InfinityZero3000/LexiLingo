@@ -130,6 +130,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
+    - .env.production
     - animation/
     - assets/badges/
     - assets/i18n/

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -78,8 +78,9 @@ void main() async {
   };
 
   try {
-    // Load environment variables from .env file
-    await dotenv.load(fileName: ".env");
+    // Load .env.production for release builds, .env for dev
+    final envFile = kReleaseMode ? '.env.production' : '.env';
+    await dotenv.load(fileName: envFile);
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
