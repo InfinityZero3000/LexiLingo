@@ -169,6 +169,9 @@ class GraphCAGPipeline:
         retrieval_policy: str = "full",
         diagnosis_policy: str = "auto",
         generation_policy: str = "auto",
+        benchmark_task: Optional[str] = None,
+        benchmark_context: Optional[str] = None,
+        benchmark_metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Run the GraphCAG pipeline.
@@ -196,6 +199,9 @@ class GraphCAGPipeline:
             retrieval_policy=retrieval_policy,
             diagnosis_policy=diagnosis_policy,
             generation_policy=generation_policy,
+            benchmark_task=benchmark_task,
+            benchmark_context=benchmark_context,
+            benchmark_metadata=benchmark_metadata,
         )
         
         logger.info(f"[GraphCAG] Starting analysis: {user_input[:50]}...")
@@ -264,6 +270,7 @@ class GraphCAGPipeline:
                 "reuse_risk": state.get("reuse_risk", 1.0),
                 "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
+                "retrieval_trace": state.get("retrieval_trace", []),
             },
             "audio": {
                 "bytes": state.get("tts_audio_bytes"),

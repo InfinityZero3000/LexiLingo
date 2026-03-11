@@ -41,6 +41,16 @@ class VectorHit(TypedDict):
     content: str
 
 
+class RetrievalTraceItem(TypedDict, total=False):
+    """Ranked retrieval item for benchmark analysis."""
+    item_id: str
+    title: str
+    text: str
+    rank: int
+    score: float
+    is_relevant: bool
+
+
 class CacheFingerprint(TypedDict, total=False):
     """Fingerprint for PCC-aware cache keying (paper Alg. 1)."""
     query_norm: str          # normalized user input
@@ -79,6 +89,9 @@ class GraphCAGState(TypedDict, total=False):
     user_id: Optional[str]
     input_type: str  # "text" or "voice"
     audio_bytes: Optional[bytes]  # Raw audio if voice input
+    benchmark_task: Optional[str]
+    benchmark_context: Optional[str]
+    benchmark_metadata: Optional[Dict[str, Any]]
     
     # ============================================
     # Learner Context (from Redis cache)
@@ -106,6 +119,7 @@ class GraphCAGState(TypedDict, total=False):
     # ============================================
     vector_hits: List[VectorHit]
     retrieved_context: str  # Combined context for generation
+    retrieval_trace: List[RetrievalTraceItem]
     
     # ============================================
     # Response Generation
@@ -165,6 +179,9 @@ def create_initial_state(
     retrieval_policy: str = "full",
     diagnosis_policy: str = "auto",
     generation_policy: str = "auto",
+    benchmark_task: Optional[str] = None,
+    benchmark_context: Optional[str] = None,
+    benchmark_metadata: Optional[Dict[str, Any]] = None,
 ) -> GraphCAGState:
     """
     Create initial state for GraphCAG pipeline.
@@ -186,6 +203,9 @@ def create_initial_state(
         user_id=user_id,
         input_type=input_type,
         audio_bytes=None,
+        benchmark_task=benchmark_task,
+        benchmark_context=benchmark_context,
+        benchmark_metadata=benchmark_metadata or {},
         
         # Context (will be populated by input_node)
         learner_profile=learner_profile or {"level": "B1"},
@@ -205,6 +225,7 @@ def create_initial_state(
         # Retrieval (will be populated by retrieve_node)
         vector_hits=[],
         retrieved_context="",
+        retrieval_trace=[],
         
         # Response (will be populated by generate_node)
         tutor_response="",
