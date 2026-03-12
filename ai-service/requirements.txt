@@ -35,7 +35,9 @@ aiohttp>=3.9.0
 kuzu>=0.4.2
 
 # Embeddings
-sentence-transformers>=2.2.2
+# NOTE: sentence-transformers>=4.0.0 has LRScheduler compatibility issues with torch 2.2.x.
+# Pin to <4.0.0 for Intel Mac compatibility.
+sentence-transformers>=2.2.2,<4.0.0
 numpy>=1.23.0,<2.0.0
 
 # STT / TTS
@@ -44,9 +46,12 @@ piper-tts>=1.2.0
 gTTS>=2.5.0
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
-transformers>=4.37.0
+# NOTE: transformers>=5.0.0 requires torch>=2.4, which is NOT available on Intel Mac (x86_64).
+# Pin to <5.0.0 to stay compatible with torch 2.2.x on Intel Mac.
+transformers>=4.37.0,<5.0.0
 accelerate>=0.25.0
-torch>=2.2.0
+# NOTE: torch>=2.4.0 has no wheels for macOS x86_64. Max available: 2.2.2.
+torch>=2.2.0,<=2.2.2
 peft>=0.8.0  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (GraphCAG Orchestration)
