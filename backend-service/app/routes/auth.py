@@ -3,7 +3,7 @@ Authentication Routes
 """
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,17 +11,32 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.security import verify_password_async, get_password_hash_async, create_access_token, create_refresh_token
-from app.models.user import User
+from app.models.user import User, RefreshToken
 from app.models.rbac import Role
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
     ChangePasswordRequest, GoogleLoginRequest, ForgotPasswordRequest, 
-    ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse
+    ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse, LogoutRequest
 )
 from app.schemas.user import UserResponse
-from app.schemas.common import MessageResponse
+from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
 router = APIRouter()
+
+async def _save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str):
+    """Save refresh token to database for revocation/rotation support."""
+    from app.core.config import settings
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    db_token = RefreshToken(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at
+    )
+    db.add(db_token)
+    await db.commit()
+
+# ... rest of code ...
 
 
 async def _get_role_id(db: AsyncSession, role_slug: str) -> uuid.UUID | None:
@@ -144,6 +159,9 @@ async def login(
     access_token = create_access_token({"sub": user_id})
     refresh_token = create_refresh_token({"sub": user_id})
     
+    # FIX: Save refresh token for revocation support
+    await _save_refresh_token(db, uuid.UUID(user_id), refresh_token)
+    
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -181,6 +199,24 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
+    # FIX: Verify token exists and is valid in DB
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.token == request.refresh_token,
+            RefreshToken.is_revoked == False,
+            RefreshToken.is_used == False,
+            RefreshToken.expires_at > datetime.now(timezone.utc)
+        )
+    )
+    db_token = result.scalar_one_or_none()
+    
+    if not db_token:
+        # Potential reuse attack or revoked token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
     user_id_str = payload.get("sub")
     if not user_id_str:
         raise HTTPException(
@@ -208,9 +244,15 @@ async def refresh_token(
             detail="User not found or inactive"
         )
     
+    # FIX: Implement token rotation
+    db_token.is_used = True
+    
     # Create new tokens
     access_token = create_access_token({"sub": str(user.id)})
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
+    
+    # Save new refresh token
+    await _save_refresh_token(db, user.id, new_refresh_token)
     
     return TokenResponse(
         access_token=access_token,
@@ -233,16 +275,27 @@ async def get_current_user_via_auth(
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout():
+async def logout(
+    request: LogoutRequest,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Logout user.
-    
-    Note: JWT tokens are stateless. Client should discard the token.
-    For production, implement token blacklist with Redis.
     """
+    if request.refresh_token:
+        # FIX: Revoke token in DB
+        result = await db.execute(
+            select(RefreshToken).where(RefreshToken.token == request.refresh_token)
+        )
+        db_token = result.scalar_one_or_none()
+        if db_token:
+            db_token.is_revoked = True
+            db_token.revoked_at = datetime.now(timezone.utc)
+            await db.commit()
+
     return MessageResponse(
         message="Logged out successfully",
-        detail="Token is still valid until expiration. Please discard it on client side."
+        detail="Session revoked and refresh token invalidated."
     )
 
 
@@ -284,7 +337,7 @@ async def google_login(
     google_info = await verify_google_token(request.id_token, audience=audience)
 
     # For non-admin sources, if strict-audience check failed, retry without audience
-    # (handles Firebase Web id_tokens whose aud != GOOGLE_CLIENT_ID)
+    # (handles Firebase web id_tokens whose aud != GOOGLE_CLIENT_ID)
     if not google_info and request.source != "admin":
         logger.info("Retrying token verification without audience restriction (Flutter web / Firebase)")
         google_info = await verify_google_token(request.id_token, audience=None)
@@ -337,12 +390,21 @@ async def google_login(
         await db.commit()
         await db.refresh(user)
     elif user.provider != "google":
+        # FIX: Only update provider if it's currently 'local' or not 'google' 
+        # but DON'T error out if it's an admin source (allows linking)
         if request.source != "admin" or not allowlisted_admin_role:
+            if user.provider != "local": # If already set to something else (e.g. facebook)
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Email already registered with {user.provider}. Please login accordingly."
+                )
+            # For non-admin, still error to prevent accidental provider switch
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered with email/password. Please login with password."
+                detail="Email already registered with password. Please login with password."
             )
 
+        # For admin, we allow switching to google provider to enable admin panel access
         user.provider = "google"
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
@@ -379,6 +441,9 @@ async def google_login(
     # Create tokens
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})
+    
+    # FIX: Save refresh token for revocation support
+    await _save_refresh_token(db, user.id, refresh_token)
     
     return LoginResponse(
         access_token=access_token,

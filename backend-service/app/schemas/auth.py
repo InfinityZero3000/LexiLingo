@@ -40,6 +40,11 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    """Logout request."""
+    refresh_token: Optional[str] = None
+
+
 class ChangePasswordRequest(BaseModel):
     """Change password request."""
     current_password: str

@@ -1,0 +1,115 @@
+"""
+Tests for Phase 2 Topic Features:
+1. Topic Catalog Service (Caching)
+2. Topic Context Preloader (Context Bundling)
+3. Cache Warming Endpoint
+4. Chat Session Injection (Cache Hit Path)
+"""
+
+import pytest
+import json
+import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime
+
+from api.services.topic_catalog_service import TopicCatalogService
+from api.services.topic_preloader import TopicContextPreloader
+from api.models.story_schemas import Story, LocalizedTitle, DifficultyLevel, ContextDescription, RolePersona, ConversationFlow
+
+class TestTopicFeatures:
+    
+    @pytest.fixture
+    def sample_story(self):
+        return Story(
+            story_id="test_story_1",
+            title=LocalizedTitle(en="Test Story", vi="Câu chuyện thử nghiệm"),
+            difficulty_level=DifficultyLevel.B1,
+            category="test",
+            context_description=ContextDescription(setting="Lab", scenario="Testing code", objectives=["Verify cache"]),
+            role_persona=RolePersona(name="Tester", role="QA", personality="Rigorous", speaking_style="Formal", background="Codebase"),
+            vocabulary_list=[],
+            grammar_points=[],
+            conversation_flow=ConversationFlow(opening_prompt="Hello, ready to test?"),
+            is_published=True
+        )
+
+    @pytest.mark.asyncio
+    async def test_topic_catalog_service_caching(self, mock_mongodb, mock_redis, sample_story):
+        """Task 2.1: Verify TopicCatalogService uses Redis cache."""
+        service = TopicCatalogService(mock_mongodb, mock_redis)
+        
+        # 1. Test cache miss
+        mock_redis.get.return_value = None
+        # Mock story_service.list_stories via mock_mongodb
+        # StoryService(db) uses db["stories"]
+        mock_cursor = AsyncMock()
+        mock_cursor.to_list.return_value = [{"story_id": "test_story_1", "title": {"en": "Test", "vi": "Thử"}, "difficulty_level": "B1", "category": "test", "estimated_minutes": 15, "tags": []}]
+        mock_mongodb["stories"].count_documents = AsyncMock(return_value=1)
+        mock_mongodb["stories"].find.return_value = mock_cursor
+        
+        topics = await service.get_topics()
+        assert len(topics) == 1
+        assert topics[0].story_id == "test_story_1"
+        assert mock_redis.set.called
+        
+        # 2. Test cache hit
+        mock_redis.get.return_value = json.dumps([topics[0].model_dump()])
+        cached_topics = await service.get_topics()
+        assert len(cached_topics) == 1
+        assert cached_topics[0].story_id == "test_story_1"
+        # Ensure it didn't call MongoDB again (find was called once in Step 1)
+        assert mock_mongodb["stories"].find.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_topic_preloader_bundle(self, mock_mongodb, mock_redis, sample_story):
+        """Task 2.2 & 2.3: Verify preloader builds correct bundle and warms Redis."""
+        preloader = TopicContextPreloader(mock_mongodb, mock_redis)
+        
+        # Mock get_story_by_id
+        mock_mongodb["stories"].find_one.return_value = sample_story.model_dump()
+        
+        bundle = await preloader.warm_cache("test_story_1", "user_1")
+        
+        assert bundle["topic_id"] == "test_story_1"
+        assert "prime_prompt" in bundle
+        assert "Tester" in bundle["prime_prompt"]
+        
+        # Verify Redis warming
+        cache_key = f"chat:context:test_story_1"
+        assert mock_redis.set.called
+        args, kwargs = mock_redis.set.call_args
+        assert args[0] == cache_key
+        assert "prime_prompt" in args[1]
+
+    @pytest.mark.asyncio
+    async def test_start_session_cache_injection(self, mock_mongodb, mock_redis, sample_story):
+        """Task 2.4: Verify start_topic_session injects context from GraphCache."""
+        from api.routes.topic_chat import start_topic_session
+        from api.models.story_schemas import StartTopicSessionRequest
+        
+        request = StartTopicSessionRequest(user_id="user_1", story_id="test_story_1")
+        
+        # Mock Cache HIT
+        bundle = {
+            "prime_prompt": "ENRICHED SYSTEM PROMPT",
+            "title": "Cached Story"
+        }
+        mock_redis.get.return_value = json.dumps(bundle)
+        
+        # Mock session insertion
+        mock_mongodb["chat_sessions"].insert_one = AsyncMock()
+        mock_mongodb["chat_messages"].insert_one = AsyncMock()
+        
+        # We also need to mock story_service.get_story_by_id because the route needs it for metadata
+        mock_mongodb["stories"].find_one.return_value = sample_story.model_dump()
+        
+        with patch("api.routes.topic_chat.uuid.uuid4", return_value="mock-uuid"):
+            response = await start_topic_session(request, mock_mongodb, mock_redis)
+            
+            # Verify session was created with CACHED prompt
+            session_insert_args = mock_mongodb["chat_sessions"].insert_one.call_args[0][0]
+            assert session_insert_args["system_prompt"] == "ENRICHED SYSTEM PROMPT"
+            assert session_insert_args["session_id"] == "mock-uuid"
+            
+            # Verify cache was checked
+            mock_redis.get.assert_called_with("chat:context:test_story_1")

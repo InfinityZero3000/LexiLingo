@@ -369,6 +369,8 @@ async def _patched_pipeline(
     # Also reset node gateway singleton
     import api.services.graph_cag.nodes_v2 as _nodes_mod
     _nodes_mod._gateway_instance = None
+    _nodes_mod._MEM_RESPONSE_CACHE.clear()
+    _nodes_mod._MEM_GRAPH_BUCKETS.clear()
 
     # Create a fake kg_service_v3 module for patching
     fake_kg_module = MagicMock()
@@ -906,13 +908,13 @@ async def test_edge_routing_decisions():
 
     # Cache hit checks
     print()
-    for cache_val, expected in [(True, "cache_hit"), (False, "process")]:
-        actual = check_cache_hit({"cache_hit": cache_val})
+    for val, expected in [("reuse", "cache_hit"), ("patch", "cache_hit"), ("full", "process")]:
+        actual = check_cache_hit({"cache_decision": val})
         ok = actual == expected
         if not ok:
             all_passed = False
         icon = _green("✓") if ok else _red("✗")
-        print(f"  {icon} cache_hit={cache_val!s:<6} → {actual}")
+        print(f"  {icon} cache_decision={val!s:<6} → {actual}")
 
     # TTS check (always returns "end")
     tts_result = should_generate_tts({})

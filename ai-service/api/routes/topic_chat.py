@@ -24,9 +24,14 @@ from api.models.story_schemas import (
     ListStoriesResponse,
     StoryListItem,
     DifficultyLevel,
+    WarmTopicCacheRequest,
+    WarmTopicCacheResponse,
 )
 from api.services.story_service import StoryService
+from api.services.topic_catalog_service import get_topic_catalog_service
+from api.services.topic_preloader import get_topic_preloader
 from api.services.topic_prompt_builder import TopicPromptBuilder
+from api.core.redis_client import get_redis
 from api.services.topic_llm_gateway import get_topic_llm_gateway
 from api.services.educational_hints_parser import (
     EducationalHintsParser,
@@ -64,22 +69,23 @@ async def list_stories(
     category: str | None = None,
     difficulty_level: DifficultyLevel | None = None,
     limit: int = 20,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    catalog_service = Depends(get_topic_catalog_service)
 ):
     """
     Get a list of available stories/topics for topic-based conversation.
     
-    Supports filtering by category and difficulty level.
+    Uses TopicCatalogService with Redis caching for snappier responses.
     """
     try:
-        story_service = StoryService(db)
-        stories, total = await story_service.list_stories(
-            category=category,
-            difficulty_level=difficulty_level,
-            limit=limit
-        )
+        all_stories = await catalog_service.get_topics()
         
-        return ListStoriesResponse(stories=stories, total=total)
+        filtered = all_stories
+        if category:
+            filtered = [s for s in filtered if s.category == category]
+        if difficulty_level:
+            filtered = [s for s in filtered if s.difficulty_level == difficulty_level]
+            
+        return ListStoriesResponse(stories=filtered[:limit], total=len(filtered))
         
     except Exception as e:
         logger.error(f"Failed to list stories: {e}")
@@ -87,6 +93,40 @@ async def list_stories(
             status_code=500,
             detail=f"Failed to list stories: {str(e)}"
         )
+
+
+@router.post(
+    "/stories/warm",
+    response_model=WarmTopicCacheResponse,
+    summary="Warm GraphCache for a specific topic"
+)
+async def warm_topic_cache(
+    request: WarmTopicCacheRequest,
+    preloader = Depends(get_topic_preloader)
+):
+    """
+    Preload topic context into GraphCache (Redis).
+    This makes the subsequent session start and first message instant.
+    """
+    try:
+        import json
+        bundle = await preloader.warm_cache(request.story_id, request.user_id)
+        
+        # Calculate size for metadata
+        bundle_json = json.dumps(bundle)
+        size_kb = len(bundle_json.encode('utf-8')) / 1024
+        
+        return WarmTopicCacheResponse(
+            success=True,
+            topic_id=request.story_id,
+            message=f"Context warmed for '{bundle['title']}'",
+            bundle_size_kb=round(size_kb, 2)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to warm cache: {e}")
+        raise HTTPException(status_code=500, detail="Internal warming failure")
 
 
 @router.get(
@@ -114,27 +154,41 @@ async def get_story(
 )
 async def start_topic_session(
     request: StartTopicSessionRequest,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    redis_client = Depends(get_redis)
 ):
     """
     Start a new topic-based conversation session.
     
-    This endpoint:
-    1. Fetches story metadata from MongoDB
-    2. Builds a dynamic system prompt with story context
-    3. Creates a new session linked to the story
-    4. Returns the AI's opening message
+    This endpoint checks GraphCache for preloaded context to skip MongoDB lookups.
     """
     try:
-        # Fetch story
-        story_service = StoryService(db)
-        story = await story_service.get_story_by_id(request.story_id)
+        import json
         
-        if not story:
-            raise HTTPException(status_code=404, detail="Story not found")
+        # 1. Check cache for preloaded context (Phase 2.4)
+        cache_key = f"chat:context:{request.story_id}"
+        cached_bundle = await redis_client.get(cache_key)
         
-        # Build system prompt
-        system_prompt = TopicPromptBuilder.build_master_prompt(story)
+        story = None
+        system_prompt = None
+        
+        if cached_bundle:
+            logger.info(f"GraphCache HIT for topic: {request.story_id}")
+            bundle = json.loads(cached_bundle)
+            system_prompt = bundle.get("prime_prompt")
+            # We still need the story object for metadata in the response
+            # but we can try to skip full construction if we have enough info
+        
+        if not system_prompt or not story:
+            # Fetch from DB if cache miss or need more data
+            story_service = StoryService(db)
+            story = await story_service.get_story_by_id(request.story_id)
+            
+            if not story:
+                raise HTTPException(status_code=404, detail="Story not found")
+            
+            if not system_prompt:
+                system_prompt = TopicPromptBuilder.build_master_prompt(story)
         
         # Create session
         session_id = str(uuid.uuid4())

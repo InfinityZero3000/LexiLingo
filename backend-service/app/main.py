@@ -22,11 +22,17 @@ from app.core.database import init_db, close_db
 from app.core.redis import RedisClient
 from app.core.middleware import (
     RateLimitMiddleware,
-    ErrorHandlerMiddleware,
     RequestLoggingMiddleware,
     RequestIDMiddleware,
     PrivateNetworkAccessMiddleware,
 )
+from app.core.exceptions import (
+    http_exception_handler,
+    validation_exception_handler,
+    unhandled_exception_handler
+)
+from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, Request, status, HTTPException
 from app.routes import (
     health_router,
     auth_router,
@@ -158,16 +164,13 @@ if settings.is_production:
         allowed_hosts=settings.ALLOWED_HOSTS
     )
 
-# 2. Error Handler - Catch unhandled exceptions
-app.add_middleware(ErrorHandlerMiddleware)
-
-# 3. Request Logging - Log all requests
+# 2. Request Logging - Log all requests
 app.add_middleware(RequestLoggingMiddleware)
 
-# 4. Request ID - Add unique ID to each request
+# 3. Request ID - Add unique ID to each request
 app.add_middleware(RequestIDMiddleware)
 
-# 5. CORS - Must be OUTSIDE ErrorHandler so error responses get CORS headers
+# 4. CORS - Must be OUTSIDE handlers so error responses get CORS headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -177,10 +180,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 6. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
+# 5. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
 app.add_middleware(PrivateNetworkAccessMiddleware)
 
-# 7. Rate Limiting - Prevent abuse (Phase 1: Security)
+# 6. Rate Limiting - Prevent abuse (Phase 1: Security)
 # Higher limits in development to avoid blocking local testing
 # Production: 120 RPM / 5000 RPH supports ~10k concurrent users (NAT-friendly)
 _rate_rpm = 300 if settings.is_development else 120
@@ -190,6 +193,11 @@ app.add_middleware(
     requests_per_minute=_rate_rpm,
     requests_per_hour=_rate_rph,
 )
+
+# ===== EXCEPTION HANDLERS =====
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 # ===== Request Body Size Limit (Phase 4) =====
