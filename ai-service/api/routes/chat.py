@@ -1,15 +1,14 @@
 """
 Chat routes
 
-Endpoints for chat functionality with Google Gemini integration
+Endpoints for chat functionality with multi-provider fallback and persistent storage.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
-import google.generativeai as genai
-import os
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List, Optional
 
 from api.core.database import get_database
 from api.core.config import settings
@@ -24,12 +23,30 @@ from api.models.schemas import (
 
 router = APIRouter()
 
-# Configure Gemini API
-if settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
-else:
-    model = None
+# Helper to get the providers from app.state or direct import
+# In a real app, these would be in a service layer
+
+async def get_ai_response(request: Request, message: str, db: AsyncIOMotorDatabase) -> tuple[str, str]:
+    """Get AI response using fallback chain."""
+    # This logic is shared with main.py for now, but should ideally be in a service
+    from api.main import get_groq_response, get_gemini_response, get_ollama_response
+    
+    # 1. Groq
+    response = await get_groq_response(message, db)
+    if response:
+        return response, f"groq/{settings.GROQ_MODEL}"
+    
+    # 2. Gemini
+    response = await get_gemini_response(message, db)
+    if response:
+        return response, "gemini-2.0-flash"
+    
+    # 3. Ollama
+    response = await get_ollama_response(message)
+    if response:
+        return response, f"ollama/{settings.OLLAMA_MODEL}"
+    
+    return "I'm having trouble connecting to my brain. Please try again later.", "fallback"
 
 
 @router.post(
@@ -41,22 +58,17 @@ async def create_session(
     request: CreateSessionRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """
-    Create a new chat session.
-    
-    Similar to Flutter's createSession use case.
-    """
+    """Create a new chat session in MongoDB."""
     try:
         session_id = str(uuid.uuid4())
-        created_at = datetime.utcnow()
+        now = datetime.utcnow()
         
-        # Store session in MongoDB
         session = {
             "session_id": session_id,
             "user_id": request.user_id,
-            "title": request.title,
-            "created_at": created_at,
-            "last_activity": created_at,
+            "title": request.title or "New Conversation",
+            "created_at": now,
+            "last_activity": now,
             "message_count": 0
         }
         
@@ -64,15 +76,12 @@ async def create_session(
         
         return CreateSessionResponse(
             session_id=session_id,
-            title=request.title or "New Conversation",
-            created_at=created_at
+            title=session["title"],
+            created_at=now
         )
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create session: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
@@ -81,52 +90,43 @@ async def create_session(
     summary="Send chat message"
 )
 async def send_message(
-    request: SendMessageRequest,
+    request: Request,
+    msg_req: SendMessageRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """
-    Send message and get AI response.
-    
-    Similar to Flutter's sendMessage use case with Gemini integration.
-    """
-    if not model:
-        raise HTTPException(
-            status_code=503,
-            detail="Gemini API not configured"
-        )
-    
+    """Send message and get AI response with fallback."""
     try:
         import time
         start_time = time.time()
         
-        # Save user message to MongoDB
+        # 1. Save user message
         user_message = {
             "message_id": str(uuid.uuid4()),
-            "session_id": request.session_id,
-            "user_id": request.user_id,
-            "content": request.message,
+            "session_id": msg_req.session_id,
+            "user_id": msg_req.user_id,
+            "content": msg_req.message,
             "role": MessageRole.USER,
             "timestamp": datetime.utcnow()
         }
         await db["chat_messages"].insert_one(user_message)
         
-        # Get AI response from Gemini
-        response = model.generate_content(request.message)
-        ai_response = response.text
+        # 2. Get AI response
+        ai_response, model_used = await get_ai_response(request, msg_req.message, db)
         
-        # Save AI message
+        # 3. Save AI message
         ai_message = {
             "message_id": str(uuid.uuid4()),
-            "session_id": request.session_id,
+            "session_id": msg_req.session_id,
             "content": ai_response,
             "role": MessageRole.AI,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow(),
+            "model": model_used
         }
         await db["chat_messages"].insert_one(ai_message)
         
-        # Update session
+        # 4. Update session
         await db["chat_sessions"].update_one(
-            {"session_id": request.session_id},
+            {"session_id": msg_req.session_id},
             {
                 "$set": {"last_activity": datetime.utcnow()},
                 "$inc": {"message_count": 2}
@@ -138,20 +138,16 @@ async def send_message(
         return SendMessageResponse(
             message_id=ai_message["message_id"],
             ai_response=ai_response,
-            analysis=None,  # TODO: Add AI analysis
             processing_time_ms=processing_time
         )
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to send message: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
     "/sessions/{session_id}/messages",
-    response_model=list[ChatMessage],
+    response_model=List[ChatMessage],
     summary="Get session messages"
 )
 async def get_session_messages(
@@ -159,11 +155,7 @@ async def get_session_messages(
     limit: int = 100,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """
-    Get all messages in a session.
-    
-    Similar to Flutter's getChatHistory.
-    """
+    """Get all messages in a session."""
     try:
         cursor = db["chat_messages"].find(
             {"session_id": session_id}
@@ -171,24 +163,17 @@ async def get_session_messages(
         
         messages = await cursor.to_list(length=limit)
         
-        # Convert to ChatMessage model
-        result = []
-        for msg in messages:
-            result.append(ChatMessage(
+        return [
+            ChatMessage(
                 id=msg["message_id"],
                 session_id=msg["session_id"],
                 content=msg["content"],
                 role=MessageRole(msg["role"]),
                 timestamp=msg["timestamp"]
-            ))
-        
-        return result
-        
+            ) for msg in messages
+        ]
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get messages: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -207,15 +192,8 @@ async def get_user_sessions(
         ).sort("last_activity", -1).limit(limit)
         
         sessions = await cursor.to_list(length=limit)
-        
-        # Convert ObjectId to string
-        for session in sessions:
-            session["_id"] = str(session["_id"])
-        
+        for s in sessions:
+            s["_id"] = str(s["_id"])
         return sessions
-        
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get sessions: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))

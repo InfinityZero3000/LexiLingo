@@ -410,14 +410,23 @@ async def get_weekly_progress(
         .order_by(DailyActivity.activity_date)
     )
     activities = result.scalars().all()
-    
+
+    # Aggregate weekly totals directly from DB records (missing days = 0)
+    total_lessons = sum(a.lessons_completed for a in activities)
+    total_study_time = sum(a.study_time_minutes for a in activities)
+    goals_met_count = sum(1 for a in activities if a.daily_goal_met)
+
+    # Fetch streak for current_streak / longest_streak
+    streak_result = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
+    streak = streak_result.scalar_one_or_none()
+
     # Create a map for quick lookup
     activity_map = {a.activity_date: a for a in activities}
-    
+
     # Build response for each day of the week
     days = []
     day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    
+
     total_xp = 0
     best_day = None
     best_xp = 0
@@ -458,6 +467,11 @@ async def get_weekly_progress(
         'days_active': days_with_activity,
         'week_start': week_start.isoformat(),
         'week_end': today.isoformat(),
+        'total_lessons': total_lessons,
+        'total_study_time': total_study_time,
+        'week_goal_progress': round(goals_met_count / 7, 2),
+        'current_streak': streak.current_streak if streak else 0,
+        'longest_streak': streak.longest_streak if streak else 0,
     }
     
     return ApiResponse(

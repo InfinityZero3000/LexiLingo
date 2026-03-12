@@ -216,7 +216,7 @@ class TestUpdateDevice:
             f"{BASE}/{DEVICE_ID}", json={"fcm_token": "new-token"}
         )
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_updates_fcm_token_successfully(self, auth_client):

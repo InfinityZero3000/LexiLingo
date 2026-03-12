@@ -231,6 +231,7 @@ async def start_topic_session(
             category=story.category,
             estimated_minutes=story.estimated_minutes,
             cover_image_url=story.cover_image_url,
+            suggested_prompts=story.suggested_prompts or [],
             tags=story.tags
         )
         

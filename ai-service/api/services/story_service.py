@@ -89,6 +89,7 @@ class StoryService:
                 "category": 1,
                 "estimated_minutes": 1,
                 "cover_image_url": 1,
+                "suggested_prompts": 1,
                 "tags": 1
             }
         ).skip(skip).limit(limit)

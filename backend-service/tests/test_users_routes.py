@@ -241,7 +241,7 @@ class TestGetUserById:
         mock_result.scalar_one_or_none.return_value = None
         response = await client.get(f"{BASE}/{OTHER_USER_ID}")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_user_when_found(self, auth_client):

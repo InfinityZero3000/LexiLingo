@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
@@ -27,12 +28,15 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   }
 
   Future<void> _loadDueCount() async {
-    // TODO: Implement API call to get due count
-    // For now, mock data
-    await Future.delayed(const Duration(seconds: 1));
+    final result = await vocab_di
+        .getIt<VocabularyRepository>()
+        .getVocabularyStats();
     if (mounted) {
       setState(() {
-        _dueCount = 15; // Mock data
+        _dueCount = result.fold(
+          (failure) => 0,
+          (stats) => stats['due_for_review'] as int? ?? 0,
+        );
         _isLoading = false;
       });
     }

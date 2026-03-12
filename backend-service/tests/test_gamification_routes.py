@@ -201,7 +201,7 @@ class TestShop:
         )
         
         assert response.status_code == 400
-        assert "Insufficient gems" in response.json()["detail"]
+        assert "Insufficient gems" in response.json()["error"]["message"]
 
 
 class TestInventory:

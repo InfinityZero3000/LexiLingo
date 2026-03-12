@@ -53,6 +53,7 @@ class TopicContextPreloader:
             "grammar_rules": [g.model_dump() for g in story.grammar_points],
             "user_weak_points": [], # Placeholder for future progress integration
             "suggested_focus": [obj for obj in story.context_description.objectives],
+            "suggested_prompts": story.suggested_prompts or [],
             "prime_prompt": TopicPromptBuilder.build_master_prompt(story)
         }
         

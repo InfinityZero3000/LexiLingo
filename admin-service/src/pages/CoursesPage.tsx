@@ -4,6 +4,7 @@ import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
 import { StatusPill } from "../components/StatusPill";
+import { TableSkeleton } from "../components/Skeleton";
 import {
   listCoursesAdmin,
   createCourse,
@@ -175,9 +176,18 @@ export const CoursesPage = () => {
       {/* Course list */}
       <div className="panel">
         {loading ? (
-          <div className="loading">{t.common.loading}</div>
+          <TableSkeleton rows={5} cols={6} />
         ) : courses.length === 0 ? (
-          <EmptyState title={t.courses.noCourses} description={t.courses.noCoursesDesc} />
+          <EmptyState
+            title={t.courses.noCourses}
+            description={t.courses.noCoursesDesc}
+            icon="📚"
+            action={
+              <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+                {t.courses.createCourse}
+              </button>
+            }
+          />
         ) : (
           <>
             <DataTable

@@ -234,7 +234,7 @@ class TestGetCourseDetail:
         with patch("app.crud.course.CourseCRUD.get_course_with_units", new=AsyncMock(return_value=None)):
             response = await no_auth_client.get(f"{BASE}/{COURSE_ID}")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_404_for_unpublished_course(self, no_auth_client: AsyncClient):
@@ -291,7 +291,7 @@ class TestEnrollInCourse:
         with patch("app.crud.course.CourseCRUD.get_course", new=AsyncMock(return_value=None)):
             response = await auth_client.post(f"{BASE}/{COURSE_ID}/enroll")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_400_for_unpublished_course(self, auth_client: AsyncClient):
@@ -300,7 +300,7 @@ class TestEnrollInCourse:
         with patch("app.crud.course.CourseCRUD.get_course", new=AsyncMock(return_value=mock_course)):
             response = await auth_client.post(f"{BASE}/{COURSE_ID}/enroll")
         assert response.status_code == 400
-        assert "not available" in response.json()["detail"].lower()
+        assert "not available" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_already_enrolled_returns_200_with_message(self, auth_client: AsyncClient):

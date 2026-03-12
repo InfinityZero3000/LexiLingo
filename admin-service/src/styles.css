@@ -780,6 +780,26 @@ textarea:focus {
   color: var(--muted);
 }
 
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(225, 242, 255, 0.5) 25%,
+    rgba(205, 232, 255, 0.8) 50%,
+    rgba(225, 242, 255, 0.5) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .form-error {
   background: rgba(183, 50, 76, 0.12);
   color: #b7324c;

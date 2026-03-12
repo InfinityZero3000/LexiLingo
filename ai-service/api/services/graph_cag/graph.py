@@ -7,27 +7,33 @@ This is the main entry point for the GraphCAG pipeline.
 
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from langgraph.graph import StateGraph, END
 
 from api.services.graph_cag.state import GraphCAGState, create_initial_state
+from api.services.graph_cag.evaluation_agent import EvaluationAgent
 # Using nodes_v2 with ModelGateway for lazy loading
 from api.services.graph_cag.nodes_v2 import (
     input_node,
     cache_gate_node,
     kg_expand_node,
     diagnose_node,
+    kg_diagnose_node,
     retrieve_node,
     generate_node,
     vietnamese_node,
     tts_node,
     ask_clarify_node,
+    stt_node,
+    pronunciation_node,
 )
 from api.services.graph_cag.edges import (
     route_after_diagnosis,
     should_generate_tts,
     check_cache_hit,
+    route_voice_or_text,
+    should_analyze_pronunciation,
 )
 from api.services.model_gateway import get_gateway
 
@@ -91,11 +97,14 @@ class GraphCAGPipeline:
         graph.add_node("cache_gate_node", cache_gate_node)
         graph.add_node("kg_expand_node", kg_expand_node)
         graph.add_node("diagnose_node", diagnose_node)
+        graph.add_node("kg_diagnose_node", kg_diagnose_node)
         graph.add_node("retrieve_node", retrieve_node)
         graph.add_node("generate_node", generate_node)
         graph.add_node("vietnamese_node", vietnamese_node)
         graph.add_node("tts_node", tts_node)
         graph.add_node("ask_clarify_node", ask_clarify_node)
+        graph.add_node("stt_node", stt_node)
+        graph.add_node("pronunciation_node", pronunciation_node)
         
         # ============================================
         # SET ENTRY POINT
@@ -103,28 +112,37 @@ class GraphCAGPipeline:
         graph.set_entry_point("input_node")
         
         # ============================================
+        # ============================================
         # ADD EDGES
         # ============================================
-        
-        # Input → Cache Gate (check for cached response first)
-        graph.add_edge("input_node", "cache_gate_node")
-        
-        # Cache Gate → (END if hit) or (kg_expand if miss)
+
+        # Input → STT (voice) or Cache Gate (text)
+        graph.add_conditional_edges(
+            "input_node",
+            route_voice_or_text,
+            {
+                "stt_node": "stt_node",
+                "cache_gate_node": "cache_gate_node",
+            }
+        )
+
+        # STT → Cache Gate (after transcription, continue normal flow)
+        graph.add_edge("stt_node", "cache_gate_node")
+
+        # Cache Gate → (END if hit) or (kg_diagnose if miss)
+        # kg_diagnose_node runs kg_expand + diagnose concurrently via asyncio.gather
         graph.add_conditional_edges(
             "cache_gate_node",
             check_cache_hit,
             {
                 "cache_hit": END,
-                "process": "kg_expand_node",
+                "process": "kg_diagnose_node",
             }
         )
-        
-        # KG expand → diagnose
-        graph.add_edge("kg_expand_node", "diagnose_node")
-        
-        # Conditional: diagnose → (retrieve | vietnamese | ask_clarify)
+
+        # Conditional: kg_diagnose → (retrieve | vietnamese | ask_clarify)
         graph.add_conditional_edges(
-            "diagnose_node",
+            "kg_diagnose_node",
             route_after_diagnosis,
             {
                 "retrieve_node": "retrieve_node",
@@ -132,27 +150,30 @@ class GraphCAGPipeline:
                 "ask_clarify_node": "ask_clarify_node",
             }
         )
-        
+
         # Vietnamese → retrieve (continue normal flow)
         graph.add_edge("vietnamese_node", "retrieve_node")
-        
+
         # Retrieve → generate
         graph.add_edge("retrieve_node", "generate_node")
-        
+
         # Ask clarify → END (already has complete tutor_response, skip generate)
         graph.add_edge("ask_clarify_node", END)
-        
-        # Conditional: generate → (tts | end)
+
+        # Conditional: generate → pronunciation (voice) or END (text)
         graph.add_conditional_edges(
             "generate_node",
-            should_generate_tts,
+            should_analyze_pronunciation,
             {
-                "tts_node": "tts_node",
+                "pronunciation_node": "pronunciation_node",
                 "end": END,
             }
         )
-        
-        # TTS → end
+
+        # Pronunciation → END (pronunciation result is in state for the response)
+        graph.add_edge("pronunciation_node", END)
+
+        # TTS → end (node remains registered but unreachable; TTS handled externally)
         graph.add_edge("tts_node", END)
         
         return graph
@@ -164,6 +185,7 @@ class GraphCAGPipeline:
         user_id: Optional[str] = None,
         input_type: str = "text",
         learner_profile: Optional[Dict[str, Any]] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None,
         *,
         cache_policy: str = "on",
         retrieval_policy: str = "full",
@@ -175,19 +197,20 @@ class GraphCAGPipeline:
     ) -> Dict[str, Any]:
         """
         Run the GraphCAG pipeline.
-        
+
         Args:
             user_input: Text from user
             session_id: Unique session ID
             user_id: Optional user ID
             input_type: "text" or "voice"
             learner_profile: Optional learner profile
-            
+            conversation_history: Optional prior turns to inject (bypasses Redis load)
+
         Returns:
             Final state with tutor response
         """
         start_time = time.time()
-        
+
         # Create initial state
         initial_state = create_initial_state(
             user_input=user_input,
@@ -203,6 +226,11 @@ class GraphCAGPipeline:
             benchmark_context=benchmark_context,
             benchmark_metadata=benchmark_metadata,
         )
+
+        # Override conversation_history if caller supplies it directly
+        # (avoids a redundant Redis round-trip when lexi_chat already holds the store)
+        if conversation_history is not None:
+            initial_state["conversation_history"] = conversation_history
         
         logger.info(f"[GraphCAG] Starting analysis: {user_input[:50]}...")
         
@@ -234,7 +262,20 @@ class GraphCAGPipeline:
             }
     
     def _format_response(self, state: GraphCAGState) -> Dict[str, Any]:
-        """Format final state into API response."""
+        """
+        Format final state into API response with weighted evidence fusion.
+
+        Scores are recomputed here via EvaluationAgent to ensure consistency
+        regardless of which node path executed (cache hit vs. slow path).
+        """
+        grammar = state.get("grammar_score", 0.0)
+        fluency = state.get("fluency_score", 0.0)
+        vocab_level = state.get("vocabulary_level", "B1")
+        trace = state.get("retrieval_trace", [])
+
+        overall_weighted = EvaluationAgent.compute_overall_score(grammar, fluency, vocab_level)
+        retrieval_quality = EvaluationAgent.compute_retrieval_quality(trace)
+
         return {
             "tutor_response": state.get("tutor_response", ""),
             "corrections": [
@@ -250,10 +291,11 @@ class GraphCAGPipeline:
             "vietnamese_hint": state.get("vietnamese_hint"),
             "pronunciation_tip": state.get("pronunciation_tip"),
             "scores": {
-                "fluency": state.get("fluency_score", 0.0),
-                "grammar": state.get("grammar_score", 0.0),
-                "overall": state.get("overall_score", 0.0),
-                "vocabulary_level": state.get("vocabulary_level", "B1"),
+                "fluency": fluency,
+                "grammar": grammar,
+                "overall": overall_weighted,
+                "vocabulary_level": vocab_level,
+                "retrieval_quality": retrieval_quality,
             },
             "action": {
                 "strategy": state.get("strategy", "scaffold"),
@@ -270,7 +312,7 @@ class GraphCAGPipeline:
                 "reuse_risk": state.get("reuse_risk", 1.0),
                 "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
-                "retrieval_trace": state.get("retrieval_trace", []),
+                "retrieval_trace": trace,
             },
             "audio": {
                 "bytes": state.get("tts_audio_bytes"),

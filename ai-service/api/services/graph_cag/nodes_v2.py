@@ -23,6 +23,7 @@ from typing import Dict, Any, List, Optional
 from api.services.graph_cag.state import (
     GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry,
 )
+from api.services.graph_cag.evaluation_agent import EvaluationAgent
 
 logger = logging.getLogger(__name__)
 
@@ -517,17 +518,28 @@ async def _write_cache_entry(
 # ============================================================
 
 _gateway_instance = None
+_retrieval_v3_instance = None
 
 
 async def get_gateway():
     """Get or initialize the ModelGateway singleton"""
     global _gateway_instance
-    
+
     if _gateway_instance is None:
         from api.services.model_gateway import get_model_gateway
         _gateway_instance = get_model_gateway()
-    
+
     return _gateway_instance
+
+
+async def _get_retrieval_v3():
+    """Lazy singleton for RetrievalServiceV3 (centrality + community ranking)."""
+    global _retrieval_v3_instance
+    if _retrieval_v3_instance is None:
+        from api.services.kg_service_v3 import get_kg_service
+        from api.services.retrieval_service_v3 import RetrievalServiceV3
+        _retrieval_v3_instance = RetrievalServiceV3(get_kg_service())
+    return _retrieval_v3_instance
 
 
 # ============================================================
@@ -858,6 +870,7 @@ async def diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
             "diagnosis_confidence": 1.0,
             "grammar_score": 1.0,
             "fluency_score": 1.0,
+            "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": ["benchmark_bypass"],
         }
 
@@ -874,6 +887,7 @@ async def diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
             "diagnosis_confidence": confidence,
             "grammar_score": grammar_score,
             "fluency_score": fluency_score,
+            "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": ["rule_forced"],
         }
     
@@ -980,6 +994,7 @@ Be encouraging and focus on the most important errors first."""
             "diagnosis_confidence": confidence,
             "grammar_score": grammar_score,
             "fluency_score": fluency_score,
+            "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": ["qwen_grammar"],
         }
         
@@ -994,6 +1009,7 @@ Be encouraging and focus on the most important errors first."""
             "diagnosis_confidence": 0.5,
             "grammar_score": 0.7,
             "fluency_score": 0.7,
+            "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": ["rule_fallback"],
         }
 
@@ -1027,13 +1043,56 @@ def _rule_based_diagnosis(text: str) -> tuple:
 
 
 # ============================================================
-# FUSION SCORING (paper Eq. 8: score(e) = α·s_kg + β·s_vec + γ·s_rec)
+# PARALLEL NODE: KG_EXPAND + DIAGNOSE concurrent (paper Alg. 3+4)
 # ============================================================
+
+async def kg_diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
+    """
+    Run kg_expand_node and diagnose_node concurrently via asyncio.gather.
+
+    Both nodes are I/O-bound (KuzuDB and ModelGateway respectively) and read
+    from the same state snapshot without conflicting writes.
+
+    Latency improvement: max(t_kg, t_diag) instead of t_kg + t_diag.
+    """
+    kg_result, diag_result = await asyncio.gather(
+        kg_expand_node(state),
+        diagnose_node(state),
+    )
+    merged: Dict[str, Any] = {}
+    merged.update(kg_result or {})
+    merged.update(diag_result or {})
+    # Merge the accumulator list explicitly (avoid overwrite by dict.update)
+    merged["models_used"] = (
+        list((kg_result or {}).get("models_used", []))
+        + list((diag_result or {}).get("models_used", []))
+    )
+    return merged
 
 _FUSION_ALPHA = 0.5   # KG structural relevance weight
 _FUSION_BETA = 0.3    # Vector similarity weight
 _FUSION_GAMMA = 0.2   # Recency bonus weight
 _RECENCY_LAMBDA = 0.01  # Decay rate for recency bonus
+
+
+# ============================================================
+# PCC: PROGRESSIVE COMPLEXITY CONTROL
+# ============================================================
+
+def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:
+    """
+    PCC difficulty signal based on session progress + learner performance.
+
+    Returns: 'gentle' | 'standard' | 'challenging'
+      - gentle:     first 3 turns or score < 0.50
+      - standard:   turns 3-8 or score 0.50-0.70
+      - challenging: turns 8+ with score >= 0.70
+    """
+    if session_turn < 3 or overall_score < 0.50:
+        return "gentle"
+    if session_turn < 8 or overall_score < 0.70:
+        return "standard"
+    return "challenging"
 
 
 def _fusion_score(
@@ -1315,62 +1374,104 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
             "is_relevant": True,
         })
 
-    # ── Stage 2: Optional vector evidence (budgeted) ─────────────────
+    # ── Stage 2: RetrievalServiceV3 (centrality + community ranking) ─────
     vector_hits = []
-    try:
-        from api.services.model_gateway import get_gateway
-
-        gateway = await get_gateway()
-
+    if not benchmark_candidates:
         errors = state.get("diagnosis_errors", [])
         confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
 
         do_vector_search = True
-        max_expanded = 10
         max_hits = 5
-        threshold = 0.3
 
         if retrieval_policy == "rapid":
             if len(errors) == 0 and confidence >= 0.8:
                 do_vector_search = False
             elif len(errors) <= 2 and confidence >= 0.7:
-                max_expanded = 5
                 max_hits = 2
-                threshold = 0.35
 
-        if do_vector_search and not benchmark_candidates:
-            candidate_labels = []
-            for c in kg_concepts:
-                if isinstance(c, dict):
-                    candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
-                else:
-                    candidate_labels.append(str(c))
-            for node in kg_expanded[:max_expanded]:
-                label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
-                if label.strip() and label not in candidate_labels:
-                    candidate_labels.append(label)
+        if do_vector_search:
+            # ── Primary: RetrievalServiceV3 (centrality + community diversity) ──
+            try:
+                from api.models.v3_schemas import V3PipelineContext
 
-            if candidate_labels:
-                result = await gateway.invoke(
-                    "minilm", "invoke",
-                    {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                retrieval_v3 = await _get_retrieval_v3()
+                ctx = V3PipelineContext(
+                    user_input=user_input,
+                    session_id=state.get("session_id", ""),
+                    user_id=state.get("user_id"),
                 )
-                if result.get("success"):
-                    sim_results = result.get("data", {}).get("results", [])
-                    for r in sim_results:
-                        if r["score"] >= threshold:
-                            vector_hits.append({"text": r["text"], "score": r["score"]})
-                            evidence_items.append({
-                                "text": f"Semantic match: {r['text']}",
-                                "kg_depth": 2,  # treat vector hits as depth-2
-                                "vec_sim": r["score"],
-                                "turns_ago": session_turn,
-                            })
+                seed_nodes = [
+                    c if isinstance(c, str) else c.get("id", "")
+                    for c in kg_concepts[:5]
+                ]
+                bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
 
-                    vector_hits = vector_hits[:max_hits]
-                    logger.info(f"[retrieve_node] MiniLM found {len(vector_hits)} semantic hits")
-    except Exception as e:
-        logger.warning(f"[retrieve_node] Vector search skipped: {e}")
+                for hit in bundle.vector_hits[:max_hits]:
+                    snippet = getattr(hit, "snippet", hit.id)
+                    vector_hits.append({"text": snippet, "score": hit.score})
+                    evidence_items.append({
+                        "item_id": hit.id,
+                        "title": snippet,
+                        "text": f"Concept ({hit.id}): {snippet}",
+                        "kg_depth": 2,
+                        "vec_sim": hit.score,
+                        "turns_ago": session_turn,
+                    })
+
+                logger.info(
+                    f"[retrieve_node] RetrievalServiceV3: {len(vector_hits)} hits "
+                    f"(centrality+community ranked)"
+                )
+
+            except Exception as e:
+                logger.warning(
+                    f"[retrieve_node] RetrievalServiceV3 unavailable, "
+                    f"falling back to MiniLM gateway: {e}"
+                )
+                # ── Fallback: MiniLM gateway ──────────────────────────────────
+                try:
+                    from api.services.model_gateway import get_gateway
+
+                    gateway = await get_gateway()
+                    max_expanded = 10
+                    threshold = 0.3
+
+                    if retrieval_policy == "rapid" and len(errors) <= 2 and confidence >= 0.7:
+                        max_expanded = 5
+                        threshold = 0.35
+
+                    candidate_labels = []
+                    for c in kg_concepts:
+                        if isinstance(c, dict):
+                            candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
+                        else:
+                            candidate_labels.append(str(c))
+                    for node in kg_expanded[:max_expanded]:
+                        label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
+                        if label.strip() and label not in candidate_labels:
+                            candidate_labels.append(label)
+
+                    if candidate_labels:
+                        result = await gateway.invoke(
+                            "minilm", "invoke",
+                            {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                        )
+                        if result.get("success"):
+                            sim_results = result.get("data", {}).get("results", [])
+                            for r in sim_results:
+                                if r["score"] >= threshold:
+                                    vector_hits.append({"text": r["text"], "score": r["score"]})
+                                    evidence_items.append({
+                                        "text": f"Semantic match: {r['text']}",
+                                        "kg_depth": 2,
+                                        "vec_sim": r["score"],
+                                        "turns_ago": session_turn,
+                                    })
+
+                            vector_hits = vector_hits[:max_hits]
+                            logger.info(f"[retrieve_node] MiniLM fallback: {len(vector_hits)} hits")
+                except Exception as e2:
+                    logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
 
     # ── Fusion scoring and ranking ───────────────────────────────────
     for item in evidence_items:
@@ -1477,7 +1578,8 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
 
         grammar_score = state.get("grammar_score", 0.8)
         fluency_score = state.get("fluency_score", 0.8)
-        overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
+        vocab_level = state.get("vocabulary_level", "B1")
+        overall_score = EvaluationAgent.compute_overall_score(grammar_score, fluency_score, vocab_level)
 
         # Store response in cache even when generation is forced to template.
         # This keeps benchmark runs deterministic while still measuring cache wins.
@@ -1499,12 +1601,17 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         }
     
     # Build system prompt with Lexi persona + grounded context
+    session_turn = len(state.get("conversation_history", []))
+    prev_overall = state.get("overall_score", 0.5)
+    difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
+
     system_prompt = (
         "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
         "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
         "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
         "Gently correct mistakes with encouraging context.\n"
         f"The learner's current CEFR level is: {level}\n"
+        f"Difficulty setting for this turn: {difficulty}\n"
     )
     
     if context:
@@ -1542,10 +1649,23 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     try:
         import httpx
         
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Inject conversation history (last 6 turns = up to 12 messages)
+        history = state.get("conversation_history", [])
+        for msg in history[-12:]:
+            role = msg.get("role")
+            content = msg.get("content", "")
+            if role and content:
+                # Standard {"role": "user"/"assistant", "content": "..."} format
+                messages.append({"role": role, "content": content})
+            elif msg.get("user"):
+                # ConversationCache {"user": "...", "ai": "..."} format
+                messages.append({"role": "user", "content": msg["user"]})
+                if msg.get("ai"):
+                    messages.append({"role": "assistant", "content": msg["ai"]})
+
+        messages.append({"role": "user", "content": user_input})
         
         # 1. Try Groq
         groq_key = os.getenv("GROQ_API_KEY", "")
@@ -1637,8 +1757,9 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     # Calculate overall score
     grammar_score = state.get("grammar_score", 0.8)
     fluency_score = state.get("fluency_score", 0.8)
-    overall_score = (grammar_score * 0.6 + fluency_score * 0.4)
-    
+    vocab_level = state.get("vocabulary_level", "B1")
+    overall_score = EvaluationAgent.compute_overall_score(grammar_score, fluency_score, vocab_level)
+
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on":
         try:
@@ -2261,11 +2382,11 @@ async def stt_node(state: GraphCAGState) -> Dict[str, Any]:
         
         if result.get("success") and result.get("data"):
             stt_data = result["data"]
-            
-            latency_ms = int((time.time() - start_time) * 1000)
-            
+            transcribed = stt_data.get("text", "")
+
             return {
-                "transcribed_text": stt_data.get("text", ""),
+                "user_input": transcribed if transcribed else state.get("user_input", ""),
+                "transcribed_text": transcribed,
                 "word_timestamps": stt_data.get("segments", []),
                 "stt_confidence": stt_data.get("confidence", 0.0),
                 "models_used": ["whisper_stt"],

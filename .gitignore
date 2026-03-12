@@ -111,8 +111,10 @@ temp/
 tmp/
 *_log.txtsha256-*
 
+# mcp server and agent skills (not needed in version control)
 mcp-server
 agent-skills
 .vercel
+.gemini
 
 system-testing/

@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 import '../../data/models/story_model.dart';
 import '../../data/models/topic_session_model.dart';
@@ -7,14 +9,19 @@ import '../../domain/repositories/story_repository.dart';
 /// State management for Story/Topic-based conversation
 class StoryProvider extends ChangeNotifier {
   final StoryRepository repository;
+  static const String _recentTopicsKey = 'recent_topic_ids';
 
-  StoryProvider({required this.repository});
+  StoryProvider({required this.repository}) {
+    _loadRecentlyUsed();
+  }
 
   // Stories state
   List<StoryListItem> _stories = [];
+  List<StoryListItem> _recentlyUsed = [];
   List<String> _categories = [];
   Story? _currentStoryDetails;
   bool _isLoading = false;
+  bool _isWarming = false;
   String? _error;
 
   // Filters
@@ -29,9 +36,11 @@ class StoryProvider extends ChangeNotifier {
 
   // Getters
   List<StoryListItem> get stories => _stories;
+  List<StoryListItem> get recentlyUsed => _recentlyUsed;
   List<String> get categories => _categories;
   Story? get currentStoryDetails => _currentStoryDetails;
   bool get isLoading => _isLoading;
+  bool get isWarming => _isWarming;
   String? get error => _error;
   String? get filterCategory => _filterCategory;
   DifficultyLevel? get filterDifficulty => _filterDifficulty;
@@ -81,6 +90,10 @@ class StoryProvider extends ChangeNotifier {
       (stories) {
         _stories = stories;
         _isLoading = false;
+        
+        // Sync full story data for recently used if needed
+        _syncRecentlyUsedWithStories();
+        
         notifyListeners();
       },
     );
@@ -134,6 +147,46 @@ class StoryProvider extends ChangeNotifier {
     );
   }
 
+  /// Warm topic cache
+  Future<bool> warmTopicCache({
+    required String storyId,
+    required String userId,
+  }) async {
+    _isWarming = true;
+    _error = null;
+    notifyListeners();
+
+    final result = await repository.warmTopicCache(
+      storyId: storyId,
+      userId: userId,
+    );
+
+    return result.fold(
+      (failure) {
+        _error = failure.message;
+        _isWarming = false;
+        notifyListeners();
+        return false;
+      },
+      (success) {
+        _isWarming = false;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
+  /// Pre-warm top 3 recently used topics
+  Future<void> preWarmRecents(String userId) async {
+    if (_recentlyUsed.isEmpty) return;
+    
+    final toWarm = _recentlyUsed.take(3).toList();
+    for (var story in toWarm) {
+      // Best effort warming, don't block or show loading
+      repository.warmTopicCache(storyId: story.storyId, userId: userId);
+    }
+  }
+
   /// Start a new topic session
   Future<bool> startTopicSession({
     required String userId,
@@ -161,6 +214,11 @@ class StoryProvider extends ChangeNotifier {
       },
       (session) {
         _currentSession = session;
+        
+        // Add to recently used
+        final story = _stories.firstWhere((s) => s.storyId == storyId, orElse: () => session.story);
+        _addToRecentlyUsed(story);
+        
         _messages = [
           // Add opening message as AI message
           TopicChatMessage(
@@ -267,9 +325,64 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _addToRecentlyUsed(StoryListItem story) {
+    _recentlyUsed.removeWhere((s) => s.storyId == story.storyId);
+    _recentlyUsed.insert(0, story);
+    if (_recentlyUsed.length > 5) {
+      _recentlyUsed = _recentlyUsed.sublist(0, 5);
+    }
+    _saveRecentlyUsed();
+    notifyListeners();
+  }
+
   /// Check LLM health
   Future<Map<String, dynamic>?> checkLlmHealth() async {
     final result = await repository.checkLlmHealth();
     return result.fold((failure) => null, (health) => health);
+  }
+
+  Future<void> _saveRecentlyUsed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final ids = _recentlyUsed.map((s) => s.storyId).toList();
+      await prefs.setStringList(_recentTopicsKey, ids);
+      
+      // Also cache full JSON for quick boot
+      final jsonList = _recentlyUsed.map((s) => jsonEncode(s.toJson())).toList();
+      await prefs.setStringList('${_recentTopicsKey}_data', jsonList);
+    } catch (e) {
+      debugPrint('Error saving recent topics: $e');
+    }
+  }
+
+  Future<void> _loadRecentlyUsed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = prefs.getStringList('${_recentTopicsKey}_data');
+      
+      if (jsonList != null) {
+        _recentlyUsed = jsonList
+            .map((s) => StoryListItem.fromJson(jsonDecode(s)))
+            .toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error loading recent topics: $e');
+    }
+  }
+
+  void _syncRecentlyUsedWithStories() {
+    if (_recentlyUsed.isEmpty || _stories.isEmpty) return;
+    
+    for (int i = 0; i < _recentlyUsed.length; i++) {
+      try {
+        final fullStory = _stories.firstWhere(
+          (s) => s.storyId == _recentlyUsed[i].storyId
+        );
+        _recentlyUsed[i] = fullStory;
+      } catch (_) {
+        // Keep existing if not found in current list
+      }
+    }
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import '../../../chat/presentation/providers/story_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
@@ -17,6 +20,26 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _lexiWarmedUp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _triggerPreWarming();
+  }
+
+  void _triggerPreWarming() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final auth = context.read<AuthProvider>();
+        final storyProvider = context.read<StoryProvider>();
+        final userId = auth.user?.id ?? 'guest';
+        
+        storyProvider.preWarmRecents(userId);
+      } catch (e) {
+        debugPrint('Pre-warming skipped: $e');
+      }
+    });
+  }
 
   final List<Widget> _pages = [
     const HomePageNew(),

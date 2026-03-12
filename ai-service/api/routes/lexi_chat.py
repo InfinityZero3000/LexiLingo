@@ -444,6 +444,7 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
             session_id=session_id,
             user_id=request.user_id,
             learner_profile={"level": request.learner_level},
+            conversation_history=history,
         )
         
         # Use the GraphCAG tutor_response directly as Lexi's response
@@ -513,6 +514,24 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
         "content": lexi_response,
         "timestamp": timestamp,
     })
+
+    # Write-back to ConversationCache so input_node gets real history on next turn
+    try:
+        from api.core.redis_client import ConversationCache, RedisClient
+        _redis = await RedisClient.get_instance()
+        _conv_cache = ConversationCache(_redis)
+        await _conv_cache.add_turn(
+            session_id=session_id,
+            user_message=user_text,
+            ai_response=lexi_response,
+            metadata={
+                "model": model_used,
+                "scores": scores,
+                "latency_ms": int((time.time() - start_time) * 1000),
+            },
+        )
+    except Exception as _cc_err:
+        logger.debug(f"ConversationCache write skipped: {_cc_err}")
     
     # ── 7. Build response ──
     total_ms = int((time.time() - start_time) * 1000)

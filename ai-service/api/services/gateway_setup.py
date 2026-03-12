@@ -83,7 +83,7 @@ async def _register_qwen(gateway: ModelGateway) -> None:
         estimated_memory_mb=3500,
         priority=ModelPriority.CRITICAL,  # Main chat model
         idle_timeout_seconds=600,  # 10 minutes
-        preload=False,  # Lazy load
+        preload=True,  # Preload for performance
     )
     
     logger.info("Registered: qwen (chat)")
@@ -116,7 +116,7 @@ async def _register_whisper(gateway: ModelGateway) -> None:
         estimated_memory_mb=500,
         priority=ModelPriority.NORMAL,
         idle_timeout_seconds=300,  # 5 minutes
-        preload=False,
+        preload=True, # Preload for performance
     )
     
     logger.info("Registered: whisper (stt)")

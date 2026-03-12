@@ -251,7 +251,7 @@ class TestGetNews:
     async def test_invalid_cefr_level_returns_400(self, no_db_client: AsyncClient):
         response = await no_db_client.get("/api/v1/news?level=X2")
         assert response.status_code == 400
-        assert "Invalid CEFR level" in response.json()["detail"]
+        assert "Invalid CEFR level" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_valid_cefr_levels_accepted(self, no_db_client: AsyncClient):

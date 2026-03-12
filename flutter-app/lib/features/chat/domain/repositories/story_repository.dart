@@ -16,6 +16,12 @@ abstract class StoryRepository {
   /// Get full story details
   Future<Either<Failure, Story>> getStoryDetails(String storyId);
 
+  /// Warm the cache for a specific topic
+  Future<Either<Failure, Map<String, dynamic>>> warmTopicCache({
+    required String storyId,
+    required String userId,
+  });
+
   /// Get available categories
   Future<Either<Failure, List<String>>> getCategories();
 

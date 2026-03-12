@@ -144,8 +144,8 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
     try {
       final response = await apiClient.get('/vocabulary/due?limit=$limit');
 
-      // Response: {"due_items": [...], "total_due": 10}
-      final List<dynamic> dueItems = response['due_items'] as List<dynamic>;
+      // Response: {"items": [...], "total_due": 10}
+      final List<dynamic> dueItems = response['items'] as List<dynamic>;
 
       return dueItems
           .map((json) => UserVocabularyModel.fromJson(json))

@@ -83,6 +83,22 @@ async def lifespan(app: FastAPI):
             logger.info("Database initialized")
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
+    else:
+        # Production migration check
+        try:
+            from alembic import command
+            from alembic.config import Config
+            import os
+            
+            # Find alembic.ini relative to this file
+            ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alembic.ini")
+            if os.path.exists(ini_path):
+                alembic_cfg = Config(ini_path)
+                # Check current revision vs head (optional: auto-upgrade)
+                # command.upgrade(alembic_cfg, "head") # Uncomment to auto-upgrade
+                logger.info("Alembic migration check: ensure 'alembic upgrade head' is run during deployment")
+        except Exception as e:
+            logger.warning(f"Alembic check failed: {e}")
     
     # Initialize Redis (rate limiting, token blacklist, caching)
     try:

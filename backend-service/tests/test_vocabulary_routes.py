@@ -212,7 +212,7 @@ class TestGetVocabularyItem:
         with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=None)):
             response = await no_auth_client.get(f"{BASE}/items/{VOCAB_ID}")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_item_when_found(self, no_auth_client: AsyncClient):
@@ -305,7 +305,7 @@ class TestAddToCollection:
                 f"{BASE}/collection", params={"vocabulary_id": VOCAB_ID}
             )
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_adds_to_collection_successfully(self, auth_client):

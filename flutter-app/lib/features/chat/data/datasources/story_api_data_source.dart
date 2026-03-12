@@ -83,6 +83,36 @@ class StoryApiDataSource {
     }
   }
 
+  /// Warm the cache for a specific topic
+  Future<Map<String, dynamic>> warmTopicCache({
+    required String storyId,
+    required String userId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/topics/stories/warm');
+      logDebug(_tag, 'warmTopicCache: $uri');
+
+      final body = {'story_id': storyId, 'user_id': userId};
+
+      final response = await _client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Failed to warm cache: ${response.statusCode}',
+        );
+      }
+
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      logError(_tag, 'warmTopicCache error: $e');
+      rethrow;
+    }
+  }
+
   /// Get available categories
   Future<List<String>> getCategories() async {
     try {

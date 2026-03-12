@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { I18nProvider, useI18n } from "./lib/i18n";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
@@ -11,30 +11,37 @@ import {
   Megaphone, ScrollText, Activity, Settings,
   Shield, Database, Bot, ArrowRight, ArrowLeft
 } from "lucide-react";
-import { LoginPage } from "./pages/LoginPage";
-import { RoleRedirectPage } from "./pages/RoleRedirectPage";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { EnhancedAdminDashboard } from "./pages/EnhancedAdminDashboard";
-import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
-import { CoursesPage } from "./pages/CoursesPage";
-import { UnitsPage } from "./pages/UnitsPage";
-import { LessonsPage } from "./pages/LessonsPage";
-import { VocabularyPage } from "./pages/VocabularyPage";
-import { AchievementsPage } from "./pages/AchievementsPage";
-import { ShopPage } from "./pages/ShopPage";
-import UserManagementPage from "./pages/UserManagementPage";
-import { AdsPage } from "./pages/AdsPage";
-import { LogsPage } from "./pages/LogsPage";
-import { MonitoringPage } from "./pages/MonitoringPage";
-import { ContentLabPage } from "./pages/ContentLabPage";
-import { DatabasePage } from "./pages/DatabasePage";
-import { AiModelsPage } from "./pages/AiModelsPage";
-import { ContentAnalyticsPage } from "./pages/ContentAnalyticsPage";
-import { SystemSettingsPage } from "./pages/SystemSettingsPage";
-import { AdminManagementPage } from "./pages/AdminManagementPage";
-import { AiChatSettingsPage } from "./pages/AiChatSettingsPage";
-import { NoAccessPage } from "./pages/NoAccessPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
+
+// Lazy-loaded components
+const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
+const RoleRedirectPage = lazy(() => import("./pages/RoleRedirectPage").then(m => ({ default: m.RoleRedirectPage })));
+const EnhancedAdminDashboard = lazy(() => import("./pages/EnhancedAdminDashboard").then(m => ({ default: m.EnhancedAdminDashboard })));
+const SuperAdminDashboard = lazy(() => import("./pages/SuperAdminDashboard").then(m => ({ default: m.SuperAdminDashboard })));
+const CoursesPage = lazy(() => import("./pages/CoursesPage").then(m => ({ default: m.CoursesPage })));
+const UnitsPage = lazy(() => import("./pages/UnitsPage").then(m => ({ default: m.UnitsPage })));
+const LessonsPage = lazy(() => import("./pages/LessonsPage").then(m => ({ default: m.LessonsPage })));
+const VocabularyPage = lazy(() => import("./pages/VocabularyPage").then(m => ({ default: m.VocabularyPage })));
+const AchievementsPage = lazy(() => import("./pages/AchievementsPage").then(m => ({ default: m.AchievementsPage })));
+const ShopPage = lazy(() => import("./pages/ShopPage").then(m => ({ default: m.ShopPage })));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
+const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.AdsPage })));
+const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
+const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
+const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));
+const DatabasePage = lazy(() => import("./pages/DatabasePage").then(m => ({ default: m.DatabasePage })));
+const AiModelsPage = lazy(() => import("./pages/AiModelsPage").then(m => ({ default: m.AiModelsPage })));
+const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").then(m => ({ default: m.ContentAnalyticsPage })));
+const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
+const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
+const AiChatSettingsPage = lazy(() => import("./pages/AiChatSettingsPage").then(m => ({ default: m.AiChatSettingsPage })));
+const NoAccessPage = lazy(() => import("./pages/NoAccessPage").then(m => ({ default: m.NoAccessPage })));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-full p-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 const AppRoutes = () => {
   const { t } = useI18n();
@@ -69,49 +76,63 @@ const AppRoutes = () => {
   ];
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/no-access" element={<NoAccessPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/no-access" element={<NoAccessPage />} />
 
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<RoleRedirectPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<RoleRedirectPage />} />
 
-        <Route element={<RequireRole allowed={["admin", "super_admin"]} />}>
-          <Route element={<AppShell title={t.appShell.adminDashboard} role="admin" navItems={adminNav} />}>
-            <Route path="/admin" element={<EnhancedAdminDashboard />} />
-            <Route path="/admin/users" element={<UserManagementPage />} />
-            <Route path="/admin/courses" element={<CoursesPage />} />
-            <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
-            <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
-            <Route path="/admin/units" element={<UnitsPage />} />
-            <Route path="/admin/lessons" element={<LessonsPage />} />
-            <Route path="/admin/content-lab" element={<ContentLabPage />} />
-            <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
-            <Route path="/admin/vocabulary" element={<VocabularyPage />} />
-            <Route path="/admin/achievements" element={<AchievementsPage />} />
-            <Route path="/admin/shop" element={<ShopPage />} />
-            <Route path="/admin/ads" element={<AdsPage />} />
-            <Route path="/admin/logs" element={<LogsPage />} />
-            <Route path="/admin/monitoring" element={<MonitoringPage />} />
-            <Route path="/admin/settings" element={<SystemSettingsPage />} />
+          <Route element={<RequireRole allowed={["admin", "super_admin"]} />}>
+            <Route element={<AppShell title={t.appShell.adminDashboard} role="admin" navItems={adminNav} />}>
+              <Route path="/admin" element={<EnhancedAdminDashboard />} />
+              <Route path="/admin/users" element={<UserManagementPage />} />
+              <Route path="/admin/courses" element={<CoursesPage />} />
+              <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
+              <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
+              <Route path="/admin/units" element={<UnitsPage />} />
+              <Route path="/admin/lessons" element={<LessonsPage />} />
+              <Route path="/admin/content-lab" element={<ContentLabPage />} />
+              <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
+              <Route path="/admin/vocabulary" element={<VocabularyPage />} />
+              <Route path="/admin/achievements" element={<AchievementsPage />} />
+              <Route path="/admin/shop" element={<ShopPage />} />
+              <Route path="/admin/ads" element={<AdsPage />} />
+              <Route path="/admin/logs" element={<LogsPage />} />
+              <Route path="/admin/monitoring" element={<MonitoringPage />} />
+              <Route path="/admin/settings" element={<SystemSettingsPage />} />
+            </Route>
+          </Route>
+
+          <Route element={<RequireRole allowed={["super_admin"]} />}>
+            <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
+              <Route path="/super" element={<SuperAdminDashboard />} />
+              <Route path="/super/admins" element={<AdminManagementPage />} />
+              <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
+              <Route path="/super/db" element={<DatabasePage />} />
+              <Route path="/super/ai-models" element={<AiModelsPage />} />
+            </Route>
           </Route>
         </Route>
 
-        <Route element={<RequireRole allowed={["super_admin"]} />}>
-          <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
-            <Route path="/super" element={<SuperAdminDashboard />} />
-            <Route path="/super/admins" element={<AdminManagementPage />} />
-            <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
-            <Route path="/super/db" element={<DatabasePage />} />
-            <Route path="/super/ai-models" element={<AiModelsPage />} />
-          </Route>
-        </Route>
-      </Route>
-
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 };
+
+const App = () => {
+  return (
+    <I18nProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </I18nProvider>
+  );
+};
+
+export default App;
 
 const App = () => {
   return (
