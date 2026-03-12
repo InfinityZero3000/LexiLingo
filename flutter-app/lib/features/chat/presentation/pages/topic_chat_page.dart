@@ -132,12 +132,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
               ),
 
               // 3. Suggested Prompts (if any)
-              if (widget.story.suggestedPrompts.isNotEmpty && !provider.isSendingMessage)
+              if (widget.story.suggestedPrompts.isNotEmpty &&
+                  !provider.isSendingMessage)
                 _buildSuggestedPrompts(),
 
               // 4. Typing indicator
-              if (provider.isSendingMessage)
-                _buildTypingIndicator(),
+              if (provider.isSendingMessage) _buildTypingIndicator(),
 
               // 5. Input field
               _buildInputField(),
@@ -162,8 +162,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.story.title.en, 
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                  widget.story.title.en,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   '${widget.story.difficultyLevel.shortName} • ${widget.story.estimatedMinutes}m left',
@@ -229,7 +232,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
           const SizedBox(width: 12),
           Text(
             '${widget.story.title.en.split(' ').first} is typing...',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),
@@ -238,7 +245,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   Widget _buildInputField() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -263,7 +275,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 decoration: const InputDecoration(
                   hintText: 'Type in English...',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
@@ -291,11 +306,25 @@ class _TopicChatPageState extends State<TopicChatPage> {
     IconData icon;
     Color color;
     switch (category.toLowerCase()) {
-      case 'travel': icon = Icons.flight; color = Colors.blue; break;
-      case 'business': icon = Icons.business_center; color = Colors.indigo; break;
-      case 'daily_life': icon = Icons.home; color = Colors.teal; break;
-      case 'food': icon = Icons.restaurant; color = Colors.orange; break;
-      default: icon = Icons.chat_bubble; color = Colors.grey;
+      case 'travel':
+        icon = Icons.flight;
+        color = Colors.blue;
+        break;
+      case 'business':
+        icon = Icons.business_center;
+        color = Colors.indigo;
+        break;
+      case 'daily_life':
+        icon = Icons.home;
+        color = Colors.teal;
+        break;
+      case 'food':
+        icon = Icons.restaurant;
+        color = Colors.orange;
+        break;
+      default:
+        icon = Icons.chat_bubble;
+        color = Colors.grey;
     }
     return Container(
       padding: const EdgeInsets.all(8),
@@ -336,7 +365,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('End Session?'),
-        content: const Text('Are you sure you want to end this conversation? Your progress will be saved.'),
+        content: const Text(
+          'Are you sure you want to end this conversation? Your progress will be saved.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -350,7 +381,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('End Session'),
           ),
@@ -388,8 +421,13 @@ class _StoryContextHeader extends StatelessWidget {
             radius: 20,
             backgroundColor: Colors.blue.withOpacity(0.1),
             child: Text(
-              session.rolePersona.name.isNotEmpty ? session.rolePersona.name[0] : '?',
-              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              session.rolePersona.name.isNotEmpty
+                  ? session.rolePersona.name[0]
+                  : '?',
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -397,8 +435,14 @@ class _StoryContextHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(session.rolePersona.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(session.rolePersona.role, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                Text(
+                  session.rolePersona.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  session.rolePersona.role,
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                ),
               ],
             ),
           ),
@@ -413,7 +457,14 @@ class _StoryContextHeader extends StatelessWidget {
               children: [
                 Icon(Icons.bolt, size: 12, color: Colors.green),
                 SizedBox(width: 4),
-                Text('Context Ready', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                Text(
+                  'Context Ready',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -436,19 +487,29 @@ class _TopicMessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!isUser) ...[
-                const CircleAvatar(radius: 14, child: Icon(Icons.smart_toy, size: 16)),
+                const CircleAvatar(
+                  radius: 14,
+                  child: Icon(Icons.smart_toy, size: 16),
+                ),
                 const SizedBox(width: 8),
               ],
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isUser ? Colors.blue : Colors.white,
                     borderRadius: BorderRadius.only(
@@ -467,7 +528,10 @@ class _TopicMessageBubble extends StatelessWidget {
                   ),
                   child: Text(
                     message.displayContent,
-                    style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 15),
+                    style: TextStyle(
+                      color: isUser ? Colors.white : Colors.black87,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -516,7 +580,10 @@ class VocabularyPreviewSheet extends StatelessWidget {
             margin: const EdgeInsets.only(top: 12),
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
@@ -524,7 +591,10 @@ class VocabularyPreviewSheet extends StatelessWidget {
               children: [
                 const Icon(Icons.menu_book, color: Colors.blue),
                 const SizedBox(width: 12),
-                const Text('Key Vocabulary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Key Vocabulary',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
@@ -541,14 +611,29 @@ class VocabularyPreviewSheet extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   title: Row(
                     children: [
-                      Text(item.term, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        item.term,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       if (item.partOfSpeech.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4)),
-                            child: Text(item.partOfSpeech, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              item.partOfSpeech,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ),
                         ),
                     ],
@@ -557,11 +642,21 @@ class VocabularyPreviewSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 4),
-                      Text(item.definition, style: const TextStyle(fontSize: 13)),
+                      Text(
+                        item.definition,
+                        style: const TextStyle(fontSize: 13),
+                      ),
                       if (item.exampleInStory.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: Text('"${item.exampleInStory}"', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey[600], fontSize: 12)),
+                          child: Text(
+                            '"${item.exampleInStory}"',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                     ],
                   ),

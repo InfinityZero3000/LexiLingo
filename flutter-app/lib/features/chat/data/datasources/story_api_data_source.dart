@@ -101,9 +101,7 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException(
-          'Failed to warm cache: ${response.statusCode}',
-        );
+        throw ServerException('Failed to warm cache: ${response.statusCode}');
       }
 
       return jsonDecode(response.body) as Map<String, dynamic>;

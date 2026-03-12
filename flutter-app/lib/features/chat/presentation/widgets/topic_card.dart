@@ -19,7 +19,7 @@ class TopicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getDifficultyColor(story.difficultyLevel);
-    
+
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 2,
@@ -47,7 +47,7 @@ class TopicCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Info Section
                 Expanded(
                   flex: 3,
@@ -61,7 +61,10 @@ class TopicCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: color.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -85,7 +88,7 @@ class TopicCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Title
                         Text(
                           story.title.en,
@@ -97,7 +100,7 @@ class TopicCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const Spacer(),
-                        
+
                         // Progress Bar (if available)
                         if (progress != null) ...[
                           ClipRRect(
@@ -111,21 +114,31 @@ class TopicCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                         ],
-                        
+
                         // Footer: Time & Tags
                         Row(
                           children: [
-                            Icon(Icons.access_time, size: 12, color: Colors.grey[500]),
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: Colors.grey[500],
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${story.estimatedMinutes}m',
-                              style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[500],
+                              ),
                             ),
                             const Spacer(),
                             if (story.tags.isNotEmpty)
                               Text(
                                 '#${story.tags.first}',
-                                style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: color.withValues(alpha: 0.7),
+                                ),
                               ),
                           ],
                         ),
@@ -135,7 +148,7 @@ class TopicCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Warming Overlay
             if (isWarming)
               Container(
@@ -170,26 +183,40 @@ class TopicCard extends StatelessWidget {
 
   Color _getDifficultyColor(DifficultyLevel level) {
     switch (level) {
-      case DifficultyLevel.A1: return Colors.green;
-      case DifficultyLevel.A2: return Colors.blue;
-      case DifficultyLevel.B1: return Colors.orange;
-      case DifficultyLevel.B2: return Colors.deepOrange;
-      case DifficultyLevel.C1: return Colors.red;
-      case DifficultyLevel.C2: return Colors.purple;
+      case DifficultyLevel.A1:
+        return Colors.green;
+      case DifficultyLevel.A2:
+        return Colors.blue;
+      case DifficultyLevel.B1:
+        return Colors.orange;
+      case DifficultyLevel.B2:
+        return Colors.deepOrange;
+      case DifficultyLevel.C1:
+        return Colors.red;
+      case DifficultyLevel.C2:
+        return Colors.purple;
     }
   }
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'travel': return Icons.flight;
-      case 'business': return Icons.business_center;
-      case 'daily_life': return Icons.home;
-      case 'food': return Icons.restaurant;
-      case 'shopping': return Icons.shopping_bag;
-      case 'health': return Icons.local_hospital;
-      default: return Icons.chat_bubble;
+      case 'travel':
+        return Icons.flight;
+      case 'business':
+        return Icons.business_center;
+      case 'daily_life':
+        return Icons.home;
+      case 'food':
+        return Icons.restaurant;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'health':
+        return Icons.local_hospital;
+      default:
+        return Icons.chat_bubble;
     }
   }
 
-  String _capitalize(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }

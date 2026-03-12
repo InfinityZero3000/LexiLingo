@@ -21,16 +21,7 @@ const double _kBotPad = 120.0;
 
 /// Sine-wave x positions (normalized 0..1).
 /// 8-step cycle gives a smooth winding road from edge to edge.
-const List<double> _kXCycle = [
-  0.14,
-  0.32,
-  0.50,
-  0.68,
-  0.86,
-  0.68,
-  0.50,
-  0.32,
-];
+const List<double> _kXCycle = [0.14, 0.32, 0.50, 0.68, 0.86, 0.68, 0.50, 0.32];
 
 // ─────────────────────────────────────────────────────────────
 // Internal layout data holders
@@ -40,11 +31,7 @@ class _NodeLayout {
   final LessonProgressModel lesson;
   final UnitRoadmapModel unit;
 
-  _NodeLayout({
-    required this.center,
-    required this.lesson,
-    required this.unit,
-  });
+  _NodeLayout({required this.center, required this.lesson, required this.unit});
 
   Color get baseColor => _parseHex(unit.backgroundColor);
 
@@ -128,9 +115,14 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       // Nodes
       for (final lesson in unit.lessons) {
         final xNorm = _kXCycle[gi % _kXCycle.length];
-        final cx = (xNorm * width).clamp(_kNodeRadius + 8, width - _kNodeRadius - 8);
+        final cx = (xNorm * width).clamp(
+          _kNodeRadius + 8,
+          width - _kNodeRadius - 8,
+        );
         final cy = y + _kNodeRadius;
-        nodes.add(_NodeLayout(center: Offset(cx, cy), lesson: lesson, unit: unit));
+        nodes.add(
+          _NodeLayout(center: Offset(cx, cy), lesson: lesson, unit: unit),
+        );
         y += _kRowH;
         gi++;
       }
@@ -203,10 +195,12 @@ class _ZigzagRoadmap extends StatelessWidget {
             builder: (context, constraints) {
               final width = constraints.maxWidth;
               final contentH = totalH(roadmap);
-              final layouts = buildLayouts(roadmap, width) as ({
-                List<_NodeLayout> nodes,
-                List<_BannerLayout> banners,
-              });
+              final layouts =
+                  buildLayouts(roadmap, width)
+                      as ({
+                        List<_NodeLayout> nodes,
+                        List<_BannerLayout> banners,
+                      });
 
               return SizedBox(
                 height: contentH,
@@ -217,7 +211,9 @@ class _ZigzagRoadmap extends StatelessWidget {
                     Positioned.fill(
                       child: CustomPaint(
                         painter: RoadmapPathPainter(
-                          nodeCenters: layouts.nodes.map((n) => n.center).toList(),
+                          nodeCenters: layouts.nodes
+                              .map((n) => n.center)
+                              .toList(),
                           segmentColors: List.generate(
                             layouts.nodes.length,
                             (i) => layouts.nodes[i].pathColor,
@@ -250,12 +246,17 @@ class _ZigzagRoadmap extends StatelessWidget {
                         ),
                       ),
                     // ── Current lesson label bubble ───────────
-                    for (final n in layouts.nodes.where((n) => n.lesson.isCurrent))
+                    for (final n in layouts.nodes.where(
+                      (n) => n.lesson.isCurrent,
+                    ))
                       Positioned(
                         left: n.center.dx - 72,
                         top: n.center.dy - _kNodeRadius - 48,
                         width: 144,
-                        child: _CurrentLessonLabel(lesson: n.lesson, color: n.baseColor),
+                        child: _CurrentLessonLabel(
+                          lesson: n.lesson,
+                          color: n.baseColor,
+                        ),
                       ),
                   ],
                 ),
@@ -303,12 +304,14 @@ class _LessonNodeState extends State<_LessonNode>
       duration: const Duration(milliseconds: 1400),
       vsync: this,
     );
-    _scale = Tween(begin: 1.0, end: 1.10).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
-    _glow = Tween(begin: 0.3, end: 0.8).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
+    _scale = Tween(
+      begin: 1.0,
+      end: 1.10,
+    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
+    _glow = Tween(
+      begin: 0.3,
+      end: 0.8,
+    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
     if (widget.layout.lesson.isCurrent) _pulse.repeat(reverse: true);
   }
 
@@ -376,7 +379,10 @@ class _LessonNodeState extends State<_LessonNode>
                     bottom: 3,
                     right: 3,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(6),
@@ -408,7 +414,11 @@ class _LessonNodeState extends State<_LessonNode>
       return const Icon(Icons.check_rounded, size: 34, color: Colors.white);
     }
     if (lesson.isCurrent) {
-      return const Icon(Icons.play_arrow_rounded, size: 36, color: Colors.white);
+      return const Icon(
+        Icons.play_arrow_rounded,
+        size: 36,
+        color: Colors.white,
+      );
     }
     return Icon(_lessonTypeIcon(lesson.title), size: 28, color: Colors.white);
   }
@@ -418,16 +428,19 @@ class _LessonNodeState extends State<_LessonNode>
     if (t.contains('quiz') || t.contains('test') || t.contains('mock')) {
       return Icons.emoji_events_rounded;
     }
-    if (t.contains('listen') || t.contains('audio')) return Icons.headphones_rounded;
+    if (t.contains('listen') || t.contains('audio'))
+      return Icons.headphones_rounded;
     if (t.contains('speak') || t.contains('pronun')) return Icons.mic_rounded;
-    if (t.contains('read') || t.contains('passage')) return Icons.menu_book_rounded;
+    if (t.contains('read') || t.contains('passage'))
+      return Icons.menu_book_rounded;
     if (t.contains('writ') || t.contains('essay') || t.contains('task')) {
       return Icons.edit_note_rounded;
     }
     if (t.contains('grammar') || t.contains('tense') || t.contains('verb')) {
       return Icons.auto_stories_rounded;
     }
-    if (t.contains('vocab') || t.contains('word')) return Icons.translate_rounded;
+    if (t.contains('vocab') || t.contains('word'))
+      return Icons.translate_rounded;
     return Icons.school_rounded;
   }
 }
@@ -724,10 +737,7 @@ class _LessonDetailSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: color.withValues(alpha: 0.3),
-                width: 2,
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
             ),
             child: Icon(_typeIcon(lesson.title), size: 32, color: color),
           ),
@@ -816,7 +826,8 @@ class _LessonDetailSheet extends StatelessWidget {
     if (t.contains('grammar') || t.contains('tense') || t.contains('verb')) {
       return Icons.auto_stories_rounded;
     }
-    if (t.contains('vocab') || t.contains('word')) return Icons.translate_rounded;
+    if (t.contains('vocab') || t.contains('word'))
+      return Icons.translate_rounded;
     return Icons.school_rounded;
   }
 }
@@ -825,7 +836,11 @@ class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _StatChip({required this.icon, required this.label, required this.color});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -870,8 +885,8 @@ class _CtaButton extends StatelessWidget {
     final label = lesson.isCompleted
         ? 'Practice Again'
         : lesson.isCurrent
-            ? 'Continue'
-            : 'Start Lesson';
+        ? 'Continue'
+        : 'Start Lesson';
     final icon = lesson.isCompleted
         ? Icons.replay_rounded
         : Icons.play_arrow_rounded;
@@ -907,10 +922,7 @@ class _CtaButton extends StatelessWidget {
           icon: Icon(icon),
           label: Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           onPressed: () {
             Navigator.pop(context);
@@ -947,7 +959,11 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, size: 64, color: Colors.redAccent),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.redAccent,
+            ),
             const SizedBox(height: 16),
             Text(
               'Failed to load roadmap',
@@ -983,7 +999,10 @@ class _EmptyView extends StatelessWidget {
         children: [
           Icon(Icons.school_outlined, size: 72, color: Colors.grey.shade400),
           const SizedBox(height: 20),
-          Text('No lessons available', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'No lessons available',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           Text(
             'Check back later for new content',

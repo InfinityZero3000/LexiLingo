@@ -336,7 +336,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=False):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=False)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",
@@ -361,7 +361,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=True):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=True)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",
@@ -389,7 +389,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=True):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=True)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",

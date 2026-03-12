@@ -90,10 +90,10 @@ class StoryProvider extends ChangeNotifier {
       (stories) {
         _stories = stories;
         _isLoading = false;
-        
+
         // Sync full story data for recently used if needed
         _syncRecentlyUsedWithStories();
-        
+
         notifyListeners();
       },
     );
@@ -179,7 +179,7 @@ class StoryProvider extends ChangeNotifier {
   /// Pre-warm top 3 recently used topics
   Future<void> preWarmRecents(String userId) async {
     if (_recentlyUsed.isEmpty) return;
-    
+
     final toWarm = _recentlyUsed.take(3).toList();
     for (var story in toWarm) {
       // Best effort warming, don't block or show loading
@@ -214,11 +214,14 @@ class StoryProvider extends ChangeNotifier {
       },
       (session) {
         _currentSession = session;
-        
+
         // Add to recently used
-        final story = _stories.firstWhere((s) => s.storyId == storyId, orElse: () => session.story);
+        final story = _stories.firstWhere(
+          (s) => s.storyId == storyId,
+          orElse: () => session.story,
+        );
         _addToRecentlyUsed(story);
-        
+
         _messages = [
           // Add opening message as AI message
           TopicChatMessage(
@@ -346,9 +349,11 @@ class StoryProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final ids = _recentlyUsed.map((s) => s.storyId).toList();
       await prefs.setStringList(_recentTopicsKey, ids);
-      
+
       // Also cache full JSON for quick boot
-      final jsonList = _recentlyUsed.map((s) => jsonEncode(s.toJson())).toList();
+      final jsonList = _recentlyUsed
+          .map((s) => jsonEncode(s.toJson()))
+          .toList();
       await prefs.setStringList('${_recentTopicsKey}_data', jsonList);
     } catch (e) {
       debugPrint('Error saving recent topics: $e');
@@ -359,7 +364,7 @@ class StoryProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonList = prefs.getStringList('${_recentTopicsKey}_data');
-      
+
       if (jsonList != null) {
         _recentlyUsed = jsonList
             .map((s) => StoryListItem.fromJson(jsonDecode(s)))
@@ -373,11 +378,11 @@ class StoryProvider extends ChangeNotifier {
 
   void _syncRecentlyUsedWithStories() {
     if (_recentlyUsed.isEmpty || _stories.isEmpty) return;
-    
+
     for (int i = 0; i < _recentlyUsed.length; i++) {
       try {
         final fullStory = _stories.firstWhere(
-          (s) => s.storyId == _recentlyUsed[i].storyId
+          (s) => s.storyId == _recentlyUsed[i].storyId,
         );
         _recentlyUsed[i] = fullStory;
       } catch (_) {

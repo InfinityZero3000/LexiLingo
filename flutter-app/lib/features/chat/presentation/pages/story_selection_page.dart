@@ -42,8 +42,10 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
           final filteredStories = provider.filteredStories.where((s) {
-            return s.title.en.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                   s.category.toLowerCase().contains(_searchQuery.toLowerCase());
+            return s.title.en.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+                s.category.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
 
           return CustomScrollView(
@@ -77,7 +79,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: TopicCard(
                               story: story,
-                              isWarming: provider.isWarming && _warmingStoryId == story.storyId,
+                              isWarming:
+                                  provider.isWarming &&
+                                  _warmingStoryId == story.storyId,
                               onTap: () => _handleTopicSelection(story),
                             ),
                           ),
@@ -90,36 +94,34 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
 
               // 4. All Topics Section
               _buildSectionHeader('All Topics'),
-              
+
               if (provider.isLoading && provider.stories.isEmpty)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (filteredStories.isEmpty)
-                SliverFillRemaining(
-                  child: _buildEmptyState(),
-                )
+                SliverFillRemaining(child: _buildEmptyState())
               else
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final story = filteredStories[index];
-                        return TopicCard(
-                          story: story,
-                          isWarming: provider.isWarming && _warmingStoryId == story.storyId,
-                          onTap: () => _handleTopicSelection(story),
-                        );
-                      },
-                      childCount: filteredStories.length,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.75,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final story = filteredStories[index];
+                      return TopicCard(
+                        story: story,
+                        isWarming:
+                            provider.isWarming &&
+                            _warmingStoryId == story.storyId,
+                        onTap: () => _handleTopicSelection(story),
+                      );
+                    }, childCount: filteredStories.length),
                   ),
                 ),
             ],
@@ -189,15 +191,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         decoration: InputDecoration(
           hintText: 'Search topics...',
           prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty 
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() => _searchQuery = '');
-                },
-              )
-            : null,
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -211,10 +213,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
         child: Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -227,9 +226,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         children: [
           Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          const Text('No topics found', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'No topics found',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          Text('Try searching for something else', style: TextStyle(color: Colors.grey[600])),
+          Text(
+            'Try searching for something else',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
         ],
       ),
     );
@@ -254,13 +259,13 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       // Navigate to chat
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => TopicChatPage(story: story),
-        ),
+        MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to prepare AI context. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to prepare AI context. Please try again.'),
+        ),
       );
     }
 
@@ -332,9 +337,15 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Filter Topics', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Filter Topics',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
-          const Text('Difficulty Level', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Difficulty Level',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -372,7 +383,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () => widget.onApply(_category, _difficulty),
                   child: const Text('Apply Filters'),

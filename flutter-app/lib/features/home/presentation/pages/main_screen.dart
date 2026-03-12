@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
         final auth = context.read<AuthProvider>();
         final storyProvider = context.read<StoryProvider>();
         final userId = auth.user?.id ?? 'guest';
-        
+
         storyProvider.preWarmRecents(userId);
       } catch (e) {
         debugPrint('Pre-warming skipped: $e');

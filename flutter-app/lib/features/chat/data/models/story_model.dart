@@ -347,8 +347,12 @@ class Story {
       isPublished:
           json['is_published'] as bool? ?? json['isPublished'] as bool? ?? true,
       suggestedPrompts:
-          (json['suggested_prompts'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
-          (json['suggestedPrompts'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          (json['suggested_prompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['suggestedPrompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
@@ -420,8 +424,12 @@ class StoryListItem {
           json['cover_image_url'] as String? ??
           json['coverImageUrl'] as String?,
       suggestedPrompts:
-          (json['suggested_prompts'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
-          (json['suggestedPrompts'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          (json['suggested_prompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['suggestedPrompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
