@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,10 +16,12 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _lexiWarmedUp = false;
 
   final List<Widget> _pages = [
     const HomePageNew(),
     const CourseListScreen(),
+    const LexiChatPage(),
     const ChatPage(),
     const ProfilePage(),
   ];
@@ -25,7 +30,6 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-      floatingActionButton: _buildLexiFab(context),
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -54,24 +58,54 @@ class _MainScreenState extends State<MainScreen> {
               ),
               child: BottomNavigationBar(
                 currentIndex: _currentIndex,
-                onTap: (index) => setState(() => _currentIndex = index),
-                items: const [
-                  BottomNavigationBarItem(
+                type: BottomNavigationBarType.fixed,
+                onTap: (index) {
+                  if (index == 2 && !_lexiWarmedUp) {
+                    _lexiWarmedUp = true;
+                    _warmupAiModels();
+                  }
+                  setState(() => _currentIndex = index);
+                },
+                items: [
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.explore_outlined),
                     activeIcon: Icon(Icons.explore),
                     label: 'Discovery',
                   ),
-                  BottomNavigationBarItem(
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.menu_book_outlined),
                     activeIcon: Icon(Icons.menu_book),
                     label: 'Learning',
                   ),
                   BottomNavigationBarItem(
+                    icon: ClipOval(
+                      child: Image.asset(
+                        'assets/avatar/avatar-ai-chat.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Text('🦜', style: TextStyle(fontSize: 18)),
+                      ),
+                    ),
+                    activeIcon: ClipOval(
+                      child: Image.asset(
+                        'assets/avatar/avatar-ai-chat.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Text('🦜', style: TextStyle(fontSize: 18)),
+                      ),
+                    ),
+                    label: 'Lexi',
+                  ),
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.chat_bubble_outline),
                     activeIcon: Icon(Icons.chat_bubble),
                     label: 'Chat',
                   ),
-                  BottomNavigationBarItem(
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.account_circle_outlined),
                     activeIcon: Icon(Icons.account_circle),
                     label: 'Account',
@@ -85,23 +119,8 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  /// Floating action button to open Lexi Chat adventure.
-  Widget _buildLexiFab(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => Navigator.pushNamed(context, '/lexi'),
-      tooltip: 'Chat with Lexi 🦜',
-      backgroundColor: const Color(0xFF43E97B),
-      elevation: 6,
-      child: ClipOval(
-        child: Image.asset(
-          'assets/avatar/avatar-ai-chat.png',
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              const Text('🦜', style: TextStyle(fontSize: 24)),
-        ),
-      ),
-    );
+  void _warmupAiModels() {
+    final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
+    http.post(url).catchError((_) {});
   }
 }
