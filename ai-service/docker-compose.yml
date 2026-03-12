@@ -52,8 +52,8 @@ services:
       - "8081:8081"
     environment:
       - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
     depends_on:
       - mongodb
     networks:

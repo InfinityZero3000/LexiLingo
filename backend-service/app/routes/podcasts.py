@@ -265,9 +265,23 @@ async def get_podcast_episodes(
     if _parsed.scheme not in ("http", "https"):
         raise HTTPException(status_code=400, detail="Only HTTP/HTTPS feed URLs are allowed")
     _host = (_parsed.hostname or "").lower()
-    _private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.")
+    # Use ipaddress module for robust private IP detection
+    from ipaddress import ip_address
+    import socket
+    _private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
+                         "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
+                         "172.22.", "172.23.", "172.24.", "172.25.", "172.26.",
+                         "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
+                         "169.254.", "fc00", "fd", "fe80")
     if any(_host == p or _host.startswith(p) for p in _private_prefixes):
         raise HTTPException(status_code=400, detail="Internal/private feed URLs are not allowed")
+    # Additional check: resolve hostname and verify the IP is public
+    try:
+        resolved_ip = socket.getaddrinfo(_host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
+        if ip_address(resolved_ip).is_private or ip_address(resolved_ip).is_loopback:
+            raise HTTPException(status_code=400, detail="Internal/private feed URLs are not allowed")
+    except (socket.gaierror, ValueError):
+        pass  # Allow if DNS resolution fails—httpx will handle the error
 
     cache_key = f"podcasts:episodes:{hashlib.md5(f'{feed_url}:{limit}'.encode()).hexdigest()[:16]}"
     cache_service = APICacheService(db)

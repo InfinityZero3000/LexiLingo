@@ -7,7 +7,7 @@ services:
     container_name: lexilingo-postgres
     environment:
       POSTGRES_USER: lexilingo
-      POSTGRES_PASSWORD: lexilingo_pass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: lexilingo
     ports:
       - "5432:5432"
@@ -30,7 +30,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@postgres:5432/lexilingo
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       DEBUG: ${DEBUG:-True}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}

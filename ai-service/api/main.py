@@ -123,10 +123,18 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "http://localhost:5173",
+        "https://lexilingo.vercel.app",
+        "https://flutter-app-nine-pied.vercel.app",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],
 )
 app.add_middleware(PrivateNetworkAccessMiddleware)
 

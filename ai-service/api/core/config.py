@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # ============================================================
     MONGODB_URI: str = os.getenv(
         "MONGODB_URI",
-        "mongodb://admin:lexilingo2026@localhost:27017/"
+        "mongodb://localhost:27017/"
     )
     MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
     MONGODB_MIN_POOL_SIZE: int = 2
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     )
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "lexilingo2026")
+    REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "")
     REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
     REDIS_MAX_CONNECTIONS: int = 50
     

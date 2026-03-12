@@ -560,7 +560,10 @@ async def bulk_import_vocabulary(
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
     
+    # Limit CSV file size to 10MB to prevent memory exhaustion
     content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
     text = content.decode("utf-8-sig")  # Handle BOM
     reader = csv.DictReader(io.StringIO(text))
     
@@ -628,8 +631,8 @@ async def upload_badge_image(
     import os
     from pathlib import Path
 
-    # Validate file type
-    allowed_types = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+    # Validate file type — SVG excluded to prevent XSS
+    allowed_types = ["image/png", "image/jpeg", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -648,17 +651,14 @@ async def upload_badge_image(
     static_dir = Path(__file__).resolve().parent.parent.parent / "static" / "badges"
     static_dir.mkdir(parents=True, exist_ok=True)
 
-    # Sanitize filename
-    import re
-    safe_name = re.sub(r'[^\w\-.]', '_', file.filename or "badge.png")
+    # Generate UUID-based filename to prevent path traversal and name collisions
+    import uuid
+    allowed_extensions = {".png", ".jpg", ".jpeg", ".webp"}
+    original_ext = Path(file.filename or "badge.png").suffix.lower()
+    if original_ext not in allowed_extensions:
+        original_ext = ".png"
+    safe_name = f"{uuid.uuid4().hex}{original_ext}"
     filepath = static_dir / safe_name
-
-    # Avoid overwriting — add suffix if exists
-    counter = 1
-    original_stem = filepath.stem
-    while filepath.exists():
-        filepath = static_dir / f"{original_stem}_{counter}{filepath.suffix}"
-        counter += 1
 
     with open(filepath, "wb") as f:
         f.write(contents)
