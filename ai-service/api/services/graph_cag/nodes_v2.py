@@ -24,6 +24,7 @@ from api.services.graph_cag.state import (
     GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry,
 )
 from api.services.graph_cag.evaluation_agent import EvaluationAgent
+from api.services.document_intelligence import get_doc_intel_service
 
 logger = logging.getLogger(__name__)
 
@@ -1473,6 +1474,28 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                 except Exception as e2:
                     logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
 
+        # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
+        # Nếu các tầng KG và Vector Local không đủ dữ liệu, gọi L2
+        if len(evidence_items) < 3 and not benchmark_candidates:
+            try:
+                doc_service = get_doc_intel_service()
+                external_hits = await doc_service.query_l2(user_input)
+                for hit in external_hits:
+                    evidence_items.append({
+                        "item_id": f"ext_{hit['id']}",
+                        "title": "External Knowledge",
+                        "text": f"Context: {hit['content']}",
+                        "kg_depth": 3, # Tầng sâu hơn KG
+                        "vec_sim": hit["score"],
+                        "turns_ago": session_turn,
+                        "is_external": True,
+                        "chunk_id": hit["id"]
+                    })
+                if external_hits:
+                    logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
+            except Exception as e3:
+                logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
+
     # ── Fusion scoring and ranking ───────────────────────────────────
     for item in evidence_items:
         if benchmark_candidates and "precomputed_score" in item:
@@ -1763,7 +1786,23 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on":
         try:
-            await _write_cache_entry(state, response, strategy, errors, overall_score, context)
+            # ── Tiered Cache Management (L0/L1 Promotion) ─────────────
+            # Nếu thông tin từ L2 được sử dụng, kiểm tra thăng hạng
+            doc_service = get_doc_intel_service()
+            trace = state.get("retrieval_trace", [])
+            is_l2_used = any(t.get("item_id", "").startswith("ext_") for t in trace[:3])
+            
+            if is_l2_used:
+                for t in trace[:3]:
+                    if t.get("item_id", "").startswith("ext_"):
+                        chunk_id = t["item_id"].replace("ext_", "")
+                        if doc_service.should_promote_to_cache(chunk_id):
+                            logger.info(f"[cache_promotion] Chunk {chunk_id[:8]} promoted to L1 cache")
+                            await _write_cache_entry(state, response, strategy, errors, overall_score, context)
+                            break
+            else:
+                # Mặc định cache cho các luồng KG/Rules để tối ưu tốc độ
+                await _write_cache_entry(state, response, strategy, errors, overall_score, context)
         except Exception as e:
             logger.debug(f"[generate_node] Cache write failed: {e}")
     

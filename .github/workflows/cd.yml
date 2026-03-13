@@ -32,14 +32,21 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Create firebase_options.dart from example
-        run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+      - name: Create firebase_options.dart
+        run: |
+          sed \
+            -e 's/YOUR_WEB_API_KEY/AIzaSyDxb89kPDmWalE3fx8Jlo45pNYMfpe-Q5I/' \
+            -e 's/YOUR_WEB_APP_ID/1:432329288238:web:f34e2fdf685d5b8a718dbf/' \
+            -e 's/YOUR_MESSAGING_SENDER_ID/432329288238/g' \
+            -e 's/YOUR_PROJECT_ID/lexilingo-88492/g' \
+            -e 's/YOUR_MEASUREMENT_ID/G-M8B2FXYJ42/' \
+            lib/firebase_options.dart.example > lib/firebase_options.dart
 
       - name: Create .env for build
         run: |
-          printf 'API_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
-            "${{ secrets.API_BASE_URL || 'https://api.lexilingo.app/api/v1' }}" \
-            "${{ secrets.AI_SERVICE_URL || 'https://ai.lexilingo.app/api/v1' }}" \
+          printf 'ENVIRONMENT=production\nAPI_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
+            "${{ secrets.API_BASE_URL || 'https://lexilingo-4gu6.onrender.com/api/v1' }}" \
+            "${{ secrets.AI_SERVICE_URL || '' }}" \
             "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" \
             > .env
 
