@@ -38,6 +38,7 @@ jobs:
           --health-retries 5
 
     env:
+      PYTHONPATH: .
       DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test
       SECRET_KEY: ci-secret-key-not-for-production
       ALGORITHM: HS256

@@ -24,7 +24,7 @@ export interface UserListItem {
 
 export interface UserDetail extends UserListItem {
   avatar_url: string | null;
-  provider: string; // "local", "google", "facebook"
+  provider: string[]; // ["local"], ["google"]
   total_xp: number;
   courses_enrolled: number;
   courses_completed: number;

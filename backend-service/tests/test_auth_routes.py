@@ -29,7 +29,7 @@ def _make_mock_user(
     *,
     is_active: bool = True,
     is_verified: bool = True,
-    provider: str = "local",
+    provider: List[str] = ["local"],
     hashed_password: str = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
 ) -> MagicMock:
     """Build a minimal mock User ORM object."""

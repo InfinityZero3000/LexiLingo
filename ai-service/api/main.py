@@ -48,7 +48,7 @@ class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", os.getenv("MONGODB_DB_NAME", "lexilingo"))
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
