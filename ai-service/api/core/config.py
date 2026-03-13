@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # ============================================================
     REDIS_URL: str = os.getenv(
         "REDIS_URL",
-        "redis://:lexilingo2026@localhost:6379/0"
+        "redis://localhost:6379/1"
     )
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))

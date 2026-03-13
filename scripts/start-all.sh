@@ -327,12 +327,12 @@ echo $BACKEND_PID > "$PID_DIR/backend.pid"
 # ============ AI Service ============
 # echo -e "${BLUE}[START] Starting AI Service (port 8001)...${NC}"
 
-AI_VENV="$PROJECT_ROOT/.venv"
+AI_VENV="$PROJECT_ROOT/ai-service/venv"
 
 # Check if venv exists
 if [ ! -d "$AI_VENV" ]; then
     echo -e "   ${RED}[ERROR] Virtual environment not found at $AI_VENV${NC}"
-    echo -e "   ${YELLOW}Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r ai-service/requirements.txt${NC}"
+    echo -e "   ${YELLOW}Run: cd ai-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
     exit 1
 fi
 
@@ -356,7 +356,7 @@ fi
     export USE_GRAPHCAG="${USE_GRAPHCAG:-true}"
     echo "$(date): Starting AI Service on port 8001" >> "$LOG_DIR/ai-service.log"
     echo "$(date): CHAT_MODEL=$CHAT_MODEL, OLLAMA_MODEL=$OLLAMA_MODEL, USE_GRAPHCAG=$USE_GRAPHCAG" >> "$LOG_DIR/ai-service.log"
-    python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
+    python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
 ) &
 AI_PID=$!
 disown $AI_PID

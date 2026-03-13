@@ -31,6 +31,26 @@ services:
       - lexilingo-network
 
   # ============================================
+  # pgAdmin (PostgreSQL Web Management UI)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lexilingo-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@lexilingo.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_LOGIN_BANNER: "'LexiLingo Database Management'"
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lexilingo-network
+
+  # ============================================
   # MongoDB Database (AI Service)
   # ============================================
   mongodb:
@@ -63,6 +83,28 @@ services:
       - lexilingo-network
 
   # ============================================
+  # Mongo Express (MongoDB Web Management UI)
+  # ============================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: lexilingo-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_AUTH_DATABASE: admin
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin}
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - lexilingo-network
+
+  # ============================================
   # Redis Cache (Shared)
   # ============================================
   redis:
@@ -87,6 +129,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # RedisInsight (Redis Web Management UI)
+  # ============================================
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: lexilingo-redisinsight
+    restart: unless-stopped
+    ports:
+      - "8282:5540"
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - lexilingo-network
 

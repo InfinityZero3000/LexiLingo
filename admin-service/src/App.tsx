@@ -134,14 +134,3 @@ const App = () => {
 
 export default App;
 
-const App = () => {
-  return (
-    <I18nProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </I18nProvider>
-  );
-};
-
-export default App;

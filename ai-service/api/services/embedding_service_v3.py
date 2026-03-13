@@ -6,10 +6,9 @@ Uses Sentence-Transformers to encode text into embeddings.
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import Any, List
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from api.core.config import settings
 
@@ -22,8 +21,9 @@ class EmbeddingServiceV3:
         self._model_name = getattr(settings, "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
         self._device = getattr(settings, "EMBEDDING_DEVICE", "cpu")
 
-    def _load_model(self) -> SentenceTransformer:
+    def _load_model(self) -> Any:
         if self._model is None:
+            from sentence_transformers import SentenceTransformer  # lazy import: not available on all platforms
             logger.info(f"Loading embedding model: {self._model_name} on {self._device}")
             self._model = SentenceTransformer(self._model_name, device=self._device)
         return self._model

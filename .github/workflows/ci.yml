@@ -74,6 +74,8 @@ jobs:
         run: python create_tables.py
 
       - name: Seed proficiency integration test data
+        env:
+          PYTHONPATH: .
         run: python -m tests.seed_proficiency_data
 
       - name: Check app import
