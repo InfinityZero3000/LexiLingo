@@ -6,11 +6,10 @@ Extended for Phase 1: Authentication & Secure User Foundation
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Boolean, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID, TZDateTime
+from app.core.db_types import GUID, TZDateTime, PortableJSON
 
 
 class User(Base):
@@ -59,7 +58,7 @@ class User(Base):
     #   - Registration only creates ["local"]
     #   - Google OAuth *adds* "google" to this list (never self-registerable as "google")
     #   - Admin dashboard requires "google" in this list (real Google account ownership)
-    provider: Mapped[list] = mapped_column(JSONB, default=lambda: ["local"])
+    provider: Mapped[list] = mapped_column(PortableJSON, default=lambda: ["local"])
 
     # Convenience helpers — never stored
     @property

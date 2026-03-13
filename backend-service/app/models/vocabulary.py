@@ -5,13 +5,13 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import String, Integer, ForeignKey, Float, JSON, Text, Index, Enum as SQLEnum, Boolean
+from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray, TZDateTime
+from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
 
 
 class VocabularyStatus(str, enum.Enum):
@@ -64,7 +64,7 @@ class VocabularyItem(Base):
     definition: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Multilingual support
-    translation: Mapped[dict] = mapped_column(JSON, nullable=True)
+    translation: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
     # Example: {"vi": "xin chào", "examples": ["Hello, how are you?", "Hello world!"]}
     
     # Pronunciation
@@ -99,7 +99,7 @@ class VocabularyItem(Base):
     
     # Additional metadata
     usage_frequency: Mapped[int] = mapped_column(Integer, default=0)  # How often word appears
-    tags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # ["business", "travel", "casual"]
+    tags: Mapped[Optional[dict]] = mapped_column(PortableJSON, nullable=True)  # ["business", "travel", "casual"]
     
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(

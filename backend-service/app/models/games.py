@@ -10,11 +10,11 @@ Models:
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Float, Index
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Float, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID, TZDateTime
+from app.core.db_types import GUID, TZDateTime, PortableJSON
 
 
 class GameWord(Base):
@@ -39,7 +39,7 @@ class GameWord(Base):
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)   # food, animals, etc.
 
     # Synonyms/Vietnamese for matching game variations
-    synonyms: Mapped[list] = mapped_column(JSON, nullable=True)         # ["large", "vast"]
+    synonyms: Mapped[list] = mapped_column(PortableJSON, nullable=True)         # ["large", "vast"]
     vietnamese_translation: Mapped[str] = mapped_column(String(200), nullable=True)
 
     # Word difficulty metadata
@@ -96,7 +96,7 @@ class GameSession(Base):
     xp_awarded: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Extra data (hints used, streak at time of game, etc.)
-    session_data: Mapped[dict] = mapped_column(JSON, nullable=True)
+    session_data: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
 

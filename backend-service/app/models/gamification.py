@@ -5,11 +5,11 @@ Phase 4: Integrated Gamification & Social Features
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Index, UniqueConstraint
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray, TZDateTime
+from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
 
 
 class Achievement(Base):
@@ -33,7 +33,7 @@ class Achievement(Base):
     # Achievement criteria
     condition_type: Mapped[str] = mapped_column(String(50), nullable=False)  # reach_streak_10, pass_level_a1, etc.
     condition_value: Mapped[int] = mapped_column(Integer, nullable=True)  # Threshold value
-    condition_data: Mapped[dict] = mapped_column(JSON, nullable=True)  # Additional condition parameters
+    condition_data: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # Additional condition parameters
     
     # Display
     badge_icon: Mapped[str] = mapped_column(String(500), nullable=True)  # URL or icon name
@@ -282,7 +282,7 @@ class ActivityFeed(Base):
     activity_type: Mapped[str] = mapped_column(String(50), nullable=False)  # lesson_complete, achievement_unlock, streak_milestone
     
     # Activity data (flexible JSON)
-    activity_data: Mapped[dict] = mapped_column(JSON, nullable=True)
+    activity_data: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
     
     # Display text (pre-generated for performance)
     message: Mapped[str] = mapped_column(Text, nullable=False)
@@ -317,7 +317,7 @@ class ShopItem(Base):
     price_gems: Mapped[int] = mapped_column(Integer, nullable=False)
     
     # Item effects (JSON)
-    effects: Mapped[dict] = mapped_column(JSON, nullable=True)  # {"duration_hours": 24, "multiplier": 2}
+    effects: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # {"duration_hours": 24, "multiplier": 2}
     
     # Display
     icon_url: Mapped[str] = mapped_column(String(500), nullable=True)

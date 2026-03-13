@@ -7,8 +7,24 @@ Import GUID and TZDateTime from here instead of using SQLAlchemy types directly.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import TypeDecorator, CHAR, DateTime, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY as PG_ARRAY
+from sqlalchemy import TypeDecorator, CHAR, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY as PG_ARRAY, JSONB as PG_JSONB
+
+
+class PortableJSON(TypeDecorator):
+    """Platform-independent JSON type.
+    
+    Uses PostgreSQL's JSONB type when available, otherwise uses standard JSON.
+    Works with both PostgreSQL and SQLite.
+    """
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
 
 
 class GUID(TypeDecorator):

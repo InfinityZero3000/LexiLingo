@@ -5,12 +5,12 @@ Extended for Phase 2: Advanced Content Management System
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, JSON, Index
+from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray, TZDateTime
+from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
 
 
 class Course(Base):
@@ -41,7 +41,7 @@ class Course(Base):
     )
     
     # Phase 2: Enhanced metadata
-    tags: Mapped[dict] = mapped_column(JSON, nullable=True)  # ["grammar", "vocabulary", "business"]
+    tags: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # ["grammar", "vocabulary", "business"]
     total_xp: Mapped[int] = mapped_column(Integer, default=0)
     estimated_duration: Mapped[int] = mapped_column(Integer, default=0)  # minutes
     content_version: Mapped[int] = mapped_column(Integer, default=1)  # For cache invalidation
@@ -149,7 +149,7 @@ class Lesson(Base):
     pass_threshold: Mapped[int] = mapped_column(Integer, default=80)  # Minimum score to pass (%)
     
     # Lesson content stored as JSON
-    content: Mapped[dict] = mapped_column(JSON, nullable=True)
+    content: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
     content_version: Mapped[int] = mapped_column(Integer, default=1)  # For cache/offline invalidation
     
     estimated_minutes: Mapped[int] = mapped_column(Integer, default=10)
