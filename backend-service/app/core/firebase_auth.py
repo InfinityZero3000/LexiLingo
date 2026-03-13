@@ -96,8 +96,8 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     if user:
         updated = False
 
-        if user.provider != "google":
-            user.provider = "google"
+        if not user.has_google_auth:
+            user.add_provider("google")
             updated = True
         if is_verified and not user.is_verified:
             user.is_verified = True

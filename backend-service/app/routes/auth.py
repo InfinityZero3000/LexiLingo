@@ -104,6 +104,7 @@ async def register(
         hashed_password=await get_password_hash_async(request.password),
         display_name=request.display_name or request.username,
         role_id=role_id,
+        provider=["local"],  # self-registration is always local — never "google"
     )
     
     db.add(user)
@@ -382,30 +383,30 @@ async def google_login(
             hashed_password=await get_password_hash_async("OAUTH_USER_NO_PASSWORD"),
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
-            provider="google",
+            provider=["google"],  # OAuth-created accounts never have local auth by default
             is_verified=email_verified,
             role_id=role_id,
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
-    elif user.provider != "google":
-        # FIX: Only update provider if it's currently 'local' or not 'google' 
-        # but DON'T error out if it's an admin source (allows linking)
+    elif not user.has_google_auth:
+        # "google" is NOT yet in this user's providers list
         if request.source != "admin" or not allowlisted_admin_role:
-            if user.provider != "local": # If already set to something else (e.g. facebook)
+            existing = ", ".join(user.provider) if isinstance(user.provider, list) else user.provider
+            if not user.has_local_auth:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Email already registered with {user.provider}. Please login accordingly."
+                    detail=f"Email already registered with {existing}. Please login accordingly."
                 )
-            # For non-admin, still error to prevent accidental provider switch
+            # Non-admin Google login for a local-only account: block provider switch
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered with password. Please login with password."
             )
 
-        # For admin, we allow switching to google provider to enable admin panel access
-        user.provider = "google"
+        # Admin source + allowlisted email → link google to this account
+        user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
 
@@ -474,8 +475,8 @@ async def change_password(
             detail="Current password is incorrect"
         )
     
-    # Check if user is OAuth user
-    if current_user.provider != "local":
+    # Check if user has local auth — OAuth-only accounts cannot change password
+    if not current_user.has_local_auth:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot change password for OAuth accounts"
@@ -518,8 +519,8 @@ async def forgot_password(
             detail="Check your email inbox."
         )
     
-    # Check if OAuth user
-    if user.provider != "local":
+    # Only local accounts can reset password
+    if not user.has_local_auth:
         return MessageResponse(
             message="This email is registered with Google. Please use Google login.",
             detail="Password reset is not available for OAuth accounts."

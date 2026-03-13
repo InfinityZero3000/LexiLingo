@@ -75,15 +75,18 @@ async def setup_admin_oauth():
                 # Update existing user — fix role, provider, password
                 old_role_id = user.role_id
 
-                user.provider = "google"
-                user.hashed_password = oauth_password_hash
+                user.add_provider("google")
+                # Only reset password to placeholder if user has no local credentials.
+                # Multi-provider accounts keep their real local password intact.
+                if not user.has_local_auth:
+                    user.hashed_password = oauth_password_hash
                 user.role_id = user_data["role_id"]
                 user.display_name = user_data["display_name"]
                 user.is_verified = True
                 user.is_active = True
 
                 print(f"\n  ✅ Updated user: {email}")
-                print(f"     - Provider: → google")
+                print(f"     - Providers: {user.provider}")
                 print(f"     - Role: {user_data['role_name']}")
                 if old_role_id != user.role_id:
                     print(f"     - Role ID changed: {old_role_id} → {user.role_id}")
@@ -106,7 +109,7 @@ async def setup_admin_oauth():
                     username=username,
                     hashed_password=oauth_password_hash,
                     display_name=user_data["display_name"],
-                    provider="google",
+                    provider=["google"],
                     role_id=user_data["role_id"],
                     is_verified=True,
                     is_active=True,
