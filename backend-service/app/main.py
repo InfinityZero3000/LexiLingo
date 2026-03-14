@@ -94,9 +94,8 @@ async def lifespan(app: FastAPI):
             ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alembic.ini")
             if os.path.exists(ini_path):
                 alembic_cfg = Config(ini_path)
-                # Check current revision vs head (optional: auto-upgrade)
-                # command.upgrade(alembic_cfg, "head") # Uncomment to auto-upgrade
-                logger.info("Alembic migration check: ensure 'alembic upgrade head' is run during deployment")
+                command.upgrade(alembic_cfg, "head")
+                logger.info("Alembic migrations applied (upgrade head)")
         except Exception as e:
             logger.warning(f"Alembic check failed: {e}")
     
