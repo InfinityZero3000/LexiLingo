@@ -316,7 +316,7 @@ class _ChatPageState extends State<ChatPage> {
         title: AITutorMoodIndicator(
           mood: chatProvider.isSending ? AIMood.thinking : AIMood.helpful,
           isOnline: true,
-          currentTopic: 'Daily Habits',
+          currentTopic: 'Normal Chat',
         ),
         centerTitle: true,
         backgroundColor: AppColors.accentYellow,
@@ -341,13 +341,32 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           // Topic/Story Selection button
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const StorySelectionPage()),
-              );
-            },
+          Tooltip(
+            message: 'Start Topic Chat',
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StorySelectionPage()),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_stories,
+                  color: AppColors.textDark,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+          Tooltip(
+            message: 'Help',
             child: Container(
               margin: const EdgeInsets.all(8),
               width: 40,
@@ -355,21 +374,8 @@ class _ChatPageState extends State<ChatPage> {
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.auto_stories,
-                color: AppColors.textDark,
-                size: 20,
-              ),
+              child: const Icon(Icons.info_outline, color: AppColors.textDark),
             ),
-          ),
-          Container(
-            margin: const EdgeInsets.all(8),
-            width: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.info_outline, color: AppColors.textDark),
           ),
         ],
       ),

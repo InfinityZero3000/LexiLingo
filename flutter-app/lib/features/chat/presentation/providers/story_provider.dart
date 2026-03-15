@@ -194,6 +194,9 @@ class StoryProvider extends ChangeNotifier {
     String? sessionTitle,
     String preferredLlm = 'qwen',
   }) async {
+    // Clear previous session state
+    clearActiveSession();
+
     _isLoading = true;
     _sessionError = null;
     notifyListeners();
@@ -237,6 +240,14 @@ class StoryProvider extends ChangeNotifier {
         return true;
       },
     );
+  }
+
+  /// Clear the active topic session
+  void clearActiveSession() {
+    _currentSession = null;
+    _messages = [];
+    _sessionError = null;
+    notifyListeners();
   }
 
   /// Send a message in the topic session

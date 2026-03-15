@@ -51,6 +51,9 @@ class _HomePageNewState extends State<HomePageNew> {
       });
       // Listen for level-up events triggered by fetchLevelFull
       _levelProvider?.addListener(_onLevelProviderChange);
+      // Load streak data here (after auth token is ready) instead of relying
+      // on the race-prone call in main.dart that fires before authentication.
+      context.read<StreakProvider>().loadStreak();
     });
   }
 
@@ -97,7 +100,10 @@ class _HomePageNewState extends State<HomePageNew> {
             }
 
             return RefreshIndicator(
-              onRefresh: () => homeProvider.refreshData(),
+              onRefresh: () => Future.wait([
+                homeProvider.refreshData(),
+                context.read<StreakProvider>().loadStreak(),
+              ]),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: Column(

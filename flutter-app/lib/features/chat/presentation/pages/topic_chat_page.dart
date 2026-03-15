@@ -35,6 +35,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
+    // Use clearActiveSession via a microtask to avoid notifying during dispose
+    Future.microtask(() {
+      if (context.mounted) {
+        context.read<StoryProvider>().clearActiveSession();
+      }
+    });
     super.dispose();
   }
 
@@ -153,6 +159,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
       backgroundColor: Colors.white,
       foregroundColor: Colors.black,
       elevation: 0,
+      leading: BackButton(
+        onPressed: () {
+          context.read<StoryProvider>().clearActiveSession();
+          Navigator.pop(context);
+        },
+      ),
       title: Row(
         children: [
           _getCategoryIcon(widget.story.category),
@@ -375,7 +387,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<StoryProvider>().endSession();
+              final provider = context.read<StoryProvider>();
+              provider.endSession();
+              provider.clearActiveSession();
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Go back to story selection
             },

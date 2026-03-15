@@ -69,15 +69,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               SliverAppBar(
                 expandedHeight: 250,
                 pinned: true,
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     course.title,
                     style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                       shadows: [
                         Shadow(
                           offset: Offset(0, 1),
-                          blurRadius: 3,
-                          color: Colors.black45,
+                          blurRadius: 6,
+                          color: Colors.black87,
                         ),
                       ],
                     ),

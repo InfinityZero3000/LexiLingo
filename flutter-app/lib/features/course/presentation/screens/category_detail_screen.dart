@@ -106,14 +106,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               SliverAppBar(
                 expandedHeight: 200,
                 pinned: true,
+                backgroundColor: categoryColor,
+                foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     category.name,
                     style: const TextStyle(
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
-                          color: Colors.black26,
+                          color: Colors.black45,
                           offset: Offset(0, 1),
                           blurRadius: 4,
                         ),
