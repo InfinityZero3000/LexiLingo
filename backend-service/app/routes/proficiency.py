@@ -25,7 +25,7 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
-    SkillType,
+    SkillType as ModelSkillType,
 )
 from app.schemas.proficiency import (
     ProficiencyProfile,
@@ -36,6 +36,7 @@ from app.schemas.proficiency import (
     ProficiencyAssessmentResult,
     LevelCheckResponse,
     LEVEL_THRESHOLDS,
+    SkillType,
 )
 from app.services.proficiency_service import ProficiencyService
 from app.services.rank_service import calculate_rank

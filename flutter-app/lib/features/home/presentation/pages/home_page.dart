@@ -80,6 +80,7 @@ class _HomePageNewState extends State<HomePageNew> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Consumer3<HomeProvider, UserProvider, AuthProvider>(
           builder: (context, homeProvider, userProvider, authProvider, child) {
