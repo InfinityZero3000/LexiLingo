@@ -3,7 +3,7 @@ Health Check Routes
 """
 
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,3 +71,13 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
 async def ping():
     """Simple ping endpoint."""
     return {"message": "pong"}
+
+
+# ── TEMPORARY: xóa sau khi đã điền TRUSTED_PROXIES vào .env.production ────────
+@router.get("/debug/proxy-ip", tags=["Health"], include_in_schema=False)
+async def debug_proxy_ip(raw_request: Request):
+    return {
+        "peer_ip": raw_request.client.host if raw_request.client else None,
+        "x_forwarded_for": raw_request.headers.get("x-forwarded-for"),
+    }
+# ─────────────────────────────────────────────────────────────────────────────
