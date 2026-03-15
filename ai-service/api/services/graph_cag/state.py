@@ -74,6 +74,20 @@ class CacheEntry(TypedDict, total=False):
     ttl: int                           # seconds
 
 
+class BucketVersionRecord(TypedDict, total=False):
+    """
+    Version tuple for an L1 graph bucket  v_b = ⟨ν_graph, ν_policy, ν_profile, t_refresh⟩
+    (paper §5.3, Algorithm 3).
+
+    A bucket is invalidated when any version field drifts from the current
+    deployment constants, or when t_refresh exceeds the bucket TTL.
+    """
+    nu_graph: int     # graph-schema / neighborhood version (bump on KG rebuild)
+    nu_policy: int    # policy-template version (bump on prompt/strategy changes)
+    nu_profile: int   # profile-state epoch (future: per-user epoch counter)
+    t_refresh: float  # monotonic timestamp of last successful write
+
+
 class GraphCAGState(TypedDict, total=False):
     """
     Central state for GraphCAG pipeline.

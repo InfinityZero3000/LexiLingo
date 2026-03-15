@@ -56,11 +56,12 @@ class StreakWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: _getStreakGradient(streak.currentStreak),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: streak.currentStreak > 0
+              boxShadow: streak.currentStreak >= 3
                   ? [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: Colors.orange.withValues(alpha: 0.45),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                         offset: const Offset(0, 2),
                       ),
                     ]

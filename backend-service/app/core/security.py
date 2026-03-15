@@ -209,7 +209,6 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
     logger = logging.getLogger(__name__)
     
     logger.info(f"verify_google_token called with audience={audience}")
-    logger.info(f"id_token length={len(id_token) if id_token else 0}, starts_with={id_token[:50] if id_token else 'None'}...")
     
     try:
         from google.oauth2 import id_token as google_id_token

@@ -322,7 +322,7 @@ disown $BACKEND_PID
 echo $BACKEND_PID > "$PID_DIR/backend.pid"
 # echo -e "${GREEN}[OK] Backend started (PID: $BACKEND_PID)${NC}"
 
-# Wait logic removed for immediate dashboard
+sleep 1.5
 
 # ============ AI Service ============
 # echo -e "${BLUE}[START] Starting AI Service (port 8001)...${NC}"
@@ -363,7 +363,7 @@ disown $AI_PID
 echo $AI_PID > "$PID_DIR/ai-service.pid"
 # echo -e "${GREEN}[OK] AI Service started (PID: $AI_PID)${NC}"
 
-# Wait logic removed for immediate dashboard
+sleep 1.5
 
 # ============ Admin Dashboard ============
 # echo -e "${BLUE}[START] Starting Admin Dashboard (port 5176)...${NC}"
@@ -389,7 +389,7 @@ ADMIN_PID=$!
 echo $ADMIN_PID > "$PID_DIR/admin.pid"
 # echo -e "${GREEN}[OK] Admin Dashboard started (PID: $ADMIN_PID)${NC}"
 
-# Wait logic removed for immediate dashboard
+sleep 1.5
 
 # ============ Flutter Web ============
 # echo -e "${BLUE}[START] Starting Flutter Web (port 8080)...${NC}"

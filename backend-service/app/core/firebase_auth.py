@@ -84,7 +84,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     uid = claims.get("uid") or claims.get("sub")
     display_name = claims.get("name") or (email or "user")
     avatar_url = claims.get("picture")
-    is_verified = bool(claims.get("email_verified", True))
+    is_verified = bool(claims.get("email_verified", False))
     allowlisted_role = settings.get_admin_role_for_email(email)
 
     if not email:
@@ -127,7 +127,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
         hashed_password=await get_password_hash_async(uuid.uuid4().hex),
         display_name=display_name,
         avatar_url=avatar_url,
-        provider="google",
+        provider=["google"],
         is_verified=is_verified,
         is_active=True,
         role_id=role_id,

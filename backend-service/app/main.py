@@ -193,12 +193,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_private_network=True,
 )
 
-# 5. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
-app.add_middleware(PrivateNetworkAccessMiddleware)
-
-# 6. Rate Limiting - Prevent abuse (Phase 1: Security)
+# 5. Rate Limiting - Prevent abuse (Phase 1: Security)
 # Higher limits in development to avoid blocking local testing
 # Production: 120 RPM / 5000 RPH supports ~10k concurrent users (NAT-friendly)
 _rate_rpm = 300 if settings.is_development else 120

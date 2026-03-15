@@ -8,7 +8,6 @@ Initializes resources and includes modular routers.
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 import os
 import httpx
@@ -28,20 +27,6 @@ logger = logging.getLogger(__name__)
 # Load .env file
 from dotenv import load_dotenv
 load_dotenv()
-
-
-# ============================================================
-# Private Network Access Middleware (Chrome CORS-RFC1918)
-# ============================================================
-class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        has_pna_header = (
-            request.headers.get("access-control-request-private-network") == "true"
-        )
-        response = await call_next(request)
-        if has_pna_header or request.method == "OPTIONS":
-            response.headers["Access-Control-Allow-Private-Network"] = "true"
-        return response
 
 
 # Environment Configuration
@@ -135,8 +120,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],
+    allow_private_network=True,
 )
-app.add_middleware(PrivateNetworkAccessMiddleware)
 
 
 # Helper Functions for Providers (re-exported for routers)

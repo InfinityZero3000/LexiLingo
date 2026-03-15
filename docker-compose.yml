@@ -170,14 +170,26 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       DEBUG: ${DEBUG:-True}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
+      # Redis (use container hostname, not localhost)
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Firebase
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - ./backend-service/app:/app/app
       - ./backend-service/alembic:/app/alembic
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - lexilingo-network

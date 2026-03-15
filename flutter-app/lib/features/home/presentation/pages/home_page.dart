@@ -226,6 +226,8 @@ class _HomePageNewState extends State<HomePageNew> {
                           value: '$streak',
                           subtitle: 'days',
                           height: 120,
+                          hasGlow: streak >= 3,
+                          glowColor: Colors.orange,
                           onTap: () {
                             if (streakProvider.streak != null) {
                               showModalBottomSheet(
@@ -361,6 +363,8 @@ class _HomePageNewState extends State<HomePageNew> {
     String? subtitle,
     required double height,
     VoidCallback? onTap,
+    bool hasGlow = false,
+    Color glowColor = Colors.orange,
   }) {
     // Adjust padding and sizes based on card height
     final isSmallCard = height <= 100;
@@ -370,65 +374,93 @@ class _HomePageNewState extends State<HomePageNew> {
     final valueFontSize = isSmallCard ? 18.0 : 22.0;
     final labelFontSize = isSmallCard ? 10.0 : 11.0;
 
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Container(
+          padding: EdgeInsets.all(iconPadding),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: iconSize),
+        ),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: valueFontSize,
+                  fontWeight: FontWeight.bold,
+                  color: iconColor.withValues(alpha: 0.9),
+                ),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: labelFontSize,
+                    color: iconColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                )
+              else
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: labelFontSize,
+                    color: iconColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: height,
-        padding: EdgeInsets.all(padding),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: iconColor.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: EdgeInsets.all(iconPadding),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: iconSize),
-            ),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: valueFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: iconColor.withValues(alpha: 0.9),
-                    ),
+      child: hasGlow
+          ? TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 1500),
+              tween: Tween(begin: 0.25, end: 0.45),
+              curve: Curves.easeInOutSine,
+              builder: (context, pulse, child) {
+                return Container(
+                  height: height,
+                  padding: EdgeInsets.all(padding),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: iconColor.withValues(alpha: 0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: glowColor.withValues(alpha: pulse),
+                        blurRadius: 12 + (pulse * 12),
+                        spreadRadius: 1 + (pulse * 2),
+                      ),
+                    ],
                   ),
-                  if (subtitle != null)
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: labelFontSize,
-                        color: iconColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
-                  else
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: labelFontSize,
-                        color: iconColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                ],
+                  child: child,
+                );
+              },
+              child: content,
+            )
+          : Container(
+              height: height,
+              padding: EdgeInsets.all(padding),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: iconColor.withValues(alpha: 0.2)),
               ),
+              child: content,
             ),
-          ],
-        ),
-      ),
     );
   }
 

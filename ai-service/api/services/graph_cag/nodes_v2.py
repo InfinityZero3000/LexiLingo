@@ -21,7 +21,7 @@ import time
 from typing import Dict, Any, List, Optional
 
 from api.services.graph_cag.state import (
-    GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry,
+    GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
 )
 from api.services.graph_cag.evaluation_agent import EvaluationAgent
 from api.services.document_intelligence import get_doc_intel_service
@@ -321,6 +321,77 @@ _MEM_GRAPH_BUCKETS: dict[str, list[str]] = {}
 _MEM_RESPONSE_CACHE_MAX_ITEMS = 1024
 _MEM_BUCKET_MAX_ITEMS = 8
 
+# ── L1 Bucket Version Store (paper §5.3, Algorithm 3) ───────────────────────
+# v_b = ⟨ν_graph, ν_policy, ν_profile, t_refresh⟩
+# Increment a version constant to invalidate all buckets at startup.
+_MEM_BUCKET_VERSIONS: dict[str, BucketVersionRecord] = {}
+_GRAPH_SCHEMA_VERSION: int = 1   # bump when KG topology / node schema changes
+_POLICY_VERSION: int = 1          # bump when strategy / prompt templates change
+_DEFAULT_BUCKET_TTL: int = 7200   # 2 h: max age of a valid L1 bucket
+
+
+def _write_bucket_version(bucket: str) -> None:
+    """Record current deployment version tuple for *bucket* (Algorithm 3, PromoteToL1)."""
+    _MEM_BUCKET_VERSIONS[bucket] = BucketVersionRecord(
+        nu_graph=_GRAPH_SCHEMA_VERSION,
+        nu_policy=_POLICY_VERSION,
+        nu_profile=0,
+        t_refresh=time.monotonic(),
+    )
+
+
+def _bucket_version_valid(bucket: str) -> bool:
+    """
+    Algorithm 3, lines 3–5: return False when the bucket should be invalidated.
+
+    A bucket is stale when:
+      - its graph-schema version ≠ current (KG rebuild happened), OR
+      - its policy version ≠ current (prompt templates changed), OR
+      - its age exceeds _DEFAULT_BUCKET_TTL.
+    A bucket with *no* version record is treated as fresh (first write hasn't
+    happened yet) to avoid spuriously invalidating cold buckets.
+    """
+    rec = _MEM_BUCKET_VERSIONS.get(bucket)
+    if rec is None:
+        return True
+    if rec.get("nu_graph", _GRAPH_SCHEMA_VERSION) != _GRAPH_SCHEMA_VERSION:
+        return False
+    if rec.get("nu_policy", _POLICY_VERSION) != _POLICY_VERSION:
+        return False
+    age = time.monotonic() - rec.get("t_refresh", 0.0)
+    return age <= _DEFAULT_BUCKET_TTL
+
+
+def _invalidate_bucket(bucket: str) -> None:
+    """
+    Evict all candidates registered under *bucket* from the in-process caches
+    and remove the version record (Algorithm 3, InvalidateBucket).
+    """
+    orphan_keys = _MEM_GRAPH_BUCKETS.pop(bucket, [])
+    _MEM_BUCKET_VERSIONS.pop(bucket, None)
+    for key in orphan_keys:
+        _MEM_RESPONSE_CACHE.pop(key, None)
+    if orphan_keys:
+        logger.debug(f"[_invalidate_bucket] invalidated bucket={bucket[:8]} evicted={len(orphan_keys)} keys")
+
+
+def _is_pcc_stable(state: GraphCAGState) -> bool:
+    """
+    WriteL1(x) = PCCStable ∧ Confident ∧ ¬HighlySpecific  (paper §4.1).
+
+    PCCStable  — diagnosis produced at least one root-cause concept so the
+                 bucket is anchored to a stable graph neighbourhood.
+    Confident  — diagnosis_confidence ≥ 0.70 (arbitrary but conservative).
+    ¬HighlySpec— input is at least 3 words long; single-word or two-word queries
+                 are too instance-specific to be useful L1 artifacts.
+    """
+    if state.get("diagnosis_confidence", 0.0) < 0.70:
+        return False
+    if not state.get("diagnosis_root_causes"):
+        return False
+    word_count = len((state.get("user_input") or "").split())
+    return word_count >= 3
+
 
 def _extract_lightweight_graph_concepts(user_input: str) -> list[str]:
     """Approximate root concepts before diagnosis for L1 bucket lookup."""
@@ -362,6 +433,7 @@ def _register_graph_bucket(bucket: str, cache_key: str) -> None:
     keys = [item for item in _MEM_GRAPH_BUCKETS.get(bucket, []) if item != cache_key]
     keys.insert(0, cache_key)
     _MEM_GRAPH_BUCKETS[bucket] = keys[:_MEM_BUCKET_MAX_ITEMS]
+    _write_bucket_version(bucket)
 
 
 async def _register_graph_bucket_redis(bucket: str, cache_key: str, ttl: int) -> None:
@@ -501,7 +573,15 @@ async def _write_cache_entry(
             for k, _ in oldest:
                 _MEM_RESPONSE_CACHE.pop(k, None)
     _MEM_RESPONSE_CACHE[cache_key] = (now + ttl, entry)
-    _register_graph_bucket(graph_bucket, cache_key)
+    # L1 write-back: promote to bucket only when PCCStable ∧ Confident ∧ ¬HighlySpecific
+    # (paper §4.1 WriteL1 rule, Algorithm 3 PromoteToL1).
+    # Unconditional write still goes to L0 (exact key); the bucket registration
+    # is the extra step that makes this entry discoverable as an L1 near-hit.
+    if _is_pcc_stable(state):
+        _register_graph_bucket(graph_bucket, cache_key)
+        logger.debug(f"[_write_cache_entry] L1 promote key={cache_key[:8]} bucket={graph_bucket[:8]}")
+    else:
+        logger.debug(f"[_write_cache_entry] L1 skipped (not PCC-stable) key={cache_key[:8]}")
 
     # Redis
     try:
@@ -688,6 +768,21 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
             }
 
     # --- Try graph-bucket near-hit lookup (L1) ---
+    # Algorithm 3, lines 3–5: validate bucket version before inspecting candidates.
+    # If the bucket is stale (version mismatch or TTL expired) → invalidate and
+    # fall through to L2 reconstruction immediately.
+    if not _bucket_version_valid(bucket):
+        _invalidate_bucket(bucket)
+        logger.info(f"[cache_gate_node] L1 bucket stale/invalid → invalidated, fall L2 (bucket={bucket[:8]})")
+        return {
+            "cache_hit": False,
+            "cache_decision": "full",
+            "cache_layer": "none",
+            "cache_bucket": bucket,
+            "reuse_risk": 1.0,
+            "cache_fingerprint": fingerprint,
+            "path": "slow",
+        }
     candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
     best_candidate: tuple[str, CacheEntry, float] | None = None
     for candidate_key in candidate_keys:

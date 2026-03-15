@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.security import verify_password_async, get_password_hash_async, create_access_token, create_refresh_token
+from app.core.security import verify_password_async, get_password_hash_async, get_password_hash, create_access_token, create_refresh_token
 from app.models.user import User, RefreshToken
 from app.models.rbac import Role
 from app.schemas.auth import (
@@ -22,6 +22,11 @@ from app.schemas.user import UserResponse
 from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
 router = APIRouter()
+
+# Pre-computed bcrypt hash used when a login email is not found.
+# Always running bcrypt ensures the response time is the same whether the email
+# exists or not, preventing user enumeration via timing side-channels.
+_DUMMY_HASH: str = get_password_hash("_lexilingo_timing_normalization_placeholder_")
 
 async def _save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str):
     """Save refresh token to database for revocation/rotation support."""
@@ -130,7 +135,11 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not user.hashed_password or not await verify_password_async(request.password, user.hashed_password):
+    # Always run bcrypt — skipping it when user is None would create a ~100 ms timing
+    # delta that reveals whether an email is registered (user enumeration via timing).
+    hash_to_check = user.hashed_password if (user and user.hashed_password) else _DUMMY_HASH
+    password_ok = await verify_password_async(request.password, hash_to_check)
+    if not user or not password_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -333,14 +342,14 @@ async def google_login(
     import logging
     logger = logging.getLogger(__name__)
     logger.info(f"Google login attempt: source={request.source}, audience={audience}")
-    logger.info(f"id_token length={len(request.id_token)}, first_50={request.id_token[:50]}...")
-    
+
     google_info = await verify_google_token(request.id_token, audience=audience)
 
-    # For non-admin sources, if strict-audience check failed, retry without audience
-    # (handles Firebase web id_tokens whose aud != GOOGLE_CLIENT_ID)
-    if not google_info and request.source != "admin":
-        logger.info("Retrying token verification without audience restriction (Flutter web / Firebase)")
+    # Only skip audience check when GOOGLE_CLIENT_ID is not configured.
+    # If it IS configured and verification fails, the token belongs to a different
+    # app/project — do NOT retry unchecked (would accept tokens from any Google app).
+    if not google_info and request.source != "admin" and not audience:
+        logger.info("Retrying token verification without audience restriction (GOOGLE_CLIENT_ID not configured)")
         google_info = await verify_google_token(request.id_token, audience=None)
 
     if not google_info:
@@ -380,7 +389,7 @@ async def google_login(
         user = User(
             email=email,
             username=username,
-            hashed_password=await get_password_hash_async("OAUTH_USER_NO_PASSWORD"),
+            hashed_password=await get_password_hash_async(uuid.uuid4().hex),
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
             provider=["google"],  # OAuth-created accounts never have local auth by default
@@ -393,16 +402,15 @@ async def google_login(
     elif not user.has_google_auth:
         # "google" is NOT yet in this user's providers list
         if request.source != "admin" or not allowlisted_admin_role:
-            existing = ", ".join(user.provider) if isinstance(user.provider, list) else user.provider
             if not user.has_local_auth:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Email already registered with {existing}. Please login accordingly."
+                    detail="Email already registered with a different login method."
                 )
             # Non-admin Google login for a local-only account: block provider switch
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered with password. Please login with password."
+                detail="Email already registered. Please login with your existing method."
             )
 
         # Admin source + allowlisted email → link google to this account
@@ -504,8 +512,7 @@ async def forgot_password(
     Generates a reset token and sends email (stubbed for development).
     """
     from app.core.security import create_verification_token
-    import logging
-    
+
     # Find user by email
     result = await db.execute(
         select(User).where(User.email == request.email)
@@ -533,8 +540,6 @@ async def forgot_password(
     )
     
     # TODO: Send email with reset link
-    # For now, log the token for development
-    logging.info(f"Password reset token for {user.email}: {reset_token}")
     
     return MessageResponse(
         message="If the email exists, a password reset link has been sent.",

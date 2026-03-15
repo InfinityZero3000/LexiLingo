@@ -144,6 +144,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_PASSWORD: str | None = None
+    # Trusted reverse-proxy IPs (comma-separated) allowed to set X-Forwarded-For.
+    # Set to your load balancer IP(s) in production; leave empty for dev/direct deployments.
+    TRUSTED_PROXIES: str = ""
 
     # ── External API Keys (Phase 0+ Content Features) ──
     YOUTUBE_API_KEY: str | None = None           # YouTube Data API v3

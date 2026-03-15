@@ -58,21 +58,7 @@ class _WelcomePageState extends State<WelcomePage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Live Love Learn animation floating above the card
-              Expanded(
-                flex: 3,
-                child: Center(
-                  child: Opacity(
-                    opacity: 0.75,
-                    child: LottieAnimationWidget(
-                      animation: LottieAnimation.liveLoveLearn,
-                      width: 220,
-                      height: 130,
-                      repeat: true,
-                    ),
-                  ),
-                ),
-              ),
+              const Spacer(flex: 3),
 
               // Frosted glass card: animation + texts
               _buildFrostedContentCard(context),

@@ -198,6 +198,7 @@ async def list_users(
             role_level=user.role_level,
             created_at=user.created_at,
             last_login=user.last_login,
+            provider=user.provider if isinstance(user.provider, list) else [user.provider],
         )
         for user in users
     ]

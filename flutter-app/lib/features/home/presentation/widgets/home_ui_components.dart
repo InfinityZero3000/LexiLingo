@@ -526,14 +526,14 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     ? const Color(0xFFFF6B35).withValues(alpha: 0.3)
                     : Colors.grey.withValues(alpha: 0.2),
               ),
-              boxShadow: widget.streakDays > 0
+              boxShadow: widget.streakDays >= 3
                   ? [
                       BoxShadow(
                         color: const Color(
                           0xFFFF6B35,
-                        ).withValues(alpha: _pulseAnimation.value * 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                        ).withValues(alpha: _pulseAnimation.value * 0.4), // Slightly increased opacity
+                        blurRadius: 25,
+                        spreadRadius: 3,
                       ),
                     ]
                   : null,

@@ -7,11 +7,11 @@ export default defineConfig({
     port: 5176,
     headers: {
       // Required for Google OAuth popup to postMessage back to opener
-      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+      "Cross-Origin-Opener-Policy": "unsafe-none",
       // Only allow resources from own origin + Google GSI + fonts + backend API
       "Content-Security-Policy": [
         "default-src 'self'",
-        "script-src 'self' https://accounts.google.com https://apis.google.com",
+        "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com",
         "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: https://*.googleusercontent.com https://accounts.google.com",

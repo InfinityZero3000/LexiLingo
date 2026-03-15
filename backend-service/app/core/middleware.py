@@ -53,6 +53,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
       * Strict: per-path override for sensitive endpoints (login, register…)
     """
 
+    # Set to True in tests via monkeypatch.setattr(RateLimitMiddleware, "_testing", True)
+    # This is read at dispatch time (not captured by BaseHTTPMiddleware), so monkeypatch works.
+    _testing: bool = False
+
     def __init__(
         self,
         app,
@@ -71,11 +75,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _client_ip(request: Request) -> str:
-        # Respect X-Forwarded-For when behind a reverse proxy
+        # Only trust X-Forwarded-For when the direct peer is a configured trusted proxy.
+        # Accepting the header unconditionally lets any client spoof their IP and
+        # bypass all rate limiting.
+        from app.core.config import settings
+        peer_ip = request.client.host if request.client else None
         forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-        return request.client.host if request.client else "unknown"
+        if forwarded and peer_ip:
+            trusted = {ip.strip() for ip in settings.TRUSTED_PROXIES.split(",") if ip.strip()}
+            if trusted and peer_ip in trusted:
+                return forwarded.split(",")[0].strip()
+        return peer_ip or "unknown"
 
     # ── Redis-backed counting ────────────────────────────────
 
@@ -211,6 +221,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Rate limit based on client IP with Redis → memory fallback."""
+        if self.__class__._testing:
+            return await call_next(request)
 
         # Skip preflight and exempt paths (health, docs, etc.)
         if request.method == "OPTIONS":
@@ -276,7 +288,6 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 error=ErrorDetail(
                     code=ErrorCodes.INTERNAL_ERROR,
                     message="An internal server error occurred",
-                    details={"type": type(exc).__name__}
                 )
             )
             
