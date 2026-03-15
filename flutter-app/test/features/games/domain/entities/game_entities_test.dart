@@ -16,22 +16,31 @@ void main() {
 
     test('displayName returns non-empty string for all types', () {
       for (final type in GameType.values) {
-        expect(type.displayName.isNotEmpty, isTrue,
-            reason: '${type.name} displayName should not be empty');
+        expect(
+          type.displayName.isNotEmpty,
+          isTrue,
+          reason: '${type.name} displayName should not be empty',
+        );
       }
     });
 
     test('icon returns non-empty string for all types', () {
       for (final type in GameType.values) {
-        expect(type.icon, isNotNull,
-            reason: '${type.name} icon should not be null');
+        expect(
+          type.icon,
+          isNotNull,
+          reason: '${type.name} icon should not be null',
+        );
       }
     });
 
     test('description returns non-empty string for all types', () {
       for (final type in GameType.values) {
-        expect(type.description.isNotEmpty, isTrue,
-            reason: '${type.name} description should not be empty');
+        expect(
+          type.description.isNotEmpty,
+          isTrue,
+          reason: '${type.name} description should not be empty',
+        );
       }
     });
   });
@@ -75,7 +84,10 @@ void main() {
     });
 
     test('fromJson defaults for missing optional fields', () {
-      final word = GameWord.fromJson(<String, dynamic>{'word_id': '1', 'word': 'cat'});
+      final word = GameWord.fromJson(<String, dynamic>{
+        'word_id': '1',
+        'word': 'cat',
+      });
       expect(word.cefrLevel, 'A1');
       expect(word.category, 'general');
       expect(word.xpValue, 5);
@@ -245,10 +257,7 @@ void main() {
     });
 
     test('fromJson accepts xp_full as fallback for xp_value', () {
-      final json = <String, dynamic>{
-        'word': 'test',
-        'xp_full': 20,
-      };
+      final json = <String, dynamic>{'word': 'test', 'xp_full': 20};
       final word = SpellingBeeWord.fromJson(json);
       expect(word.xpValue, 20);
     });
@@ -380,10 +389,7 @@ void main() {
   // ── GameResult ────────────────────────────────────────────────────────────────
 
   group('GameResult', () {
-    GameResult makeResult({
-      required int correct,
-      required int total,
-    }) {
+    GameResult makeResult({required int correct, required int total}) {
       return GameResult(
         gameType: GameType.grammarQuiz,
         cefrLevel: 'B1',

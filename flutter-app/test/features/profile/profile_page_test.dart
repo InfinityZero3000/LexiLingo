@@ -11,9 +11,18 @@ void main() {
       });
 
       test('should handle different months correctly', () {
-        expect(_formatMemberSince(DateTime(2022, 12, 1)), 'Member since Dec 2022');
-        expect(_formatMemberSince(DateTime(2024, 6, 20)), 'Member since Jun 2024');
-        expect(_formatMemberSince(DateTime(2021, 3, 5)), 'Member since Mar 2021');
+        expect(
+          _formatMemberSince(DateTime(2022, 12, 1)),
+          'Member since Dec 2022',
+        );
+        expect(
+          _formatMemberSince(DateTime(2024, 6, 20)),
+          'Member since Jun 2024',
+        );
+        expect(
+          _formatMemberSince(DateTime(2021, 3, 5)),
+          'Member since Mar 2021',
+        );
       });
 
       test('should return "Member" for null date', () {
@@ -129,7 +138,10 @@ void main() {
     group('Tier Name Display', () {
       test('should combine tier code and name', () {
         expect(_getTierDisplayName('A1', 'Beginner'), 'A1 Beginner');
-        expect(_getTierDisplayName('B2', 'Upper Intermediate'), 'B2 Upper Intermediate');
+        expect(
+          _getTierDisplayName('B2', 'Upper Intermediate'),
+          'B2 Upper Intermediate',
+        );
         expect(_getTierDisplayName('C2', 'Mastery'), 'C2 Mastery');
       });
     });

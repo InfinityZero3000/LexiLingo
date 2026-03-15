@@ -122,7 +122,10 @@ void main() {
 
         expect(resultJson['video_id'], originalJson['video_id']);
         expect(resultJson['title'], originalJson['title']);
-        expect(resultJson['thumbnail_medium'], originalJson['thumbnail_medium']);
+        expect(
+          resultJson['thumbnail_medium'],
+          originalJson['thumbnail_medium'],
+        );
       });
     });
   });
@@ -223,11 +226,7 @@ void main() {
       });
 
       test('duration is fractional for sub-second segments', () {
-        const segment = CaptionSegment(
-          startMs: 0,
-          endMs: 500,
-          text: 'Short',
-        );
+        const segment = CaptionSegment(startMs: 0, endMs: 500, text: 'Short');
         expect(segment.durationSeconds, closeTo(0.5, 0.001));
       });
     });
@@ -282,7 +281,7 @@ void main() {
               'published_at': '2024-01-01',
               'thumbnail_url': '',
               'thumbnail_medium': '',
-            }
+            },
           ],
           'next_page_token': 'nextToken123',
           'prev_page_token': null,
@@ -313,7 +312,7 @@ void main() {
             'channel_id': 'c1',
             'published_at': '',
             'thumbnail_url': '',
-          }
+          },
         ],
         'next_page_token': null,
         'prev_page_token': null,
@@ -334,7 +333,7 @@ void main() {
           'next_page_token': null,
           'prev_page_token': null,
           'total_results': 0,
-        }
+        },
       };
 
       final result = YouTubeSearchResult.fromJson(json);
@@ -345,7 +344,9 @@ void main() {
     });
 
     test('handles missing videos field', () {
-      final result = YouTubeSearchResult.fromJson(<String, dynamic>{'data': <String, dynamic>{}});
+      final result = YouTubeSearchResult.fromJson(<String, dynamic>{
+        'data': <String, dynamic>{},
+      });
       expect(result.videos, isEmpty);
       expect(result.totalResults, 0);
     });
@@ -365,10 +366,7 @@ void main() {
       );
 
       final json = {
-        'data': {
-          'videos': videoList,
-          'total_results': 5,
-        }
+        'data': {'videos': videoList, 'total_results': 5},
       };
 
       final result = YouTubeSearchResult.fromJson(json);

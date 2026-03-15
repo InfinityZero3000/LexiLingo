@@ -138,54 +138,66 @@ void main() {
   // =========================================================================
   group('DictionaryService.lookup()', () {
     test('returns null for empty string', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response('should not be called', 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response('should not be called', 200);
+        }),
+      );
       final result = await service.lookup('');
       expect(result, isNull);
       service.dispose();
     });
 
     test('returns null for whitespace-only string', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response('should not be called', 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response('should not be called', 200);
+        }),
+      );
       final result = await service.lookup('   ');
       expect(result, isNull);
       service.dispose();
     });
 
     test('returns null when API returns 404', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response('{"title": "No Definitions Found"}', 404);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response('{"title": "No Definitions Found"}', 404);
+        }),
+      );
       final result = await service.lookup('xyzzy');
       expect(result, isNull);
       service.dispose();
     });
 
     test('returns null when API returns 500', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response('Internal Server Error', 500);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response('Internal Server Error', 500);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result, isNull);
       service.dispose();
     });
 
     test('returns null on network exception', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        throw Exception('Network error');
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          throw Exception('Network error');
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result, isNull);
       service.dispose();
     });
 
     test('returns WordDefinition for valid response', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result, isNotNull);
       expect(result!.word, 'hello');
@@ -194,10 +206,12 @@ void main() {
 
     test('normalises word to lowercase', () async {
       late Uri calledUri;
-      final service = DictionaryService(client: MockClient((req) async {
-        calledUri = req.url;
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((req) async {
+          calledUri = req.url;
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       await service.lookup('HELLO');
       expect(calledUri.path, contains('hello'));
       service.dispose();
@@ -205,46 +219,56 @@ void main() {
 
     test('trims whitespace from word before lookup', () async {
       late Uri calledUri;
-      final service = DictionaryService(client: MockClient((req) async {
-        calledUri = req.url;
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((req) async {
+          calledUri = req.url;
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       await service.lookup('  hello  ');
       expect(calledUri.path, endsWith('/hello'));
       service.dispose();
     });
 
     test('extracts phonetic from first non-empty phonetics entry', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result!.phonetic, '/heh-LOH/');
       service.dispose();
     });
 
     test('returns both meanings (exclamation + noun)', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result!.meanings.length, 2);
       service.dispose();
     });
 
     test('first meaning has partOfSpeech exclamation', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result!.meanings[0].partOfSpeech, 'exclamation');
       service.dispose();
     });
 
     test('limits definitions to 3 per meaning', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       // The sample has 4 definitions but service takes only 3
       expect(result!.meanings[0].definitions.length, lessThanOrEqualTo(3));
@@ -252,9 +276,11 @@ void main() {
     });
 
     test('extracts examples from definitions', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result!.meanings[0].examples, isNotEmpty);
       expect(result.meanings[0].examples[0], contains('Hello'));
@@ -262,9 +288,11 @@ void main() {
     });
 
     test('limits synonyms to 5 max', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(_sampleResponseJson, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(_sampleResponseJson, 200);
+        }),
+      );
       final result = await service.lookup('hello');
       // Sample has 6 synonyms at definition level — service caps at 5
       expect(result!.meanings[0].synonyms.length, lessThanOrEqualTo(5));
@@ -275,37 +303,43 @@ void main() {
       final responseWithEmptyDef = jsonEncode([
         {
           'word': 'test',
-          'phonetics': [{'text': '/test/'}],
+          'phonetics': [
+            {'text': '/test/'},
+          ],
           'meanings': [
             {
               'partOfSpeech': 'noun',
               'definitions': [
                 {'definition': '', 'example': null, 'synonyms': []},
-                {'definition': 'A procedure to verify something.', 'synonyms': []},
+                {
+                  'definition': 'A procedure to verify something.',
+                  'synonyms': [],
+                },
               ],
               'synonyms': [],
               'antonyms': [],
-            }
-          ]
-        }
+            },
+          ],
+        },
       ]);
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(responseWithEmptyDef, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(responseWithEmptyDef, 200);
+        }),
+      );
       final result = await service.lookup('test');
       // Empty definitions are filtered out
       expect(result!.meanings[0].definitions, isNotEmpty);
-      expect(
-        result.meanings[0].definitions.every((d) => d.isNotEmpty),
-        isTrue,
-      );
+      expect(result.meanings[0].definitions.every((d) => d.isNotEmpty), isTrue);
       service.dispose();
     });
 
     test('returns null when API returns empty list', () async {
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response('[]', 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response('[]', 200);
+        }),
+      );
       final result = await service.lookup('hello');
       expect(result, isNull);
       service.dispose();
@@ -319,16 +353,20 @@ void main() {
           'meanings': [
             {
               'partOfSpeech': 'noun',
-              'definitions': [{'definition': 'A feline.', 'synonyms': []}],
+              'definitions': [
+                {'definition': 'A feline.', 'synonyms': []},
+              ],
               'synonyms': [],
               'antonyms': [],
-            }
-          ]
-        }
+            },
+          ],
+        },
       ]);
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(noPhonetics, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(noPhonetics, 200);
+        }),
+      );
       final result = await service.lookup('cat');
       expect(result, isNotNull);
       expect(result!.phonetic, isNull);
@@ -337,11 +375,13 @@ void main() {
 
     test('handles missing meanings gracefully (empty list)', () async {
       final noMeanings = jsonEncode([
-        {'word': 'xyz', 'phonetics': [], 'meanings': []}
+        {'word': 'xyz', 'phonetics': [], 'meanings': []},
       ]);
-      final service = DictionaryService(client: MockClient((_) async {
-        return http.Response(noMeanings, 200);
-      }));
+      final service = DictionaryService(
+        client: MockClient((_) async {
+          return http.Response(noMeanings, 200);
+        }),
+      );
       final result = await service.lookup('xyz');
       expect(result, isNotNull);
       expect(result!.meanings, isEmpty);

@@ -48,8 +48,9 @@ void main() {
 
   test('should get progress stats from repository', () async {
     // arrange
-    when(mockRepository.getMyProgress())
-        .thenAnswer((_) async => Right(tProgressStats));
+    when(
+      mockRepository.getMyProgress(),
+    ).thenAnswer((_) async => Right(tProgressStats));
 
     // act
     final result = await usecase(NoParams());
@@ -63,8 +64,7 @@ void main() {
   test('should return ServerFailure when repository call fails', () async {
     // arrange
     final failure = ServerFailure('Server error');
-    when(mockRepository.getMyProgress())
-        .thenAnswer((_) async => Left(failure));
+    when(mockRepository.getMyProgress()).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(NoParams());
@@ -82,8 +82,7 @@ void main() {
   test('should return NetworkFailure when network error occurs', () async {
     // arrange
     final failure = NetworkFailure('No internet');
-    when(mockRepository.getMyProgress())
-        .thenAnswer((_) async => Left(failure));
+    when(mockRepository.getMyProgress()).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(NoParams());
