@@ -736,6 +736,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
         logger.info(f"[cache_gate_node] L0 HIT key={cache_key[:8]} ρ={rho:.3f}")
 
         if rho <= _TAU_REUSE:
+            _resp_text = entry.get("response", "")
             return {
                 "cache_hit": True,
                 "cache_decision": "reuse",
@@ -743,11 +744,12 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "cache_bucket": bucket,
                 "reuse_risk": rho,
                 "cache_fingerprint": fingerprint,
-                "tutor_response": entry.get("response", ""),
+                "tutor_response": _resp_text,
                 "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
+                "tokens_saved": 650 + len(_resp_text) // 4,
                 "models_used": ["rapid_reuse_l0"],
             }
         elif rho <= _TAU_PATCH:
@@ -764,6 +766,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
+                "tokens_saved": 650 + len(patched) // 4,
                 "models_used": ["rapid_patch_l0"],
             }
 
@@ -799,6 +802,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
         _, entry, rho = best_candidate
         logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} ρ={rho:.3f}")
         if rho <= _TAU_REUSE:
+            _resp_text = entry.get("response", "")
             return {
                 "cache_hit": True,
                 "cache_decision": "reuse",
@@ -806,11 +810,12 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "cache_bucket": bucket,
                 "reuse_risk": rho,
                 "cache_fingerprint": fingerprint,
-                "tutor_response": entry.get("response", ""),
+                "tutor_response": _resp_text,
                 "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
+                "tokens_saved": 650 + len(_resp_text) // 4,
                 "models_used": ["rapid_reuse_l1"],
             }
         patched = _patch_response(entry, fingerprint)
@@ -826,6 +831,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
             "diagnosis_errors": entry.get("diagnosis_errors", []),
             "overall_score": entry.get("overall_score", 0.8),
             "path": "fast",
+            "tokens_saved": 650 + len(patched) // 4,
             "models_used": ["rapid_patch_l1"],
         }
 
@@ -1569,27 +1575,48 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                 except Exception as e2:
                     logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
 
-        # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
-        # Nếu các tầng KG và Vector Local không đủ dữ liệu, gọi L2
-        if len(evidence_items) < 3 and not benchmark_candidates:
-            try:
-                doc_service = get_doc_intel_service()
-                external_hits = await doc_service.query_l2(user_input)
-                for hit in external_hits:
-                    evidence_items.append({
-                        "item_id": f"ext_{hit['id']}",
-                        "title": "External Knowledge",
-                        "text": f"Context: {hit['content']}",
-                        "kg_depth": 3, # Tầng sâu hơn KG
-                        "vec_sim": hit["score"],
-                        "turns_ago": session_turn,
-                        "is_external": True,
-                        "chunk_id": hit["id"]
-                    })
-                if external_hits:
-                    logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
-            except Exception as e3:
-                logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
+    # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
+    # Phân tích xem có nên ép buộc tìm kiếm bên ngoài không (Proactive Dynamic Retrieval)
+    force_external = False
+    dynamic_patterns = [
+        r"\bhôm (qua|nay|kia)\b", r"\bmới (đây|nhất)\b", r"\bvừa mới\b",
+        r"\brecently\b", r"\byesterday\b", r"\btoday\b", r"\blatest\b", r"\bcurrent\b",
+        r"\bdo you know\b", r"\bnghe nói\b", r"\bbạn có biết\b", r"\bnews\b", r"\btin tức\b"
+    ]
+    if any(re.search(p, user_input, re.IGNORECASE) for p in dynamic_patterns):
+        force_external = True
+        logger.info(f"[retrieve_node] Dynamic intent detected. Forcing L2 Search.")
+
+    # Kích hoạt L2 nếu (thiếu dữ liệu) HOẶC (phát hiện intent cần tin tức thực tế)
+    if (len(evidence_items) < 3 or force_external) and not benchmark_candidates:
+        try:
+            doc_service = get_doc_intel_service()
+            # Nếu force_external, ta có thể điều chỉnh query để search hiệu quả hơn
+            search_query = user_input
+            if force_external and len(user_input) < 100:
+                # Bổ sung ngữ cảnh để search Tavily tốt hơn
+                search_query = f"latest information about {user_input}"
+                
+            external_hits = await doc_service.query_l2(search_query)
+            for hit in external_hits:
+                # Tránh trùng lặp nếu đã có trong evidence_items
+                if any(e.get("chunk_id") == hit["id"] for e in evidence_items):
+                    continue
+                    
+                evidence_items.append({
+                    "item_id": f"ext_{hit['id']}",
+                    "title": "External Knowledge",
+                    "text": f"Context: {hit['content']}",
+                    "kg_depth": 3, # Tầng sâu hơn KG
+                    "vec_sim": hit["score"],
+                    "turns_ago": session_turn,
+                    "is_external": True,
+                    "chunk_id": hit["id"]
+                })
+            if external_hits:
+                logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
+        except Exception as e3:
+            logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
 
     # ── Fusion scoring and ranking ───────────────────────────────────
     for item in evidence_items:
@@ -1787,7 +1814,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         
         # 1. Try Groq
         groq_key = os.getenv("GROQ_API_KEY", "")
-        groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
         if groq_key:
             try:
                 resp = await _throttled_post_json(
@@ -2089,7 +2116,7 @@ async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: floa
 
                 if provider == "groq":
                     groq_key = os.getenv("GROQ_API_KEY", "")
-                    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+                    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
                     if not groq_key:
                         continue
                     try:

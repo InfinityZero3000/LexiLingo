@@ -272,9 +272,32 @@ class GraphCAGPipeline:
         fluency = state.get("fluency_score", 0.0)
         vocab_level = state.get("vocabulary_level", "B1")
         trace = state.get("retrieval_trace", [])
+        errors = state.get("diagnosis_errors", [])
+        user_input = state.get("user_input", "")
 
+        # ── Composite score ────────────────────────────────────────────────
         overall_weighted = EvaluationAgent.compute_overall_score(grammar, fluency, vocab_level)
-        retrieval_quality = EvaluationAgent.compute_retrieval_quality(trace)
+
+        # ── Text quality metrics ───────────────────────────────────────────
+        word_count = len(user_input.split()) if user_input.strip() else 0
+        correction_count = len(errors)
+        corrected_text = EvaluationAgent.apply_corrections(user_input, errors)
+        wer = EvaluationAgent.compute_wer(user_input, corrected_text) if errors else 0.0
+        ttr = EvaluationAgent.compute_type_token_ratio(user_input)
+        error_density = EvaluationAgent.compute_error_density(correction_count, word_count)
+
+        # ── Retrieval quality metrics ──────────────────────────────────────
+        precision_k = EvaluationAgent.compute_retrieval_quality(trace)
+        ndcg_k = EvaluationAgent.compute_ndcg_k(trace)
+        mrr = EvaluationAgent.compute_mrr(trace)
+
+        bm_meta = state.get("benchmark_metadata") or {}
+        total_relevant = len(
+            bm_meta.get("supporting_titles")
+            or bm_meta.get("relevant_passage_ids")
+            or []
+        )
+        recall_k = EvaluationAgent.compute_recall_k(trace, total_relevant)
 
         return {
             "tutor_response": state.get("tutor_response", ""),
@@ -285,7 +308,7 @@ class GraphCAGPipeline:
                     "type": err.get("type", ""),
                     "explanation": err.get("explanation", ""),
                 }
-                for err in state.get("diagnosis_errors", [])
+                for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
             "vietnamese_hint": state.get("vietnamese_hint"),
@@ -295,7 +318,18 @@ class GraphCAGPipeline:
                 "grammar": grammar,
                 "overall": overall_weighted,
                 "vocabulary_level": vocab_level,
-                "retrieval_quality": retrieval_quality,
+                "diagnosis_confidence": state.get("diagnosis_confidence", 0.0),
+                "wer": round(wer, 4),
+                "word_count": word_count,
+                "correction_count": correction_count,
+                "error_density": error_density,
+                "type_token_ratio": round(ttr, 4),
+                "retrieval": {
+                    "precision_k": precision_k,
+                    "recall_k": recall_k,
+                    "ndcg_k": round(ndcg_k, 4) if ndcg_k is not None else None,
+                    "mrr": round(mrr, 4) if mrr is not None else None,
+                },
             },
             "action": {
                 "strategy": state.get("strategy", "scaffold"),
@@ -310,6 +344,7 @@ class GraphCAGPipeline:
                 "cache_layer": state.get("cache_layer", "none"),
                 "cache_bucket": state.get("cache_bucket", ""),
                 "reuse_risk": state.get("reuse_risk", 1.0),
+                "tokens_saved": state.get("tokens_saved", 0),
                 "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
                 "retrieval_trace": trace,

@@ -227,7 +227,7 @@ async def _get_lexi_llm_response(messages: List[Dict[str, str]]) -> tuple[str, s
     """
     # ── 1. Groq (fast, free tier) ──
     groq_key = os.getenv("GROQ_API_KEY", "")
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
     if groq_key:
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:

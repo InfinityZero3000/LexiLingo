@@ -179,6 +179,7 @@ class GraphCAGState(TypedDict, total=False):
     latency_ms: int
     cache_hit: bool
     path: str  # "fast" or "slow"
+    tokens_saved: int  # Estimated LLM tokens saved via cache (0 on slow path)
     error: Optional[str]  # Error message if any
 
 

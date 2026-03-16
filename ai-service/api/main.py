@@ -7,6 +7,8 @@ Initializes resources and includes modular routers.
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -35,7 +37,7 @@ USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
 
@@ -182,6 +184,17 @@ app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
+
+# Static files (dev tools / visualizers)
+_static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
+
+@app.get("/visualizer", include_in_schema=False)
+async def visualizer_redirect():
+    """Redirect to the GraphCAG Node Visualizer HTML tool."""
+    return RedirectResponse(url="/static/graphcag-node-viz.html")
 
 
 @app.get("/health")
