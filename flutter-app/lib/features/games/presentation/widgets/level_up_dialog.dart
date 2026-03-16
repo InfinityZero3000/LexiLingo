@@ -101,7 +101,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -166,7 +166,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accentYellow.withOpacity(0.2),
+                      color: AppColors.accentYellow.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

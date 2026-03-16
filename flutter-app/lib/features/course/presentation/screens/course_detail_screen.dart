@@ -11,8 +11,7 @@ class CourseDetailScreen extends StatefulWidget {
   final String courseId;
   final String? heroTag;
 
-  const CourseDetailScreen({Key? key, required this.courseId, this.heroTag})
-    : super(key: key);
+  const CourseDetailScreen({super.key, required this.courseId, this.heroTag});
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -335,8 +334,7 @@ class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _StatChip({Key? key, required this.icon, required this.label})
-    : super(key: key);
+  const _StatChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -351,11 +349,10 @@ class _UnitCard extends StatelessWidget {
   final String courseId;
 
   const _UnitCard({
-    Key? key,
     required this.unit,
     required this.unitNumber,
     required this.courseId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -407,8 +404,7 @@ class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
   final String courseId;
 
-  const _LessonTile({Key? key, required this.lesson, required this.courseId})
-    : super(key: key);
+  const _LessonTile({required this.lesson, required this.courseId});
 
   @override
   Widget build(BuildContext context) {

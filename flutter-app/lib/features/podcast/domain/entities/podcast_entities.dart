@@ -1,6 +1,7 @@
 /// Podcast entity models for the Podcast feature.
 ///
 /// Phase 4: Podcast.
+library;
 
 /// Download state for a podcast episode.
 enum DownloadState { notDownloaded, downloading, downloaded }

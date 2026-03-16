@@ -1,5 +1,6 @@
 /// Stub for Web Speech Recognition on non-web platforms
 /// This file is used when compiling for mobile/desktop platforms
+library;
 
 class WebSpeechRecognition {
   static bool get isSupported => false;

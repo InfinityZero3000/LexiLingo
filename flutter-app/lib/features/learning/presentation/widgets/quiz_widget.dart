@@ -11,13 +11,13 @@ class QuizWidget extends StatefulWidget {
   final bool? isCorrect;
 
   const QuizWidget({
-    Key? key,
+    super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
     this.userAnswer,
     this.isCorrect,
-  }) : super(key: key);
+  });
 
   @override
   State<QuizWidget> createState() => _QuizWidgetState();
@@ -220,7 +220,7 @@ class _QuizWidgetState extends State<QuizWidget>
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           // Explanation (shown after answering)
           if (widget.isAnswered && widget.exercise.explanation != null) ...[

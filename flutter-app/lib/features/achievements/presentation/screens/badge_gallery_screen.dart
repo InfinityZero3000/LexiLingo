@@ -2,6 +2,7 @@
 ///
 /// This screen allows viewing all badge shapes, rarities, and categories
 /// Useful for designers and developers to preview badge configurations
+library;
 
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';

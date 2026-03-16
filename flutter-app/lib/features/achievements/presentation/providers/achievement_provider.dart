@@ -1,4 +1,5 @@
 /// Achievement Provider - State management for achievements
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';

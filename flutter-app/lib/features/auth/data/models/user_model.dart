@@ -4,36 +4,21 @@ import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 /// From backend-service/app/models/user.py
 class UserModel extends UserEntity {
   UserModel({
-    required String id,
-    required String email,
-    required String username,
-    required String displayName,
-    String? avatarUrl,
-    String provider = 'local',
-    bool isVerified = false,
-    String level = 'A1',
-    int xp = 0,
-    int currentStreak = 0,
-    DateTime? lastLogin,
-    String? lastLoginIp,
-    required DateTime createdAt,
-    DateTime? updatedAt,
-  }) : super(
-         id: id,
-         email: email,
-         username: username,
-         displayName: displayName,
-         avatarUrl: avatarUrl,
-         provider: provider,
-         isVerified: isVerified,
-         level: level,
-         xp: xp,
-         currentStreak: currentStreak,
-         lastLogin: lastLogin,
-         lastLoginIp: lastLoginIp,
-         createdAt: createdAt,
-         updatedAt: updatedAt,
-       );
+    required super.id,
+    required super.email,
+    required super.username,
+    required super.displayName,
+    super.avatarUrl,
+    super.provider,
+    super.isVerified,
+    super.level,
+    super.xp,
+    super.currentStreak,
+    super.lastLogin,
+    super.lastLoginIp,
+    required super.createdAt,
+    super.updatedAt,
+  });
 
   /// Convert from backend API JSON response
   factory UserModel.fromJson(Map<String, dynamic> json) {

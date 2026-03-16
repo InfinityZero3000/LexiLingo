@@ -10,11 +10,11 @@ class RoadmapNodeWidget extends StatelessWidget {
   final VoidCallback? onTap;
 
   const RoadmapNodeWidget({
-    Key? key,
+    super.key,
     required this.lesson,
     this.isLastInUnit = false,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

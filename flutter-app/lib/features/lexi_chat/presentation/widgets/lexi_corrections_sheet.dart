@@ -18,8 +18,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
   static void show(BuildContext context, LexiMessage message) {
     if (!message.hasCorrections &&
         message.vietnameseHint == null &&
-        message.linkedConcepts.isEmpty)
+        message.linkedConcepts.isEmpty) {
       return;
+    }
 
     showModalBottomSheet(
       context: context,

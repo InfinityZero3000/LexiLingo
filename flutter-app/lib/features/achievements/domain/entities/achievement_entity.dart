@@ -1,5 +1,6 @@
 /// Achievement Entity - Domain layer
 /// Represents an achievement/badge that users can unlock
+library;
 
 class AchievementEntity {
   final String id;

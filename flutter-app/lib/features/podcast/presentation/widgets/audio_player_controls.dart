@@ -198,7 +198,7 @@ class AudioPlayerControls extends StatelessWidget {
                   return ListTile(
                     leading: const Icon(Icons.speed_rounded),
                     title: Text(
-                      s == 1.0 ? '1.0× (Normal)' : '${s}×',
+                      s == 1.0 ? '1.0× (Normal)' : '$s×',
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.w700
@@ -290,7 +290,7 @@ class _SpeedButton extends StatelessWidget {
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: Text(
-          '${speed}×',
+          '$speed×',
           style: const TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,

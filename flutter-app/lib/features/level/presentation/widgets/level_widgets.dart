@@ -25,6 +25,12 @@ IconData _getTierIcon(String iconIdentifier) {
   }
 }
 
+/// Color mapping for tiers
+Color _getTierColor(LevelTier tier) {
+  final hex = tier.colorHex.replaceFirst('#', '');
+  return Color(int.parse('FF$hex', radix: 16));
+}
+
 /// Compact level badge for header display
 class LevelBadge extends StatelessWidget {
   final String tierCode;
@@ -42,6 +48,7 @@ class LevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tierColor = _getTierColor(tier);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -49,14 +56,14 @@ class LevelBadge extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              _getTierColor(tier),
-              _getTierColor(tier).withValues(alpha: 0.8),
+              tierColor,
+              tierColor.withValues(alpha: 0.8),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _getTierColor(tier).withValues(alpha: 0.3),
+              color: tierColor.withValues(alpha: 0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -83,11 +90,6 @@ class LevelBadge extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getTierColor(LevelTier tier) {
-    final hex = tier.colorHex.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
   }
 }
 
@@ -236,11 +238,6 @@ class LevelProgressCard extends StatelessWidget {
     );
   }
 
-  Color _getTierColor(LevelTier tier) {
-    final hex = tier.colorHex.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
-  }
-
   void _showLevelDetails(BuildContext context, LevelStatus status) {
     showModalBottomSheet(
       context: context,
@@ -259,6 +256,7 @@ class LevelDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentTierColor = _getTierColor(status.currentTier);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -282,13 +280,13 @@ class LevelDetailsSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _getTierColor(status.currentTier).withValues(alpha: 0.1),
+              color: currentTierColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getTierIcon(status.currentTier.iconIdentifier),
               size: 48,
-              color: _getTierColor(status.currentTier),
+              color: currentTierColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -301,7 +299,7 @@ class LevelDetailsSheet extends StatelessWidget {
           Text(
             status.currentTier.name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: _getTierColor(status.currentTier),
+              color: currentTierColor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -377,22 +375,23 @@ class LevelDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildTierRow(BuildContext context, LevelTier tier, bool isCurrent) {
+    final tierColor = _getTierColor(tier);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isCurrent
-            ? _getTierColor(tier).withValues(alpha: 0.1)
+            ? tierColor.withValues(alpha: 0.1)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: isCurrent ? Border.all(color: _getTierColor(tier)) : null,
+        border: isCurrent ? Border.all(color: tierColor) : null,
       ),
       child: Row(
         children: [
           Icon(
             _getTierIcon(tier.iconIdentifier),
             size: 20,
-            color: _getTierColor(tier),
+            color: tierColor,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -403,7 +402,7 @@ class LevelDetailsSheet extends StatelessWidget {
                   '${tier.code} - ${tier.name}',
                   style: TextStyle(
                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                    color: isCurrent ? _getTierColor(tier) : null,
+                    color: isCurrent ? tierColor : null,
                   ),
                 ),
                 Text(
@@ -423,10 +422,5 @@ class LevelDetailsSheet extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Color _getTierColor(LevelTier tier) {
-    final hex = tier.colorHex.replaceFirst('#', '');
-    return Color(int.parse('FF$hex', radix: 16));
   }
 }

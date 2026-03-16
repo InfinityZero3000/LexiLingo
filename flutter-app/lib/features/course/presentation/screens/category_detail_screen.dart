@@ -22,8 +22,7 @@ enum CourseSortOption {
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
 
-  const CategoryDetailScreen({Key? key, required this.categoryId})
-    : super(key: key);
+  const CategoryDetailScreen({super.key, required this.categoryId});
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -365,8 +364,7 @@ class _CourseCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseCard({Key? key, required this.course, required this.onTap})
-    : super(key: key);
+  const _CourseCard({required this.course, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -495,8 +493,7 @@ class _CourseGridCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseGridCard({Key? key, required this.course, required this.onTap})
-    : super(key: key);
+  const _CourseGridCard({required this.course, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

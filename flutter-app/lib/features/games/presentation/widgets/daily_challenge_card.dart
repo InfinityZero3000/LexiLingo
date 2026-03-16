@@ -48,7 +48,7 @@ class DailyChallengeCard extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -65,7 +65,7 @@ class DailyChallengeCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: completed
                     ? AppColors.grey300
-                    : Colors.white.withOpacity(0.2),
+                    : Colors.white.withValues(alpha: 0.2),
               ),
               alignment: Alignment.center,
               child: completed
@@ -109,7 +109,7 @@ class DailyChallengeCard extends StatelessWidget {
                       fontSize: 11,
                       color: completed
                           ? AppColors.textGrey
-                          : Colors.white.withOpacity(0.7),
+                          : Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

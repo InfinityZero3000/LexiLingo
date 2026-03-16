@@ -15,6 +15,7 @@
 ///   });
 /// }
 /// ```
+library;
 
 export 'web_speech_recognition_stub.dart'
     if (dart.library.html) 'web_speech_recognition.dart';

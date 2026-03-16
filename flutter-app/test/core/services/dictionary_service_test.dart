@@ -2,6 +2,7 @@
 ///
 /// Covers: WordDefinition, MeaningEntry constructors,
 ///         DictionaryService.lookup() with mocked HTTP client
+library;
 
 import 'dart:convert';
 

@@ -38,8 +38,9 @@ class ApiConfig {
   /// URL dự phòng — thử khi [baseUrl] không kết nối được.
   /// Trống trong production mode (không có fallback về local).
   static String get fallbackBaseUrl {
-    if (_mustUseProductionBackend)
+    if (_mustUseProductionBackend) {
       return ''; // production không fallback về local
+    }
     final envUrl = _normalizedEnvUrl('API_BASE_URL_FALLBACK');
     return envUrl ?? AppConstants.apiBaseUrl;
   }

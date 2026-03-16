@@ -1,4 +1,5 @@
 /// Achievement Repository Interface - Domain layer
+library;
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';

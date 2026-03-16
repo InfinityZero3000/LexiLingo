@@ -1,5 +1,6 @@
 /// Core widgets barrel file
 /// Export all reusable widgets for easy import
+library;
 
 export 'skeleton_loading.dart';
 export 'empty_state_widget.dart';

@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../widgets/auth_gradient_background.dart';
 
 /// Welcome page shown after successful login

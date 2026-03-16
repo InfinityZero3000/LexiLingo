@@ -239,7 +239,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
+                                  color: Colors.black.withValues(alpha: 0.06),
                                   blurRadius: 8,
                                 ),
                               ],
@@ -269,16 +269,16 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               Color text = AppColors.textDark;
                               if (_answered) {
                                 if (q.options[i] == q.correctAnswer) {
-                                  bg = AppColors.greenSuccess.withOpacity(0.1);
+                                  bg = AppColors.greenSuccess.withValues(alpha: 0.1);
                                   border = AppColors.greenSuccess;
                                   text = AppColors.greenSuccess;
                                 } else if (i == _selectedIndex) {
-                                  bg = Colors.red.withOpacity(0.1);
+                                  bg = Colors.red.withValues(alpha: 0.1);
                                   border = Colors.red;
                                   text = Colors.red;
                                 }
                               } else if (_selectedIndex == i) {
-                                bg = AppColors.primary.withOpacity(0.1);
+                                bg = AppColors.primary.withValues(alpha: 0.1);
                                 border = AppColors.primary;
                                 text = AppColors.primary;
                               }
@@ -324,8 +324,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                         _selectedIndex != null &&
                                         q.options[_selectedIndex!] ==
                                             q.correctAnswer
-                                    ? AppColors.greenSuccess.withOpacity(0.1)
-                                    : Colors.red.withOpacity(0.1),
+                                    ? AppColors.greenSuccess.withValues(alpha: 0.1)
+                                    : Colors.red.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color:

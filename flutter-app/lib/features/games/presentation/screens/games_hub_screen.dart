@@ -210,7 +210,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -384,7 +384,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -510,7 +510,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     ];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility
-        : color.withOpacity(0.85);
+        : color.withValues(alpha: 0.85);
 
     return AnimatedBuilder(
       animation: anim,
@@ -535,7 +535,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               border: Border.all(color: color, width: 2),
             ),
             child: Center(
@@ -574,7 +574,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color, color.withOpacity(0.75)],
+                colors: [color, color.withValues(alpha: 0.75)],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(8),

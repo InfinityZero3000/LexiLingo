@@ -92,10 +92,12 @@ class UserFirestoreDataSourceImpl implements UserFirestoreDataSource {
       if (totalXP != null) updates['totalXP'] = totalXP;
       if (currentStreak != null) updates['currentStreak'] = currentStreak;
       if (longestStreak != null) updates['longestStreak'] = longestStreak;
-      if (totalLessonsCompleted != null)
+      if (totalLessonsCompleted != null) {
         updates['totalLessonsCompleted'] = totalLessonsCompleted;
-      if (totalWordsLearned != null)
+      }
+      if (totalWordsLearned != null) {
         updates['totalWordsLearned'] = totalWordsLearned;
+      }
 
       await firestoreService.getUserDocument(userId)?.update(updates);
     } catch (e) {

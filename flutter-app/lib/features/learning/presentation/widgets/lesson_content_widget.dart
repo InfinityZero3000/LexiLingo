@@ -10,12 +10,12 @@ class LessonContentWidget extends StatefulWidget {
   final bool? isCorrect;
 
   const LessonContentWidget({
-    Key? key,
+    super.key,
     required this.exercise,
     required this.onSubmit,
     this.isAnswered = false,
     this.isCorrect,
-  }) : super(key: key);
+  });
 
   @override
   State<LessonContentWidget> createState() => _LessonContentWidgetState();

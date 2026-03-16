@@ -98,7 +98,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -153,10 +153,10 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         decoration: BoxDecoration(
           color: isSelected ? theme.primaryColor : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(999),
-          border: isSelected ? null : Border.all(color: theme.primaryColor.withOpacity(0.2)),
+          border: isSelected ? null : Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: theme.primaryColor.withOpacity(0.3),
+              color: theme.primaryColor.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -300,10 +300,10 @@ class _TopicListItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.primaryColor.withOpacity(0.05)),
+            border: Border.all(color: theme.primaryColor.withValues(alpha: 0.05)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -316,7 +316,7 @@ class _TopicListItem extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.15),
+                  color: theme.primaryColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -345,7 +345,7 @@ class _TopicListItem extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: difficultyColor.withOpacity(0.1),
+                            color: difficultyColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(

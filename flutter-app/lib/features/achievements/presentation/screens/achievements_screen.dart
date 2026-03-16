@@ -1,4 +1,5 @@
 /// Achievements Screen - Display all achievements and user progress
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

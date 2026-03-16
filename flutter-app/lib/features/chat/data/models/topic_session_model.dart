@@ -1,5 +1,6 @@
 /// Topic Session model for Topic-Based Conversation
 /// Manages topic-based chat sessions with story context
+library;
 
 import 'story_model.dart';
 import 'educational_hints_model.dart';

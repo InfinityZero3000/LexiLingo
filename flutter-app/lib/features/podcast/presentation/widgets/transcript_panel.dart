@@ -143,7 +143,7 @@ class TranscriptPanel extends StatelessWidget {
                     fontSize: 14,
                     height: 1.6,
                     color: isDark
-                        ? Colors.white.withOpacity(0.87)
+                        ? Colors.white.withValues(alpha: 0.87)
                         : AppColors.textDark,
                   ),
                 ),

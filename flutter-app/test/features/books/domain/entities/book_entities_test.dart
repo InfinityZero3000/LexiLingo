@@ -2,6 +2,7 @@
 ///
 /// Covers: CefrInfo, Book, UserBook, Bookmark,
 ///         BookQuizQuestion, BookQuiz, ReaderSettings, ReaderTheme
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/books/domain/entities/book_entities.dart';

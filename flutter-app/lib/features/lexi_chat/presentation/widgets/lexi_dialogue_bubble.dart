@@ -145,8 +145,6 @@ class LexiDialogueBubble extends StatelessWidget {
   }
 
   Widget _buildUserBubble(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.only(left: 48, right: 8, top: 4, bottom: 4),
       child: Row(

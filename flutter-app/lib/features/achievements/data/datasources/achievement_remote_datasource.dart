@@ -1,5 +1,6 @@
 /// Achievement Remote Datasource
 /// Handles API calls for achievements
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';

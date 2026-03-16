@@ -1,6 +1,7 @@
 /// Book entity models for the Book Reading feature.
 ///
 /// Phase 5: Book Reading.
+library;
 
 /// CEFR level metadata.
 class CefrInfo {

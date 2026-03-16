@@ -353,15 +353,15 @@ class _ColumnList extends StatelessWidget {
               Color bg = Colors.white;
               Color border = AppColors.grey300;
               if (selected) {
-                bg = AppColors.primary.withOpacity(0.1);
+                bg = AppColors.primary.withValues(alpha: 0.1);
                 border = AppColors.primary;
               }
               if (state == _PairState.correct) {
-                bg = AppColors.greenSuccess.withOpacity(0.15);
+                bg = AppColors.greenSuccess.withValues(alpha: 0.15);
                 border = AppColors.greenSuccess;
               }
               if (state == _PairState.wrong) {
-                bg = Colors.red.withOpacity(0.1);
+                bg = Colors.red.withValues(alpha: 0.1);
                 border = Colors.red;
               }
               return GestureDetector(
@@ -413,7 +413,7 @@ class _TimerChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),

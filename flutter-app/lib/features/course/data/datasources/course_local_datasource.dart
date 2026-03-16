@@ -4,6 +4,7 @@
 /// Following agent-skills/language-learning-patterns:
 /// - Improve UX with offline-first data when available
 /// - Reduce API calls for rarely-changing data like categories
+library;
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';

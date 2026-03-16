@@ -1,4 +1,5 @@
 /// Achievement Widgets - UI components for displaying achievements
+library;
 
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';

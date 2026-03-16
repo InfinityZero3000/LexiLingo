@@ -95,13 +95,13 @@ class _LetterTileState extends State<LetterTile>
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.isSelected
-                  ? AppColors.primary.withOpacity(0.6)
+                  ? AppColors.primary.withValues(alpha: 0.6)
                   : AppColors.grey300,
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: _tileColor.withOpacity(0.3),
+                color: _tileColor.withValues(alpha: 0.3),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

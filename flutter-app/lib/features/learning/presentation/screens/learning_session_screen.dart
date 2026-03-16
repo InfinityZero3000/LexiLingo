@@ -16,10 +16,10 @@ class LearningSessionScreen extends StatefulWidget {
   final String courseId;
 
   const LearningSessionScreen({
-    Key? key,
+    super.key,
     required this.lessonId,
     required this.courseId,
-  }) : super(key: key);
+  });
 
   @override
   State<LearningSessionScreen> createState() => _LearningSessionScreenState();
@@ -61,8 +61,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             const TtsSpeedButton(),
             Consumer<LearningProvider>(
               builder: (context, provider, child) {
-                if (provider.currentLesson == null)
+                if (provider.currentLesson == null) {
                   return const SizedBox.shrink();
+                }
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(

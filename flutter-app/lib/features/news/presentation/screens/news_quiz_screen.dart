@@ -612,12 +612,15 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   }
 
   String _resultSubMessage(int percentage) {
-    if (percentage >= 80)
+    if (percentage >= 80) {
       return 'You have a great understanding of this article.';
-    if (percentage >= 60)
+    }
+    if (percentage >= 60) {
       return 'You\'re on the right track. Review the highlighted words.';
-    if (percentage >= 40)
+    }
+    if (percentage >= 40) {
       return 'Try re-reading the article and focusing on key details.';
+    }
     return 'Re-read the article carefully before trying again.';
   }
 }

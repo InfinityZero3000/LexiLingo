@@ -1,5 +1,6 @@
 /// Story models for Topic-Based Conversation
 /// Defines story/topic data structures for language learning scenarios
+library;
 
 /// Difficulty levels matching CEFR standard
 enum DifficultyLevel {

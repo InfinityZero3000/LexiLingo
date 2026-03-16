@@ -10,7 +10,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
 class CourseListScreen extends StatefulWidget {
-  const CourseListScreen({Key? key}) : super(key: key);
+  const CourseListScreen({super.key});
 
   @override
   State<CourseListScreen> createState() => _CourseListScreenState();
@@ -341,7 +341,6 @@ class _CategorySection extends StatelessWidget {
   final VoidCallback? onSeeAll;
 
   const _CategorySection({
-    Key? key,
     required this.categoryId,
     required this.title,
     required this.description,
@@ -350,7 +349,7 @@ class _CategorySection extends StatelessWidget {
     required this.courses,
     required this.onCourseTap,
     this.onSeeAll,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -431,10 +430,9 @@ class _HorizontalCourseCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _HorizontalCourseCard({
-    Key? key,
     required this.course,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -978,7 +976,7 @@ class _HorizontalCourseCard extends StatelessWidget {
 
 /// Filter Sheet Widget
 class _FilterSheet extends StatelessWidget {
-  const _FilterSheet({Key? key}) : super(key: key);
+  const _FilterSheet();
 
   @override
   Widget build(BuildContext context) {

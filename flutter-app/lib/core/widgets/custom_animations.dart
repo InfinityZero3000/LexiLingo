@@ -100,7 +100,7 @@ class _PulsePainter extends CustomPainter {
       final opacity = (1.0 - ringProgress) * 0.5;
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity)
+        ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0 * (1.0 - ringProgress);
 
@@ -261,7 +261,7 @@ class _WavePainter extends CustomPainter {
       final phaseShift = progress * 2 * math.pi + (i * math.pi / 3);
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity.clamp(0.1, 0.3))
+        ..color = color.withValues(alpha: opacity.clamp(0.1, 0.3))
         ..style = PaintingStyle.fill;
 
       final path = Path();
@@ -395,7 +395,7 @@ class _ParticlesPainter extends CustomPainter {
       final y = ((particle.y + progress * particle.speed) % 1.0) * size.height;
 
       final paint = Paint()
-        ..color = color.withOpacity(particle.opacity)
+        ..color = color.withValues(alpha: particle.opacity)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), particle.size, paint);
@@ -637,7 +637,7 @@ class _RipplePainter extends CustomPainter {
     final opacity = (1.0 - progress) * 0.3;
 
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(center, radius, paint);
@@ -698,7 +698,7 @@ class _BreathingGlowState extends State<BreathingGlow>
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withOpacity(
+                color: widget.glowColor.withValues(alpha: 
                   0.3 + 0.3 * _controller.value,
                 ),
                 blurRadius: blur,
@@ -800,7 +800,7 @@ class _TypingIndicatorPainter extends CustomPainter {
       final y = size.height / 2 - bounce * dotSize / 2;
 
       final paint = Paint()
-        ..color = color.withOpacity(0.4 + 0.6 * bounce)
+        ..color = color.withValues(alpha: 0.4 + 0.6 * bounce)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), dotSize / 2, paint);

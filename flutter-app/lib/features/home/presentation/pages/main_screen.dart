@@ -143,8 +143,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _warmupAiModels() {
-    final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
-    http.post(url).catchError((_) {});
+  void _warmupAiModels() async {
+    try {
+      final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
+      await http.post(url);
+    } catch (_) {
+      // Ignore error
+    }
   }
 }

@@ -5,6 +5,7 @@
 /// - Gradient fills, glowing effects
 /// - Animated shine effects
 /// - Rarity-based styling
+library;
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';

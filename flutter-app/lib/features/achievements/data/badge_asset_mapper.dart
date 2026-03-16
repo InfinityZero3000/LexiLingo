@@ -4,6 +4,7 @@
 /// All badge PNG files are mapped to achievement IDs.
 /// The AchievementBadge widget uses this to show image assets
 /// and falls back to SmartAchievementBadge if no mapping exists.
+library;
 
 class BadgeAssetMapper {
   BadgeAssetMapper._();

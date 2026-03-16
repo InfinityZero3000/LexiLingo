@@ -262,8 +262,7 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString() +
-        '_' +
-        (DateTime.now().microsecond % 1000).toString();
+    final now = DateTime.now();
+    return '${now.millisecondsSinceEpoch}_${now.microsecond % 1000}';
   }
 }

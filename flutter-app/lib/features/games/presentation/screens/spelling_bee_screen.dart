@@ -220,7 +220,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             boxShadow: _playsLeft > 0
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withOpacity(0.4),
+                                      color: AppColors.primary.withValues(alpha: 0.4),
                                       blurRadius: 16,
                                       offset: const Offset(0, 6),
                                     ),
@@ -306,8 +306,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: _isCorrect
-                                ? AppColors.greenSuccess.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.08),
+                                ? AppColors.greenSuccess.withValues(alpha: 0.1)
+                                : Colors.red.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _isCorrect

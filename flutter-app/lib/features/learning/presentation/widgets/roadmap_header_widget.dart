@@ -8,10 +8,10 @@ class RoadmapHeaderWidget extends StatelessWidget {
   final VoidCallback onBack;
 
   const RoadmapHeaderWidget({
-    Key? key,
+    super.key,
     required this.roadmap,
     required this.onBack,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

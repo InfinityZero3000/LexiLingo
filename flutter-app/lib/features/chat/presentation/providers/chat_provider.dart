@@ -32,12 +32,12 @@ class ChatProvider extends ChangeNotifier {
   // Pagination for messages
   bool _hasMoreMessages = true;
   bool _isLoadingMoreMessages = false;
-  int _messagesPageSize = 20;
+  final int _messagesPageSize = 20;
 
   // Pagination for sessions
   bool _hasMoreSessions = true;
   bool _isLoadingMoreSessions = false;
-  int _sessionsPageSize = 10;
+  final int _sessionsPageSize = 10;
 
   ChatSession? get currentSession => _currentSession;
   List<ChatSession> get sessions => _sessions;
@@ -157,8 +157,9 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoreMessages() async {
-    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages)
+    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) {
       return;
+    }
 
     _isLoadingMoreMessages = true;
     notifyListeners();

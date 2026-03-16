@@ -68,10 +68,10 @@ class LearningRoadmapScreen extends StatefulWidget {
   final String courseTitle;
 
   const LearningRoadmapScreen({
-    Key? key,
+    super.key,
     required this.courseId,
     required this.courseTitle,
-  }) : super(key: key);
+  });
 
   @override
   State<LearningRoadmapScreen> createState() => _LearningRoadmapScreenState();
@@ -428,19 +428,22 @@ class _LessonNodeState extends State<_LessonNode>
     if (t.contains('quiz') || t.contains('test') || t.contains('mock')) {
       return Icons.emoji_events_rounded;
     }
-    if (t.contains('listen') || t.contains('audio'))
+    if (t.contains('listen') || t.contains('audio')) {
       return Icons.headphones_rounded;
+    }
     if (t.contains('speak') || t.contains('pronun')) return Icons.mic_rounded;
-    if (t.contains('read') || t.contains('passage'))
+    if (t.contains('read') || t.contains('passage')) {
       return Icons.menu_book_rounded;
+    }
     if (t.contains('writ') || t.contains('essay') || t.contains('task')) {
       return Icons.edit_note_rounded;
     }
     if (t.contains('grammar') || t.contains('tense') || t.contains('verb')) {
       return Icons.auto_stories_rounded;
     }
-    if (t.contains('vocab') || t.contains('word'))
+    if (t.contains('vocab') || t.contains('word')) {
       return Icons.translate_rounded;
+    }
     return Icons.school_rounded;
   }
 }
@@ -826,8 +829,9 @@ class _LessonDetailSheet extends StatelessWidget {
     if (t.contains('grammar') || t.contains('tense') || t.contains('verb')) {
       return Icons.auto_stories_rounded;
     }
-    if (t.contains('vocab') || t.contains('word'))
+    if (t.contains('vocab') || t.contains('word')) {
       return Icons.translate_rounded;
+    }
     return Icons.school_rounded;
   }
 }

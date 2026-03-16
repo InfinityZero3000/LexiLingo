@@ -2,11 +2,11 @@ import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dar
 
 class VocabWordModel extends VocabWord {
   VocabWordModel({
-    int? id,
-    required String word,
-    required String definition,
-    bool isLearned = false,
-  }) : super(id: id, word: word, definition: definition, isLearned: isLearned);
+    super.id,
+    required super.word,
+    required super.definition,
+    super.isLearned,
+  });
 
   // Convert from JSON to Model
   factory VocabWordModel.fromJson(Map<String, dynamic> json) {

@@ -1,6 +1,7 @@
 /// News entity models for the News Reading feature.
 ///
 /// Phase 2: News Reading.
+library;
 
 /// A news article with CEFR level grading.
 class NewsArticle {

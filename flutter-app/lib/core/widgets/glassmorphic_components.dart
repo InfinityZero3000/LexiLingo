@@ -61,8 +61,8 @@ class GlassmorphicCard extends StatelessWidget {
                 colors:
                     gradientColors ??
                     [
-                      Colors.white.withOpacity(bgOpacity),
-                      Colors.white.withOpacity(bgOpacity * 0.5),
+                      Colors.white.withValues(alpha: bgOpacity),
+                      Colors.white.withValues(alpha: bgOpacity * 0.5),
                     ],
               ),
               border: Border.all(
@@ -316,7 +316,7 @@ class _StreakFlameState extends State<StreakFlame>
               boxShadow: widget.isActive
                   ? [
                       BoxShadow(
-                        color: Colors.orange.withOpacity(_glowAnimation.value),
+                        color: Colors.orange.withValues(alpha: _glowAnimation.value),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),

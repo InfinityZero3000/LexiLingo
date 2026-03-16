@@ -32,7 +32,7 @@ class StreakIndicator extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.45),
+                  color: Colors.orange.withValues(alpha: 0.45),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -82,7 +82,7 @@ class StreakIndicator extends StatelessWidget {
         boxShadow: _hasGlow
             ? [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.5),
+                  color: Colors.orange.withValues(alpha: 0.5),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -112,7 +112,7 @@ class StreakIndicator extends StatelessWidget {
               ),
               Text(
                 'streak',
-                style: TextStyle(fontSize: 11, color: color.withOpacity(0.7)),
+                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7)),
               ),
             ],
           ),
