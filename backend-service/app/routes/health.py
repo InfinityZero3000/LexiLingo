@@ -50,7 +50,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
         from app.core.redis import RedisClient
         redis_client = await RedisClient.get_instance()
         if redis_client:
-            await redis_client.ping()
+            await redis_client.ping()  # type: ignore[misc]  # redis.asyncio stubs
         else:
             checks["redis"] = "not configured"
     except Exception as e:

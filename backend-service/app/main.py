@@ -166,10 +166,10 @@ app = FastAPI(
 # ===== MIDDLEWARE CONFIGURATION =====
 # Order matters! Last added = outermost (executes first for requests).
 # 
-# Execution order (request): PNA → CORS → RequestID → Logging → ErrorHandler → App
-# Execution order (response): App → ErrorHandler → Logging → RequestID → CORS → PNA
+# Execution order (request): PNA → CORS → RateLimit → RequestID → Logging → App
+# Execution order (response): App → Logging → RequestID → RateLimit → CORS → PNA
 #
-# KEY: CORS must be OUTSIDE ErrorHandler so error 500 responses also get CORS headers.
+# KEY: CORS must be OUTSIDE RateLimit and Logging so error responses get CORS headers.
 # PNA must be OUTSIDE CORS so it can add PNA headers to CORS preflight responses.
 
 # 1. Trusted Host - Security (innermost, closest to app)
@@ -185,7 +185,17 @@ app.add_middleware(RequestLoggingMiddleware)
 # 3. Request ID - Add unique ID to each request
 app.add_middleware(RequestIDMiddleware)
 
-# 4. CORS - Must be OUTSIDE handlers so error responses get CORS headers
+# 4. Rate Limiting - Prevent abuse (Phase 1: Security)
+# Higher limits in development to avoid blocking local testing
+_rate_rpm = 300 if settings.is_development else 120
+_rate_rph = 5000 if settings.is_development else 5000
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=_rate_rpm,
+    requests_per_hour=_rate_rph,
+)
+
+# 5. CORS - Must be OUTSIDE RateLimit so error responses get CORS headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -196,16 +206,8 @@ app.add_middleware(
     allow_private_network=True,
 )
 
-# 5. Rate Limiting - Prevent abuse (Phase 1: Security)
-# Higher limits in development to avoid blocking local testing
-# Production: 120 RPM / 5000 RPH supports ~10k concurrent users (NAT-friendly)
-_rate_rpm = 300 if settings.is_development else 120
-_rate_rph = 5000 if settings.is_development else 5000
-app.add_middleware(
-    RateLimitMiddleware,
-    requests_per_minute=_rate_rpm,
-    requests_per_hour=_rate_rph,
-)
+# 6. Private Network Access - Chrome CORS-RFC1918 (outermost)
+app.add_middleware(PrivateNetworkAccessMiddleware)
 
 # ===== EXCEPTION HANDLERS =====
 app.add_exception_handler(HTTPException, http_exception_handler)

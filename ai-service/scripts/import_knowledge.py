@@ -189,8 +189,8 @@ def main():
     parser = argparse.ArgumentParser(description="Import knowledge to KuzuDB")
     parser.add_argument(
         "--json-path",
-        default=str(Path(__file__).parent.parent / "data" / "knowledge_extended.json"),
-        help="Path to JSON knowledge file"
+        default=None,
+        help="Path to JSON knowledge file (optional, will import default files if not provided)"
     )
     parser.add_argument(
         "--db-path",
@@ -205,14 +205,26 @@ def main():
     
     args = parser.parse_args()
     
-    if not os.path.exists(args.json_path):
-        logger.error(f"JSON file not found: {args.json_path}")
-        sys.exit(1)
+    data_dir = Path(__file__).parent.parent / "data"
+    default_files = [
+        data_dir / "knowledge_extended.json",
+        data_dir / "topic_graphs.json"
+    ]
     
-    stats = import_knowledge(args.json_path, args.db_path, args.clear)
-    
-    if stats["errors"]:
-        sys.exit(1)
+    # If explicit path provided, use only that
+    if args.json_path:
+        if not os.path.exists(args.json_path):
+            logger.error(f"JSON file not found: {args.json_path}")
+            sys.exit(1)
+        import_knowledge(args.json_path, args.db_path, args.clear)
+    else:
+        # Import default files
+        for json_file in default_files:
+            if json_file.exists():
+                logger.info(f"Importing from default file: {json_file}")
+                import_knowledge(str(json_file), args.db_path, args.clear if json_file == default_files[0] else False)
+            else:
+                logger.warning(f"Default file not found: {json_file}")
     
     sys.exit(0)
 

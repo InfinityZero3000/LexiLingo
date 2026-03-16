@@ -96,13 +96,21 @@ async def list_courses_admin(
 @router.get("/units", response_model=ApiResponse[List[dict]])
 async def list_units_admin(
     course_id: Optional[UUID] = Query(None, description="Filter units by course"),
+    search: Optional[str] = Query(None, description="Search units by title or description"),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
-    """List all units, optionally filtered by course."""
+    """List all units, optionally filtered by course or searched by title/description."""
     query = select(Unit)
     if course_id:
         query = query.where(Unit.course_id == course_id)
+    if search:
+        query = query.where(
+            or_(
+                Unit.title.ilike(f"%{search}%"),
+                Unit.description.ilike(f"%{search}%")
+            )
+        )
     query = query.order_by(Unit.order_index)
     result = await db.execute(query)
     units = result.scalars().all()

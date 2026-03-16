@@ -25,12 +25,13 @@ for f in "$PID_DIR"/*.pid; do
   rm -f "$f"
 done
 
-# Stop Python processes on ports (avoid killing Docker daemon)
-for PORT in 8000 8001 8080; do
+# Stop processes on ports (avoid killing Docker daemon)
+for PORT in 8000 8001 5176 8080; do
   for PID in $(lsof -ti:$PORT 2>/dev/null); do
-    # Check if it's a Python process (not Docker backend)
-    if ps -p $PID -o command= | grep -q python; then
-      echo -e "  Stopping Python process on port $PORT (PID: $PID)"
+    # Check if it's a project-related process (not Docker backend)
+    CMD=$(ps -p $PID -o command= 2>/dev/null)
+    if echo "$CMD" | grep -Eq "python|node|dart|flutter|uvicorn|vite"; then
+      echo -e "  Stopping process on port $PORT (PID: $PID, CMD: $CMD)"
       kill -9 $PID 2>/dev/null || true
     fi
   done

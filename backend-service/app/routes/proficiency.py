@@ -382,7 +382,7 @@ async def record_exercise_results(
         attempt = ExerciseAttempt(
             user_id=current_user.id,
             exercise_type=exercise.exercise_type,
-            skill=SkillType(exercise.skill.value),
+            skill=ModelSkillType(exercise.skill.value),
             difficulty_level=exercise.difficulty_level.value,
             is_correct=exercise.is_correct,
             score=exercise.score,
@@ -402,7 +402,7 @@ async def record_exercise_results(
     skill_updates = {}
     
     for skill_type in SkillType:
-        skill_results = [r for r in results if r.skill == SkillType(skill_type.value)]
+        skill_results = [r for r in results if r.skill == skill_type]
         
         if not skill_results:
             continue
@@ -412,7 +412,7 @@ async def record_exercise_results(
             select(UserSkillScore)
             .where(
                 UserSkillScore.profile_id == profile.id,
-                UserSkillScore.skill == skill_type
+                UserSkillScore.skill == ModelSkillType(skill_type.value)
             )
         )
         skill_score = skill_result.scalar_one_or_none()
@@ -420,7 +420,7 @@ async def record_exercise_results(
         if not skill_score:
             skill_score = UserSkillScore(
                 profile_id=profile.id,
-                skill=skill_type,
+                skill=ModelSkillType(skill_type.value),
             )
             db.add(skill_score)
         
@@ -452,7 +452,7 @@ async def record_exercise_results(
     all_skill_scores = skill_scores_result.scalars().all()
     
     skill_scores_dict = {
-        skill_score.skill: skill_score.score
+        SkillType(skill_score.skill.value): skill_score.score
         for skill_score in all_skill_scores
     }
     
@@ -548,7 +548,7 @@ async def check_level_requirements(
     skill_scores = skill_result.scalars().all()
     
     skill_scores_dict = {
-        skill_score.skill: skill_score.score
+        SkillType(skill_score.skill.value): skill_score.score
         for skill_score in skill_scores
     }
     
