@@ -115,6 +115,7 @@ tmp/
 mcp-server
 agent-skills
 .vercel
+.agents
 .gemini
-
+.superpowers
 system-testing/
