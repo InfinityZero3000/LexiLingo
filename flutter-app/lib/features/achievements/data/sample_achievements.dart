@@ -650,7 +650,6 @@ class SampleAchievements {
     'lessons',
     'streak',
     'vocabulary',
-    'xp',
     'quiz',
     'course',
     'voice',

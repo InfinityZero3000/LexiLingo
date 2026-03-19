@@ -238,8 +238,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return 'Streaks';
       case 'vocabulary':
         return 'Vocabulary';
-      case 'xp':
-        return 'Experience Points';
       case 'quiz':
         return 'Quiz Performance';
       case 'course':
@@ -270,8 +268,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return Icons.local_fire_department;
       case 'vocabulary':
         return Icons.translate;
-      case 'xp':
-        return Icons.star;
       case 'quiz':
         return Icons.quiz;
       case 'course':

@@ -74,8 +74,6 @@ class AchievementEntity {
         return 'Streak';
       case 'vocabulary':
         return 'Vocabulary';
-      case 'xp':
-        return 'Experience';
       case 'quiz':
         return 'Quiz';
       case 'course':

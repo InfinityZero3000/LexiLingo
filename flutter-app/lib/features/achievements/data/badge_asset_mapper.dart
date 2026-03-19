@@ -34,11 +34,6 @@ class BadgeAssetMapper {
     'vocab_master': 'epic-vocabulary.png',
     'walking_dictionary': 'legendary-vocabulary.png',
 
-    // ===================== XP ACHIEVEMENTS =========================
-    'xp_hunter': 'xp-hunter.png', // XP Hunter - Common (grey)
-    'xp_warrior': 'xp-warrior.png', // XP Warrior - Rare (blue)
-    'xp_champion': 'xp-champion.png', // XP Champion - Epic (purple)
-    'xp_legend': 'xp-legend.png', // XP Legend - Legendary (gold)
     // ===================== QUIZ / PERFECT SCORE ====================
     'perfectionist': '100%.png',
     'first_perfect_score': 'first-perfect.png',
@@ -96,6 +91,11 @@ class BadgeAssetMapper {
 
   /// Check if achievement has a custom badge image
   static bool hasCustomBadge(String achievementId) {
+    return _badgeAssets.containsKey(achievementId.toLowerCase());
+  }
+
+  /// Check if achievement has a mapped badge and the file is available.
+  static bool hasRenderableBadge(String achievementId) {
     return _badgeAssets.containsKey(achievementId.toLowerCase());
   }
 

@@ -28,6 +28,25 @@ class AchievementProvider with ChangeNotifier {
   String? get error => _error;
   bool get usingSampleData => _usingSampleData;
 
+  List<AchievementEntity> _removeXpAchievements(
+    List<AchievementEntity> achievements,
+  ) {
+    return achievements
+        .where((achievement) => achievement.category.toLowerCase() != 'xp')
+        .toList();
+  }
+
+  List<UserAchievementEntity> _removeXpUserAchievements(
+    List<UserAchievementEntity> achievements,
+  ) {
+    return achievements
+        .where(
+          (achievement) =>
+              achievement.achievement.category.toLowerCase() != 'xp',
+        )
+        .toList();
+  }
+
   /// Unlocked achievement IDs for quick lookup
   Set<String> get unlockedIds =>
       _myAchievements.map((ua) => ua.achievement.id).toSet();
@@ -62,11 +81,13 @@ class AchievementProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _allAchievements = await repository.getAllAchievements();
+      _allAchievements = _removeXpAchievements(
+        await repository.getAllAchievements(),
+      );
 
       // Use sample data if API returns empty
       if (_allAchievements.isEmpty) {
-        _allAchievements = SampleAchievements.getAll();
+        _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
         _usingSampleData = true;
         debugPrint('Using sample achievements data (API returned empty)');
       } else {
@@ -76,7 +97,7 @@ class AchievementProvider with ChangeNotifier {
       _error = 'Failed to load achievements: $e';
       debugPrint(_error);
       // Fallback to sample data on error
-      _allAchievements = SampleAchievements.getAll();
+      _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
       _usingSampleData = true;
       debugPrint('Using sample achievements data (API error)');
     } finally {
@@ -92,7 +113,9 @@ class AchievementProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _myAchievements = await repository.getMyAchievements();
+      _myAchievements = _removeXpUserAchievements(
+        await repository.getMyAchievements(),
+      );
     } catch (e) {
       _error = 'Failed to load my achievements: $e';
       debugPrint(_error);
@@ -114,12 +137,16 @@ class AchievementProvider with ChangeNotifier {
         repository.getMyAchievements(),
       ]);
 
-      _allAchievements = results[0] as List<AchievementEntity>;
-      _myAchievements = results[1] as List<UserAchievementEntity>;
+      _allAchievements = _removeXpAchievements(
+        results[0] as List<AchievementEntity>,
+      );
+      _myAchievements = _removeXpUserAchievements(
+        results[1] as List<UserAchievementEntity>,
+      );
 
       // Use sample data if API returns empty
       if (_allAchievements.isEmpty) {
-        _allAchievements = SampleAchievements.getAll();
+        _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
         _usingSampleData = true;
         debugPrint('Using sample achievements data (API returned empty)');
       } else {
@@ -129,7 +156,7 @@ class AchievementProvider with ChangeNotifier {
       _error = 'Failed to load achievements: $e';
       debugPrint(_error);
       // Fallback to sample data on error
-      _allAchievements = SampleAchievements.getAll();
+      _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
       _usingSampleData = true;
       debugPrint('Using sample achievements data (API error)');
     } finally {

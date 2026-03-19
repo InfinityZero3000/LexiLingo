@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
@@ -26,13 +28,27 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _badgeShineController;
+
   @override
   void initState() {
     super.initState();
+    _badgeShineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _badgeShineController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -1046,6 +1062,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context, provider, child) {
         final badges = provider.recentBadges;
         final isLoading = provider.isLoadingBadges;
+        final visibleBadges = badges.where(_hasRenderableBadgeImage).toList();
 
         return Column(
           children: [
@@ -1078,15 +1095,15 @@ class _ProfilePageState extends State<ProfilePage> {
               height: 100,
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : badges.isEmpty
+                  : visibleBadges.isEmpty
                   ? _buildEmptyBadges()
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: badges.length,
+                      itemCount: visibleBadges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {
-                        final badge = badges[index];
+                        final badge = visibleBadges[index];
                         return _buildBadgeItemFromEntity(badge);
                       },
                     ),
@@ -1095,6 +1112,26 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       },
     );
+  }
+
+  bool _hasRenderableBadgeImage(UserAchievementEntity badge) {
+    final achievement = badge.achievement;
+
+    if (achievement.category.toLowerCase() == 'xp') {
+      return false;
+    }
+
+    final networkBadge = achievement.badgeIcon?.trim();
+    if (networkBadge != null && networkBadge.isNotEmpty) {
+      return true;
+    }
+
+    final lookupKey = (achievement.slug ?? achievement.id).trim();
+    if (lookupKey.isEmpty) {
+      return false;
+    }
+
+    return BadgeAssetMapper.hasRenderableBadge(lookupKey);
   }
 
   /// Build empty badges placeholder
@@ -1115,17 +1152,62 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// Build badge item from UserAchievementEntity
-  Widget _buildBadgeItemFromEntity(dynamic badge) {
+  Widget _buildBadgeItemFromEntity(UserAchievementEntity badge) {
     final achievement = badge.achievement;
+    const badgeSize = 64.0;
 
     return Tooltip(
       message: '${achievement.name}\n${badge.unlockedTimeAgo}',
       child: Column(
         children: [
-          AchievementBadge(
-            achievement: achievement,
-            isUnlocked: true,
-            size: 64,
+          SizedBox(
+            width: badgeSize,
+            height: badgeSize,
+            child: Stack(
+              children: [
+                AchievementBadge(
+                  achievement: achievement,
+                  isUnlocked: true,
+                  size: badgeSize,
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _badgeShineController,
+                      builder: (context, child) {
+                        final progress = _badgeShineController.value;
+                        final travel = (badgeSize * 2.2 * progress) -
+                            (badgeSize * 1.1);
+
+                        return ClipOval(
+                          child: Transform.translate(
+                            offset: Offset(travel, 0),
+                            child: Transform.rotate(
+                              angle: -0.55,
+                              child: Container(
+                                width: badgeSize * 0.30,
+                                height: badgeSize * 1.9,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.white.withValues(alpha: 0.80),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
