@@ -60,6 +60,7 @@ export const AppShell = ({
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === "/admin" || item.to === "/super"}
                 className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                 onClick={closeMobileMenu}
               >
