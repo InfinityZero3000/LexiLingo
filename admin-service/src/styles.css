@@ -1788,11 +1788,15 @@ textarea:focus {
   background: rgba(0, 0, 0, 0.5);
   z-index: 998;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.3s;
 }
 
 .mobile-overlay.active {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* ─── Responsive Typography ──────────────────── */
@@ -1880,6 +1884,17 @@ textarea:focus {
 @media (min-width: 481px) and (max-width: 768px) {
   .card-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  }
+}
+
+/* Dashboard-specific responsive overrides */
+@media (max-width: 768px) {
+  .dashboard-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
