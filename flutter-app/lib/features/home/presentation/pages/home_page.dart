@@ -478,6 +478,9 @@ class _HomePageNewState extends State<HomePageNew> {
             longestStreak: longestStreak,
             isActiveToday: isActiveToday,
             weeklyActivity: streak?.weeklyActivity,
+            weeklyProgressPercentages: provider.weeklyProgress.weekProgress
+                .map((day) => day.progressPercentage)
+                .toList(growable: false),
             onTap: () {
               if (streak != null) {
                 showModalBottomSheet(

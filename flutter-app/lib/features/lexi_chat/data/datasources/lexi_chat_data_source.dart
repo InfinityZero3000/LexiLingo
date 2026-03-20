@@ -12,6 +12,27 @@ class LexiChatDataSource {
 
   LexiChatDataSource({required this.apiClient});
 
+  String _sanitizeAssistantContent(String input) {
+    var text = input;
+
+    // Remove hidden reasoning blocks if the model leaks them.
+    text = text.replaceAll(
+      RegExp(r'<think\\b[^>]*>[\\s\\S]*?<\\/think>', caseSensitive: false),
+      '',
+    );
+    text = text.replaceAll(RegExp(r'<\\/?think>', caseSensitive: false), '');
+
+    // Remove markdown wrappers that should not appear in plain chat bubbles.
+    text = text.replaceAll(RegExp(r'\\*\\*(.*?)\\*\\*'), r'$1');
+    text = text.replaceAll(RegExp(r'__(.*?)__'), r'$1');
+    text = text.replaceAll('`', '');
+
+    // Normalize excessive blank lines from stripped sections.
+    text = text.replaceAll(RegExp(r'\\n{3,}'), '\\n\\n').trim();
+
+    return text;
+  }
+
   /// Create a new Lexi session.
   Future<LexiSession> createSession({required String userId}) async {
     try {
@@ -104,10 +125,11 @@ class LexiChatDataSource {
           data['message_id'] ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       role: 'assistant',
-      content:
-          data['lexi_response'] ??
-          data['response'] ??
-          'Squawk! Something went wrong.',
+      content: _sanitizeAssistantContent(
+        data['lexi_response'] ??
+            data['response'] ??
+            'Squawk! Something went wrong.',
+      ),
       timestamp: DateTime.now(),
       audioBase64: data['audio_base64'],
       corrections: corrections,
@@ -127,10 +149,14 @@ class LexiChatDataSource {
       final rawMessages = data['messages'] as List? ?? [];
 
       return rawMessages.map((m) {
+        final role = m['role'] ?? 'user';
+        final rawContent = m['content'] ?? '';
         return LexiMessage(
           id: m['id'] ?? '',
-          role: m['role'] ?? 'user',
-          content: m['content'] ?? '',
+          role: role,
+          content: role == 'assistant'
+              ? _sanitizeAssistantContent(rawContent)
+              : rawContent,
           timestamp: DateTime.tryParse(m['timestamp'] ?? '') ?? DateTime.now(),
         );
       }).toList();

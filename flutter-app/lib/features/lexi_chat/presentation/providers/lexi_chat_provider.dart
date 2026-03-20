@@ -62,7 +62,7 @@ class LexiChatProvider extends ChangeNotifier {
           id: 'greeting',
           role: 'assistant',
           content:
-              "Squawk! 🦜 Hey there, adventurer! I'm **Lexi**, your English buddy. "
+              "Squawk! 🦜 Hey there, adventurer! I'm Lexi, your English buddy. "
               "Let's go on a learning adventure together!\n\n"
               "You can type or speak — I'll help you practice English. "
               "What would you like to talk about?",

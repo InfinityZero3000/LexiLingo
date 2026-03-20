@@ -361,9 +361,9 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: InkWell(
-                  onTap: () {
-                    context.setLocale(Locale(lang['code']!));
-                    settings.updateLanguage(lang['code']!);
+                  onTap: () async {
+                    // Update language - this will also update the app locale
+                    await settings.updateLanguage(lang['code']!, context);
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(

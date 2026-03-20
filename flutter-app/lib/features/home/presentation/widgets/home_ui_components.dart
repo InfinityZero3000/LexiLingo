@@ -441,6 +441,7 @@ class AnimatedStreakCard extends StatefulWidget {
   final int longestStreak;
   final bool isActiveToday;
   final List<bool>? weeklyActivity;
+  final List<double>? weeklyProgressPercentages;
   final VoidCallback? onTap;
 
   const AnimatedStreakCard({
@@ -449,6 +450,7 @@ class AnimatedStreakCard extends StatefulWidget {
     this.longestStreak = 0,
     this.isActiveToday = false,
     this.weeklyActivity,
+    this.weeklyProgressPercentages,
     this.onTap,
   });
 
@@ -498,118 +500,103 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = _resolveWeeklyProgress();
+    final labels = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final todayIndex = DateTime.now().weekday - 1;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_flameAnimation, _pulseAnimation]),
-        builder: (context, child) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: widget.streakDays > 0
-                    ? [
-                        const Color(0xFFFF6B35).withValues(alpha: 0.15),
-                        const Color(0xFFFF9A56).withValues(alpha: 0.1),
-                      ]
-                    : [
-                        Colors.grey.withValues(alpha: 0.1),
-                        Colors.grey.withValues(alpha: 0.05),
-                      ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF172033) : const Color(0xFFF7FAFE),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFD8E4F2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Weekly Progress',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  color: isDark ? Colors.white : const Color(0xFF0F1B37),
+                ),
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: widget.streakDays > 0
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.3)
-                    : Colors.grey.withValues(alpha: 0.2),
+              const Spacer(),
+              TextButton(
+                onPressed: widget.onTap,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF35D4D3),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                child: const Text('View Calendar'),
               ),
-              boxShadow: widget.streakDays >= 3
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFFFF6B35).withValues(
-                          alpha: _pulseAnimation.value * 0.4,
-                        ), // Slightly increased opacity
-                        blurRadius: 25,
-                        spreadRadius: 3,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              children: [
-                // Animated fire icon
-                _buildAnimatedFire(),
-                const SizedBox(width: 16),
-                // Streak info
-                Expanded(
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(7, (index) {
+              final level = progress[index].clamp(0.0, 1.0);
+              final isToday = index == todayIndex;
+              final labelColor = isToday
+                  ? (isDark ? Colors.white : const Color(0xFF6B7E9A))
+                  : (isDark ? Colors.white70 : const Color(0xFF7183A0));
+
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index == 6 ? 0 : 8),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _ProgressCapsule(level: level, isToday: isToday),
+                      const SizedBox(height: 8),
                       Text(
-                        '${widget.streakDays} Day Streak',
+                        labels[index],
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: widget.streakDays > 0
-                              ? const Color(0xFFFF6B35)
-                              : Colors.grey,
+                          fontSize: 11,
+                          fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                          color: labelColor,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      if (widget.longestStreak > 0)
-                        Text(
-                          'Longest: ${widget.longestStreak} days',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      // Week calendar
-                      _buildWeekCalendar(),
                     ],
                   ),
                 ),
-                // Status indicator
-                if (widget.isActiveToday)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 14,
-                          color: Color(0xFF10B981),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Done',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+              );
+            }),
+          ),
+        ],
       ),
     );
+  }
+
+  List<double> _resolveWeeklyProgress() {
+    final progressFromApi = widget.weeklyProgressPercentages;
+    if (progressFromApi != null && progressFromApi.length == 7) {
+      return progressFromApi
+          .map((e) => e.clamp(0.0, 1.0).toDouble())
+          .toList(growable: false);
+    }
+
+    final activity = widget.weeklyActivity ?? List.filled(7, false);
+    return List.generate(7, (i) => activity[i] ? 0.82 : 0.0, growable: false);
   }
 
   Widget _buildAnimatedFire() {
@@ -711,6 +698,56 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
           ),
         );
       }),
+    );
+  }
+}
+
+class _ProgressCapsule extends StatelessWidget {
+  final double level;
+  final bool isToday;
+
+  const _ProgressCapsule({required this.level, required this.isToday});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return SizedBox(
+      height: 120,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final fillHeight = constraints.maxHeight * level;
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF25314A)
+                        : const Color(0xFFE6EBF2),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+              if (fillHeight > 0)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: fillHeight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isToday
+                          ? const Color(0xFF35D4D3)
+                          : const Color(0xFF9EE1E4),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

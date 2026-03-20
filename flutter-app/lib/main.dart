@@ -15,6 +15,7 @@ import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
@@ -223,8 +224,24 @@ class LexiLingoApp extends StatelessWidget {
         // Phase 6: Lexi Chat — Story Adventure
         ChangeNotifierProvider(create: (_) => di.sl<LexiChatProvider>()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
+      child: Consumer2<SettingsProvider, AuthProvider>(
+        builder: (context, settings, auth, child) {
+          // Sync locale from settings on startup (after auth wrapper initializes)
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (auth.currentUser != null && settings.settings != null) {
+              // Sync app locale with saved settings
+              final savedLocale = await LocaleService.getSavedLocale();
+              final settingsLanguage = settings.language;
+              
+              // If settings has a different language than saved locale, update it
+              if (savedLocale != settingsLanguage) {
+                await LocaleService.saveLocale(settingsLanguage);
+                await context.setLocale(Locale(settingsLanguage));
+                debugPrint('Locale synced from settings: $settingsLanguage');
+              }
+            }
+          });
+          
           return MaterialApp(
             title: 'LexiLingo',
             debugShowCheckedModeBanner: false,

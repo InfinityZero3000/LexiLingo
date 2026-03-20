@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
@@ -95,14 +96,18 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   /// Update language preference
-  Future<void> updateLanguage(String languageCode) async {
+  /// This updates both the database and the app locale via EasyLocalization
+  Future<void> updateLanguage(String languageCode, BuildContext context) async {
     if (_settings == null) return;
 
     final oldLanguage = _settings!.language;
+    
+    // Update settings in memory first
     _settings = _settings!.copyWith(language: languageCode);
     notifyListeners();
 
     try {
+      // Update database
       final result = await _repository.updateSettings(_settings!);
       result.fold(
         (failure) {
@@ -111,8 +116,11 @@ class SettingsProvider extends ChangeNotifier {
           _error = failure.message;
           notifyListeners();
         },
-        (_) {
+        (_) async {
           _error = null;
+          // Update app locale via EasyLocalization and persist
+          await LocaleService.updateAppLocale(context, languageCode);
+          debugPrint('Language updated to: $languageCode');
         },
       );
     } catch (e) {
