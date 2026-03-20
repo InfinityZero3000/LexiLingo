@@ -15,12 +15,12 @@ exporters:
     endpoint: jaeger:4317
     tls:
       insecure: true
-  logging:
-    loglevel: info
+  debug:
+    verbosity: basic
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, otlp]
+      exporters: [debug, otlp]

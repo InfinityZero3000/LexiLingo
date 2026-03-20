@@ -74,7 +74,7 @@ services:
       - gateway-network
 
   jaeger:
-    image: jaegertracing/all-in-one:1.61
+    image: jaegertracing/all-in-one:latest
     container_name: lexilingo-jaeger-hybrid
     restart: unless-stopped
     ports:
