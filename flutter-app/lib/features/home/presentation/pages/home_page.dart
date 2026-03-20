@@ -145,6 +145,9 @@ class _HomePageNewState extends State<HomePageNew> {
                     _buildSectionTitle(context, 'Quick Stats'),
                     const SizedBox(height: 12),
                     _buildQuickStats(context),
+                    const SizedBox(height: 24),
+                    // Quick Actions - Horizontal scrollable section
+                    _buildQuickActionsHorizontal(context),
                   ],
                 ),
               ),
@@ -1493,6 +1496,164 @@ class _HomePageNewState extends State<HomePageNew> {
                 color: AppColors.textGrey,
                 fontSize: 11,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Quick Actions - Horizontal scrollable section with circular buttons
+  Widget _buildQuickActionsHorizontal(BuildContext context) {
+    final quickActions = [
+      {
+        'icon': Icons.smart_display,
+        'label': 'YouTube',
+        'color': const Color(0xFFEF4444),
+        'bgColor': const Color(0xFFFEF2F2),
+        'route': '/youtube',
+      },
+      {
+        'icon': Icons.article,
+        'label': 'News',
+        'color': const Color(0xFF6366F1),
+        'bgColor': const Color(0xFFEEF2FF),
+        'route': '/news',
+      },
+      {
+        'icon': Icons.sports_esports,
+        'label': 'Games',
+        'color': const Color(0xFF8B5CF6),
+        'bgColor': const Color(0xFFF5F3FF),
+        'route': '/games',
+      },
+      {
+        'icon': Icons.podcasts,
+        'label': 'Podcast',
+        'color': const Color(0xFF0EA5E9),
+        'bgColor': const Color(0xFFE0F2FE),
+        'route': '/podcast',
+      },
+      {
+        'icon': Icons.menu_book_rounded,
+        'label': 'Books',
+        'color': const Color(0xFF10B981),
+        'bgColor': const Color(0xFFD1FAE5),
+        'route': '/books',
+      },
+      {
+        'icon': Icons.pets,
+        'label': 'Lexi Chat',
+        'color': const Color(0xFF43E97B),
+        'bgColor': const Color(0xFFE8FFF0),
+        'route': '/lexi',
+      },
+      {
+        'icon': Icons.style,
+        'label': 'Vocabulary',
+        'color': Colors.orange,
+        'bgColor': const Color(0xFFFFF7ED),
+        'route': '/vocab',
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'Quick Actions',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: quickActions.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final action = quickActions[index];
+              return _buildQuickActionChip(
+                context,
+                icon: action['icon'] as IconData,
+                label: action['label'] as String,
+                color: action['color'] as Color,
+                bgColor: action['bgColor'] as Color,
+                onTap: () {
+                  final route = action['route'] as String;
+                  if (route == '/vocab') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const VocabLibraryPage(),
+                      ),
+                    );
+                  } else {
+                    Navigator.pushNamed(context, route);
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 85,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Animated gradient background for profile header
@@ -97,7 +96,6 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
@@ -109,12 +107,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _glowAnimation = Tween<double>(
-      begin: 0.2,
-      end: 0.4,
+      end: 0.98,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
@@ -140,6 +133,18 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark
+      ? widget.color.withValues(alpha: 0.12)
+      : widget.color.withValues(alpha: 0.08);
+    final borderColor = isDark
+      ? widget.color.withValues(alpha: 0.36)
+      : widget.color.withValues(alpha: 0.28);
+    final iconBgColor = isDark
+      ? widget.color.withValues(alpha: 0.22)
+      : widget.color.withValues(alpha: 0.16);
+    final titleColor = isDark ? Colors.white70 : const Color(0xFF6B7280);
+    final valueColor = isDark ? Colors.white : const Color(0xFF3F3F46);
+    final subtitleColor = isDark ? Colors.white60 : const Color(0xFF71717A);
 
     return GestureDetector(
       onTapDown: widget.onTap != null ? _onTapDown : null,
@@ -153,112 +158,90 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.9),
-                          Colors.white.withValues(alpha: 0.7),
-                        ],
-                ),
+                color: surfaceColor,
                 border: Border.all(
-                  color: widget.color.withValues(alpha: _glowAnimation.value),
-                  width: 1.5,
+                  color: borderColor,
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: widget.color.withValues(alpha: isDark ? 0.08 : 0.14),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: widget.color.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                widget.icon,
-                                color: widget.color,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                widget.title,
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 300),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.grey[800],
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: iconBgColor,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Text(widget.value),
-                        ),
-                        if (widget.subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.subtitle!,
-                                  style: TextStyle(
-                                    color: widget.isAction
-                                        ? widget.color
-                                        : (isDark
-                                              ? Colors.grey[500]
-                                              : Colors.grey[600]),
-                                    fontSize: 11,
-                                    fontWeight: widget.isAction
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                              if (widget.isAction)
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 10,
-                                  color: widget.color,
-                                ),
-                            ],
+                          child: Icon(
+                            widget.icon,
+                            color: widget.color,
+                            size: 22,
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            widget.title,
+                            style: TextStyle(
+                              color: titleColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
+                    const Spacer(),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 250),
+                      style: TextStyle(
+                        fontSize: 42,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: valueColor,
+                        letterSpacing: -1,
+                      ),
+                      child: Text(widget.value),
+                    ),
+                    if (widget.subtitle != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.subtitle!,
+                              style: TextStyle(
+                                color: widget.isAction ? widget.color : subtitleColor,
+                                fontSize: 12,
+                                fontWeight: widget.isAction
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (widget.isAction)
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: widget.color,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

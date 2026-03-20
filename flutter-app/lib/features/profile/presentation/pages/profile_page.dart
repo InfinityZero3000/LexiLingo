@@ -818,9 +818,9 @@ class _ProfilePageState extends State<ProfilePage>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.98,
               children: [
                 GlassmorphicStatCard(
                   icon: Icons.local_fire_department,
@@ -901,9 +901,9 @@ class _ProfilePageState extends State<ProfilePage>
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.5,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.98,
           children: List.generate(
             6,
             (index) => Container(
