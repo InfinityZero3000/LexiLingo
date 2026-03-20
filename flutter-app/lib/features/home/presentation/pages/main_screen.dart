@@ -5,7 +5,7 @@ import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
-import '../../../chat/presentation/pages/chat_page.dart';
+import '../../../chat/presentation/pages/story_selection_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
@@ -45,7 +45,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomePageNew(),
     const CourseListScreen(),
     const LexiChatPage(),
-    const ChatPage(),
+    const StorySelectionPage(),
     const ProfilePage(),
   ];
 

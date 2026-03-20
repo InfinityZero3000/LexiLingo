@@ -4,6 +4,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/story_model.dart';
 import '../providers/story_provider.dart';
 import 'topic_chat_page.dart';
+import 'chat_page.dart';
 
 /// Story Selection Page - Modern Redesign
 class StorySelectionPage extends StatefulWidget {
@@ -45,7 +46,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: Colors.black87),
+        automaticallyImplyLeading: false,
         title: Text(
           'Conversation Topics',
           style: TextStyle(
@@ -55,7 +56,18 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
         ),
         centerTitle: true,
-        actions: [],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.chat_bubble_outline, color: isDark ? Colors.white : Colors.black87),
+            tooltip: 'Free Chat',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {

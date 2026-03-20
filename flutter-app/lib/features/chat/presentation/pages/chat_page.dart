@@ -345,10 +345,9 @@ class _ChatPageState extends State<ChatPage> {
             message: 'Start Topic Chat',
             child: GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const StorySelectionPage()),
-                );
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
               },
               child: Container(
                 margin: const EdgeInsets.all(8),
