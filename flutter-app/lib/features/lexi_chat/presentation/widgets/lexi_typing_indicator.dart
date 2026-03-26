@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
-/// Animated typing indicator showing Lexi is "thinking".
-/// Three bouncing dots with parrot-green color, game-like style.
+/// Minimalist animated typing indicator showing Lexi is "thinking".
+/// Three subtle bouncing dots with clean design.
 class LexiTypingIndicator extends StatefulWidget {
   const LexiTypingIndicator({super.key});
 
@@ -35,7 +35,7 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
     _animations = _controllers.map((c) {
       return Tween<double>(
         begin: 0,
-        end: -8,
+        end: -6,
       ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut));
     }).toList();
   }
@@ -53,37 +53,32 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 56, right: 48, top: 4, bottom: 4),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 4),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFF0F7FF),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(18),
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
-              ),
+              color: isDark ? const Color(0xFF1C2A38) : const Color(0xFFF6F7F8),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF2A5A8E).withValues(alpha: 0.4)
-                    : AppColors.primary.withValues(alpha: 0.15),
+                color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF),
+                width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Lexi is thinking',
+                  'Lexi is typing',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: isDark ? Colors.white70 : AppColors.textGrey,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 ...List.generate(3, (i) {
                   return AnimatedBuilder(
                     animation: _animations[i],
@@ -94,13 +89,11 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
                       );
                     },
                     child: Container(
-                      width: 7,
-                      height: 7,
+                      width: 6,
+                      height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF43E97B)
-                            : AppColors.primary,
+                        color: isDark ? Colors.white38 : AppColors.primary,
                         shape: BoxShape.circle,
                       ),
                     ),

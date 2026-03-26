@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 
-/// Bottom sheet showing grammar/vocabulary corrections from Lexi.
+/// Minimalist bottom sheet showing grammar/vocabulary corrections from Lexi.
 class LexiCorrectionsSheet extends StatelessWidget {
   final List<LexiCorrection> corrections;
   final String? vietnameseHint;
@@ -40,96 +40,146 @@ class LexiCorrectionsSheet extends StatelessWidget {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
+        maxHeight: MediaQuery.of(context).size.height * 0.65,
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Handle bar
           Container(
-            width: 40,
+            width: 32,
             height: 4,
-            margin: const EdgeInsets.only(top: 12),
+            margin: const EdgeInsets.only(top: 16, bottom: 8),
             decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           // Title
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                const Text('🦜', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentYellow.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.auto_fix_high_rounded,
+                    size: 18,
+                    color: AppColors.accentYellow,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
-                  'Lexi\'s Notes',
+                  'Language Notes',
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : AppColors.textDark,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+          const SizedBox(height: 8),
           // Content
           Flexible(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               shrinkWrap: true,
               children: [
                 // Corrections
                 if (corrections.isNotEmpty) ...[
-                  _sectionTitle(context, '✏️ Corrections'),
-                  const SizedBox(height: 8),
+                  _sectionTitle(context, 'Corrections'),
+                  const SizedBox(height: 12),
                   ...corrections.map((c) => _correctionCard(context, c)),
                   const SizedBox(height: 16),
                 ],
                 // Vietnamese hint
                 if (vietnameseHint != null) ...[
-                  _sectionTitle(context, '🇻🇳 Vietnamese Hint'),
-                  const SizedBox(height: 8),
+                  _sectionTitle(context, 'Vietnamese Hint'),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF1A2E3F)
-                          : const Color(0xFFFFF3E0),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      vietnameseHint!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? Colors.white : AppColors.textDark,
+                          : const Color(0xFFFFF8F0),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF2A3A4A)
+                            : AppColors.accentYellow.withValues(alpha: 0.3),
+                        width: 1,
                       ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          size: 18,
+                          color: AppColors.accentYellow,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            vietnameseHint!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: isDark ? Colors.white : AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
                 ],
                 // Linked concepts
                 if (linkedConcepts.isNotEmpty) ...[
-                  _sectionTitle(context, '🔗 Related Concepts'),
-                  const SizedBox(height: 8),
+                  _sectionTitle(context, 'Related Concepts'),
+                  const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: linkedConcepts
                         .map(
-                          (c) => Chip(
-                            label: Text(
-                              c,
-                              style: const TextStyle(fontSize: 12),
+                          (c) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                            backgroundColor: isDark
-                                ? const Color(0xFF2A3A4A)
-                                : AppColors.primary.withValues(alpha: 0.1),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF2A3A4A)
+                                  : AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF3A4A5A)
+                                    : AppColors.primary.withValues(alpha: 0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              c,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.primary,
+                              ),
+                            ),
                           ),
                         )
                         .toList(),
@@ -148,9 +198,10 @@ class LexiCorrectionsSheet extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: isDark ? Colors.white70 : AppColors.textGrey,
+        letterSpacing: 0.3,
       ),
     );
   }
@@ -159,15 +210,16 @@ class LexiCorrectionsSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2E3F) : const Color(0xFFFFF8F0),
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? const Color(0xFF1A2E3F) : const Color(0xFFFFFBF5),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
-              ? AppColors.accentYellow.withValues(alpha: 0.3)
-              : AppColors.accentYellow.withValues(alpha: 0.5),
+              ? AppColors.accentYellow.withValues(alpha: 0.2)
+              : AppColors.accentYellow.withValues(alpha: 0.3),
+          width: 1,
         ),
       ),
       child: Column(
@@ -178,30 +230,43 @@ class LexiCorrectionsSheet extends StatelessWidget {
             children: [
               // Error
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: Colors.red.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   correction.errorSpan,
                   style: const TextStyle(
                     color: Colors.red,
                     fontSize: 13,
+                    fontWeight: FontWeight.w500,
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
               ),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_forward_rounded, size: 16),
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
               ),
               // Correction
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.greenSuccess.withValues(alpha: 0.1),
+                  color: AppColors.greenSuccess.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.greenSuccess.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   correction.correction,
@@ -215,12 +280,32 @@ class LexiCorrectionsSheet extends StatelessWidget {
             ],
           ),
           if (correction.explanation.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              correction.explanation,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white60 : AppColors.textGrey,
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0A1628) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      correction.explanation,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: isDark ? Colors.white70 : AppColors.textGrey,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
