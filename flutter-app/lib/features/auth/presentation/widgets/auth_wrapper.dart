@@ -51,21 +51,21 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Determine which page to show
     Widget currentPage;
-    if (authProvider.isAuthenticated && _showWelcome) {
-      currentPage = WelcomePage(
-        userName:
-            authProvider.currentUser?.displayName ??
-            authProvider.currentUser?.username,
-        onComplete: () {
-          setState(() {
-            _showWelcome = false;
-          });
-          // Reset the just logged in flag
-          authProvider.clearJustLoggedIn();
-        },
-      );
-    } else if (authProvider.isAuthenticated) {
-      currentPage = const MainScreen();
+    if (authProvider.isAuthenticated) {
+      if (_showWelcome) {
+        currentPage = WelcomePage(
+          userName: authProvider.currentUser?.displayName,
+          onComplete: () {
+            if (!mounted) return;
+            setState(() {
+              _showWelcome = false;
+            });
+            authProvider.clearJustLoggedIn();
+          },
+        );
+      } else {
+        currentPage = const MainScreen();
+      }
     } else {
       currentPage = const LoginPage();
     }

@@ -98,8 +98,8 @@ void main() async {
 
     // Initialize Firebase Cloud Messaging
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    await FirebaseMessagingService.instance.initialize();
-    debugPrint('Firebase Messaging initialized successfully');
+    // Push notification permission should not block app startup
+    // so we delay it until after runApp()
   } catch (e) {
     debugPrint('Warning: Firebase initialization failed: $e');
   }
@@ -157,6 +157,17 @@ void main() async {
       child: const LexiLingoApp(),
     ),
   );
+
+  // Initialize Firebase Messaging after UI starts rendering
+  // so the permission dialog doesn't appear over a blank screen
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await FirebaseMessagingService.instance.initialize();
+      debugPrint('Firebase Messaging initialized successfully');
+    } catch (e) {
+      debugPrint('Warning: Firebase Messaging initialization failed: $e');
+    }
+  });
 }
 
 class LexiLingoApp extends StatelessWidget {

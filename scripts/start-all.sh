@@ -39,6 +39,24 @@ fi
 # ============ Animated Banner ============
 clear 2>/dev/null || true
 
+# Interactive Prompt for Flutter Platform
+echo -e "${CYAN}Choose Flutter platform to run:${NC}"
+echo "  1) Web (Chrome - Port 8080) [Default]"
+echo "  2) iOS Simulator"
+echo "  3) Android Device/Emulator"
+echo "  4) iPad (Physical Device)"
+echo "  5) Skip Flutter"
+read -p "Enter choice [1-5]: " flutter_choice
+
+FLUTTER_PLATFORM="web"
+case "$flutter_choice" in
+    2) FLUTTER_PLATFORM="ios" ;;
+    3) FLUTTER_PLATFORM="android" ;;
+    4) FLUTTER_PLATFORM="ipad" ;;
+    5) FLUTTER_PLATFORM="none" ;;
+    *) FLUTTER_PLATFORM="web" ;;
+esac
+
 # Hide cursor during animation
 printf '\033[?25l'
 
@@ -398,38 +416,84 @@ fi
 
 sleep 0.5
 
-# ============ Flutter Web ============
-# echo -e "${BLUE}[START] Starting Flutter Web (port 8080)...${NC}"
+# ============ Flutter App ============
+if [ "$FLUTTER_PLATFORM" != "none" ]; then
+    echo -e "${BLUE}[START] Starting Flutter App ($FLUTTER_PLATFORM)...${NC}"
 
-FLUTTER_RUNNING=false
+    FLUTTER_RUNNING=false
 
-# Check if Flutter is already running
-if check_service 8080; then
-    echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
-    FLUTTER_RUNNING=true
-fi
+    # Check if Flutter is already running on port 8080 (only applicable for web)
+    if [ "$FLUTTER_PLATFORM" = "web" ]; then
+        if check_service 8080; then
+            echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
+            FLUTTER_RUNNING=true
+        fi
+    fi
 
-cd "$PROJECT_ROOT/flutter-app"
+    cd "$PROJECT_ROOT/flutter-app"
 
-# Clean Chrome cache
-rm -rf .dart_tool/chrome-device 2>/dev/null || true
+    HAS_FLUTTER=true
+    # Check if flutter command exists
+    if ! command -v flutter &> /dev/null; then
+        HAS_FLUTTER=false
+        echo -e "   ${YELLOW}[WARN] Flutter CLI not found in PATH${NC}"
+    fi
 
-HAS_FLUTTER=true
-# Check if flutter command exists
-if ! command -v flutter &> /dev/null; then
+    # Start Flutter in background if available and not running
+    if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
+        # Check if Flutter app is already running (e.g. from Xcode or manually)
+        if pgrep -f "flutter_tools.snapshot run" > /dev/null || pgrep -x "Runner" > /dev/null; then
+            echo -e "   ${GREEN}[OK] Flutter App detected as already running natively or via IDE. Skipping start.${NC}"
+            # Create a mock PID to allow the dashboard to display it as running
+            echo "1" > "$PID_DIR/flutter.pid"
+        else
+            (
+                cd "$PROJECT_ROOT/flutter-app"
+                if [ "$FLUTTER_PLATFORM" = "web" ]; then
+                    # Clean Chrome cache
+                    rm -rf .dart_tool/chrome-device 2>/dev/null || true
+                    nohup flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1 &
+                elif [ "$FLUTTER_PLATFORM" = "ios" ]; then
+                    nohup flutter run -d ios >> "$LOG_DIR/flutter.log" 2>&1 &
+                elif [ "$FLUTTER_PLATFORM" = "android" ]; then
+                    # Check if the specific Xiaomi device is connected
+                    if flutter devices | grep -q "23053RN02A"; then
+                        echo -e "   ${GREEN}[INFO] Found physical device (Xiaomi 23053RN02A). Prioritizing it.${NC}"
+                        nohup flutter run -d 23053RN02A >> "$LOG_DIR/flutter.log" 2>&1 &
+                    else
+                        echo -e "   ${YELLOW}[INFO] Physical device not found. Falling back to default Android device/emulator.${NC}"
+                        nohup flutter run -d android >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
+                elif [ "$FLUTTER_PLATFORM" = "ipad" ]; then
+                    # ID cụ thể của iPad mà bạn đã cung cấp
+                    nohup flutter run -d 00008030-000531940152202E >> "$LOG_DIR/flutter.log" 2>&1 &
+                fi
+                echo $! > "$PID_DIR/flutter.pid"
+            )
+            # Wait for Flutter to start (up to 10 seconds)
+            echo -e "   ${DIM}Waiting for Flutter ($FLUTTER_PLATFORM) to initialize...${NC}"
+            for i in $(seq 1 20); do
+                # For web we can check the port, for iOS/Android we just wait a bit
+                if [ "$FLUTTER_PLATFORM" = "web" ]; then
+                    if check_service 8080; then
+                        echo -e "   ${GREEN}[OK] Flutter Web started successfully${NC}"
+                        break
+                    fi
+                fi
+                sleep 0.5
+            done
+            
+            # Final check if web
+            if [ "$FLUTTER_PLATFORM" = "web" ]; then
+                if ! check_service 8080; then
+                    echo -e "   ${YELLOW}[WARN] Flutter Web may not have started correctly. Check logs: tail -f logs/flutter.log${NC}"
+                fi
+            fi
+        fi
+    fi
+else
     HAS_FLUTTER=false
-    echo -e "   ${YELLOW}[WARN] Flutter CLI not found in PATH${NC}"
-fi
-
-# Start Flutter in background if available and not running
-if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
-    (
-        cd "$PROJECT_ROOT/flutter-app"
-        flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1
-    ) &
-    FLUTTER_PID=$!
-    echo $FLUTTER_PID > "$PID_DIR/flutter.pid"
-    # echo -e "${GREEN}[OK] Flutter starting in background (PID: $FLUTTER_PID)${NC}"
+    echo -e "${BLUE}[INFO] Skipping Flutter app as chosen.${NC}"
 fi
 
 # ============ Persistent Animated Dashboard ============
@@ -582,15 +646,25 @@ animated_dashboard() {
             printf "  ${RED}  [ ] Admin${NC}          ${DIM}offline${NC}\033[K\n"
         fi
 
-        # Flutter Web
-        if check_service 8080; then
-            printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
-        elif [ "$HAS_FLUTTER" = false ]; then
-            printf "  ${RED}  [!] Flutter Web${NC}    ${DIM}not installed${NC}\033[K\n"
-        elif [ -f "$PID_DIR/flutter.pid" ]; then
-            printf "  ${YELLOW}  [~] Flutter Web${NC}    ${DIM}starting...${NC}\033[K\n"
+        # Flutter Web/App logic logic
+        if [ "$FLUTTER_PLATFORM" = "web" ]; then
+            if check_service 8080; then
+                printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
+            elif [ "$HAS_FLUTTER" = false ]; then
+                printf "  ${RED}  [!] Flutter Web${NC}    ${DIM}not installed${NC}\033[K\n"
+            elif [ -f "$PID_DIR/flutter.pid" ]; then
+                printf "  ${YELLOW}  [~] Flutter Web${NC}    ${DIM}starting...${NC}\033[K\n"
+            else
+                printf "  ${RED}  [ ] Flutter Web${NC}    ${DIM}offline${NC}\033[K\n"
+            fi
+        elif [ "$FLUTTER_PLATFORM" = "ios" ] || [ "$FLUTTER_PLATFORM" = "android" ] || [ "$FLUTTER_PLATFORM" = "ipad" ]; then
+            if [ -f "$PID_DIR/flutter.pid" ]; then
+                printf "  ${GREEN}  [*] Flutter App${NC}    ${DIM}running on $FLUTTER_PLATFORM${NC}\033[K\n"
+            else
+                printf "  ${RED}  [ ] Flutter App${NC}    ${DIM}offline${NC}\033[K\n"
+            fi
         else
-            printf "  ${RED}  [ ] Flutter Web${NC}    ${DIM}offline${NC}\033[K\n"
+             printf "  ${RED}  [ ] Flutter App${NC}    ${DIM}skipped${NC}\033[K\n"
         fi
 
         printf '\033[K\n'

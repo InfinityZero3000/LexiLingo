@@ -37,9 +37,27 @@ class FirebaseMessagingService {
       // Request permission (required for iOS and web)
       await _requestPermission();
 
+      // Check if running on iOS simulator avoiding APNS hang
+      bool isSimulator = false;
+      if (!kIsWeb && Platform.isIOS) {
+        try {
+          final iosInfo = await DeviceInfoPlugin().iosInfo;
+          isSimulator = !iosInfo.isPhysicalDevice;
+        } catch (_) {}
+      }
+
       // Get FCM token
-      _fcmToken = await _messaging.getToken();
-      debugPrint('📱 FCM Token: $_fcmToken');
+      try {
+        if (isSimulator) {
+          debugPrint('📱 Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.');
+          _fcmToken = 'simulator_dummy_token';
+        } else {
+          _fcmToken = await _messaging.getToken().timeout(const Duration(seconds: 5));
+          debugPrint('📱 FCM Token: $_fcmToken');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Could not get FCM token (expected if APNS/FCM not fully setup): $e');
+      }
 
       // Listen for token refresh
       _messaging.onTokenRefresh.listen((newToken) {

@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Thêm quyền báo chí (nếu sử dụng Notifications/Missions/Audio) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    
     <application
-        android:label="lexilingo_app"
+        android:label="LexiLingo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
