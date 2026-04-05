@@ -10,8 +10,11 @@ Key goals:
 
 from __future__ import annotations
 
+import hashlib
+import re
 import time
 from typing import Any, Dict, Optional
+import logging
 
 from api.core.redis_client import (
     ConversationCache,
@@ -34,6 +37,21 @@ from api.services.grounded_response_v3 import GroundedResponseV3
 from api.services.kg_service_v3 import KnowledgeGraphServiceV3
 from api.services.retrieval_service_v3 import RetrievalConfig, RetrievalServiceV3
 from api.services.graph_analytics import get_graph_analytics
+
+
+logger = logging.getLogger(__name__)
+
+
+def _normalize_query_for_cache(text: str) -> str:
+    """Deterministic normalization for L0 exact-reuse keying."""
+    normalized = re.sub(r"\s+", " ", (text or "").strip().lower())
+    return normalized
+
+
+def _build_l0_cache_key(text: str, level: str) -> str:
+    """Paper-aligned reference key: md5(clean(query) || level)."""
+    digest = hashlib.md5(f"{_normalize_query_for_cache(text)}||{level}".encode("utf-8")).hexdigest()
+    return f"v3:{level}:{digest}"
 
 
 class V3Pipeline:
@@ -92,13 +110,24 @@ class V3Pipeline:
 
         history = []
         if self.conversation_cache:
-            history = await self.conversation_cache.get_history(session_id)
+            try:
+                history = await self.conversation_cache.get_history(session_id)
+            except Exception as exc:
+                logger.warning("[V3] conversation cache unavailable, continuing without history: %s", exc)
+                history = []
+                self.conversation_cache = None
+                self.redis_available = False
 
         resolved_profile = learner_profile or {}
         if self.learner_cache and resolved_user_id and resolved_user_id != "anonymous":
             # Merge: request profile overrides cached if provided.
-            cached = await self.learner_cache.get_profile(resolved_user_id)
-            resolved_profile = {**cached, **resolved_profile}
+            try:
+                cached = await self.learner_cache.get_profile(resolved_user_id)
+                resolved_profile = {**cached, **resolved_profile}
+            except Exception as exc:
+                logger.warning("[V3] learner cache unavailable, using request profile only: %s", exc)
+                self.learner_cache = None
+                self.redis_available = False
 
         ctx = V3PipelineContext(
             user_input=text,
@@ -115,8 +144,14 @@ class V3Pipeline:
         if self.response_cache:
             # Simple cache key that is stable enough for the skeleton.
             level = str(resolved_profile.get("level", "B1"))
-            cache_key = f"v3:{level}:{hash(text)}"
-            cached = await self.response_cache.get(cache_key)
+            cache_key = _build_l0_cache_key(text, level)
+            try:
+                cached = await self.response_cache.get(cache_key)
+            except Exception as exc:
+                logger.warning("[V3] response cache read unavailable, continuing with slow path: %s", exc)
+                cached = None
+                self.response_cache = None
+                self.redis_available = False
             if cached:
                 latency_ms = int((time.time() - start) * 1000)
                 # Ensure metadata exists / override minimally.
@@ -190,7 +225,12 @@ class V3Pipeline:
 
         # Cache slow response
         if self.response_cache and cache_key:
-            await self.response_cache.set(cache_key, response.model_dump(by_alias=True))
+            try:
+                await self.response_cache.set(cache_key, response.model_dump(by_alias=True, mode="json"))
+            except Exception as exc:
+                logger.warning("[V3] response cache write unavailable, skipping cache store: %s", exc)
+                self.response_cache = None
+                self.redis_available = False
 
         # Schedule background updates
         if self.bg:
