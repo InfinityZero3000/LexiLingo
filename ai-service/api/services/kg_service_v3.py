@@ -67,7 +67,7 @@ class KnowledgeGraphServiceV3:
             logger.warning(f"[KG] DB may be corrupted, rebuilding: {e}")
             # Only destroy if we can't open it
             if os.path.isdir(db_path):
-                import shutil
+                import shutil; logger.error(f"[KG] Database error: {e}"); if "lock" in str(e).lower(): logger.error("DB locked, not deleting."); raise e
                 shutil.rmtree(db_path)
             self._db = kuzu.Database(db_path)
             self._conn = kuzu.Connection(self._db)

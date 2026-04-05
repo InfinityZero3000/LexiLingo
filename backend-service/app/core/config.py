@@ -93,6 +93,16 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Email (SMTP)
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+    EMAIL_FROM: str = "noreply@lexilingo.app"
+    PASSWORD_RESET_URL_BASE: str = "http://localhost:8080/#/reset-password"
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"

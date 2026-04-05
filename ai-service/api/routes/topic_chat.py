@@ -95,6 +95,26 @@ async def list_stories(
         )
 
 
+@router.get(
+    "/categories",
+    summary="List available story categories"
+)
+async def list_categories(
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Return all available topic categories for filtering UI."""
+    try:
+        story_service = StoryService(db)
+        categories = await story_service.get_categories()
+        return {"categories": categories}
+    except Exception as e:
+        logger.error(f"Failed to list categories: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list categories: {str(e)}"
+        )
+
+
 @router.post(
     "/stories/warm",
     response_model=WarmTopicCacheResponse,
@@ -125,8 +145,8 @@ async def warm_topic_cache(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to warm cache: {e}")
-        raise HTTPException(status_code=500, detail="Internal warming failure")
+        import traceback; traceback.print_exc(); logger.error(f"Failed to warm cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(

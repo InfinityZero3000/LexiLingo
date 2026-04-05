@@ -29,6 +29,7 @@ class UserUpdate(BaseModel):
     native_language: Optional[str] = None
     target_language: Optional[str] = None
     level: Optional[str] = None
+    is_onboarding_completed: Optional[bool] = None
 
 
 class UserResponse(UserBase):
@@ -37,6 +38,7 @@ class UserResponse(UserBase):
     avatar_url: Optional[str] = None
     is_active: bool
     is_verified: bool
+    is_onboarding_completed: bool = False
     created_at: datetime
     last_login: Optional[datetime] = None
     

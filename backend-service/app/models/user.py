@@ -41,6 +41,11 @@ class User(Base):
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
     rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, diamond, master
+    is_onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     
     # RBAC
     role_id: Mapped[uuid.UUID] = mapped_column(

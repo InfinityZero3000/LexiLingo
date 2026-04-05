@@ -115,7 +115,7 @@ class Settings(BaseSettings):
     # ============================================================
     # Model Names (default = use base model on server)
     # ============================================================
-    # Qwen2.5-1.5B - English NLP (grammar, fluency, vocabulary, tutor response)
+    # Qwen3-1.7B - English NLP (grammar, fluency, vocabulary, tutor response)
     QWEN_MODEL_NAME: str = os.getenv("QWEN_MODEL_NAME", "")
     
     # LLaMA3-8B-VI - Vietnamese explanations (lazy load)

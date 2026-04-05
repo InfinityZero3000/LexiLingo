@@ -26,12 +26,12 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DESIGN PRINCIPLES                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  ✓ Hybrid Models: Qwen (English) + LLaMA3 (Vietnamese)          │
-│  ✓ Unified Adapter: 1 adapter xử lý 4 tasks (giảm latency 75%)  │
-│  ✓ Lazy Loading: LLaMA3-VI chỉ load khi cần giải thích VI       │
-│  ✓ Parallel Processing: Pronunciation analysis chạy song song   │
-│  ✓ Caching: Redis cho learner profiles + common responses       │
-│  ✓ Fallback: Error handling với graceful degradation            │
+│  [*] Hybrid Models: Qwen (English) + LLaMA3 (Vietnamese)          │
+│  [*] Unified Adapter: 1 adapter xử lý 4 tasks (giảm latency 75%)  │
+│  [*] Lazy Loading: LLaMA3-VI chỉ load khi cần giải thích VI       │
+│  [*] Parallel Processing: Pronunciation analysis chạy song song   │
+│  [*] Caching: Redis cho learner profiles + common responses       │
+│  [*] Fallback: Error handling với graceful degradation            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -435,14 +435,18 @@
 │  • Next suggested action                                         │
 └──────────────────────────────────────────────────────────────────┘
                              │
-                             ↺ (conversation loop)
+                             (loop) (conversation loop)
 ```
 
 ---
 
-### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + CAG)
+### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + GraphCAG Cache)
 
 Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* thành “hệ tri thức vận hành được”, đồng thời giữ phản hồi nhanh bằng cách tách **Fast Path / Slow Path / Background Path**.
+
+Quy ước trong tài liệu này:
+- **GraphCAG** = pipeline hội thoại có **cache gate** (RAPID L0/L1) + KG retrieval + grounded generation.
+- **CAG (Content Auto-Generation)** = dịch vụ sinh bài luyện/lộ trình học chạy nền, tách riêng khỏi pipeline hội thoại GraphCAG.
 
 #### 2.2.1 Ba đường chạy (Fast/Slow/Background)
 
@@ -457,11 +461,11 @@ Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* 
 │                                                                  │
 │  SLOW PATH (250-1200ms)                                          │
 │  - Diagnose → Hybrid Retrieval (Vector + KG) → Grounded Generate │
-│  - Returns linked concepts + actionable fix                       │
+│  - Returns linked concepts + actionable fix                      │
 │                                                                  │
 │  BACKGROUND PATH (async, non-blocking)                           │
 │  - Update learner profile + write KG edges/weights               │
-│  - Generate next exercises / lesson package (CAG)                │
+│  - Trigger lesson generation service (Content Auto-Generation)   │
 │  - Summarize session, metrics logging                            │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -490,27 +494,27 @@ Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* 
     └────┬─────┘  └──────────┬───────────┘   └──────────────────────────┘
              │                  ▼
              │        ┌──────────────────────┐
-             │        │ Evidence Bundle       │  concepts + examples + rules
+             │        │ Evidence Bundle      │  concepts + examples + rules
              │        └──────────┬───────────┘
              │                   ▼
-             └────────►┌──────────────────────┐
+             └──────────────────►┌──────────────────────┐
                                  │ Grounded Generation  │  LLM constrained to evidence
                                  └──────────┬───────────┘
-                                                        ▼
+                                            ▼
                                  ┌──────────────────────┐
                                  │ Verify + Score       │  JSON schema + confidence
                                  └──────────┬───────────┘
-                                                        ▼
+                                            ▼
                                  ┌──────────────────────┐
                                  │ Respond              │  EN + optional VI
                                  └──────────┬───────────┘
-                                                        ▼
+                                            ▼
                                  ┌──────────────────────┐
-                                 │ Background Jobs      │  KG update + CAG lesson gen
+                                 │ Background Jobs      │  KG update + cache/profile sync + optional lesson generation
                                  └──────────────────────┘
 ```
 
-#### 2.2.3 Hợp đồng dữ liệu (JSON) để Orchestrator chạy ổn định
+#### 2.2.3 Hợp đồng dữ liệu (JSON) để GraphCAG chạy ổn định (trước đây là Orchestrator)
 
 **A) `DiagnosisV3` (đầu ra của bước Diagnose)**
 
@@ -573,7 +577,7 @@ Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* 
 }
 ```
 
-**D) `CAGLessonRequestV3` (CAG chạy nền, sinh bài luyện từ tri thức)**
+**D) `CAGLessonRequestV3` (request gửi sang dịch vụ Content Auto-Generation chạy nền)**
 
 ```json
 {
@@ -590,15 +594,16 @@ Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* 
 - **Hybrid Retrieval bắt buộc**: Vector để bắt ngôn ngữ tự nhiên + KG để suy ra prerequisite/root-cause (1–2 hops) và tạo “đường giải thích”.
 - **Diagnose tách riêng**: bước rẻ, ổn định, trả JSON (intent/skill/root-cause/confidence) để quyết định hỏi làm rõ hay đi thẳng.
 - **Grounded Generation**: LLM phải nhận `RetrievalBundleV3` và bị ràng buộc trả lời dựa trên evidence + trả `linked_concepts`.
-- **CAG không chặn phản hồi**: CAG chạy nền dựa trên `target_concepts` và error_patterns để tạo lesson/exercises cá nhân hoá.
+- **GraphCAG ưu tiên phản hồi nhanh**: cache gate chạy trước để quyết định reuse/patch/full retrieval.
+- **Content Auto-Generation không chặn phản hồi**: dịch vụ sinh lesson chạy nền dựa trên `target_concepts` và `error_patterns`.
 
-#### 2.2.5 Nơi gắn vào Orchestrator (mapping theo phase)
+#### 2.2.5 Mapping theo các Phase truyền thống
 
 - **Phase 1 (Task Analysis)**: sinh `DiagnosisV3` (cheap classifier + rules + light LLM).
 - **Phase 3 (Execution)**:
-    - Fast path: cache gate → response.
+    - Fast path: `cache_gate_node` (RAPID L0/L1) → response.
     - Slow path: build `RetrievalBundleV3` (vector + KG) → grounded generation → verify.
-- **Phase 5/6 (State Management)**: emit background jobs: cập nhật learner profile + KG writer + CAG lesson generator.
+- **Phase 5/6 (State Management)**: emit background jobs: cập nhật learner profile + KG writer + invoke Content Auto-Generation service.
 
 ## 3. Component Details
 
@@ -640,329 +645,52 @@ Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Orchestrator Implementation
+### 3.2 Pipeline Execution Architecture
 
-```python
-class AIOrchestrator:
-    """
-    Central coordinator for the entire AI pipeline.
-    Manages task routing, resource allocation, parallel execution,
-    error handling, and state management.
-    """
-    
-    def __init__(self):
-        # Core components
-        self.qwen_engine = QwenUnifiedEngine()
-        self.llama_engine = None  # Lazy loaded
-        self.hubert_engine = None  # Lazy loaded
-        self.context_manager = ContextManager()
-        self.resource_manager = ResourceManager()
-        self.cache = RedisCache()
-        
-        # State tracking
-        self.session_state = {}
-        self.loaded_models = {"qwen": True}
-        self.execution_stats = {
-            "total_requests": 0,
-            "cache_hits": 0,
-            "avg_latency": 0
-        }
-    
-    async def process_input(self, user_input: str, 
-                           session_id: str,
-                           input_type: str = "text") -> Dict:
-        """
-        Main entry point for processing user input.
-        
-        Args:
-            user_input: Text from STT or keyboard
-            session_id: Unique conversation identifier
-            input_type: "text" or "voice"
-            
-        Returns:
-            Complete response with analysis, feedback, and audio
-        """
-        
-        # Phase 1: Task Analysis
-        execution_plan = self._analyze_task(
-            user_input, session_id, input_type
-        )
-        
-        # Phase 2: Resource Allocation
-        await self._allocate_resources(execution_plan)
-        
-        # Phase 3: Execution Coordination
-        try:
-            results = await self._execute_pipeline(
-                user_input, session_id, execution_plan
-            )
-            
-            # Phase 4: Result Aggregation
-            response = self._aggregate_results(
-                results, execution_plan
-            )
-            
-            # Phase 5: State Update
-            self._update_state(session_id, response)
-            
-            return response
-            
-        except Exception as e:
-            # Error handling & fallback
-            return self._handle_error(e, user_input, session_id)
-    
-    def _analyze_task(self, text: str, session_id: str, 
-                      input_type: str) -> Dict:
-        """
-        Analyze input to create execution plan.
-        """
-        # Get learner profile
-        profile = self.cache.get(f"learner:{session_id}:profile")
-        level = profile.get("level", "B1")
-        
-        # Get conversation context
-        history = self.context_manager.get_history(session_id)
-        
-        # Determine required tasks
-        plan = {
-            "primary_tasks": ["comprehensive_analysis"],  # Always run Qwen
-            "parallel_tasks": [],
-            "conditional_tasks": [],
-            "strategy": "scaffolding"  # Default
-        }
-        
-        # Add pronunciation if voice input
-        if input_type == "voice":
-            plan["parallel_tasks"].append("pronunciation")
-        
-        # Add Vietnamese if A2 or low confidence expected
-        if level == "A2" or self._is_complex(text):
-            plan["conditional_tasks"].append("vietnamese_explanation")
-        
-        # Select tutoring strategy based on history
-        error_count = self._count_recent_errors(history)
-        if error_count == 0:
-            plan["strategy"] = "praise"
-        elif error_count <= 2:
-            plan["strategy"] = "positive_feedback"
-        elif error_count <= 4:
-            plan["strategy"] = "socratic_questioning"
-        else:
-            plan["strategy"] = "scaffolding"
-        
-        return plan
-    
-    async def _allocate_resources(self, plan: Dict):
-        """
-        Load required models based on execution plan.
-        """
-        # Qwen is always loaded
-        
-        # Load HuBERT if needed
-        if "pronunciation" in plan["parallel_tasks"]:
-            if not self.loaded_models.get("hubert"):
-                self.hubert_engine = await self._lazy_load_hubert()
-                self.loaded_models["hubert"] = True
-        
-        # Load LLaMA3-VI if needed
-        if "vietnamese_explanation" in plan["conditional_tasks"]:
-            if not self.loaded_models.get("llama"):
-                # Check memory availability
-                if self.resource_manager.can_load_llama():
-                    self.llama_engine = await self._lazy_load_llama()
-                    self.loaded_models["llama"] = True
-                else:
-                    # Remove from plan if insufficient memory
-                    plan["conditional_tasks"].remove("vietnamese_explanation")
-    
-    async def _execute_pipeline(self, text: str, 
-                                session_id: str,
-                                plan: Dict) -> Dict:
-        """
-        Execute all tasks according to plan with proper coordination.
-        """
-        results = {}
-        
-        # Check cache first
-        cache_key = self.cache.hash(text)
-        cached = self.cache.get(f"response:{cache_key}")
-        if cached:
-            self.execution_stats["cache_hits"] += 1
-            return cached
-        
-        # Create tasks for parallel execution
-        tasks = []
-        
-        # Primary task: Qwen analysis (always runs)
-        context = self.context_manager.get_context(session_id)
-        tasks.append(
-            self._run_qwen_analysis(text, context, plan["strategy"])
-        )
-        
-        # Parallel tasks
-        if "pronunciation" in plan["parallel_tasks"]:
-            audio = self._get_audio(session_id)  # From STT module
-            tasks.append(
-                self._run_pronunciation_analysis(audio)
-            )
-        
-        # Execute all parallel tasks
-        completed = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Process results
-        results["qwen"] = completed[0] if not isinstance(completed[0], Exception) else None
-        if len(completed) > 1:
-            results["pronunciation"] = completed[1] if not isinstance(completed[1], Exception) else None
-        
-        # Conditional tasks (run after primary)
-        if "vietnamese_explanation" in plan["conditional_tasks"]:
-            if results["qwen"] and results["qwen"]["confidence"] < 0.8:
-                results["vietnamese"] = await self._run_vietnamese_explanation(
-                    text, results["qwen"]
-                )
-        
-        return results
-    
-    async def _run_qwen_analysis(self, text: str, 
-                                 context: Dict,
-                                 strategy: str) -> Dict:
-        """
-        Run comprehensive analysis with Qwen + Unified adapter.
-        """
-        prompt = self._build_qwen_prompt(text, context, strategy)
-        
-        # Set timeout
-        try:
-            result = await asyncio.wait_for(
-                self.qwen_engine.generate(prompt),
-                timeout=0.5  # 500ms timeout
-            )
-            return result
-        except asyncio.TimeoutError:
-            raise TimeoutError("Qwen inference timeout")
-    
-    async def _run_pronunciation_analysis(self, audio: np.ndarray) -> Dict:
-        """
-        Run pronunciation analysis with HuBERT.
-        """
-        try:
-            result = await asyncio.wait_for(
-                self.hubert_engine.analyze(audio),
-                timeout=0.3  # 300ms timeout
-            )
-            return result
-        except asyncio.TimeoutError:
-            # Non-critical, can skip
-            return None
-    
-    def _aggregate_results(self, results: Dict, plan: Dict) -> Dict:
-        """
-        Combine all results into final response.
-        """
-        qwen_result = results.get("qwen", {})
-        pronunciation = results.get("pronunciation")
-        vietnamese = results.get("vietnamese")
-        
-        # Base response from Qwen
-        response = {
-            "text": qwen_result.get("response", ""),
-            "analysis": {
-                "fluency": qwen_result.get("fluency_score", 0.0),
-                "grammar": qwen_result.get("grammar", {}),
-                "vocabulary": qwen_result.get("vocabulary_level", "B1")
-            },
-            "score": {},
-            "strategy": plan["strategy"]
-        }
-        
-        # Add pronunciation if available
-        if pronunciation:
-            response["analysis"]["pronunciation"] = pronunciation
-            response["pronunciation_tip"] = self._generate_tip(pronunciation)
-        
-        # Add Vietnamese if available
-        if vietnamese:
-            response["vietnamese_hint"] = vietnamese["explanation"]
-        
-        # Calculate overall score
-        response["score"] = self._calculate_scores(response["analysis"])
-        
-        return response
-    
-    def _handle_error(self, error: Exception, 
-                     text: str, session_id: str) -> Dict:
-        """
-        Graceful degradation when errors occur.
-        """
-        # Log error
-        logger.error(f"Orchestrator error: {error}")
-        
-        # Try cache fallback
-        similar = self.cache.get_similar(text)
-        if similar:
-            return similar
-        
-        # Fallback to rule-based
-        from .fallback import RuleBasedChecker
-        checker = RuleBasedChecker()
-        
-        return {
-            "text": "I see. Let me help you with that.",
-            "analysis": checker.check_grammar(text),
-            "fallback": True,
-            "error": str(error)
-        }
-    
-    def _update_state(self, session_id: str, response: Dict):
-        """
-        Update session state and cache.
-        """
-        # Update conversation history
-        self.context_manager.add_turn(session_id, response)
-        
-        # Update learner profile
-        errors = response["analysis"].get("grammar", {}).get("errors", [])
-        if errors:
-            self.cache.append(
-                f"learner:{session_id}:errors",
-                [e["type"] for e in errors]
-            )
-        
-        # Update stats
-        self.execution_stats["total_requests"] += 1
-        
-        # Cache response for future
-        cache_key = self.cache.hash(response["text"])
-        self.cache.set(f"response:{cache_key}", response, ttl=7*24*3600)
-```
+The previous `AIOrchestrator` conceptual flow has been refactored
+into a LangGraph StateGraph-based architecture. Below is the mapping:
 
-### 3.3 Orchestrator Benefits & Metrics
+| Old Conceptual Phase | LangGraph Implementation |
+|---|---|
+| Phase 1: Task Analysis | `input_node` + `diagnose_node` |
+| Phase 2: Resource Alloc | Deferred to `ModelGateway` (lazy load) |
+| Phase 3a: Cache Decision| `cache_gate_node` (RAPID algorithm) |
+| Phase 3b: KG Expansion  | `kg_expand_node` (parallel w/ diagnose) |
+| Phase 3c: Routing       | `route_after_diagnosis` edge |
+| Phase 3d: Retrieval     | `retrieve_node` |
+| Phase 3e: Generation    | `generate_node` |
+| Phase 4: Result Aggr    | `_format_response()` in `graph.py` |
+| Phase 5: State Update   | Background job (async, non-blocking) |
+
+Each node is an async function that reads/writes to `GraphCAGState`.
+
+### 3.3 Pipeline Benefits & Metrics
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              WHY ORCHESTRATOR IS ESSENTIAL                       │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Problem Without Orchestrator:                                   │
+│  Problem Without GraphCAG:                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  ❌ Tight coupling between components                       │  │
-│  │  ❌ No centralized error handling                           │  │
-│  │  ❌ Inefficient resource usage (all models always loaded)   │  │
-│  │  ❌ No task prioritization                                  │  │
-│  │  ❌ Difficult to add new features                           │  │
-│  │  ❌ No visibility into pipeline performance                 │  │
-│  │  ❌ Hard to test individual components                      │  │
+│  │  [!] Tight coupling between components                       │  │
+│  │  [!] No centralized error handling                           │  │
+│  │  [!] Inefficient resource usage (all models always loaded)   │  │
+│  │  [!] No task prioritization                                  │  │
+│  │  [!] Difficult to add new features                           │  │
+│  │  [!] No visibility into pipeline performance                 │  │
+│  │  [!] Hard to test individual components                      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Solutions With Orchestrator:                                    │
+│  Solutions With GraphCAG:                                    │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  ✅ Single responsibility principle                         │  │
-│  │  ✅ Centralized error handling & fallback                   │  │
-│  │  ✅ Lazy loading - 60% memory savings                       │  │
-│  │  ✅ Intelligent task routing                                │  │
-│  │  ✅ Easy to extend (add new adapters/models)                │  │
-│  │  ✅ Built-in monitoring & telemetry                         │  │
-│  │  ✅ Testable components in isolation                        │  │
+│  │  [*] Single responsibility principle                         │  │
+│  │  [*] Centralized error handling & fallback                   │  │
+│  │  [*] Lazy loading - 60% memory savings                       │  │
+│  │  [*] Intelligent task routing                                │  │
+│  │  [*] Easy to extend (add new adapters/models)                │  │
+│  │  [*] Built-in monitoring & telemetry                         │  │
+│  │  [*] Testable components in isolation                        │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  Performance Improvements:                                       │
@@ -980,7 +708,7 @@ class AIOrchestrator:
 │  Key Architectural Benefits:                                     │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  1. Separation of Concerns                                 │  │
-│  │     • Orchestrator handles WHAT to run                     │  │
+│  │     • LangGraph handles WHAT to run                     │  │
 │  │     • Components handle HOW to run                         │  │
 │  │                                                            │  │
 │  │  2. Flexibility                                            │  │
@@ -1034,10 +762,25 @@ class AIOrchestrator:
 │                                                                  │
 │  Response Cache:                                                 │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Key: response:{text_hash}                                 │  │
-│  │  Value: { "analysis": {...}, "audio_url": "..." }          │  │
-│  │  TTL: 7 days                                               │  │
-│  │  Hit rate target: >40%                                     │  │
+│  │  ═══ L0 EXACT-MATCH CACHE ═══                              │  │
+│  │  Key format: v1:resp:{MD5(clean(query) || level)}          │  │
+│  │  Hit condition: exact query + exact level match            │  │
+│  │  Hit rate: ~50% on repeated-query workload                 │  │
+│  │  Hit latency: ~4ms                                         │  │
+│  │  TTL: 24 hours (dynamically set per entry)                 │  │
+│  │                                                            │  │
+│  │  ═══ L1 CONCEPT-STATE BUCKET CACHE ═══                     │  │
+│  │  Bucket key: v1:resp_bucket:{MD5(...)                      │  │
+│  │  Hit condition: PCC gate (Intent, Concepts, Level)         │  │
+│  │  Hit latency: ~5-30ms                                      │  │
+│  │  Hit rate: Target 10-15%                                   │  │
+│  │  TTL: 2 hours (bucket), 24 hours (entries)                 │  │
+│  │                                                            │  │
+│  │  ═══ L2 RECONSTRUCTION ═══                                 │  │
+│  │  Cost: 110-180ms (rule-based) or 1000ms+ (LLM)             │  │
+│  │                                                            │  │
+│  │  ═══ BUCKET VERSION INVALIDATION ═══                       │  │
+│  │  v_b = {nu_graph, nu_policy, nu_profile, t_refresh}        │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  TTS Audio Cache:                                                │

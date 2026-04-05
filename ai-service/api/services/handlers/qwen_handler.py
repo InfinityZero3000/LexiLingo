@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class QwenConfig:
     """Configuration for Qwen model."""
     model_path: str = "models/qwen3-1.7b"
-    model_id: str = "Qwen/Qwen2.5-1.5B-Instruct"  # Fallback to HF
     device: str = "cpu"  # cpu, cuda, mps
     max_memory_gb: float = 4.0
     context_length: int = 8192
@@ -39,8 +38,8 @@ class QwenHandler:
     
     def __init__(self, config: Optional[QwenConfig] = None):
         self.config = config or QwenConfig()
-        self.model = None
-        self.tokenizer = None
+        self.model: Optional[Any] = None
+        self.tokenizer: Optional[Any] = None
         self._loaded = False
         self._loading = False
         self._lock = asyncio.Lock()
@@ -88,33 +87,43 @@ class QwenHandler:
                 # Detect device
                 device = self._detect_device()
                 
-                # Check local model first
+                # Local-only model loading (no automatic HuggingFace fallback).
                 model_path = self.config.model_path
                 if not os.path.exists(model_path):
-                    model_path = self.config.model_id
-                    logger.info(f"[QwenHandler] Local model not found, using HuggingFace: {model_path}")
+                    logger.error(
+                        "[QwenHandler] Local model not found at '%s'. "
+                        "Set QWEN_MODEL_PATH to a local model directory.",
+                        model_path,
+                    )
+                    self._loaded = False
+                    return False
                 
                 # Load tokenizer
-                self.tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer = AutoTokenizer.from_pretrained(
                     model_path,
                     trust_remote_code=True,
+                    local_files_only=True,
                 )
                 
                 # Load model with appropriate dtype
                 dtype = torch.float16 if device != "cpu" else torch.float32
                 
-                self.model = AutoModelForCausalLM.from_pretrained(
+                model = AutoModelForCausalLM.from_pretrained(
                     model_path,
                     torch_dtype=dtype,
                     device_map=device if device != "mps" else "auto",
                     trust_remote_code=True,
                     low_cpu_mem_usage=True,
+                    local_files_only=True,
                 )
                 
                 if device == "mps":
-                    self.model = self.model.to("mps")
+                    model = model.to("mps")
                 
-                self.model.eval()
+                model.eval()
+
+                self.tokenizer = tokenizer
+                self.model = model
                 
                 self._loaded = True
                 logger.info(f"[QwenHandler] ✓ Qwen model loaded on {device}")
@@ -185,6 +194,12 @@ class QwenHandler:
         """
         if not await self.load():
             raise RuntimeError("Failed to load Qwen model")
+
+        if self.model is None or self.tokenizer is None:
+            raise RuntimeError("Qwen model/tokenizer not initialized")
+
+        model = self.model
+        tokenizer = self.tokenizer
         
         # Build conversation
         if system_prompt:
@@ -194,31 +209,31 @@ class QwenHandler:
             full_messages = messages
         
         # Apply chat template
-        text = self.tokenizer.apply_chat_template(
+        text = tokenizer.apply_chat_template(
             full_messages,
             tokenize=False,
             add_generation_prompt=True,
         )
         
         # Tokenize
-        inputs = self.tokenizer(text, return_tensors="pt")
-        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+        inputs = tokenizer(text, return_tensors="pt")
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
         
         # Generate
         import torch
         with torch.no_grad():
-            outputs = self.model.generate(
+            outputs = model.generate(
                 **inputs,
                 max_new_tokens=max_tokens,
                 temperature=temperature or self.config.temperature,
                 top_p=self.config.top_p,
                 do_sample=True,
-                pad_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=tokenizer.eos_token_id,
             )
         
         # Decode only the new tokens
         new_tokens = outputs[0][inputs["input_ids"].shape[1]:]
-        response = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+        response = tokenizer.decode(new_tokens, skip_special_tokens=True)
         
         return response.strip()
     

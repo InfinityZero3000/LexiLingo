@@ -1020,14 +1020,16 @@ Provide a JSON response with:
 If no errors, return empty errors array with high scores.
 Be encouraging and focus on the most important errors first."""
 
-        # Call Qwen via ModelGateway (lazy loads if needed)
+        # Call local Qwen via ModelGateway (lazy loads if needed).
+        # If local Qwen is unavailable (e.g., missing local weights), fall back
+        # to Groq (Qwen3) before degrading to rules.
         result = await gateway.execute_task(
             "chat",
             {
                 "message": diagnosis_prompt,
                 "system": "You are an English grammar analyzer. Return only valid JSON.",
                 "max_tokens": 500,
-            }
+            },
         )
         
         # Parse AI response
@@ -1038,6 +1040,39 @@ Be encouraging and focus on the most important errors first."""
         grammar_score = 0.8
         fluency_score = 0.8
         
+        used_model = "qwen_grammar"
+
+        if not (result.get("success") and result.get("data")):
+            groq_key = os.getenv("GROQ_API_KEY", "")
+            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
+            if groq_key:
+                try:
+                    import httpx
+
+                    messages = [
+                        {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
+                        {"role": "user", "content": diagnosis_prompt},
+                    ]
+                    resp = await _throttled_post_json(
+                        provider="groq",
+                        url="https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                        payload={"model": groq_model, "messages": messages, "max_tokens": 500, "temperature": 0.0},
+                        httpx_module=httpx,
+                        timeout=20.0,
+                    )
+                    if resp is not None and resp.status_code == 200:
+                        content = resp.json()["choices"][0]["message"]["content"]
+                        result = {"success": True, "data": content}
+                        used_model = f"groq/{groq_model}"
+                    else:
+                        logger.warning(
+                            f"[diagnose_node] Groq returned {getattr(resp, 'status_code', 'n/a')}: "
+                            f"{getattr(resp, 'text', '')[:200]}"
+                        )
+                except Exception as e:
+                    logger.warning(f"[diagnose_node] Groq fallback failed: {e}")
+
         if result.get("success") and result.get("data"):
             try:
                 ai_response = result["data"]
@@ -1097,7 +1132,7 @@ Be encouraging and focus on the most important errors first."""
             "grammar_score": grammar_score,
             "fluency_score": fluency_score,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
-            "models_used": ["qwen_grammar"],
+            "models_used": [used_model],
         }
         
     except Exception as e:

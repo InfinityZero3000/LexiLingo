@@ -112,7 +112,7 @@ _store = _LexiStore()
 
 
 # ─── Lexi Persona System Prompt ─────────────────────────────────────────────
-LEXI_PERSONA = """You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.
+LEXI_PERSONA = """You are Lexi, a cheerful, witty parrot who is an expert English tutor.
 You speak in a warm, encouraging tone — like a fun game character guiding an adventure.
 
 Personality traits:
@@ -309,7 +309,7 @@ async def _get_lexi_llm_response(messages: List[Dict[str, str]]) -> tuple[str, s
 
     # ── 4. Static fallback ──
     return (
-        "Squawk! 🦜 I'm having a little trouble right now. "
+        "Squawk! I'm having a little trouble right now. "
         "My feathers got ruffled — try again in a moment!",
         "fallback",
     )

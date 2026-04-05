@@ -58,6 +58,11 @@ class GoogleLoginRequest(BaseModel):
     id_token: str = Field(..., description="Google ID token from client")
     source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
 
+class FacebookLoginRequest(BaseModel):
+    """Facebook login request (via Firebase)."""
+    id_token: str = Field(..., description="Firebase ID token from client")
+    source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
+
 
 class ForgotPasswordRequest(BaseModel):
     """Forgot password request."""

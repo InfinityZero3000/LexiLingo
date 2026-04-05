@@ -3,7 +3,7 @@ DL Model Service
 
 Service to interact with DL-Model-Support API
 Following architecture.md:
-- Qwen2.5-1.5B + Unified LoRA Adapter
+- Qwen3-1.7B + Unified LoRA Adapter
 - HuBERT for pronunciation
 - LLaMA3-8B-VI for Vietnamese explanations (lazy load)
 """
