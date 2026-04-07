@@ -97,6 +97,7 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _startRecording() async {
     if (!_hasRecorderPermission) {
       await _checkRecorderPermission();
+      if (!mounted) return;
       if (!_hasRecorderPermission) {
         _showSnackBar('Microphone permission denied');
         return;
@@ -105,6 +106,7 @@ class _ChatPageState extends State<ChatPage> {
 
     try {
       final directory = await getTemporaryDirectory();
+      if (!mounted) return;
       _recordingPath =
           '${directory.path}/chat_voice_${DateTime.now().millisecondsSinceEpoch}.wav';
 
@@ -113,6 +115,7 @@ class _ChatPageState extends State<ChatPage> {
         path: _recordingPath!,
       );
 
+      if (!mounted) return;
       setState(() {
         _isRecording = true;
         _recordingDuration = Duration.zero;
@@ -141,6 +144,7 @@ class _ChatPageState extends State<ChatPage> {
     try {
       final path = await _recorder.stop();
 
+      if (!mounted) return;
       setState(() {
         _isRecording = false;
         _isProcessingVoice = true;
@@ -151,6 +155,7 @@ class _ChatPageState extends State<ChatPage> {
         final file = File(path);
         final audioData = await file.readAsBytes();
 
+        if (!mounted) return;
         // Transcribe using VoiceProvider
         final voiceProvider = context.read<VoiceProvider>();
         final transcription = await voiceProvider.stopRecordingAndTranscribe(
@@ -159,6 +164,7 @@ class _ChatPageState extends State<ChatPage> {
           language: 'en',
         );
 
+        if (!mounted) return;
         if (transcription != null && transcription.text.isNotEmpty) {
           // Send transcribed text to chat
           final chatProvider = context.read<ChatProvider>();
@@ -176,6 +182,7 @@ class _ChatPageState extends State<ChatPage> {
         } catch (_) {}
       }
     } catch (e) {
+      if (!mounted) return;
       _showSnackBar('Failed to process recording: $e');
     } finally {
       if (mounted) {
@@ -201,6 +208,7 @@ class _ChatPageState extends State<ChatPage> {
       }
     } catch (_) {}
 
+    if (!mounted) return;
     setState(() {
       _isRecording = false;
       _recordingDuration = Duration.zero;

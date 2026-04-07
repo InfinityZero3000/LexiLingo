@@ -21,7 +21,7 @@ class GameCard extends StatelessWidget {
   static const Map<GameType, List<Color>> _gradients = {
     GameType.wordScramble: [Color(0xFF137FEC), Color(0xFF38B2FF)],
     GameType.fillBlank: [Color(0xFF078838), Color(0xFF34C25A)],
-    GameType.matching: [Color(0xFF9C27B0), Color(0xFFCE93D8)],
+    GameType.matching: [AppColors.purple, Color(0xFFCE93D8)],
     GameType.spellingBee: [Color(0xFFF57C00), Color(0xFFFFB74D)],
     GameType.grammarQuiz: [Color(0xFF0288D1), Color(0xFF4FC3F7)],
     GameType.hangman: [Color(0xFFC62828), Color(0xFFEF9A9A)],

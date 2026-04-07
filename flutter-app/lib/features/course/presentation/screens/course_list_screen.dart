@@ -115,7 +115,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   child: IconButton(
                                     icon: const Icon(
                                       Icons.tune_rounded,
-                                      color: Color(0xFF3B82F6),
+                                      color: AppColors.primary,
                                     ),
                                     onPressed: () => _showFilterSheet(context),
                                     tooltip: 'Filter',
@@ -312,9 +312,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
       case 'beginner':
         return AppColors.greenSuccess;
       case 'intermediate':
-        return const Color(0xFF3B82F6); // blue — on-theme
+        return AppColors.primary; // blue — on-theme
       case 'advanced':
-        return const Color(0xFF8B5CF6); // violet — premium feel
+        return AppColors.purple; // violet — premium feel
       default:
         return AppColors.primary;
     }
@@ -840,8 +840,8 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   List<Color> _getGradientFromHash(int hash) {
     final gradients = [
-      [const Color(0xFF667eea), const Color(0xFF764ba2)], // Purple
-      [const Color(0xFFf093fb), const Color(0xFFf5576c)], // Pink
+      [AppColors.primary, AppColors.purple], // Purple
+      [AppColors.purple, const Color(0xFFf5576c)], // Pink
       [const Color(0xFF4facfe), const Color(0xFF00f2fe)], // Blue
       [const Color(0xFF43e97b), const Color(0xFF38f9d7)], // Green
       [const Color(0xFFfa709a), const Color(0xFFfee140)], // Sunset
@@ -1011,7 +1011,7 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(

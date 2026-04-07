@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/story_model.dart';
 import '../providers/story_provider.dart';
@@ -42,30 +43,71 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF112121) : const Color(0xFFF6F8F8),
+      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF6F8F8),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        toolbarHeight: 86,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'Conversation Topics',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+        titleSpacing: 16,
+        title: Consumer<StoryProvider>(
+          builder: (context, provider, _) {
+            final total = provider.stories.length;
+            return Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.forum_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Conversation Topics',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AppColors.textDark,
+                      ),
+                    ),
+                    Text(
+                      '$total topics available',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? AppColors.textMuted : AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
-        centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline, color: isDark ? Colors.white : Colors.black87),
-            tooltip: 'Free Chat',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChatPage()),
-              );
-            },
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.primary),
+              tooltip: 'Free Chat',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -106,7 +148,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -163,7 +205,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          color: isSelected ? theme.primaryColor : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
           borderRadius: BorderRadius.circular(999),
           border: isSelected ? null : Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
           boxShadow: isSelected ? [
@@ -310,7 +352,7 @@ class _TopicListItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: theme.primaryColor.withValues(alpha: 0.05)),
             boxShadow: [

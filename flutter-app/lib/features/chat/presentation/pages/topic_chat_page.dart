@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/story_model.dart';
@@ -53,7 +54,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
       storyId: widget.story.storyId,
     );
 
-    if (!success && mounted) {
+    if (!mounted) return;
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError ?? 'Failed to start session'),
@@ -83,9 +85,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
       message: message,
     );
 
+    if (!mounted) return;
     if (success) {
       _scrollToBottom();
-    } else if (mounted && provider.sessionError != null) {
+    } else if (provider.sessionError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError!),
@@ -156,8 +159,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      toolbarHeight: 86,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      foregroundColor: AppColors.textDark,
       elevation: 0,
       leading: BackButton(
         onPressed: () {
@@ -165,24 +169,38 @@ class _TopicChatPageState extends State<TopicChatPage> {
           Navigator.pop(context);
         },
       ),
+      titleSpacing: 8,
       title: Row(
         children: [
-          _getCategoryIcon(widget.story.category),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _getCategoryIconData(widget.story.category),
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.story.title.en,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
                   ),
                 ),
                 Text(
                   '${widget.story.difficultyLevel.shortName} • ${widget.story.estimatedMinutes}m left',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
                 ),
               ],
             ),
@@ -202,6 +220,24 @@ class _TopicChatPageState extends State<TopicChatPage> {
         ),
       ],
     );
+  }
+
+  IconData _getCategoryIconData(String category) {
+    switch (category.toLowerCase()) {
+      case 'travel':
+        return Icons.flight_rounded;
+      case 'business':
+        return Icons.business_center_rounded;
+      case 'food':
+        return Icons.restaurant_rounded;
+      case 'health':
+        return Icons.health_and_safety_rounded;
+      case 'daily_life':
+      case 'daily life':
+        return Icons.home_rounded;
+      default:
+        return Icons.forum_rounded;
+    }
   }
 
   Widget _buildSuggestedPrompts() {
