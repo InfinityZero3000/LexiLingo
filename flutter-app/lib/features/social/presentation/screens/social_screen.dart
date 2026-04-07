@@ -411,13 +411,13 @@ class _ActivityFeedCard extends StatelessWidget {
       case ActivityFeedItemEntity.typeAchievement:
         return const Color(0xFFFFD700);
       case ActivityFeedItemEntity.typeCourse:
-        return const Color(0xFF10B981);
+        return AppColors.greenSuccessBright;
       case ActivityFeedItemEntity.typeLesson:
-        return const Color(0xFF3B82F6);
+        return AppColors.primary;
       case ActivityFeedItemEntity.typeStreak:
-        return const Color(0xFFF59E0B);
+        return AppColors.orange;
       case ActivityFeedItemEntity.typeLevel:
-        return const Color(0xFF8B5CF6);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

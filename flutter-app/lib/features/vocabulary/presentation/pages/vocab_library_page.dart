@@ -68,7 +68,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               height: 48,
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF1C2632)
+                    ? AppColors.surfaceDarkMuted
                     : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
@@ -171,7 +171,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         color: isSelected
             ? AppColors.primary
             : (Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1C2632)
+                  ? AppColors.surfaceDarkMuted
                   : Colors.white),
         borderRadius: BorderRadius.circular(18),
         border: isSelected
@@ -259,7 +259,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1C2632)
+            ? AppColors.surfaceDarkMuted
             : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [

@@ -95,7 +95,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1C2632)
+            ? AppColors.surfaceDarkMuted
             : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -214,7 +214,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1C2632)
+            ? AppColors.surfaceDarkMuted
             : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [

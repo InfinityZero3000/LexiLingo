@@ -314,7 +314,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primary.withValues(alpha: 0.3),
-                      const Color(0xFF6366F1).withValues(alpha: 0.3),
+                      AppColors.primary.withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -359,7 +359,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
+                        colors: [Color(0xFF137FEC), AppColors.primary],
                       ),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),

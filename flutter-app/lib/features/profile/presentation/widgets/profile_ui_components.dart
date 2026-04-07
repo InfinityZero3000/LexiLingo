@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated gradient background for profile header
 class AnimatedProfileBackground extends StatefulWidget {
@@ -11,9 +12,9 @@ class AnimatedProfileBackground extends StatefulWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF667eea),
-      Color(0xFF764ba2),
-      Color(0xFFf093fb),
+      AppColors.primary,
+      AppColors.primaryDark,
+      AppColors.purple,
     ],
     this.duration = const Duration(seconds: 4),
   });
@@ -77,6 +78,13 @@ class GlassmorphicStatCard extends StatefulWidget {
   final String? subtitle;
   final bool isAction;
   final VoidCallback? onTap;
+  final double valueFontSize;
+  final EdgeInsetsGeometry contentPadding;
+  final double iconBoxSize;
+  final double iconSize;
+  final double titleFontSize;
+  final double subtitleFontSize;
+  final double middleSpacing;
 
   const GlassmorphicStatCard({
     super.key,
@@ -87,6 +95,13 @@ class GlassmorphicStatCard extends StatefulWidget {
     this.subtitle,
     this.isAction = false,
     this.onTap,
+    this.valueFontSize = 42,
+    this.contentPadding = const EdgeInsets.all(16),
+    this.iconBoxSize = 48,
+    this.iconSize = 22,
+    this.titleFontSize = 14,
+    this.subtitleFontSize = 12,
+    this.middleSpacing = 18,
   });
 
   @override
@@ -143,9 +158,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
     final iconBgColor = isDark
       ? widget.color.withValues(alpha: 0.22)
       : widget.color.withValues(alpha: 0.16);
-    final titleColor = isDark ? Colors.white70 : const Color(0xFF6B7280);
-    final valueColor = isDark ? Colors.white : const Color(0xFF3F3F46);
-    final subtitleColor = isDark ? Colors.white60 : const Color(0xFF71717A);
+    final titleColor = isDark ? Colors.white70 : AppColors.textGrey;
+    final valueColor = isDark ? Colors.white : AppColors.textDark;
+    final subtitleColor = isDark ? Colors.white60 : AppColors.textSlate;
 
     return GestureDetector(
       onTapDown: widget.onTap != null ? _onTapDown : null,
@@ -173,15 +188,15 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: widget.contentPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: widget.iconBoxSize,
+                          height: widget.iconBoxSize,
                           decoration: BoxDecoration(
                             color: iconBgColor,
                             borderRadius: BorderRadius.circular(14),
@@ -189,7 +204,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                           child: Icon(
                             widget.icon,
                             color: widget.color,
-                            size: 22,
+                            size: widget.iconSize,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -198,18 +213,18 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                             widget.title,
                             style: TextStyle(
                               color: titleColor,
-                              fontSize: 14,
+                              fontSize: widget.titleFontSize,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
+                    SizedBox(height: widget.middleSpacing),
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 250),
                       style: TextStyle(
-                        fontSize: 42,
+                        fontSize: widget.valueFontSize,
                         height: 1,
                         fontWeight: FontWeight.w700,
                         color: valueColor,
@@ -226,7 +241,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                               widget.subtitle!,
                               style: TextStyle(
                                 color: widget.isAction ? widget.color : subtitleColor,
-                                fontSize: 12,
+                                fontSize: widget.subtitleFontSize,
                                 fontWeight: widget.isAction
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -336,7 +351,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
               Container(
                 height: widget.height,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[800] : const Color(0xFFDBE0E6),
+                  color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
                 ),
               ),
               // Progress
@@ -474,7 +489,7 @@ class _AnimatedSocialStatState extends State<AnimatedSocialStat>
                   widget.label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -602,7 +617,7 @@ class AnimatedActivityBar extends StatefulWidget {
     required this.label,
     required this.value,
     required this.xpValue,
-    this.color = const Color(0xFF6366F1),
+    this.color = AppColors.primary,
     this.delay = Duration.zero,
   });
 

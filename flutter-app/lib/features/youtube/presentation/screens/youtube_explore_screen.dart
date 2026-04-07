@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Explore Screen — main discovery page for English learning videos.
 ///
@@ -246,7 +247,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               _buildCategoryChip(
                 'Academic',
                 Icons.auto_stories_rounded,
-                const Color(0xFF9C27B0),
+                AppColors.purple,
               ),
               _buildCategoryChip(
                 'News',
@@ -558,7 +559,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
       case 'news':
         return [const Color(0xFF00897B), const Color(0xFF26A69A)];
       default:
-        return [const Color(0xFF137FEC), const Color(0xFF42A5F5)];
+        return [const Color(0xFF137FEC), AppColors.primary];
     }
   }
 
@@ -566,17 +567,17 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

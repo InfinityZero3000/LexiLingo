@@ -104,6 +104,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         path: _recordingPath!,
       );
 
+      if (!mounted) return;
+
       setState(() {
         _isRecording = true;
         _recordingDuration = Duration.zero;
@@ -127,6 +129,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
     try {
       final path = await _recorder.stop();
+
+      if (!mounted) return;
 
       setState(() => _isRecording = false);
 

@@ -283,8 +283,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
       background: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+          gradient: LinearGradient(
+            colors: [AppColors.dangerGradient[0], const Color(0xFFDC2626)],
           ),
           borderRadius: BorderRadius.circular(12),
         ),
