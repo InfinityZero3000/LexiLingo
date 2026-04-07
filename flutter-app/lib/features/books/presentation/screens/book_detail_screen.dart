@@ -6,6 +6,7 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import 'book_quiz_screen.dart';
 import 'book_reader_screen.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Book detail screen showing cover, synopsis, CEFR badge, and Read/Download actions.
 ///
@@ -33,17 +34,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }
@@ -383,9 +384,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 icon: const Icon(Icons.quiz_rounded),
                                 label: const Text('Chapter Quiz'),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF8B5CF6),
+                                  foregroundColor: AppColors.purple,
                                   side: const BorderSide(
-                                    color: Color(0xFF8B5CF6),
+                                    color: AppColors.purple,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,

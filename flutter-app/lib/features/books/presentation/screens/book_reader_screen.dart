@@ -82,7 +82,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1A2E)
+          ? AppColors.readingNight
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -130,7 +130,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
   void _showWordDefinition(String word) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sheetBg = isDark ? const Color(0xFF1C2B3A) : Colors.white;
+    final sheetBg = isDark ? AppColors.surfaceDarkElevated : Colors.white;
     final textColor = isDark ? Colors.white : AppColors.textDark;
     final subtextColor = isDark ? Colors.white54 : AppColors.textGrey;
 
@@ -426,11 +426,11 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
   Color _readerBg(ReaderTheme theme) {
     switch (theme) {
       case ReaderTheme.light:
-        return const Color(0xFFF8F5EE);
+        return AppColors.readingPaper;
       case ReaderTheme.sepia:
-        return const Color(0xFFF4ECD8);
+        return AppColors.readingSepia;
       case ReaderTheme.dark:
-        return const Color(0xFF1A1A2E);
+        return AppColors.readingNight;
     }
   }
 
@@ -439,9 +439,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       case ReaderTheme.light:
         return Colors.black87;
       case ReaderTheme.sepia:
-        return const Color(0xFF4B3B2A);
+        return AppColors.readingSepiaText;
       case ReaderTheme.dark:
-        return const Color(0xFFE8E0D0);
+        return AppColors.readingNightAlt;
     }
   }
 }

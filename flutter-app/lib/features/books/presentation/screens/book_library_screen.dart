@@ -104,7 +104,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           hintText: 'Search books by title or author...',
           prefixIcon: const Icon(Icons.search_rounded),
           filled: true,
-          fillColor: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+          fillColor: isDark ? AppColors.surfaceDarkElevated : Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -150,7 +150,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     final cefrColor = _cefrColor(book.cefrLevel);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(10),
@@ -335,7 +335,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           color: isSelected
               ? AppColors.primary
               : isDark
-              ? const Color(0xFF1C2B3A)
+              ? AppColors.surfaceDarkElevated
               : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -431,17 +431,17 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

@@ -384,9 +384,9 @@ class _OptionTile extends StatelessWidget {
     Color textColor;
 
     if (showGreen) {
-      borderColor = const Color(0xFF4CAF50);
-      bgColor = const Color(0xFF4CAF50).withValues(alpha: 0.12);
-      textColor = const Color(0xFF4CAF50);
+      borderColor = AppColors.greenSuccessBright;
+      bgColor = AppColors.greenSuccessBright.withValues(alpha: 0.12);
+      textColor = AppColors.greenSuccessBright;
     } else if (showRed) {
       borderColor = Colors.red;
       bgColor = Colors.red.withValues(alpha: 0.1);
@@ -397,7 +397,7 @@ class _OptionTile extends StatelessWidget {
       textColor = isDark ? Colors.white : AppColors.textDark;
     } else {
       borderColor = isDark ? Colors.white24 : AppColors.grey300;
-      bgColor = isDark ? const Color(0xFF1C2B3A) : Colors.white;
+      bgColor = isDark ? AppColors.surfaceDarkElevated : Colors.white;
       textColor = isDark ? Colors.white : AppColors.textDark;
     }
 
@@ -420,7 +420,7 @@ class _OptionTile extends StatelessWidget {
               height: 26,
               decoration: BoxDecoration(
                 color: showGreen
-                    ? const Color(0xFF4CAF50)
+                    ? AppColors.greenSuccessBright
                     : showRed
                     ? Colors.red
                     : selected
@@ -458,7 +458,7 @@ class _OptionTile extends StatelessWidget {
             if (showGreen)
               const Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFF4CAF50),
+                color: AppColors.greenSuccessBright,
                 size: 20,
               ),
             if (showRed)
