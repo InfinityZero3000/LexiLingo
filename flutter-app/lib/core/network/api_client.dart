@@ -212,6 +212,20 @@ class ApiClient {
           headers: headers,
           body: jsonEncode(body ?? {}),
         );
+      case 'PUT':
+        return _client.put(uri, headers: headers, body: jsonEncode(body ?? {}));
+      case 'PATCH':
+        return _client.patch(
+          uri,
+          headers: headers,
+          body: jsonEncode(body ?? {}),
+        );
+      case 'DELETE':
+        return _client.delete(
+          uri,
+          headers: headers,
+          body: jsonEncode(body ?? {}),
+        );
       default:
         throw ServerException('Unsupported method $method');
     }
