@@ -18,6 +18,7 @@ import 'package:lexilingo_app/core/startup/startup_task.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/story_provider.dart';
@@ -173,6 +174,24 @@ void main() async {
 class LexiLingoApp extends StatelessWidget {
   const LexiLingoApp({super.key});
 
+  String? _extractResetTokenFromDeepLink() {
+    final queryToken = Uri.base.queryParameters['token'];
+    if (queryToken != null && queryToken.isNotEmpty) {
+      return queryToken;
+    }
+
+    final fragment = Uri.base.fragment;
+    if (fragment.isNotEmpty) {
+      final fragmentUri = Uri.tryParse(fragment);
+      final fragmentToken = fragmentUri?.queryParameters['token'];
+      if (fragmentToken != null && fragmentToken.isNotEmpty) {
+        return fragmentToken;
+      }
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -237,17 +256,20 @@ class LexiLingoApp extends StatelessWidget {
       ],
       child: Consumer2<SettingsProvider, AuthProvider>(
         builder: (context, settings, auth, child) {
+          final safeContext = context;
           // Sync locale from settings on startup (after auth wrapper initializes)
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (auth.currentUser != null && settings.settings != null) {
               // Sync app locale with saved settings
               final savedLocale = await LocaleService.getSavedLocale();
+              if (!safeContext.mounted) return;
               final settingsLanguage = settings.language;
               
               // If settings has a different language than saved locale, update it
               if (savedLocale != settingsLanguage) {
                 await LocaleService.saveLocale(settingsLanguage);
-                await context.setLocale(Locale(settingsLanguage));
+                if (!safeContext.mounted) return;
+                await safeContext.setLocale(Locale(settingsLanguage));
                 debugPrint('Locale synced from settings: $settingsLanguage');
               }
             }
@@ -304,6 +326,17 @@ class LexiLingoApp extends StatelessWidget {
               '/books': (context) => const BookLibraryScreen(),
               // Phase 6: Lexi Chat
               '/lexi': (context) => const LexiChatPage(),
+              '/reset-password': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                String? token;
+                if (args is String) {
+                  token = args;
+                } else if (args is Map<String, dynamic>) {
+                  token = args['token'] as String?;
+                }
+                token ??= _extractResetTokenFromDeepLink();
+                return ResetPasswordPage(initialToken: token);
+              },
             },
           );
         },
