@@ -96,6 +96,23 @@ class AuthBackendDataSource {
     return loginResponse;
   }
 
+  /// Login with Facebook (via Firebase)
+  /// POST /auth/facebook
+  Future<LoginResponse> loginWithFacebook(String firebaseIdToken) async {
+    final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
+      '/auth/facebook',
+      body: {'id_token': firebaseIdToken, 'source': 'app'},
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+
+    final loginResponse = LoginResponse.fromJson(envelope.data);
+
+    await tokenStorage.saveTokens(loginResponse.tokens);
+    await _registerDevice();
+
+    return loginResponse;
+  }
+
   /// Refresh access token using refresh token
   /// POST /auth/refresh-token
   Future<AuthTokens> refreshToken(String refreshToken) async {
@@ -145,12 +162,21 @@ class AuthBackendDataSource {
   Future<UserModel> updateProfile({
     String? displayName,
     String? avatarUrl,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? level,
+    bool? isOnboardingCompleted,
   }) async {
     final envelope = await apiClient.putEnvelope<Map<String, dynamic>>(
       '/users/me',
       body: {
         if (displayName != null) 'display_name': displayName,
         if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (nativeLanguage != null) 'native_language': nativeLanguage,
+        if (targetLanguage != null) 'target_language': targetLanguage,
+        if (level != null) 'level': level,
+        if (isOnboardingCompleted != null)
+          'is_onboarding_completed': isOnboardingCompleted,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );

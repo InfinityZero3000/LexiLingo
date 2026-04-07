@@ -8,6 +8,7 @@ class UserEntity {
   final String? avatarUrl;
   final String provider; // 'local', 'google', 'facebook'
   final bool isVerified;
+  final bool isOnboardingCompleted;
   final String level; // CEFR level: A1, A2, B1, B2, C1, C2
   final int xp;
   final int currentStreak;
@@ -24,6 +25,7 @@ class UserEntity {
     this.avatarUrl,
     this.provider = 'local',
     this.isVerified = false,
+    this.isOnboardingCompleted = false,
     this.level = 'A1',
     this.xp = 0,
     this.currentStreak = 0,
@@ -41,6 +43,7 @@ class UserEntity {
     String? avatarUrl,
     String? provider,
     bool? isVerified,
+    bool? isOnboardingCompleted,
     String? level,
     int? xp,
     int? currentStreak,
@@ -57,6 +60,8 @@ class UserEntity {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       provider: provider ?? this.provider,
       isVerified: isVerified ?? this.isVerified,
+        isOnboardingCompleted:
+          isOnboardingCompleted ?? this.isOnboardingCompleted,
       level: level ?? this.level,
       xp: xp ?? this.xp,
       currentStreak: currentStreak ?? this.currentStreak,

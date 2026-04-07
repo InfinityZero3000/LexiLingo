@@ -50,6 +50,7 @@ class LocaleService {
   static Future<void> syncLocale(BuildContext context) async {
     try {
       final savedLocale = await getSavedLocale();
+      if (!context.mounted) return;
       final currentLocale = context.locale.languageCode;
       
       if (savedLocale != currentLocale) {

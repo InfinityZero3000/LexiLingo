@@ -1,61 +1,56 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 
 const _tag = 'TokenStorage';
 
 /// Secure storage for authentication tokens
-/// Uses flutter_secure_storage for encrypted storage
-/// Falls back to in-memory storage on web for reliability
+/// Uses flutter_secure_storage for encrypted storage on mobile,
+/// and SharedPreferences (LocalStorage) on Web for reliable persistence across reloads.
 class TokenStorage {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _tokenTypeKey = 'token_type';
 
-  // In-memory storage for web platform as fallback
-  static final Map<String, String> _memoryStorage = {};
-
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-    webOptions: WebOptions(
-      dbName: 'lexilingo_secure_storage',
-      publicKey: 'lexilingo_public_key',
     ),
   );
 
   Future<void> _write(String key, String value) async {
     if (kIsWeb) {
-      // Use in-memory storage on web for reliability
-      _memoryStorage[key] = value;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, value);
     } else {
-      await _storage.write(key: key, value: value);
+      await _secureStorage.write(key: key, value: value);
     }
   }
 
   Future<String?> _read(String key) async {
     if (kIsWeb) {
-      return _memoryStorage[key];
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(key);
+    } else {
+      return await _secureStorage.read(key: key);
     }
-    return await _storage.read(key: key);
   }
 
-  /// Delete a value from secure storage
-  // ignore: unused_element
   Future<void> _delete(String key) async {
     if (kIsWeb) {
-      _memoryStorage.remove(key);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(key);
     } else {
-      await _storage.delete(key: key);
+      await _secureStorage.delete(key: key);
     }
   }
 
   /// Save authentication tokens securely
   Future<void> saveTokens(AuthTokens tokens) async {
-    logDebug(_tag, 'Saving tokens... (isWeb: $kIsWeb)');
+    logDebug(_tag, 'Saving tokens...');
     logDebug(_tag, 'Access token length: ${tokens.accessToken.length}');
     try {
       await Future.wait([
@@ -86,7 +81,7 @@ class TokenStorage {
     try {
       final accessToken = await getAccessToken();
       final refreshToken = await getRefreshToken();
-      final tokenType = await _storage.read(key: _tokenTypeKey);
+      final tokenType = await _read(_tokenTypeKey);
 
       logDebug(
         _tag,
@@ -134,23 +129,20 @@ class TokenStorage {
 
   /// Clear all stored tokens (logout)
   Future<void> clearTokens() async {
-    if (kIsWeb) {
-      _memoryStorage.clear();
-    } else {
-      await Future.wait([
-        _storage.delete(key: _accessTokenKey),
-        _storage.delete(key: _refreshTokenKey),
-        _storage.delete(key: _tokenTypeKey),
-      ]);
-    }
+    await Future.wait([
+      _delete(_accessTokenKey),
+      _delete(_refreshTokenKey),
+      _delete(_tokenTypeKey),
+    ]);
   }
 
   /// Clear all secure storage (complete wipe)
   Future<void> clearAll() async {
     if (kIsWeb) {
-      _memoryStorage.clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
     } else {
-      await _storage.deleteAll();
+      await _secureStorage.deleteAll();
     }
   }
 }
