@@ -348,6 +348,7 @@ class GraphCAGPipeline:
                 "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
                 "retrieval_trace": trace,
+                "retrieval_meta": state.get("retrieval_meta", {}),
             },
             "audio": {
                 "bytes": state.get("tts_audio_bytes"),

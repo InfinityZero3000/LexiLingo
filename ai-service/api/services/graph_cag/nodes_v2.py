@@ -19,6 +19,7 @@ import json
 import hashlib
 import time
 from typing import Dict, Any, List, Optional
+from collections import OrderedDict
 
 from api.services.graph_cag.state import (
     GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
@@ -30,11 +31,83 @@ logger = logging.getLogger(__name__)
 
 _PROVIDER_QUEUE_LOCKS: Dict[str, asyncio.Lock] = {}
 _PROVIDER_NEXT_REQUEST_AT: Dict[str, float] = {}
+_KG_QUERY_CACHE: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
     raw = str(os.getenv(name, "1" if default else "0")).strip().lower()
     return raw in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _token_count_approx(text: str) -> int:
+    if not text:
+        return 0
+    return len(re.findall(r"\w+|[^\w\s]", text, flags=re.UNICODE))
+
+
+def _kg_cache_key(query: str, level: str, top_k: int) -> str:
+    raw = f"{query.strip().lower()}||{str(level).upper()}||{top_k}"
+    return hashlib.md5(raw.encode("utf-8")).hexdigest()
+
+
+def _kg_cache_get(key: str) -> Optional[List[Dict[str, Any]]]:
+    now = time.monotonic()
+    ttl_seconds = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_TTL_SECONDS", 900))
+    item = _KG_QUERY_CACHE.get(key)
+    if not item:
+        return None
+    if now - float(item.get("ts", 0.0)) > ttl_seconds:
+        _KG_QUERY_CACHE.pop(key, None)
+        return None
+    _KG_QUERY_CACHE.move_to_end(key)
+    return list(item.get("data") or [])
+
+
+def _kg_cache_set(key: str, data: List[Dict[str, Any]]) -> None:
+    max_entries = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_MAX_ENTRIES", 200))
+    _KG_QUERY_CACHE[key] = {"ts": time.monotonic(), "data": list(data)}
+    _KG_QUERY_CACHE.move_to_end(key)
+    while len(_KG_QUERY_CACHE) > max_entries:
+        _KG_QUERY_CACHE.popitem(last=False)
+
+
+def _pack_kg_nodes_for_context(nodes: List[Dict[str, Any]], token_budget: int) -> List[Dict[str, Any]]:
+    if token_budget <= 0:
+        return []
+    packed: List[Dict[str, Any]] = []
+    used = 0
+    for node in nodes:
+        title = str(node.get("title") or node.get("id") or "")
+        keywords = str(node.get("keywords") or "")
+        snippet = f"Concept: {title}. Keywords: {keywords}".strip()
+        cost = _token_count_approx(snippet)
+        if cost <= 0:
+            continue
+        if used + cost > token_budget:
+            break
+        packed.append(node)
+        used += cost
+    return packed
 
 
 def _provider_rpm(provider: str) -> int:
@@ -178,15 +251,21 @@ def _cefr_distance(a: str, b: str) -> int:
 # ============================================================
 
 # Reuse-risk weights (tunable, sum to ~1.0)
-_W_INTENT = 0.30     # w1: intent mismatch (0/1)
-_W_CONCEPT = 0.25    # w2: concept drift (1-Jaccard)
-_W_LEVEL = 0.20      # w3: normalized level drift
-_W_PROGRESS = 0.10   # w4: profile progress drift
-_W_STALENESS = 0.15  # w5: staleness ratio
+_W_INTENT = _env_float("GRAPHCAG_PCC_W_INTENT", 0.30)      # w1: intent mismatch (0/1)
+_W_CONCEPT = _env_float("GRAPHCAG_PCC_W_CONCEPT", 0.25)    # w2: concept drift (1-Jaccard)
+_W_LEVEL = _env_float("GRAPHCAG_PCC_W_LEVEL", 0.20)        # w3: normalized level drift
+_W_PROGRESS = _env_float("GRAPHCAG_PCC_W_PROGRESS", 0.10)  # w4: profile progress drift
+_W_STALENESS = _env_float("GRAPHCAG_PCC_W_STALENESS", 0.15)  # w5: staleness ratio
 
 # Thresholds for ternary decision
-_TAU_REUSE = 0.25    # τ₀: max risk for direct reuse
-_TAU_PATCH = 0.55    # τ₁: max risk for delta patching
+_TAU_REUSE = _env_float("GRAPHCAG_PCC_TAU_REUSE", 0.25)  # τ₀: max risk for direct reuse
+_TAU_PATCH = _env_float("GRAPHCAG_PCC_TAU_PATCH", 0.55)  # τ₁: max risk for delta patching
+
+# L1 ranking weights (paper-inspired: risk + overlap + recency)
+_L1_RISK_WEIGHT = _env_float("GRAPHCAG_L1_RISK_WEIGHT", 1.0)
+_L1_OVERLAP_WEIGHT = _env_float("GRAPHCAG_L1_OVERLAP_WEIGHT", 0.5)
+_L1_RECENCY_WEIGHT = _env_float("GRAPHCAG_L1_RECENCY_WEIGHT", 0.3)
+_L1_RECENCY_LAMBDA = _env_float("GRAPHCAG_L1_RECENCY_LAMBDA", 0.10)
 
 
 def _is_exact_reuse_match(fingerprint: CacheFingerprint, entry: CacheEntry) -> bool:
@@ -312,6 +391,40 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
     return response
 
 
+def _concept_overlap_score(current: CacheFingerprint, candidate: CacheEntry) -> float:
+    cur_concepts = set(current.get("root_concepts") or [])
+    cached_concepts = set((candidate.get("fingerprint") or {}).get("root_concepts") or [])
+    if not cur_concepts and not cached_concepts:
+        return 0.5
+    return len(cur_concepts & cached_concepts) / max(len(cur_concepts | cached_concepts), 1)
+
+
+def _recency_score(current: CacheFingerprint, candidate: CacheEntry) -> float:
+    import math
+
+    cur_turn = int(current.get("session_turn") or 0)
+    cached_turn = int((candidate.get("fingerprint") or {}).get("session_turn") or 0)
+    turn_gap = abs(cur_turn - cached_turn)
+    return math.exp(-_L1_RECENCY_LAMBDA * turn_gap)
+
+
+def _rank_l1_candidate(
+    fingerprint: CacheFingerprint,
+    candidate: CacheEntry,
+    now: float,
+) -> tuple[float, float]:
+    """Return (rank_score, rho) for L1 candidate ordering."""
+    rho = _compute_reuse_risk(fingerprint, candidate, now)
+    overlap = _concept_overlap_score(fingerprint, candidate)
+    recency = _recency_score(fingerprint, candidate)
+    score = (
+        -_L1_RISK_WEIGHT * rho
+        + _L1_OVERLAP_WEIGHT * overlap
+        + _L1_RECENCY_WEIGHT * recency
+    )
+    return score, rho
+
+
 # ============================================================
 # IN-PROCESS CACHE (Structured CacheEntry, fallback when Redis unavailable)
 # ============================================================
@@ -330,17 +443,16 @@ _POLICY_VERSION: int = 1          # bump when strategy / prompt templates change
 _DEFAULT_BUCKET_TTL: int = 7200   # 2 h: max age of a valid L1 bucket
 
 
-def _write_bucket_version(bucket: str) -> None:
+def _write_bucket_version(bucket: str, profile_epoch: Optional[int] = None) -> None:
     """Record current deployment version tuple for *bucket* (Algorithm 3, PromoteToL1)."""
     _MEM_BUCKET_VERSIONS[bucket] = BucketVersionRecord(
         nu_graph=_GRAPH_SCHEMA_VERSION,
         nu_policy=_POLICY_VERSION,
-        nu_profile=0,
+        nu_profile=int(profile_epoch or 0),
         t_refresh=time.monotonic(),
     )
 
-
-def _bucket_version_valid(bucket: str) -> bool:
+def _bucket_version_valid(bucket: str, current_profile_epoch: Optional[int] = None) -> bool:
     """
     Algorithm 3, lines 3–5: return False when the bucket should be invalidated.
 
@@ -357,6 +469,8 @@ def _bucket_version_valid(bucket: str) -> bool:
     if rec.get("nu_graph", _GRAPH_SCHEMA_VERSION) != _GRAPH_SCHEMA_VERSION:
         return False
     if rec.get("nu_policy", _POLICY_VERSION) != _POLICY_VERSION:
+        return False
+    if current_profile_epoch is not None and int(rec.get("nu_profile", 0)) != int(current_profile_epoch):
         return False
     age = time.monotonic() - rec.get("t_refresh", 0.0)
     return age <= _DEFAULT_BUCKET_TTL
@@ -418,22 +532,61 @@ def _extract_lightweight_graph_concepts(user_input: str) -> list[str]:
     return sorted(concepts)
 
 
-def _build_graph_bucket(user_input: str, level: str, conversation_history: list[dict[str, Any]]) -> str:
+def _infer_intent_pre_diagnosis(user_input: str) -> str:
+    text = (user_input or "").lower()
+    if any(token in text for token in ["why", "explain", "what does", "how does"]):
+        return "explain"
+    if any(token in text for token in ["practice", "exercise", "quiz", "train"]):
+        return "practice"
+    if text.rstrip().endswith("?") or any(token in text for token in ["who", "where", "when", "which", "what", "how many"]):
+        return "ask"
+    return "correct"
+
+
+def _profile_epoch(profile: dict[str, Any]) -> int:
+    level = str(profile.get("level") or "B1").upper()
+    sessions_completed = int(profile.get("sessions_completed") or 0)
+    vocabulary_count = int(profile.get("vocabulary_count") or 0)
+    common_errors = profile.get("common_errors") or []
+    error_bucket = len(common_errors) // 2 if isinstance(common_errors, list) else 0
+    key = f"{level}|{sessions_completed // 3}|{vocabulary_count // 200}|{error_bucket}"
+    return int(hashlib.md5(key.encode()).hexdigest()[:8], 16)
+
+
+def _build_graph_bucket(
+    user_input: str,
+    level: str,
+    intent: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+) -> str:
     """Cheap graph-aware bucket used for L1 candidate lookup."""
     concepts = _extract_lightweight_graph_concepts(user_input)
     if not concepts:
         concepts = ["token:generic"]
-    bucket_material = "|".join([level, str(len(conversation_history) // 2)] + concepts[:5])
+    bucket_material = "|".join([
+        level,
+        intent,
+        str(profile_epoch),
+        str(len(conversation_history) // 2),
+    ] + concepts[:5])
     return hashlib.md5(bucket_material.encode()).hexdigest()
 
 
-def _register_graph_bucket(bucket: str, cache_key: str) -> None:
+def _register_graph_bucket(
+    bucket: str,
+    cache_key: str,
+    *,
+    profile_epoch: Optional[int] = None,
+    refresh_version: bool = True,
+) -> None:
     if not bucket:
         return
     keys = [item for item in _MEM_GRAPH_BUCKETS.get(bucket, []) if item != cache_key]
     keys.insert(0, cache_key)
     _MEM_GRAPH_BUCKETS[bucket] = keys[:_MEM_BUCKET_MAX_ITEMS]
-    _write_bucket_version(bucket)
+    if refresh_version:
+        _write_bucket_version(bucket, profile_epoch=profile_epoch)
 
 
 async def _register_graph_bucket_redis(bucket: str, cache_key: str, ttl: int) -> None:
@@ -507,7 +660,7 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
         ttl_remaining = max(entry["ttl"] - (now - entry.get("created_at", now)), 60)
         _MEM_RESPONSE_CACHE[cache_key] = (now + ttl_remaining, entry)
         if entry.get("graph_bucket"):
-            _register_graph_bucket(entry["graph_bucket"], cache_key)
+            _register_graph_bucket(entry["graph_bucket"], cache_key, refresh_version=False)
         return entry
     except Exception as e:
         logger.debug(f"[_get_cache_entry] Redis read failed: {e}")
@@ -524,7 +677,10 @@ async def _write_cache_entry(
 ) -> None:
     """Write a structured CacheEntry to both in-process and Redis caches."""
     user_input = state.get("user_input", "")
-    level = state.get("learner_profile", {}).get("level", "B1")
+    learner_profile = state.get("learner_profile", {})
+    level = learner_profile.get("level", "B1")
+    intent_hint = state.get("diagnosis_intent") or _infer_intent_pre_diagnosis(user_input)
+    profile_epoch = _profile_epoch(learner_profile)
 
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
@@ -532,6 +688,8 @@ async def _write_cache_entry(
     graph_bucket = _build_graph_bucket(
         user_input,
         level,
+        intent_hint,
+        profile_epoch,
         state.get("conversation_history", []),
     )
 
@@ -578,17 +736,20 @@ async def _write_cache_entry(
     # Unconditional write still goes to L0 (exact key); the bucket registration
     # is the extra step that makes this entry discoverable as an L1 near-hit.
     if _is_pcc_stable(state):
-        _register_graph_bucket(graph_bucket, cache_key)
+        _register_graph_bucket(graph_bucket, cache_key, profile_epoch=profile_epoch)
         logger.debug(f"[_write_cache_entry] L1 promote key={cache_key[:8]} bucket={graph_bucket[:8]}")
     else:
         logger.debug(f"[_write_cache_entry] L1 skipped (not PCC-stable) key={cache_key[:8]}")
 
     # Redis
+    should_promote_l1 = _is_pcc_stable(state)
+
     try:
         from api.core.redis_client import RedisClient
         redis_client = await RedisClient.get_instance()
         await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
-        await _register_graph_bucket_redis(graph_bucket, cache_key, ttl)
+        if should_promote_l1:
+            await _register_graph_bucket_redis(graph_bucket, cache_key, ttl)
         logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
     except Exception as e:
         logger.debug(f"[_write_cache_entry] Redis write failed: {e}")
@@ -710,14 +871,17 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
         }
 
     user_input = state.get("user_input", "")
-    level = state.get("learner_profile", {}).get("level", "B1")
+    learner_profile = state.get("learner_profile", {})
+    level = learner_profile.get("level", "B1")
     conversation_history = state.get("conversation_history", [])
-    bucket = _build_graph_bucket(user_input, level, conversation_history)
+    intent_hint = _infer_intent_pre_diagnosis(user_input)
+    profile_epoch = _profile_epoch(learner_profile)
+    bucket = _build_graph_bucket(user_input, level, intent_hint, profile_epoch, conversation_history)
 
     # Build lightweight fingerprint (pre-diagnosis: intent/root_concepts unknown)
     fingerprint = CacheFingerprint(
         query_norm=user_input.strip().lower(),
-        intent="unknown",  # not yet diagnosed
+        intent=intent_hint,
         level=level,
         root_concepts=_extract_lightweight_graph_concepts(user_input),
         session_turn=len(conversation_history),
@@ -774,7 +938,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
     # Algorithm 3, lines 3–5: validate bucket version before inspecting candidates.
     # If the bucket is stale (version mismatch or TTL expired) → invalidate and
     # fall through to L2 reconstruction immediately.
-    if not _bucket_version_valid(bucket):
+    if not _bucket_version_valid(bucket, current_profile_epoch=profile_epoch):
         _invalidate_bucket(bucket)
         logger.info(f"[cache_gate_node] L1 bucket stale/invalid → invalidated, fall L2 (bucket={bucket[:8]})")
         return {
@@ -787,19 +951,19 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
             "path": "slow",
         }
     candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
-    best_candidate: tuple[str, CacheEntry, float] | None = None
+    best_candidate: tuple[str, CacheEntry, float, float] | None = None
     for candidate_key in candidate_keys:
         candidate_entry = await _get_cache_entry(candidate_key, level, now)
         if not candidate_entry:
             continue
-        rho = _compute_reuse_risk(fingerprint, candidate_entry, now)
+        rank_score, rho = _rank_l1_candidate(fingerprint, candidate_entry, now)
         if rho > _TAU_PATCH:
             continue
-        if best_candidate is None or rho < best_candidate[2]:
-            best_candidate = (candidate_key, candidate_entry, rho)
+        if best_candidate is None or rank_score > best_candidate[2]:
+            best_candidate = (candidate_key, candidate_entry, rank_score, rho)
 
     if best_candidate is not None:
-        _, entry, rho = best_candidate
+        _, entry, _, rho = best_candidate
         logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} ρ={rho:.3f}")
         if rho <= _TAU_REUSE:
             _resp_text = entry.get("response", "")
@@ -1305,10 +1469,47 @@ def _normalize_score_map(scores: dict[str, float]) -> dict[str, float]:
     return {key: value / total for key, value in positive.items()}
 
 
+def _question_complexity_score(question: str) -> int:
+    text = (question or "").lower()
+    score = 1
+    if any(k in text for k in ["and", "both", "compare", "before", "after", "while"]):
+        score += 1
+    if any(k in text for k in ["who", "where", "when", "which", "how many", "how much"]):
+        score += 1
+    if len(text.split()) >= 14:
+        score += 1
+    return min(score, 4)
+
+
+def _compute_evidence_budget(
+    *,
+    question: str,
+    retrieval_policy: str,
+    benchmark_mode: str,
+    benchmark_candidates: bool,
+) -> int:
+    base = max(2, _env_int("GRAPHCAG_EVIDENCE_BUDGET_BASE", 5))
+    max_budget = max(base, _env_int("GRAPHCAG_EVIDENCE_BUDGET_MAX", 9))
+    complexity = _question_complexity_score(question)
+    budget = base + max(0, complexity - 2)
+
+    if retrieval_policy == "rapid":
+        budget -= 1
+
+    if benchmark_candidates:
+        if benchmark_mode == "graphrag_proxy":
+            budget = max(3, budget - 1)
+        elif benchmark_mode == "hipporag_proxy":
+            budget = min(max_budget, budget + 1)
+
+    return max(2, min(max_budget, budget))
+
+
 def _rank_benchmark_candidates(
     question: str,
     candidates: list[Dict[str, Any]],
     ranker: str,
+    benchmark_mode: str = "",
 ) -> list[Dict[str, Any]]:
     if not candidates:
         return []
@@ -1373,7 +1574,13 @@ def _rank_benchmark_candidates(
         memory_score = memory_state.get(item_id, 0.0)
 
         if ranker == "graph":
-            final_score = (0.6 * base_score) + (0.4 * graph_score)
+            # Keep proxy modes intentionally distinct in benchmark runs.
+            if benchmark_mode == "graphrag_proxy":
+                final_score = (0.35 * base_score) + (0.65 * graph_score)
+            elif benchmark_mode == "graphcag_rapid":
+                final_score = (0.7 * base_score) + (0.3 * graph_score)
+            else:
+                final_score = (0.6 * base_score) + (0.4 * graph_score)
         elif ranker == "memory":
             final_score = (0.45 * base_score) + (0.55 * memory_score)
         else:
@@ -1442,16 +1649,30 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
     """
     logger.info("[retrieve_node] Budgeted hybrid retrieval...")
     start_time = time.time()
+    retrieve_start = time.monotonic()
+
+    kg_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_KG_MS", 120.0))
+    vector_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
+    fusion_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
+    total_budget_ms = kg_budget_ms + vector_budget_ms + fusion_budget_ms
+
+    def _elapsed_ms() -> float:
+        return (time.monotonic() - retrieve_start) * 1000.0
+
+    budget_exhausted = False
 
     retrieval_policy = state.get("retrieval_policy", "full")
     benchmark_context = (state.get("benchmark_context") or "").strip()
     benchmark_task = state.get("benchmark_task") or ""
-    benchmark_ranker = str((state.get("benchmark_metadata") or {}).get("_benchmark_ranker") or "graph").strip().lower()
+    benchmark_metadata = state.get("benchmark_metadata") or {}
+    benchmark_ranker = str(benchmark_metadata.get("_benchmark_ranker") or "graph").strip().lower()
+    benchmark_mode = str(benchmark_metadata.get("_benchmark_mode") or "").strip().lower()
     user_input = state.get("user_input", "")
 
     kg_concepts = state.get("kg_seed_concepts", [])
     kg_expanded = state.get("kg_expanded_nodes", [])
     session_turn = len(state.get("conversation_history", []))
+    benchmark_candidates, relevant_ids = _build_benchmark_candidates(state)
 
     # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
     # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
@@ -1474,6 +1695,38 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
             "turns_ago": session_turn,
         })
 
+    # Query KG with top-K node retrieval and bounded context packing to control prompt size.
+    if not benchmark_candidates and not benchmark_context:
+        try:
+            from api.services.kg_service_v3 import get_kg_service
+
+            learner_level = state.get("learner_profile", {}).get("level", "B1")
+            top_k = max(1, _env_int("GRAPHCAG_KG_TOPK", 8))
+            token_budget = max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160))
+
+            cache_key = _kg_cache_key(user_input, learner_level, top_k)
+            queried_nodes = _kg_cache_get(cache_key)
+            if queried_nodes is None:
+                kg = get_kg_service()
+                queried_nodes = kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
+                _kg_cache_set(cache_key, queried_nodes)
+
+            packed_nodes = _pack_kg_nodes_for_context(queried_nodes, token_budget)
+            for node in packed_nodes:
+                title = str(node.get("title") or node.get("id") or "")
+                keywords = str(node.get("keywords") or "")
+                score = float(node.get("score") or 0.0)
+                evidence_items.append({
+                    "item_id": str(node.get("id") or title),
+                    "title": title,
+                    "text": f"Concept: {title}. Keywords: {keywords}",
+                    "kg_depth": 1,
+                    "vec_sim": max(0.0, min(1.0, score)),
+                    "turns_ago": session_turn,
+                })
+        except Exception as kg_exc:
+            logger.warning(f"[retrieve_node] KG top-K query skipped: {kg_exc}")
+
     for error in state.get("diagnosis_errors", [])[:3]:
         evidence_items.append({
             "text": f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
@@ -1482,10 +1735,14 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
             "turns_ago": 0,
         })
 
-    benchmark_candidates, relevant_ids = _build_benchmark_candidates(state)
     if benchmark_candidates:
         evidence_items = []
-        ranked_candidates = _rank_benchmark_candidates(user_input, benchmark_candidates, benchmark_ranker)
+        ranked_candidates = _rank_benchmark_candidates(
+            user_input,
+            benchmark_candidates,
+            benchmark_ranker,
+            benchmark_mode,
+        )
         for candidate in ranked_candidates:
             final_score = float(candidate.get("fusion_score", candidate.get("vec_sim", 0.0)))
             evidence_items.append({
@@ -1513,7 +1770,7 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
 
     # ── Stage 2: RetrievalServiceV3 (centrality + community ranking) ─────
     vector_hits = []
-    if not benchmark_candidates:
+    if not benchmark_candidates and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
         errors = state.get("diagnosis_errors", [])
         confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
 
@@ -1526,7 +1783,7 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
             elif len(errors) <= 2 and confidence >= 0.7:
                 max_hits = 2
 
-        if do_vector_search:
+        if do_vector_search and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
             # ── Primary: RetrievalServiceV3 (centrality + community diversity) ──
             try:
                 from api.models.v3_schemas import V3PipelineContext
@@ -1609,6 +1866,8 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                             logger.info(f"[retrieve_node] MiniLM fallback: {len(vector_hits)} hits")
                 except Exception as e2:
                     logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
+    elif not benchmark_candidates:
+        budget_exhausted = True
 
     # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
     # Phân tích xem có nên ép buộc tìm kiếm bên ngoài không (Proactive Dynamic Retrieval)
@@ -1654,18 +1913,30 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
             logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
 
     # ── Fusion scoring and ranking ───────────────────────────────────
-    for item in evidence_items:
-        if benchmark_candidates and "precomputed_score" in item:
-            item["fusion_score"] = float(item.get("precomputed_score") or 0.0)
-        else:
-            item["fusion_score"] = _fusion_score(
-                kg_depth=item["kg_depth"],
-                vec_sim=item["vec_sim"],
-                last_used_turns_ago=item["turns_ago"],
-            )
+    if _elapsed_ms() <= total_budget_ms:
+        for item in evidence_items:
+            if benchmark_candidates and "precomputed_score" in item:
+                item["fusion_score"] = float(item.get("precomputed_score") or 0.0)
+            else:
+                item["fusion_score"] = _fusion_score(
+                    kg_depth=item["kg_depth"],
+                    vec_sim=item["vec_sim"],
+                    last_used_turns_ago=item["turns_ago"],
+                )
+    else:
+        budget_exhausted = True
+        for item in evidence_items:
+            if "fusion_score" not in item:
+                item["fusion_score"] = float(item.get("vec_sim") or 0.0)
 
     evidence_items.sort(key=lambda x: x["fusion_score"], reverse=True)
-    top_evidence = evidence_items[:5]  # budget: top-5
+    evidence_budget = _compute_evidence_budget(
+        question=user_input,
+        retrieval_policy=retrieval_policy,
+        benchmark_mode=benchmark_mode,
+        benchmark_candidates=bool(benchmark_candidates),
+    )
+    top_evidence = evidence_items[:evidence_budget]
     retrieval_trace = [
         {
             "item_id": str(item.get("item_id") or item.get("title") or f"item_{idx}"),
@@ -1692,12 +1963,38 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
         retrieved_context = "\n".join(context_parts) if context_parts else ""
 
     latency_ms = int((time.time() - start_time) * 1000)
-    logger.info(f"[retrieve_node] {len(evidence_items)} candidates → top {len(top_evidence)} via fusion scoring")
+    logger.info(
+        f"[retrieve_node] {len(evidence_items)} candidates → top {len(top_evidence)} via fusion scoring"
+        f" (mode={benchmark_mode or 'default'}, ranker={benchmark_ranker})"
+    )
 
     return {
         "vector_hits": vector_hits,
         "retrieved_context": retrieved_context,
         "retrieval_trace": retrieval_trace,
+        "retrieval_meta": {
+            "budget": {
+                "kg_ms": kg_budget_ms,
+                "vector_ms": vector_budget_ms,
+                "fusion_ms": fusion_budget_ms,
+                "total_ms": total_budget_ms,
+                "elapsed_ms": _elapsed_ms(),
+                "exhausted": budget_exhausted,
+            },
+            "fusion": {
+                "alpha": _FUSION_ALPHA,
+                "beta": _FUSION_BETA,
+                "gamma": _FUSION_GAMMA,
+                "recency_lambda": _RECENCY_LAMBDA,
+            },
+            "kg_topk": {
+                "top_k": max(1, _env_int("GRAPHCAG_KG_TOPK", 8)),
+                "context_token_budget": max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
+                "query_cache_size": len(_KG_QUERY_CACHE),
+            },
+            "mode": benchmark_mode or "default",
+            "ranker": benchmark_ranker,
+        },
         "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
     }
 
@@ -2118,6 +2415,37 @@ def _generate_template_qa_response(question: str, context: str) -> str:
     return answer or best_sentence
 
 
+def _postprocess_benchmark_qa_answer(question: str, raw_answer: str, context: str) -> str:
+    """Normalize LLM output into a concise benchmark answer span."""
+    text = str(raw_answer or "").strip()
+    if not text:
+        return "unknown"
+
+    # Remove code fences/prefixes and keep first non-empty line.
+    text = re.sub(r"```(?:text)?", "", text, flags=re.IGNORECASE)
+    text = text.replace("```", "").strip()
+    text = re.sub(r"^\s*(final\s+answer|answer)\s*:\s*", "", text, flags=re.IGNORECASE)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    candidate = (lines[0] if lines else text).strip(" \t\n\r\"'`“”")
+
+    low = candidate.lower().strip().rstrip(".!")
+    if low in {"yes", "no", "unknown"}:
+        return low
+
+    candidate_tokens = _content_tokens(candidate)
+    context_tokens = set(_content_tokens(context))
+    if candidate_tokens:
+        support = sum(1 for tok in candidate_tokens if tok in context_tokens) / max(len(candidate_tokens), 1)
+        if support < 0.4:
+            return _generate_template_qa_response(question, context)
+
+    # For long explanatory outputs, fallback to deterministic span extraction.
+    if len(candidate.split()) > 20 or any(token in low for token in ["because", "according to", "based on", "the answer"]):
+        return _generate_template_qa_response(question, context)
+
+    return candidate
+
+
 async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: float) -> Dict[str, Any]:
     """Generate concise QA outputs for paper-style public benchmarks."""
     question = state.get("user_input", "")
@@ -2235,6 +2563,8 @@ async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: floa
         if not response:
             response = _generate_template_qa_response(question, context)
             model_used = "benchmark_template"
+
+    response = _postprocess_benchmark_qa_answer(question, response, context)
 
     overall_score = 1.0 if response and response.lower() != "unknown" else 0.0
     if state.get("cache_policy", "on") == "on":

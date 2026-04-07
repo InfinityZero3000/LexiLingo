@@ -1,7 +1,7 @@
 """
 Model Gateway - Unified Model Management for LexiLingo
 
-This is the CORE MCP tool that manages all AI models:
+This is the core component that manages all AI models:
 - Lazy loading: Models only load when first requested
 - Auto unload: Free RAM after idle timeout
 - Smart routing: Route requests to appropriate models

@@ -22,6 +22,7 @@ class DocumentIntelligenceService:
         self.knowledge_index: List[Dict[str, Any]] = []
         # Cấu hình API Search (Ví dụ: Tavily - rất phổ biến cho AI RAG)
         self.search_api_key = os.getenv("TAVILY_API_KEY", "")
+        self.search_depth = os.getenv("TAVILY_SEARCH_DEPTH", "fast").strip().lower() or "fast"
         self._load_local_docs()
 
     def _load_local_docs(self):
@@ -60,6 +61,9 @@ class DocumentIntelligenceService:
             logger.warning("[L2_Search] No TAVILY_API_KEY found. Auto-search disabled.")
             return []
 
+        allowed_depths = {"ultra-fast", "fast", "basic", "advanced"}
+        depth = self.search_depth if self.search_depth in allowed_depths else "fast"
+
         logger.info(f"[L2_Search] Searching the web for: {query}")
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
@@ -68,13 +72,18 @@ class DocumentIntelligenceService:
                     json={
                         "api_key": self.search_api_key,
                         "query": query,
-                        "search_depth": "smart",
+                        "search_depth": depth,
                         "max_results": 3
                     }
                 )
                 if response.status_code == 200:
                     results = response.json().get("results", [])
                     return [r["content"] for r in results if len(r["content"]) > 100]
+                logger.warning(
+                    "[L2_Search] Tavily returned status %s: %s",
+                    response.status_code,
+                    response.text[:300],
+                )
         except Exception as e:
             logger.error(f"[L2_Search] Search failed: {e}")
         return []
@@ -96,6 +105,18 @@ class DocumentIntelligenceService:
                     self._process_text(content, "Web Search")
                 # Tìm lại lần nữa sau khi đã nạp tri thức Web
                 local_hits = self._get_top_matches(query, top_k)
+                if not local_hits:
+                    # Fallback an toàn: vẫn trả context web để không mất dữ liệu realtime
+                    local_hits = [
+                        {
+                            "content": content,
+                            "score": 0.55,
+                            "id": hashlib.md5(content.encode()).hexdigest(),
+                            "source": "Web Search",
+                        }
+                        for content in web_contents[:top_k]
+                        if len(content) > 40
+                    ]
 
         return local_hits
 

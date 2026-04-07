@@ -134,6 +134,7 @@ class GraphCAGState(TypedDict, total=False):
     vector_hits: List[VectorHit]
     retrieved_context: str  # Combined context for generation
     retrieval_trace: List[RetrievalTraceItem]
+    retrieval_meta: Dict[str, Any]
     
     # ============================================
     # Response Generation
@@ -241,6 +242,7 @@ def create_initial_state(
         vector_hits=[],
         retrieved_context="",
         retrieval_trace=[],
+        retrieval_meta={},
         
         # Response (will be populated by generate_node)
         tutor_response="",

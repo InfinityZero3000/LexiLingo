@@ -13,6 +13,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 import os
+import shutil
+import time
+import json
+import re
 
 import kuzu
 
@@ -40,20 +44,24 @@ class KnowledgeGraphServiceV3:
         db_path = getattr(settings, "KUZU_DB_PATH", None) or os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "kuzu"
         )
-        db_path = os.path.abspath(db_path)
+        self._db_path = os.path.abspath(db_path)
+        self._recovery_attempted = False
         
         # Create parent directory if doesn't exist
-        parent_dir = os.path.dirname(db_path)
+        parent_dir = os.path.dirname(self._db_path)
         os.makedirs(parent_dir, exist_ok=True)
         
         # Only destroy and recreate if the DB is corrupted or missing.
         # Check if schema already exists to avoid unnecessary re-seed.
         needs_seed = False
-        if not os.path.isdir(db_path):
+        if os.path.exists(self._db_path) and not os.path.isdir(self._db_path):
+            os.remove(self._db_path)
+            needs_seed = True
+        elif not os.path.isdir(self._db_path):
             needs_seed = True
         
         try:
-            self._db = kuzu.Database(db_path)
+            self._db = kuzu.Database(self._db_path)
             self._conn = kuzu.Connection(self._db)
             self._ensure_schema()
             
@@ -63,21 +71,61 @@ class KnowledgeGraphServiceV3:
                 self._seed_default_graph()
             else:
                 logger.info(f"[KG] Reusing existing KG with {self.get_concept_count()} concepts")
+
+            # Keep KG in sync with optional external knowledge bundle.
+            self._sync_external_knowledge()
         except Exception as e:
             logger.warning(f"[KG] DB may be corrupted, rebuilding: {e}")
-            # Only destroy if we can't open it
-            if os.path.isdir(db_path):
-                import shutil
+            self._hard_rebuild_db(reason=str(e))
 
-                logger.error(f"[KG] Database error: {e}")
-                if "lock" in str(e).lower():
-                    logger.error("DB locked, not deleting.")
-                    raise e
-                shutil.rmtree(db_path)
-            self._db = kuzu.Database(db_path)
-            self._conn = kuzu.Connection(self._db)
-            self._ensure_schema()
-            self._seed_default_graph()
+    def _hard_rebuild_db(self, reason: str = "unknown") -> None:
+        """Rebuild Kuzu DB from scratch when corruption is detected."""
+        logger.warning("[KG] Hard rebuild triggered: %s", reason)
+        if os.path.isdir(self._db_path):
+            if "lock" in reason.lower():
+                logger.error("[KG] DB locked, cannot rebuild safely: %s", self._db_path)
+                raise RuntimeError(reason)
+            ts = int(time.time() * 1000)
+            quarantine = f"{self._db_path}.corrupt.{ts}"
+            suffix = 1
+            while os.path.exists(quarantine):
+                quarantine = f"{self._db_path}.corrupt.{ts}.{suffix}"
+                suffix += 1
+            try:
+                os.rename(self._db_path, quarantine)
+                logger.warning("[KG] Quarantined corrupted DB to %s", quarantine)
+            except Exception:
+                shutil.rmtree(self._db_path, ignore_errors=True)
+        elif os.path.exists(self._db_path):
+            os.remove(self._db_path)
+
+        os.makedirs(self._db_path, exist_ok=True)
+        self._db = kuzu.Database(self._db_path)
+        self._conn = kuzu.Connection(self._db)
+        self._ensure_schema()
+        self._seed_default_graph()
+        self._sync_external_knowledge()
+        self._recovery_attempted = True
+
+    def _is_corruption_error(self, exc: Exception) -> bool:
+        text = str(exc).lower()
+        return (
+            "reading past the end of the file" in text
+            or "corrupt" in text
+            or "checksum" in text
+            or "invalid" in text
+        )
+
+    def _recover_and_retry(self, op_name: str) -> bool:
+        if self._recovery_attempted:
+            return False
+        try:
+            logger.warning("[KG] Attempting one-time recovery for %s", op_name)
+            self._hard_rebuild_db(reason=f"runtime failure during {op_name}")
+            return True
+        except Exception as rebuild_exc:
+            logger.error("[KG] Recovery failed for %s: %s", op_name, rebuild_exc)
+            return False
 
     def _ensure_schema(self) -> None:
         # Create tables if they do not exist.
@@ -297,6 +345,70 @@ class KnowledgeGraphServiceV3:
                 "keywords": "missing subject pronoun I he she it",
                 "level": "A1",
             },
+
+            # ============================================
+            # QA / MULTI-HOP BRIDGE CONCEPTS
+            # ============================================
+            "concept:qa.person_nationality": {
+                "title": "Person and Nationality",
+                "keywords": "person nationality born citizen country same nationality",
+                "level": "B1",
+            },
+            "concept:qa.person_profession": {
+                "title": "Person and Profession",
+                "keywords": "person profession occupation manager actor singer director",
+                "level": "B1",
+            },
+            "concept:qa.film_director": {
+                "title": "Film and Director",
+                "keywords": "film movie directed by director",
+                "level": "B1",
+            },
+            "concept:qa.album_release": {
+                "title": "Album Release",
+                "keywords": "album release released year music track",
+                "level": "B1",
+            },
+            "concept:qa.book_author": {
+                "title": "Book and Author",
+                "keywords": "book novel author wrote written",
+                "level": "B1",
+            },
+            "concept:qa.location_country": {
+                "title": "Location and Country",
+                "keywords": "location city country in located where",
+                "level": "A2",
+            },
+            "concept:qa.location_region": {
+                "title": "Location and Region",
+                "keywords": "region state province county district",
+                "level": "A2",
+            },
+            "concept:qa.organization_founder": {
+                "title": "Organization and Founder",
+                "keywords": "organization founded founder company institute",
+                "level": "B2",
+            },
+            "concept:qa.organization_headquarters": {
+                "title": "Organization Headquarters",
+                "keywords": "organization headquarters based in office",
+                "level": "B1",
+            },
+            "concept:qa.sports_team_league": {
+                "title": "Sports Team and League",
+                "keywords": "team league club football basketball",
+                "level": "B1",
+            },
+            "concept:qa.time_event": {
+                "title": "Time and Event",
+                "keywords": "when year date founded released born",
+                "level": "A2",
+            },
+            "concept:qa.bridge_comparison": {
+                "title": "Bridge Comparison",
+                "keywords": "both same compare comparison relation",
+                "level": "B2",
+            },
         }
 
         # Edge format: from -> [(to, relation)]
@@ -346,6 +458,36 @@ class KnowledgeGraphServiceV3:
             "concept:grammar.past_time_markers": [
                 ("concept:error.tense_confusion", "related_to"),
             ],
+            "concept:qa.person_profession": [
+                ("concept:qa.film_director", "related_to"),
+                ("concept:qa.organization_founder", "related_to"),
+            ],
+            "concept:qa.film_director": [
+                ("concept:qa.person_nationality", "bridge_to"),
+                ("concept:qa.time_event", "related_to"),
+            ],
+            "concept:qa.album_release": [
+                ("concept:qa.time_event", "related_to"),
+                ("concept:qa.person_profession", "related_to"),
+            ],
+            "concept:qa.book_author": [
+                ("concept:qa.person_profession", "related_to"),
+                ("concept:qa.bridge_comparison", "bridge_to"),
+            ],
+            "concept:qa.location_region": [
+                ("concept:qa.location_country", "prerequisite_of"),
+            ],
+            "concept:qa.organization_founder": [
+                ("concept:qa.organization_headquarters", "related_to"),
+                ("concept:qa.location_country", "bridge_to"),
+            ],
+            "concept:qa.sports_team_league": [
+                ("concept:qa.location_country", "related_to"),
+                ("concept:qa.bridge_comparison", "bridge_to"),
+            ],
+            "concept:qa.time_event": [
+                ("concept:qa.bridge_comparison", "related_to"),
+            ],
         }
 
         # Insert nodes (with level)
@@ -375,6 +517,75 @@ class KnowledgeGraphServiceV3:
                 except Exception:
                     continue
 
+    def _extended_knowledge_path(self) -> str:
+        configured = os.getenv("KG_EXTENDED_KNOWLEDGE_PATH", "").strip()
+        if configured:
+            return os.path.abspath(configured)
+        default_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "knowledge_extended.json")
+        return os.path.abspath(default_path)
+
+    def _sync_external_knowledge(self) -> None:
+        path = self._extended_knowledge_path()
+        if not os.path.isfile(path):
+            return
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+        except Exception as exc:
+            logger.warning("[KG] Failed loading extended knowledge file %s: %s", path, exc)
+            return
+
+        concepts = payload.get("concepts") if isinstance(payload, dict) else None
+        edges = payload.get("edges") if isinstance(payload, dict) else None
+        if not isinstance(concepts, list):
+            return
+
+        inserted_concepts = 0
+        inserted_edges = 0
+
+        for concept in concepts:
+            if not isinstance(concept, dict):
+                continue
+            node_id = str(concept.get("id") or "").strip()
+            if not node_id:
+                continue
+            title = str(concept.get("title") or node_id).strip()
+            keywords = str(concept.get("keywords") or "").strip()
+            level = str(concept.get("level") or "B1").strip() or "B1"
+            try:
+                self._conn.execute(
+                    "MERGE (c:Concept {id: $id}) "
+                    "ON CREATE SET c.title = $title, c.keywords = $keywords, c.level = $level "
+                    "ON MATCH SET c.title = $title, c.keywords = $keywords, c.level = $level",
+                    {"id": node_id, "title": title, "keywords": keywords, "level": level},
+                )
+                inserted_concepts += 1
+            except Exception:
+                continue
+
+        if isinstance(edges, list):
+            for edge in edges:
+                if not isinstance(edge, dict):
+                    continue
+                from_id = str(edge.get("from") or "").strip()
+                to_id = str(edge.get("to") or "").strip()
+                relation = str(edge.get("relation") or "related_to").strip() or "related_to"
+                if not from_id or not to_id:
+                    continue
+                try:
+                    self._conn.execute(
+                        "MATCH (a:Concept), (b:Concept) WHERE a.id = $from AND b.id = $to "
+                        "MERGE (a)-[:Edge {relation: $relation}]->(b)",
+                        {"from": from_id, "to": to_id, "relation": relation},
+                    )
+                    inserted_edges += 1
+                except Exception:
+                    continue
+
+        if inserted_concepts or inserted_edges:
+            logger.info("[KG] Synced extended knowledge: concepts=%d edges=%d (%s)", inserted_concepts, inserted_edges, path)
+
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         concepts: Dict[str, Dict[str, str]] = {}
         try:
@@ -386,7 +597,9 @@ class KnowledgeGraphServiceV3:
                     "keywords": row[2] or "",
                     "level": row[3] or "B1",
                 }
-        except Exception:
+        except Exception as exc:
+            if self._is_corruption_error(exc) and self._recover_and_retry("get_concepts"):
+                return self.get_concepts()
             return concepts
         return concepts
 
@@ -411,7 +624,9 @@ class KnowledgeGraphServiceV3:
                         properties={"relation": row[1], "level": row[2] or "B1"},
                     ))
                     paths.append(KGPath(nodes=[seed, row[0]], edges=[row[1]]))
-        except Exception:
+        except Exception as exc:
+            if self._is_corruption_error(exc) and self._recover_and_retry("expand"):
+                return await self.expand(seed_nodes=seed_nodes, hops=hops)
             return KGHits(seed_nodes=seed_nodes, expanded_nodes=[], paths=[])
 
         return KGHits(seed_nodes=seed_nodes, expanded_nodes=expanded_nodes, paths=paths)
@@ -485,6 +700,13 @@ class KnowledgeGraphServiceV3:
                         w = ped_weight(neighbor_level)
                         heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
         except Exception as e:
+            if self._is_corruption_error(e) and self._recover_and_retry("expand_best_first"):
+                return await self.expand_best_first(
+                    seed_nodes=seed_nodes,
+                    learner_level=learner_level,
+                    max_hops=max_hops,
+                    max_nodes=max_nodes,
+                )
             logger.warning(f"[KG] expand_best_first error: {e}")
 
         return KGHits(seed_nodes=seed_nodes, expanded_nodes=expanded_nodes, paths=paths)
@@ -667,4 +889,52 @@ class KnowledgeGraphServiceV3:
         except Exception:
             pass
         return 0
+
+    def query_concepts(self, query: str, learner_level: str = "B1", top_k: int = 8) -> List[Dict[str, Any]]:
+        """Lexical + level-aware top-K concept retrieval for prompt grounding."""
+        normalized = str(query or "").strip().lower()
+        if not normalized or top_k <= 0:
+            return []
+
+        tokens = [tok for tok in re.findall(r"[a-z0-9_]+", normalized) if len(tok) >= 2]
+        if not tokens:
+            return []
+
+        concepts = self.get_concepts()
+        if not concepts:
+            return []
+
+        CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+        learner_ord = CEFR_ORD.get(str(learner_level or "B1").upper(), 3)
+
+        scored: List[Tuple[float, str, Dict[str, str]]] = []
+        token_set = set(tokens)
+        for concept_id, meta in concepts.items():
+            title = str(meta.get("title") or "")
+            keywords = str(meta.get("keywords") or "")
+            haystack = f"{title} {keywords}".lower()
+            if not haystack:
+                continue
+
+            overlap = sum(1 for tok in token_set if tok in haystack)
+            if overlap <= 0:
+                continue
+
+            level = str(meta.get("level") or "B1").upper()
+            diff = abs(CEFR_ORD.get(level, 3) - learner_ord)
+            level_boost = 1.0 if diff == 0 else (0.8 if diff == 1 else 0.6)
+            score = (overlap / max(len(token_set), 1)) * level_boost
+            scored.append((score, concept_id, meta))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [
+            {
+                "id": concept_id,
+                "title": meta.get("title", concept_id),
+                "keywords": meta.get("keywords", ""),
+                "level": meta.get("level", "B1"),
+                "score": round(float(score), 4),
+            }
+            for score, concept_id, meta in scored[:top_k]
+        ]
 

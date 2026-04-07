@@ -9,6 +9,7 @@ Following architecture.md:
 
 import asyncio
 import logging
+import os
 import redis.asyncio as redis
 from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
 from typing import Optional, Dict, Any, List, Callable, Awaitable, TypeVar
@@ -30,9 +31,45 @@ class RedisClient:
     _max_retries: int = 10
 
     @classmethod
+    def _benchmark_fail_fast(cls) -> bool:
+        value = os.getenv("BENCHMARK_REDIS_FAIL_FAST", "")
+        return value.lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
+    def _effective_max_retries(cls) -> int:
+        if cls._benchmark_fail_fast():
+            raw = os.getenv("BENCHMARK_REDIS_MAX_RETRIES", "1")
+        else:
+            raw = os.getenv("REDIS_MAX_RETRIES", str(cls._max_retries))
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            return cls._max_retries
+
+    @classmethod
+    def _socket_timeouts(cls) -> tuple[float, float]:
+        if cls._benchmark_fail_fast():
+            connect_raw = os.getenv("BENCHMARK_REDIS_CONNECT_TIMEOUT", "0.2")
+            op_raw = os.getenv("BENCHMARK_REDIS_SOCKET_TIMEOUT", "0.2")
+        else:
+            connect_raw = os.getenv("REDIS_CONNECT_TIMEOUT", "5")
+            op_raw = os.getenv("REDIS_SOCKET_TIMEOUT", "5")
+
+        try:
+            connect_timeout = max(0.05, float(connect_raw))
+        except ValueError:
+            connect_timeout = 5.0
+        try:
+            socket_timeout = max(0.05, float(op_raw))
+        except ValueError:
+            socket_timeout = 5.0
+        return connect_timeout, socket_timeout
+
+    @classmethod
     async def _create_instance(cls) -> redis.Redis:
         """Create a fresh Redis client and verify connectivity."""
         password = settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None
+        socket_connect_timeout, socket_timeout = cls._socket_timeouts()
 
         cls._pool = redis.ConnectionPool(
             host=settings.REDIS_HOST,
@@ -41,8 +78,8 @@ class RedisClient:
             db=settings.REDIS_DB,
             decode_responses=True,
             max_connections=10,
-            socket_timeout=5,
-            socket_connect_timeout=5,
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=socket_connect_timeout,
             health_check_interval=30,
         )
         cls._instance = redis.Redis(connection_pool=cls._pool)
@@ -73,7 +110,8 @@ class RedisClient:
         Raises RuntimeError after retry budget is exhausted.
         """
         last_exc: Optional[Exception] = None
-        for attempt in range(1, cls._max_retries + 1):
+        max_retries = cls._effective_max_retries()
+        for attempt in range(1, max_retries + 1):
             try:
                 await cls._reset()
                 return await cls._create_instance()
@@ -82,14 +120,14 @@ class RedisClient:
                 logger.warning(
                     "Redis reconnect attempt %s/%s failed: %s",
                     attempt,
-                    cls._max_retries,
+                    max_retries,
                     exc,
                 )
-                if attempt < cls._max_retries:
+                if attempt < max_retries:
                     await asyncio.sleep(min(0.2 * attempt, 2.0))
 
         raise RuntimeError(
-            f"Redis reconnect failed after {cls._max_retries} attempts"
+            f"Redis reconnect failed after {max_retries} attempts"
         ) from last_exc
     
     @classmethod
@@ -114,7 +152,8 @@ class RedisClient:
         Retries connection/timeouts up to 10 times, then raises RuntimeError.
         """
         last_exc: Optional[Exception] = None
-        for attempt in range(1, cls._max_retries + 1):
+        max_retries = cls._effective_max_retries()
+        for attempt in range(1, max_retries + 1):
             try:
                 client = await cls.get_instance()
                 return await operation(client)
@@ -123,15 +162,15 @@ class RedisClient:
                 logger.warning(
                     "Redis operation failed (attempt %s/%s), reconnecting: %s",
                     attempt,
-                    cls._max_retries,
+                    max_retries,
                     exc,
                 )
-                if attempt < cls._max_retries:
+                if attempt < max_retries:
                     await cls.reconnect()
                     await asyncio.sleep(min(0.2 * attempt, 2.0))
 
         raise RuntimeError(
-            f"Redis operation failed after {cls._max_retries} reconnect attempts"
+            f"Redis operation failed after {max_retries} reconnect attempts"
         ) from last_exc
     
     @classmethod
