@@ -17,18 +17,18 @@ class LexiChatDataSource {
 
     // Remove hidden reasoning blocks if the model leaks them.
     text = text.replaceAll(
-      RegExp(r'<think\\b[^>]*>[\\s\\S]*?<\\/think>', caseSensitive: false),
+      RegExp(r'<think\b[^>]*>[\s\S]*?<\/think>', caseSensitive: false),
       '',
     );
-    text = text.replaceAll(RegExp(r'<\\/?think>', caseSensitive: false), '');
+    text = text.replaceAll(RegExp(r'<\/?think>', caseSensitive: false), '');
 
     // Remove markdown wrappers that should not appear in plain chat bubbles.
-    text = text.replaceAll(RegExp(r'\\*\\*(.*?)\\*\\*'), r'$1');
-    text = text.replaceAll(RegExp(r'__(.*?)__'), r'$1');
+    text = text.replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (m) => m[1] ?? '');
+    text = text.replaceAllMapped(RegExp(r'__(.*?)__'), (m) => m[1] ?? '');
     text = text.replaceAll('`', '');
 
     // Normalize excessive blank lines from stripped sections.
-    text = text.replaceAll(RegExp(r'\\n{3,}'), '\\n\\n').trim();
+    text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 
     return text;
   }

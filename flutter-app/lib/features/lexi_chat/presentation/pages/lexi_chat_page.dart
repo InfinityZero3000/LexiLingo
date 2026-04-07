@@ -19,7 +19,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corre
 ///  - Clean minimalist conversation interface (no avatar)
 ///  - Voice input (STT via Whisper) and voice output (TTS)
 ///  - Real-time grammar/word checking with inline corrections
-///  - Topic-based conversation with elegant topic display
+///  - Free-form conversation focused on natural English practice
 ///  - Dark/light theme support
 class LexiChatPage extends StatefulWidget {
   const LexiChatPage({super.key});
@@ -40,9 +40,6 @@ class _LexiChatPageState extends State<LexiChatPage>
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   String? _recordingPath;
-
-  // Current topic
-  String _currentTopic = 'Free Conversation';
 
   @override
   void initState() {
@@ -132,6 +129,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     if (path != null) {
       final bytes = await File(path).readAsBytes();
+      if (!mounted) return;
       final b64 = base64Encode(bytes);
       final provider = context.read<LexiChatProvider>();
       await provider.sendVoiceMessage(b64, userId: _userId);
@@ -164,7 +162,6 @@ class _LexiChatPageState extends State<LexiChatPage>
           child: Column(
             children: [
               _buildHeader(isDark),
-              _buildTopicBar(isDark),
               Expanded(child: _buildMessageList(isDark)),
               _buildInputBar(isDark),
             ],
@@ -177,7 +174,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   // ── Minimalist Header ────────────────────────────────────────────────────
   Widget _buildHeader(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF1C2A38).withValues(alpha: 0.95)
@@ -191,26 +188,31 @@ class _LexiChatPageState extends State<LexiChatPage>
       ),
       child: Row(
         children: [
-          // Back button
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_rounded,
-              color: isDark ? Colors.white : AppColors.textDark,
-              size: 18,
+          const SizedBox(width: 4),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
             ),
-            onPressed: () => Navigator.of(context).pop(),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           // Title
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Lexi',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : AppColors.textDark,
                     letterSpacing: -0.3,
                   ),
@@ -218,8 +220,8 @@ class _LexiChatPageState extends State<LexiChatPage>
                 Consumer<LexiChatProvider>(
                   builder: (_, provider, __) {
                     final status = provider.isLexiTyping
-                        ? 'typing...'
-                        : 'Online';
+                        ? 'Lexi is typing...'
+                        : 'English speaking companion';
                     return Text(
                       status,
                       style: TextStyle(
@@ -227,7 +229,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                         color: provider.isLexiTyping
                             ? AppColors.primary
                             : (isDark ? Colors.white54 : AppColors.textGrey),
-                        fontWeight: provider.isLexiTyping ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight: provider.isLexiTyping ? FontWeight.w600 : FontWeight.w500,
                       ),
                     );
                   },
@@ -261,91 +263,6 @@ class _LexiChatPageState extends State<LexiChatPage>
             },
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Topic Display Bar ────────────────────────────────────────────────────
-  Widget _buildTopicBar(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1C2A38).withValues(alpha: 0.6)
-            : Colors.white.withValues(alpha: 0.6),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFF0F2F4),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: 16,
-            color: isDark ? Colors.white54 : AppColors.textGrey,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Topic:',
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.white54 : AppColors.textGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTopicChip('Free Conversation', isDark),
-                  const SizedBox(width: 6),
-                  _buildTopicChip('Daily Life', isDark),
-                  const SizedBox(width: 6),
-                  _buildTopicChip('Travel', isDark),
-                  const SizedBox(width: 6),
-                  _buildTopicChip('Work', isDark),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopicChip(String topic, bool isDark) {
-    final isSelected = _currentTopic == topic;
-    return GestureDetector(
-      onTap: () => setState(() => _currentTopic = topic),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? const Color(0xFF2A3A4A) : const Color(0xFFF0F2F4))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? const Color(0xFF3A4A5A) : AppColors.primary.withValues(alpha: 0.3))
-                : (isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF)),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          topic,
-          style: TextStyle(
-            fontSize: 12,
-            color: isSelected
-                ? (isDark ? Colors.white : AppColors.textDark)
-                : (isDark ? Colors.white54 : AppColors.textGrey),
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-          ),
-        ),
       ),
     );
   }
@@ -515,8 +432,13 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   Widget _buildVoiceButton(bool isDark) {
     return GestureDetector(
-      onLongPressStart: (_) => _startRecording(),
-      onLongPressEnd: (_) => _stopRecording(),
+      onTap: () {
+        if (_isRecording) {
+          _stopRecording();
+        } else {
+          _startRecording();
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 44,
@@ -534,7 +456,7 @@ class _LexiChatPageState extends State<LexiChatPage>
           ),
         ),
         child: Icon(
-          _isRecording ? Icons.mic_rounded : Icons.mic_none_rounded,
+          _isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
           color: _isRecording
               ? Colors.red
               : (isDark ? Colors.white54 : AppColors.textGrey),
