@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Shop Item Card Widget
 /// Displays a purchasable item in the shop
@@ -169,7 +170,7 @@ class ShopItemCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          color: AppColors.purple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -178,7 +179,7 @@ class ShopItemCard extends StatelessWidget {
                             const Icon(
                               Icons.diamond,
                               size: 14,
-                              color: Color(0xFF8B5CF6),
+                              color: AppColors.purple,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -186,7 +187,7 @@ class ShopItemCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF8B5CF6),
+                                color: AppColors.purple,
                               ),
                             ),
                           ],
@@ -206,7 +207,7 @@ class ShopItemCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: canAfford && !item.isOutOfStock
-                                ? const Color(0xFF10B981)
+                                ? AppColors.greenSuccessBright
                                 : Colors.grey[300],
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -289,13 +290,13 @@ class ShopItemCard extends StatelessWidget {
   Color _getCategoryColor(String category) {
     switch (category) {
       case ShopItemEntity.categoryPowerUps:
-        return const Color(0xFF3B82F6); // Blue
+        return AppColors.primary; // Blue
       case ShopItemEntity.categoryCosmetics:
         return const Color(0xFFEC4899); // Pink
       case ShopItemEntity.categoryBoosts:
-        return const Color(0xFFF59E0B); // Amber
+        return AppColors.orange; // Amber
       case ShopItemEntity.categorySpecial:
-        return const Color(0xFF8B5CF6); // Purple
+        return AppColors.purple; // Purple
       default:
         return const Color(0xFF6B7280); // Gray
     }

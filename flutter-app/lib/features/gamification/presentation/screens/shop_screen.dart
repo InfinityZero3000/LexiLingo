@@ -67,12 +67,13 @@ class _ShopScreenState extends State<ShopScreen>
 
     // Confirm purchase
     final confirmed = await _showPurchaseConfirmation(item);
-    if (!confirmed) return;
+    if (!mounted || !confirmed) return;
 
     setState(() => _purchasingItemId = item.id);
 
     final success = await provider.purchaseItem(item.id);
 
+    if (!mounted) return;
     setState(() => _purchasingItemId = null);
 
     if (success) {
@@ -101,7 +102,7 @@ class _ShopScreenState extends State<ShopScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    color: AppColors.purple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -110,7 +111,7 @@ class _ShopScreenState extends State<ShopScreen>
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6),
+                          color: AppColors.purple,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -134,13 +135,13 @@ class _ShopScreenState extends State<ShopScreen>
                                 const Icon(
                                   Icons.diamond,
                                   size: 16,
-                                  color: Color(0xFF8B5CF6),
+                                  color: AppColors.purple,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${item.priceGems}',
                                   style: const TextStyle(
-                                    color: Color(0xFF8B5CF6),
+                                    color: AppColors.purple,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -168,7 +169,7 @@ class _ShopScreenState extends State<ShopScreen>
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: AppColors.greenSuccessBright,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -194,12 +195,12 @@ class _ShopScreenState extends State<ShopScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                color: AppColors.greenSuccessBright.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle,
-                color: Color(0xFF10B981),
+                color: AppColors.greenSuccessBright,
                 size: 48,
               ),
             ),

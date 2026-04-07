@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Wallet Screen
 /// Displays gem balance and transaction history
@@ -40,7 +41,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF8B5CF6),
+                          AppColors.purple,
                           const Color(0xFFA855F7).withValues(alpha: 0.8),
                         ],
                         begin: Alignment.topLeft,
@@ -96,7 +97,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Expanded(
                         child: _buildStatCard(
                           icon: Icons.arrow_upward,
-                          color: const Color(0xFF10B981),
+                          color: AppColors.greenSuccessBright,
                           label: 'Earned',
                           value: '${provider.wallet?.totalEarned ?? 0}',
                         ),
@@ -105,7 +106,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Expanded(
                         child: _buildStatCard(
                           icon: Icons.arrow_downward,
-                          color: const Color(0xFFF59E0B),
+                          color: AppColors.orange,
                           label: 'Spent',
                           value: '${provider.wallet?.totalSpent ?? 0}',
                         ),
@@ -123,15 +124,15 @@ class _WalletScreenState extends State<WalletScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF10B981).withValues(alpha: 0.1),
-                        const Color(0xFF059669).withValues(alpha: 0.05),
+                        AppColors.greenSuccessBright.withValues(alpha: 0.1),
+                        AppColors.greenSuccess.withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                      color: AppColors.greenSuccessBright.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -149,7 +150,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             ),
                             child: const Icon(
                               Icons.lightbulb_outline,
-                              color: Color(0xFF10B981),
+                              color: AppColors.greenSuccessBright,
                               size: 20,
                             ),
                           ),
@@ -293,7 +294,7 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
+          const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -306,7 +307,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF8B5CF6),
+              color: AppColors.purple,
             ),
           ),
         ],
@@ -324,7 +325,7 @@ class _TransactionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEarning = transaction.isEarning;
-    final color = isEarning ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+    final color = isEarning ? AppColors.greenSuccessBright : AppColors.orange;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
