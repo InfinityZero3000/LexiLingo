@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
-/// Welcome page shown after successful login
-/// Displays a welcome animation before navigating to the main screen
+/// Get Started page for first-time visitors before authentication.
 class WelcomePage extends StatefulWidget {
-  final VoidCallback onComplete;
+  final VoidCallback onGetStarted;
+  final VoidCallback onSkip;
   final String? userName;
 
-  const WelcomePage({super.key, required this.onComplete, this.userName});
+  const WelcomePage({
+    super.key,
+    required this.onGetStarted,
+    required this.onSkip,
+    this.userName,
+  });
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -48,19 +54,24 @@ class _WelcomePageState extends State<WelcomePage>
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       Container(
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF30E8E8).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF30E8E8,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.language,
-                          color: Color(0xFF30E8E8),
+                          color: AppColors.accentMint,
                         ),
                       ),
                       Expanded(
@@ -69,7 +80,9 @@ class _WelcomePageState extends State<WelcomePage>
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ),
@@ -90,8 +103,8 @@ class _WelcomePageState extends State<WelcomePage>
                             borderRadius: BorderRadius.circular(20),
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF30E8E8).withValues(alpha: 0.18),
-                                const Color(0xFF30E8E8).withValues(alpha: 0.04),
+                                AppColors.accentMint.withValues(alpha: 0.18),
+                                AppColors.accentMint.withValues(alpha: 0.04),
                               ],
                             ),
                           ),
@@ -105,7 +118,9 @@ class _WelcomePageState extends State<WelcomePage>
                                       center: Alignment.center,
                                       radius: 0.85,
                                       colors: [
-                                        const Color(0xFF30E8E8).withValues(alpha: 0.35),
+                                        const Color(
+                                          0xFF30E8E8,
+                                        ).withValues(alpha: 0.35),
                                         Colors.transparent,
                                       ],
                                     ),
@@ -115,10 +130,8 @@ class _WelcomePageState extends State<WelcomePage>
                               Image.network(
                                 'https://lh3.googleusercontent.com/aida-public/AB6AXuAc_TfHt87FYCBniWnGN3kl94DydU2vFtKzeOxV_6Ez_Tw0GYGw3a0ysilRFZpcKAMGx5hnBZRLpgVuMraqepi7LHYSzidFKfdbY1T0_DaMkXd3mhDMqg91zRb-kAIYymk344jIEdsKDKuWk2eIlNjqJnxqDvzl-nOE6GtcUx6YQ5944ntfVUXySAPcjcAU1F2c4y7LL5dXZWYXvELyv11z0CPqYkWgPKVkc6KqRsAXRQI0TRj2UULR93RCsVECPwvJ-7xUQo-ma38',
                                 fit: BoxFit.contain,
-                                errorBuilder: (context, _, __) => const Icon(
-                                  Icons.school_rounded,
-                                  size: 92,
-                                ),
+                                errorBuilder: (context, _, __) =>
+                                    const Icon(Icons.school_rounded, size: 92),
                               ),
                             ],
                           ),
@@ -129,7 +142,9 @@ class _WelcomePageState extends State<WelcomePage>
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -137,7 +152,9 @@ class _WelcomePageState extends State<WelcomePage>
                           'AI English tutor: The fun and effective way to master English conversation.',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -145,14 +162,14 @@ class _WelcomePageState extends State<WelcomePage>
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton.icon(
-                            onPressed: widget.onComplete,
+                            onPressed: widget.onGetStarted,
                             icon: const Icon(Icons.arrow_forward),
                             label: const Text(
                               'Get Started',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF30E8E8),
+                              backgroundColor: AppColors.accentMint,
                               foregroundColor: const Color(0xFF112121),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
@@ -165,7 +182,7 @@ class _WelcomePageState extends State<WelcomePage>
                           width: double.infinity,
                           height: 56,
                           child: OutlinedButton(
-                            onPressed: widget.onComplete,
+                            onPressed: widget.onSkip,
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Color(0x4430E8E8)),
                               shape: RoundedRectangleBorder(
