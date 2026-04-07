@@ -13,14 +13,19 @@ import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_p
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dart';
 
+import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_facebook_usecase.dart';
+import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
+
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
+  final SignInWithFacebookUseCase signInWithFacebookUseCase;
   final SignInWithEmailPasswordUseCase signInWithEmailPasswordUseCase;
   final SignOutUseCase signOutUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final RegisterUseCase registerUseCase;
   final AuthRepository authRepository;
   final GoogleSignInService googleSignInService;
+  final FacebookSignInService facebookSignInService;
 
   UserEntity? _user;
   bool _isLoading = false;
@@ -30,12 +35,14 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider({
     required this.signInWithGoogleUseCase,
+    required this.signInWithFacebookUseCase,
     required this.signInWithEmailPasswordUseCase,
     required this.signOutUseCase,
     required this.getCurrentUserUseCase,
     required this.registerUseCase,
     required this.authRepository,
     required this.googleSignInService,
+    required this.facebookSignInService,
   }) {
     _checkCurrentUser();
   }
@@ -137,6 +144,53 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Sign in with Facebook
+  Future<void> signInWithFacebook() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      // Get Firebase ID token via Facebook authentication
+      final idToken = await facebookSignInService.signIn();
+      if (idToken == null) {
+        _errorMessage = 'Facebook sign in was cancelled or failed';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final result = await signInWithFacebookUseCase(
+        SignInWithFacebookParams(idToken: idToken),
+      );
+
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          _user = null;
+          _isJustLoggedIn = false;
+        },
+        (user) {
+          _user = user;
+          _errorMessage = null;
+          _isJustLoggedIn = true;
+          // Register FCM token with backend after successful Facebook sign-in
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint("Facebook sign in error: $e");
+      _errorMessage = _parseErrorMessage(e.toString());
+      _user = null;
+      _isJustLoggedIn = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Sign in with email and password
   Future<void> signInWithEmailPassword(String email, String password) async {
     try {
@@ -172,6 +226,68 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = _parseErrorMessage(e.toString());
       _user = null;
       _isJustLoggedIn = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Request password reset link/email.
+  Future<bool> requestPasswordReset(String email) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.requestPasswordReset(email);
+
+      return result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          return false;
+        },
+        (_) {
+          _errorMessage = null;
+          return true;
+        },
+      );
+    } catch (e) {
+      _errorMessage = _parseErrorMessage(e.toString());
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Reset password with token from email link.
+  Future<bool> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.resetPassword(
+        token: token,
+        newPassword: newPassword,
+      );
+
+      return result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          return false;
+        },
+        (_) {
+          _errorMessage = null;
+          return true;
+        },
+      );
+    } catch (e) {
+      _errorMessage = _parseErrorMessage(e.toString());
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -268,6 +384,27 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Submit onboarding payload once at the end of onboarding flow.
+  Future<void> submitOnboarding(Map<String, dynamic> payload) async {
+    final selectedLevel = (payload['level'] as String?)?.toUpperCase();
+
+    final result = await authRepository.updateProfile(
+      level: selectedLevel,
+      nativeLanguage: 'vi',
+      targetLanguage: 'en',
+      isOnboardingCompleted: true,
+    );
+
+    result.fold(
+      (_) {
+        // Keep onboarding non-blocking on backend issues.
+      },
+      (updatedUser) {
+        _user = updatedUser;
+      },
+    );
   }
 
   // Clear error message

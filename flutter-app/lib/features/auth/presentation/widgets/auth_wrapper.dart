@@ -1,11 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/core/utils/constants.dart';
 import '../providers/auth_provider.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../pages/login_page.dart';
+import '../pages/register_page.dart';
 import '../pages/welcome_page.dart';
+import '../pages/onboarding_page.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -15,8 +21,137 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  bool _showWelcome = false;
+  bool _showOnboarding = false;
+  bool _showPreAuthWelcome = false;
   bool _wasAuthenticated = false;
+  bool _isResolvingFlow = false;
+  bool _isResolvingPreAuthFlow = false;
+  bool _isShowingRegister = false;
+  bool _preAuthFlowResolved = false;
+  String? _flowResolvedForUserId;
+
+  String _onboardingCompletedKey(String userId) =>
+      '${AppConstants.firstTimeUserKey}_completed_$userId';
+  String _onboardingConfigKey(String userId) =>
+      '${AppConstants.firstTimeUserKey}_config_$userId';
+
+  Future<void> _resolvePreAuthFlow() async {
+    if (_isResolvingPreAuthFlow || _preAuthFlowResolved) {
+      return;
+    }
+
+    setState(() {
+      _isResolvingPreAuthFlow = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final shouldShowWelcome =
+        prefs.getBool(AppConstants.firstTimeUserKey) ?? true;
+
+    if (!mounted) return;
+    setState(() {
+      _showPreAuthWelcome = shouldShowWelcome;
+      _isShowingRegister = false;
+      _preAuthFlowResolved = true;
+      _isResolvingPreAuthFlow = false;
+    });
+  }
+
+  Future<void> _dismissPreAuthWelcome({required bool openRegister}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.firstTimeUserKey, false);
+
+    if (!mounted) return;
+    setState(() {
+      _showPreAuthWelcome = false;
+      _isShowingRegister = openRegister;
+    });
+  }
+
+  Future<void> _resolvePostAuthFlow(AuthProvider authProvider) async {
+    final currentUser = authProvider.currentUser;
+    final userId = currentUser?.id;
+    if (userId == null ||
+        _isResolvingFlow ||
+        _flowResolvedForUserId == userId) {
+      return;
+    }
+
+    setState(() {
+      _isResolvingFlow = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final localCompleted =
+        prefs.getBool(_onboardingCompletedKey(userId)) ?? false;
+    var isCompleted = currentUser?.isOnboardingCompleted ?? false;
+
+    // Backward compatibility: sync old local completion state to backend once.
+    if (!isCompleted && localCompleted) {
+      await authProvider.submitOnboarding({
+        'level': currentUser?.level ?? 'A1',
+      });
+      isCompleted = true;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = !isCompleted;
+      _flowResolvedForUserId = userId;
+      _isResolvingFlow = false;
+    });
+  }
+
+  Future<void> _completeOnboarding(
+    AuthProvider authProvider,
+    OnboardingAnswers answers,
+  ) async {
+    final userId = authProvider.currentUser?.id;
+    if (userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final config = <String, dynamic>{
+      'goal': answers.goal,
+      'level': answers.level,
+      'interest': answers.interest,
+      'theme_color': _themeColorForGoal(answers.goal),
+      'current_plan_id': _planIdForAnswers(answers),
+      'feature_flags': {
+        'show_advanced_grammar_tab':
+            answers.level != 'A1' && answers.level != 'A2',
+        'show_business_lessons':
+            answers.goal == 'business' || answers.interest == 'career',
+      },
+    };
+
+    await prefs.setBool(_onboardingCompletedKey(userId), true);
+    await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
+
+    await authProvider.submitOnboarding(answers.toJson());
+
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = false;
+    });
+    authProvider.clearJustLoggedIn();
+  }
+
+  String _themeColorForGoal(String goal) {
+    switch (goal) {
+      case 'business':
+        return '#0EA5E9';
+      case 'exam':
+        return '#F59E0B';
+      case 'travel':
+        return '#14B8A6';
+      default:
+        return '#30E8E8';
+    }
+  }
+
+  String _planIdForAnswers(OnboardingAnswers answers) {
+    return '${answers.goal}_${answers.level}_${answers.interest}'.toLowerCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,42 +167,71 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Detect when user just logged in
     if (authProvider.isAuthenticated && !_wasAuthenticated) {
       _wasAuthenticated = true;
+      _flowResolvedForUserId = null;
+      _showOnboarding = false;
       // Load user settings when authenticated
       final userId = authProvider.currentUser?.id;
       if (userId != null) {
         context.read<SettingsProvider>().loadSettings(userId);
       }
-      // Only show welcome for fresh logins (not app restarts with existing session)
-      if (authProvider.isJustLoggedIn) {
-        _showWelcome = true;
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resolvePostAuthFlow(authProvider);
+      });
     }
 
     // Reset state when user logs out
     if (!authProvider.isAuthenticated && _wasAuthenticated) {
       _wasAuthenticated = false;
-      _showWelcome = false;
+      _showOnboarding = false;
+      _flowResolvedForUserId = null;
+      _preAuthFlowResolved = false;
+      _showPreAuthWelcome = false;
+      _isShowingRegister = false;
+    }
+
+    if (authProvider.isAuthenticated && !_isResolvingFlow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resolvePostAuthFlow(authProvider);
+      });
+    }
+
+    if (!authProvider.isAuthenticated &&
+        !_isResolvingPreAuthFlow &&
+        !_preAuthFlowResolved) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resolvePreAuthFlow();
+      });
     }
 
     // Determine which page to show
     Widget currentPage;
     if (authProvider.isAuthenticated) {
-      if (_showWelcome) {
-        currentPage = WelcomePage(
-          userName: authProvider.currentUser?.displayName,
-          onComplete: () {
-            if (!mounted) return;
-            setState(() {
-              _showWelcome = false;
-            });
-            authProvider.clearJustLoggedIn();
-          },
+      if (_isResolvingFlow) {
+        currentPage = const Scaffold(
+          body: LoadingScreen(message: 'Preparing your learning path...'),
+        );
+      } else if (_showOnboarding) {
+        currentPage = OnboardingPage(
+          onComplete: (answers) => _completeOnboarding(authProvider, answers),
         );
       } else {
         currentPage = const MainScreen();
       }
     } else {
-      currentPage = const LoginPage();
+      if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {
+        currentPage = const Scaffold(
+          body: LoadingScreen(message: 'Preparing your learning path...'),
+        );
+      } else if (_showPreAuthWelcome) {
+        currentPage = WelcomePage(
+          onGetStarted: () => _dismissPreAuthWelcome(openRegister: false),
+          onSkip: () => _dismissPreAuthWelcome(openRegister: false),
+        );
+      } else {
+        currentPage = _isShowingRegister
+            ? const RegisterPage()
+            : const LoginPage();
+      }
     }
 
     // Use AnimatedSwitcher for smooth transitions between pages
@@ -105,8 +269,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       child: KeyedSubtree(
         key: ValueKey<String>(
           authProvider.isAuthenticated
-              ? (_showWelcome ? 'welcome' : 'main')
-              : 'login',
+            ? (_showOnboarding ? 'onboarding' : 'main')
+            : (_showPreAuthWelcome
+              ? 'welcome'
+              : (_isShowingRegister ? 'register' : 'login')),
         ),
         child: currentPage,
       ),
