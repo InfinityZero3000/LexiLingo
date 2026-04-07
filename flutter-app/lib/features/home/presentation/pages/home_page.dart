@@ -84,6 +84,7 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Consumer3<HomeProvider, UserProvider, AuthProvider>(
           builder: (context, homeProvider, userProvider, authProvider, child) {
@@ -105,13 +106,13 @@ class _HomePageNewState extends State<HomePageNew> {
                 context.read<StreakProvider>().loadStreak(),
               ]),
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(context, homeProvider, authProvider),
                     const SizedBox(height: 16),
-                    // Bento Stats Grid
                     _buildBentoStatsGrid(context, homeProvider, authProvider),
                     const SizedBox(height: 16),
                     const Padding(
@@ -133,7 +134,6 @@ class _HomePageNewState extends State<HomePageNew> {
                       child: DailyReviewCard(),
                     ),
                     const SizedBox(height: 24),
-                    // Enrolled courses section - always show if user is authenticated
                     _buildSectionTitle(context, 'Continue Learning'),
                     const SizedBox(height: 12),
                     _buildEnrolledCoursesSection(context, homeProvider),
@@ -142,11 +142,8 @@ class _HomePageNewState extends State<HomePageNew> {
                     const SizedBox(height: 12),
                     _buildFeaturedCourses(context, homeProvider),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(context, 'Quick Stats'),
+                    _buildSectionTitle(context, 'Quick Actions'),
                     const SizedBox(height: 12),
-                    _buildQuickStats(context),
-                    const SizedBox(height: 24),
-                    // Quick Actions - Horizontal scrollable section
                     _buildQuickActionsHorizontal(context),
                   ],
                 ),
@@ -223,7 +220,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.local_fire_department,
                           iconColor: Colors.orange,
-                          bgColor: const Color(0xFFFFF3E0),
+                          bgColor: AppColors.orange.withValues(alpha: 0.1),
                           title: 'Streak',
                           value: '$streak',
                           subtitle: 'days',
@@ -251,8 +248,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: _buildBentoCard(
                           context,
                           icon: Icons.star,
-                          iconColor: const Color(0xFFF59E0B),
-                          bgColor: const Color(0xFFFEF9C3),
+                          iconColor: AppColors.orange,
+                          bgColor: AppColors.accentYellow.withValues(alpha: 0.1),
                           title: 'XP',
                           value: LevelCalculator.formatXP(xp),
                           subtitle: 'earned',
@@ -270,8 +267,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: _buildBentoCard(
                           context,
                           icon: Icons.diamond,
-                          iconColor: const Color(0xFF8B5CF6),
-                          bgColor: const Color(0xFFEDE9FE),
+                          iconColor: AppColors.purple,
+                          bgColor: AppColors.purple.withValues(alpha: 0.1),
                           title: 'Gems',
                           value: '$gems',
                           subtitle: null,
@@ -291,7 +288,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           height: 100,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDBEAFE),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: const Color(
@@ -307,15 +304,15 @@ class _HomePageNewState extends State<HomePageNew> {
                                 size: 50,
                                 strokeWidth: 5,
                                 gradientColors: const [
-                                  Color(0xFF3B82F6),
-                                  Color(0xFF6366F1),
+                                  AppColors.primary,
+                                  AppColors.primary,
                                 ],
                                 child: Text(
                                   '${progress.toInt()}%',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3B82F6),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -324,7 +321,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 'Level Progress',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Color(0xFF3B82F6),
+                                  color: AppColors.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -338,8 +335,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: _buildBentoCard(
                           context,
                           icon: Icons.menu_book,
-                          iconColor: const Color(0xFF10B981),
-                          bgColor: const Color(0xFFD1FAE5),
+                          iconColor: AppColors.greenSuccessBright,
+                          bgColor: AppColors.greenSuccessSoft.withValues(alpha: 0.1),
                           title: 'Today',
                           value: '$lessonsToday',
                           subtitle: 'lessons',
@@ -512,8 +509,8 @@ class _HomePageNewState extends State<HomePageNew> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isCompleted
-              ? [const Color(0xFFD1FAE5), const Color(0xFFA7F3D0)]
-              : [const Color(0xFFDBEAFE), const Color(0xFFBFDBFE)],
+              ? [AppColors.greenSuccessSoft.withValues(alpha: 0.1), AppColors.greenSuccessSoft.withValues(alpha: 0.2)]
+              : [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.2)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -540,13 +537,13 @@ class _HomePageNewState extends State<HomePageNew> {
               size: 70,
               strokeWidth: 6,
               gradientColors: isCompleted
-                  ? const [Color(0xFF10B981), Color(0xFF059669)]
-                  : const [Color(0xFF3B82F6), Color(0xFF6366F1)],
+                  ? const [AppColors.greenSuccessBright, AppColors.greenSuccess]
+                  : const [AppColors.primary, AppColors.primary],
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isCompleted)
-                    const Icon(Icons.check, color: Color(0xFF10B981), size: 20)
+                    const Icon(Icons.check, color: AppColors.greenSuccessBright, size: 20)
                   else
                     Text(
                       '${(percentage * 100).toInt()}%',
@@ -554,8 +551,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: isCompleted
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF3B82F6),
+                            ? AppColors.greenSuccessBright
+                            : AppColors.primary,
                       ),
                     ),
                 ],
@@ -579,8 +576,8 @@ class _HomePageNewState extends State<HomePageNew> {
                       child: Icon(
                         isCompleted ? Icons.emoji_events : Icons.bolt,
                         color: isCompleted
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF3B82F6),
+                            ? AppColors.greenSuccessBright
+                            : AppColors.primary,
                         size: 18,
                       ),
                     ),
@@ -590,8 +587,8 @@ class _HomePageNewState extends State<HomePageNew> {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isCompleted
-                            ? const Color(0xFF065F46)
-                            : const Color(0xFF1E40AF),
+                            ? AppColors.greenSuccess
+                            : AppColors.primaryDark,
                       ),
                     ),
                   ],
@@ -602,8 +599,8 @@ class _HomePageNewState extends State<HomePageNew> {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isCompleted
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF3B82F6),
+                        ? AppColors.greenSuccessBright
+                        : AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -623,8 +620,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         isCompleted ? Icons.celebration : Icons.trending_up,
                         size: 14,
                         color: isCompleted
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF3B82F6),
+                            ? AppColors.greenSuccessBright
+                            : AppColors.primary,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -633,8 +630,8 @@ class _HomePageNewState extends State<HomePageNew> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isCompleted
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFF3B82F6),
+                              ? AppColors.greenSuccessBright
+                              : AppColors.primary,
                         ),
                       ),
                     ],
@@ -669,24 +666,31 @@ class _HomePageNewState extends State<HomePageNew> {
 
     // Show empty state if no enrolled courses
     if (provider.enrolledCourses.isEmpty) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(
+              color: isDark ? AppColors.surfaceDarkElevated : AppColors.slate200,
+            ),
           ),
           child: Column(
             children: [
-              Icon(Icons.school_outlined, size: 48, color: Colors.grey[400]),
+              Icon(
+                Icons.school_outlined,
+                size: 48,
+                color: isDark ? AppColors.textMuted : AppColors.textGrey,
+              ),
               const SizedBox(height: 12),
               Text(
                 'No enrolled courses yet',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
+                  color: isDark ? AppColors.textInverted : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -694,7 +698,9 @@ class _HomePageNewState extends State<HomePageNew> {
                 'Start your learning journey by enrolling in a course',
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                ).textTheme.bodySmall?.copyWith(
+                  color: isDark ? AppColors.textMuted : AppColors.textGrey,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -731,10 +737,10 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget _buildEnrolledCourseCard(BuildContext context, CourseEntity course) {
     final progress = course.userProgress ?? 0;
     final progressColor = progress >= 80
-        ? const Color(0xFF10B981)
+        ? AppColors.greenSuccessBright
         : progress >= 50
-        ? const Color(0xFFF59E0B)
-        : const Color(0xFF3B82F6);
+        ? AppColors.orange
+        : AppColors.primary;
 
     return GestureDetector(
       onTap: () {
@@ -746,7 +752,7 @@ class _HomePageNewState extends State<HomePageNew> {
         );
       },
       child: Container(
-        width: 320,
+        width: 296,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -984,10 +990,10 @@ class _HomePageNewState extends State<HomePageNew> {
         );
       },
       child: Container(
-        width: 280,
+        width: 260,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isDark
@@ -1100,7 +1106,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                            colors: [AppColors.orange, AppColors.orange],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
@@ -1171,13 +1177,13 @@ class _HomePageNewState extends State<HomePageNew> {
                         _buildInfoChip(
                           icon: Icons.menu_book_rounded,
                           label: '${course.totalLessons} lessons',
-                          color: const Color(0xFF3B82F6),
+                          color: AppColors.primary,
                         ),
                         const SizedBox(width: 8),
                         _buildInfoChip(
                           icon: Icons.translate_rounded,
                           label: course.language,
-                          color: const Color(0xFF8B5CF6),
+                          color: AppColors.purple,
                         ),
                       ],
                     ),
@@ -1257,250 +1263,18 @@ class _HomePageNewState extends State<HomePageNew> {
   Color _getLevelColor(String level) {
     switch (level.toLowerCase()) {
       case 'beginner':
-        return const Color(0xFF10B981);
+        return AppColors.greenSuccessBright;
       case 'elementary':
-        return const Color(0xFF34D399);
+        return AppColors.greenSuccessSoft;
       case 'intermediate':
-        return const Color(0xFFF59E0B);
+        return AppColors.orange;
       case 'upper-intermediate':
-        return const Color(0xFFF97316);
+        return AppColors.orange;
       case 'advanced':
-        return const Color(0xFFEF4444);
+        return AppColors.dangerGradient[0];
       default:
-        return const Color(0xFF3B82F6);
+        return AppColors.primary;
     }
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.smart_toy,
-                  title: 'AI Tutor',
-                  subtitle: 'Practice speaking',
-                  color: AppColors.primary,
-                  bgColor: AppColors.primary.withValues(alpha: 0.1),
-                  onTap: () {
-                    // Navigate to AI Chat - handled by bottom nav
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.style,
-                  title: 'Vocabulary',
-                  subtitle: 'Review flashcards',
-                  color: Colors.orange,
-                  bgColor: const Color(0xFFFFF7ED),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VocabLibraryPage(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.store,
-                  title: 'Shop',
-                  subtitle: 'Spend your gems',
-                  color: const Color(0xFFF59E0B),
-                  bgColor: const Color(0xFFFEF3C7),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ShopScreen()),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.leaderboard,
-                  title: 'Leaderboard',
-                  subtitle: 'Compete globally',
-                  color: const Color(0xFF10B981),
-                  bgColor: const Color(0xFFD1FAE5),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LeaderboardScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.article,
-                  title: 'News',
-                  subtitle: 'Read articles',
-                  color: const Color(0xFF6366F1), // Indigo
-                  bgColor: const Color(0xFFEEF2FF),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/news');
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.smart_display,
-                  title: 'YouTube',
-                  subtitle: 'Watch videos',
-                  color: const Color(0xFFEF4444), // Red
-                  bgColor: const Color(0xFFFEF2F2),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/youtube');
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.sports_esports,
-                  title: 'Games',
-                  subtitle: 'Play & earn XP',
-                  color: const Color(0xFF8B5CF6), // Purple
-                  bgColor: const Color(0xFFF5F3FF),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/games');
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.podcasts,
-                  title: 'Podcast',
-                  subtitle: 'Listen & learn',
-                  color: const Color(0xFF0EA5E9), // Sky blue
-                  bgColor: const Color(0xFFE0F2FE),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/podcast');
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.menu_book_rounded,
-                  title: 'Books',
-                  subtitle: 'Read & grow',
-                  color: const Color(0xFF10B981), // Emerald
-                  bgColor: const Color(0xFFD1FAE5),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/books');
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickActionCard(
-                  context,
-                  icon: Icons.pets,
-                  title: 'Lexi',
-                  subtitle: 'Chat adventure',
-                  color: const Color(0xFF43E97B), // Parrot green
-                  bgColor: const Color(0xFFE8FFF0),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/lexi');
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required Color bgColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textGrey,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// Quick Actions - Horizontal scrollable section with circular buttons
@@ -1509,100 +1283,85 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.smart_display,
         'label': 'YouTube',
-        'color': const Color(0xFFEF4444),
-        'bgColor': const Color(0xFFFEF2F2),
+        'color': AppColors.dangerGradient[0],
+        'bgColor': AppColors.dangerGradient[0].withValues(alpha: 0.1),
         'route': '/youtube',
       },
       {
         'icon': Icons.article,
         'label': 'News',
-        'color': const Color(0xFF6366F1),
-        'bgColor': const Color(0xFFEEF2FF),
+        'color': AppColors.primary,
+        'bgColor': AppColors.backgroundLight,
         'route': '/news',
       },
       {
         'icon': Icons.sports_esports,
         'label': 'Games',
-        'color': const Color(0xFF8B5CF6),
-        'bgColor': const Color(0xFFF5F3FF),
+        'color': AppColors.purple,
+        'bgColor': AppColors.purple.withValues(alpha: 0.1),
         'route': '/games',
       },
       {
         'icon': Icons.podcasts,
         'label': 'Podcast',
-        'color': const Color(0xFF0EA5E9),
-        'bgColor': const Color(0xFFE0F2FE),
+        'color': AppColors.primary,
+        'bgColor': AppColors.primary.withValues(alpha: 0.1),
         'route': '/podcast',
       },
       {
         'icon': Icons.menu_book_rounded,
         'label': 'Books',
-        'color': const Color(0xFF10B981),
-        'bgColor': const Color(0xFFD1FAE5),
+        'color': AppColors.greenSuccessBright,
+        'bgColor': AppColors.greenSuccessSoft.withValues(alpha: 0.1),
         'route': '/books',
       },
       {
         'icon': Icons.pets,
         'label': 'Lexi Chat',
-        'color': const Color(0xFF43E97B),
-        'bgColor': const Color(0xFFE8FFF0),
+        'color': AppColors.greenSuccessBright,
+        'bgColor': AppColors.greenSuccess.withValues(alpha: 0.1),
         'route': '/lexi',
       },
       {
         'icon': Icons.style,
         'label': 'Vocabulary',
         'color': Colors.orange,
-        'bgColor': const Color(0xFFFFF7ED),
+        'bgColor': AppColors.warning.withValues(alpha: 0.1),
         'route': '/vocab',
       },
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Quick Actions',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 110,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: quickActions.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final action = quickActions[index];
-              return _buildQuickActionChip(
-                context,
-                icon: action['icon'] as IconData,
-                label: action['label'] as String,
-                color: action['color'] as Color,
-                bgColor: action['bgColor'] as Color,
-                onTap: () {
-                  final route = action['route'] as String;
-                  if (route == '/vocab') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const VocabLibraryPage(),
-                      ),
-                    );
-                  } else {
-                    Navigator.pushNamed(context, route);
-                  }
-                },
-              );
+    return SizedBox(
+      height: 124,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: quickActions.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final action = quickActions[index];
+          return _buildQuickActionChip(
+            context,
+            icon: action['icon'] as IconData,
+            label: action['label'] as String,
+            color: action['color'] as Color,
+            bgColor: action['bgColor'] as Color,
+            onTap: () {
+              final route = action['route'] as String;
+              if (route == '/vocab') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const VocabLibraryPage(),
+                  ),
+                );
+              } else {
+                Navigator.pushNamed(context, route);
+              }
             },
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 
@@ -1617,8 +1376,8 @@ class _HomePageNewState extends State<HomePageNew> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 85,
-        padding: const EdgeInsets.all(12),
+        width: 84,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
@@ -1628,8 +1387,8 @@ class _HomePageNewState extends State<HomePageNew> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(12),
@@ -1641,18 +1400,19 @@ class _HomePageNewState extends State<HomePageNew> {
                   ),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
+                height: 1.1,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -1668,25 +1428,25 @@ class _HomePageNewState extends State<HomePageNew> {
         icon: Icons.article_rounded,
         label: 'Articles',
         value: '—',
-        color: const Color(0xFF6366F1),
+        color: AppColors.primary,
       ),
       _QuickStat(
         icon: Icons.sports_esports_rounded,
         label: 'Games',
         value: '—',
-        color: const Color(0xFF8B5CF6),
+        color: AppColors.purple,
       ),
       _QuickStat(
         icon: Icons.headphones_rounded,
         label: 'Listened',
         value: '—',
-        color: const Color(0xFF0EA5E9),
+        color: AppColors.primary,
       ),
       _QuickStat(
         icon: Icons.menu_book_rounded,
         label: 'Reading',
         value: '—',
-        color: const Color(0xFF10B981),
+        color: AppColors.greenSuccessBright,
       ),
     ];
     return Padding(
@@ -1699,7 +1459,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+                      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: s.color.withValues(alpha: 0.2)),
                     ),
@@ -1747,28 +1507,28 @@ class _HomePageNewState extends State<HomePageNew> {
             icon: Icons.smart_display_rounded,
             title: 'YouTube',
             subtitle: 'Continue watching',
-            color: const Color(0xFFEF4444),
+            color: AppColors.dangerGradient[0],
             route: '/youtube',
           ),
           _ContinueItem(
             icon: Icons.article_rounded,
             title: 'News',
             subtitle: 'Continue reading',
-            color: const Color(0xFF6366F1),
+            color: AppColors.primary,
             route: '/news',
           ),
           _ContinueItem(
             icon: Icons.sports_esports_rounded,
             title: 'Games',
             subtitle: 'Earn more XP',
-            color: const Color(0xFF8B5CF6),
+            color: AppColors.purple,
             route: '/games',
           ),
           _ContinueItem(
             icon: Icons.podcasts_rounded,
             title: 'Podcast',
             subtitle: 'Continue listening',
-            color: const Color(0xFF0EA5E9),
+            color: AppColors.primary,
             route: '/podcast',
           ),
           if (currentBook != null)
@@ -1780,7 +1540,7 @@ class _HomePageNewState extends State<HomePageNew> {
               subtitle: currentProgress != null
                   ? '${(currentProgress.readingProgress * 100).toInt()}% read'
                   : 'Continue reading',
-              color: const Color(0xFF10B981),
+              color: AppColors.greenSuccessBright,
               route: '/books',
             )
           else
@@ -1788,7 +1548,7 @@ class _HomePageNewState extends State<HomePageNew> {
               icon: Icons.menu_book_rounded,
               title: 'Books',
               subtitle: 'Start reading',
-              color: const Color(0xFF10B981),
+              color: AppColors.greenSuccessBright,
               route: '/books',
             ),
         ];
@@ -1808,7 +1568,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   width: 130,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+                    color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: item.color.withValues(alpha: 0.25),
@@ -1859,13 +1619,15 @@ class _HomePageNewState extends State<HomePageNew> {
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontSize: 18,
+          color: isDark ? AppColors.textInverted : AppColors.slate900,
         ),
       ),
     );

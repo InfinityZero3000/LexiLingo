@@ -109,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
                         height: 24,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
-                            const Text('🦜', style: TextStyle(fontSize: 18)),
+                            const Icon(Icons.smart_toy_outlined, size: 20),
                       ),
                     ),
                     activeIcon: ClipOval(
@@ -119,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
                         height: 24,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
-                            const Text('🦜', style: TextStyle(fontSize: 18)),
+                            const Icon(Icons.smart_toy, size: 20),
                       ),
                     ),
                     label: 'Lexi',

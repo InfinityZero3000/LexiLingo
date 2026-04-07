@@ -185,28 +185,21 @@ class LevelProgressCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 // Progress bar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Level $level  →  Level ${level + 1}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
-                        ),
-                        Text(
-                          '${(progress * 100).toInt()}% complete',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ],
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${(progress * 100).toInt()}% complete',
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ClipRRect(

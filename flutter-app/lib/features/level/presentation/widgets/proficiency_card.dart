@@ -53,12 +53,12 @@ class ProficiencyCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.2)
-                  : const Color(0xFFE2E8F0),
+                  ? AppColors.primary.withValues(alpha: 0.2)
+                  : AppColors.slate200,
             ),
           ),
           child: Column(
@@ -97,12 +97,12 @@ class ProficiencyCard extends StatelessWidget {
                               },
                         size: 240,
                         fillColor: isDark
-                            ? const Color(0xFF6366F1).withValues(alpha: 0.25)
-                            : const Color(0xFF6366F1).withValues(alpha: 0.15),
-                        strokeColor: const Color(0xFF6366F1),
+                            ? AppColors.primary.withValues(alpha: 0.25)
+                            : AppColors.primary.withValues(alpha: 0.15),
+                        strokeColor: AppColors.primary,
                         gridColor: isDark
                             ? Colors.white.withValues(alpha: 0.1)
-                            : const Color(0xFFE2E8F0),
+                            : AppColors.slate200,
                         animate: true,
                       ),
                       // Center decorative icon
@@ -112,7 +112,7 @@ class ProficiencyCard extends StatelessWidget {
                           height: 56,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF1E293B).withValues(alpha: 0.9)
+                                ? AppColors.surfaceDarkMuted.withValues(alpha: 0.9)
                                 : Colors.white.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -120,7 +120,7 @@ class ProficiencyCard extends StatelessWidget {
                                   ? const Color(
                                       0xFF6366F1,
                                     ).withValues(alpha: 0.3)
-                                  : const Color(0xFFE2E8F0),
+                                  : AppColors.slate200,
                               width: 1.5,
                             ),
                           ),
@@ -128,7 +128,7 @@ class ProficiencyCard extends StatelessWidget {
                             Icons.hourglass_bottom_rounded,
                             size: 28,
                             color: isDark
-                                ? const Color(0xFF6366F1).withValues(alpha: 0.6)
+                                ? AppColors.primary.withValues(alpha: 0.6)
                                 : const Color(
                                     0xFF6366F1,
                                   ).withValues(alpha: 0.4),
@@ -173,7 +173,7 @@ class ProficiencyCard extends StatelessWidget {
                           border: Border.all(
                             color: isDark
                                 ? Colors.white.withValues(alpha: 0.15)
-                                : const Color(0xFFE2E8F0),
+                                : AppColors.slate200,
                           ),
                         ),
                         child: Row(
@@ -212,7 +212,7 @@ class ProficiencyCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Row(
@@ -258,12 +258,12 @@ class ProficiencyCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.2)
-                  : const Color(0xFFE2E8F0),
+                  ? AppColors.primary.withValues(alpha: 0.2)
+                  : AppColors.slate200,
             ),
           ),
           child: const Center(
