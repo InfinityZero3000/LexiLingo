@@ -1,6 +1,6 @@
 {
-    "name": "lexilingo_app",
-    "short_name": "lexilingo_app",
+    "name": "LexiLingo",
+    "short_name": "LexiLingo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
