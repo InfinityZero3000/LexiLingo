@@ -41,20 +41,21 @@ clear 2>/dev/null || true
 
 # Interactive Prompt for Flutter Platform
 echo -e "${CYAN}Choose Flutter platform to run:${NC}"
-echo "  1) Web (Chrome - Port 8080) [Default]"
+echo "  1) Web Hot Reload (Interactive Chrome - Port 8080) [Default]"
 echo "  2) iOS Simulator"
 echo "  3) Android Device/Emulator"
 echo "  4) iPad (Physical Device)"
 echo "  5) Skip Flutter"
 read -p "Enter choice [1-5]: " flutter_choice
 
-FLUTTER_PLATFORM="web"
+FLUTTER_PLATFORM="web_hot"
 case "$flutter_choice" in
+    1) FLUTTER_PLATFORM="web_hot" ;;
     2) FLUTTER_PLATFORM="ios" ;;
     3) FLUTTER_PLATFORM="android" ;;
     4) FLUTTER_PLATFORM="ipad" ;;
     5) FLUTTER_PLATFORM="none" ;;
-    *) FLUTTER_PLATFORM="web" ;;
+    *) FLUTTER_PLATFORM="web_hot" ;;
 esac
 
 # Hide cursor during animation
@@ -422,8 +423,8 @@ if [ "$FLUTTER_PLATFORM" != "none" ]; then
 
     FLUTTER_RUNNING=false
 
-    # Check if Flutter is already running on port 8080 (only applicable for web)
-    if [ "$FLUTTER_PLATFORM" = "web" ]; then
+    # Check if Flutter is already running on port 8080 (only applicable for web modes)
+    if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
         if check_service 8080; then
             echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
             FLUTTER_RUNNING=true
@@ -453,8 +454,29 @@ if [ "$FLUTTER_PLATFORM" != "none" ]; then
                     # Clean Chrome cache
                     rm -rf .dart_tool/chrome-device 2>/dev/null || true
                     nohup flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1 &
+                elif [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                    if command -v osascript >/dev/null 2>&1; then
+                        osascript <<EOF >/dev/null 2>&1
+tell application "Terminal"
+    do script "cd '$PROJECT_ROOT/flutter-app' && flutter run -d chrome --web-port=8080"
+    activate
+end tell
+EOF
+                        echo -e "   ${GREEN}[OK] Opened interactive Flutter terminal (Hot Reload supported)${NC}"
+                    else
+                        echo -e "   ${YELLOW}[WARN] osascript unavailable. Falling back to web-server mode.${NC}"
+                        rm -rf .dart_tool/chrome-device 2>/dev/null || true
+                        nohup flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
                 elif [ "$FLUTTER_PLATFORM" = "ios" ]; then
-                    nohup flutter run -d ios >> "$LOG_DIR/flutter.log" 2>&1 &
+                    IOS_ID=$(flutter devices | grep -i simulator | head -n 1 | awk -F '•' '{print $2}' | xargs)
+                    if [ -n "$IOS_ID" ]; then
+                        echo -e "   ${GREEN}[INFO] Found iOS Simulator ($IOS_ID). Starting app...${NC}"
+                        nohup flutter run -d "$IOS_ID" >> "$LOG_DIR/flutter.log" 2>&1 &
+                    else
+                        echo -e "   ${YELLOW}[WARN] No iOS Simulator found. Make sure a simulator is running. Falling back to default 'ios'...${NC}"
+                        nohup flutter run -d ios >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
                 elif [ "$FLUTTER_PLATFORM" = "android" ]; then
                     # Check if the specific Xiaomi device is connected
                     if flutter devices | grep -q "23053RN02A"; then
@@ -473,18 +495,22 @@ if [ "$FLUTTER_PLATFORM" != "none" ]; then
             # Wait for Flutter to start (up to 10 seconds)
             echo -e "   ${DIM}Waiting for Flutter ($FLUTTER_PLATFORM) to initialize...${NC}"
             for i in $(seq 1 20); do
-                # For web we can check the port, for iOS/Android we just wait a bit
-                if [ "$FLUTTER_PLATFORM" = "web" ]; then
+                # For web modes we can check the port, for iOS/Android we just wait a bit
+                if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
                     if check_service 8080; then
-                        echo -e "   ${GREEN}[OK] Flutter Web started successfully${NC}"
+                        if [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                            echo -e "   ${GREEN}[OK] Flutter Web Hot Reload started on port 8080${NC}"
+                        else
+                            echo -e "   ${GREEN}[OK] Flutter Web started successfully${NC}"
+                        fi
                         break
                     fi
                 fi
                 sleep 0.5
             done
             
-            # Final check if web
-            if [ "$FLUTTER_PLATFORM" = "web" ]; then
+            # Final check if web modes
+            if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
                 if ! check_service 8080; then
                     echo -e "   ${YELLOW}[WARN] Flutter Web may not have started correctly. Check logs: tail -f logs/flutter.log${NC}"
                 fi
@@ -647,9 +673,13 @@ animated_dashboard() {
         fi
 
         # Flutter Web/App logic logic
-        if [ "$FLUTTER_PLATFORM" = "web" ]; then
+        if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
             if check_service 8080; then
-                printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
+                if [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}${NC} ${C2}http://localhost:8080${NC}\033[K\n"
+                else
+                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
+                fi
             elif [ "$HAS_FLUTTER" = false ]; then
                 printf "  ${RED}  [!] Flutter Web${NC}    ${DIM}not installed${NC}\033[K\n"
             elif [ -f "$PID_DIR/flutter.pid" ]; then
