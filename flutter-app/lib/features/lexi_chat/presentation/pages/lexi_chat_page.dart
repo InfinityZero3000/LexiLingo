@@ -91,7 +91,9 @@ class _LexiChatPageState extends State<LexiChatPage>
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
-    await provider.sendMessage(text, userId: _userId);
+    final pending = provider.sendMessage(text, userId: _userId);
+    _scrollToBottom();
+    await pending;
     _scrollToBottom();
   }
 
@@ -132,7 +134,9 @@ class _LexiChatPageState extends State<LexiChatPage>
       if (!mounted) return;
       final b64 = base64Encode(bytes);
       final provider = context.read<LexiChatProvider>();
-      await provider.sendVoiceMessage(b64, userId: _userId);
+      final pending = provider.sendVoiceMessage(b64, userId: _userId);
+      _scrollToBottom();
+      await pending;
       _scrollToBottom();
     }
   }
@@ -219,17 +223,23 @@ class _LexiChatPageState extends State<LexiChatPage>
                 ),
                 Consumer<LexiChatProvider>(
                   builder: (_, provider, __) {
-                    final status = provider.isLexiTyping
-                        ? 'Lexi is typing...'
-                        : 'English speaking companion';
+                    final status = provider.isLexiThinking
+                        ? 'Lexi is thinking...'
+                        : (provider.isLexiTyping
+                              ? 'Lexi is typing...'
+                              : 'English speaking companion');
+                    final isActive =
+                        provider.isLexiThinking || provider.isLexiTyping;
                     return Text(
                       status,
                       style: TextStyle(
                         fontSize: 12,
-                        color: provider.isLexiTyping
+                        color: isActive
                             ? AppColors.primary
                             : (isDark ? Colors.white54 : AppColors.textGrey),
-                        fontWeight: provider.isLexiTyping ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     );
                   },
@@ -242,7 +252,9 @@ class _LexiChatPageState extends State<LexiChatPage>
             builder: (_, provider, __) {
               return Container(
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFF6F7F8),
+                  color: isDark
+                      ? const Color(0xFF2A3A4A)
+                      : const Color(0xFFF6F7F8),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
@@ -294,17 +306,18 @@ class _LexiChatPageState extends State<LexiChatPage>
         }
 
         final messages = provider.messages;
+        final isResponding = provider.isLexiResponding;
 
         return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          itemCount: messages.length + (provider.isLexiTyping ? 1 : 0),
+          itemCount: messages.length + (isResponding ? 1 : 0),
           itemBuilder: (context, index) {
             // Typing indicator at the end
-            if (index == messages.length && provider.isLexiTyping) {
+            if (index == messages.length && isResponding) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: LexiTypingIndicator(),
+                child: LexiTypingIndicator(isThinking: provider.isLexiThinking),
               );
             }
 
@@ -364,7 +377,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                     : const Color(0xFFF6F7F8),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF),
+                  color: isDark
+                      ? const Color(0xFF2A3A4A)
+                      : const Color(0xFFE8ECEF),
                   width: 1,
                 ),
               ),

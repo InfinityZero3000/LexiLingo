@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -27,10 +28,12 @@ class LexiChatProvider extends ChangeNotifier {
   final List<LexiMessage> _messages = [];
   bool _isLoading = false;
   bool _isSending = false;
+  bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   String? _error;
   bool _ttsEnabled = true;
   String _learnerLevel = 'B1';
+  Timer? _typingStageTimer;
 
   // Audio player for Lexi's voice
   final AudioPlayer _ttsPlayer = AudioPlayer();
@@ -40,7 +43,9 @@ class LexiChatProvider extends ChangeNotifier {
   List<LexiMessage> get messages => List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
+  bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
+  bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
   String? get error => _error;
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
@@ -96,7 +101,7 @@ class LexiChatProvider extends ChangeNotifier {
     );
     _messages.add(userMsg);
     _isSending = true;
-    _isLexiTyping = true;
+    _beginLexiResponseState();
     _error = null;
     notifyListeners();
 
@@ -110,7 +115,7 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       _messages.add(response);
-      _isLexiTyping = false;
+      _endLexiResponseState();
       _isSending = false;
       notifyListeners();
 
@@ -119,7 +124,7 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
-      _isLexiTyping = false;
+      _endLexiResponseState();
       _isSending = false;
       _error = 'Lexi couldn\'t respond: $e';
       logError(_tag, _error!);
@@ -147,7 +152,7 @@ class LexiChatProvider extends ChangeNotifier {
     final sessionId = _session?.sessionId ?? '';
 
     _isSending = true;
-    _isLexiTyping = true;
+    _beginLexiResponseState();
     _error = null;
 
     // Show recording indicator
@@ -173,7 +178,7 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       _messages.add(response);
-      _isLexiTyping = false;
+      _endLexiResponseState();
       _isSending = false;
       notifyListeners();
 
@@ -181,12 +186,32 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
-      _isLexiTyping = false;
+      _endLexiResponseState();
       _isSending = false;
       _error = 'Voice processing failed: $e';
       logError(_tag, _error!);
       notifyListeners();
     }
+  }
+
+  void _beginLexiResponseState() {
+    _typingStageTimer?.cancel();
+    _isLexiThinking = true;
+    _isLexiTyping = false;
+
+    // Transition to typing state if request takes longer.
+    _typingStageTimer = Timer(const Duration(milliseconds: 700), () {
+      if (!_isSending) return;
+      _isLexiThinking = false;
+      _isLexiTyping = true;
+      notifyListeners();
+    });
+  }
+
+  void _endLexiResponseState() {
+    _typingStageTimer?.cancel();
+    _isLexiThinking = false;
+    _isLexiTyping = false;
   }
 
   // ── TTS Playback ──────────────────────────────────────────────────────────
@@ -227,6 +252,7 @@ class LexiChatProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _typingStageTimer?.cancel();
     _ttsPlayer.dispose();
     super.dispose();
   }

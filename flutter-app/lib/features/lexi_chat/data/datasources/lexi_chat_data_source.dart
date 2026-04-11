@@ -22,6 +22,23 @@ class LexiChatDataSource {
     );
     text = text.replaceAll(RegExp(r'<\/?think>', caseSensitive: false), '');
 
+    // Remove leaked internal GraphCAG payloads from assistant content.
+    text = text.replaceAll(
+      RegExp(
+        r'\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    text = text.replaceAll(
+      RegExp(
+        r'^\s*\{(?:\\?"v\\?"|"v")[\s\S]*?(?:\\?"e\\?"|"e")[\s\S]*?\}\s*$',
+        caseSensitive: false,
+        multiLine: true,
+      ),
+      '',
+    );
+
     // Remove markdown wrappers that should not appear in plain chat bubbles.
     text = text.replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (m) => m[1] ?? '');
     text = text.replaceAllMapped(RegExp(r'__(.*?)__'), (m) => m[1] ?? '');
@@ -29,6 +46,10 @@ class LexiChatDataSource {
 
     // Normalize excessive blank lines from stripped sections.
     text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+
+    if (text.isEmpty) {
+      return 'Squawk! I had a small glitch. Can you ask that again?';
+    }
 
     return text;
   }
