@@ -236,7 +236,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     // Update streak when lesson is completed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StreakProvider>().updateStreak();
+      if (mounted) {
+        context.read<StreakProvider>().updateStreak();
+      }
     });
 
     return Stack(

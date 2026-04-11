@@ -148,17 +148,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   Color _getLeagueColor(String league) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return AppColors.textMuted;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return AppColors.warning;
       case 'platinum':
-        return const Color(0xFFE5E4E2);
+        return AppColors.purple;
       case 'diamond':
-        return const Color(0xFFB9F2FF);
+        return AppColors.primary;
       default:
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
     }
   }
 }
@@ -253,10 +253,16 @@ class _LeaderboardTab extends StatelessWidget {
 
               // Divider
               if (remaining.isNotEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Divider(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Text(
+                      'More Ranks',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                   ),
                 ),
 
@@ -352,17 +358,17 @@ class _LeagueBadgeSmall extends StatelessWidget {
   Color _getLeagueColor(String league) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return AppColors.textMuted;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return AppColors.warning;
       case 'platinum':
-        return const Color(0xFFE5E4E2);
+        return AppColors.purple;
       case 'diamond':
-        return const Color(0xFFB9F2FF);
+        return AppColors.primary;
       default:
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
     }
   }
 

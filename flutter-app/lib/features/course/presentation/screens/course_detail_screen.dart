@@ -266,6 +266,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     BuildContext context,
     CourseProvider provider,
   ) async {
+    if (!mounted) return;
     provider.clearEnrollmentMessages();
 
     final success = await provider.enrollInCourse(widget.courseId);

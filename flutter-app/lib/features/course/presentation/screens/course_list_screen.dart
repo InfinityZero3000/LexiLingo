@@ -353,21 +353,27 @@ class _CategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompactMobile = screenWidth < 390;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Category Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: isCompactMobile ? 14 : 16,
+            vertical: isCompactMobile ? 6 : 8,
+          ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(isCompactMobile ? 7 : 8),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(icon, color: color, size: isCompactMobile ? 18 : 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -397,10 +403,10 @@ class _CategorySection extends StatelessWidget {
 
         // Horizontal Course List with staggered animation
         SizedBox(
-          height: 280,
+          height: isCompactMobile ? 244 : 280,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: isCompactMobile ? 10 : 12),
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
@@ -410,6 +416,7 @@ class _CategorySection extends StatelessWidget {
                 delayPerItem: const Duration(milliseconds: 80),
                 child: _HorizontalCourseCard(
                   course: course,
+                  compact: isCompactMobile,
                   onTap: () => onCourseTap(course.id),
                 ),
               );
@@ -427,27 +434,34 @@ class _CategorySection extends StatelessWidget {
 /// Compact card design for horizontal scrolling with enhanced hero images
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
+  final bool compact;
   final VoidCallback onTap;
 
   const _HorizontalCourseCard({
     required this.course,
+    this.compact = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardWidth = compact ? 172.0 : 200.0;
+    final cardRadius = compact ? 14.0 : 16.0;
+    final contentPadding = compact ? 10.0 : 12.0;
+    final titleFontSize = compact ? 13.0 : 14.0;
+    final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
 
     return Container(
-      width: 200,
+      width: cardWidth,
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Card(
         elevation: 4,
         shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(cardRadius),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -455,11 +469,11 @@ class _HorizontalCourseCard extends StatelessWidget {
               Hero(
                 tag: 'discovery-course-image-${course.id}',
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(cardRadius),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 16 / 10,
+                    aspectRatio: imageAspectRatio,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -571,7 +585,7 @@ class _HorizontalCourseCard extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(contentPadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -685,7 +699,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       Text(
                         course.title,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
                         ),

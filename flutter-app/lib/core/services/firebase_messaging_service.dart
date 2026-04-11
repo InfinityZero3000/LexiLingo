@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 
@@ -49,20 +49,30 @@ class FirebaseMessagingService {
       // Get FCM token
       try {
         if (isSimulator) {
-          debugPrint('📱 Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.');
+          debugPrint(
+            '📱 Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.',
+          );
           _fcmToken = 'simulator_dummy_token';
         } else {
-          _fcmToken = await _messaging.getToken().timeout(const Duration(seconds: 5));
-          debugPrint('📱 FCM Token: $_fcmToken');
+          _fcmToken = await _messaging.getToken().timeout(
+            const Duration(seconds: 5),
+          );
+          if (kDebugMode) {
+            debugPrint('📱 FCM Token: ${_maskToken(_fcmToken)}');
+          }
         }
       } catch (e) {
-        debugPrint('⚠️ Could not get FCM token (expected if APNS/FCM not fully setup): $e');
+        debugPrint(
+          '⚠️ Could not get FCM token (expected if APNS/FCM not fully setup): $e',
+        );
       }
 
       // Listen for token refresh
       _messaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
-        debugPrint('📱 FCM Token refreshed: $newToken');
+        if (kDebugMode) {
+          debugPrint('📱 FCM Token refreshed: ${_maskToken(newToken)}');
+        }
         // Re-register the updated token with the backend (fire-and-forget).
         if (_apiClient != null) {
           registerTokenWithBackend(_apiClient!, forceUpdate: true);
@@ -283,6 +293,14 @@ class FirebaseMessagingService {
   /// Dispose resources
   void dispose() {
     _messageController.close();
+  }
+
+  String _maskToken(String? token) {
+    if (token == null || token.isEmpty) return '<empty>';
+    if (token.length <= 10) return '***';
+    final head = token.substring(0, 6);
+    final tail = token.substring(token.length - 4);
+    return '$head...$tail';
   }
 }
 
