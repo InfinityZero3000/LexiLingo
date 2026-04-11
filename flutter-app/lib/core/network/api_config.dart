@@ -77,9 +77,16 @@ class ApiConfig {
   static String? _normalizedEnvUrl(String key) {
     final envUrl = dotenv.env[key]?.trim();
     if (envUrl == null || envUrl.isEmpty) return null;
-    return envUrl.endsWith('/')
+    final normalized = envUrl.endsWith('/')
         ? envUrl.substring(0, envUrl.length - 1)
         : envUrl;
+
+    // Force IPv4 loopback for localhost to avoid IPv6 routing to unrelated listeners.
+    if (normalized.contains('://localhost')) {
+      return normalized.replaceFirst('://localhost', '://127.0.0.1');
+    }
+
+    return normalized;
   }
 
   static bool get _shouldUseLocalFallback => !_mustUseProductionBackend;
@@ -100,6 +107,9 @@ class ApiConfig {
   }
 
   static bool _isLoopbackHost(String host) {
-    return host == 'localhost' || host == '127.0.0.1' || host == '0.0.0.0';
+    return host == 'localhost' ||
+        host == '127.0.0.1' ||
+        host == '0.0.0.0' ||
+        host == '::1';
   }
 }

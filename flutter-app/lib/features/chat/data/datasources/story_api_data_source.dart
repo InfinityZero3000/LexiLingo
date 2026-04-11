@@ -51,6 +51,33 @@ class StoryApiDataSource {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final storiesJson = json['stories'] as List<dynamic>? ?? [];
 
+      if (storiesJson.isEmpty &&
+          queryParams['category'] == null &&
+          queryParams['difficulty_level'] == null) {
+        final retryUri = Uri.parse('$baseUrl/topics/stories').replace(
+          queryParameters: {
+            if (limit != 20) 'limit': limit.toString(),
+            'bypass_cache': 'true',
+          },
+        );
+
+        logDebug(_tag, 'getStories retry with bypass_cache: $retryUri');
+
+        final retryResponse = await _client.get(
+          retryUri,
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        if (retryResponse.statusCode == 200) {
+          final retryJson =
+              jsonDecode(retryResponse.body) as Map<String, dynamic>;
+          final retryStoriesJson = retryJson['stories'] as List<dynamic>? ?? [];
+          return retryStoriesJson
+              .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      }
+
       return storiesJson
           .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
           .toList();

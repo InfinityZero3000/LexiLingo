@@ -36,16 +36,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
-    // Use clearActiveSession via a microtask to avoid notifying during dispose
+    // Capture provider before microtask to avoid using context after dispose
+    final provider = context.read<StoryProvider>();
     Future.microtask(() {
-      if (context.mounted) {
-        context.read<StoryProvider>().clearActiveSession();
-      }
+      provider.clearActiveSession();
     });
     super.dispose();
   }
 
   Future<void> _startSession() async {
+    if (!mounted) return;
     final provider = context.read<StoryProvider>();
     final userId = _currentUserId(context);
 
@@ -71,6 +71,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   }
 
   Future<void> _sendMessage([String? text]) async {
+    if (!mounted) return;
     final message = text ?? _controller.text.trim();
     if (message.isEmpty) return;
 
