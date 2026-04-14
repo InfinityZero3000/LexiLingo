@@ -5,6 +5,8 @@ services:
   ai-service:
     build: .
     container_name: lexilingo-ai-service
+    mem_limit: 2g
+    memswap_limit: 2g
     ports:
       - "8001:8001"
     environment:
@@ -27,6 +29,8 @@ services:
     image: mongo:7.0
     container_name: lexilingo-mongo
     restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
     ports:
       - "27017:27017"
     environment:
@@ -48,6 +52,8 @@ services:
     image: mongo-express:latest
     container_name: lexilingo-mongo-express
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
     ports:
       - "8081:8081"
     environment:
@@ -64,6 +70,8 @@ services:
     image: redis:7-alpine
     container_name: lexilingo-redis
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes

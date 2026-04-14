@@ -34,16 +34,18 @@ services:
       - ./logs:/app/logs
       
     restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 2g
     
     # Resource limits (adjust based on your machine)
     deploy:
       resources:
         limits:
           cpus: '2.0'      # Use 2 CPU cores
-          memory: 4G       # Max 4GB RAM
+          memory: 2G       # Max 2GB RAM
         reservations:
           cpus: '1.0'
-          memory: 2G       # Reserve 2GB RAM
+          memory: 1G       # Reserve 1GB RAM
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
@@ -65,6 +67,8 @@ services:
       - redis-data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
     networks:
       - lexilingo-network
 
