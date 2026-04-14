@@ -59,8 +59,8 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF112121)
-          : const Color(0xFFF6F8F8),
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -82,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Icons.arrow_back,
                                   color: isDark
                                       ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                      : AppColors.surfaceDarkInput,
                                 ),
                               )
                             : const SizedBox(width: 48),
@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF0F172A),
+                                  : AppColors.surfaceDarkInput,
                             ),
                           ),
                         ),
@@ -131,7 +131,7 @@ class _LoginPageState extends State<LoginPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -139,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Continue your English language journey',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Email Address',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -159,7 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                         hintText: 'name@example.com',
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -183,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
                             'Password',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : AppColors.surfaceDarkInput,
                             ),
                           ),
                         ),
@@ -212,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -266,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
-                          foregroundColor: const Color(0xFF112121),
+                          foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -331,7 +331,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Divider(
                             color: isDark
                                 ? AppColors.surfaceDarkMuted
-                                : const Color(0xFFE2E8F0),
+                                : AppColors.slate200,
                           ),
                         ),
                         Padding(
@@ -340,8 +340,8 @@ class _LoginPageState extends State<LoginPage> {
                             'Or login with',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF94A3B8),
+                                  ? AppColors.textMuted
+                                  : AppColors.textMuted,
                             ),
                           ),
                         ),
@@ -349,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Divider(
                             color: isDark
                                 ? AppColors.surfaceDarkMuted
-                                : const Color(0xFFE2E8F0),
+                                : AppColors.slate200,
                           ),
                         ),
                       ],
@@ -407,7 +407,7 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'Don\'t have an account?',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark ? Colors.white70 : AppColors.textSlate,
                           ),
                         ),
                         TextButton(

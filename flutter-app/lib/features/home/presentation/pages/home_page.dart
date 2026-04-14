@@ -206,6 +206,9 @@ class _HomePageNewState extends State<HomePageNew> {
             // Use numeric level progress, not CEFR-based
             final progress = levelProvider.displayLevelProgress * 100;
 
+            final colorScheme = Theme.of(context).colorScheme;
+            final surfaceBg = colorScheme.surfaceContainerHighest;
+
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -219,14 +222,14 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: _buildBentoCard(
                           context,
                           icon: Icons.local_fire_department,
-                          iconColor: Colors.orange,
-                          bgColor: AppColors.orange.withValues(alpha: 0.1),
+                          iconColor: AppColors.orange,
+                          bgColor: surfaceBg,
                           title: 'Streak',
                           value: '$streak',
                           subtitle: 'days',
                           height: 120,
                           hasGlow: streak >= 3,
-                          glowColor: Colors.orange,
+                          glowColor: AppColors.orange,
                           onTap: () {
                             if (streakProvider.streak != null) {
                               showModalBottomSheet(
@@ -249,7 +252,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.star,
                           iconColor: AppColors.orange,
-                          bgColor: AppColors.accentYellow.withValues(alpha: 0.1),
+                          bgColor: surfaceBg,
                           title: 'XP',
                           value: LevelCalculator.formatXP(xp),
                           subtitle: 'earned',
@@ -268,7 +271,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.diamond,
                           iconColor: AppColors.purple,
-                          bgColor: AppColors.purple.withValues(alpha: 0.1),
+                          bgColor: surfaceBg,
                           title: 'Gems',
                           value: '$gems',
                           subtitle: null,
@@ -288,12 +291,10 @@ class _HomePageNewState extends State<HomePageNew> {
                           height: 100,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: surfaceBg,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(
-                                0xFF3B82F6,
-                              ).withValues(alpha: 0.2),
+                              color: colorScheme.outlineVariant,
                             ),
                           ),
                           child: Column(
@@ -336,7 +337,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           context,
                           icon: Icons.menu_book,
                           iconColor: AppColors.greenSuccessBright,
-                          bgColor: AppColors.greenSuccessSoft.withValues(alpha: 0.1),
+                          bgColor: surfaceBg,
                           title: 'Today',
                           value: '$lessonsToday',
                           subtitle: 'lessons',
@@ -363,7 +364,7 @@ class _HomePageNewState extends State<HomePageNew> {
     required double height,
     VoidCallback? onTap,
     bool hasGlow = false,
-    Color glowColor = Colors.orange,
+    Color glowColor = AppColors.orange,
   }) {
     // Adjust padding and sizes based on card height
     final isSmallCard = height <= 100;
@@ -500,28 +501,20 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget _buildDailyGoalCard(BuildContext context, HomeProvider provider) {
     final percentage = provider.dailyProgressPercentage;
     final isCompleted = percentage >= 1.0;
+    final colorScheme = Theme.of(context).colorScheme;
+    final surfaceBg = colorScheme.surfaceContainerHighest;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isCompleted
-              ? [AppColors.greenSuccessSoft.withValues(alpha: 0.1), AppColors.greenSuccessSoft.withValues(alpha: 0.2)]
-              : [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.2)],
-        ),
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: (isCompleted ? Colors.green : Colors.blue).withValues(
-              alpha: 0.15,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(
+          color: isCompleted
+              ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
+              : AppColors.primary.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
@@ -530,7 +523,7 @@ class _HomePageNewState extends State<HomePageNew> {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.5),
+              color: colorScheme.surface,
             ),
             child: glass.AnimatedProgressRing(
               progress: percentage.clamp(0.0, 1.0),
@@ -570,7 +563,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -610,7 +603,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -741,6 +734,8 @@ class _HomePageNewState extends State<HomePageNew> {
         : progress >= 50
         ? AppColors.orange
         : AppColors.primary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final surfaceBg = colorScheme.surfaceContainerHighest;
 
     return GestureDetector(
       onTap: () {
@@ -755,20 +750,9 @@ class _HomePageNewState extends State<HomePageNew> {
         width: 296,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, progressColor.withValues(alpha: 0.05)],
-          ),
+          color: surfaceBg,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: progressColor.withValues(alpha: 0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-          border: Border.all(color: progressColor.withValues(alpha: 0.2)),
+          border: Border.all(color: progressColor.withValues(alpha: 0.3)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -780,20 +764,14 @@ class _HomePageNewState extends State<HomePageNew> {
                 height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  color: progressColor.withValues(alpha: 0.1),
+                  color: colorScheme.surface,
                   image: course.thumbnailUrl != null
                       ? DecorationImage(
                           image: NetworkImage(course.thumbnailUrl!),
                           fit: BoxFit.cover,
                         )
                       : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: progressColor.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: course.thumbnailUrl == null
                     ? Icon(Icons.school, size: 32, color: progressColor)
@@ -1325,7 +1303,7 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.style,
         'label': 'Vocabulary',
-        'color': Colors.orange,
+        'color': AppColors.orange,
         'bgColor': AppColors.warning.withValues(alpha: 0.1),
         'route': '/vocab',
       },

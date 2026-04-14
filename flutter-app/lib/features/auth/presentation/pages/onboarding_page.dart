@@ -72,8 +72,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF112121)
-          : const Color(0xFFF6F8F8),
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -91,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   Text(
                     '${_currentPage + 1}/3',
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : AppColors.textSlate,
                     ),
                   ),
                 ],
@@ -104,7 +104,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   minHeight: 8,
                   backgroundColor: isDark
                       ? const Color(0xFF1F2937)
-                      : const Color(0xFFE2E8F0),
+                      : AppColors.slate200,
                   valueColor: const AlwaysStoppedAnimation(AppColors.accentMint),
                 ),
               ),
@@ -182,7 +182,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   onPressed: _isSubmitting ? null : _goNext,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accentMint,
-                    foregroundColor: const Color(0xFF112121),
+                    foregroundColor: AppColors.accentMintDark,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -318,7 +318,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
-                              color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0),
+                              color: isDark ? const Color(0xFF1F2937) : AppColors.slate200,
                             );
                           },
                         ),
@@ -426,14 +426,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     color: selected
                         ? AppColors.accentMint.withValues(alpha: 0.1)
                         : (isDark
-                              ? const Color(0xFF0F172A).withValues(alpha: 0.55)
+                              ? AppColors.surfaceDarkInput.withValues(alpha: 0.55)
                               : Colors.white),
                     border: Border.all(
                       color: selected
                           ? AppColors.accentMint
                           : (isDark
                                 ? const Color(0xFF334155).withValues(alpha: 0.5)
-                                : const Color(0xFFE2E8F0)),
+                                : AppColors.slate200),
                       width: selected ? 2 : 1.5,
                     ),
                     boxShadow: selected
@@ -471,7 +471,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 : FontWeight.w500,
                             color: selected 
                                 ? (isDark ? Colors.white : AppColors.textDark)
-                                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                : (isDark ? Colors.white70 : AppColors.textSlate),
                             fontSize: 17,
                           ),
                         ),

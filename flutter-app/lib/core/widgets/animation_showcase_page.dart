@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'custom_animations.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animation Showcase Page
 /// Demonstrates all available custom animations in the app
@@ -93,7 +94,7 @@ class AnimationShowcasePage extends StatelessWidget {
                   size: 80,
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
-                  progressColor: Colors.orange,
+                  progressColor: AppColors.orange,
                   child: Text(
                     '65%',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -115,12 +116,12 @@ class AnimationShowcasePage extends StatelessWidget {
             _buildDescription('Touch feedback animation'),
             Center(
               child: RippleEffect(
-                rippleColor: Colors.purple,
+                rippleColor: AppColors.purple,
                 child: Container(
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.2),
+                    color: AppColors.purple.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(child: Text('Tap me')),
@@ -178,7 +179,7 @@ class AnimationShowcasePage extends StatelessWidget {
             AnimatedGradientBorder(
               borderWidth: 3,
               borderRadius: 16,
-              colors: [Colors.blue, Colors.purple, Colors.pink, Colors.orange],
+              colors: [Colors.blue, AppColors.purple, Colors.pink, AppColors.orange],
               child: Container(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -209,7 +210,7 @@ class AnimationShowcasePage extends StatelessWidget {
               children: [
                 AnimatedCheckmark(color: Colors.green, size: 60),
                 AnimatedCheckmark(color: Colors.blue, size: 60),
-                AnimatedCheckmark(color: Colors.purple, size: 60),
+                AnimatedCheckmark(color: AppColors.purple, size: 60),
               ],
             ),
             const SizedBox(height: 48),

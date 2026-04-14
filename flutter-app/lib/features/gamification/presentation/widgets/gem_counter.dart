@@ -84,7 +84,7 @@ class _GemCounterState extends State<GemCounter>
                   gradient: LinearGradient(
                     colors: [
                       AppColors.purple.withValues(alpha: 0.15),
-                      const Color(0xFFA855F7).withValues(alpha: 0.1),
+                      AppColors.purpleLight.withValues(alpha: 0.1),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -122,7 +122,7 @@ class _GemCounterState extends State<GemCounter>
       height: widget.iconSize,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.purple, Color(0xFFA855F7)],
+          colors: [AppColors.purple, AppColors.purpleLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -163,7 +163,7 @@ class GemIcon extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.purple, Color(0xFFA855F7)],
+          colors: [AppColors.purple, AppColors.purpleLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

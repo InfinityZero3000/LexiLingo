@@ -32,7 +32,7 @@ class StreakIndicator extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withValues(alpha: 0.45),
+                  color: AppColors.orange.withValues(alpha: 0.45),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -48,7 +48,7 @@ class StreakIndicator extends StatelessWidget {
         children: [
           const Icon(
             Icons.local_fire_department_rounded,
-            color: Colors.orange,
+            color: AppColors.orange,
             size: 16,
           ),
           const SizedBox(width: 3),
@@ -82,7 +82,7 @@ class StreakIndicator extends StatelessWidget {
         boxShadow: _hasGlow
             ? [
                 BoxShadow(
-                  color: Colors.orange.withValues(alpha: 0.5),
+                  color: AppColors.orange.withValues(alpha: 0.5),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -94,7 +94,7 @@ class StreakIndicator extends StatelessWidget {
         children: [
           Icon(
             Icons.local_fire_department_rounded,
-            color: Colors.orange,
+            color: AppColors.orange,
             size: _hasGlow ? 22 : 18,
           ),
           const SizedBox(width: 6),

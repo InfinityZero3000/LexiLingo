@@ -38,7 +38,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF112121) : const Color(0xFFF6F8F8),
+      backgroundColor: isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Forgot Password'),
         centerTitle: true,
@@ -59,7 +59,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Icon(
                       Icons.lock_reset,
                       size: 56,
-                      color: isDark ? AppColors.accentMint : const Color(0xFF137FEC),
+                      color: isDark ? AppColors.accentMint : AppColors.primary,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -67,7 +67,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -75,7 +75,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       'Enter your account email. We will send instructions to reset your password.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -86,7 +86,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         hintText: 'name@example.com',
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -129,7 +129,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
-                          foregroundColor: const Color(0xFF112121),
+                          foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),

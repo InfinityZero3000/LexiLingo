@@ -19,7 +19,7 @@ class PronunciationScoreCard extends StatelessWidget {
   Color _getScoreColor(int value) {
     if (value >= 90) return Colors.green;
     if (value >= 70) return Colors.amber;
-    if (value >= 50) return Colors.orange;
+    if (value >= 50) return AppColors.orange;
     return Colors.red;
   }
 
@@ -153,7 +153,7 @@ class _OverallScoreCircle extends StatelessWidget {
   Color _getColor() {
     if (score >= 90) return Colors.green;
     if (score >= 70) return Colors.amber;
-    if (score >= 50) return Colors.orange;
+    if (score >= 50) return AppColors.orange;
     return Colors.red;
   }
 
@@ -210,7 +210,7 @@ class _ScoreItem extends StatelessWidget {
   Color _getColor() {
     if (score >= 90) return Colors.green;
     if (score >= 70) return Colors.amber;
-    if (score >= 50) return Colors.orange;
+    if (score >= 50) return AppColors.orange;
     return Colors.red;
   }
 

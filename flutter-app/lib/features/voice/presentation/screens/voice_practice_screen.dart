@@ -305,7 +305,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     icon: const Icon(Icons.mic_off),
                     label: const Text('Grant Microphone Permission'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: AppColors.orange,
                       foregroundColor: Colors.white,
                     ),
                   ),

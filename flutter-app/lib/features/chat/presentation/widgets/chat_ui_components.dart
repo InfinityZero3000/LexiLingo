@@ -324,7 +324,7 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
       case AIMood.happy:
         return Colors.green;
       case AIMood.thinking:
-        return Colors.orange;
+        return AppColors.orange;
       case AIMood.excited:
         return Colors.pink;
       case AIMood.helpful:
@@ -556,9 +556,9 @@ class TopicData {
 
 /// Default conversation topics
 const List<TopicData> defaultTopics = [
-  TopicData(label: 'Daily Life', icon: Icons.wb_sunny, color: Colors.orange),
+  TopicData(label: 'Daily Life', icon: Icons.wb_sunny, color: AppColors.orange),
   TopicData(label: 'Travel', icon: Icons.flight, color: Colors.blue),
   TopicData(label: 'Food', icon: Icons.restaurant, color: Colors.red),
-  TopicData(label: 'Work', icon: Icons.work, color: Colors.purple),
+  TopicData(label: 'Work', icon: Icons.work, color: AppColors.purple),
   TopicData(label: 'Hobbies', icon: Icons.palette, color: Colors.green),
 ];

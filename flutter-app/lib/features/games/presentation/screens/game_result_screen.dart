@@ -283,7 +283,7 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           const Icon(
             Icons.local_fire_department_rounded,
-            color: Colors.orange,
+            color: AppColors.orange,
             size: 16,
           ),
           const SizedBox(width: 6),

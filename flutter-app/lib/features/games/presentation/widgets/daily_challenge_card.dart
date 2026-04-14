@@ -38,7 +38,7 @@ class DailyChallengeCard extends StatelessWidget {
           gradient: completed
               ? null
               : const LinearGradient(
-                  colors: [Color(0xFF137FEC), Color(0xFF5B9BF5)],
+                  colors: [AppColors.primary, Color(0xFF5B9BF5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

@@ -116,7 +116,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF2A3A4A)
+                            ? AppColors.surfaceDarkChat
                             : AppColors.accentYellow.withValues(alpha: 0.3),
                         width: 1,
                       ),
@@ -160,7 +160,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? const Color(0xFF2A3A4A)
+                                  ? AppColors.surfaceDarkChat
                                   : AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -22,17 +23,25 @@ class _TopicChatPageState extends State<TopicChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
+  bool _taskBannerVisible = false;
+  bool _taskBannerDismissedByUser = false;
+  _TaskBannerType _taskBannerType = _TaskBannerType.loading;
+  String _taskBannerTitle = 'Preparing chat...';
+  String _taskBannerDetail = '';
+  double? _taskBannerProgress;
+  Timer? _autoHideTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startSession();
+      _openTopicAndWarmContext();
     });
   }
 
   @override
   void dispose() {
+    _autoHideTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -44,10 +53,17 @@ class _TopicChatPageState extends State<TopicChatPage> {
     super.dispose();
   }
 
-  Future<void> _startSession() async {
+  Future<void> _openTopicAndWarmContext() async {
     if (!mounted) return;
     final provider = context.read<StoryProvider>();
     final userId = _currentUserId(context);
+
+    _showTaskBanner(
+      type: _TaskBannerType.loading,
+      title: 'Opening topic chat',
+      detail: 'Creating your conversation session...',
+      progress: 0.25,
+    );
 
     final success = await provider.startTopicSession(
       userId: userId,
@@ -56,13 +72,87 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
     if (!mounted) return;
     if (!success) {
+      _showTaskBanner(
+        type: _TaskBannerType.error,
+        title: 'Could not open chat',
+        detail: provider.sessionError ?? 'Please try again.',
+        progress: null,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError ?? 'Failed to start session'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
     }
+
+    _showTaskBanner(
+      type: _TaskBannerType.loading,
+      title: 'Loading knowledge graph',
+      detail: 'Preparing context for smarter replies...',
+      progress: 0.7,
+    );
+
+    final warmed = await provider.warmTopicCache(
+      storyId: widget.story.storyId,
+      userId: userId,
+    );
+
+    if (!mounted) return;
+    if (warmed) {
+      _showTaskBanner(
+        type: _TaskBannerType.complete,
+        title: 'Context complete',
+        detail: 'Knowledge graph is ready for this chat.',
+        progress: 1.0,
+      );
+      _scheduleAutoHide();
+    } else {
+      _showTaskBanner(
+        type: _TaskBannerType.error,
+        title: 'Context preload unavailable',
+        detail: provider.error ?? 'Chat is ready, but KG preload failed.',
+        progress: null,
+      );
+    }
+  }
+
+  void _showTaskBanner({
+    required _TaskBannerType type,
+    required String title,
+    required String detail,
+    double? progress,
+  }) {
+    _autoHideTimer?.cancel();
+    if (_taskBannerDismissedByUser) return;
+
+    setState(() {
+      _taskBannerType = type;
+      _taskBannerTitle = title;
+      _taskBannerDetail = detail;
+      _taskBannerProgress = progress;
+      _taskBannerVisible = true;
+    });
+  }
+
+  void _scheduleAutoHide() {
+    _autoHideTimer?.cancel();
+    _autoHideTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() {
+        _taskBannerVisible = false;
+      });
+    });
+  }
+
+  void _dismissTaskBannerByUser() {
+    _autoHideTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _taskBannerDismissedByUser = true;
+      _taskBannerVisible = false;
+    });
   }
 
   String _currentUserId(BuildContext context) {
@@ -118,10 +208,6 @@ class _TopicChatPageState extends State<TopicChatPage> {
       appBar: _buildAppBar(),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading && !provider.hasActiveSession) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
           return Column(
             children: [
               // 1. Story context header
@@ -130,15 +216,27 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
               // 2. Messages list
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: provider.messages.length,
-                  itemBuilder: (context, index) {
-                    final message = provider.messages[index];
-                    return _TopicMessageBubble(message: message);
-                  },
-                ),
+                child: provider.messages.isEmpty
+                    ? Center(
+                        child: Text(
+                          provider.isLoading
+                              ? 'Preparing your topic...'
+                              : 'Say hello to start practicing.',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: provider.messages.length,
+                        itemBuilder: (context, index) {
+                          final message = provider.messages[index];
+                          return _TopicMessageBubble(message: message);
+                        },
+                      ),
               ),
 
               // 3. Suggested Prompts (if any)
@@ -150,7 +248,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
               if (provider.isSendingMessage) _buildTypingIndicator(),
 
               // 5. Input field
-              _buildInputField(),
+              if (!_taskBannerDismissedByUser) _buildTaskBanner(),
+              _buildInputField(isEnabled: provider.hasActiveSession),
             ],
           );
         },
@@ -201,7 +300,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 ),
                 Text(
                   '${widget.story.difficultyLevel.shortName} • ${widget.story.estimatedMinutes}m left',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
                 ),
               ],
             ),
@@ -292,7 +394,97 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildInputField() {
+  Widget _buildTaskBanner() {
+    final Color accent = switch (_taskBannerType) {
+      _TaskBannerType.loading => AppColors.primary,
+      _TaskBannerType.complete => Colors.green,
+      _TaskBannerType.error => AppColors.orange,
+    };
+
+    final IconData icon = switch (_taskBannerType) {
+      _TaskBannerType.loading => Icons.sync,
+      _TaskBannerType.complete => Icons.check_circle_outline,
+      _TaskBannerType.error => Icons.info_outline,
+    };
+
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      offset: _taskBannerVisible ? Offset.zero : const Offset(0, 1),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: _taskBannerVisible ? 1 : 0,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Dismissible(
+            key: ValueKey('task-banner-$_taskBannerTitle-$_taskBannerType'),
+            direction: DismissDirection.horizontal,
+            onDismissed: (_) => _dismissTaskBannerByUser(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: accent.withValues(alpha: 0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(icon, color: accent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _taskBannerTitle,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey[900],
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Swipe to close',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                  if (_taskBannerDetail.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _taskBannerDetail,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    ),
+                  ],
+                  if (_taskBannerProgress != null) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        minHeight: 6,
+                        value: _taskBannerProgress,
+                        backgroundColor: accent.withValues(alpha: 0.16),
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({required bool isEnabled}) {
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -321,6 +513,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
+                enabled: isEnabled,
                 decoration: const InputDecoration(
                   hintText: 'Type in English...',
                   border: InputBorder.none,
@@ -336,11 +529,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
           ),
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: _sendMessage,
+            onTap: isEnabled ? _sendMessage : null,
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Colors.blue,
+              decoration: BoxDecoration(
+                color: isEnabled ? Colors.blue : Colors.grey,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.send, color: Colors.white, size: 20),
@@ -365,11 +558,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
         break;
       case 'daily_life':
         icon = Icons.home;
-        color = Colors.teal;
+        color = AppColors.teal;
         break;
       case 'food':
         icon = Icons.restaurant;
-        color = Colors.orange;
+        color = AppColors.orange;
         break;
       default:
         icon = Icons.chat_bubble;
@@ -443,6 +636,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 }
+
+enum _TaskBannerType { loading, complete, error }
 
 /// Story context header widget
 class _StoryContextHeader extends StatelessWidget {

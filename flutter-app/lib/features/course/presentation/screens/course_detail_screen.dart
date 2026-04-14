@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/course/presentation/providers/course_prov
 import 'package:lexilingo_app/features/course/domain/entities/course_detail_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_roadmap_screen.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Course Detail Screen
 /// Shows course roadmap with units and lessons
@@ -475,11 +476,11 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'grammar':
           iconData = Icons.menu_book;
-          color = Colors.orange;
+          color = AppColors.orange;
           break;
         case 'listening':
           iconData = Icons.headphones;
-          color = Colors.purple;
+          color = AppColors.purple;
           break;
         case 'speaking':
           iconData = Icons.mic;
@@ -487,7 +488,7 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'reading':
           iconData = Icons.book;
-          color = Colors.teal;
+          color = AppColors.teal;
           break;
         case 'writing':
           iconData = Icons.edit;

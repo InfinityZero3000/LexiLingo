@@ -67,9 +67,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.surfaceDarkMuted
-                    : Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -164,15 +162,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   Widget _buildFilterChip(String label, bool isSelected, {IconData? icon}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primary
-            : (Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.surfaceDarkMuted
-                  : Colors.white),
+            ? colorScheme.primary
+            : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
         border: isSelected
             ? null
@@ -199,10 +196,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             label,
             style: TextStyle(
               color: isSelected
-                  ? Colors.white
-                  : (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : AppColors.textDark),
+                  ? colorScheme.onPrimary
+                  : colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -254,13 +249,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     String ipa,
     String def,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceDarkMuted
-            : Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -281,10 +275,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.menu_book, color: AppColors.primary),
+                  child: Icon(Icons.menu_book, color: colorScheme.primary),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -332,12 +326,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.05),
+              color: colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.volume_up,
-              color: AppColors.primary,
+              color: colorScheme.primary,
               size: 20,
             ),
           ),

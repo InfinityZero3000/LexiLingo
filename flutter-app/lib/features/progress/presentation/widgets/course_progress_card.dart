@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Course Progress Card Widget
 /// Displays progress for a single course
@@ -126,7 +127,7 @@ class CourseProgressCard extends StatelessWidget {
     if (progress >= 80) {
       return Colors.green;
     } else if (progress >= 50) {
-      return Colors.orange;
+      return AppColors.orange;
     } else {
       return Colors.blue;
     }

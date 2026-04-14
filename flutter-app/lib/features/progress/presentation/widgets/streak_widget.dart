@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../providers/streak_provider.dart';
 import '../../domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Helper function to get icon from streak identifier
 IconData _getStreakIcon(String identifier) {
@@ -59,7 +60,7 @@ class StreakWidget extends StatelessWidget {
               boxShadow: streak.currentStreak >= 3
                   ? [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.45),
+                        color: AppColors.orange.withValues(alpha: 0.45),
                         blurRadius: 10,
                         spreadRadius: 1,
                         offset: const Offset(0, 2),
@@ -182,7 +183,7 @@ class StreakCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: streak.currentStreak > 0
-                                ? [Colors.orange, Colors.deepOrange]
+                                ? [AppColors.orange, AppColors.deepOrange]
                                 : [Colors.grey.shade300, Colors.grey.shade400],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -357,7 +358,7 @@ class StreakDetailsSheet extends StatelessWidget {
           // Big streak display
           Icon(
             _getStreakIcon(streak.streakIcon),
-            color: Colors.orange,
+            color: AppColors.orange,
             size: 64,
           ),
           const SizedBox(height: 8),
@@ -370,7 +371,7 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             streak.streakLevel,
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.orange),
+            style: theme.textTheme.titleMedium?.copyWith(color: AppColors.orange),
           ),
 
           const SizedBox(height: 32),
@@ -424,7 +425,7 @@ class StreakDetailsSheet extends StatelessWidget {
                   color: streak.isActiveToday
                       ? Colors.green
                       : streak.streakAtRisk
-                      ? Colors.orange
+                      ? AppColors.orange
                       : Colors.grey,
                 ),
                 const SizedBox(width: 12),
@@ -494,7 +495,7 @@ class StreakDetailsSheet extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(icon, size: 24, color: Colors.orange),
+        Icon(icon, size: 24, color: AppColors.orange),
         const SizedBox(height: 4),
         Text(
           value,

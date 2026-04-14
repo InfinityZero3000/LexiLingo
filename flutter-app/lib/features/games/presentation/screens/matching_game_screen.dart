@@ -300,7 +300,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                     AppColors.primary,
                     Colors.yellow,
                     Colors.green,
-                    Colors.orange,
+                    AppColors.orange,
                   ],
                 ),
               ),
@@ -408,7 +408,7 @@ class _TimerChip extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-        ? Colors.orange
+        ? AppColors.orange
         : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

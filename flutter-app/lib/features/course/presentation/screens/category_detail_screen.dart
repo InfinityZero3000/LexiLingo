@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Sort options for courses
 enum CourseSortOption {
@@ -477,7 +478,7 @@ class _CourseCard extends StatelessWidget {
       case 'intermediate':
       case 'b1':
       case 'b2':
-        return Colors.orange;
+        return AppColors.orange;
       case 'advanced':
       case 'c1':
       case 'c2':
@@ -590,7 +591,7 @@ class _CourseGridCard extends StatelessWidget {
       case 'intermediate':
       case 'b1':
       case 'b2':
-        return Colors.orange;
+        return AppColors.orange;
       case 'advanced':
       case 'c1':
       case 'c2':

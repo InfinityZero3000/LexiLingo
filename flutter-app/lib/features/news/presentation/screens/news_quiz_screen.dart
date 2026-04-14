@@ -594,7 +594,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   Color _questionTypeColor(String type) {
     switch (type) {
       case 'comprehension':
-        return const Color(0xFF137FEC);
+        return AppColors.primary;
       case 'vocabulary':
         return AppColors.purple;
       case 'grammar':

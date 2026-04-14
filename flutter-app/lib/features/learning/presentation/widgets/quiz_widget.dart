@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -230,11 +231,11 @@ class _QuizWidgetState extends State<QuizWidget>
               child: Card(
                 color: widget.isCorrect!
                     ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
+                    : AppColors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: widget.isCorrect! ? Colors.green : Colors.orange,
+                    color: widget.isCorrect! ? Colors.green : AppColors.orange,
                     width: 1,
                   ),
                 ),
@@ -251,7 +252,7 @@ class _QuizWidgetState extends State<QuizWidget>
                                 : Icons.info_outline,
                             color: widget.isCorrect!
                                 ? Colors.green
-                                : Colors.orange,
+                                : AppColors.orange,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -261,7 +262,7 @@ class _QuizWidgetState extends State<QuizWidget>
                               fontWeight: FontWeight.bold,
                               color: widget.isCorrect!
                                   ? Colors.green
-                                  : Colors.orange,
+                                  : AppColors.orange,
                             ),
                           ),
                         ],

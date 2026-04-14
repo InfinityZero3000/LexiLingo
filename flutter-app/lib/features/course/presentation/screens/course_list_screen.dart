@@ -917,9 +917,9 @@ class _HorizontalCourseCard extends StatelessWidget {
       case 'elementary':
         return Colors.lightGreen;
       case 'intermediate':
-        return Colors.orange;
+        return AppColors.orange;
       case 'upper-intermediate':
-        return Colors.deepOrange;
+        return AppColors.deepOrange;
       case 'advanced':
         return Colors.red;
       default:
@@ -929,7 +929,7 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   Color _getProgressColor(double progress) {
     if (progress >= 80) return Colors.green;
-    if (progress >= 50) return Colors.orange;
+    if (progress >= 50) return AppColors.orange;
     return Colors.blue;
   }
 
@@ -1107,10 +1107,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Spanish',
                 isSelected: provider.selectedLanguage == 'Spanish',
-                color: Colors.orange,
+                color: AppColors.orange,
                 iconWidget: _buildLanguageIcon(
                   'ES',
-                  Colors.orange,
+                  AppColors.orange,
                   provider.selectedLanguage == 'Spanish',
                 ),
                 onTap: () {
@@ -1144,13 +1144,13 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.1),
+                  color: AppColors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.signal_cellular_alt,
                   size: 16,
-                  color: Colors.purple,
+                  color: AppColors.purple,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1189,7 +1189,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Intermediate',
                 isSelected: provider.selectedLevel == 'Intermediate',
-                color: Colors.orange,
+                color: AppColors.orange,
                 onTap: () {
                   provider.filterByLevel('Intermediate');
                   Navigator.pop(context);

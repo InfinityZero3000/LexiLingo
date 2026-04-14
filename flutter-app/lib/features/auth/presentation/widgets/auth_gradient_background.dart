@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthGradientBackground
@@ -219,7 +220,7 @@ class _Particle {
 
   factory _Particle.random(math.Random rng, int index) {
     final colors = const [
-      Color(0xFFFFD700), // gold
+      AppColors.gold, // gold
       Color(0xFF80DEEA), // cyan
       Color(0xFFA5D6A7), // mint
       Color(0xFFCE93D8), // lavender

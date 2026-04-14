@@ -30,6 +30,7 @@ class LexiChatPage extends StatefulWidget {
 
 class _LexiChatPageState extends State<LexiChatPage>
     with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -40,6 +41,12 @@ class _LexiChatPageState extends State<LexiChatPage>
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   String? _recordingPath;
+  int _lastMessageCount = 0;
+  final List<String> _quickReplies = const [
+    'Hi Lexi, can we practice speaking?',
+    'Can you correct my sentence?',
+    'Give me a daily conversation challenge.',
+  ];
 
   @override
   void initState() {
@@ -47,11 +54,14 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Start session
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
+      provider.syncSessions(_userId);
       if (!provider.hasSession) {
         final userId = _userId;
         provider.startSession(userId);
       }
     });
+
+    _scrollController.addListener(_handleTopReached);
   }
 
   String get _userId {
@@ -65,6 +75,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_handleTopReached);
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -85,6 +96,16 @@ class _LexiChatPageState extends State<LexiChatPage>
     }
   }
 
+  void _handleTopReached() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels <= 30) {
+      final provider = context.read<LexiChatProvider>();
+      if (provider.messages.isNotEmpty) {
+        _showSnack('Showing full saved history for this session');
+      }
+    }
+  }
+
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -95,6 +116,11 @@ class _LexiChatPageState extends State<LexiChatPage>
     _scrollToBottom();
     await pending;
     _scrollToBottom();
+  }
+
+  Future<void> _sendQuickReply(String text) async {
+    _controller.text = text;
+    await _sendMessage();
   }
 
   // ── Voice Recording ─────────────────────────────────────────────────────
@@ -151,14 +177,23 @@ class _LexiChatPageState extends State<LexiChatPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final provider = context.watch<LexiChatProvider>();
+    final currentCount = provider.messages.length;
+    if (currentCount != _lastMessageCount) {
+      _lastMessageCount = currentCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    }
+
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: _buildSessionDrawer(isDark),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [const Color(0xFF0A1628), const Color(0xFF101922)]
+                ? [const Color(0xFF0A1628), AppColors.backgroundDark]
                 : [const Color(0xFFFAFBFC), const Color(0xFFF8F9FA)],
           ),
         ),
@@ -181,18 +216,33 @@ class _LexiChatPageState extends State<LexiChatPage>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1C2A38).withValues(alpha: 0.95)
+            ? AppColors.surfaceDark.withValues(alpha: 0.95)
             : Colors.white.withValues(alpha: 0.95),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF),
+            color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
             width: 1,
           ),
         ),
       ),
       child: Row(
         children: [
-          const SizedBox(width: 4),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.menu_rounded,
+                color: isDark ? Colors.white70 : AppColors.textDark,
+                size: 20,
+              ),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              tooltip: 'Session history',
+            ),
+          ),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -253,8 +303,8 @@ class _LexiChatPageState extends State<LexiChatPage>
               return Container(
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF2A3A4A)
-                      : const Color(0xFFF6F7F8),
+                      ? AppColors.surfaceDarkChat
+                      : AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
@@ -274,7 +324,159 @@ class _LexiChatPageState extends State<LexiChatPage>
               );
             },
           ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.add_comment_outlined,
+                color: isDark ? Colors.white70 : AppColors.textDark,
+                size: 20,
+              ),
+              onPressed: () =>
+                  context.read<LexiChatProvider>().createNewSession(_userId),
+              tooltip: 'New chat',
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSessionDrawer(bool isDark) {
+    return Drawer(
+      child: SafeArea(
+        child: Consumer<LexiChatProvider>(
+          builder: (context, provider, _) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Lexi Sessions',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_rounded),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await provider.createNewSession(_userId);
+                        },
+                        tooltip: 'New session',
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: provider.sessions.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No previous sessions',
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white54
+                                  : AppColors.textGrey,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: provider.sessions.length,
+                          itemBuilder: (context, index) {
+                            final s = provider.sessions[index];
+                            final selected =
+                                provider.session?.sessionId == s.sessionId;
+                            return ListTile(
+                              selected: selected,
+                              selectedTileColor: AppColors.primary.withValues(
+                                alpha: 0.08,
+                              ),
+                              title: Text(
+                                s.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                s.updatedAt.toLocal().toString().substring(
+                                  0,
+                                  16,
+                                ),
+                              ),
+                              onTap: () async {
+                                Navigator.pop(context);
+                                await provider.selectSession(s);
+                              },
+                              trailing: PopupMenuButton<String>(
+                                onSelected: (value) async {
+                                  if (value == 'rename') {
+                                    final controller = TextEditingController(
+                                      text: s.title,
+                                    );
+                                    final renamed = await showDialog<String>(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text('Rename session'),
+                                        content: TextField(
+                                          controller: controller,
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(
+                                              context,
+                                              controller.text.trim(),
+                                            ),
+                                            child: const Text('Save'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (renamed != null && renamed.isNotEmpty) {
+                                      await provider.renameSession(
+                                        s.sessionId,
+                                        renamed,
+                                      );
+                                    }
+                                  }
+                                  if (value == 'delete') {
+                                    await provider.deleteSession(s.sessionId);
+                                  }
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: 'rename',
+                                    child: Text('Rename'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -354,91 +556,150 @@ class _LexiChatPageState extends State<LexiChatPage>
       ),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1C2A38).withValues(alpha: 0.95)
+            ? AppColors.surfaceDark.withValues(alpha: 0.95)
             : Colors.white.withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF),
+            color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
             width: 1,
           ),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Voice recording button
-          _buildVoiceButton(isDark),
-          const SizedBox(width: 12),
-          // Text input
-          Expanded(
-            child: Container(
+          if (_isRecording)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0A1628)
-                    : const Color(0xFFF6F7F8),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF2A3A4A)
-                      : const Color(0xFFE8ECEF),
-                  width: 1,
-                ),
+                color: Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
               ),
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
-                maxLines: 4,
-                minLines: 1,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? Colors.white : AppColors.textDark,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Message Lexi...',
-                  hintStyle: TextStyle(
-                    color: isDark ? Colors.white38 : AppColors.textGrey,
-                    fontSize: 14,
+              child: Row(
+                children: [
+                  const Icon(Icons.mic, color: Colors.red, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Recording ${_recordingDuration.inSeconds}s',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          // Send button
-          Consumer<LexiChatProvider>(
-            builder: (_, provider, __) {
-              return Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+          if (!_isRecording) ...[
+            SizedBox(
+              height: 34,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _quickReplies.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final text = _quickReplies[index];
+                  return ActionChip(
+                    label: Text(text, overflow: TextOverflow.ellipsis),
+                    onPressed: () => _sendQuickReply(text),
+                    labelStyle: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white70 : AppColors.textGrey,
                     ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    provider.isSending
-                        ? Icons.hourglass_empty_rounded
-                        : Icons.send_rounded,
-                    color: Colors.white,
-                    size: 20,
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.surfaceDarkChat
+                          : AppColors.chatBgLight,
+                    ),
+                    backgroundColor: isDark
+                        ? const Color(0xFF0A1628)
+                        : AppColors.backgroundLight,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          Row(
+            children: [
+              // Voice recording button
+              _buildVoiceButton(isDark),
+              const SizedBox(width: 12),
+              // Text input
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF0A1628)
+                        : AppColors.backgroundLight,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.surfaceDarkChat
+                          : AppColors.chatBgLight,
+                      width: 1,
+                    ),
                   ),
-                  onPressed: provider.isSending ? null : _sendMessage,
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
+                    maxLines: 4,
+                    minLines: 1,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white : AppColors.textDark,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Message Lexi...',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.white38 : AppColors.textGrey,
+                        fontSize: 14,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
                 ),
-              );
-            },
+              ),
+              const SizedBox(width: 12),
+              // Send button
+              Consumer<LexiChatProvider>(
+                builder: (_, provider, __) {
+                  return Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        provider.isSending
+                            ? Icons.hourglass_empty_rounded
+                            : Icons.send_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: provider.isSending ? null : _sendMessage,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -447,11 +708,21 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   Widget _buildVoiceButton(bool isDark) {
     return GestureDetector(
+      onLongPressStart: (_) {
+        if (!_isRecording) {
+          _startRecording();
+        }
+      },
+      onLongPressEnd: (_) {
+        if (_isRecording) {
+          _stopRecording();
+        }
+      },
       onTap: () {
         if (_isRecording) {
           _stopRecording();
         } else {
-          _startRecording();
+          _showSnack('Hold to record or tap to toggle');
         }
       },
       child: AnimatedContainer(
@@ -461,12 +732,12 @@ class _LexiChatPageState extends State<LexiChatPage>
         decoration: BoxDecoration(
           color: _isRecording
               ? Colors.red.withValues(alpha: 0.1)
-              : (isDark ? const Color(0xFF2A3A4A) : const Color(0xFFF6F7F8)),
+              : (isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: _isRecording
                 ? Colors.red.withValues(alpha: 0.3)
-                : (isDark ? const Color(0xFF2A3A4A) : const Color(0xFFE8ECEF)),
+                : (isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight),
             width: 1,
           ),
         ),

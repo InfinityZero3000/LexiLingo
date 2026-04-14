@@ -248,12 +248,12 @@ class _ShopScreenState extends State<ShopScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.2),
+                color: AppColors.orange.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.diamond_outlined,
-                color: Colors.orange,
+                color: AppColors.orange,
                 size: 48,
               ),
             ),

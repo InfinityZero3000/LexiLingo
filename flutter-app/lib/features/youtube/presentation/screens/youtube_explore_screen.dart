@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Explore Screen — main discovery page for English learning videos.
 ///
@@ -237,7 +236,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               _buildCategoryChip(
                 'General',
                 Icons.school_rounded,
-                const Color(0xFF137FEC),
+                AppColors.primary,
               ),
               _buildCategoryChip(
                 'Pronunciation',
@@ -252,7 +251,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               _buildCategoryChip(
                 'News',
                 Icons.newspaper_rounded,
-                const Color(0xFF00897B),
+                AppColors.teal,
               ),
             ],
           ),
@@ -557,9 +556,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
       case 'academic':
         return [const Color(0xFF7C4DFF), const Color(0xFF536DFE)];
       case 'news':
-        return [const Color(0xFF00897B), const Color(0xFF26A69A)];
+        return [AppColors.teal, const Color(0xFF26A69A)];
       default:
-        return [const Color(0xFF137FEC), AppColors.primary];
+        return [AppColors.primary, AppColors.primary];
     }
   }
 

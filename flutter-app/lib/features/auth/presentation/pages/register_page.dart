@@ -81,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -510,7 +510,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               child: SelectableText(
                                 authProvider.errorMessage!,
                                 style: const TextStyle(
-                                  color: Color(0xFFC62828),
+                                  color: AppColors.errorDark,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

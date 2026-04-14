@@ -119,7 +119,7 @@ class _MessageBubbleState extends State<MessageBubble>
       case 'target':
         return Colors.green;
       case 'help':
-        return Colors.purple;
+        return AppColors.purple;
       default:
         return Colors.grey;
     }

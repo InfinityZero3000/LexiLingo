@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Collection of lightweight custom animations using CustomPaint
 /// These animations are optimized for performance without external dependencies
@@ -127,7 +128,7 @@ class ShimmerEffect extends StatefulWidget {
   const ShimmerEffect({
     super.key,
     required this.child,
-    this.baseColor = const Color(0xFFE0E0E0),
+    this.baseColor = AppColors.grey300,
     this.highlightColor = const Color(0xFFF5F5F5),
     this.duration = const Duration(milliseconds: 1500),
   });
@@ -829,7 +830,7 @@ class AnimatedGradientBorder extends StatefulWidget {
     required this.child,
     this.borderWidth = 2,
     this.borderRadius = 12,
-    this.colors = const [Colors.blue, Colors.purple, Colors.pink, Colors.blue],
+    this.colors = const [Colors.blue, AppColors.purple, Colors.pink, Colors.blue],
     this.duration = const Duration(seconds: 3),
   });
 

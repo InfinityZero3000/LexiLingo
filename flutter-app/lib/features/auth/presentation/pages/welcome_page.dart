@@ -44,8 +44,8 @@ class _WelcomePageState extends State<WelcomePage>
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF112121)
-          : const Color(0xFFF6F8F8),
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: FadeTransition(
           opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
@@ -82,7 +82,7 @@ class _WelcomePageState extends State<WelcomePage>
                             fontWeight: FontWeight.bold,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF0F172A),
+                                : AppColors.surfaceDarkInput,
                           ),
                         ),
                       ),
@@ -144,7 +144,7 @@ class _WelcomePageState extends State<WelcomePage>
                             fontWeight: FontWeight.bold,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF0F172A),
+                                : AppColors.surfaceDarkInput,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -154,7 +154,7 @@ class _WelcomePageState extends State<WelcomePage>
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDark
                                 ? Colors.white70
-                                : const Color(0xFF64748B),
+                                : AppColors.textSlateLight,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -170,7 +170,7 @@ class _WelcomePageState extends State<WelcomePage>
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.accentMint,
-                              foregroundColor: const Color(0xFF112121),
+                              foregroundColor: AppColors.accentMintDark,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -227,8 +227,8 @@ class _WelcomePageState extends State<WelcomePage>
                               'Join a global community',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
+                                    ? AppColors.textMuted
+                                    : AppColors.textSlateLight,
                               ),
                             ),
                           ],
@@ -254,7 +254,7 @@ class _WelcomePageState extends State<WelcomePage>
         Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            color: isDark ? AppColors.textMuted : AppColors.textSlateLight,
           ),
         ),
         const SizedBox(height: 4),

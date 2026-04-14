@@ -42,7 +42,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.purple,
-                          const Color(0xFFA855F7).withValues(alpha: 0.8),
+                          AppColors.purpleLight.withValues(alpha: 0.8),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,

@@ -8,6 +8,7 @@ import '../widgets/quiz_widget.dart';
 import '../widgets/lesson_content_widget.dart';
 import '../../../voice/presentation/widgets/tts_speed_selector.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Learning Session Screen
 /// Handles the lesson learning flow with interactive exercises
@@ -213,7 +214,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               backgroundColor: provider.isCurrentAnswered
                   ? ((provider.isCurrentCorrect ?? false)
                         ? Colors.green
-                        : Colors.orange)
+                        : AppColors.orange)
                   : Colors.grey,
             ),
             child: Text(
@@ -329,7 +330,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               : Icons.auto_awesome,
                           color: percentage >= 80
                               ? Colors.amber
-                              : Colors.purple,
+                              : AppColors.purple,
                           size: 28,
                         ),
                         const SizedBox(width: 8),
@@ -345,7 +346,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               : Icons.auto_awesome,
                           color: percentage >= 80
                               ? Colors.amber
-                              : Colors.purple,
+                              : AppColors.purple,
                           size: 28,
                         ),
                       ],

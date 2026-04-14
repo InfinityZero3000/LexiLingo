@@ -9,6 +9,7 @@ import '../../../chat/presentation/pages/story_selection_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -59,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C2A38) : Colors.white,
+              color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),

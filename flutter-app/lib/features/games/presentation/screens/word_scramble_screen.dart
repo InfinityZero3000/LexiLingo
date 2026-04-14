@@ -285,7 +285,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                     color: _slotCorrect[i]
                                         ? AppColors.greenSuccess
                                         : _slotWrong[i]
-                                        ? const Color(0xFFC62828)
+                                        ? AppColors.errorDark
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
@@ -405,7 +405,7 @@ class _TimerDisplay extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-        ? Colors.orange
+        ? AppColors.orange
         : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

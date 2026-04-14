@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/story_model.dart';
 import '../providers/story_provider.dart';
 import 'topic_chat_page.dart';
-import 'chat_page.dart';
 
 /// Story Selection Page - Modern Redesign
 class StorySelectionPage extends StatefulWidget {
@@ -18,7 +16,6 @@ class StorySelectionPage extends StatefulWidget {
 class _StorySelectionPageState extends State<StorySelectionPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String? _warmingStoryId;
   DifficultyLevel? _selectedDifficulty;
 
   @override
@@ -43,7 +40,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF6F8F8),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         toolbarHeight: 86,
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -82,7 +81,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                     Text(
                       '$total topics available',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.textMuted : AppColors.textGrey,
+                        color: isDark
+                            ? AppColors.textMuted
+                            : AppColors.textGrey,
                       ),
                     ),
                   ],
@@ -91,32 +92,17 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             );
           },
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.primary),
-              tooltip: 'Free Chat',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ChatPage()),
-                );
-              },
-            ),
-          ),
-        ],
+        actions: const [],
       ),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
           final filteredStories = provider.stories.where((s) {
-            final matchesSearch = s.title.en.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            final matchesSearch =
+                s.title.en.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                 s.category.toLowerCase().contains(_searchQuery.toLowerCase());
-            final matchesDifficulty = _selectedDifficulty == null || s.difficultyLevel == _selectedDifficulty;
+            final matchesDifficulty =
+                _selectedDifficulty == null ||
+                s.difficultyLevel == _selectedDifficulty;
             return matchesSearch && matchesDifficulty;
           }).toList();
 
@@ -164,10 +150,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           hintText: 'Search topics...',
-          hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
+          hintStyle: TextStyle(
+            color: isDark ? Colors.grey[500] : Colors.grey[400],
+          ),
           prefixIcon: Icon(Icons.search, color: theme.primaryColor),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
         ),
       ),
     );
@@ -179,47 +170,88 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildChip('All', _selectedDifficulty == null, () {
-            setState(() => _selectedDifficulty = null);
-          }, theme, isDark),
+          _buildChip(
+            'All',
+            _selectedDifficulty == null,
+            () {
+              setState(() => _selectedDifficulty = null);
+            },
+            theme,
+            isDark,
+          ),
           const SizedBox(width: 8),
-          _buildChip('Beginner', _selectedDifficulty == DifficultyLevel.A1 || _selectedDifficulty == DifficultyLevel.A2, () {
-            setState(() => _selectedDifficulty = DifficultyLevel.A1);
-          }, theme, isDark),
+          _buildChip(
+            'Beginner',
+            _selectedDifficulty == DifficultyLevel.A1 ||
+                _selectedDifficulty == DifficultyLevel.A2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.A1);
+            },
+            theme,
+            isDark,
+          ),
           const SizedBox(width: 8),
-          _buildChip('Intermediate', _selectedDifficulty == DifficultyLevel.B1 || _selectedDifficulty == DifficultyLevel.B2, () {
-            setState(() => _selectedDifficulty = DifficultyLevel.B1);
-          }, theme, isDark),
+          _buildChip(
+            'Intermediate',
+            _selectedDifficulty == DifficultyLevel.B1 ||
+                _selectedDifficulty == DifficultyLevel.B2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.B1);
+            },
+            theme,
+            isDark,
+          ),
           const SizedBox(width: 8),
-          _buildChip('Advanced', _selectedDifficulty == DifficultyLevel.C1 || _selectedDifficulty == DifficultyLevel.C2, () {
-            setState(() => _selectedDifficulty = DifficultyLevel.C1);
-          }, theme, isDark),
+          _buildChip(
+            'Advanced',
+            _selectedDifficulty == DifficultyLevel.C1 ||
+                _selectedDifficulty == DifficultyLevel.C2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.C1);
+            },
+            theme,
+            isDark,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildChip(String label, bool isSelected, VoidCallback onTap, ThemeData theme, bool isDark) {
+  Widget _buildChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    ThemeData theme,
+    bool isDark,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
+          color: isSelected
+              ? theme.primaryColor
+              : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
           borderRadius: BorderRadius.circular(999),
-          border: isSelected ? null : Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: theme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            )
-          ] : null,
+          border: isSelected
+              ? null
+              : Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: theme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? (isDark ? Colors.black : Colors.white) : (isDark ? Colors.grey[300] : Colors.grey[700]),
+            color: isSelected
+                ? (isDark ? Colors.black : Colors.white)
+                : (isDark ? Colors.grey[300] : Colors.grey[700]),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
@@ -228,7 +260,11 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     );
   }
 
-  Widget _buildStoryList(List<StoryListItem> stories, ThemeData theme, bool isDark) {
+  Widget _buildStoryList(
+    List<StoryListItem> stories,
+    ThemeData theme,
+    bool isDark,
+  ) {
     if (stories.isEmpty) {
       return _buildEmptyState(isDark);
     }
@@ -267,7 +303,6 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         final story = stories[index - 1];
         return _TopicListItem(
           story: story,
-          isWarming: _warmingStoryId == story.storyId,
           onTap: () => _handleTopicSelection(story),
           theme: theme,
           isDark: isDark,
@@ -281,7 +316,11 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: isDark ? Colors.grey[700] : Colors.grey[300],
+          ),
           const SizedBox(height: 16),
           Text(
             'No topics found',
@@ -296,47 +335,26 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   }
 
   Future<void> _handleTopicSelection(StoryListItem story) async {
-    final provider = context.read<StoryProvider>();
-    final authProvider = context.read<AuthProvider>();
-    final userId = authProvider.user?.id ?? 'guest';
-
-    setState(() => _warmingStoryId = story.storyId);
-
-    final success = await provider.warmTopicCache(
-      storyId: story.storyId,
-      userId: userId,
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
     );
-
-    if (!mounted) return;
-
-    if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to prepare AI context. Please try again.')),
-      );
-    }
-
-    setState(() => _warmingStoryId = null);
   }
 }
 
 class _TopicListItem extends StatelessWidget {
   final StoryListItem story;
-  final bool isWarming;
   final VoidCallback onTap;
   final ThemeData theme;
   final bool isDark;
+  final bool isWarming;
 
   const _TopicListItem({
     required this.story,
-    required this.isWarming,
     required this.onTap,
     required this.theme,
     required this.isDark,
+    this.isWarming = false,
   });
 
   @override
@@ -347,14 +365,16 @@ class _TopicListItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: isWarming ? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.primaryColor.withValues(alpha: 0.05)),
+            border: Border.all(
+              color: theme.primaryColor.withValues(alpha: 0.05),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -397,7 +417,10 @@ class _TopicListItem extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: difficultyColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(99),
@@ -412,11 +435,18 @@ class _TopicListItem extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(Icons.timer_outlined, size: 14, color: Colors.grey[500]),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${story.estimatedMinutes} mins',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       ],
                     ),

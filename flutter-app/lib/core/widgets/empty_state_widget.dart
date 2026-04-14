@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Reusable empty state widget with illustration and action button
 class EmptyStateWidget extends StatelessWidget {
@@ -113,7 +114,7 @@ class EmptyStateWidget extends StatelessWidget {
       icon: Icons.notifications_none_outlined,
       title: 'No Notifications',
       description: 'You\'re all caught up! Check back later.',
-      iconColor: Colors.orange,
+      iconColor: AppColors.orange,
     );
   }
 
@@ -125,7 +126,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Start a conversation with our AI tutor.',
       actionLabel: onStartChat != null ? 'Start Chat' : null,
       onAction: onStartChat,
-      iconColor: Colors.purple,
+      iconColor: AppColors.purple,
     );
   }
 
@@ -149,7 +150,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Complete lessons to track your learning progress.',
       actionLabel: onStart != null ? 'Start Learning' : null,
       onAction: onStart,
-      iconColor: Colors.teal,
+      iconColor: AppColors.teal,
     );
   }
 

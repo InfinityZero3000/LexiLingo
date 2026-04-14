@@ -357,7 +357,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                           used: _hint2Used,
                           disabled: _gameOver,
                           onTap: () => _useHint2(game),
-                          color: Colors.orange,
+                          color: AppColors.orange,
                         ),
                         const SizedBox(width: 8),
                         _HintButton(
@@ -366,7 +366,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                           used: _hint3Used,
                           disabled: _gameOver,
                           onTap: () => _useHint3(game),
-                          color: Colors.purple,
+                          color: AppColors.purple,
                         ),
                       ],
                     ),

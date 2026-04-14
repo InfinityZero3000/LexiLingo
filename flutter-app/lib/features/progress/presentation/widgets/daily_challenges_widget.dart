@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/daily_challenge_entity.dart';
 import '../providers/daily_challenges_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Daily Challenges Card for Home Screen
 /// Shows today's challenges with progress
@@ -135,7 +136,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       value: provider.progress,
                       backgroundColor: Colors.grey.shade200,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        provider.allCompleted ? Colors.green : Colors.purple,
+                        provider.allCompleted ? Colors.green : AppColors.purple,
                       ),
                       minHeight: 8,
                     ),
@@ -225,15 +226,15 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
       case 'lesson':
         return Colors.blue;
       case 'vocabulary':
-        return Colors.purple;
+        return AppColors.purple;
       case 'streak':
-        return Colors.orange;
+        return AppColors.orange;
       case 'xp':
         return Colors.amber;
       case 'voice':
         return Colors.pink;
       case 'social':
-        return Colors.teal;
+        return AppColors.teal;
       default:
         return Colors.grey;
     }
@@ -295,7 +296,7 @@ class DailyChallengesSheet extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.star, size: 28, color: Colors.purple),
+              Icon(Icons.star, size: 28, color: AppColors.purple),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -310,7 +311,7 @@ class DailyChallengesSheet extends StatelessWidget {
                     Text(
                       'Complete all for bonus ${provider.bonusXp} XP!',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.purple,
+                        color: AppColors.purple,
                       ),
                     ),
                   ],
@@ -330,7 +331,7 @@ class DailyChallengesSheet extends StatelessWidget {
                     value: provider.progress,
                     backgroundColor: Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      provider.allCompleted ? Colors.green : Colors.purple,
+                      provider.allCompleted ? Colors.green : AppColors.purple,
                     ),
                     minHeight: 12,
                   ),
@@ -583,15 +584,15 @@ class _ChallengeCard extends StatelessWidget {
       case 'lesson':
         return Colors.blue;
       case 'vocabulary':
-        return Colors.purple;
+        return AppColors.purple;
       case 'streak':
-        return Colors.orange;
+        return AppColors.orange;
       case 'xp':
         return Colors.amber;
       case 'voice':
         return Colors.pink;
       case 'social':
-        return Colors.teal;
+        return AppColors.teal;
       default:
         return Colors.grey;
     }

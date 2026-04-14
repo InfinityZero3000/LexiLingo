@@ -76,7 +76,7 @@ class ShopItemCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: item.isOutOfStock
                               ? Colors.red.withValues(alpha: 0.9)
-                              : Colors.orange.withValues(alpha: 0.9),
+                              : AppColors.orange.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

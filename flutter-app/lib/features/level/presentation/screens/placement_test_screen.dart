@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 
 import '../providers/placement_test_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Placement Test Screen
 /// Assesses user's English proficiency level (A1-C2) through 20 questions.
@@ -251,11 +252,11 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
   Color _getRankColor(String rank) {
     switch (rank.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return AppColors.bronze;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return AppColors.silver;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return AppColors.gold;
       case 'platinum':
         return const Color(0xFFE5E4E2);
       case 'diamond':

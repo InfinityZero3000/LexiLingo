@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Rank tier configuration
 class RankTierData {
@@ -19,19 +20,19 @@ class RankTierData {
 const Map<String, RankTierData> _rankTiers = {
   'bronze': RankTierData(
     name: 'Bronze',
-    color: Color(0xFFCD7F32),
+    color: AppColors.bronze,
     colorDark: Color(0xFF8B5A2B),
     icon: Icons.shield_outlined,
   ),
   'silver': RankTierData(
     name: 'Silver',
-    color: Color(0xFFC0C0C0),
+    color: AppColors.silver,
     colorDark: Color(0xFF808080),
     icon: Icons.shield,
   ),
   'gold': RankTierData(
     name: 'Gold',
-    color: Color(0xFFFFD700),
+    color: AppColors.gold,
     colorDark: Color(0xFFDAA520),
     icon: Icons.military_tech,
   ),

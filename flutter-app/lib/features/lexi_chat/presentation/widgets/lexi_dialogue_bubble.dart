@@ -86,8 +86,8 @@ class LexiDialogueBubble extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF1C2A38)
-                : const Color(0xFFF6F7F8),
+                ? AppColors.surfaceDark
+                : AppColors.backgroundLight,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(4),
               topRight: Radius.circular(16),
@@ -96,8 +96,8 @@ class LexiDialogueBubble extends StatelessWidget {
             ),
             border: Border.all(
               color: isDark
-                  ? const Color(0xFF2A3A4A)
-                  : const Color(0xFFE8ECEF),
+                  ? AppColors.surfaceDarkChat
+                  : AppColors.chatBgLight,
               width: 1,
             ),
           ),

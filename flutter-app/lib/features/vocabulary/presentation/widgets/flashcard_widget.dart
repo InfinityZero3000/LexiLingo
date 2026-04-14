@@ -337,7 +337,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         return Colors.green;
       case 'B1':
       case 'B2':
-        return Colors.orange;
+        return AppColors.orange;
       case 'C1':
       case 'C2':
         return Colors.red;

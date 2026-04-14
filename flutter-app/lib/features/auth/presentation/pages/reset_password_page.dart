@@ -43,7 +43,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF112121) : const Color(0xFFF6F8F8),
+      backgroundColor: isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Create New Password'),
         centerTitle: true,
@@ -66,7 +66,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -74,7 +74,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       'Use the reset token from your email and choose a new password.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -85,7 +85,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         labelText: 'Reset token',
                         prefixIcon: const Icon(Icons.vpn_key_outlined),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -117,7 +117,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -152,7 +152,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -196,7 +196,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
-                          foregroundColor: const Color(0xFF112121),
+                          foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),

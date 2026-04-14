@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Glassmorphic Card Widget
 /// Creates a frosted glass effect card with blur and gradient border
@@ -316,7 +317,7 @@ class _StreakFlameState extends State<StreakFlame>
               boxShadow: widget.isActive
                   ? [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: _glowAnimation.value),
+                        color: AppColors.orange.withValues(alpha: _glowAnimation.value),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -329,7 +330,7 @@ class _StreakFlameState extends State<StreakFlame>
                 Icon(
                   Icons.local_fire_department,
                   size: widget.size,
-                  color: widget.isActive ? Colors.orange : Colors.grey,
+                  color: widget.isActive ? AppColors.orange : Colors.grey,
                 ),
                 Positioned(
                   bottom: 4,

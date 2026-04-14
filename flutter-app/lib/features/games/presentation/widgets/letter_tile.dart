@@ -61,7 +61,7 @@ class _LetterTileState extends State<LetterTile>
 
   Color get _tileColor {
     if (widget.isCorrect) return AppColors.greenSuccess;
-    if (widget.isWrong) return const Color(0xFFC62828);
+    if (widget.isWrong) return AppColors.errorDark;
     if (widget.isSelected) return AppColors.primary;
     return Colors.white;
   }

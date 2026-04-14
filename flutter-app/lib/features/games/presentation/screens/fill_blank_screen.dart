@@ -365,7 +365,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                     AppColors.primary,
                     Colors.yellow,
                     Colors.green,
-                    Colors.orange,
+                    AppColors.orange,
                   ],
                 ),
               ),

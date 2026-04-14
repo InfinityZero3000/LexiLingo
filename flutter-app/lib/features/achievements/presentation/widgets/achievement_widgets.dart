@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/achievements/domain/entities/achievement_
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -480,8 +481,8 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
             Colors.green,
             Colors.blue,
             Colors.pink,
-            Colors.orange,
-            Colors.purple,
+            AppColors.orange,
+            AppColors.purple,
             Colors.yellow,
           ],
           numberOfParticles: 30,

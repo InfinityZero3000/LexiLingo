@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Types of errors that can be displayed
 enum ErrorType { network, server, timeout, unauthorized, notFound, unknown }
@@ -76,7 +77,7 @@ class ErrorDisplayWidget extends StatelessWidget {
     switch (errorType) {
       case ErrorType.network:
       case ErrorType.timeout:
-        return Colors.orange;
+        return AppColors.orange;
       case ErrorType.server:
       case ErrorType.unknown:
         return Colors.red;

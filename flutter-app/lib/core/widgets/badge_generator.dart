@@ -9,6 +9,7 @@ library;
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Badge shape types
 enum BadgeShape {
@@ -64,13 +65,13 @@ class BadgeConfig {
 
     switch (rarity) {
       case BadgeRarity.common:
-        return [const Color(0xFF9E9E9E), const Color(0xFF757575)]; // Gray
+        return [AppColors.grey500, AppColors.grey600]; // Gray
       case BadgeRarity.rare:
         return [const Color(0xFF2196F3), const Color(0xFF1565C0)]; // Blue
       case BadgeRarity.epic:
         return [const Color(0xFF9C27B0), const Color(0xFF6A1B9A)]; // Purple
       case BadgeRarity.legendary:
-        return [const Color(0xFFFFD700), const Color(0xFFFFA000)]; // Gold
+        return [AppColors.gold, const Color(0xFFFFA000)]; // Gold
     }
   }
 
@@ -82,7 +83,7 @@ class BadgeConfig {
       case BadgeRarity.rare:
         return Colors.blue.withValues(alpha: 0.4);
       case BadgeRarity.epic:
-        return Colors.purple.withValues(alpha: 0.5);
+        return AppColors.purple.withValues(alpha: 0.5);
       case BadgeRarity.legendary:
         return Colors.amber.withValues(alpha: 0.6);
     }
@@ -481,7 +482,7 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.shield,
       rarity: rarity,
       icon: Icons.local_fire_department,
-      primaryColor: const Color(0xFFFF5722),
+      primaryColor: AppColors.deepOrange,
       secondaryColor: const Color(0xFFE64A19),
     );
   }
@@ -525,7 +526,7 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.star,
       rarity: rarity,
       icon: Icons.star,
-      primaryColor: const Color(0xFFFFD700),
+      primaryColor: AppColors.gold,
       secondaryColor: const Color(0xFFFFA000),
     );
   }
@@ -558,7 +559,7 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.medal,
       rarity: BadgeRarity.epic,
       icon: Icons.military_tech,
-      primaryColor: Color(0xFFFFD700),
+      primaryColor: AppColors.gold,
       secondaryColor: Color(0xFFDAA520),
     );
   }
@@ -641,13 +642,13 @@ class AchievementBadgeTemplates {
         break;
       case 'C2':
         rarity = BadgeRarity.legendary;
-        primary = const Color(0xFFFFD700);
+        primary = AppColors.gold;
         secondary = const Color(0xFFFFA000);
         break;
       default:
         rarity = BadgeRarity.common;
-        primary = const Color(0xFF9E9E9E);
-        secondary = const Color(0xFF757575);
+        primary = AppColors.grey500;
+        secondary = AppColors.grey600;
     }
 
     return BadgeConfig(

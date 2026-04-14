@@ -374,7 +374,7 @@ class _ProfilePageState extends State<ProfilePage>
                               size: 140,
                               strokeWidth: 6,
                               gradientColors: const [
-                                Color(0xFF137FEC),
+                                AppColors.primary,
                                 AppColors.primary,
                                 AppColors.purple,
                               ],
@@ -440,7 +440,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [
-                                        Color(0xFF137FEC),
+                                        AppColors.primary,
                                         AppColors.primary,
                                       ],
                                     ),
@@ -801,13 +801,13 @@ class _ProfilePageState extends State<ProfilePage>
       case 'A1':
         return Colors.green;
       case 'A2':
-        return Colors.teal;
+        return AppColors.teal;
       case 'B1':
         return Colors.blue;
       case 'B2':
         return Colors.indigo;
       case 'C1':
-        return Colors.purple;
+        return AppColors.purple;
       case 'C2':
         return Colors.amber;
       default:

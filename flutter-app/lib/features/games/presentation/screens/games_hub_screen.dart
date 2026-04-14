@@ -403,7 +403,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     second,
                     1,
                     72,
-                    const Color(0xFFC0C0C0),
+                    AppColors.silver,
                   ),
                 ),
               if (second != null) const SizedBox(width: 8),
@@ -413,7 +413,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     first,
                     0,
                     104,
-                    const Color(0xFFFFD700),
+                    AppColors.gold,
                   ),
                 ),
               if (third != null) const SizedBox(width: 8),
@@ -423,7 +423,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     third,
                     2,
                     56,
-                    const Color(0xFFCD7F32),
+                    AppColors.bronze,
                   ),
                 ),
             ],
@@ -504,9 +504,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final anim = anims[rank];
     const rankLabels = ['1st', '2nd', '3rd'];
     const medalColors = [
-      Color(0xFFFFD700),
-      Color(0xFFC0C0C0),
-      Color(0xFFCD7F32),
+      AppColors.gold,
+      AppColors.silver,
+      AppColors.bronze,
     ];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility

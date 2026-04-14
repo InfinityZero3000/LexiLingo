@@ -49,8 +49,8 @@ class ProficiencyRadarChart extends StatefulWidget {
     this.size = 220,
     this.fillColor = const Color(0x336366F1),
     this.strokeColor = AppColors.primary,
-    this.gridColor = const Color(0xFFE2E8F0),
-    this.labelColor = const Color(0xFF64748B),
+    this.gridColor = AppColors.slate200,
+    this.labelColor = AppColors.textSlateLight,
     this.animate = true,
   });
 

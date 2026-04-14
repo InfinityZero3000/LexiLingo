@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/story_model.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Enhanced Topic Card for Selection Screen
 class TopicCard extends StatelessWidget {
@@ -188,13 +189,13 @@ class TopicCard extends StatelessWidget {
       case DifficultyLevel.A2:
         return Colors.blue;
       case DifficultyLevel.B1:
-        return Colors.orange;
+        return AppColors.orange;
       case DifficultyLevel.B2:
-        return Colors.deepOrange;
+        return AppColors.deepOrange;
       case DifficultyLevel.C1:
         return Colors.red;
       case DifficultyLevel.C2:
-        return Colors.purple;
+        return AppColors.purple;
     }
   }
 

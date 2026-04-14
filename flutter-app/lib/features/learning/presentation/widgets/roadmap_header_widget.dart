@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Roadmap Header Widget
 /// Displays course info, progress stats, and streak at the top of roadmap
@@ -67,7 +68,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     icon: Icons.local_fire_department,
                     value: '${roadmap.currentStreak}',
                     label: 'Streak',
-                    iconColor: Colors.orange,
+                    iconColor: AppColors.orange,
                   ),
                   _buildStatItem(
                     icon: Icons.star,
@@ -158,7 +159,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
         badgeColor = Colors.green;
         break;
       case 'intermediate':
-        badgeColor = Colors.orange;
+        badgeColor = AppColors.orange;
         break;
       case 'advanced':
         badgeColor = Colors.red;

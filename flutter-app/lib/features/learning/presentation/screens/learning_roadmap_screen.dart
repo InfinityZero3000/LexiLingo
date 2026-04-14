@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/learning/presentation/painters/roadmap_pa
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/roadmap_header_widget.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Layout constants
@@ -36,7 +37,7 @@ class _NodeLayout {
   Color get baseColor => _parseHex(unit.backgroundColor);
 
   Color get nodeColor {
-    if (lesson.isLocked) return const Color(0xFFBDBDBD);
+    if (lesson.isLocked) return AppColors.grey400;
     if (lesson.isCompleted) return const Color(0xFF43A047);
     if (lesson.isCurrent) return baseColor;
     return baseColor.withValues(alpha: 0.65);
@@ -790,7 +791,7 @@ class _LessonDetailSheet extends StatelessWidget {
                 _StatChip(
                   icon: Icons.star_rounded,
                   label: '${lesson.starsEarned}/3',
-                  color: Colors.orange,
+                  color: AppColors.orange,
                 ),
               ],
               if (lesson.attemptsCount > 0) ...[

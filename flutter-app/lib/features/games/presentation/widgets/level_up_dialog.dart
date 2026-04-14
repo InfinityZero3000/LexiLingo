@@ -86,7 +86,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
             AppColors.accentYellow,
             AppColors.greenSuccess,
             Colors.pink,
-            Colors.purple,
+            AppColors.purple,
           ],
         ),
         // Dialog
