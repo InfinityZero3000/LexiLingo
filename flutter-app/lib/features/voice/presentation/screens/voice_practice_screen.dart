@@ -212,7 +212,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.errorBright),
     );
   }
 
@@ -349,7 +349,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red),
+                        Icon(Icons.error_outline, color: AppColors.errorBright),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -402,7 +402,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     Text(
                       'Phát âm xuất sắc! 🎉',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.green,
+                        color: AppColors.greenSuccessBright,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

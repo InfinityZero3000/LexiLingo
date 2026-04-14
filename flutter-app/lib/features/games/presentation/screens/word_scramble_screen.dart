@@ -221,7 +221,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
             return Scaffold(
               backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
                   'Word ${_currentWordIndex + 1} of ${game.words.length}',
@@ -406,7 +406,7 @@ class _TimerDisplay extends StatelessWidget {
         ? AppColors.greenSuccess
         : ratio > 0.25
         ? AppColors.orange
-        : Colors.red;
+        : AppColors.errorBright;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -483,8 +483,8 @@ class _XpPopup extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.surface,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),

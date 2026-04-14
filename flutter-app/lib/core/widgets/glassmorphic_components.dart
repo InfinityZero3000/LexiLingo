@@ -342,13 +342,13 @@ class _StreakFlameState extends State<StreakFlame>
                     decoration: BoxDecoration(
                       color: widget.isActive
                           ? Colors.orange.shade700
-                          : Colors.grey.shade600,
+                          : AppColors.grey600,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${widget.streakCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -415,10 +415,10 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor =
         widget.baseColor ??
-        (isDark ? Colors.grey.shade800 : Colors.grey.shade300);
+        (isDark ? AppColors.grey800 : AppColors.grey300);
     final highlightColor =
         widget.highlightColor ??
-        (isDark ? Colors.grey.shade700 : Colors.grey.shade100);
+        (isDark ? AppColors.grey700 : AppColors.grey100);
 
     return AnimatedBuilder(
       animation: _animation,
@@ -486,12 +486,12 @@ class GradientStatCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: gradientColors),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: Theme.of(context).colorScheme.surface, size: 20),
             ),
             const SizedBox(height: 12),
             Text(
@@ -508,13 +508,13 @@ class GradientStatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
+                color: AppColors.grey600,
               ),
             ),
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 11, color: AppColors.grey500),
               ),
           ],
         ),

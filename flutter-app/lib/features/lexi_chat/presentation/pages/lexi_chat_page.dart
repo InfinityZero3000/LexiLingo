@@ -249,9 +249,9 @@ class _LexiChatPageState extends State<LexiChatPage>
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome_rounded,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               size: 20,
             ),
           ),
@@ -580,12 +580,12 @@ class _LexiChatPageState extends State<LexiChatPage>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.mic, color: Colors.red, size: 16),
+                  const Icon(Icons.mic, color: AppColors.errorBright, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'Recording ${_recordingDuration.inSeconds}s',
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: AppColors.errorBright,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -691,7 +691,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                         provider.isSending
                             ? Icons.hourglass_empty_rounded
                             : Icons.send_rounded,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         size: 20,
                       ),
                       onPressed: provider.isSending ? null : _sendMessage,
@@ -744,7 +744,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         child: Icon(
           _isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
           color: _isRecording
-              ? Colors.red
+              ? AppColors.errorBright
               : (isDark ? Colors.white54 : AppColors.textGrey),
           size: 20,
         ),

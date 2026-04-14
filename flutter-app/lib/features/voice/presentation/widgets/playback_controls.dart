@@ -118,19 +118,19 @@ class PlaybackControls extends StatelessWidget {
                     ],
                   ),
                   child: isLoading
-                      ? const Center(
+                      ? Center(
                           child: SizedBox(
                             width: 28,
                             height: 28,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                               strokeWidth: 2.5,
                             ),
                           ),
                         )
                       : Icon(
                           isPlaying ? Icons.stop : Icons.play_arrow,
-                          color: Colors.white,
+                          color: AppColors.surfaceLight,
                           size: 32,
                         ),
                 ),

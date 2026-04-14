@@ -95,9 +95,9 @@ class _GameResultScreenState extends State<GameResultScreen>
         automaticallyImplyLeading: false,
         title: Text(
           '${result.gameType.displayName} — Result',
-          style: const TextStyle(color: AppColors.textDark),
+          style: TextStyle(color: AppColors.textDark),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -145,9 +145,9 @@ class _GameResultScreenState extends State<GameResultScreen>
   Widget _buildScoreCard(GameResult result) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -169,7 +169,7 @@ class _GameResultScreenState extends State<GameResultScreen>
                 ? AppColors.greenSuccess
                 : result.accuracy >= 60
                 ? AppColors.primary
-                : Colors.red,
+                : AppColors.errorBright,
           ),
           _statRow(
             'Correct',
@@ -229,8 +229,8 @@ class _GameResultScreenState extends State<GameResultScreen>
             animation: _xpAnimation,
             builder: (_, __) => Text(
               '+${_xpAnimation.value}',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.surfaceLight,
                 fontWeight: FontWeight.bold,
                 fontSize: 40,
               ),
@@ -259,8 +259,8 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: AppColors.surfaceLight,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),

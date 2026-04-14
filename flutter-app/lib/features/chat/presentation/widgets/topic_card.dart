@@ -153,7 +153,7 @@ class TopicCard extends StatelessWidget {
             // Warming Overlay
             if (isWarming)
               Container(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: AppColors.surfaceLight,
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -185,7 +185,7 @@ class TopicCard extends StatelessWidget {
   Color _getDifficultyColor(DifficultyLevel level) {
     switch (level) {
       case DifficultyLevel.A1:
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case DifficultyLevel.A2:
         return Colors.blue;
       case DifficultyLevel.B1:
@@ -193,7 +193,7 @@ class TopicCard extends StatelessWidget {
       case DifficultyLevel.B2:
         return AppColors.deepOrange;
       case DifficultyLevel.C1:
-        return Colors.red;
+        return AppColors.errorBright;
       case DifficultyLevel.C2:
         return AppColors.purple;
     }

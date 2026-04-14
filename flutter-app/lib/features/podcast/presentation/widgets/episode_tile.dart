@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Full-width list tile for a single podcast episode.
 ///
@@ -127,8 +128,8 @@ class EpisodeTile extends StatelessWidget {
                               ),
                               child: Text(
                                 episode.cefrLevel!,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: AppColors.surfaceLight,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 10,
                                 ),
@@ -159,7 +160,7 @@ class EpisodeTile extends StatelessWidget {
                   minHeight: 3,
                   backgroundColor: isDark
                       ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.grey.shade200,
+                      : AppColors.grey200,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     episode.isCompleted ? AppColors.greenSuccess : cefrColor,
                   ),

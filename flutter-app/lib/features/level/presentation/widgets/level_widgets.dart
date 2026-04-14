@@ -75,13 +75,13 @@ class LevelBadge extends StatelessWidget {
             Icon(
               _getTierIcon(tier.iconIdentifier),
               size: 16,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
             ),
             const SizedBox(width: 4),
             Text(
               tierCode,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.surface,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -206,7 +206,7 @@ class LevelProgressCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: AppColors.grey200,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           AppColors.primary,
                         ),
@@ -265,7 +265,7 @@ class LevelDetailsSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -313,13 +313,13 @@ class LevelDetailsSheet extends StatelessWidget {
                   LevelCalculator.formatXP(status.totalXP),
                   'Total XP',
                 ),
-                Container(width: 1, height: 40, color: Colors.grey.shade200),
+                Container(width: 1, height: 40, color: AppColors.grey200),
                 _buildStatItem(
                   context,
                   '${status.xpInCurrentLevel}',
                   'Current Level',
                 ),
-                Container(width: 1, height: 40, color: Colors.grey.shade200),
+                Container(width: 1, height: 40, color: AppColors.grey200),
                 _buildStatItem(context, '${status.xpToNextLevel}', 'To Next'),
               ],
             ),
@@ -410,7 +410,7 @@ class LevelDetailsSheet extends StatelessWidget {
           ),
           if (isCurrent) ...[
             const SizedBox(width: 8),
-            const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 20),
           ],
         ],
       ),

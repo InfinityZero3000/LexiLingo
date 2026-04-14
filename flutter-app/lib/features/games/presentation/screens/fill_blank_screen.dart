@@ -168,7 +168,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Question ${_questionIndex + 1}/${game.questions.length}',
@@ -206,7 +206,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                             backgroundColor: AppColors.grey200,
                             color: _timeLeft > 5
                                 ? AppColors.primary
-                                : Colors.red,
+                                : AppColors.errorBright,
                             minHeight: 6,
                           ),
                         ),
@@ -218,7 +218,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                             fontSize: 13,
                             color: _timeLeft > 5
                                 ? AppColors.textGrey
-                                : Colors.red,
+                                : AppColors.errorBright,
                           ),
                         ),
                       ],
@@ -233,9 +233,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                           // Question sentence
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(20),
+                            padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
@@ -274,8 +274,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                   text = AppColors.greenSuccess;
                                 } else if (i == _selectedIndex) {
                                   bg = Colors.red.withValues(alpha: 0.1);
-                                  border = Colors.red;
-                                  text = Colors.red;
+                                  border = AppColors.errorBright;
+                                  text = AppColors.errorBright;
                                 }
                               } else if (_selectedIndex == i) {
                                 bg = AppColors.primary.withValues(alpha: 0.1);
@@ -334,7 +334,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                           q.options[_selectedIndex!] ==
                                               q.correctAnswer
                                       ? AppColors.greenSuccess
-                                      : Colors.red,
+                                      : AppColors.errorBright,
                                 ),
                               ),
                               child: Text(
@@ -364,7 +364,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                   colors: const [
                     AppColors.primary,
                     Colors.yellow,
-                    Colors.green,
+                    AppColors.greenSuccessBright,
                     AppColors.orange,
                   ],
                 ),

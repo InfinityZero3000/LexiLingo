@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/educational_hints_model.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Educational Hints Card
 /// Displays grammar corrections and vocabulary hints from AI response
@@ -37,14 +38,14 @@ class EducationalHintsCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.thumb_up, size: 14, color: Colors.green),
+                  const Icon(Icons.thumb_up, size: 14, color: AppColors.greenSuccessBright),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       hints.encouragement!,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.green,
+                        color: AppColors.greenSuccessBright,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -187,9 +188,9 @@ class GrammarCorrectionBadge extends StatelessWidget {
           // Explanation
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -215,7 +216,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 'Rule: ${correction.rule}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey.shade600,
+                  color: AppColors.grey600,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -289,12 +290,12 @@ class VocabularyHintCard extends StatelessWidget {
               // Pronunciation
               if (hint.pronunciation != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -314,9 +315,9 @@ class VocabularyHintCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -334,7 +335,7 @@ class VocabularyHintCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
-                          color: Colors.grey.shade700,
+                          color: AppColors.grey700,
                         ),
                       ),
                     ),
@@ -400,7 +401,7 @@ class TopicProgressIndicator extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: AppColors.grey200,
             ),
           ),
         ],

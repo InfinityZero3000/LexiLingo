@@ -198,7 +198,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Question ${_questionIndex + 1}/${game.questions.length}',
@@ -252,16 +252,16 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                             backgroundColor: AppColors.grey200,
                             color: _timeLeft > 4
                                 ? AppColors.primary
-                                : Colors.red,
+                                : AppColors.errorBright,
                             minHeight: 6,
                           ),
                           const SizedBox(height: 16),
                           // Question
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(18),
+                            padding: EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
@@ -295,8 +295,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 icon = Icons.check_circle_outline;
                               } else if (i == _selectedIndex) {
                                 bg = Colors.red.withValues(alpha: 0.08);
-                                border = Colors.red;
-                                text = Colors.red;
+                                border = AppColors.errorBright;
+                                text = AppColors.errorBright;
                                 icon = Icons.cancel_outlined;
                               }
                             } else if (_selectedIndex == i) {
@@ -358,7 +358,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                       _answered &&
                                           _selectedIndex == q.correctIndex
                                       ? AppColors.greenSuccess
-                                      : Colors.red,
+                                      : AppColors.errorBright,
                                 ),
                               ),
                               child: Text(
@@ -388,7 +388,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                   colors: const [
                     AppColors.primary,
                     Colors.yellow,
-                    Colors.green,
+                    AppColors.greenSuccessBright,
                     AppColors.orange,
                   ],
                 ),
@@ -413,7 +413,7 @@ class _TimerWidget extends StatelessWidget {
         ? AppColors.greenSuccess
         : ratio > 0.25
         ? AppColors.orange
-        : Colors.red;
+        : AppColors.errorBright;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

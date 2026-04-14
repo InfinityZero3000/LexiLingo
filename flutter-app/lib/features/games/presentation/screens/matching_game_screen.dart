@@ -187,7 +187,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: const Text(
               'Matching Game',
@@ -299,7 +299,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   colors: const [
                     AppColors.primary,
                     Colors.yellow,
-                    Colors.green,
+                    AppColors.greenSuccessBright,
                     AppColors.orange,
                   ],
                 ),
@@ -362,7 +362,7 @@ class _ColumnList extends StatelessWidget {
               }
               if (state == _PairState.wrong) {
                 bg = Colors.red.withValues(alpha: 0.1);
-                border = Colors.red;
+                border = AppColors.errorBright;
               }
               return GestureDetector(
                 onTap: () => onTap(item),
@@ -409,7 +409,7 @@ class _TimerChip extends StatelessWidget {
         ? AppColors.greenSuccess
         : ratio > 0.25
         ? AppColors.orange
-        : Colors.red;
+        : AppColors.errorBright;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

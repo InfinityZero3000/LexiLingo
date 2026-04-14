@@ -245,7 +245,7 @@ class BadgePainter extends CustomPainter {
 
   void _drawCircle(Canvas canvas, Offset center, double radius) {
     final colors = config.isLocked
-        ? [Colors.grey.shade400, Colors.grey.shade600]
+        ? [AppColors.grey400, AppColors.grey600]
         : config.rarityGradient;
 
     // Gradient fill
@@ -339,7 +339,7 @@ class BadgePainter extends CustomPainter {
     // Draw ribbon
     final ribbonPaint = Paint()
       ..color = config.isLocked
-          ? Colors.grey.shade400
+          ? AppColors.grey400
           : config.rarityGradient[1];
 
     final ribbonPath = Path();
@@ -408,7 +408,7 @@ class BadgePainter extends CustomPainter {
 
   void _drawPathWithGradient(Canvas canvas, Path path, Size size) {
     final colors = config.isLocked
-        ? [Colors.grey.shade400, Colors.grey.shade600]
+        ? [AppColors.grey400, AppColors.grey600]
         : config.rarityGradient;
 
     final fillPaint = Paint()
@@ -799,6 +799,6 @@ class SmartAchievementBadge extends StatelessWidget {
     if (colorString.startsWith('#')) {
       return Color(int.parse(colorString.replaceFirst('#', 'FF'), radix: 16));
     }
-    return Colors.amber;
+    return AppColors.warning;
   }
 }

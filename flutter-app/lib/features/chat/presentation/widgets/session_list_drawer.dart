@@ -82,20 +82,20 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Chat Sessions',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   '${widget.sessions.length} conversations',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -325,7 +325,7 @@ class _SessionListItemState extends State<SessionListItem> {
                           icon: const Icon(Icons.delete, size: 16),
                           label: const Text('Delete'),
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
+                            foregroundColor: AppColors.errorBright,
                           ),
                         ),
                       ),
@@ -399,7 +399,7 @@ class _SessionListItemState extends State<SessionListItem> {
                 _showActions = false;
               });
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorBright),
             child: const Text('Delete'),
           ),
         ],

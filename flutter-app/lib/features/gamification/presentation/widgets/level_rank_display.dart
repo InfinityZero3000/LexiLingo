@@ -90,8 +90,8 @@ class LevelRankDisplay extends StatelessWidget {
                   ),
                   child: Text(
                     'Lv.$numericLevel',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),

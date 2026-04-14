@@ -95,7 +95,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     const Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: Colors.red,
+                      color: AppColors.errorBright,
                     ),
                     const SizedBox(height: 16),
                     Text(provider.error!, textAlign: TextAlign.center),
@@ -127,7 +127,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 LinearProgressIndicator(
                   value: provider.progress,
                   backgroundColor: Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.greenSuccessBright),
                 ),
 
                 // Content
@@ -213,7 +213,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
               backgroundColor: provider.isCurrentAnswered
                   ? ((provider.isCurrentCorrect ?? false)
-                        ? Colors.green
+                        ? AppColors.greenSuccessBright
                         : AppColors.orange)
                   : Colors.grey,
             ),
@@ -276,13 +276,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: (percentage >= 80 ? Colors.amber : Colors.green)
+                        color: (percentage >= 80 ? AppColors.warning : AppColors.greenSuccessBright)
                             .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color:
-                                (percentage >= 80 ? Colors.amber : Colors.green)
+                                (percentage >= 80 ? AppColors.warning : AppColors.greenSuccessBright)
                                     .withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
@@ -298,7 +298,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         repeat: false,
                       )
                     else
-                      AnimatedCheckmark(color: Colors.green, size: 80),
+                      AnimatedCheckmark(color: AppColors.greenSuccessBright, size: 80),
                   ],
                 ),
               ),
@@ -329,7 +329,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               ? Icons.celebration
                               : Icons.auto_awesome,
                           color: percentage >= 80
-                              ? Colors.amber
+                              ? AppColors.warning
                               : AppColors.purple,
                           size: 28,
                         ),
@@ -345,7 +345,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               ? Icons.celebration
                               : Icons.auto_awesome,
                           color: percentage >= 80
-                              ? Colors.amber
+                              ? AppColors.warning
                               : AppColors.purple,
                           size: 28,
                         ),
@@ -394,14 +394,14 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.stars, color: Colors.white, size: 28),
+                        Icon(Icons.stars, color: AppColors.surfaceLight, size: 28),
                         const SizedBox(width: 8),
                         Text(
                           '+${provider.xpEarned} XP',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColors.surfaceLight,
                           ),
                         ),
                       ],
@@ -418,7 +418,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.green,
+                    backgroundColor: AppColors.greenSuccessBright,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -474,7 +474,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.errorBright),
             child: const Text('Exit'),
           ),
         ],

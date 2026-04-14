@@ -97,7 +97,7 @@ class CourseProgressCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
 
               // Last Activity
               Row(
@@ -107,7 +107,7 @@ class CourseProgressCard extends StatelessWidget {
                     size: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'Last activity: ${_formatDate(courseProgress.lastActivityAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -125,7 +125,7 @@ class CourseProgressCard extends StatelessWidget {
 
   Color _getProgressColor(double progress) {
     if (progress >= 80) {
-      return Colors.green;
+      return AppColors.greenSuccessBright;
     } else if (progress >= 50) {
       return AppColors.orange;
     } else {

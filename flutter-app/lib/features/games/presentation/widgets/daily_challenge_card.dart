@@ -69,12 +69,12 @@ class DailyChallengeCard extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: completed
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_circle_rounded,
                       color: AppColors.greenSuccess,
                       size: 28,
                     )
-                  : Icon(icon, color: Colors.white, size: 26),
+                  : Icon(icon, color: Theme.of(context).colorScheme.surface, size: 26),
             ),
             const SizedBox(width: 14),
 
@@ -130,19 +130,19 @@ class DailyChallengeCard extends StatelessWidget {
                   children: [
                     Text(
                       '${challenge.bonusMultiplier}x',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         height: 1,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'XP',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                       ),
                     ),
                   ],

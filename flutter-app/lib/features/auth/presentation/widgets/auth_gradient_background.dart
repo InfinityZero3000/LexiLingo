@@ -324,20 +324,20 @@ class GlassmorphicAuthCard extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
-          padding: padding ?? const EdgeInsets.all(24),
+          padding: padding ?? EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.35),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 24,
                 spreadRadius: 2,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.45),
               width: 1.5,
             ),
           ),

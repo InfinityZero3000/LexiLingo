@@ -224,11 +224,11 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.arrow_upward, color: Colors.green),
+                    const Icon(Icons.arrow_upward, color: AppColors.greenSuccessBright),
                     const SizedBox(width: 8),
                     Text(
                       'Level updated: ${result['previous_level']} → ${result['assessed_level']}',
-                      style: const TextStyle(color: Colors.green),
+                      style: const TextStyle(color: AppColors.greenSuccessBright),
                     ),
                   ],
                 ),

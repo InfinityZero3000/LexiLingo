@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../providers/book_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Comprehension quiz screen for a book chapter.
 ///
@@ -261,9 +262,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         ? Icons.thumb_up_rounded
         : Icons.menu_book_rounded;
     final resultIconColor = pct >= 0.8
-        ? Colors.amber
+        ? AppColors.warning
         : pct >= 0.6
-        ? Colors.green
+        ? AppColors.greenSuccessBright
         : Colors.blue;
     final msg = pct >= 0.8
         ? 'Excellent!'
@@ -388,9 +389,9 @@ class _OptionTile extends StatelessWidget {
       bgColor = AppColors.greenSuccessBright.withValues(alpha: 0.12);
       textColor = AppColors.greenSuccessBright;
     } else if (showRed) {
-      borderColor = Colors.red;
+      borderColor = AppColors.errorBright;
       bgColor = Colors.red.withValues(alpha: 0.1);
-      textColor = Colors.red;
+      textColor = AppColors.errorBright;
     } else if (selected) {
       borderColor = AppColors.primary;
       bgColor = AppColors.primary.withValues(alpha: 0.08);
@@ -422,7 +423,7 @@ class _OptionTile extends StatelessWidget {
                 color: showGreen
                     ? AppColors.greenSuccessBright
                     : showRed
-                    ? Colors.red
+                    ? AppColors.errorBright
                     : selected
                     ? AppColors.primary
                     : (isDark ? Colors.white12 : AppColors.grey200),
@@ -462,7 +463,7 @@ class _OptionTile extends StatelessWidget {
                 size: 20,
               ),
             if (showRed)
-              const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
+              const Icon(Icons.cancel_rounded, color: AppColors.errorBright, size: 20),
           ],
         ),
       ),

@@ -189,7 +189,7 @@ class _HangmanScreenState extends State<HangmanScreen>
             return Scaffold(
               backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: const Text(
                   'Hangman',
@@ -204,7 +204,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                         (i) => Icon(
                           Icons.favorite,
                           color: i < maxWrong - _wrongGuesses
-                              ? Colors.red
+                              ? AppColors.errorBright
                               : AppColors.grey300,
                           size: 18,
                         ),
@@ -326,7 +326,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                       child: Text(
                         'The word was: ${game.word}',
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: AppColors.errorBright,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),

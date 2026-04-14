@@ -47,7 +47,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'Again',
                   subLabel: 'Hard',
-                  color: Colors.red,
+                  color: AppColors.errorBright,
                   quality: ReviewQuality.hard,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),
@@ -67,7 +67,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'Easy',
                   subLabel: 'Perfect!',
-                  color: Colors.green,
+                  color: AppColors.greenSuccessBright,
                   quality: ReviewQuality.easy,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),

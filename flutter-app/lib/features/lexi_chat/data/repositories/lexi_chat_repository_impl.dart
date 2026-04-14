@@ -41,4 +41,22 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
   Future<List<LexiMessage>> getMessages({required String sessionId}) {
     return dataSource.getMessages(sessionId: sessionId);
   }
+
+  @override
+  Future<List<LexiSession>> getSessions({required String userId}) {
+    return dataSource.getSessions(userId: userId);
+  }
+
+  @override
+  Future<void> renameSession({
+    required String sessionId,
+    required String title,
+  }) {
+    return dataSource.renameSession(sessionId: sessionId, title: title);
+  }
+
+  @override
+  Future<void> deleteSession({required String sessionId}) {
+    return dataSource.deleteSession(sessionId: sessionId);
+  }
 }

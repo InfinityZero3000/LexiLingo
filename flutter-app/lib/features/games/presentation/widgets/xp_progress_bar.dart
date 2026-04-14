@@ -182,7 +182,7 @@ class _XPProgressBarState extends State<XPProgressBar>
       child: Text(
         '${widget.numericLevel}',
         style: TextStyle(
-          color: Colors.white,
+          color: AppColors.surfaceLight,
           fontWeight: FontWeight.bold,
           fontSize: fontSize,
         ),

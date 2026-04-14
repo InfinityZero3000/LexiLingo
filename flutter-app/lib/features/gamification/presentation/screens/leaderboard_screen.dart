@@ -351,7 +351,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
           BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
         ],
       ),
-      child: Icon(_getLeagueIcon(league), color: Colors.white, size: 12),
+      child: Icon(_getLeagueIcon(league), color: Theme.of(context).colorScheme.surface, size: 12),
     );
   }
 

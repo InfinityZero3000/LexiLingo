@@ -215,13 +215,13 @@ class ProficiencyCard extends StatelessWidget {
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Start Lessons',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),

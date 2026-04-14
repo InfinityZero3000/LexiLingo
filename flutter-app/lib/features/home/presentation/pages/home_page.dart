@@ -875,13 +875,13 @@ class _HomePageNewState extends State<HomePageNew> {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.play_arrow,
                                 size: 14,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                               ),
                               SizedBox(width: 2),
                               Text(
@@ -889,7 +889,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.surfaceLight,
                                 ),
                               ),
                             ],
@@ -1021,19 +1021,19 @@ class _HomePageNewState extends State<HomePageNew> {
                     if (course.thumbnailUrl == null)
                       Center(
                         child: Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
                           child: Icon(
                             Icons.school_rounded,
                             size: 40,
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: AppColors.surfaceLight,
                           ),
                         ),
                       ),
@@ -1064,8 +1064,8 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         child: Text(
                           course.level,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.surfaceLight,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -1100,16 +1100,16 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.star_rounded,
                               size: 14,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${course.totalXp} XP',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.surfaceLight,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1125,8 +1125,8 @@ class _HomePageNewState extends State<HomePageNew> {
                       right: 12,
                       child: Text(
                         course.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.surfaceLight,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           shadows: [
@@ -1177,19 +1177,19 @@ class _HomePageNewState extends State<HomePageNew> {
                           color: levelColor.withValues(alpha: 0.6),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.play_circle_filled_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: AppColors.surfaceLight,
                           ),
                           SizedBox(width: 8),
                           Text(
                             'Start Learning',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.3,
@@ -1374,11 +1374,11 @@ class _HomePageNewState extends State<HomePageNew> {
                   BoxShadow(
                     color: color.withValues(alpha: 0.3),
                     blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: Theme.of(context).colorScheme.surface, size: 22),
             ),
             const SizedBox(height: 10),
             Text(
@@ -1628,7 +1628,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       SkeletonText(width: 150, height: 14),
                       SizedBox(height: 6),
                       SkeletonText(width: 100, height: 12),
@@ -1649,18 +1649,18 @@ class _HomePageNewState extends State<HomePageNew> {
           // Daily goal skeleton
           ShimmerContainer(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: EdgeInsets.symmetric(horizontal: 16),
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
           const SizedBox(height: 24),
           // Section title skeleton
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: ShimmerContainer(
               child: SkeletonText(width: 150, height: 20),
             ),

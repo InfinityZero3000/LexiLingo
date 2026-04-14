@@ -380,7 +380,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                             ).createShader(bounds);
                           },
                           blendMode: BlendMode.srcATop,
-                          child: Container(color: Colors.white),
+                          child: Container(color: Theme.of(context).colorScheme.surface),
                         )
                       : null,
                 ),
@@ -576,18 +576,18 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(widget.icon, size: 16, color: Colors.white),
+                      Icon(widget.icon, size: 16, color: Theme.of(context).colorScheme.surface),
                       const SizedBox(width: 6),
                       Text(
                         widget.text,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),

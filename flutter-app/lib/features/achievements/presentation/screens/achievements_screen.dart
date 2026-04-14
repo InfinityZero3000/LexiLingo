@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -137,7 +138,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Text(
                     'Your Progress',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -158,8 +159,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 progressColor: Colors.white,
                 child: Text(
                   '${percentage.toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.surfaceLight,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -365,7 +366,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   _buildRewardBadge(
                     Icons.star,
                     '${achievement.xpReward} XP',
-                    Colors.amber,
+                    AppColors.warning,
                   ),
                 if (achievement.xpReward > 0 && achievement.gemsReward > 0)
                   const SizedBox(width: 12),

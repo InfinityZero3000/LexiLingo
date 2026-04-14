@@ -6,6 +6,7 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import 'book_quiz_screen.dart';
 import 'book_reader_screen.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Book detail screen showing cover, synopsis, CEFR badge, and Read/Download actions.
 ///
@@ -75,9 +76,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 20,
                 ),
               ),
@@ -165,8 +166,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         ),
                         child: Text(
                           book.cefrLevel,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 13,
                           ),
@@ -461,8 +462,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         ],
       ),
     ),
-    child: const Center(
-      child: Icon(Icons.menu_book_rounded, size: 48, color: Colors.white),
+    child: Center(
+      child: Icon(Icons.menu_book_rounded, size: 48, color: AppColors.surfaceLight),
     ),
   );
 }

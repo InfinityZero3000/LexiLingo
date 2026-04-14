@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// A beautiful loading widget using Lottie animation
 /// Can be used as a replacement for CircularProgressIndicator
@@ -69,9 +70,9 @@ class LottieLoadingWidget extends StatelessWidget {
       color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

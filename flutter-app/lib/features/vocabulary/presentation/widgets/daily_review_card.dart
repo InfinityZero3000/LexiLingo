@@ -100,10 +100,10 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.style, color: Colors.white, size: 32),
+                child: Icon(Icons.style, color: Theme.of(context).colorScheme.surface, size: 32),
               ),
 
               const SizedBox(width: 16),
@@ -113,10 +113,10 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Daily Review',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -135,7 +135,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                                 ? '$_dueCount words waiting'
                                 : 'All caught up! Tap to check again',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),
@@ -146,7 +146,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               // Button
               if (!_isLoading && _dueCount > 0)
                 Material(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: _startReview,

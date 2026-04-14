@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Player Screen — video player with synced subtitle overlay.
 ///
@@ -157,9 +158,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.play_arrow_rounded,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         size: 40,
                       ),
                     ),
@@ -248,8 +249,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             ),
             child: Text(
               widget.video.cefrLevel,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.surfaceLight,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -346,7 +347,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 Icon(
                   Icons.subtitles_off_rounded,
                   size: 40,
-                  color: isDark ? Colors.white30 : Colors.grey.shade400,
+                  color: isDark ? Colors.white30 : AppColors.grey400,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -511,7 +512,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
+                color: AppColors.grey400,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

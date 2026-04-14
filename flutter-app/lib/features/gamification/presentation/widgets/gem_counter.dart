@@ -135,7 +135,7 @@ class _GemCounterState extends State<GemCounter>
           ),
         ],
       ),
-      child: const Icon(Icons.diamond, color: Colors.white, size: 14),
+      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 14),
     );
   }
 
@@ -173,12 +173,12 @@ class GemIcon extends StatelessWidget {
                 BoxShadow(
                   color: AppColors.purple.withValues(alpha: 0.4),
                   blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  offset: Offset(0, 3),
                 ),
               ]
             : null,
       ),
-      child: Icon(Icons.diamond, color: Colors.white, size: size * 0.6),
+      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: size * 0.6),
     );
   }
 }

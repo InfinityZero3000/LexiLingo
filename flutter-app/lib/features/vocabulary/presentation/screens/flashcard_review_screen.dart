@@ -213,7 +213,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close screen
             },
-            child: const Text('Exit', style: TextStyle(color: Colors.red)),
+            child: const Text('Exit', style: TextStyle(color: AppColors.errorBright)),
           ),
         ],
       ),

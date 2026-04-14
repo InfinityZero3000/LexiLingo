@@ -89,9 +89,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
+                Icon(Icons.check_circle, color: AppColors.surfaceLight),
                 SizedBox(width: 8),
                 Text('Profile updated successfully!'),
               ],
@@ -176,7 +176,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       children: [
                         const Icon(
                           Icons.error_outline,
-                          color: Colors.red,
+                          color: AppColors.errorBright,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -184,7 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           child: Text(
                             _errorMessage!,
                             style: const TextStyle(
-                              color: Colors.red,
+                              color: AppColors.errorBright,
                               fontSize: 13,
                             ),
                           ),
@@ -262,11 +262,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       shadowColor: AppColors.primary.withValues(alpha: 0.3),
                     ),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                               strokeWidth: 2,
                             ),
                           )
@@ -326,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppColors.surfaceLight,
                     width: 3,
                   ),
                   boxShadow: [
@@ -358,11 +358,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [AppColors.primary, AppColors.primary],
                       ),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.surfaceLight, width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.4),
@@ -370,9 +370,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.camera_alt,
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       size: 18,
                     ),
                   ),
@@ -591,7 +591,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: AppColors.errorBright),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

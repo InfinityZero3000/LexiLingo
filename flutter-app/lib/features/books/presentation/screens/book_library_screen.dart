@@ -6,6 +6,7 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Library screen showing curated books by CEFR level + global search.
 ///
@@ -196,8 +197,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
               ),
               child: Text(
                 book.cefrLevel,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -377,8 +378,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
               ),
               child: Text(
                 level,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),

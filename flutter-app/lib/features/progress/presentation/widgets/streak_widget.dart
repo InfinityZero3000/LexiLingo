@@ -72,18 +72,18 @@ class StreakWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (streak.streakAtRisk)
-                  const LottieAnimationWidget.heartbeat(width: 22, height: 22)
+                  LottieAnimationWidget.heartbeat(width: 22, height: 22)
                 else
                   Icon(
                     _getStreakIcon(streak.streakIcon),
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     size: 18,
                   ),
                 const SizedBox(width: 4),
                 Text(
                   '${streak.currentStreak}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.surface,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -122,7 +122,7 @@ class StreakWidget extends StatelessWidget {
         colors: [Color(0xFFFFCC00), Color(0xFFFF8C00)],
       );
     }
-    return LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500]);
+    return LinearGradient(colors: [AppColors.grey400, AppColors.grey500]);
   }
 
   void _showStreakDetails(BuildContext context, StreakEntity streak) {
@@ -184,20 +184,20 @@ class StreakCard extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: streak.currentStreak > 0
                                 ? [AppColors.orange, AppColors.deepOrange]
-                                : [Colors.grey.shade300, Colors.grey.shade400],
+                                : [AppColors.grey300, AppColors.grey400],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: streak.streakAtRisk
-                            ? const LottieAnimationWidget.heartbeat(
+                            ? LottieAnimationWidget.heartbeat(
                                 width: 32,
                                 height: 32,
                               )
                             : Icon(
                                 _getStreakIcon(streak.streakIcon),
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 size: 24,
                               ),
                       ),
@@ -246,7 +246,7 @@ class StreakCard extends StatelessWidget {
                                   Icon(
                                     Icons.check_circle,
                                     size: 14,
-                                    color: Colors.green,
+                                    color: AppColors.greenSuccessBright,
                                   ),
                                 if (streak.isActiveToday)
                                   const SizedBox(width: 4),
@@ -256,7 +256,7 @@ class StreakCard extends StatelessWidget {
                                       : 'Practice now to keep your streak!',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: streak.isActiveToday
-                                        ? Colors.green
+                                        ? AppColors.greenSuccessBright
                                         : Colors.grey,
                                   ),
                                 ),
@@ -271,7 +271,7 @@ class StreakCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.emoji_events,
-                            color: Colors.amber,
+                            color: AppColors.warning,
                             size: 16,
                           ),
                           Text(
@@ -349,7 +349,7 @@ class StreakDetailsSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -411,7 +411,7 @@ class StreakDetailsSheet extends StatelessWidget {
                   ? Colors.green.shade50
                   : streak.streakAtRisk
                   ? Colors.orange.shade50
-                  : Colors.grey.shade100,
+                  : AppColors.grey100,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -423,7 +423,7 @@ class StreakDetailsSheet extends StatelessWidget {
                       ? Icons.warning_rounded
                       : Icons.info_outline,
                   color: streak.isActiveToday
-                      ? Colors.green
+                      ? AppColors.greenSuccessBright
                       : streak.streakAtRisk
                       ? AppColors.orange
                       : Colors.grey,
@@ -533,7 +533,7 @@ class StreakBadge extends StatelessWidget {
             decoration: BoxDecoration(
               color: streak.currentStreak > 0
                   ? Colors.orange.shade100
-                  : Colors.grey.shade200,
+                  : AppColors.grey200,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -543,7 +543,7 @@ class StreakBadge extends StatelessWidget {
                   _getStreakIcon(streak.streakIcon),
                   color: streak.currentStreak > 0
                       ? Colors.orange.shade800
-                      : Colors.grey.shade600,
+                      : AppColors.grey600,
                   size: 14,
                 ),
                 const SizedBox(width: 2),
@@ -554,7 +554,7 @@ class StreakBadge extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: streak.currentStreak > 0
                         ? Colors.orange.shade800
-                        : Colors.grey.shade600,
+                        : AppColors.grey600,
                   ),
                 ),
               ],

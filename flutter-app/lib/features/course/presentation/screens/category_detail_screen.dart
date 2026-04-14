@@ -111,8 +111,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     category.name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -138,7 +138,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       child: Icon(
                         categoryIcon,
                         size: 80,
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -193,7 +193,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                       const Icon(
                                         Icons.check,
                                         size: 18,
-                                        color: Colors.green,
+                                        color: AppColors.greenSuccessBright,
                                       ),
                                     ],
                                   ],
@@ -474,7 +474,7 @@ class _CourseCard extends StatelessWidget {
       case 'beginner':
       case 'a1':
       case 'a2':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'intermediate':
       case 'b1':
       case 'b2':
@@ -482,7 +482,7 @@ class _CourseCard extends StatelessWidget {
       case 'advanced':
       case 'c1':
       case 'c2':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
         return Colors.blue;
     }
@@ -587,7 +587,7 @@ class _CourseGridCard extends StatelessWidget {
       case 'beginner':
       case 'a1':
       case 'a2':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'intermediate':
       case 'b1':
       case 'b2':
@@ -595,7 +595,7 @@ class _CourseGridCard extends StatelessWidget {
       case 'advanced':
       case 'c1':
       case 'c2':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
         return Colors.blue;
     }

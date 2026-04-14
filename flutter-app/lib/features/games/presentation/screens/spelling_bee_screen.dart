@@ -180,7 +180,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Word ${_wordIndex + 1}/${game.words.length}',
@@ -232,7 +232,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             _isPlaying
                                 ? Icons.volume_up
                                 : Icons.play_arrow_rounded,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             size: 52,
                           ),
                         ),
@@ -257,9 +257,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Type the word...',
-                          hintStyle: const TextStyle(color: AppColors.textGrey),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.surfaceLight,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
@@ -312,7 +312,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             border: Border.all(
                               color: _isCorrect
                                   ? AppColors.greenSuccess
-                                  : Colors.red,
+                                  : AppColors.errorBright,
                             ),
                           ),
                           child: Column(
@@ -323,7 +323,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: _isCorrect
                                       ? AppColors.greenSuccess
-                                      : Colors.red,
+                                      : AppColors.errorBright,
                                 ),
                               ),
                               if (!_isCorrect) ...[

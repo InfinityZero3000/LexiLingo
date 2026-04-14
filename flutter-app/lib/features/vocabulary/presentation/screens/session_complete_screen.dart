@@ -80,7 +80,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                 AppColors.primary,
                 AppColors.accentYellow,
                 AppColors.greenSuccess,
-                Colors.red,
+                AppColors.errorBright,
                 AppColors.purple,
               ],
             ),

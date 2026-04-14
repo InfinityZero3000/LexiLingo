@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
@@ -170,8 +171,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               ),
                               child: Text(
                                 widget.article.cefrLevel,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.surface,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13,
                                 ),
@@ -308,12 +309,12 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                   return GestureDetector(
                                     onTap: () => _onWordTap(word),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(
+                                      padding: EdgeInsets.symmetric(
                                         horizontal: 10,
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: AppColors.surfaceLight,
                                         borderRadius: BorderRadius.circular(8),
                                         boxShadow: [
                                           BoxShadow(
@@ -575,7 +576,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
+                color: AppColors.grey400,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

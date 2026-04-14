@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Bottom-bar style audio player controls widget.
 ///
@@ -66,7 +67,7 @@ class AudioPlayerControls extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.grey.shade300,
+                  : AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -144,7 +145,7 @@ class AudioPlayerControls extends StatelessWidget {
                   icon: Icon(
                     isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     size: 30,
-                    color: Colors.white,
+                    color: AppColors.surfaceLight,
                   ),
                   tooltip: isPlaying ? 'Pause' : 'Play',
                 ),

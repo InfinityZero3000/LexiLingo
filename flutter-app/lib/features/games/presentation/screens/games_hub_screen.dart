@@ -134,7 +134,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   SliverAppBar _buildAppBar(GamesProvider provider) {
     return SliverAppBar(
       floating: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       title: const Text(
         'Games',
@@ -159,12 +159,12 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   Widget _buildXpHeader(GamesProvider provider) {
     if (provider.isLoading && provider.xpProfile == null) {
       return Shimmer.fromColors(
-        baseColor: Colors.grey.shade200,
-        highlightColor: Colors.grey.shade100,
+        baseColor: AppColors.grey200,
+        highlightColor: AppColors.grey100,
         child: Container(
           height: 120,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -204,9 +204,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final dailyCap = dailyXp + provider.dailyCapRemaining;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -306,7 +306,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     color: selected ? Colors.white : AppColors.textDark,
                     fontWeight: FontWeight.bold,
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: BorderSide(
@@ -358,9 +358,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final board = provider.leaderboard;
     if (board.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Center(
@@ -378,9 +378,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final third = top3.length > 2 ? top3[2] : null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+      padding: EdgeInsets.fromLTRB(12, 20, 12, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -583,9 +583,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             alignment: Alignment.center,
             child: Text(
               rankLabels[rank],
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 fontSize: 15,
                 shadows: [
                   Shadow(

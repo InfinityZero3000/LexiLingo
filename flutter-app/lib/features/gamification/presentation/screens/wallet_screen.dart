@@ -61,12 +61,12 @@ class _WalletScreenState extends State<WalletScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.diamond,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 size: 32,
                               ),
                             ),
@@ -74,10 +74,10 @@ class _WalletScreenState extends State<WalletScreen> {
                             // Balance
                             Text(
                               '${provider.gems}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                               ),
                             ),
                           ],

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Explore Screen — main discovery page for English learning videos.
 ///
@@ -299,20 +300,20 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.play_circle_fill_rounded,
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                   size: 28,
                 ),
               ),
               const Spacer(),
               Text(
                 channel.name,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.surfaceLight,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -321,15 +322,15 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               ),
               const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   channel.level,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.surfaceLight,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -386,12 +387,12 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               Icon(
                 Icons.search_off_rounded,
                 size: 64,
-                color: Colors.grey.shade400,
+                color: AppColors.grey400,
               ),
               const SizedBox(height: 12),
               Text(
                 'No videos found',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                style: TextStyle(color: AppColors.grey500, fontSize: 16),
               ),
             ],
           ),
@@ -478,10 +479,10 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         ),
                       ),
                     ),
-                    const Center(
+                    Center(
                       child: Icon(
                         Icons.play_circle_fill_rounded,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         size: 48,
                       ),
                     ),
@@ -501,8 +502,8 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                           ),
                           child: Text(
                             video.cefrLevel,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.surfaceLight,
                               fontWeight: FontWeight.w700,
                               fontSize: 11,
                             ),

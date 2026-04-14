@@ -104,7 +104,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Add words to build your vocabulary library.',
       actionLabel: onAdd != null ? 'Add Words' : null,
       onAction: onAdd,
-      iconColor: Colors.green,
+      iconColor: AppColors.greenSuccessBright,
     );
   }
 
@@ -162,7 +162,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Please check your network and try again.',
       actionLabel: onRetry != null ? 'Retry' : null,
       onAction: onRetry,
-      iconColor: Colors.red,
+      iconColor: AppColors.errorBright,
     );
   }
 
@@ -174,7 +174,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'We\'re having trouble connecting. Please try again.',
       actionLabel: onRetry != null ? 'Retry' : null,
       onAction: onRetry,
-      iconColor: Colors.red,
+      iconColor: AppColors.errorBright,
     );
   }
 }

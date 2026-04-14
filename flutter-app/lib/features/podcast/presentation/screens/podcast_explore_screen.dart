@@ -6,6 +6,7 @@ import '../../domain/entities/podcast_entities.dart';
 import '../providers/podcast_provider.dart';
 import '../widgets/podcast_card.dart';
 import 'podcast_detail_screen.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Main podcast browse screen.
 ///
@@ -161,7 +162,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'Failed to load podcasts',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: AppColors.grey500),
                           ),
                           const SizedBox(height: 8),
                           TextButton(
@@ -213,17 +214,17 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               Icon(
                 Icons.podcasts_rounded,
                 size: 64,
-                color: Colors.grey.shade300,
+                color: AppColors.grey300,
               ),
               const SizedBox(height: 12),
               Text(
                 'No podcasts found',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                style: TextStyle(color: AppColors.grey500, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Try a different search term',
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                style: TextStyle(color: AppColors.grey400, fontSize: 13),
               ),
             ],
           ),
@@ -262,7 +263,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
         child: Center(
           child: Text(
             'No curated podcasts yet',
-            style: TextStyle(color: Colors.grey.shade400),
+            style: TextStyle(color: AppColors.grey400),
           ),
         ),
       );
@@ -306,8 +307,8 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                 ),
                 child: Text(
                   category.cefrLevel,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.surfaceLight,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -496,8 +497,8 @@ class _SearchResultTile extends StatelessWidget {
                         ),
                         child: Text(
                           podcast.cefrLevel,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 10,
                           ),
@@ -522,7 +523,7 @@ class _SearchResultTile extends StatelessWidget {
                   : Icons.chevron_right_rounded,
               color: isFollowed
                   ? AppColors.greenSuccess
-                  : (isDark ? Colors.white38 : Colors.grey.shade400),
+                  : (isDark ? Colors.white38 : AppColors.grey400),
             ),
           ],
         ),

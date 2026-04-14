@@ -226,14 +226,14 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(settings.currentGoalIcon, size: 32, color: Colors.white),
+                  Icon(settings.currentGoalIcon, size: 32, color: Theme.of(context).colorScheme.surface),
                   const SizedBox(width: 12),
                   Column(
                     children: [
                       Text(
                         '${settings.dailyGoalXP} XP',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -241,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         settings.currentGoalLabel,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -276,7 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : Colors.grey.shade300,
+                              : AppColors.grey300,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -654,7 +654,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           user.email,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade600,
+                            color: AppColors.grey600,
                           ),
                         ),
                       ],
@@ -664,7 +664,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
 
-          if (user != null) Divider(height: 1, color: Colors.grey.shade200),
+          if (user != null) Divider(height: 1, color: AppColors.grey200),
 
           // Sign out button
           InkWell(
@@ -700,7 +700,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Spacer(),
                   Icon(
                     Icons.chevron_right,
-                    color: Colors.grey.shade400,
+                    color: AppColors.grey400,
                     size: 20,
                   ),
                 ],

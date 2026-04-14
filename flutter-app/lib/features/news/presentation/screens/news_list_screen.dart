@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News List Screen — browse English news articles by category and CEFR level.
 ///
@@ -124,7 +125,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'Failed to load articles',
-                              style: TextStyle(color: Colors.grey.shade500),
+                              style: TextStyle(color: AppColors.grey500),
                             ),
                             const SizedBox(height: 8),
                             TextButton(
@@ -147,13 +148,13 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             Icon(
                               Icons.article_outlined,
                               size: 64,
-                              color: Colors.grey.shade400,
+                              color: AppColors.grey400,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No articles found',
                               style: TextStyle(
-                                color: Colors.grey.shade500,
+                                color: AppColors.grey500,
                                 fontSize: 16,
                               ),
                             ),
@@ -310,7 +311,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
               ),
               backgroundColor: isDark
                   ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.grey.shade100,
+                  : AppColors.grey100,
               selectedColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -409,8 +410,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           ),
                           child: Text(
                             article.cefrLevel,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.surfaceLight,
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),

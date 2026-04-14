@@ -83,10 +83,10 @@ class ShopItemCard extends StatelessWidget {
                           item.isOutOfStock
                               ? 'SOLD OUT'
                               : '${item.stockRemaining} LEFT',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                           ),
                         ),
                       ),
@@ -109,18 +109,18 @@ class ShopItemCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.timer,
                               size: 12,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${item.effectDuration}h',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                               ),
                             ),
                           ],
@@ -212,12 +212,12 @@ class ShopItemCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                   ),
                                 )
                               : Text(
@@ -279,11 +279,11 @@ class ShopItemCard extends StatelessWidget {
           BoxShadow(
             color: _getCategoryColor(item.category).withValues(alpha: 0.4),
             blurRadius: 12,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: 32),
+      child: Icon(icon, color: AppColors.surfaceLight, size: 32),
     );
   }
 

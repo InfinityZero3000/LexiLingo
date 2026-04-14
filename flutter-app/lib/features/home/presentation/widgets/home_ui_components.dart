@@ -181,7 +181,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             shape: BoxShape.circle,
             gradient: SweepGradient(
               startAngle: _controller.value * 2 * math.pi,
-              colors: const [
+              colors: [
                 AppColors.primary,
                 AppColors.purple,
                 AppColors.purple,
@@ -417,8 +417,8 @@ class _NotificationBellState extends State<_NotificationBell>
                         ),
                         child: Text(
                           widget.count > 9 ? '9+' : widget.count.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.surface,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -649,10 +649,10 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   ),
                 ),
                 child: isActive
-                    ? const Icon(
+                    ? Icon(
                         Icons.local_fire_department,
                         size: 14,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                       )
                     : null,
               ),

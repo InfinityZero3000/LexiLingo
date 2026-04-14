@@ -57,7 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.surfaceLight,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -421,7 +421,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.surfaceLight,
                           side: const BorderSide(color: Color(0xFFD7DEE7)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
@@ -439,11 +439,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             : () async {
                                 await authProvider.signInWithFacebook();
                               },
-                        icon: const Icon(Icons.facebook, color: Colors.white),
-                        label: const Text(
+                        icon: Icon(Icons.facebook, color: AppColors.surfaceLight),
+                        label: Text(
                           'Continue with Facebook',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 18,
                           ),
@@ -504,7 +504,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red),
+                            const Icon(Icons.error_outline, color: AppColors.errorBright),
                             const SizedBox(width: 10),
                             Expanded(
                               child: SelectableText(

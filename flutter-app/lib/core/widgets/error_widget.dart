@@ -80,9 +80,9 @@ class ErrorDisplayWidget extends StatelessWidget {
         return AppColors.orange;
       case ErrorType.server:
       case ErrorType.unknown:
-        return Colors.red;
+        return AppColors.errorBright;
       case ErrorType.unauthorized:
-        return Colors.amber;
+        return AppColors.warning;
       case ErrorType.notFound:
         return Colors.grey;
     }
@@ -240,10 +240,10 @@ class OfflineBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       color: Colors.orange.shade800,
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.wifi_off, color: Colors.white, size: 18),
+          Icon(Icons.wifi_off, color: Theme.of(context).colorScheme.surface, size: 18),
           SizedBox(width: 8),
           Text(
             'You are offline',

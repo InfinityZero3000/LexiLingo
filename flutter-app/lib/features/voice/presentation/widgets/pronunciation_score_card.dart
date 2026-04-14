@@ -17,10 +17,10 @@ class PronunciationScoreCard extends StatelessWidget {
   });
 
   Color _getScoreColor(int value) {
-    if (value >= 90) return Colors.green;
-    if (value >= 70) return Colors.amber;
+    if (value >= 90) return AppColors.greenSuccessBright;
+    if (value >= 70) return AppColors.warning;
     if (value >= 50) return AppColors.orange;
-    return Colors.red;
+    return AppColors.errorBright;
   }
 
   @override
@@ -151,10 +151,10 @@ class _OverallScoreCircle extends StatelessWidget {
   const _OverallScoreCircle({required this.score, required this.grade});
 
   Color _getColor() {
-    if (score >= 90) return Colors.green;
-    if (score >= 70) return Colors.amber;
+    if (score >= 90) return AppColors.greenSuccessBright;
+    if (score >= 70) return AppColors.warning;
     if (score >= 50) return AppColors.orange;
-    return Colors.red;
+    return AppColors.errorBright;
   }
 
   @override
@@ -168,7 +168,7 @@ class _OverallScoreCircle extends StatelessWidget {
           child: CircularProgressIndicator(
             value: score / 100,
             strokeWidth: 8,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: AppColors.grey200,
             valueColor: AlwaysStoppedAnimation<Color>(_getColor()),
           ),
         ),
@@ -208,10 +208,10 @@ class _ScoreItem extends StatelessWidget {
   });
 
   Color _getColor() {
-    if (score >= 90) return Colors.green;
-    if (score >= 70) return Colors.amber;
+    if (score >= 90) return AppColors.greenSuccessBright;
+    if (score >= 70) return AppColors.warning;
     if (score >= 50) return AppColors.orange;
-    return Colors.red;
+    return AppColors.errorBright;
   }
 
   @override

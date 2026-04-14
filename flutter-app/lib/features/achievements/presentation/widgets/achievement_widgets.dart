@@ -217,7 +217,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
+                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
               ),
           ],
         ),
@@ -269,7 +269,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
+                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
               ),
           ],
         ),
@@ -331,7 +331,7 @@ class AchievementBadge extends StatelessWidget {
               ? Icon(
                   _getBadgeIcon(achievement.badgeIcon),
                   size: size * 0.4,
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                 )
               : Icon(Icons.lock, size: size * 0.35, color: Colors.grey),
         ),
@@ -363,7 +363,7 @@ class AchievementCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isUnlocked ? rarityColor : Colors.grey.shade300,
+          color: isUnlocked ? rarityColor : AppColors.grey300,
           width: isUnlocked ? 2 : 1,
         ),
       ),
@@ -462,7 +462,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
               radix: 16,
             ),
           )
-        : Colors.amber;
+        : AppColors.warning;
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -478,7 +478,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
           blastDirectionality: BlastDirectionality.explosive,
           shouldLoop: false,
           colors: const [
-            Colors.green,
+            AppColors.greenSuccessBright,
             Colors.blue,
             Colors.pink,
             AppColors.orange,
@@ -535,7 +535,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     child: Icon(
                       _getBadgeIcon(achievement.badgeIcon),
                       size: 48,
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                     ),
                   ),
                 ),
@@ -566,7 +566,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                       _RewardChip(
                         icon: Icons.star,
                         value: '+${achievement.xpReward} XP',
-                        color: Colors.amber,
+                        color: AppColors.warning,
                       ),
                       const SizedBox(width: 12),
                     ],

@@ -63,7 +63,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Container(
               height: 48,
               decoration: BoxDecoration(
@@ -378,7 +378,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(provider.errorMessage!),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppColors.errorBright,
                       ),
                     );
                   }

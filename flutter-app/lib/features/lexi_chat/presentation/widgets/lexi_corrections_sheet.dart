@@ -242,7 +242,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 child: Text(
                   correction.errorSpan,
                   style: const TextStyle(
-                    color: Colors.red,
+                    color: AppColors.errorBright,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.lineThrough,

@@ -81,7 +81,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
           emissionFrequency: 0.06,
           numberOfParticles: 18,
           gravity: 0.3,
-          colors: const [
+          colors: [
             AppColors.primary,
             AppColors.accentYellow,
             AppColors.greenSuccess,
@@ -95,9 +95,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              padding: const EdgeInsets.all(28),
+              padding: EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -122,9 +122,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.emoji_events_rounded,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       size: 36,
                     ),
                   ),

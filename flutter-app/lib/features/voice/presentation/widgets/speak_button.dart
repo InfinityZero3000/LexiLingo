@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Speak Button Widget
 /// A reusable button that uses TTS to speak text
@@ -99,7 +100,7 @@ class _SpeakButtonState extends State<SpeakButton> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to play: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.errorBright,
             duration: const Duration(seconds: 2),
           ),
         );

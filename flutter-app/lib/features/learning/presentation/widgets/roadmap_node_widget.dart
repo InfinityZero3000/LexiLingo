@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/lesson_ui_components.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Roadmap Node Widget
 /// Displays a single lesson node in the roadmap with status indicators
@@ -56,7 +57,7 @@ class RoadmapNodeWidget extends StatelessWidget {
       return Colors.grey;
     }
     if (lesson.isCompleted) {
-      return Colors.green;
+      return AppColors.greenSuccessBright;
     }
     if (lesson.isCurrent) {
       return Colors.blue;

@@ -181,7 +181,7 @@ class LeaderboardPodium extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: medalColor,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.2),
@@ -192,8 +192,8 @@ class LeaderboardPodium extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$rank',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -231,9 +231,9 @@ class LeaderboardPodium extends StatelessWidget {
             ),
             child: Text(
               '${entry.xpEarned}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -409,12 +409,12 @@ class LeaderboardEntryRow extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'YOU',
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         ),

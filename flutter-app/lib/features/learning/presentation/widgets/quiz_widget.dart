@@ -163,11 +163,11 @@ class _QuizWidgetState extends State<QuizWidget>
             if (showResult) {
               if (isCorrectAnswer) {
                 backgroundColor = Colors.green.withValues(alpha: 0.1);
-                borderColor = Colors.green;
+                borderColor = AppColors.greenSuccessBright;
                 icon = Icons.check_circle;
               } else if (isSelected && !isCorrectAnswer) {
                 backgroundColor = Colors.red.withValues(alpha: 0.1);
-                borderColor = Colors.red;
+                borderColor = AppColors.errorBright;
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
@@ -214,7 +214,7 @@ class _QuizWidgetState extends State<QuizWidget>
                       if (showResult && icon != null)
                         Icon(
                           icon,
-                          color: isCorrectAnswer ? Colors.green : Colors.red,
+                          color: isCorrectAnswer ? AppColors.greenSuccessBright : AppColors.errorBright,
                         ),
                     ],
                   ),
@@ -235,7 +235,7 @@ class _QuizWidgetState extends State<QuizWidget>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: widget.isCorrect! ? Colors.green : AppColors.orange,
+                    color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.orange,
                     width: 1,
                   ),
                 ),
@@ -251,7 +251,7 @@ class _QuizWidgetState extends State<QuizWidget>
                                 ? Icons.check_circle
                                 : Icons.info_outline,
                             color: widget.isCorrect!
-                                ? Colors.green
+                                ? AppColors.greenSuccessBright
                                 : AppColors.orange,
                           ),
                           const SizedBox(width: 8),
@@ -261,7 +261,7 @@ class _QuizWidgetState extends State<QuizWidget>
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: widget.isCorrect!
-                                  ? Colors.green
+                                  ? AppColors.greenSuccessBright
                                   : AppColors.orange,
                             ),
                           ),

@@ -20,4 +20,16 @@ abstract class LexiChatRepository {
 
   /// Get message history for a session.
   Future<List<LexiMessage>> getMessages({required String sessionId});
+
+  /// Get all sessions for a user.
+  Future<List<LexiSession>> getSessions({required String userId});
+
+  /// Rename a session title.
+  Future<void> renameSession({
+    required String sessionId,
+    required String title,
+  });
+
+  /// Delete a session and its messages.
+  Future<void> deleteSession({required String sessionId});
 }

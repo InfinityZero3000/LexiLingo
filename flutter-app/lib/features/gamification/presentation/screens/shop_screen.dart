@@ -82,7 +82,7 @@ class _ShopScreenState extends State<ShopScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Purchase failed. Please try again.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.errorBright,
         ),
       );
     }
@@ -114,9 +114,9 @@ class _ShopScreenState extends State<ShopScreen>
                           color: AppColors.purple,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.card_giftcard,
-                          color: Colors.white,
+                          color: AppColors.surfaceLight,
                         ),
                       ),
                       const SizedBox(width: 12),

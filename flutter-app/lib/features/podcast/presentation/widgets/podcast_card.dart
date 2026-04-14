@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Compact podcast card for list/grid display.
 ///
@@ -195,8 +196,8 @@ class PodcastCard extends StatelessWidget {
       ),
       child: Text(
         level,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.surfaceLight,
           fontWeight: FontWeight.w800,
           fontSize: 11,
         ),

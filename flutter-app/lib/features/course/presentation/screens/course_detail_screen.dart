@@ -41,7 +41,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const Icon(Icons.error_outline, size: 64, color: AppColors.errorBright),
                   const SizedBox(height: 16),
                   Text(
                     provider.detailError!,
@@ -74,8 +74,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     course.title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.w600,
                       shadows: [
                         Shadow(
@@ -278,14 +278,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.enrollmentSuccess ?? 'Successfully enrolled!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.greenSuccessBright,
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.enrollmentError ?? 'Failed to enroll'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.errorBright,
         ),
       );
     }
@@ -326,7 +326,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
     return Container(
       color: Theme.of(context).primaryColor,
-      child: const Icon(Icons.school, size: 64, color: Colors.white),
+      child: Icon(Icons.school, size: 64, color: Theme.of(context).colorScheme.surface),
     );
   }
 }
@@ -365,8 +365,8 @@ class _UnitCard extends StatelessWidget {
           backgroundColor: _parseColor(unit.backgroundColor),
           child: Text(
             '$unitNumber',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -435,7 +435,7 @@ class _LessonTile extends StatelessWidget {
           const SizedBox(width: 8),
           // Status Icon
           if (isCompleted)
-            const Icon(Icons.check_circle, color: Colors.green)
+            const Icon(Icons.check_circle, color: AppColors.greenSuccessBright)
           else if (isLocked)
             const Icon(Icons.lock, color: Colors.grey)
           else
@@ -467,7 +467,7 @@ class _LessonTile extends StatelessWidget {
       color = Colors.grey;
     } else if (isCompleted) {
       iconData = Icons.check_circle;
-      color = Colors.green;
+      color = AppColors.greenSuccessBright;
     } else {
       switch (lessonType.toLowerCase()) {
         case 'vocabulary':
@@ -484,7 +484,7 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'speaking':
           iconData = Icons.mic;
-          color = Colors.red;
+          color = AppColors.errorBright;
           break;
         case 'reading':
           iconData = Icons.book;
@@ -496,7 +496,7 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'quiz':
           iconData = Icons.quiz;
-          color = Colors.amber;
+          color = AppColors.warning;
           break;
         default:
           iconData = Icons.article;

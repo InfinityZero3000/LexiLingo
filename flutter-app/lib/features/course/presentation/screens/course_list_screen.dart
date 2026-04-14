@@ -76,9 +76,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     color: AppColors.primary,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.explore,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.surface,
                                     size: 24,
                                   ),
                                 ),
@@ -526,8 +526,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                             child: Text(
                               course.level,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.surfaceLight,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -558,16 +558,16 @@ class _HorizontalCourseCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.star,
                                   size: 12,
-                                  color: Colors.white,
+                                  color: AppColors.surfaceLight,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${course.totalXp}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: AppColors.surfaceLight,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -667,12 +667,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.08)
-                                        : Colors.grey.shade100,
+                                        : AppColors.grey100,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: isDark
                                           ? Colors.white24
-                                          : Colors.grey.shade300,
+                                          : AppColors.grey300,
                                       width: 0.8,
                                     ),
                                   ),
@@ -683,7 +683,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                       color: isDark
                                           ? Colors.white70
-                                          : Colors.grey.shade700,
+                                          : AppColors.grey700,
                                     ),
                                   ),
                                 ),
@@ -747,7 +747,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       ] else ...[
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: EdgeInsets.symmetric(vertical: 4),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -759,12 +759,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.play_arrow_rounded,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                                 size: 14,
                               ),
                               SizedBox(width: 2),
@@ -774,7 +774,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.surfaceLight,
                                 ),
                               ),
                             ],
@@ -816,7 +816,7 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -828,22 +828,22 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
           // Icon in center
           Center(
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 _getLanguageIcon(course.language),
                 size: 32,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
               ),
             ),
           ),
@@ -913,7 +913,7 @@ class _HorizontalCourseCard extends StatelessWidget {
   Color _getLevelColor(String level) {
     switch (level.toLowerCase()) {
       case 'beginner':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'elementary':
         return Colors.lightGreen;
       case 'intermediate':
@@ -921,14 +921,14 @@ class _HorizontalCourseCard extends StatelessWidget {
       case 'upper-intermediate':
         return AppColors.deepOrange;
       case 'advanced':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
         return Colors.blue;
     }
   }
 
   Color _getProgressColor(double progress) {
-    if (progress >= 80) return Colors.green;
+    if (progress >= 80) return AppColors.greenSuccessBright;
     if (progress >= 50) return AppColors.orange;
     return Colors.blue;
   }
@@ -997,8 +997,8 @@ class _FilterSheet extends StatelessWidget {
     final provider = context.watch<CourseProvider>();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
@@ -1028,9 +1028,9 @@ class _FilterSheet extends StatelessWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.tune_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 20,
                 ),
               ),
@@ -1122,10 +1122,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Vietnamese',
                 isSelected: provider.selectedLanguage == 'Vietnamese',
-                color: Colors.red,
+                color: AppColors.errorBright,
                 iconWidget: _buildLanguageIcon(
                   'VI',
-                  Colors.red,
+                  AppColors.errorBright,
                   provider.selectedLanguage == 'Vietnamese',
                 ),
                 onTap: () {
@@ -1179,7 +1179,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Beginner',
                 isSelected: provider.selectedLevel == 'Beginner',
-                color: Colors.green,
+                color: AppColors.greenSuccessBright,
                 onTap: () {
                   provider.filterByLevel('Beginner');
                   Navigator.pop(context);
@@ -1199,7 +1199,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Advanced',
                 isSelected: provider.selectedLevel == 'Advanced',
-                color: Colors.red,
+                color: AppColors.errorBright,
                 onTap: () {
                   provider.filterByLevel('Advanced');
                   Navigator.pop(context);
@@ -1261,7 +1261,7 @@ class _FilterSheet extends StatelessWidget {
             ),
             if (isSelected) ...[
               const SizedBox(width: 4),
-              const Icon(Icons.check, size: 14, color: Colors.white),
+              Icon(Icons.check, size: 14, color: Theme.of(context).colorScheme.surface),
             ],
           ],
         ),

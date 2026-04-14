@@ -60,9 +60,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.forum_rounded,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     size: 22,
                   ),
                 ),
@@ -472,7 +472,7 @@ class _TopicListItem extends StatelessWidget {
     switch (level) {
       case DifficultyLevel.A1:
       case DifficultyLevel.A2:
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case DifficultyLevel.B1:
       case DifficultyLevel.B2:
         return Colors.blue;

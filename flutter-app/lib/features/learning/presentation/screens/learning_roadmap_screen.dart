@@ -342,7 +342,7 @@ class _LessonNodeState extends State<_LessonNode>
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: lesson.isLocked
-                      ? Colors.grey.shade300
+                      ? AppColors.grey300
                       : Colors.white.withValues(alpha: 0.7),
                   width: 3.5,
                 ),
@@ -390,8 +390,8 @@ class _LessonNodeState extends State<_LessonNode>
                       ),
                       child: Text(
                         '${lesson.lessonNumber}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
@@ -409,19 +409,19 @@ class _LessonNodeState extends State<_LessonNode>
 
   Widget _nodeIcon(LessonProgressModel lesson) {
     if (lesson.isLocked) {
-      return Icon(Icons.lock_rounded, size: 26, color: Colors.grey.shade500);
+      return Icon(Icons.lock_rounded, size: 26, color: AppColors.grey500);
     }
     if (lesson.isCompleted) {
-      return const Icon(Icons.check_rounded, size: 34, color: Colors.white);
+      return Icon(Icons.check_rounded, size: 34, color: AppColors.surfaceLight);
     }
     if (lesson.isCurrent) {
-      return const Icon(
+      return Icon(
         Icons.play_arrow_rounded,
         size: 36,
-        color: Colors.white,
+        color: AppColors.surfaceLight,
       );
     }
-    return Icon(_lessonTypeIcon(lesson.title), size: 28, color: Colors.white);
+    return Icon(_lessonTypeIcon(lesson.title), size: 28, color: AppColors.surfaceLight);
   }
 
   IconData _lessonTypeIcon(String title) {
@@ -462,21 +462,21 @@ class _StarsBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.amber,
+        color: AppColors.warning,
         borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 9, color: Colors.white),
+          Icon(Icons.star_rounded, size: 9, color: Theme.of(context).colorScheme.surface),
           Text(
             '$stars',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -522,8 +522,8 @@ class _CurrentLessonLabel extends StatelessWidget {
                   ? '${lesson.title.substring(0, 26)}…'
                   : lesson.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.surface,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 height: 1.2,
@@ -586,7 +586,7 @@ class _UnitBanner extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             child: Row(
               children: [
                 // Unit number chip
@@ -594,16 +594,16 @@ class _UnitBanner extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.22),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
                       '${unit.unitNumber}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                     ),
                   ),
@@ -617,22 +617,22 @@ class _UnitBanner extends StatelessWidget {
                     children: [
                       Text(
                         unit.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           height: 1.2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (unit.description != null) ...[
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           unit.description!,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -666,21 +666,21 @@ class _UnitProgressRing extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 900),
+            duration: Duration(milliseconds: 900),
             tween: Tween(begin: 0, end: pct),
             curve: Curves.easeOutCubic,
             builder: (_, v, __) => CircularProgressIndicator(
               value: v,
               strokeWidth: 5,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.25),
               valueColor: const AlwaysStoppedAnimation(Colors.white),
               strokeCap: StrokeCap.round,
             ),
           ),
           Text(
             '${unit.completedLessons}/${unit.totalLessons}',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.surface,
               fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
@@ -769,7 +769,7 @@ class _LessonDetailSheet extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: AppColors.grey600,
                   height: 1.4,
                 ),
               ),
@@ -784,7 +784,7 @@ class _LessonDetailSheet extends StatelessWidget {
                 _StatChip(
                   icon: Icons.emoji_events_rounded,
                   label: '${lesson.bestScore!.toStringAsFixed(0)}%',
-                  color: Colors.amber,
+                  color: AppColors.warning,
                 ),
               if (lesson.starsEarned > 0) ...[
                 const SizedBox(width: 10),
@@ -978,7 +978,7 @@ class _ErrorView extends StatelessWidget {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: AppColors.grey600),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -1002,7 +1002,7 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.school_outlined, size: 72, color: Colors.grey.shade400),
+          Icon(Icons.school_outlined, size: 72, color: AppColors.grey400),
           const SizedBox(height: 20),
           Text(
             'No lessons available',
@@ -1011,7 +1011,7 @@ class _EmptyView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Check back later for new content',
-            style: TextStyle(color: Colors.grey.shade500),
+            style: TextStyle(color: AppColors.grey500),
           ),
         ],
       ),

@@ -353,8 +353,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               const SizedBox(height: 8),
                               Text(
                                 goal['label'] as String,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: AppColors.surfaceLight,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),

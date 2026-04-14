@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../games/data/repositories/games_repository.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News Quiz Screen — comprehension quiz after reading an article.
 ///
@@ -82,13 +83,13 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     Icon(
                       Icons.quiz_outlined,
                       size: 64,
-                      color: Colors.grey.shade400,
+                      color: AppColors.grey400,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Quiz not available',
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: AppColors.grey500,
                         fontSize: 16,
                       ),
                     ),
@@ -278,14 +279,14 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         ? cefrColor.withValues(alpha: 0.08)
                         : (isDark
                               ? Colors.white.withValues(alpha: 0.03)
-                              : Colors.grey.shade50),
+                              : AppColors.grey50),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
                           ? cefrColor
                           : (isDark
                                 ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.grey.shade200),
+                                : AppColors.grey200),
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -300,7 +301,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                               ? cefrColor
                               : (isDark
                                     ? Colors.white.withValues(alpha: 0.06)
-                                    : Colors.grey.shade100),
+                                    : AppColors.grey100),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -311,7 +312,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                                   ? Colors.white
                                   : (isDark
                                         ? Colors.white54
-                                        : Colors.grey.shade600),
+                                        : AppColors.grey600),
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -477,7 +478,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         isCorrect
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
-                        color: isCorrect ? Colors.green : Colors.red,
+                        color: isCorrect ? AppColors.greenSuccessBright : AppColors.errorBright,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -497,7 +498,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     Text(
                       'Correct: ${q.options[q.correctIndex]}',
                       style: const TextStyle(
-                        color: Colors.green,
+                        color: AppColors.greenSuccessBright,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),

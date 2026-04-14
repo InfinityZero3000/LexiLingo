@@ -50,11 +50,11 @@ class LeagueCard extends StatelessWidget {
                   BoxShadow(
                     color: leagueData.color.withValues(alpha: 0.4),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
-              child: Icon(leagueData.icon, color: Colors.white, size: 28),
+              child: Icon(leagueData.icon, color: Theme.of(context).colorScheme.surface, size: 28),
             ),
             const SizedBox(width: 16),
 
@@ -89,7 +89,7 @@ class LeagueCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                              color: AppColors.greenSuccessBright,
                             ),
                           ),
                         ),
@@ -228,11 +228,11 @@ class LeagueBadge extends StatelessWidget {
           BoxShadow(
             color: data.$1.withValues(alpha: 0.4),
             blurRadius: 6,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: Icon(data.$3, color: Colors.white, size: size * 0.5),
+      child: Icon(data.$3, color: Theme.of(context).colorScheme.surface, size: size * 0.5),
     );
   }
 

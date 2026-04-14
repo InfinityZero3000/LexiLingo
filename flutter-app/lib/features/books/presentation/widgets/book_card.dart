@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Card widget displaying book cover, title, author, and CEFR badge.
 ///
@@ -62,8 +63,8 @@ class BookCard extends StatelessWidget {
                     ),
                     child: Text(
                       book.cefrLevel,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -135,7 +136,7 @@ class BookCard extends StatelessWidget {
         child: Icon(
           Icons.menu_book_rounded,
           size: 48,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: AppColors.surfaceLight,
         ),
       ),
     );

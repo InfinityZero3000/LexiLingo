@@ -61,9 +61,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.notifications_rounded,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         size: 22,
                       ),
                     ),
@@ -289,16 +289,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: const Column(
+        padding: EdgeInsets.only(right: 24),
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+            Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.surface, size: 24),
             SizedBox(height: 4),
             Text(
               'Delete',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

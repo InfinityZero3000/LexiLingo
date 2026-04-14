@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
@@ -20,14 +21,20 @@ const _tag = 'LexiChatProvider';
 ///  - Typing animation state
 class LexiChatProvider extends ChangeNotifier {
   final LexiChatRepository repository;
+  static const String _savedSessionsKey = 'lexi_saved_sessions';
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
-  LexiChatProvider({required this.repository});
+  LexiChatProvider({required this.repository}) {
+    _loadSavedSessions();
+  }
 
   // ── State ──────────────────────────────────────────────────────────────────
   LexiSession? _session;
+  final List<LexiSessionSummary> _sessions = [];
   final List<LexiMessage> _messages = [];
   bool _isLoading = false;
   bool _isSending = false;
+  bool _isLoadingSessions = false;
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   String? _error;
@@ -40,9 +47,11 @@ class LexiChatProvider extends ChangeNotifier {
 
   // ── Getters ────────────────────────────────────────────────────────────────
   LexiSession? get session => _session;
+  List<LexiSessionSummary> get sessions => List.unmodifiable(_sessions);
   List<LexiMessage> get messages => List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
+  bool get isLoadingSessions => _isLoadingSessions;
   bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
   bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
@@ -59,6 +68,15 @@ class LexiChatProvider extends ChangeNotifier {
 
     try {
       _session = await repository.createSession(userId: userId);
+      _upsertSessionSummary(
+        LexiSessionSummary(
+          sessionId: _session!.sessionId,
+          userId: userId,
+          title: _session!.title ?? _buildSessionTitle(),
+          createdAt: _session!.createdAt,
+          updatedAt: _session!.updatedAt ?? DateTime.now(),
+        ),
+      );
       _messages.clear();
 
       // Add Lexi's greeting
@@ -76,6 +94,7 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       _isLoading = false;
+      unawaited(syncSessions(userId));
       notifyListeners();
     } catch (e) {
       _error = 'Failed to start session: $e';
@@ -83,6 +102,74 @@ class LexiChatProvider extends ChangeNotifier {
       logError(_tag, _error!);
       notifyListeners();
     }
+  }
+
+  Future<void> createNewSession(String userId) async {
+    await startSession(userId);
+  }
+
+  Future<void> selectSession(LexiSessionSummary summary) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final remoteSessions = await repository.getSessions(
+        userId: summary.userId,
+      );
+      final existsRemotely = remoteSessions.any(
+        (s) => s.sessionId == summary.sessionId,
+      );
+      if (!existsRemotely) {
+        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+        await _saveSessions();
+        await startSession(summary.userId);
+        _error = 'Session was expired on server. Started a new one.';
+        return;
+      }
+
+      _session = LexiSession(
+        sessionId: summary.sessionId,
+        userId: summary.userId,
+        createdAt: summary.createdAt,
+        title: summary.title,
+        updatedAt: summary.updatedAt,
+      );
+
+      final loaded = await repository.getMessages(sessionId: summary.sessionId);
+      _messages
+        ..clear()
+        ..addAll(loaded);
+
+      _touchSession(summary.sessionId);
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to load session: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> renameSession(String sessionId, String title) async {
+    final idx = _sessions.indexWhere((s) => s.sessionId == sessionId);
+    if (idx == -1) return;
+    await repository.renameSession(sessionId: sessionId, title: title.trim());
+    _sessions[idx] = _sessions[idx].copyWith(title: title.trim());
+    await _saveSessions();
+    notifyListeners();
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await repository.deleteSession(sessionId: sessionId);
+    _sessions.removeWhere((s) => s.sessionId == sessionId);
+    if (_session?.sessionId == sessionId) {
+      _session = null;
+      _messages.clear();
+    }
+    await _saveSessions();
+    notifyListeners();
   }
 
   // ── Send Message ───────────────────────────────────────────────────────────
@@ -255,5 +342,138 @@ class LexiChatProvider extends ChangeNotifier {
     _typingStageTimer?.cancel();
     _ttsPlayer.dispose();
     super.dispose();
+  }
+
+  String _buildSessionTitle() {
+    final now = DateTime.now();
+    final hh = now.hour.toString().padLeft(2, '0');
+    final mm = now.minute.toString().padLeft(2, '0');
+    final dd = now.day.toString().padLeft(2, '0');
+    final mo = now.month.toString().padLeft(2, '0');
+    return 'Lexi $hh:$mm $dd/$mo';
+  }
+
+  void _upsertSessionSummary(LexiSessionSummary summary) {
+    _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+    _sessions.insert(0, summary);
+    unawaited(_saveSessions());
+  }
+
+  void _touchSession(String sessionId) {
+    final idx = _sessions.indexWhere((s) => s.sessionId == sessionId);
+    if (idx == -1) return;
+    final item = _sessions.removeAt(idx).copyWith(updatedAt: DateTime.now());
+    _sessions.insert(0, item);
+    unawaited(_saveSessions());
+  }
+
+  Future<void> syncSessions(String userId) async {
+    try {
+      final remote = await repository.getSessions(userId: userId);
+      if (remote.isEmpty) return;
+
+      _sessions
+        ..clear()
+        ..addAll(
+          remote.map(
+            (s) => LexiSessionSummary(
+              sessionId: s.sessionId,
+              userId: s.userId,
+              title: s.title ?? 'Lexi Chat',
+              createdAt: s.createdAt,
+              updatedAt: s.updatedAt ?? s.createdAt,
+            ),
+          ),
+        );
+      await _saveSessions();
+      notifyListeners();
+    } catch (e) {
+      logWarn(_tag, 'syncSessions failed: $e');
+    }
+  }
+
+  Future<void> _loadSavedSessions() async {
+    _isLoadingSessions = true;
+    notifyListeners();
+
+    try {
+      final rawString = await _secureStorage.read(key: _savedSessionsKey);
+      if (rawString == null || rawString.isEmpty) {
+        _isLoadingSessions = false;
+        notifyListeners();
+        return;
+      }
+      final raw = (jsonDecode(rawString) as List).cast<dynamic>();
+      _sessions
+        ..clear()
+        ..addAll(
+          raw
+              .map(
+                (e) =>
+                    LexiSessionSummary.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList(),
+        );
+    } catch (e) {
+      logWarn(_tag, 'Failed to load saved Lexi sessions: $e');
+    }
+
+    _isLoadingSessions = false;
+    notifyListeners();
+  }
+
+  Future<void> _saveSessions() async {
+    try {
+      final raw = jsonEncode(_sessions.map((e) => e.toJson()).toList());
+      await _secureStorage.write(key: _savedSessionsKey, value: raw);
+    } catch (e) {
+      logWarn(_tag, 'Failed to save Lexi sessions: $e');
+    }
+  }
+}
+
+class LexiSessionSummary {
+  final String sessionId;
+  final String userId;
+  final String title;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const LexiSessionSummary({
+    required this.sessionId,
+    required this.userId,
+    required this.title,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  LexiSessionSummary copyWith({String? title, DateTime? updatedAt}) {
+    return LexiSessionSummary(
+      sessionId: sessionId,
+      userId: userId,
+      title: title ?? this.title,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'session_id': sessionId,
+      'user_id': userId,
+      'title': title,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  factory LexiSessionSummary.fromJson(Map<String, dynamic> json) {
+    return LexiSessionSummary(
+      sessionId: json['session_id'] ?? '',
+      userId: json['user_id'] ?? '',
+      title: json['title'] ?? 'Lexi Chat',
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+    );
   }
 }

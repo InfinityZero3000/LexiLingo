@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Scrollable transcript panel shown inside the podcast player.
 ///
@@ -78,10 +79,10 @@ class TranscriptPanel extends StatelessWidget {
   Widget _buildShimmer(bool isDark) {
     final baseColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade200;
+        : AppColors.grey200;
     final highlightColor = isDark
         ? Colors.white.withValues(alpha: 0.15)
-        : Colors.grey.shade100;
+        : AppColors.grey100;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -91,12 +92,12 @@ class TranscriptPanel extends StatelessWidget {
         children: List.generate(5, (i) {
           final isShort = i % 3 == 2;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: 8),
             child: Container(
               height: 14,
               width: isShort ? double.infinity * 0.6 : double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
@@ -164,7 +165,7 @@ class TranscriptPanel extends StatelessWidget {
         Icon(
           Icons.subtitles_off_rounded,
           size: 48,
-          color: isDark ? Colors.white24 : Colors.grey.shade300,
+          color: isDark ? Colors.white24 : AppColors.grey300,
         ),
         const SizedBox(height: 10),
         Text(

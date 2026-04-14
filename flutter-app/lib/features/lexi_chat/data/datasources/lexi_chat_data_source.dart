@@ -186,4 +186,40 @@ class LexiChatDataSource {
       return [];
     }
   }
+
+  Future<List<LexiSession>> getSessions({required String userId}) async {
+    try {
+      final json = await apiClient.get('/lexi/sessions/user/$userId');
+      final data = json['data'] ?? json;
+      final rawSessions = data['sessions'] as List? ?? [];
+
+      return rawSessions.map((s) {
+        return LexiSession(
+          sessionId: s['session_id'] ?? '',
+          userId: s['user_id'] ?? userId,
+          createdAt: DateTime.tryParse(s['created_at'] ?? '') ?? DateTime.now(),
+          title: s['title']?.toString(),
+          updatedAt: DateTime.tryParse(s['updated_at'] ?? ''),
+          messageCount: (s['message_count'] as num?)?.toInt(),
+        );
+      }).toList();
+    } catch (e) {
+      logWarn(_tag, 'getSessions failed: $e');
+      return [];
+    }
+  }
+
+  Future<void> renameSession({
+    required String sessionId,
+    required String title,
+  }) async {
+    await apiClient.post(
+      '/lexi/sessions/$sessionId/rename',
+      body: {'title': title},
+    );
+  }
+
+  Future<void> deleteSession({required String sessionId}) async {
+    await apiClient.post('/lexi/sessions/$sessionId/delete', body: {});
+  }
 }

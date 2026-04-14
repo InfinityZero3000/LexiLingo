@@ -164,10 +164,10 @@ class LexiDialogueBubble extends StatelessWidget {
           ),
           child: Text(
             message.content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               letterSpacing: -0.1,
             ),
           ),

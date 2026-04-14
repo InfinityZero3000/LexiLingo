@@ -334,13 +334,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     switch (level) {
       case 'A1':
       case 'A2':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'B1':
       case 'B2':
         return AppColors.orange;
       case 'C1':
       case 'C2':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
         return AppColors.textGrey;
     }

@@ -81,7 +81,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError ?? 'Failed to start session'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.errorBright,
         ),
       );
       return;
@@ -183,7 +183,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError!),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.errorBright,
         ),
       );
     }
@@ -273,14 +273,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               _getCategoryIconData(widget.story.category),
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               size: 20,
             ),
           ),
@@ -356,9 +356,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: ActionChip(
-              label: Text(prompt, style: const TextStyle(fontSize: 12)),
+              label: Text(prompt, style: TextStyle(fontSize: 12)),
               onPressed: () => _sendMessage(prompt),
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(color: Colors.blue.withValues(alpha: 0.3)),
@@ -397,7 +397,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   Widget _buildTaskBanner() {
     final Color accent = switch (_taskBannerType) {
       _TaskBannerType.loading => AppColors.primary,
-      _TaskBannerType.complete => Colors.green,
+      _TaskBannerType.complete => AppColors.greenSuccessBright,
       _TaskBannerType.error => AppColors.orange,
     };
 
@@ -421,9 +421,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
             direction: DismissDirection.horizontal,
             onDismissed: (_) => _dismissTaskBannerByUser(),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: accent.withValues(alpha: 0.25)),
                 boxShadow: [
@@ -493,7 +493,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceLight,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -536,7 +536,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 color: isEnabled ? Colors.blue : Colors.grey,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: Colors.white, size: 20),
+              child: Icon(Icons.send, color: AppColors.surfaceLight, size: 20),
             ),
           ),
         ],
@@ -624,7 +624,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               Navigator.pop(context); // Go back to story selection
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.errorBright,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -649,9 +649,9 @@ class _StoryContextHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -701,13 +701,13 @@ class _StoryContextHeader extends StatelessWidget {
             ),
             child: const Row(
               children: [
-                Icon(Icons.bolt, size: 12, color: Colors.green),
+                Icon(Icons.bolt, size: 12, color: AppColors.greenSuccessBright),
                 SizedBox(width: 4),
                 Text(
                   'Context Ready',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.green,
+                    color: AppColors.greenSuccessBright,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -816,8 +816,8 @@ class VocabularyPreviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Star Rating
 /// Beautiful animated star rating component
@@ -16,7 +17,7 @@ class AnimatedStarRating extends StatefulWidget {
     required this.rating,
     this.starCount = 5,
     this.size = 24,
-    this.filledColor = Colors.amber,
+    this.filledColor = AppColors.warning,
     this.unfilledColor = Colors.grey,
     this.animationDuration = const Duration(milliseconds: 500),
   });
@@ -368,7 +369,7 @@ class HeartbeatAnimation extends StatefulWidget {
   const HeartbeatAnimation({
     super.key,
     this.size = 32,
-    this.color = Colors.red,
+    this.color = AppColors.errorBright,
     this.isActive = true,
   });
 
@@ -627,7 +628,7 @@ class SuccessBurst extends StatefulWidget {
   const SuccessBurst({
     super.key,
     this.size = 100,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.particleCount = 12,
     this.onComplete,
   });

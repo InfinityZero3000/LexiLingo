@@ -143,7 +143,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   : 'Fill in the blank...',
               filled: true,
               fillColor: widget.isAnswered
-                  ? (widget.isCorrect! ? Colors.green : Colors.red).withValues(
+                  ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright).withValues(
                       alpha: 0.1,
                     )
                   : Colors.grey[50],
@@ -166,7 +166,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
                   color: widget.isAnswered
-                      ? (widget.isCorrect! ? Colors.green : Colors.red)
+                      ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright)
                       : Colors.grey[300]!,
                   width: 2,
                 ),
@@ -174,7 +174,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               suffixIcon: widget.isAnswered
                   ? Icon(
                       widget.isCorrect! ? Icons.check_circle : Icons.cancel,
-                      color: widget.isCorrect! ? Colors.green : Colors.red,
+                      color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright,
                     )
                   : null,
             ),
@@ -221,7 +221,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: widget.isCorrect! ? Colors.green : AppColors.orange,
+                  color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.orange,
                   width: 1,
                 ),
               ),
@@ -237,7 +237,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                               ? Icons.check_circle
                               : Icons.info_outline,
                           color: widget.isCorrect!
-                              ? Colors.green
+                              ? AppColors.greenSuccessBright
                               : AppColors.orange,
                         ),
                         const SizedBox(width: 8),
@@ -247,7 +247,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: widget.isCorrect!
-                                ? Colors.green
+                                ? AppColors.greenSuccessBright
                                 : AppColors.orange,
                           ),
                         ),

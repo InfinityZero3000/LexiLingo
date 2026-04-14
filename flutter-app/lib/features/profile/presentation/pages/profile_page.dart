@@ -100,9 +100,9 @@ class _ProfilePageState extends State<ProfilePage>
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person_rounded,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 size: 22,
               ),
             ),
@@ -152,12 +152,12 @@ class _ProfilePageState extends State<ProfilePage>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.diamond, color: Colors.white, size: 16),
+                      Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${gamification.wallet?.gems ?? 0}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -297,19 +297,19 @@ class _ProfilePageState extends State<ProfilePage>
               BoxShadow(
                 color: color.withValues(alpha: 0.3),
                 blurRadius: 8,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: Colors.white, size: 24),
+              Icon(icon, color: Theme.of(context).colorScheme.surface, size: 24),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -351,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -373,7 +373,7 @@ class _ProfilePageState extends State<ProfilePage>
                               progress: progress,
                               size: 140,
                               strokeWidth: 6,
-                              gradientColors: const [
+                              gradientColors: [
                                 AppColors.primary,
                                 AppColors.primary,
                                 AppColors.purple,
@@ -384,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.5),
+                                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                                     width: 3,
                                   ),
                                   boxShadow: [
@@ -438,7 +438,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
                                         AppColors.primary,
                                         AppColors.primary,
@@ -446,7 +446,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white,
+                                      color: AppColors.surfaceLight,
                                       width: 2,
                                     ),
                                     boxShadow: [
@@ -458,9 +458,9 @@ class _ProfilePageState extends State<ProfilePage>
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.verified,
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                     size: 16,
                                   ),
                                 ),
@@ -520,16 +520,16 @@ class _ProfilePageState extends State<ProfilePage>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.workspace_premium_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.surfaceLight,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'Level ${lp.displayLevel}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: AppColors.surfaceLight,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                       ),
@@ -639,19 +639,19 @@ class _ProfilePageState extends State<ProfilePage>
                                     alpha: 0.3,
                                   ),
                                   blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                                  offset: Offset(0, 4),
                                 ),
                               ],
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.edit, color: Colors.white, size: 14),
+                                Icon(Icons.edit, color: AppColors.surfaceLight, size: 14),
                                 SizedBox(width: 6),
                                 Text(
                                   'Edit Profile',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -799,7 +799,7 @@ class _ProfilePageState extends State<ProfilePage>
   Color _getTierColor(String tierCode) {
     switch (tierCode) {
       case 'A1':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'A2':
         return AppColors.teal;
       case 'B1':
@@ -809,7 +809,7 @@ class _ProfilePageState extends State<ProfilePage>
       case 'C1':
         return AppColors.purple;
       case 'C2':
-        return Colors.amber;
+        return AppColors.warning;
       default:
         return AppColors.primary;
     }
@@ -1084,7 +1084,7 @@ class _ProfilePageState extends State<ProfilePage>
                               'Total XP',
                               '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
                               Icons.star,
-                              Colors.amber,
+                              AppColors.warning,
                             ),
                             _buildActivityStat(
                               'Lessons',
@@ -1096,7 +1096,7 @@ class _ProfilePageState extends State<ProfilePage>
                               'Words',
                               '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
                               Icons.abc,
-                              Colors.green,
+                              AppColors.greenSuccessBright,
                             ),
                           ],
                         ),
