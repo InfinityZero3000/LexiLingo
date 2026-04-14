@@ -14,8 +14,10 @@ import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_s
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/screens/my_progress_screen.dart';
 import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
+import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
 import 'package:provider/provider.dart';
@@ -169,6 +171,16 @@ class _ProfilePageState extends State<ProfilePage>
             },
           ),
           IconButton(
+            icon: const Icon(Icons.mic_rounded, color: AppColors.primary),
+            tooltip: 'Voice Practice',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VoicePracticeScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings, color: AppColors.primary),
             onPressed: () {
               Navigator.push(
@@ -259,13 +271,13 @@ class _ProfilePageState extends State<ProfilePage>
           const SizedBox(width: 12),
           _buildQuickActionButton(
             context,
-            icon: Icons.account_balance_wallet,
-            label: 'Wallet',
+            icon: Icons.insights_rounded,
+            label: 'Progress',
             color: AppColors.purple,
             gradient: AppColors.purpleGradient,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const WalletScreen()),
+              MaterialPageRoute(builder: (_) => const MyProgressScreen()),
             ),
           ),
         ],

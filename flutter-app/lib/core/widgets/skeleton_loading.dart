@@ -58,7 +58,7 @@ class SkeletonText extends StatelessWidget {
   final double? width;
   final double height;
 
-  SkeletonText({super.key, this.width, this.height = 16});
+  const SkeletonText({super.key, this.width, this.height = 16});
 
   @override
   Widget build(BuildContext context) {
