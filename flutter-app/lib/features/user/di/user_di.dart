@@ -139,7 +139,10 @@ void registerUserModule({required bool skipDatabase}) {
 
   // Register SettingsProvider for Task 4.5 (Language preferences & Daily goal)
   sl.registerFactory<SettingsProvider>(
-    () => SettingsProvider(repository: sl<SettingsRepository>()),
+    () => SettingsProvider(
+      repository: sl<SettingsRepository>(),
+      notificationService: sl(),
+    ),
   );
 
   // Only register ProgressSyncService if Firestore data sources are available

@@ -13,12 +13,18 @@ services:
       - ENVIRONMENT=development
       - MONGODB_URI=mongodb://mongodb:27017
       - MONGODB_DB_NAME=lexilingo
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_URL=redis://redis:6379/0
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
     volumes:
       - ./api:/app/api
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
@@ -74,7 +80,7 @@ services:
     memswap_limit: 256m
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu
     volumes:
       - redis_data:/data
     healthcheck:

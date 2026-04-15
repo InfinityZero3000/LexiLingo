@@ -1,0 +1,171 @@
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from fastapi import HTTPException
+
+from api.routes import lexi_chat as lexi_route
+
+
+@pytest.fixture
+def mock_store(monkeypatch):
+    store = MagicMock()
+    store.has_session = AsyncMock(return_value=False)
+    store.get_messages = AsyncMock(return_value=[])
+    store.set_session = AsyncMock()
+    store.delete_messages = AsyncMock()
+    store.append_message = AsyncMock()
+    store.get_session = AsyncMock(return_value=None)
+    store.delete_session = AsyncMock()
+    store.init_messages = AsyncMock()
+    monkeypatch.setattr(lexi_route, "_store", store)
+    return store
+
+
+@pytest.fixture
+def mock_db():
+    db = MagicMock()
+
+    lexi_sessions = MagicMock()
+    lexi_sessions.find_one = AsyncMock(return_value=None)
+    lexi_sessions.update_one = AsyncMock()
+    lexi_sessions.delete_one = AsyncMock()
+
+    lexi_messages = MagicMock()
+    lexi_messages.insert_many = AsyncMock()
+    lexi_messages.delete_many = AsyncMock()
+
+    cursor = MagicMock()
+    cursor.sort.return_value = cursor
+    cursor.to_list = AsyncMock(return_value=[])
+
+    lexi_messages.find.return_value = cursor
+
+    def get_collection(name):
+        if name == "lexi_sessions":
+            return lexi_sessions
+        if name == "lexi_messages":
+            return lexi_messages
+        return AsyncMock()
+
+    db.__getitem__.side_effect = get_collection
+    return db
+
+
+@pytest.mark.asyncio
+async def test_list_lexi_sessions_returns_mongo_rows(mock_db):
+    rows = [
+        {
+            "session_id": "s1",
+            "user_id": "u1",
+            "title": "Session 1",
+            "created_at": "2026-04-14T00:00:00",
+            "updated_at": "2026-04-14T00:05:00",
+            "message_count": 4,
+        },
+        {
+            "session_id": "s2",
+            "user_id": "u1",
+            "title": "Session 2",
+            "created_at": "2026-04-14T01:00:00",
+            "updated_at": "2026-04-14T01:10:00",
+            "message_count": 7,
+        },
+    ]
+
+    cursor = MagicMock()
+    cursor.sort.return_value = cursor
+    cursor.to_list = AsyncMock(return_value=rows)
+    mock_db["lexi_sessions"].find.return_value = cursor
+
+    result = await lexi_route.list_lexi_sessions(user_id="u1", db=mock_db)
+
+    assert result.success is True
+    assert len(result.sessions) == 2
+    assert result.sessions[0].session_id == "s1"
+    assert result.sessions[1].message_count == 7
+
+
+@pytest.mark.asyncio
+async def test_rename_lexi_session_updates_db_and_cache(mock_db, mock_store):
+    mock_db["lexi_sessions"].update_one.return_value = MagicMock(matched_count=1)
+    mock_store.get_session.return_value = {
+        "session_id": "s1",
+        "title": "Old",
+        "updated_at": "2026-04-14T00:00:00",
+    }
+
+    req = lexi_route.LexiSessionRenameRequest(title="  New Title  ")
+    result = await lexi_route.rename_lexi_session(
+        session_id="s1",
+        request=req,
+        db=mock_db,
+    )
+
+    assert result["success"] is True
+    assert result["title"] == "New Title"
+    mock_db["lexi_sessions"].update_one.assert_awaited_once()
+    mock_store.set_session.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_rename_lexi_session_not_found_raises_404(mock_db, mock_store):
+    mock_db["lexi_sessions"].update_one.return_value = MagicMock(matched_count=0)
+
+    req = lexi_route.LexiSessionRenameRequest(title="X")
+    with pytest.raises(HTTPException) as exc:
+        await lexi_route.rename_lexi_session(session_id="missing", request=req, db=mock_db)
+
+    assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_messages_fallback_rehydrates_cache(mock_db, mock_store):
+    mock_store.has_session.return_value = False
+
+    mock_db["lexi_sessions"].find_one.return_value = {
+        "session_id": "s1",
+        "user_id": "u1",
+        "created_at": "2026-04-14T00:00:00",
+        "updated_at": "2026-04-14T00:10:00",
+        "title": "Lexi Chat",
+        "message_count": 2,
+        "persona": "lexi",
+    }
+
+    cursor = MagicMock()
+    cursor.sort.return_value = cursor
+    cursor.to_list = AsyncMock(
+        return_value=[
+            {
+                "id": "m1",
+                "role": "user",
+                "content": "hello",
+                "timestamp": "2026-04-14T00:01:00",
+            },
+            {
+                "id": "m2",
+                "role": "assistant",
+                "content": "hi",
+                "timestamp": "2026-04-14T00:01:01",
+            },
+        ]
+    )
+    mock_db["lexi_messages"].find.return_value = cursor
+
+    result = await lexi_route.get_lexi_messages(session_id="s1", db=mock_db)
+
+    assert result["success"] is True
+    assert result["session_id"] == "s1"
+    assert len(result["messages"]) == 2
+    mock_store.set_session.assert_awaited_once()
+    assert mock_store.append_message.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_delete_lexi_session_cleans_db_and_cache(mock_db, mock_store):
+    result = await lexi_route.delete_lexi_session(session_id="s1", db=mock_db)
+
+    assert result["success"] is True
+    mock_db["lexi_sessions"].delete_one.assert_awaited_once_with({"session_id": "s1"})
+    mock_db["lexi_messages"].delete_many.assert_awaited_once_with({"session_id": "s1"})
+    mock_store.delete_session.assert_awaited_once_with("s1")
+    mock_store.delete_messages.assert_awaited_once_with("s1")

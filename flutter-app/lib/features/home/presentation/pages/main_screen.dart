@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -92,47 +93,39 @@ class _MainScreenState extends State<MainScreen> {
                   setState(() => _currentIndex = index);
                 },
                 items: [
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.explore_outlined),
-                    activeIcon: Icon(Icons.explore),
+                  BottomNavigationBarItem(
+                    icon: Icon(PhosphorIcons.compass()),
+                    activeIcon: Icon(
+                      PhosphorIcons.compass(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Discovery',
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.menu_book_outlined),
-                    activeIcon: Icon(Icons.menu_book),
+                  BottomNavigationBarItem(
+                    icon: Icon(PhosphorIcons.bookOpen()),
+                    activeIcon: Icon(
+                      PhosphorIcons.bookOpen(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Learning',
                   ),
                   BottomNavigationBarItem(
-                    icon: ClipOval(
-                      child: Image.asset(
-                        'assets/avatar/avatar-ai-chat.png',
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.smart_toy_outlined, size: 20),
-                      ),
-                    ),
-                    activeIcon: ClipOval(
-                      child: Image.asset(
-                        'assets/avatar/avatar-ai-chat.png',
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.smart_toy, size: 20),
-                      ),
+                    icon: Icon(PhosphorIcons.bird()),
+                    activeIcon: Icon(
+                      PhosphorIcons.bird(PhosphorIconsStyle.fill),
                     ),
                     label: 'Lexi',
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.chat_bubble_outline),
-                    activeIcon: Icon(Icons.chat_bubble),
+                  BottomNavigationBarItem(
+                    icon: Icon(PhosphorIcons.chatCircleText()),
+                    activeIcon: Icon(
+                      PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Chat',
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.account_circle_outlined),
-                    activeIcon: Icon(Icons.account_circle),
+                  BottomNavigationBarItem(
+                    icon: Icon(PhosphorIcons.userCircle()),
+                    activeIcon: Icon(
+                      PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Account',
                   ),
                 ],

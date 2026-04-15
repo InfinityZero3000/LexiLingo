@@ -289,23 +289,23 @@ kill_port() {
 # We will check each service before starting.
 echo ""
 
-# ============ PostgreSQL (via Docker) ============
+# ============ Database Services (via Docker) ============
 if command -v docker &>/dev/null; then
-    if ! check_service 5432; then
-        echo -e "${BLUE}[START] Starting PostgreSQL container...${NC}"
-        docker compose -f "$PROJECT_ROOT/docker-compose.yml" up -d postgres >> "$LOG_DIR/postgres.log" 2>&1
+    if ! check_service 5432 || ! check_service 27017 || ! check_service 6379; then
+        echo -e "${BLUE}[START] Starting Database containers (PostgreSQL, MongoDB, Redis)...${NC}"
+        docker compose -f "$PROJECT_ROOT/docker-compose.yml" up -d postgres pgadmin mongodb mongo-express redis redisinsight >> "$LOG_DIR/databases.log" 2>&1
         # Wait up to 15s for postgres to be ready
         for i in $(seq 1 15); do
             docker compose -f "$PROJECT_ROOT/docker-compose.yml" exec -T postgres pg_isready -U lexilingo >/dev/null 2>&1 && break
             sleep 1
         done
     else
-        echo -e "${GREEN}[OK] PostgreSQL is already running on port 5432${NC}"
+        echo -e "${GREEN}[OK] Database services are already running${NC}"
     fi
 else
     if ! check_service 5432; then
         echo -e "   ${YELLOW}[WARN] Docker not found and PostgreSQL not running on port 5432.${NC}"
-        echo -e "   ${YELLOW}       Install Docker or start PostgreSQL manually.${NC}"
+        echo -e "   ${YELLOW}       Install Docker or start Databases manually.${NC}"
     fi
 fi
 
@@ -328,9 +328,8 @@ if ! check_service 8000; then
     # Start backend
     (
         cd "$PROJECT_ROOT/backend-service"
-        source venv/bin/activate
         echo "$(date): Starting Backend on port 8000" >> "$LOG_DIR/backend.log"
-        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$LOG_DIR/backend.log" 2>&1
+        "$BACKEND_VENV/bin/python" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$LOG_DIR/backend.log" 2>&1
     ) &
     BACKEND_PID=$!
     disown $BACKEND_PID
@@ -367,7 +366,6 @@ if ! check_service 8001; then
     # Start AI service with main.py (full endpoints for Flutter)
     (
         cd "$PROJECT_ROOT/ai-service"
-        source "$AI_VENV/bin/activate"
         export PYTHONPATH="$PROJECT_ROOT/ai-service"
         export GEMINI_API_KEY="$GEMINI_API_KEY"
         export CHAT_MODEL="${CHAT_MODEL:-qwen}"
@@ -375,7 +373,7 @@ if ! check_service 8001; then
         export USE_GRAPHCAG="${USE_GRAPHCAG:-true}"
         echo "$(date): Starting AI Service on port 8001" >> "$LOG_DIR/ai-service.log"
         echo "$(date): CHAT_MODEL=$CHAT_MODEL, OLLAMA_MODEL=$OLLAMA_MODEL, USE_GRAPHCAG=$USE_GRAPHCAG" >> "$LOG_DIR/ai-service.log"
-        python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
+        "$AI_VENV/bin/python" -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
     ) &
     AI_PID=$!
     disown $AI_PID
@@ -676,7 +674,7 @@ animated_dashboard() {
         if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
             if check_service 8080; then
                 if [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
-                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}${NC} ${C2}http://localhost:8080${NC}\033[K\n"
+                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
                 else
                     printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
                 fi

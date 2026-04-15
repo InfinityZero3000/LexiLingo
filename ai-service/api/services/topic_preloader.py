@@ -18,7 +18,12 @@ class TopicContextPreloader:
     
     PRELOAD_KEY_PREFIX = "chat:context:"
     
-    def __init__(self, db: AsyncIOMotorDatabase, redis_client: redis.Redis, doc_service: DocumentIntelligenceService):
+    def __init__(
+        self,
+        db: AsyncIOMotorDatabase,
+        redis_client: redis.Redis,
+        doc_service: Optional[DocumentIntelligenceService] = None,
+    ):
         self.story_service = StoryService(db)
         self.redis = redis_client
         self.doc_service = doc_service
@@ -27,6 +32,10 @@ class TopicContextPreloader:
         """Collect real-time information for dynamic topics using web search/scraping."""
         tags = getattr(story, 'tags', [])
         if "real_time" not in tags and "weather" not in tags and "news" not in tags:
+            return ""
+
+        if self.doc_service is None:
+            logger.info("Dynamic context skipped: document intelligence service unavailable")
             return ""
             
         logger.info(f"Triggering dynamic collection for topic: {story.story_id}")

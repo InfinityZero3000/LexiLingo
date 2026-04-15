@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -60,11 +61,43 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       return;
     }
 
+    final messages = [
+      'All caught up for today. Come back tomorrow!',
+      'You are doing great! See you tomorrow!',
+      'Your daily goal is clear. Rest well!',
+      'No more words to learn today. Great job!',
+      'You dominated today\'s review!',
+      'Rest your brain. You\'ve earned it!',
+      'Consistency is key! You are done for today.',
+      'Awesome work! Let\'s learn more tomorrow!',
+      'Empty queue! You are a vocabulary master!',
+      'Mission accomplished! Enjoy your free time.',
+      'You crushed it today! See you on the next one.',
+      'Nothing left to review. You\'re on a roll!',
+      'Brain workout complete. Take a breather!',
+      'All words conquered! Time to relax.',
+      'Stellar effort today! Catch you tomorrow.',
+      'Zero pending reviews. You are unstoppable!',
+      'Daily target smashed! Keep up the momentum.',
+      'You\'ve cleared the board! Fantastic job.',
+      'Vocabulary expanded! Rest up for tomorrow.',
+      'Another day, another victory. Keep it up!',
+      'Review queue is empty. Go treat yourself!',
+      'You nailed your daily practice! Have a great day.',
+      'Your memory is serving you well. Good job!',
+      'Done and dusted! See you back here tomorrow.',
+      'Perfection! You\'ve learned everything for today.',
+      'That\'s a wrap! Your brain deserves a break.',
+      'You cleared your learning queue! Stay awesome.',
+      'High five! All daily words absorbed.',
+      'Great session! Let the newly learned words sink in.',
+      'You\'re officially off the clock. See you tomorrow!',
+    ];
+
+    final randomMsg = messages[Random().nextInt(messages.length)];
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ban da on xong hom nay. Quay lai vao ngay mai nhe!'),
-        duration: Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(randomMsg), duration: const Duration(seconds: 2)),
     );
   }
 
@@ -100,10 +133,16 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.style, color: Theme.of(context).colorScheme.surface, size: 32),
+                child: Icon(
+                  Icons.style,
+                  color: Theme.of(context).colorScheme.surface,
+                  size: 32,
+                ),
               ),
 
               const SizedBox(width: 16),
@@ -135,7 +174,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                                 ? '$_dueCount words waiting'
                                 : 'All caught up! Tap to check again',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surface.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),

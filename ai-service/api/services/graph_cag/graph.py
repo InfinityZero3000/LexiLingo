@@ -256,6 +256,8 @@ class GraphCAGPipeline:
                 "error": str(e),
                 "metadata": {
                     "latency_ms": int((time.time() - start_time) * 1000),
+                    "ttft_ms": 0,
+                    "graph_update": {"latency_ms": 0, "nodes_added": 0, "edges_added": 0},
                     "models_used": [],
                     "path": "error",
                 }
@@ -337,6 +339,7 @@ class GraphCAGPipeline:
             },
             "metadata": {
                 "latency_ms": state.get("latency_ms", 0),
+                "ttft_ms": state.get("ttft_ms", 0),
                 "models_used": state.get("models_used", []),
                 "path": state.get("path", "slow"),
                 "cache_hit": state.get("cache_hit", False),
@@ -344,11 +347,15 @@ class GraphCAGPipeline:
                 "cache_layer": state.get("cache_layer", "none"),
                 "cache_bucket": state.get("cache_bucket", ""),
                 "reuse_risk": state.get("reuse_risk", 1.0),
+                "adaptive_profile": state.get("adaptive_profile"),
+                "adaptive_features": state.get("adaptive_features", {}),
+                "adaptive_controller": state.get("adaptive_controller", {}),
                 "tokens_saved": state.get("tokens_saved", 0),
                 "diagnosis_intent": state.get("diagnosis_intent", "unknown"),
                 "kg_concepts_expanded": len(state.get("kg_expanded_nodes", [])),
                 "retrieval_trace": trace,
                 "retrieval_meta": state.get("retrieval_meta", {}),
+                "graph_update": state.get("graph_update", {"latency_ms": 0, "nodes_added": 0, "edges_added": 0}),
             },
             "audio": {
                 "bytes": state.get("tts_audio_bytes"),

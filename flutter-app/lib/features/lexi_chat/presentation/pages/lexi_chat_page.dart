@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -51,14 +52,10 @@ class _LexiChatPageState extends State<LexiChatPage>
   @override
   void initState() {
     super.initState();
-    // Start session
+    // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
-      provider.syncSessions(_userId);
-      if (!provider.hasSession) {
-        final userId = _userId;
-        provider.startSession(userId);
-      }
+      provider.restoreLatestSession(_userId);
     });
 
     _scrollController.addListener(_handleTopReached);
@@ -125,38 +122,57 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Voice Recording ─────────────────────────────────────────────────────
   Future<void> _startRecording() async {
-    final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) {
-      _showSnack('Microphone permission required');
-      return;
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!hasPermission) {
+        _showSnack('Microphone permission required');
+        return;
+      }
+
+      String recordingPath;
+      if (kIsWeb) {
+        recordingPath =
+            'lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      } else {
+        recordingPath =
+        '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      }
+
+      _recordingPath = recordingPath;
+
+      await _recorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
+        path: recordingPath,
+      );
+
+      setState(() {
+        _isRecording = true;
+        _recordingDuration = Duration.zero;
+      });
+
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() => _recordingDuration += const Duration(seconds: 1));
+      });
+    } catch (e) {
+      _showSnack('Failed to start recording: $e');
     }
-
-    final dir = await getTemporaryDirectory();
-    _recordingPath =
-        '${dir.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-    await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
-      path: _recordingPath!,
-    );
-
-    setState(() {
-      _isRecording = true;
-      _recordingDuration = Duration.zero;
-    });
-
-    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _recordingDuration += const Duration(seconds: 1));
-    });
   }
 
   Future<void> _stopRecording() async {
     _recordingTimer?.cancel();
-    final path = await _recorder.stop();
-    setState(() => _isRecording = false);
 
-    if (path != null) {
-      final bytes = await File(path).readAsBytes();
+    try {
+      final path = await _recorder.stop();
+      setState(() => _isRecording = false);
+
+      if (path == null) return;
+
+      final bytes = await _readRecordedAudio(path);
+      if (bytes == null || bytes.isEmpty) {
+        _showSnack('Recorded audio could not be read');
+        return;
+      }
+
       if (!mounted) return;
       final b64 = base64Encode(bytes);
       final provider = context.read<LexiChatProvider>();
@@ -164,7 +180,25 @@ class _LexiChatPageState extends State<LexiChatPage>
       _scrollToBottom();
       await pending;
       _scrollToBottom();
+    } catch (e) {
+      _showSnack('Failed to stop recording: $e');
     }
+  }
+
+  Future<List<int>?> _readRecordedAudio(String path) async {
+    if (kIsWeb) {
+      final uri = Uri.tryParse(path);
+      if (uri == null) return null;
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      }
+      return null;
+    }
+
+    final file = File(path);
+    if (!await file.exists()) return null;
+    return file.readAsBytes();
   }
 
   void _showSnack(String msg) {
@@ -240,19 +274,6 @@ class _LexiChatPageState extends State<LexiChatPage>
               ),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
               tooltip: 'Session history',
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              color: Theme.of(context).colorScheme.surface,
-              size: 20,
             ),
           ),
           const SizedBox(width: 10),

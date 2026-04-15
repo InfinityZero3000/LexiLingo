@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
@@ -591,7 +592,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAccountSection(BuildContext context) {
-    final authProvider = context.read<AuthProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
 
     return Container(
@@ -617,12 +618,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    backgroundImage:
-                        user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                        ? NetworkImage(user.avatarUrl!)
-                        : null,
-                    child: user.avatarUrl == null || user.avatarUrl!.isEmpty
-                        ? Text(
+                    child: ClipOval(
+                      child: NetworkAvatarImage(
+                        imageUrl: user.avatarUrl,
+                        fit: BoxFit.cover,
+                        width: 44,
+                        height: 44,
+                        fallback: Center(
+                          child: Text(
                             (user.displayName.isNotEmpty
                                     ? user.displayName[0]
                                     : user.email[0])
@@ -632,8 +635,10 @@ class _SettingsPageState extends State<SettingsPage> {
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
-                          )
-                        : null,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

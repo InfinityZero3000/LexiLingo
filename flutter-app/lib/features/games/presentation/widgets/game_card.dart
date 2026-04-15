@@ -29,8 +29,15 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors =
         _gradients[gameType] ?? [AppColors.primary, AppColors.primary];
+    final foregroundColor = AppColors.textInverted;
+    final secondaryForeground = foregroundColor.withValues(alpha: 0.85);
+    final playChipBg = isDark
+        ? Colors.black.withValues(alpha: 0.30)
+        : Colors.white.withValues(alpha: 0.92);
+    final playChipFg = isDark ? AppColors.textInverted : AppColors.textDark;
 
     return GestureDetector(
       onTap: onTap,
@@ -57,7 +64,7 @@ class GameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(gameType.icon, color: Theme.of(context).colorScheme.surface, size: 28),
+                Icon(gameType.icon, color: foregroundColor, size: 28),
                 if (bestScore != null)
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -65,18 +72,18 @@ class GameCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
+                      color: foregroundColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.star, color: Theme.of(context).colorScheme.surface, size: 11),
+                        Icon(Icons.star, color: foregroundColor, size: 11),
                         const SizedBox(width: 2),
                         Text(
                           '$bestScore',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.surface,
+                            color: foregroundColor,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -90,7 +97,7 @@ class GameCard extends StatelessWidget {
             Text(
               gameType.displayName,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.surface,
+                color: foregroundColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -102,7 +109,7 @@ class GameCard extends StatelessWidget {
               child: Text(
                 gameType.description,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
+                  color: secondaryForeground,
                   fontSize: 11,
                 ),
                 maxLines: 2,
@@ -119,13 +126,13 @@ class GameCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
+                    color: playChipBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     'Play',
                     style: TextStyle(
-                      color: AppColors.surfaceLight,
+                      color: playChipFg,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),

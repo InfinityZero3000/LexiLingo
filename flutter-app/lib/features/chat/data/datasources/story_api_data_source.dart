@@ -170,7 +170,7 @@ class StoryApiDataSource {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/topics/topic-sessions');
@@ -210,9 +210,7 @@ class StoryApiDataSource {
     required String message,
   }) async {
     try {
-      final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages',
-      );
+      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages');
       logDebug(_tag, 'sendTopicMessage: $uri');
 
       final body = {
@@ -266,7 +264,7 @@ class StoryApiDataSource {
   Future<List<TopicChatMessage>> getTopicMessages(String sessionId) async {
     try {
       final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages',
+        '$baseUrl/topics/topic-sessions/$sessionId/messages?limit=0',
       );
       logDebug(_tag, 'getTopicMessages: $uri');
 

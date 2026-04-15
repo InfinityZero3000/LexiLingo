@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from app.core.database import get_db
+from app.core.cache import build_cache_key, delete_cached
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
@@ -516,6 +517,9 @@ async def complete_lesson(
         logger.warning("Achievement check error: %s", e)
     
     await db.commit()
+
+    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
 
     time_sec = attempt.time_spent_ms // 1000
     accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0

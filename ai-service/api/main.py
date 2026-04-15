@@ -16,6 +16,7 @@ import httpx
 from datetime import datetime
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo import ASCENDING, DESCENDING
 
 # Core imports
 from api.core.database import mongodb_manager, get_database
@@ -47,6 +48,39 @@ _http_client: Optional[httpx.AsyncClient] = None
 _groq_limiter: Optional[RedisRateLimiter] = None
 
 
+async def _ensure_mongo_indexes() -> None:
+    """Create indexes required for fast session and message restoration."""
+    db = mongodb_manager.db
+
+    await db["chat_sessions"].create_index(
+        [("session_id", ASCENDING)],
+        unique=True,
+        name="chat_sessions_session_id_uq",
+    )
+    await db["chat_sessions"].create_index(
+        [("user_id", ASCENDING), ("last_activity", DESCENDING)],
+        name="chat_sessions_user_last_activity_idx",
+    )
+    await db["chat_messages"].create_index(
+        [("session_id", ASCENDING), ("timestamp", ASCENDING)],
+        name="chat_messages_session_timestamp_idx",
+    )
+
+    await db["lexi_sessions"].create_index(
+        [("session_id", ASCENDING)],
+        unique=True,
+        name="lexi_sessions_session_id_uq",
+    )
+    await db["lexi_sessions"].create_index(
+        [("user_id", ASCENDING), ("updated_at", DESCENDING)],
+        name="lexi_sessions_user_updated_at_idx",
+    )
+    await db["lexi_messages"].create_index(
+        [("session_id", ASCENDING), ("timestamp", ASCENDING)],
+        name="lexi_messages_session_timestamp_idx",
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
@@ -55,6 +89,7 @@ async def lifespan(app: FastAPI):
     # Startup
     try:
         await mongodb_manager.connect()
+        await _ensure_mongo_indexes()
         logger.info("✓ MongoDB connected")
     except Exception as e:
         logger.warning(f"MongoDB connection failed: {e}")

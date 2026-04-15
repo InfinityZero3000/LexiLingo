@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -71,8 +73,14 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   }
 
   Future<void> _checkPermission() async {
-    final hasPermission = await _recorder.hasPermission();
-    setState(() => _hasRecorderPermission = hasPermission);
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!mounted) return;
+      setState(() => _hasRecorderPermission = hasPermission);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _hasRecorderPermission = false);
+    }
   }
 
   @override
@@ -87,7 +95,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   Future<void> _startRecording() async {
     if (!_hasRecorderPermission) {
-      _checkPermission();
+      await _checkPermission();
       if (!_hasRecorderPermission) {
         _showError('Microphone permission denied');
         return;
@@ -95,14 +103,22 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     }
 
     try {
-      final directory = await getTemporaryDirectory();
-      _recordingPath =
-          '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
+      String? recordingPath;
+      if (!kIsWeb) {
+        final directory = await getTemporaryDirectory();
+        recordingPath =
+            '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
+      }
 
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
-        path: _recordingPath!,
+        path:
+            kIsWeb
+                ? 'recording_${DateTime.now().millisecondsSinceEpoch}.wav'
+                : recordingPath!,
       );
+
+      _recordingPath = recordingPath;
 
       if (!mounted) return;
 
@@ -135,11 +151,14 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       setState(() => _isRecording = false);
 
       if (path != null) {
-        final file = File(path);
-        if (await file.exists()) {
-          final audioData = await file.readAsBytes();
+        final audioData = await _readRecordedAudio(path);
+        if (audioData != null && audioData.isNotEmpty) {
           await _assessPronunciation(audioData, 'recording.wav');
+        } else {
+          _showError('Recorded audio could not be read');
         }
+      } else {
+        _showError('No recorded audio was returned');
       }
     } catch (e) {
       _showError('Failed to stop recording: $e');
@@ -178,12 +197,18 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
     if (result != null && result.audioData.isNotEmpty) {
       try {
-        // Save to temp file and play
-        final directory = await getTemporaryDirectory();
-        final file = File('${directory.path}/tts_audio.wav');
-        await file.writeAsBytes(result.audioData);
-
-        await _player.setFilePath(file.path);
+        if (kIsWeb) {
+          final audioUri = Uri.dataFromBytes(
+            result.audioData,
+            mimeType: 'audio/wav',
+          ).toString();
+          await _player.setUrl(audioUri);
+        } else {
+          final directory = await getTemporaryDirectory();
+          final file = File('${directory.path}/tts_audio.wav');
+          await file.writeAsBytes(result.audioData);
+          await _player.setFilePath(file.path);
+        }
         await _player.play();
 
         setState(() {
@@ -214,6 +239,22 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.errorBright),
     );
+  }
+
+  Future<Uint8List?> _readRecordedAudio(String path) async {
+    if (kIsWeb) {
+      final uri = Uri.tryParse(path);
+      if (uri == null) return null;
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      }
+      return null;
+    }
+
+    final file = File(path);
+    if (!await file.exists()) return null;
+    return file.readAsBytes();
   }
 
   @override

@@ -121,7 +121,7 @@ services:
       - lexilingo-network
 
   # ============================================
-  # Redis Cache (Shared)
+  # Redis Cache (Backend)
   # ============================================
   redis:
     image: redis:7-alpine
@@ -149,6 +149,32 @@ services:
       - lexilingo-network
 
   # ============================================
+  # Redis Cache (AI Dedicated)
+  # ============================================
+  redis-ai:
+    image: redis:7-alpine
+    container_name: lexilingo-redis-ai
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
+    mem_limit: 768m
+    memswap_limit: 768m
+    command: redis-server --appendonly yes --maxmemory 600mb --maxmemory-policy allkeys-lfu
+    volumes:
+      - redis_ai_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
   # RedisInsight (Redis Web Management UI)
   # ============================================
   redisinsight:
@@ -167,6 +193,8 @@ services:
       - "8282:5540"
     depends_on:
       redis:
+        condition: service_healthy
+      redis-ai:
         condition: service_healthy
     networks:
       - lexilingo-network
@@ -241,17 +269,18 @@ services:
       ENVIRONMENT: development
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DB_NAME: lexilingo
-      REDIS_HOST: redis
+      REDIS_HOST: redis-ai
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
-      REDIS_URL: redis://redis:6379/0
+      REDIS_DB: 0
+      REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
       DEBUG: ${DEBUG:-true}
     depends_on:
       mongodb:
         condition: service_healthy
-      redis:
+      redis-ai:
         condition: service_healthy
     volumes:
       - ./ai-service/api:/app/api
@@ -268,6 +297,8 @@ volumes:
   mongodb_config:
     driver: local
   redis_data:
+    driver: local
+  redis_ai_data:
     driver: local
 
 networks:

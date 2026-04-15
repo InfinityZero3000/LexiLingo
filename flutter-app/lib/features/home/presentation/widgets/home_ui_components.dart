@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 
 /// Get personalized greeting based on time of day
 String getTimeBasedGreeting() {
@@ -80,7 +81,9 @@ class PersonalizedGreetingHeader extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : AppColors.backgroundLight,
+        color: isDark
+            ? AppColors.surfaceDarkMuted
+            : AppColors.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
@@ -197,13 +200,11 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             ),
             padding: const EdgeInsets.all(2),
             child: ClipOval(
-              child: widget.avatarUrl != null
-                  ? Image.network(
-                      widget.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
-                    )
-                  : _buildDefaultAvatar(),
+              child: NetworkAvatarImage(
+                imageUrl: widget.avatarUrl,
+                fit: BoxFit.cover,
+                fallback: _buildDefaultAvatar(),
+              ),
             ),
           ),
         );
@@ -383,7 +384,7 @@ class _NotificationBellState extends State<_NotificationBell>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey[800] : Colors.white,
+                color: isDark ? Colors.grey[800] : AppColors.grey100,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -492,7 +493,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        color: isDark ? AppColors.surfaceDark : AppColors.grey100,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isDark
@@ -562,40 +563,73 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
   }
 
   Widget _buildAnimatedFire() {
+    final hasStreak = widget.streakDays > 0;
     return AnimatedBuilder(
       animation: _flameAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: widget.isActiveToday ? _flameAnimation.value : 1.0,
+          scale: hasStreak && widget.isActiveToday ? _flameAnimation.value : 1.0,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Glow effect
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: widget.streakDays > 0
+                    colors: hasStreak
                         ? [
-                            AppColors.deepOrange.withValues(alpha: 0.3),
+                            const Color(0xFFFF6B35).withValues(alpha: 0.38),
+                            const Color(0xFFFF3D00).withValues(alpha: 0.16),
                             Colors.transparent,
                           ]
                         : [
-                            Colors.grey.withValues(alpha: 0.2),
+                            Colors.grey.withValues(alpha: 0.18),
                             Colors.transparent,
                           ],
                   ),
                 ),
               ),
-              // Fire icon
-              Icon(
-                Icons.local_fire_department_rounded,
-                size: 32,
-                color: widget.streakDays > 0
-                    ? AppColors.deepOrange
-                    : Colors.grey,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: hasStreak
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : Colors.grey.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: hasStreak
+                        ? const Color(0xFFFF7A45).withValues(alpha: 0.55)
+                        : Colors.grey.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Center(
+                  child: hasStreak
+                      ? ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFFFFB74D),
+                              Color(0xFFFF7043),
+                              Color(0xFFE53935),
+                            ],
+                          ).createShader(bounds),
+                          child: const Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 30,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.local_fire_department_rounded,
+                          size: 30,
+                          color: AppColors.grey500,
+                        ),
+                ),
               ),
             ],
           ),

@@ -91,7 +91,7 @@ class StoryRepositoryImpl implements StoryRepository {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   }) async {
     try {
       final session = await apiDataSource.startTopicSession(

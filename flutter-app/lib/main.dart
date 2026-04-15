@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
+import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
@@ -107,6 +108,9 @@ void main() async {
 
   // Initialize Dependency Injection (skip database on web)
   await di.initializeDependencies(skipDatabase: kIsWeb);
+
+  // Initialize local notifications early so Settings sync can schedule reliably.
+  await di.sl<NotificationService>().ensureInitialized();
 
   // Run startup tasks (health check, seeding). Non-blocking for web.
   if (!kIsWeb) {

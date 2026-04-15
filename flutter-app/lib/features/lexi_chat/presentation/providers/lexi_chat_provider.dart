@@ -37,10 +37,16 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLoadingSessions = false;
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
+  bool _isRestoringSession = false;
   String? _error;
   bool _ttsEnabled = true;
   String _learnerLevel = 'B1';
   Timer? _typingStageTimer;
+  DateTime? _responseStateStartedAt;
+
+  static const Duration _minResponseIndicatorDuration = Duration(
+    milliseconds: 1200,
+  );
 
   // Audio player for Lexi's voice
   final AudioPlayer _ttsPlayer = AudioPlayer();
@@ -108,32 +114,40 @@ class LexiChatProvider extends ChangeNotifier {
     await startSession(userId);
   }
 
+  Future<void> restoreLatestSession(String userId) async {
+    if (_isRestoringSession || _session != null) return;
+
+    _isRestoringSession = true;
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await syncSessions(userId);
+
+      if (_sessions.isNotEmpty) {
+        await selectSession(_sessions.first);
+      } else {
+        await startSession(userId);
+      }
+    } finally {
+      _isRestoringSession = false;
+    }
+  }
+
   Future<void> selectSession(LexiSessionSummary summary) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final remoteSessions = await repository.getSessions(
-        userId: summary.userId,
-      );
-      final existsRemotely = remoteSessions.any(
-        (s) => s.sessionId == summary.sessionId,
-      );
-      if (!existsRemotely) {
-        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
-        await _saveSessions();
-        await startSession(summary.userId);
-        _error = 'Session was expired on server. Started a new one.';
-        return;
-      }
-
       _session = LexiSession(
         sessionId: summary.sessionId,
         userId: summary.userId,
         createdAt: summary.createdAt,
         title: summary.title,
         updatedAt: summary.updatedAt,
+        messageCount: summary.messageCount,
       );
 
       final loaded = await repository.getMessages(sessionId: summary.sessionId);
@@ -141,11 +155,39 @@ class LexiChatProvider extends ChangeNotifier {
         ..clear()
         ..addAll(loaded);
 
+      if (loaded.isEmpty && summary.messageCount > 0) {
+        throw Exception('Session history is unavailable right now.');
+      }
+
+      if (loaded.isEmpty) {
+        _messages.add(
+          LexiMessage(
+            id: 'greeting',
+            role: 'assistant',
+            content:
+                "Squawk! 🦜 Hey there, adventurer! I'm Lexi, your English buddy. "
+                "Let's go on a learning adventure together!\n\n"
+                "You can type or speak — I'll help you practice English. "
+                "What would you like to talk about?",
+            timestamp: DateTime.now(),
+          ),
+        );
+      }
+
       _touchSession(summary.sessionId);
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      final err = e.toString().toLowerCase();
+      if (err.contains('404') || err.contains('not found')) {
+        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+        await _saveSessions();
+        await startSession(summary.userId);
+        _error = 'Session expired on server. Started a new one.';
+        return;
+      }
+
       _error = 'Failed to load session: $e';
       _isLoading = false;
       notifyListeners();
@@ -177,6 +219,9 @@ class LexiChatProvider extends ChangeNotifier {
     if (text.trim().isEmpty || _isSending) return;
 
     final uid = userId ?? 'demo_user';
+    if (_session == null) {
+      await startSession(uid);
+    }
     final sessionId = _session?.sessionId ?? '';
 
     // Optimistic: add user message immediately
@@ -202,7 +247,8 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       _messages.add(response);
-      _endLexiResponseState();
+      _touchSession(sessionId, messageDelta: 2);
+      await _endLexiResponseState();
       _isSending = false;
       notifyListeners();
 
@@ -211,7 +257,7 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
-      _endLexiResponseState();
+      await _endLexiResponseState();
       _isSending = false;
       _error = 'Lexi couldn\'t respond: $e';
       logError(_tag, _error!);
@@ -236,6 +282,9 @@ class LexiChatProvider extends ChangeNotifier {
     if (_isSending) return;
 
     final uid = userId ?? 'demo_user';
+    if (_session == null) {
+      await startSession(uid);
+    }
     final sessionId = _session?.sessionId ?? '';
 
     _isSending = true;
@@ -265,7 +314,8 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       _messages.add(response);
-      _endLexiResponseState();
+      _touchSession(sessionId, messageDelta: 2);
+      await _endLexiResponseState();
       _isSending = false;
       notifyListeners();
 
@@ -273,7 +323,7 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
-      _endLexiResponseState();
+      await _endLexiResponseState();
       _isSending = false;
       _error = 'Voice processing failed: $e';
       logError(_tag, _error!);
@@ -285,6 +335,7 @@ class LexiChatProvider extends ChangeNotifier {
     _typingStageTimer?.cancel();
     _isLexiThinking = true;
     _isLexiTyping = false;
+    _responseStateStartedAt = DateTime.now();
 
     // Transition to typing state if request takes longer.
     _typingStageTimer = Timer(const Duration(milliseconds: 700), () {
@@ -295,10 +346,20 @@ class LexiChatProvider extends ChangeNotifier {
     });
   }
 
-  void _endLexiResponseState() {
+  Future<void> _endLexiResponseState() async {
+    final startedAt = _responseStateStartedAt;
+    if (startedAt != null) {
+      final elapsed = DateTime.now().difference(startedAt);
+      final remaining = _minResponseIndicatorDuration - elapsed;
+      if (remaining > Duration.zero) {
+        await Future<void>.delayed(remaining);
+      }
+    }
+
     _typingStageTimer?.cancel();
     _isLexiThinking = false;
     _isLexiTyping = false;
+    _responseStateStartedAt = null;
   }
 
   // ── TTS Playback ──────────────────────────────────────────────────────────
@@ -359,10 +420,16 @@ class LexiChatProvider extends ChangeNotifier {
     unawaited(_saveSessions());
   }
 
-  void _touchSession(String sessionId) {
+  void _touchSession(String sessionId, {int messageDelta = 0}) {
     final idx = _sessions.indexWhere((s) => s.sessionId == sessionId);
     if (idx == -1) return;
-    final item = _sessions.removeAt(idx).copyWith(updatedAt: DateTime.now());
+    final current = _sessions.removeAt(idx);
+    final item = current.copyWith(
+      updatedAt: DateTime.now(),
+      messageCount: (current.messageCount + messageDelta)
+          .clamp(0, 1 << 30)
+          .toInt(),
+    );
     _sessions.insert(0, item);
     unawaited(_saveSessions());
   }
@@ -382,6 +449,7 @@ class LexiChatProvider extends ChangeNotifier {
               title: s.title ?? 'Lexi Chat',
               createdAt: s.createdAt,
               updatedAt: s.updatedAt ?? s.createdAt,
+              messageCount: s.messageCount ?? 0,
             ),
           ),
         );
@@ -438,6 +506,7 @@ class LexiSessionSummary {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int messageCount;
 
   const LexiSessionSummary({
     required this.sessionId,
@@ -445,15 +514,21 @@ class LexiSessionSummary {
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    this.messageCount = 0,
   });
 
-  LexiSessionSummary copyWith({String? title, DateTime? updatedAt}) {
+  LexiSessionSummary copyWith({
+    String? title,
+    DateTime? updatedAt,
+    int? messageCount,
+  }) {
     return LexiSessionSummary(
       sessionId: sessionId,
       userId: userId,
       title: title ?? this.title,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      messageCount: messageCount ?? this.messageCount,
     );
   }
 
@@ -464,6 +539,7 @@ class LexiSessionSummary {
       'title': title,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'message_count': messageCount,
     };
   }
 
@@ -474,6 +550,7 @@ class LexiSessionSummary {
       title: json['title'] ?? 'Lexi Chat',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      messageCount: (json['message_count'] as num?)?.toInt() ?? 0,
     );
   }
 }

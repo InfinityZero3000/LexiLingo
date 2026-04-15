@@ -34,28 +34,33 @@ class TopicCatalogService:
                 cached = await self.redis.get(self.CACHE_KEY)
                 if cached:
                     data = json.loads(cached)
-                    return [StoryListItem(**item) for item in data]
+                    if data:
+                        return [StoryListItem(**item) for item in data]
+                    logger.info("Ignoring empty cached topic catalog and rebuilding")
             except Exception as e:
                 logger.warning(f"Failed to fetch cached topics: {e}")
         
         # Cache miss or bypass
         stories, _ = await self.story_service.list_stories(limit=100)
         
-        # Save to cache
+        # Save to cache only when there is usable data.
         try:
-            # Pydantic v2 uses model_dump()
-            data_to_cache = []
-            for s in stories:
-                if hasattr(s, "model_dump"):
-                    data_to_cache.append(s.model_dump())
-                else:
-                    data_to_cache.append(dict(s))
-                    
-            await self.redis.set(
-                self.CACHE_KEY,
-                json.dumps(data_to_cache),
-                ex=self.CACHE_TTL
-            )
+            if stories:
+                # Pydantic v2 uses model_dump()
+                data_to_cache = []
+                for s in stories:
+                    if hasattr(s, "model_dump"):
+                        data_to_cache.append(s.model_dump())
+                    else:
+                        data_to_cache.append(dict(s))
+
+                await self.redis.set(
+                    self.CACHE_KEY,
+                    json.dumps(data_to_cache),
+                    ex=self.CACHE_TTL
+                )
+            else:
+                await self.redis.delete(self.CACHE_KEY)
         except Exception as e:
             logger.warning(f"Failed to cache topics: {e}")
             

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -73,27 +74,37 @@ class _SpeakButtonState extends State<SpeakButton> {
       final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
-        // Save to temp file and play
-        final directory = await getTemporaryDirectory();
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final file = File('${directory.path}/speak_$timestamp.wav');
-        await file.writeAsBytes(result.audioData);
+        File? file;
+        if (kIsWeb) {
+          final audioUri = Uri.dataFromBytes(
+            result.audioData,
+            mimeType: 'audio/wav',
+          ).toString();
+          await _player.setUrl(audioUri);
+        } else {
+          final directory = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          file = File('${directory.path}/speak_$timestamp.wav');
+          await file.writeAsBytes(result.audioData);
+          await _player.setFilePath(file.path);
+        }
 
-        await _player.setFilePath(file.path);
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
 
         // Clean up temp file after playback
-        _player.playerStateStream
-            .firstWhere(
-              (state) => state.processingState == ProcessingState.completed,
-            )
-            .then((_) {
-              try {
-                file.deleteSync();
-              } catch (_) {}
-            });
+        if (file != null) {
+          _player.playerStateStream
+              .firstWhere(
+                (state) => state.processingState == ProcessingState.completed,
+              )
+              .then((_) {
+                try {
+                  file!.deleteSync();
+                } catch (_) {}
+              });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -245,25 +256,36 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
       final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
-        final directory = await getTemporaryDirectory();
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final file = File('${directory.path}/speak_icon_$timestamp.wav');
-        await file.writeAsBytes(result.audioData);
+        File? file;
+        if (kIsWeb) {
+          final audioUri = Uri.dataFromBytes(
+            result.audioData,
+            mimeType: 'audio/wav',
+          ).toString();
+          await _player.setUrl(audioUri);
+        } else {
+          final directory = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          file = File('${directory.path}/speak_icon_$timestamp.wav');
+          await file.writeAsBytes(result.audioData);
+          await _player.setFilePath(file.path);
+        }
 
-        await _player.setFilePath(file.path);
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
 
-        _player.playerStateStream
-            .firstWhere(
-              (state) => state.processingState == ProcessingState.completed,
-            )
-            .then((_) {
-              try {
-                file.deleteSync();
-              } catch (_) {}
-            });
+        if (file != null) {
+          _player.playerStateStream
+              .firstWhere(
+                (state) => state.processingState == ProcessingState.completed,
+              )
+              .then((_) {
+                try {
+                  file!.deleteSync();
+                } catch (_) {}
+              });
+        }
       }
     } catch (e) {
       // Silent fail for icon button

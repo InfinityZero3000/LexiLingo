@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Explore Screen — main discovery page for English learning videos.
 ///
@@ -265,6 +264,18 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 
   Widget _buildChannelCard(YouTubeChannel channel, bool isDark) {
     final gradient = _channelGradient(channel.category);
+    final iconTileBg = isDark
+      ? Colors.black.withValues(alpha: 0.28)
+      : Colors.white.withValues(alpha: 0.92);
+    final iconColor = isDark
+      ? AppColors.surfaceLight
+      : gradient.first.withValues(alpha: 0.95);
+    final levelChipBg = isDark
+      ? Colors.white.withValues(alpha: 0.20)
+      : Colors.white.withValues(alpha: 0.92);
+    final levelChipTextColor = isDark
+      ? AppColors.surfaceLight
+      : AppColors.textDark;
 
     return GestureDetector(
       onTap: () {
@@ -300,12 +311,12 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
+                  color: iconTileBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.play_circle_fill_rounded,
-                  color: AppColors.surfaceLight,
+                  color: iconColor,
                   size: 28,
                 ),
               ),
@@ -324,13 +335,13 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
+                  color: levelChipBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   channel.level,
                   style: TextStyle(
-                    color: AppColors.surfaceLight,
+                    color: levelChipTextColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

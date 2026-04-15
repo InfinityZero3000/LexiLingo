@@ -139,7 +139,6 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
 
   void _onTapUp(TapUpDetails details) {
     _controller.reverse();
-    widget.onTap?.call();
   }
 
   void _onTapCancel() {
@@ -158,11 +157,16 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
     final iconBgColor = isDark
       ? widget.color.withValues(alpha: 0.22)
       : widget.color.withValues(alpha: 0.16);
-    final titleColor = isDark ? Colors.white70 : AppColors.textGrey;
-    final valueColor = isDark ? Colors.white : AppColors.textDark;
-    final subtitleColor = isDark ? Colors.white60 : AppColors.textSlate;
+    final titleColor = isDark
+        ? AppColors.textInverted.withValues(alpha: 0.7)
+        : AppColors.textGrey;
+    final valueColor = isDark ? AppColors.textInverted : AppColors.textDark;
+    final subtitleColor = isDark
+        ? AppColors.textInverted.withValues(alpha: 0.6)
+        : AppColors.textSlate;
 
     return GestureDetector(
+      onTap: widget.onTap,
       onTapDown: widget.onTap != null ? _onTapDown : null,
       onTapUp: widget.onTap != null ? _onTapUp : null,
       onTapCancel: widget.onTap != null ? _onTapCancel : null,
@@ -570,8 +574,8 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withValues(alpha: 0.2),
-                        Colors.white.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.2),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -713,7 +717,7 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: isDark ? AppColors.grey500 : AppColors.grey600,
                 ),
               ),
             ],
@@ -761,12 +765,12 @@ class GlassmorphicContainer extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        Colors.white.withValues(alpha: 0.1),
-                        Colors.white.withValues(alpha: 0.05),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.05),
                       ]
                     : [
-                        Colors.white.withValues(alpha: 0.8),
-                        Colors.white.withValues(alpha: 0.6),
+                        AppColors.surfaceLight.withValues(alpha: 0.8),
+                        AppColors.surfaceLight.withValues(alpha: 0.6),
                       ],
               ),
               borderRadius: BorderRadius.circular(borderRadius),
@@ -774,12 +778,12 @@ class GlassmorphicContainer extends StatelessWidget {
                 color:
                     borderColor ??
                     (isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.white.withValues(alpha: 0.5)),
+                        ? AppColors.surfaceLight.withValues(alpha: 0.1)
+                        : AppColors.surfaceLight.withValues(alpha: 0.5)),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: AppColors.textDark.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

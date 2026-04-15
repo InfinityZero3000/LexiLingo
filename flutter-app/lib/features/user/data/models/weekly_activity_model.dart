@@ -11,10 +11,10 @@ class WeeklyActivityModel extends WeeklyActivityEntity {
 
   factory WeeklyActivityModel.fromJson(Map<String, dynamic> json) {
     return WeeklyActivityModel(
-      date: json['date'] as String,
-      xpEarned: json['xp_earned'] as int? ?? 0,
-      lessonsCompleted: json['lessons_completed'] as int? ?? 0,
-      vocabularyLearned: json['vocabulary_learned'] as int? ?? 0,
+      date: (json['date'] ?? json['day']) as String? ?? '',
+      xpEarned: (json['xp'] ?? json['xp_earned']) as int? ?? 0,
+      lessonsCompleted: (json['lessons'] ?? json['lessons_completed']) as int? ?? 0,
+      vocabularyLearned: (json['minutes'] ?? json['vocabulary_learned']) as int? ?? 0,
     );
   }
 

@@ -269,7 +269,7 @@ async def get_proficiency_profile(
             user_id=current_user.id,
             assessed_level="A1",
             overall_score=0.0,
-            total_xp=current_user.xp or 0,
+            total_xp=current_user.total_xp or 0,
         )
         db.add(profile)
         await db.commit()

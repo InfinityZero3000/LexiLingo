@@ -93,8 +93,21 @@ class ApiClient {
     required T Function(dynamic) fromJson,
   }) async {
     final uri = _resolve(path);
-    final response = await _sendRaw('GET', uri, headers: headers);
-    return await _parseResponseEnvelope<T>(response, fromJson);
+    try {
+      final response = await _sendRaw(
+        'GET',
+        uri,
+        headers: headers,
+      );
+      return await _parseResponseEnvelope<T>(response, fromJson);
+    } on TokenRefreshedException {
+      final retryResponse = await _sendRaw(
+        'GET',
+        uri,
+        headers: headers,
+      );
+      return await _parseResponseEnvelope<T>(retryResponse, fromJson);
+    }
   }
 
   /// POST request returning full ApiResponseEnvelope
@@ -105,8 +118,23 @@ class ApiClient {
     required T Function(dynamic) fromJson,
   }) async {
     final uri = _resolve(path);
-    final response = await _sendRaw('POST', uri, headers: headers, body: body);
-    return await _parseResponseEnvelope<T>(response, fromJson);
+    try {
+      final response = await _sendRaw(
+        'POST',
+        uri,
+        headers: headers,
+        body: body,
+      );
+      return await _parseResponseEnvelope<T>(response, fromJson);
+    } on TokenRefreshedException {
+      final retryResponse = await _sendRaw(
+        'POST',
+        uri,
+        headers: headers,
+        body: body,
+      );
+      return await _parseResponseEnvelope<T>(retryResponse, fromJson);
+    }
   }
 
   /// PUT request returning full ApiResponseEnvelope
@@ -117,8 +145,23 @@ class ApiClient {
     required T Function(dynamic) fromJson,
   }) async {
     final uri = _resolve(path);
-    final response = await _sendRaw('PUT', uri, headers: headers, body: body);
-    return await _parseResponseEnvelope<T>(response, fromJson);
+    try {
+      final response = await _sendRaw(
+        'PUT',
+        uri,
+        headers: headers,
+        body: body,
+      );
+      return await _parseResponseEnvelope<T>(response, fromJson);
+    } on TokenRefreshedException {
+      final retryResponse = await _sendRaw(
+        'PUT',
+        uri,
+        headers: headers,
+        body: body,
+      );
+      return await _parseResponseEnvelope<T>(retryResponse, fromJson);
+    }
   }
 
   /// GET request returning PaginatedResponseEnvelope
@@ -128,8 +171,21 @@ class ApiClient {
     required T Function(Map<String, dynamic>) fromJson,
   }) async {
     final uri = _resolve(path);
-    final response = await _sendRaw('GET', uri, headers: headers);
-    return await _parsePaginatedResponse<T>(response, fromJson);
+    try {
+      final response = await _sendRaw(
+        'GET',
+        uri,
+        headers: headers,
+      );
+      return await _parsePaginatedResponse<T>(response, fromJson);
+    } on TokenRefreshedException {
+      final retryResponse = await _sendRaw(
+        'GET',
+        uri,
+        headers: headers,
+      );
+      return await _parsePaginatedResponse<T>(retryResponse, fromJson);
+    }
   }
 
   /// Internal method: sends request and returns unwrapped data
@@ -140,14 +196,25 @@ class ApiClient {
     Object? body,
     Duration? timeout,
   }) async {
-    final response = await _sendRaw(
-      method,
-      uri,
-      headers: headers,
-      body: body,
-      timeout: timeout,
-    );
-    return await _handleResponse(response);
+    try {
+      final response = await _sendRaw(
+        method,
+        uri,
+        headers: headers,
+        body: body,
+        timeout: timeout,
+      );
+      return await _handleResponse(response);
+    } on TokenRefreshedException {
+      final retryResponse = await _sendRaw(
+        method,
+        uri,
+        headers: headers,
+        body: body,
+        timeout: timeout,
+      );
+      return await _handleResponse(retryResponse);
+    }
   }
 
   /// Internal method: sends request and returns raw ApiResponse

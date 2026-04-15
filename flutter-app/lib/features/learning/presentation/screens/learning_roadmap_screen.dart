@@ -38,9 +38,9 @@ class _NodeLayout {
 
   Color get nodeColor {
     if (lesson.isLocked) return AppColors.grey400;
-    if (lesson.isCompleted) return const Color(0xFF43A047);
-    if (lesson.isCurrent) return baseColor;
-    return baseColor.withValues(alpha: 0.65);
+    if (lesson.isCompleted) return AppColors.greenSuccessBright;
+    if (lesson.isCurrent) return _mixWithWhite(baseColor, 0.22);
+    return _mixWithWhite(baseColor, 0.14).withValues(alpha: 0.75);
   }
 
   Color get pathColor {
@@ -92,7 +92,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   double _totalH(CourseRoadmapModel roadmap) {
     double h = _kTopPad;
     for (final unit in roadmap.units) {
-      h += _kBannerTopMargin + _kBannerH;
+      h += _kBannerTopMargin + _kBannerH + 48.0;
       h += unit.lessons.length * _kRowH;
     }
     return h + _kBotPad;
@@ -111,7 +111,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       // Banner
       y += _kBannerTopMargin;
       banners.add(_BannerLayout(top: y, unit: unit));
-      y += _kBannerH;
+      y += _kBannerH + 48.0;
 
       // Nodes
       for (final lesson in unit.lessons) {
@@ -137,28 +137,36 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer<LearningProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoadingRoadmap) {
-            return const LoadingScreen(message: 'Loading roadmap…');
-          }
-          if (provider.roadmapError != null) {
-            return _ErrorView(
-              error: provider.roadmapError!,
-              onRetry: () => provider.loadRoadmap(widget.courseId),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/background-roadmap/background-roadmap.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Consumer<LearningProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoadingRoadmap) {
+              return const LoadingScreen(message: 'Loading roadmap…');
+            }
+            if (provider.roadmapError != null) {
+              return _ErrorView(
+                error: provider.roadmapError!,
+                onRetry: () => provider.loadRoadmap(widget.courseId),
+              );
+            }
+            final roadmap = provider.courseRoadmap;
+            if (roadmap == null || roadmap.units.isEmpty) {
+              return const _EmptyView();
+            }
+            return _ZigzagRoadmap(
+              roadmap: roadmap,
+              courseId: widget.courseId,
+              buildLayouts: _buildLayouts,
+              totalH: _totalH,
             );
-          }
-          final roadmap = provider.courseRoadmap;
-          if (roadmap == null || roadmap.units.isEmpty) {
-            return const _EmptyView();
-          }
-          return _ZigzagRoadmap(
-            roadmap: roadmap,
-            courseId: widget.courseId,
-            buildLayouts: _buildLayouts,
-            totalH: _totalH,
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -385,13 +393,13 @@ class _LessonNodeState extends State<_LessonNode>
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '${lesson.lessonNumber}',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface,
+                          color: AppColors.textDark,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
@@ -562,7 +570,7 @@ class _UnitBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _parseHex(unit.backgroundColor);
+    final color = _mixWithWhite(_parseHex(unit.backgroundColor), 0.14);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -594,7 +602,7 @@ class _UnitBanner extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.22),
+                    color: AppColors.surfaceLight.withValues(alpha: 0.32),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -603,7 +611,7 @@ class _UnitBanner extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ),
@@ -1028,6 +1036,11 @@ Color _parseHex(String hex) {
     final clean = hex.replaceFirst('#', '');
     return Color(int.parse('FF$clean', radix: 16));
   } catch (_) {
-    return const Color(0xFF2196F3);
+    return AppColors.primary;
   }
+}
+
+Color _mixWithWhite(Color color, double amount) {
+  final t = amount.clamp(0.0, 1.0);
+  return Color.lerp(color, AppColors.surfaceLight, t) ?? color;
 }

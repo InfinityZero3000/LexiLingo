@@ -112,39 +112,32 @@ class _HomePageNewState extends State<HomePageNew> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(context, homeProvider, authProvider),
-                    const SizedBox(height: 16),
-                    _buildBentoStatsGrid(context, homeProvider, authProvider),
-                    const SizedBox(height: 16),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: LevelProgressCard(),
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _buildStreakCard(context, homeProvider),
-                    const SizedBox(height: 24),
-                    _buildDailyGoalCard(context, homeProvider),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+                    _buildSectionTitle(context, 'Quick Actions'),
+                    const SizedBox(height: 8),
+                    _buildQuickActionsHorizontal(context),
+                    const SizedBox(height: 12),
+                    _buildLevelAndDailyGoalRow(context, homeProvider),
+                    const SizedBox(height: 12),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: DailyChallengesCard(),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: DailyReviewCard(),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildSectionTitle(context, 'Continue Learning'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildEnrolledCoursesSection(context, homeProvider),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     _buildSectionTitle(context, 'Featured Courses'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildFeaturedCourses(context, homeProvider),
-                    const SizedBox(height: 24),
-                    _buildSectionTitle(context, 'Quick Actions'),
-                    const SizedBox(height: 12),
-                    _buildQuickActionsHorizontal(context),
                   ],
                 ),
               ),
@@ -165,10 +158,10 @@ class _HomePageNewState extends State<HomePageNew> {
     final displayName = user?.displayName.isNotEmpty == true
         ? user!.displayName
         : user?.username ?? 'User';
-    final totalXP = user?.xp ?? homeProvider.totalXP;
 
-    return Consumer<NotificationProvider>(
-      builder: (context, notificationProvider, child) {
+    return Consumer2<NotificationProvider, LevelProvider>(
+      builder: (context, notificationProvider, levelProvider, child) {
+        final totalXP = levelProvider.levelStatus.totalXP;
         return PersonalizedGreetingHeader(
           userName: displayName,
           totalXP: totalXP,
@@ -185,282 +178,6 @@ class _HomePageNewState extends State<HomePageNew> {
           },
         );
       },
-    );
-  }
-
-  /// Bento Grid Stats - Modern dashboard layout
-  Widget _buildBentoStatsGrid(
-    BuildContext context,
-    HomeProvider homeProvider,
-    AuthProvider authProvider,
-  ) {
-    return Consumer3<StreakProvider, LevelProvider, GamificationProvider>(
-      builder:
-          (context, streakProvider, levelProvider, gamificationProvider, _) {
-            final streak =
-                streakProvider.streak?.currentStreak ?? homeProvider.streakDays;
-            final xp = levelProvider.levelStatus.totalXP;
-            final gems = gamificationProvider.wallet?.gems ?? 0;
-            final lessonsToday =
-                homeProvider.dailyXP ~/ 10; // Approximate lessons from XP
-            // Use numeric level progress, not CEFR-based
-            final progress = levelProvider.displayLevelProgress * 100;
-
-            final colorScheme = Theme.of(context).colorScheme;
-            final surfaceBg = colorScheme.surfaceContainerHighest;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  // Row 1: Streak + XP
-                  Row(
-                    children: [
-                      // Streak Card - Large
-                      Expanded(
-                        flex: 3,
-                        child: _buildBentoCard(
-                          context,
-                          icon: Icons.local_fire_department,
-                          iconColor: AppColors.orange,
-                          bgColor: surfaceBg,
-                          title: 'Streak',
-                          value: '$streak',
-                          subtitle: 'days',
-                          height: 120,
-                          hasGlow: streak >= 3,
-                          glowColor: AppColors.orange,
-                          onTap: () {
-                            if (streakProvider.streak != null) {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) => StreakDetailsSheet(
-                                  streak: streakProvider.streak!,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // XP Card
-                      Expanded(
-                        flex: 2,
-                        child: _buildBentoCard(
-                          context,
-                          icon: Icons.star,
-                          iconColor: AppColors.orange,
-                          bgColor: surfaceBg,
-                          title: 'XP',
-                          value: LevelCalculator.formatXP(xp),
-                          subtitle: 'earned',
-                          height: 120,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Row 2: Gems + Progress + Lessons
-                  Row(
-                    children: [
-                      // Gems Card
-                      Expanded(
-                        child: _buildBentoCard(
-                          context,
-                          icon: Icons.diamond,
-                          iconColor: AppColors.purple,
-                          bgColor: surfaceBg,
-                          title: 'Gems',
-                          value: '$gems',
-                          subtitle: null,
-                          height: 100,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const WalletScreen(),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Progress Card with Ring
-                      Expanded(
-                        child: Container(
-                          height: 100,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: surfaceBg,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: colorScheme.outlineVariant,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              glass.AnimatedProgressRing(
-                                progress: progress / 100,
-                                size: 50,
-                                strokeWidth: 5,
-                                gradientColors: const [
-                                  AppColors.primary,
-                                  AppColors.primary,
-                                ],
-                                child: Text(
-                                  '${progress.toInt()}%',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Level Progress',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Lessons Today Card
-                      Expanded(
-                        child: _buildBentoCard(
-                          context,
-                          icon: Icons.menu_book,
-                          iconColor: AppColors.greenSuccessBright,
-                          bgColor: surfaceBg,
-                          title: 'Today',
-                          value: '$lessonsToday',
-                          subtitle: 'lessons',
-                          height: 100,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-    );
-  }
-
-  Widget _buildBentoCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required String title,
-    required String value,
-    String? subtitle,
-    required double height,
-    VoidCallback? onTap,
-    bool hasGlow = false,
-    Color glowColor = AppColors.orange,
-  }) {
-    // Adjust padding and sizes based on card height
-    final isSmallCard = height <= 100;
-    final padding = isSmallCard ? 10.0 : 14.0;
-    final iconPadding = isSmallCard ? 6.0 : 8.0;
-    final iconSize = isSmallCard ? 14.0 : 18.0;
-    final valueFontSize = isSmallCard ? 18.0 : 22.0;
-    final labelFontSize = isSmallCard ? 10.0 : 11.0;
-
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Container(
-          padding: EdgeInsets.all(iconPadding),
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: iconColor, size: iconSize),
-        ),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: valueFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: iconColor.withValues(alpha: 0.9),
-                ),
-              ),
-              if (subtitle != null)
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: labelFontSize,
-                    color: iconColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                )
-              else
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: labelFontSize,
-                    color: iconColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-
-    return GestureDetector(
-      onTap: onTap,
-      child: hasGlow
-          ? TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 1500),
-              tween: Tween(begin: 0.25, end: 0.45),
-              curve: Curves.easeInOutSine,
-              builder: (context, pulse, child) {
-                return Container(
-                  height: height,
-                  padding: EdgeInsets.all(padding),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: iconColor.withValues(alpha: 0.4)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: glowColor.withValues(alpha: pulse),
-                        blurRadius: 12 + (pulse * 12),
-                        spreadRadius: 1 + (pulse * 2),
-                      ),
-                    ],
-                  ),
-                  child: child,
-                );
-              },
-              child: content,
-            )
-          : Container(
-              height: height,
-              padding: EdgeInsets.all(padding),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: iconColor.withValues(alpha: 0.2)),
-              ),
-              child: content,
-            ),
     );
   }
 
@@ -498,70 +215,108 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Widget _buildDailyGoalCard(BuildContext context, HomeProvider provider) {
+  Widget _buildLevelAndDailyGoalRow(
+    BuildContext context,
+    HomeProvider provider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+
+          if (isNarrow) {
+            return Column(
+              children: [
+                SizedBox(height: 148, child: LevelProgressCard(compact: true)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 148,
+                  child: _buildDailyGoalCard(
+                    context,
+                    provider,
+                    compact: true,
+                    margin: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: SizedBox(
+                  height: 148,
+                  child: LevelProgressCard(compact: true),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 4,
+                child: SizedBox(
+                  height: 148,
+                  child: _buildDailyGoalCard(
+                    context,
+                    provider,
+                    compact: true,
+                    margin: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDailyGoalCard(
+    BuildContext context,
+    HomeProvider provider, {
+    bool compact = false,
+    EdgeInsetsGeometry? margin,
+  }) {
     final percentage = provider.dailyProgressPercentage;
     final isCompleted = percentage >= 1.0;
     final colorScheme = Theme.of(context).colorScheme;
     final surfaceBg = colorScheme.surfaceContainerHighest;
+    final compactBg = isCompleted
+        ? AppColors.greenSuccessBright.withValues(alpha: 0.10)
+        : AppColors.primary.withValues(alpha: 0.05);
+    final cardPadding = compact ? 14.0 : 20.0;
+    final ringSize = compact ? 58.0 : 70.0;
+    final ringStroke = compact ? 5.0 : 6.0;
+    final titleFontSize = compact ? 16.0 : null;
+    final valueFontSize = compact ? 18.0 : null;
+    final chipFontSize = compact ? 11.0 : 12.0;
+    final badgeIconSize = compact ? 16.0 : 18.0;
+    final ringValueFontSize = compact ? 12.0 : 14.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
-        color: surfaceBg,
-        borderRadius: BorderRadius.circular(20),
+        color: compact ? compactBg : surfaceBg,
+        borderRadius: BorderRadius.circular(compact ? 16 : 20),
         border: Border.all(
           color: isCompleted
               ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
               : AppColors.primary.withValues(alpha: 0.3),
         ),
       ),
-      child: Row(
-        children: [
-          // Animated Progress Ring
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colorScheme.surface,
-            ),
-            child: glass.AnimatedProgressRing(
-              progress: percentage.clamp(0.0, 1.0),
-              size: 70,
-              strokeWidth: 6,
-              gradientColors: isCompleted
-                  ? const [AppColors.greenSuccessBright, AppColors.greenSuccess]
-                  : const [AppColors.primary, AppColors.primary],
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isCompleted)
-                    const Icon(Icons.check, color: AppColors.greenSuccessBright, size: 20)
-                  else
-                    Text(
-                      '${(percentage * 100).toInt()}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isCompleted
-                            ? AppColors.greenSuccessBright
-                            : AppColors.primary,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
@@ -571,60 +326,212 @@ class _HomePageNewState extends State<HomePageNew> {
                         color: isCompleted
                             ? AppColors.greenSuccessBright
                             : AppColors.primary,
-                        size: 18,
+                        size: badgeIconSize,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Daily XP Goal',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isCompleted
-                            ? AppColors.greenSuccess
-                            : AppColors.primaryDark,
+                    Flexible(
+                      child: Text(
+                        'Daily Goal',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: isCompleted
+                              ? AppColors.greenSuccess
+                              : AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colorScheme.surface,
+                      ),
+                      child: glass.AnimatedProgressRing(
+                        progress: percentage.clamp(0.0, 1.0),
+                        size: ringSize + 10,
+                        strokeWidth: ringStroke,
+                        gradientColors: isCompleted
+                            ? const [
+                                AppColors.greenSuccessBright,
+                                AppColors.greenSuccess,
+                              ]
+                            : const [AppColors.primary, AppColors.primary],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isCompleted)
+                              const Icon(
+                                Icons.check,
+                                color: AppColors.greenSuccessBright,
+                                size: 18,
+                              )
+                            else
+                              Text(
+                                '${(percentage * 100).toInt()}%',
+                                style: TextStyle(
+                                  fontSize: ringValueFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   '${provider.dailyXP}/${provider.dailyGoalXP} XP',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                     color: isCompleted
                         ? AppColors.greenSuccessBright
                         : AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: 4),
+              ],
+            )
+          : Row(
+              children: [
+                // Animated Progress Ring
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: glass.AnimatedProgressRing(
+                    progress: percentage.clamp(0.0, 1.0),
+                    size: ringSize,
+                    strokeWidth: ringStroke,
+                    gradientColors: isCompleted
+                        ? const [
+                            AppColors.greenSuccessBright,
+                            AppColors.greenSuccess,
+                          ]
+                        : const [AppColors.primary, AppColors.primary],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isCompleted)
+                          const Icon(
+                            Icons.check,
+                            color: AppColors.greenSuccessBright,
+                            size: 20,
+                          )
+                        else
+                          Text(
+                            '${(percentage * 100).toInt()}%',
+                            style: TextStyle(
+                              fontSize: ringValueFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: isCompleted
+                                  ? AppColors.greenSuccessBright
+                                  : AppColors.primary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: compact ? 12 : 20),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        isCompleted ? Icons.celebration : Icons.trending_up,
-                        size: 14,
-                        color: isCompleted
-                            ? AppColors.greenSuccessBright
-                            : AppColors.primary,
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(compact ? 5 : 6),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              isCompleted ? Icons.emoji_events : Icons.bolt,
+                              color: isCompleted
+                                  ? AppColors.greenSuccessBright
+                                  : AppColors.primary,
+                              size: badgeIconSize,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Daily XP Goal',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: titleFontSize,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccess
+                                        : AppColors.primaryDark,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(height: compact ? 6 : 8),
                       Text(
-                        isCompleted ? 'Goal completed!' : 'Keep going!',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isCompleted
-                              ? AppColors.greenSuccessBright
-                              : AppColors.primary,
+                        '${provider.dailyXP}/${provider.dailyGoalXP} XP',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: valueFontSize,
+                              color: isCompleted
+                                  ? AppColors.greenSuccessBright
+                                  : AppColors.primary,
+                            ),
+                      ),
+                      SizedBox(height: compact ? 2 : 4),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 8 : 10,
+                          vertical: compact ? 3 : 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isCompleted
+                                  ? Icons.celebration
+                                  : Icons.trending_up,
+                              size: 14,
+                              color: isCompleted
+                                  ? AppColors.greenSuccessBright
+                                  : AppColors.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isCompleted ? 'Goal completed!' : 'Keep going!',
+                              style: TextStyle(
+                                fontSize: chipFontSize,
+                                fontWeight: FontWeight.w600,
+                                color: isCompleted
+                                    ? AppColors.greenSuccessBright
+                                    : AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -632,9 +539,6 @@ class _HomePageNewState extends State<HomePageNew> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -645,13 +549,17 @@ class _HomePageNewState extends State<HomePageNew> {
     // Show loading state if courses are being loaded
     if (provider.isLoading && provider.enrolledCourses.isEmpty) {
       return SizedBox(
-        height: 200,
+        height: 126, // Slightly increased to match card content height
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: 2,
           itemBuilder: (context, index) {
-            return const CardSkeleton(isHorizontal: true);
+            return Container(
+              margin: const EdgeInsets.only(right: 16),
+              width: 240, // Reduced from 296 roughly
+              child: const CardSkeleton(isHorizontal: true),
+            );
           },
         ),
       );
@@ -668,7 +576,9 @@ class _HomePageNewState extends State<HomePageNew> {
             color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark ? AppColors.surfaceDarkElevated : AppColors.slate200,
+              color: isDark
+                  ? AppColors.surfaceDarkElevated
+                  : AppColors.slate200,
             ),
           ),
           child: Column(
@@ -689,9 +599,7 @@ class _HomePageNewState extends State<HomePageNew> {
               const SizedBox(height: 8),
               Text(
                 'Start your learning journey by enrolling in a course',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: isDark ? AppColors.textMuted : AppColors.textGrey,
                 ),
                 textAlign: TextAlign.center,
@@ -708,7 +616,7 @@ class _HomePageNewState extends State<HomePageNew> {
 
   Widget _buildEnrolledCourses(BuildContext context, HomeProvider provider) {
     return SizedBox(
-      height: 200,
+      height: 136,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -747,7 +655,7 @@ class _HomePageNewState extends State<HomePageNew> {
         );
       },
       child: Container(
-        width: 296,
+        width: 240,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: surfaceBg,
@@ -788,6 +696,8 @@ class _HomePageNewState extends State<HomePageNew> {
                       course.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -821,21 +731,21 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     // Progress bar
                     Stack(
                       children: [
                         Container(
-                          height: 8,
+                          height: 6,
                           decoration: BoxDecoration(
                             color: progressColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                         FractionallySizedBox(
                           widthFactor: progress / 100,
                           child: Container(
-                            height: 8,
+                            height: 6,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -843,29 +753,30 @@ class _HomePageNewState extends State<HomePageNew> {
                                   progressColor.withValues(alpha: 0.7),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${progress.toInt()}% complete',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: progressColor,
+                        Expanded(
+                          child: Text(
+                            '${progress.toInt()}%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: progressColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -873,26 +784,12 @@ class _HomePageNewState extends State<HomePageNew> {
                                 progressColor.withValues(alpha: 0.8),
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            shape: BoxShape.circle,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.play_arrow,
-                                size: 14,
-                                color: AppColors.surfaceLight,
-                              ),
-                              SizedBox(width: 2),
-                              Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.surfaceLight,
-                                ),
-                              ),
-                            ],
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            size: 16,
+                            color: AppColors.surfaceLight,
                           ),
                         ),
                       ],
@@ -911,14 +808,14 @@ class _HomePageNewState extends State<HomePageNew> {
     // Show skeleton loading while courses are loading
     if (provider.isLoading && provider.featuredCourses.isEmpty) {
       return SizedBox(
-        height: 320,
+        height: 240,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: 3,
           itemBuilder: (context, index) {
             return Container(
-              width: 280,
+              width: 240,
               margin: const EdgeInsets.only(right: 16),
               child: const CardSkeleton(isHorizontal: false),
             );
@@ -928,7 +825,7 @@ class _HomePageNewState extends State<HomePageNew> {
     }
 
     return SizedBox(
-      height: 320,
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -968,7 +865,7 @@ class _HomePageNewState extends State<HomePageNew> {
         );
       },
       child: Container(
-        width: 260,
+        width: 240,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
@@ -987,7 +884,7 @@ class _HomePageNewState extends State<HomePageNew> {
             Hero(
               tag: 'featured-course-image-${course.id}',
               child: Container(
-                height: 150,
+                height: 110,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
@@ -1023,10 +920,14 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: Container(
                           padding: EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surface.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
@@ -1329,9 +1230,7 @@ class _HomePageNewState extends State<HomePageNew> {
               if (route == '/vocab') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const VocabLibraryPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const VocabLibraryPage()),
                 );
               } else {
                 Navigator.pushNamed(context, route);
@@ -1378,7 +1277,11 @@ class _HomePageNewState extends State<HomePageNew> {
                   ),
                 ],
               ),
-              child: Icon(icon, color: Theme.of(context).colorScheme.surface, size: 22),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.surface,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
@@ -1437,7 +1340,9 @@ class _HomePageNewState extends State<HomePageNew> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
+                      color: isDark
+                          ? AppColors.surfaceDarkElevated
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: s.color.withValues(alpha: 0.2)),
                     ),
@@ -1546,7 +1451,9 @@ class _HomePageNewState extends State<HomePageNew> {
                   width: 130,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
+                    color: isDark
+                        ? AppColors.surfaceDarkElevated
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: item.color.withValues(alpha: 0.25),

@@ -111,6 +111,7 @@ async def register(
         display_name=request.display_name or request.username,
         role_id=role_id,
         provider=["local"],  # self-registration is always local — never "google"
+        is_onboarding_completed=False,
     )
     
     db.add(user)
@@ -396,6 +397,7 @@ async def google_login(
             provider=["google"],  # OAuth-created accounts never have local auth by default
             is_verified=email_verified,
             role_id=role_id,
+            is_onboarding_completed=False,
         )
         db.add(user)
         await db.commit()

@@ -4,7 +4,7 @@ Lexi Chat Route — Story-driven conversational AI with the parrot mascot.
 Pipeline:
   1. STT (if voice input) → Whisper transcription
   2. GraphCAG pipeline → KG expansion + diagnosis + retrieval
-  3. Persona-injected LLM generation (Groq → Gemini → Ollama fallback)
+    3. GraphCAG generation (internal model fallback handled by GraphCAG)
   4. TTS synthesis → gTTS / Piper for Lexi's voice
   5. Return structured response with audio, story context, corrections
 
@@ -13,7 +13,6 @@ and knowledge graph expansion to make conversations contextually rich.
 """
 
 import logging
-import os
 import re
 import io
 import json
@@ -23,9 +22,10 @@ import base64
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
-import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
+from api.core.database import get_database
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class _LexiStore:
 
     _SESSION_PREFIX = "lexi:session:"
     _MSG_PREFIX = "lexi:msgs:"
-    _TTL = timedelta(hours=4)
+    _TTL = timedelta(hours=24)
 
     def __init__(self):
         self._mem_sessions: Dict[str, Dict[str, Any]] = {}
@@ -107,8 +107,71 @@ class _LexiStore:
             if sid not in self._mem_messages:
                 self._mem_messages[sid] = []
 
+    async def delete_session(self, sid: str):
+        r = await self._redis()
+        if r:
+            await r.delete(f"{self._SESSION_PREFIX}{sid}")
+        self._mem_sessions.pop(sid, None)
+
+    async def delete_messages(self, sid: str):
+        r = await self._redis()
+        if r:
+            await r.delete(f"{self._MSG_PREFIX}{sid}")
+        self._mem_messages.pop(sid, None)
+
 
 _store = _LexiStore()
+
+SAFE_FIXED_RESPONSE = (
+    "Squawk! I'm temporarily unavailable right now. "
+    "Please try again in a moment."
+)
+
+
+async def _load_full_cursor(cursor, batch_size: int = 500) -> List[Dict[str, Any]]:
+    """Read all documents from a Mongo cursor in bounded batches."""
+    rows: List[Dict[str, Any]] = []
+    while True:
+        batch = await cursor.to_list(length=batch_size)
+        if not batch:
+            break
+        rows.extend(batch)
+        if len(batch) < batch_size:
+            break
+    return rows
+
+
+def _sanitize_lexi_response(text: str) -> str:
+    """Remove internal GraphCAG debug payloads from user-facing Lexi output."""
+    cleaned = str(text or "")
+    if not cleaned:
+        return ""
+
+    # Strip accidental reasoning/debug sections.
+    cleaned = re.sub(r"<think\b[^>]*>[\s\S]*?</think>", "", cleaned, flags=re.IGNORECASE)
+
+    # Remove JIT graph marker and trailing JSON payload if leaked.
+    cleaned = re.sub(
+        r"\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+
+    # Remove standalone graph-json lines (with optional escaped quotes).
+    cleaned = re.sub(
+        r"^\s*\{(?:\\?\"v\\?\"|\"v\")[\s\S]*?(?:\\?\"e\\?\"|\"e\")[\s\S]*?\}\s*$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+    if not cleaned:
+        return "Squawk! I lost my words for a second. Could you ask that again?"
+
+    return cleaned
 
 
 # ─── Lexi Persona System Prompt ─────────────────────────────────────────────
@@ -187,132 +250,22 @@ class LexiSessionRequest(BaseModel):
     user_id: str = Field(default="demo_user", description="User identifier")
 
 
-# ─── Helper: Build conversation messages for LLM ────────────────────────────
-def _build_llm_messages(
-    user_message: str,
-    history: List[Dict[str, Any]],
-    graph_context: str = "",
-    learner_level: str = "B1",
-    story_context: Optional[str] = None,
-) -> List[Dict[str, str]]:
-    """Build the message array for the LLM with Lexi's persona."""
-    system_prompt = LEXI_PERSONA
-    
-    if graph_context:
-        system_prompt += f"\n\n--- Knowledge Graph Context ---\n{graph_context}"
-    
-    if story_context:
-        system_prompt += f"\n\n--- Current Story/Adventure ---\n{story_context}"
-    
-    system_prompt += f"\n\nThe learner's current CEFR level is: {learner_level}"
-
-    messages = [{"role": "system", "content": system_prompt}]
-
-    # Add recent history (last 10 messages for context window)
-    for msg in history[-10:]:
-        messages.append({
-            "role": msg.get("role", "user"),
-            "content": msg.get("content", ""),
-        })
-
-    messages.append({"role": "user", "content": user_message})
-    return messages
+class LexiSessionRenameRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
 
 
-# ─── Helper: Get LLM response with fallback chain ───────────────────────────
-async def _get_lexi_llm_response(messages: List[Dict[str, str]]) -> tuple[str, str]:
-    """
-    Get LLM response using Groq → Gemini → Ollama fallback chain.
-    Returns (response_text, model_used).
-    """
-    # ── 1. Groq (fast, free tier) ──
-    groq_key = os.getenv("GROQ_API_KEY", "")
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-    if groq_key:
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {groq_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": groq_model,
-                        "messages": messages,
-                        "max_tokens": 512,
-                        "temperature": 0.7,
-                    },
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    text = data["choices"][0]["message"]["content"]
-                    logger.info(f"✅ Lexi: Groq response ({len(text)} chars)")
-                    return text, f"groq/{groq_model}"
-        except Exception as e:
-            logger.warning(f"Groq failed for Lexi: {e}")
+class LexiSessionSummary(BaseModel):
+    session_id: str
+    user_id: str
+    title: str
+    created_at: str
+    updated_at: str
+    message_count: int = 0
 
-    # ── 2. Gemini (cloud fallback) ──
-    gemini_key = os.getenv("GEMINI_API_KEY", "")
-    if gemini_key:
-        try:
-            # Convert messages to Gemini multi-turn format
-            # Separate system instruction from conversation turns
-            system_instruction = ""
-            gemini_contents = []
-            for m in messages:
-                if m["role"] == "system":
-                    system_instruction = m["content"]
-                elif m["role"] == "user":
-                    gemini_contents.append({"role": "user", "parts": [{"text": m["content"]}]})
-                else:
-                    gemini_contents.append({"role": "model", "parts": [{"text": m["content"]}]})
-            
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
-            request_body: Dict[str, Any] = {"contents": gemini_contents}
-            if system_instruction:
-                request_body["systemInstruction"] = {"parts": [{"text": system_instruction}]}
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(url, json=request_body)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        text = candidates[0]["content"]["parts"][0]["text"]
-                        logger.info(f"✅ Lexi: Gemini response ({len(text)} chars)")
-                        return text, "gemini-2.0-flash"
-        except Exception as e:
-            logger.warning(f"Gemini failed for Lexi: {e}")
 
-    # ── 3. Ollama local (offline fallback) ──
-    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(
-                f"{ollama_url}/api/chat",
-                json={
-                    "model": ollama_model,
-                    "messages": messages,
-                    "stream": False,
-                    "options": {"num_predict": 256, "temperature": 0.7},
-                },
-            )
-            if resp.status_code == 200:
-                text = resp.json().get("message", {}).get("content", "")
-                if text:
-                    logger.info(f"✅ Lexi: Ollama response ({len(text)} chars)")
-                    return text, f"ollama/{ollama_model}"
-    except Exception as e:
-        logger.warning(f"Ollama failed for Lexi: {e}")
-
-    # ── 4. Static fallback ──
-    return (
-        "Squawk! I'm having a little trouble right now. "
-        "My feathers got ruffled — try again in a moment!",
-        "fallback",
-    )
+class LexiSessionListResponse(BaseModel):
+    success: bool = True
+    sessions: List[LexiSessionSummary] = []
 
 
 # ─── Helper: TTS synthesis ──────────────────────────────────────────────────
@@ -364,6 +317,7 @@ async def _transcribe_audio(audio_base64: str) -> Optional[str]:
 @router.post("/sessions", response_model=LexiSessionResponse)
 async def create_lexi_session(
     request: LexiSessionRequest = LexiSessionRequest(),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ) -> LexiSessionResponse:
     """Create a new conversation session with Lexi."""
     session_id = str(uuid.uuid4())
@@ -373,17 +327,39 @@ async def create_lexi_session(
         "session_id": session_id,
         "user_id": request.user_id,
         "created_at": now,
+        "updated_at": now,
+        "title": "Lexi Chat",
+        "message_count": 0,
         "persona": "lexi",
         "story_context": None,
     })
     await _store.init_messages(session_id)
+
+    await db["lexi_sessions"].update_one(
+        {"session_id": session_id},
+        {
+            "$set": {
+                "session_id": session_id,
+                "user_id": request.user_id,
+                "title": "Lexi Chat",
+                "created_at": now,
+                "updated_at": now,
+                "message_count": 0,
+                "persona": "lexi",
+            }
+        },
+        upsert=True,
+    )
     
     logger.info(f"🦜 Lexi session created: {session_id[:8]}... for user: {request.user_id}")
     return LexiSessionResponse(session_id=session_id, created_at=now)
 
 
 @router.post("/chat", response_model=LexiChatResponse)
-async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
+async def lexi_chat(
+    request: LexiChatRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> LexiChatResponse:
     """
     Chat with Lexi — the full AI pipeline.
     
@@ -405,10 +381,29 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
             "session_id": session_id,
             "user_id": request.user_id,
             "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "title": "Lexi Chat",
+            "message_count": 0,
             "persona": "lexi",
             "story_context": request.story_context,
         })
         await _store.init_messages(session_id)
+
+        await db["lexi_sessions"].update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "session_id": session_id,
+                    "user_id": request.user_id,
+                    "title": "Lexi Chat",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.utcnow().isoformat(),
+                    "message_count": 0,
+                    "persona": "lexi",
+                }
+            },
+            upsert=True,
+        )
     
     history = await _store.get_messages(session_id)
     metadata["pipeline_steps"].append("session_ready")
@@ -426,8 +421,7 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
     
     # ── 3. GraphCAG pipeline (knowledge expansion + retrieval + LLM generation) ──
     # NOTE: GraphCAG generate_node now calls the LLM directly with persona,
-    # so we use its tutor_response as the final Lexi response. No separate
-    # LLM call is needed — this eliminates the double-LLM issue.
+    # so we use its tutor_response as the final Lexi response.
     lexi_response = ""
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
@@ -436,10 +430,10 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
     model_used = "graphcag"
     
     try:
-        from api.services.graph_cag.graph import get_graph_cag
-        
-        pipeline = await get_graph_cag()
-        graph_result = await pipeline.analyze(
+        from api.services.orchestrator import get_orchestrator
+
+        orchestrator = await get_orchestrator()
+        graph_result = await orchestrator.process(
             user_input=user_text,
             session_id=session_id,
             user_id=request.user_id,
@@ -468,24 +462,58 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
         model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["graphcag"]))
         
     except Exception as e:
-        logger.warning(f"GraphCAG unavailable, using standalone LLM: {e}")
-        metadata["pipeline_steps"].append("graphcag_failed")
-    
-    # ── 4. Fallback: standalone LLM only if GraphCAG didn't produce a response ──
+        logger.error("GraphCAG hard failure in Lexi chat (primary): %s", e)
+        metadata["pipeline_steps"].append("graphcag_failed_primary")
+        try:
+            from api.services.orchestrator import get_orchestrator
+
+            orchestrator = await get_orchestrator()
+            retry_result = await orchestrator.process(
+                user_input=user_text,
+                session_id=session_id,
+                user_id=request.user_id,
+                learner_profile={"level": request.learner_level},
+                conversation_history=[],
+                cache_policy="off",
+                retrieval_policy="rapid",
+                diagnosis_policy="rules",
+                generation_policy="auto",
+            )
+            lexi_response = str(retry_result.get("tutor_response") or "").strip()
+            if not lexi_response:
+                raise RuntimeError("GraphCAG degraded retry returned empty tutor_response")
+            retry_meta = retry_result.get("metadata", {}) or {}
+            metadata["pipeline_steps"].append("graphcag_retry_complete")
+            metadata["graphcag_metadata"] = {
+                **retry_meta,
+                "fallback_used": True,
+                "retry_mode": "graphcag_degraded",
+                "primary_error": str(e),
+            }
+            model_used = ", ".join(retry_meta.get("models_used", ["graphcag_retry"]))
+        except Exception as retry_err:
+            logger.error("GraphCAG hard failure in Lexi chat (degraded retry): %s", retry_err)
+            metadata["pipeline_steps"].append("graphcag_failed_hard")
+            metadata["graphcag_metadata"] = {
+                "fallback_used": True,
+                "primary_error": str(e),
+                "retry_error": str(retry_err),
+            }
+            lexi_response = SAFE_FIXED_RESPONSE
+            model_used = "graphcag_safe_response"
+
+    # ── 4. Safety and response guards ──
     story_ctx = request.story_context
     if not story_ctx:
         sess_data = await _store.get_session(session_id)
         story_ctx = (sess_data or {}).get("story_context")
     if not lexi_response:
-        llm_messages = _build_llm_messages(
-            user_message=user_text,
-            history=history,
-            graph_context="",
-            learner_level=request.learner_level,
-            story_context=story_ctx,
-        )
-        lexi_response, model_used = await _get_lexi_llm_response(llm_messages)
-        metadata["pipeline_steps"].append("llm_fallback_complete")
+        lexi_response = SAFE_FIXED_RESPONSE
+        model_used = "graphcag_safe_response"
+        metadata["pipeline_steps"].append("graphcag_empty_response_guard")
+
+    # Safety net for leaked internal payloads from GraphCAG fallback paths.
+    lexi_response = _sanitize_lexi_response(lexi_response)
     
     metadata["model_used"] = model_used
     
@@ -513,6 +541,55 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
         "role": "assistant",
         "content": lexi_response,
         "timestamp": timestamp,
+    })
+
+    await db["lexi_messages"].insert_many([
+        {
+            "id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "user_id": request.user_id,
+            "role": "user",
+            "content": user_text,
+            "timestamp": timestamp,
+        },
+        {
+            "id": message_id,
+            "session_id": session_id,
+            "user_id": request.user_id,
+            "role": "assistant",
+            "content": lexi_response,
+            "timestamp": timestamp,
+        },
+    ])
+
+    await db["lexi_sessions"].update_one(
+        {"session_id": session_id},
+        {
+            "$set": {
+                "updated_at": timestamp,
+                "user_id": request.user_id,
+            },
+            "$inc": {"message_count": 2},
+            "$setOnInsert": {
+                "created_at": timestamp,
+                "title": "Lexi Chat",
+                "persona": "lexi",
+            },
+        },
+        upsert=True,
+    )
+
+    cached_session = await _store.get_session(session_id) or {}
+    cached_count = int(cached_session.get("message_count") or 0)
+    await _store.set_session(session_id, {
+        "session_id": session_id,
+        "user_id": request.user_id,
+        "created_at": cached_session.get("created_at", timestamp),
+        "updated_at": timestamp,
+        "title": cached_session.get("title", "Lexi Chat"),
+        "message_count": cached_count + 2,
+        "persona": cached_session.get("persona", "lexi"),
+        "story_context": story_ctx,
     })
 
     # Write-back to ConversationCache so input_node gets real history on next turn
@@ -557,16 +634,129 @@ async def lexi_chat(request: LexiChatRequest) -> LexiChatResponse:
 
 
 @router.get("/sessions/{session_id}/messages")
-async def get_lexi_messages(session_id: str) -> Dict[str, Any]:
+async def get_lexi_messages(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
     """Get all messages in a Lexi session."""
-    if not await _store.has_session(session_id):
+    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
+    cached_session = await _store.get_session(session_id)
+    cached_messages = await _store.get_messages(session_id) if cached_session else []
+
+    expected_count = int((session_doc or {}).get("message_count") or 0)
+    cache_is_complete = cached_session is not None and (
+        expected_count == 0 or len(cached_messages) >= expected_count
+    )
+
+    if cache_is_complete:
+        return {
+            "success": True,
+            "session_id": session_id,
+            "messages": cached_messages,
+        }
+
+    if not session_doc:
+        if cached_session is not None:
+            return {
+                "success": True,
+                "session_id": session_id,
+                "messages": cached_messages,
+            }
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
+    cursor = db["lexi_messages"].find({"session_id": session_id}).sort("timestamp", 1)
+    messages = await _load_full_cursor(cursor)
+    payload = [
+        {
+            "id": m.get("id", str(uuid.uuid4())),
+            "role": m.get("role", "user"),
+            "content": m.get("content", ""),
+            "timestamp": m.get("timestamp", datetime.utcnow().isoformat()),
+        }
+        for m in messages
+    ]
+
+    # Rehydrate cache for faster next reads.
+    await _store.set_session(session_id, {
+        "session_id": session_doc.get("session_id"),
+        "user_id": session_doc.get("user_id", "demo_user"),
+        "created_at": session_doc.get("created_at", datetime.utcnow().isoformat()),
+        "updated_at": session_doc.get("updated_at", datetime.utcnow().isoformat()),
+        "title": session_doc.get("title", "Lexi Chat"),
+        "message_count": session_doc.get("message_count", len(payload)),
+        "persona": session_doc.get("persona", "lexi"),
+        "story_context": session_doc.get("story_context"),
+    })
+    await _store.delete_messages(session_id)
+    for item in payload:
+        await _store.append_message(session_id, item)
+
     return {
         "success": True,
         "session_id": session_id,
-        "messages": await _store.get_messages(session_id),
+        "messages": payload,
     }
+
+
+@router.get("/sessions/user/{user_id}", response_model=LexiSessionListResponse)
+async def list_lexi_sessions(
+    user_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> LexiSessionListResponse:
+    cursor = db["lexi_sessions"].find({"user_id": user_id}).sort("updated_at", -1)
+    rows = await cursor.to_list(length=100)
+    sessions = [
+        LexiSessionSummary(
+            session_id=row.get("session_id", ""),
+            user_id=row.get("user_id", user_id),
+            title=row.get("title", "Lexi Chat"),
+            created_at=row.get("created_at", datetime.utcnow().isoformat()),
+            updated_at=row.get("updated_at", row.get("created_at", datetime.utcnow().isoformat())),
+            message_count=int(row.get("message_count", 0)),
+        )
+        for row in rows
+        if row.get("session_id")
+    ]
+    return LexiSessionListResponse(sessions=sessions)
+
+
+@router.post("/sessions/{session_id}/rename")
+async def rename_lexi_session(
+    session_id: str,
+    request: LexiSessionRenameRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    title = request.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Title cannot be empty")
+
+    now = datetime.utcnow().isoformat()
+    result = await db["lexi_sessions"].update_one(
+        {"session_id": session_id},
+        {"$set": {"title": title, "updated_at": now}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    sess = await _store.get_session(session_id)
+    if sess:
+        sess["title"] = title
+        sess["updated_at"] = now
+        await _store.set_session(session_id, sess)
+
+    return {"success": True, "session_id": session_id, "title": title}
+
+
+@router.post("/sessions/{session_id}/delete")
+async def delete_lexi_session(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    await db["lexi_sessions"].delete_one({"session_id": session_id})
+    await db["lexi_messages"].delete_many({"session_id": session_id})
+    await _store.delete_session(session_id)
+    await _store.delete_messages(session_id)
+    return {"success": True, "session_id": session_id}
 
 
 @router.get("/health")

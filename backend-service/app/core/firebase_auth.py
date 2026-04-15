@@ -131,6 +131,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
         is_verified=is_verified,
         is_active=True,
         role_id=role_id,
+        is_onboarding_completed=False,
     )
 
     db.add(user)

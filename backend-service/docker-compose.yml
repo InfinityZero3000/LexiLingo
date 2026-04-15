@@ -5,6 +5,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: lexilingo-postgres
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       POSTGRES_USER: lexilingo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -27,6 +29,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: lexilingo-backend-service
+    mem_limit: 1g
+    memswap_limit: 1g
     ports:
       - "8000:8000"
     environment:

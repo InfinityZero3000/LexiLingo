@@ -18,8 +18,11 @@ import 'package:lexilingo_app/features/progress/presentation/screens/my_progress
 import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -358,7 +361,7 @@ class _ProfilePageState extends State<ProfilePage>
                         colors: [
                           AppColors.primary.withValues(alpha: 0.15),
                           AppColors.primary.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
+                          AppColors.surfaceLight.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(24),
@@ -410,35 +413,22 @@ class _ProfilePageState extends State<ProfilePage>
                                   ],
                                 ),
                                 child: ClipOval(
-                                  child:
-                                      user?.avatarUrl != null &&
-                                          user!.avatarUrl!.isNotEmpty
-                                      ? Image.network(
-                                          user.avatarUrl!,
-                                          fit: BoxFit.cover,
-                                          width: 120,
-                                          height: 120,
-                                          errorBuilder: (_, __, ___) =>
-                                              Container(
-                                                color: AppColors.primary
-                                                    .withValues(alpha: 0.2),
-                                                child: const Icon(
-                                                  Icons.person,
-                                                  size: 60,
-                                                  color: AppColors.primary,
-                                                ),
-                                              ),
-                                        )
-                                      : Container(
-                                          color: AppColors.primary.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          child: const Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
+                                  child: NetworkAvatarImage(
+                                    imageUrl: user?.avatarUrl,
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                    fallback: Container(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -495,8 +485,8 @@ class _ProfilePageState extends State<ProfilePage>
                         if (user?.email != null)
                           Text(
                             user.email,
-                            style: TextStyle(
-                              color: Colors.grey[600],
+                            style: const TextStyle(
+                              color: AppColors.grey600,
                               fontSize: 13,
                             ),
                           ),
@@ -616,8 +606,8 @@ class _ProfilePageState extends State<ProfilePage>
                         // Member Since
                         Text(
                           _formatMemberSince(user?.createdAt),
-                          style: TextStyle(
-                            color: Colors.grey[500],
+                          style: const TextStyle(
+                            color: AppColors.grey600,
                             fontSize: 12,
                           ),
                         ),
@@ -705,7 +695,7 @@ class _ProfilePageState extends State<ProfilePage>
             Container(
               height: 40,
               width: 1,
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.grey400.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.totalLessonsCompleted ?? 0}',
@@ -716,7 +706,7 @@ class _ProfilePageState extends State<ProfilePage>
             Container(
               height: 40,
               width: 1,
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.grey400.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.currentStreak ?? 0}',
@@ -815,9 +805,9 @@ class _ProfilePageState extends State<ProfilePage>
       case 'A2':
         return AppColors.teal;
       case 'B1':
-        return Colors.blue;
+        return AppColors.primary;
       case 'B2':
-        return Colors.indigo;
+        return AppColors.primaryDark;
       case 'C1':
         return AppColors.purple;
       case 'C2':
@@ -853,9 +843,7 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   Icon(
                     Icons.insights_rounded,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.accentMint
-                        : AppColors.primary,
+                    color: AppColors.primary,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -874,10 +862,15 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   GlassmorphicStatCard(
                     icon: Icons.local_fire_department,
-                    color: AppColors.orange,
+                    color: AppColors.primary,
                     title: 'Streak',
                     value: '$streak',
                     subtitle: streak > 0 ? 'days in a row' : 'start today',
+                    isAction: true,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CourseListScreen()),
+                    ),
                     valueFontSize: 24,
                     iconBoxSize: 32,
                     iconSize: 16,
@@ -894,6 +887,13 @@ class _ProfilePageState extends State<ProfilePage>
                           title: 'Lessons',
                           value: '$lessonsCompleted',
                           subtitle: 'completed',
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CourseListScreen(),
+                            ),
+                          ),
                           valueFontSize: 22,
                           iconBoxSize: 30,
                           iconSize: 15,
@@ -905,10 +905,17 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.school,
-                          color: AppColors.greenSuccess,
+                          color: AppColors.primary,
                           title: 'Courses',
                           value: '$coursesCompleted',
                           subtitle: 'finished',
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CourseListScreen(),
+                            ),
+                          ),
                           valueFontSize: 22,
                           iconBoxSize: 30,
                           iconSize: 15,
@@ -924,10 +931,17 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.auto_stories,
-                          color: AppColors.purple,
+                          color: AppColors.primary,
                           title: 'Vocabulary',
                           value: '$vocabularyMastered',
                           subtitle: 'mastered',
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VocabLibraryPage(),
+                            ),
+                          ),
                           valueFontSize: 22,
                           iconBoxSize: 30,
                           iconSize: 15,
@@ -939,12 +953,19 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.quiz,
-                          color: AppColors.accentMint,
+                          color: AppColors.primary,
                           title: 'Tests',
                           value: '$testsPassed',
                           subtitle: avgScore > 0
                               ? '${avgScore.toStringAsFixed(0)}% avg'
                               : 'passed',
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MyProgressScreen(),
+                            ),
+                          ),
                           valueFontSize: 22,
                           iconBoxSize: 30,
                           iconSize: 15,
@@ -1049,7 +1070,7 @@ class _ProfilePageState extends State<ProfilePage>
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           'No activity data yet',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: const TextStyle(color: AppColors.grey600),
                         ),
                       ),
                     )
@@ -1102,7 +1123,7 @@ class _ProfilePageState extends State<ProfilePage>
                               'Lessons',
                               '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
                               Icons.menu_book,
-                              Colors.blue,
+                              AppColors.primary,
                             ),
                             _buildActivityStat(
                               'Words',
@@ -1135,7 +1156,10 @@ class _ProfilePageState extends State<ProfilePage>
           value,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.grey600),
+        ),
       ],
     );
   }
@@ -1205,7 +1229,14 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     final networkBadge = achievement.badgeIcon?.trim();
-    if (networkBadge != null && networkBadge.isNotEmpty) {
+    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
+      ? Uri.tryParse(networkBadge)
+      : null;
+    final hasValidNetworkBadge =
+      networkBadgeUri != null &&
+      (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
+      networkBadgeUri.host.isNotEmpty;
+    if (hasValidNetworkBadge) {
       return true;
     }
 
@@ -1223,11 +1254,15 @@ class _ProfilePageState extends State<ProfilePage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 40, color: Colors.grey[400]),
+          const Icon(
+            Icons.emoji_events_outlined,
+            size: 40,
+            color: AppColors.grey500,
+          ),
           const SizedBox(height: 8),
           Text(
             'Complete lessons to earn badges!',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: const TextStyle(color: AppColors.grey600, fontSize: 12),
           ),
         ],
       ),
@@ -1261,9 +1296,9 @@ class _ProfilePageState extends State<ProfilePage>
                       end: Alignment(position + 0.5, 1.0),
                       colors: [
                         Colors.transparent,
-                        Colors.white.withValues(alpha: 0.1),
-                        Colors.white.withValues(alpha: 0.7),
-                        Colors.white.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.7),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.4, 0.5, 0.6, 1.0],

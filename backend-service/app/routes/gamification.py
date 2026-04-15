@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
-from app.core.cache import build_cache_key, get_cached, set_cached
+from app.core.cache import build_cache_key, get_cached, set_cached, delete_cached
 from app.models.user import User
 from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
@@ -168,6 +168,9 @@ async def check_all_achievements(
         }
         for a in unlocked
     ]
+
+    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,
@@ -376,6 +379,8 @@ async def purchase_item(
     
     item = await ShopCRUD.get_item(db, request.item_id)
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,
@@ -455,6 +460,8 @@ async def use_inventory_item(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message
         )
+
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,

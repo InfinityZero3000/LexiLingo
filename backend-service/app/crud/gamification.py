@@ -153,7 +153,8 @@ class WalletCRUD:
         user_id: UUID,
         amount: int,
         source: str,
-        description: str = None
+        description: str = None,
+        commit: bool = True,
     ) -> Tuple[UserWallet, WalletTransaction]:
         """Add gems to user's wallet"""
         wallet = await WalletCRUD.get_or_create_wallet(db, user_id)
@@ -171,8 +172,11 @@ class WalletCRUD:
             description=description
         )
         db.add(transaction)
-        await db.commit()
-        await db.refresh(wallet)
+        if commit:
+            await db.commit()
+            await db.refresh(wallet)
+        else:
+            await db.flush()
         
         return wallet, transaction
     
@@ -183,7 +187,8 @@ class WalletCRUD:
         amount: int,
         source: str,
         reference_id: str = None,
-        description: str = None
+        description: str = None,
+        commit: bool = True,
     ) -> Tuple[Optional[UserWallet], Optional[WalletTransaction]]:
         """Spend gems from wallet. Returns None if insufficient balance.
         Uses SELECT FOR UPDATE to prevent double-spending race conditions."""
@@ -216,8 +221,11 @@ class WalletCRUD:
             description=description
         )
         db.add(transaction)
-        await db.commit()
-        await db.refresh(wallet)
+        if commit:
+            await db.commit()
+            await db.refresh(wallet)
+        else:
+            await db.flush()
         
         return wallet, transaction
     
@@ -280,8 +288,22 @@ class LeaderboardCRUD:
                 league=league
             )
             db.add(entry)
-            await db.commit()
-            await db.refresh(entry)
+            try:
+                await db.commit()
+                await db.refresh(entry)
+            except IntegrityError:
+                await db.rollback()
+                result = await db.execute(
+                    select(LeaderboardEntry).where(
+                        and_(
+                            LeaderboardEntry.user_id == user_id,
+                            LeaderboardEntry.week_start == week_start,
+                        )
+                    )
+                )
+                entry = result.scalar_one_or_none()
+                if not entry:
+                    raise
         
         return entry
     
@@ -396,7 +418,8 @@ class ShopCRUD:
             db, user_id, total_cost,
             source="shop_purchase",
             reference_id=str(item_id),
-            description=f"Purchased {quantity}x {item.name}"
+            description=f"Purchased {quantity}x {item.name}",
+            commit=False,
         )
         
         if not wallet:

@@ -12,3 +12,4 @@ export 'custom_animations.dart';
 export 'animated_components.dart';
 export 'animated_ui_components.dart';
 export 'animation_showcase_page.dart';
+export 'network_avatar_image.dart';

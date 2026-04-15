@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
@@ -206,8 +207,12 @@ class ProficiencyCard extends StatelessWidget {
                     flex: 3,
                     child: GestureDetector(
                       onTap: () {
-                        // Navigate to learning tab
-                        // DefaultTabController.of(context)?.animateTo(1);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CourseListScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),

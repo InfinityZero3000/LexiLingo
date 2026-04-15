@@ -67,6 +67,7 @@ class CacheEntry(TypedDict, total=False):
     profile_snapshot: Dict[str, Any]   # P_c: profile at creation time
     response: str                      # R: tutor response text
     evidence_bundle: List[Dict[str, Any]]  # B: KG snippets, examples
+    retrieval_trace: List[RetrievalTraceItem]
     execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
     diagnosis_errors: List[Dict[str, Any]]
     overall_score: float
@@ -132,6 +133,8 @@ class GraphCAGState(TypedDict, total=False):
     # Retrieval (Vector + KG combined)
     # ============================================
     vector_hits: List[VectorHit]
+    jit_soft_graph: Optional[str]  # Compact JIT graph prompt payload
+    jit_graph_meta: Dict[str, Any]  # Extraction timing/quality metadata
     retrieved_context: str  # Combined context for generation
     retrieval_trace: List[RetrievalTraceItem]
     retrieval_meta: Dict[str, Any]
@@ -167,6 +170,9 @@ class GraphCAGState(TypedDict, total=False):
     cache_layer: str     # "none" | "L0" | "L1"
     cache_bucket: str    # graph-aware bucket identifier for L1 lookup
     reuse_risk: float    # ρ ∈ [0,1] from Eq. 2
+    adaptive_profile: Optional[str]
+    adaptive_features: Dict[str, float]
+    adaptive_controller: Dict[str, Any]
 
     # ============================================
     # Metadata
@@ -175,9 +181,11 @@ class GraphCAGState(TypedDict, total=False):
     cache_policy: str  # "on" | "off"
     retrieval_policy: str  # "full" | "rapid"
     diagnosis_policy: str  # "auto" | "rules"
-    generation_policy: str  # "auto" | "template"
+    generation_policy: str  # "auto" | "extractive" (template is deprecated alias)
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
+    ttft_ms: int
+    graph_update: Dict[str, int]
     cache_hit: bool
     path: str  # "fast" or "slow"
     tokens_saved: int  # Estimated LLM tokens saved via cache (0 on slow path)
@@ -240,6 +248,8 @@ def create_initial_state(
         
         # Retrieval (will be populated by retrieve_node)
         vector_hits=[],
+        jit_soft_graph=None,
+        jit_graph_meta={},
         retrieved_context="",
         retrieval_trace=[],
         retrieval_meta={},
@@ -267,6 +277,9 @@ def create_initial_state(
         cache_layer="none",
         cache_bucket="",
         reuse_risk=1.0,
+        adaptive_profile=None,
+        adaptive_features={},
+        adaptive_controller={},
         
         # Metadata
         cache_policy=cache_policy,
@@ -275,7 +288,10 @@ def create_initial_state(
         generation_policy=generation_policy,
         models_used=[],
         latency_ms=0,
+        ttft_ms=0,
+        graph_update={"latency_ms": 0, "nodes_added": 0, "edges_added": 0},
         cache_hit=False,
         path="slow",
+        tokens_saved=0,
         error=None,
     )

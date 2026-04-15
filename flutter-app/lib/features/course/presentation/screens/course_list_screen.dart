@@ -78,7 +78,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   ),
                                   child: Icon(
                                     Icons.explore,
-                                    color: Theme.of(context).colorScheme.surface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
                                     size: 24,
                                   ),
                                 ),
@@ -373,7 +375,11 @@ class _CategorySection extends StatelessWidget {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: isCompactMobile ? 18 : 20),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: isCompactMobile ? 18 : 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -403,10 +409,12 @@ class _CategorySection extends StatelessWidget {
 
         // Horizontal Course List with staggered animation
         SizedBox(
-          height: isCompactMobile ? 244 : 280,
+          height: isCompactMobile ? 220 : 250,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: isCompactMobile ? 10 : 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompactMobile ? 10 : 12,
+            ),
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
@@ -446,7 +454,7 @@ class _HorizontalCourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardWidth = compact ? 172.0 : 200.0;
+    final cardWidth = compact ? 150.0 : 170.0;
     final cardRadius = compact ? 14.0 : 16.0;
     final contentPadding = compact ? 10.0 : 12.0;
     final titleFontSize = compact ? 13.0 : 14.0;
@@ -458,7 +466,9 @@ class _HorizontalCourseCard extends StatelessWidget {
       child: Card(
         elevation: 4,
         shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardRadius),
+        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(cardRadius),
@@ -693,7 +703,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 4),
 
                       // Title
                       Text(
@@ -702,6 +712,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                           fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
+                          height: 1.15,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -729,8 +740,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                       ),
 
                       // Progress or Enroll indicator
-                      const SizedBox(height: 4),
                       if (course.isEnrolled == true) ...[
+                        const SizedBox(height: 4),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -742,42 +753,6 @@ class _HorizontalCourseCard extends StatelessWidget {
                             valueColor: AlwaysStoppedAnimation<Color>(
                               _getProgressColor(course.userProgress ?? 0),
                             ),
-                          ),
-                        ),
-                      ] else ...[
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.8),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                color: AppColors.surfaceLight,
-                                size: 14,
-                              ),
-                              SizedBox(width: 2),
-                              Text(
-                                'Start',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.surfaceLight,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],
@@ -816,7 +791,9 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -828,7 +805,9 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -837,7 +816,9 @@ class _HorizontalCourseCard extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1261,7 +1242,11 @@ class _FilterSheet extends StatelessWidget {
             ),
             if (isSelected) ...[
               const SizedBox(width: 4),
-              Icon(Icons.check, size: 14, color: Theme.of(context).colorScheme.surface),
+              Icon(
+                Icons.check,
+                size: 14,
+                color: Theme.of(context).colorScheme.surface,
+              ),
             ],
           ],
         ),

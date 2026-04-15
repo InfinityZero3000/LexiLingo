@@ -30,7 +30,7 @@ abstract class StoryRepository {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   });
 
   /// Send a message in a topic session

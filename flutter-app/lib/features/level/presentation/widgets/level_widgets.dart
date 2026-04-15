@@ -96,8 +96,13 @@ class LevelBadge extends StatelessWidget {
 /// Full level progress card for home page
 class LevelProgressCard extends StatelessWidget {
   final VoidCallback? onTap;
+  final bool compact;
 
-  const LevelProgressCard({super.key, this.onTap});
+  const LevelProgressCard({
+    super.key,
+    this.onTap,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,13 +113,23 @@ class LevelProgressCard extends StatelessWidget {
         final xpFor = levelProvider.displayXpForNextLevel;
         final progress = levelProvider.displayLevelProgress;
         final totalXp = levelProvider.levelStatus.totalXP;
+        final cardPadding = compact ? 12.0 : 16.0;
+        final iconPadding = compact ? 6.0 : 8.0;
+        final iconSize = compact ? 20.0 : 24.0;
+        final titleFontSize = compact ? 17.0 : null;
+        final xpLineFontSize = compact ? 11.0 : null;
+        final totalXpFontSize = compact ? 16.0 : null;
+        final sectionGap = compact ? 8.0 : 12.0;
+        final progressGap = compact ? 6.0 : 8.0;
+        final progressHeight = compact ? 6.0 : 8.0;
+        final toNextFontSize = compact ? 10.0 : 11.0;
 
         return GestureDetector(
           onTap:
               onTap ??
               () => _showLevelDetails(context, levelProvider.levelStatus),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
@@ -130,62 +145,115 @@ class LevelProgressCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.workspace_premium_rounded,
-                            size: 24,
-                            color: AppColors.primary,
-                          ),
+                if (compact)
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(iconPadding),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
+                        child: Icon(
+                          Icons.workspace_premium_rounded,
+                          size: iconSize,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Level $level',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: titleFontSize,
+                                  ),
                             ),
                             Text(
-                              '$xpIn / $xpFor XP this level',
+                              '$xpIn / $xpFor XP',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.textGrey),
+                                  ?.copyWith(
+                                    color: AppColors.textGrey,
+                                    fontSize: xpLineFontSize,
+                                  ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          LevelCalculator.formatXP(totalXp),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(iconPadding),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.workspace_premium_rounded,
+                              size: iconSize,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(width: compact ? 8 : 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Level $level',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: titleFontSize,
+                                    ),
                               ),
-                        ),
-                        Text(
-                          'Total XP',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                              Text(
+                                '$xpIn / $xpFor XP this level',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.textGrey,
+                                      fontSize: xpLineFontSize,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            LevelCalculator.formatXP(totalXp),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                  fontSize: totalXpFontSize,
+                                ),
+                          ),
+                          Text(
+                            'Total XP',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textGrey),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                SizedBox(height: sectionGap),
                 // Progress bar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,10 +266,11 @@ class LevelProgressCard extends StatelessWidget {
                             ?.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w600,
+                              fontSize: compact ? 10.5 : null,
                             ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: progressGap),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
@@ -210,15 +279,17 @@ class LevelProgressCard extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation<Color>(
                           AppColors.primary,
                         ),
-                        minHeight: 8,
+                        minHeight: progressHeight,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: compact ? 3 : 4),
                     Text(
                       '${xpFor - xpIn} XP to Level ${level + 1}',
+                      maxLines: compact ? 1 : null,
+                      overflow: compact ? TextOverflow.ellipsis : null,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textGrey,
-                        fontSize: 11,
+                        fontSize: toNextFontSize,
                       ),
                     ),
                   ],

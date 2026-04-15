@@ -46,7 +46,7 @@ class ChatApiDataSource {
       logWarn(_tag, 'getMessages called with empty sessionId');
       return [];
     }
-    final json = await apiClient.get('/chat/sessions/$sessionId/messages');
+    final json = await apiClient.get('/chat/sessions/$sessionId/messages?limit=0');
     final messages = (json['data'] ?? json['messages'] ?? json) as dynamic;
     if (messages is List) {
       return messages

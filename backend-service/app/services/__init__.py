@@ -377,19 +377,19 @@ class AchievementCheckerService:
         
         Returns UserAchievement if newly unlocked, None if already had.
         """
-        # Create unlock record
-        user_achievement = UserAchievement(
-            user_id=user_id,
-            achievement_id=achievement.id,
-            unlocked_at=datetime.now(timezone.utc)
-        )
-        self.db.add(user_achievement)
-        
+        user_achievement: Optional[UserAchievement] = None
         try:
-            await self.db.flush()
+            # Isolate insert conflicts without rolling back outer request work.
+            async with self.db.begin_nested():
+                user_achievement = UserAchievement(
+                    user_id=user_id,
+                    achievement_id=achievement.id,
+                    unlocked_at=datetime.now(timezone.utc)
+                )
+                self.db.add(user_achievement)
+                await self.db.flush()
         except IntegrityError:
-            # Another request already unlocked this — safe to ignore
-            await self.db.rollback()
+            # Another request already unlocked this — safe to ignore.
             return None
         
         # Award gems (if configured)
@@ -400,7 +400,8 @@ class AchievementCheckerService:
                 user_id,
                 achievement.gems_reward,
                 source="achievement",
-                description=f"Unlocked: {achievement.name}"
+                description=f"Unlocked: {achievement.name}",
+                commit=False,
             )
         
         return user_achievement

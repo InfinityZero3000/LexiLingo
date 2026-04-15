@@ -180,6 +180,9 @@ class LeaderboardEntry(Base):
     """
     
     __tablename__ = "leaderboard_entries"
+    __table_args__ = (
+        UniqueConstraint("user_id", "week_start", name="uq_leaderboard_user_week"),
+    )
     
     id: Mapped[uuid.UUID] = mapped_column(
         GUID(),

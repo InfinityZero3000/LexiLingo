@@ -192,7 +192,7 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   }) async {
     // Clear previous session state
     clearActiveSession();

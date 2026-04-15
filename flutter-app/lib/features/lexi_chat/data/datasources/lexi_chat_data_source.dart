@@ -183,7 +183,7 @@ class LexiChatDataSource {
       }).toList();
     } catch (e) {
       logWarn(_tag, 'getMessages failed: $e');
-      return [];
+      rethrow;
     }
   }
 

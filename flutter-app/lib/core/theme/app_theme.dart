@@ -13,11 +13,14 @@ class AppColors {
   // ── Surfaces (cards, sheets, dialogs) ─────────────────────────────────────
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1C2A38);
+
   /// Chat / lexi chat input bar, slightly darker than surfaceDark
   static const Color surfaceDarkMuted = Color(0xFF1C2632);
   static const Color surfaceDarkElevated = Color(0xFF1C2B3A);
+
   /// lexi-chat bubble / input field background (dark) — maps to 0xFF2A3A4A
   static const Color surfaceDarkChat = Color(0xFF2A3A4A);
+
   /// Input fields, text field fill in dark mode
   static const Color surfaceDarkInput = Color(0xFF0F172A);
 
@@ -27,6 +30,7 @@ class AppColors {
   static const Color textGrey = Color(0xFF617589);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color textSlate = Color(0xFF475569);
+
   /// Lighter slate for secondary labels in dark contexts
   static const Color textSlateLight = Color(0xFF64748B);
 
@@ -35,12 +39,14 @@ class AppColors {
   static const Color grey100 = Color(0xFFF1F5F9);
   static const Color grey200 = Color(0xFFEEEEEE);
   static const Color grey300 = Color(0xFFE0E0E0);
+
   /// Border separators in light mode
   static const Color grey400 = Color(0xFFBDBDBD);
   static const Color grey500 = Color(0xFF9E9E9E);
   static const Color grey600 = Color(0xFF757575);
   static const Color grey700 = Color(0xFF616161);
   static const Color grey800 = Color(0xFF424242);
+
   /// Dark surface for skeleton / input in dark themes
   static const Color grey900 = Color(0xFF212121);
 
@@ -48,38 +54,47 @@ class AppColors {
   static const Color greenSuccess = Color(0xFF078838);
   static const Color greenSuccessBright = Color(0xFF4CAF50);
   static const Color greenSuccessSoft = Color(0xFF8BC34A);
+
   /// bg tint for success state chips/banners (light)
   static const Color greenSuccessBg = Color(0xFFE8F5E9);
+
   /// deep green for text on success bg
   static const Color greenSuccessDark = Color(0xFF1B5E20);
 
   // ── Status: Warning / Amber ───────────────────────────────────────────────
   static const Color warning = Color(0xFFFFC107);
   static const Color warningDark = Color(0xFFB7860E);
+
   /// bg tint for warning chips/banners
   static const Color warningBg = Color(0xFFFFF8E1);
 
   // ── Status: Error / Red ───────────────────────────────────────────────────
   static const Color error = Color(0xFFB00020);
   static const Color errorBright = Color(0xFFEF5350);
+
   /// bg tint for error chips/banners (light)
   static const Color errorBg = Color(0xFFFFEBEE);
+
   /// deep red for danger text
   static const Color errorDark = Color(0xFFC62828);
 
   // ── Accent: Orange / Warm ─────────────────────────────────────────────────
   static const Color orange = Color(0xFFFF9800);
   static const Color deepOrange = Color(0xFFFF5722);
+
   /// bg tint for streak/XP accent in light mode
   static const Color orangeBg = Color(0xFFFFF3E0);
 
   // ── Accent: Yellow / Gold ─────────────────────────────────────────────────
   static const Color accentYellow = Color(0xFFFFD644);
+
   /// Standard gold used in achievement/rank contexts
   static const Color gold = Color(0xFFFFD700);
   static const Color goldDark = Color(0xFFB8720E);
+
   /// Classic trophy bronze color
   static const Color bronze = Color(0xFFCD7F32);
+
   /// Classic silver color
   static const Color silver = Color(0xFFC0C0C0);
 
@@ -108,6 +123,7 @@ class AppColors {
   // ── Chat specific ─────────────────────────────────────────────────────────
   /// Light mode input / background for chat (maps to 0xFFE8ECEF)
   static const Color chatBgLight = Color(0xFFE8ECEF);
+
   /// Light mode message list background (maps to 0xFFF6F7F8)
   static const Color chatBgAlt = Color(0xFFF6F7F8);
 
@@ -192,6 +208,10 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: AppColors.textDark),
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primary,
@@ -231,6 +251,10 @@ class AppTheme {
           fontFamily: 'Lexend',
         ),
         iconTheme: IconThemeData(color: Colors.white),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1C2A38), // Darker shade for nav bar

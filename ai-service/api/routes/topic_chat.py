@@ -7,7 +7,6 @@ Includes starting topic sessions and sending messages within topic context.
 
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
-import google.generativeai as genai
 from datetime import datetime
 import uuid
 import time
@@ -32,7 +31,6 @@ from api.services.topic_catalog_service import get_topic_catalog_service
 from api.services.topic_preloader import get_topic_preloader
 from api.services.topic_prompt_builder import TopicPromptBuilder
 from api.core.redis_client import get_redis
-from api.services.topic_llm_gateway import get_topic_llm_gateway
 from api.services.educational_hints_parser import (
     EducationalHintsParser,
 )
@@ -40,24 +38,23 @@ from api.services.educational_hints_parser import (
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Configure Gemini API as fallback (gateway handles primary Qwen + Gemini fallback)
-try:
-    if settings.GEMINI_API_KEY:
-        genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore[attr-defined]
-        gemini_model = genai.GenerativeModel('gemini-pro')  # type: ignore[attr-defined]
-    else:
-        gemini_model = None
-except Exception:
-    gemini_model = None
+SAFE_FIXED_RESPONSE = (
+    "I'm sorry, I can't respond right now. "
+    "Please try again shortly."
+)
 
-# Initialize LLM Gateway
-_llm_gateway = None
 
-def get_llm_gateway():
-    global _llm_gateway
-    if _llm_gateway is None:
-        _llm_gateway = get_topic_llm_gateway()
-    return _llm_gateway
+async def _load_full_cursor(cursor, batch_size: int = 500) -> list[dict]:
+    """Read all documents from a Mongo cursor in bounded batches."""
+    rows: list[dict] = []
+    while True:
+        batch = await cursor.to_list(length=batch_size)
+        if not batch:
+            break
+        rows.extend(batch)
+        if len(batch) < batch_size:
+            break
+    return rows
 
 
 @router.get(
@@ -69,6 +66,7 @@ async def list_stories(
     category: str | None = None,
     difficulty_level: DifficultyLevel | None = None,
     limit: int = 20,
+    bypass_cache: bool = False,
     catalog_service = Depends(get_topic_catalog_service)
 ):
     """
@@ -77,7 +75,7 @@ async def list_stories(
     Uses TopicCatalogService with Redis caching for snappier responses.
     """
     try:
-        all_stories = await catalog_service.get_topics()
+        all_stories = await catalog_service.get_topics(bypass_cache=bypass_cache)
         
         filtered = all_stories
         if category:
@@ -221,6 +219,7 @@ async def start_topic_session(
             "title": request.session_title or story.title.en,
             "system_prompt": system_prompt,
             "session_type": "topic_based",
+            "preferred_llm": (request.preferred_llm or "qwen").lower(),
             "difficulty_level": story.difficulty_level.value,
             "created_at": created_at,
             "last_activity": created_at,
@@ -290,12 +289,6 @@ async def send_topic_message(
     The AI will respond in character based on the story's role persona,
     and provide educational hints (grammar/vocabulary) when appropriate.
     """
-    if not gemini_model and not get_llm_gateway():
-        raise HTTPException(
-            status_code=503,
-            detail="AI service not configured (no LLM available)"
-        )
-    
     try:
         start_time = time.time()
         
@@ -313,73 +306,87 @@ async def send_topic_message(
         # Get conversation history
         history_cursor = db["chat_messages"].find(
             {"session_id": session_id}
-        ).sort("timestamp", 1).limit(10)
+        ).sort("timestamp", -1).limit(10)
         history = await history_cursor.to_list(length=10)
+        history.reverse()
         
-        # Build prompt with context
-        system_prompt = session.get("system_prompt", "")
-        
-        # Format conversation for Gemini
-        conversation_text = ""
-        for msg in history:
-            role_label = "User" if msg.get("role") == "user" else "Assistant"
-            conversation_text += f"{role_label}: {msg.get('content', '')}\n"
-        
-        conversation_text += f"User: {request.message}\n"
-        
-        # Create the full prompt
-        full_prompt = f"""[SYSTEM INSTRUCTIONS]
-{system_prompt}
+        preferred_llm = str(session.get("preferred_llm") or "graphcag").lower()
 
-[CONVERSATION SO FAR]
-{conversation_text}
-
-[YOUR RESPONSE]
-Respond as your character. Include [💡 Tip] or [📘] notes if the user made errors or asked about vocabulary."""
-        
-        # Get AI response via LLM Gateway (Qwen → Gemini fallback)
+        # Always run GraphCAG first for topic sessions.
+        # preferred_llm is retained for backward compatibility/telemetry only.
         ai_response = None
         llm_metadata = None
-        gateway = get_llm_gateway()
         
-        # Format conversation history for the gateway
+        # Format conversation history for GraphCAG.
         conversation_history = [
             {"role": msg.get("role", "user"), "content": msg.get("content", "")}
             for msg in history
         ]
-        
+
         try:
-            llm_response = await gateway.generate(
-                system_prompt=system_prompt,
-                user_message=request.message,
+            from api.services.orchestrator import get_orchestrator
+
+            graph_start = time.time()
+            orchestrator = await get_orchestrator()
+            graph_result = await orchestrator.process(
+                user_input=request.message,
+                session_id=session_id,
+                user_id=request.user_id,
+                learner_profile={"level": session.get("difficulty_level", "B1")},
                 conversation_history=conversation_history,
+                retrieval_policy="rapid",
             )
-            ai_response = llm_response.content
+
+            ai_response = str(graph_result.get("tutor_response") or "").strip()
+            graph_metadata = graph_result.get("metadata", {}) or {}
+            if not ai_response:
+                raise RuntimeError("GraphCAG returned empty tutor_response")
+
             llm_metadata = {
-                "provider": llm_response.provider.value,
-                "model": llm_response.model_name,
-                "latency_ms": llm_response.latency_ms,
-                "fallback_used": llm_response.fallback_used,
+                "provider": "graphcag",
+                "model": ", ".join(graph_metadata.get("models_used") or ["graphcag_pipeline"]),
+                "latency_ms": int((time.time() - graph_start) * 1000),
+                "fallback_used": preferred_llm != "graphcag",
             }
-            logger.info(
-                f"Topic chat response via {llm_response.provider.value}, "
-                f"latency={llm_response.latency_ms}ms, "
-                f"fallback={'yes' if llm_response.fallback_used else 'no'}"
-            )
-        except Exception as gw_err:
-            logger.warning(f"LLM gateway failed: {gw_err}, trying direct Gemini")
-            # Direct Gemini fallback if gateway completely fails
-            if gemini_model:
-                response = gemini_model.generate_content(full_prompt)
-                ai_response = response.text
+            logger.info("Topic chat response via GraphCAG")
+        except Exception as graph_err:
+            logger.error("GraphCAG failed for topic chat (primary): %s", graph_err)
+            try:
+                from api.services.orchestrator import get_orchestrator
+
+                retry_start = time.time()
+                orchestrator = await get_orchestrator()
+                retry_result = await orchestrator.process(
+                    user_input=request.message,
+                    session_id=session_id,
+                    user_id=request.user_id,
+                    learner_profile={"level": session.get("difficulty_level", "B1")},
+                    conversation_history=[],
+                    cache_policy="off",
+                    retrieval_policy="rapid",
+                    diagnosis_policy="rules",
+                    generation_policy="auto",
+                )
+                ai_response = str(retry_result.get("tutor_response") or "").strip()
+                retry_meta = retry_result.get("metadata", {}) or {}
+                if not ai_response:
+                    raise RuntimeError("GraphCAG degraded retry returned empty tutor_response")
                 llm_metadata = {
-                    "provider": "gemini",
-                    "model": "gemini-pro",
+                    "provider": "graphcag",
+                    "model": ", ".join(retry_meta.get("models_used") or ["graphcag_retry"]),
+                    "latency_ms": int((time.time() - retry_start) * 1000),
+                    "fallback_used": True,
+                    "retry_mode": "graphcag_degraded",
+                }
+            except Exception as retry_err:
+                logger.error("GraphCAG failed for topic chat (degraded retry): %s", retry_err)
+                ai_response = SAFE_FIXED_RESPONSE
+                llm_metadata = {
+                    "provider": "graphcag_safe_response",
+                    "model": "safe_fixed_response",
                     "latency_ms": 0,
                     "fallback_used": True,
                 }
-            else:
-                raise
         
         if not ai_response:
             raise HTTPException(status_code=500, detail="No response from AI")
@@ -493,6 +500,7 @@ async def get_topic_session(
 )
 async def get_topic_messages(
     session_id: str,
+    limit: int = 0,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Get all messages in a topic session."""
@@ -501,10 +509,18 @@ async def get_topic_messages(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
+    if limit < 0:
+        raise HTTPException(status_code=400, detail="limit must be >= 0")
+
     cursor = db["chat_messages"].find(
         {"session_id": session_id}
     ).sort("timestamp", 1)
-    messages = await cursor.to_list(length=200)
+
+    if limit > 0:
+        cursor = cursor.limit(limit)
+        messages = await cursor.to_list(length=limit)
+    else:
+        messages = await _load_full_cursor(cursor)
     
     # Clean up for response
     for msg in messages:
@@ -520,18 +536,24 @@ async def get_topic_messages(
     summary="Check LLM service health"
 )
 async def check_llm_health():
-    """Check the health status of the LLM services."""
+    """Check GraphCAG and route orchestration health."""
     health = {
         "status": "ok",
+        "graphcag_mode": "enforced",
         "gemini_configured": settings.GEMINI_API_KEY is not None,
         "ollama_url": getattr(settings, 'OLLAMA_BASE_URL', None),
     }
     
-    # Check LLM gateway
+    # Check GraphCAG orchestrator
     try:
-        gateway = get_llm_gateway()
-        health["gateway_available"] = gateway is not None
-    except Exception:
-        health["gateway_available"] = False
+        from api.services.orchestrator import get_orchestrator
+
+        orchestrator = await get_orchestrator()
+        health["graphcag_ready"] = orchestrator.is_healthy()
+        health["orchestrator_stats"] = orchestrator.get_stats()
+    except Exception as e:
+        health["status"] = "degraded"
+        health["graphcag_ready"] = False
+        health["graphcag_error"] = str(e)
     
     return health
