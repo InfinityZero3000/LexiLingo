@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING
+from pymongo.errors import OperationFailure
 
 # Core imports
 from api.core.database import mongodb_manager, get_database
@@ -49,33 +50,88 @@ _groq_limiter: Optional[RedisRateLimiter] = None
 
 
 async def _ensure_mongo_indexes() -> None:
-    """Create indexes required for fast session and message restoration."""
+    """Create indexes for fast session/message lookup without risking migrated data loss."""
     db = mongodb_manager.db
 
-    await db["chat_sessions"].create_index(
-        [("session_id", ASCENDING)],
-        unique=True,
+    async def _create_index_safe(collection: str, keys, **kwargs) -> None:
+        try:
+            await db[collection].create_index(keys, **kwargs)
+        except Exception as exc:
+            logger.warning(
+                "Skip index %s on %s due to error: %s",
+                kwargs.get("name", "<unnamed>"),
+                collection,
+                exc,
+            )
+
+    async def _has_duplicate_string_values(collection: str, field: str) -> bool:
+        pipeline = [
+            {"$match": {field: {"$exists": True, "$type": "string", "$ne": ""}}},
+            {"$group": {"_id": f"${field}", "count": {"$sum": 1}}},
+            {"$match": {"count": {"$gt": 1}}},
+            {"$limit": 1},
+        ]
+        docs = await db[collection].aggregate(pipeline).to_list(length=1)
+        return bool(docs)
+
+    async def _ensure_session_unique_index(collection: str, field: str, name: str) -> None:
+        # Keep query performance regardless of uniqueness enforceability.
+        await _create_index_safe(
+            collection,
+            [(field, ASCENDING)],
+            name=f"{collection}_{field}_idx",
+        )
+
+        if await _has_duplicate_string_values(collection, field):
+            logger.warning(
+                "Skip unique index %s on %s: duplicate %s values detected in migrated data",
+                name,
+                collection,
+                field,
+            )
+            return
+
+        try:
+            await db[collection].create_index(
+                [(field, ASCENDING)],
+                unique=True,
+                name=name,
+                partialFilterExpression={
+                    field: {"$exists": True, "$type": "string", "$ne": ""}
+                },
+            )
+        except OperationFailure as exc:
+            # Do not block startup when existing migrated data/index options conflict.
+            logger.warning("Skip unique index %s on %s: %s", name, collection, exc)
+
+    await _ensure_session_unique_index(
+        collection="chat_sessions",
+        field="session_id",
         name="chat_sessions_session_id_uq",
     )
-    await db["chat_sessions"].create_index(
+    await _create_index_safe(
+        "chat_sessions",
         [("user_id", ASCENDING), ("last_activity", DESCENDING)],
         name="chat_sessions_user_last_activity_idx",
     )
-    await db["chat_messages"].create_index(
+    await _create_index_safe(
+        "chat_messages",
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="chat_messages_session_timestamp_idx",
     )
 
-    await db["lexi_sessions"].create_index(
-        [("session_id", ASCENDING)],
-        unique=True,
+    await _ensure_session_unique_index(
+        collection="lexi_sessions",
+        field="session_id",
         name="lexi_sessions_session_id_uq",
     )
-    await db["lexi_sessions"].create_index(
+    await _create_index_safe(
+        "lexi_sessions",
         [("user_id", ASCENDING), ("updated_at", DESCENDING)],
         name="lexi_sessions_user_updated_at_idx",
     )
-    await db["lexi_messages"].create_index(
+    await _create_index_safe(
+        "lexi_messages",
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="lexi_messages_session_timestamp_idx",
     )
