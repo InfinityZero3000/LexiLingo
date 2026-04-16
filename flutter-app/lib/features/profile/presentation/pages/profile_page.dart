@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
@@ -18,8 +19,7 @@ import 'package:lexilingo_app/features/progress/presentation/screens/my_progress
 import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
-import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
+import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
@@ -42,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage>
     super.initState();
     _badgeShineController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 3000),
     )..repeat();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,6 +92,8 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
 
     return Scaffold(
       appBar: AppBar(
@@ -102,7 +104,7 @@ class _ProfilePageState extends State<ProfilePage>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: accent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -125,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage>
                 Text(
                   _formatMemberSince(user?.createdAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textGrey,
+                    color: AppColorRoles.textSecondary(isDark),
                   ),
                 ),
               ],
@@ -174,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.mic_rounded, color: AppColors.primary),
+            icon: Icon(Icons.mic_rounded, color: accent),
             tooltip: 'Voice Practice',
             onPressed: () {
               Navigator.push(
@@ -184,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: AppColors.primary),
+            icon: Icon(Icons.settings, color: accent),
             onPressed: () {
               Navigator.push(
                 context,
@@ -264,8 +266,12 @@ class _ProfilePageState extends State<ProfilePage>
             context,
             icon: Icons.people,
             label: 'Friends',
-            color: AppColors.primary,
-            gradient: AppColors.indigoGradient,
+            color: AppColorRoles.primary(
+              Theme.of(context).brightness == Brightness.dark,
+            ),
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.primaryGradientDark
+                : AppColors.indigoGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SocialScreen()),
@@ -337,6 +343,8 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
         // Use numeric level progress, not CEFR-based
@@ -359,8 +367,12 @@ class _ProfilePageState extends State<ProfilePage>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.primary.withValues(alpha: 0.15),
-                          AppColors.primary.withValues(alpha: 0.1),
+                          (isDark ? accent : AppColors.primary).withValues(
+                            alpha: 0.15,
+                          ),
+                          (isDark ? accent : AppColors.primary).withValues(
+                            alpha: 0.1,
+                          ),
                           AppColors.surfaceLight.withValues(alpha: 0.05),
                         ],
                       ),
@@ -371,7 +383,8 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: (isDark ? accent : AppColors.primary)
+                              .withValues(alpha: 0.12),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -389,8 +402,8 @@ class _ProfilePageState extends State<ProfilePage>
                               size: 140,
                               strokeWidth: 6,
                               gradientColors: [
-                                AppColors.primary,
-                                AppColors.primary,
+                                isDark ? accent : AppColors.primary,
+                                isDark ? accent : AppColors.primary,
                                 AppColors.purple,
                               ],
                               child: Container(
@@ -404,7 +417,8 @@ class _ProfilePageState extends State<ProfilePage>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
                                         alpha: 0.3,
                                       ),
                                       blurRadius: 20,
@@ -419,13 +433,14 @@ class _ProfilePageState extends State<ProfilePage>
                                     width: 120,
                                     height: 120,
                                     fallback: Container(
-                                      color: AppColors.primary.withValues(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
                                         alpha: 0.2,
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.person,
                                         size: 60,
-                                        color: AppColors.primary,
+                                        color: isDark ? accent : AppColors.primary,
                                       ),
                                     ),
                                   ),
@@ -442,8 +457,8 @@ class _ProfilePageState extends State<ProfilePage>
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppColors.primary,
-                                        AppColors.primary,
+                                        isDark ? accent : AppColors.primary,
+                                        isDark ? accent : AppColors.primary,
                                       ],
                                     ),
                                     shape: BoxShape.circle,
@@ -453,7 +468,8 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(
+                                        color: (isDark ? accent : AppColors.primary)
+                                            .withValues(
                                           alpha: 0.5,
                                         ),
                                         blurRadius: 8,
@@ -505,13 +521,16 @@ class _ProfilePageState extends State<ProfilePage>
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: AppColors.primaryGradient,
+                                  gradient: LinearGradient(
+                                    colors: AppColorRoles.primaryGradient(
+                                      isDark,
+                                    ),
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
                                         alpha: 0.4,
                                       ),
                                       blurRadius: 8,
@@ -631,13 +650,14 @@ class _ProfilePageState extends State<ProfilePage>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: AppColors.primaryGradient,
+                              gradient: LinearGradient(
+                                colors: AppColorRoles.primaryGradient(isDark),
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(
+                                  color: (isDark ? accent : AppColors.primary)
+                                      .withValues(
                                     alpha: 0.3,
                                   ),
                                   blurRadius: 8,
@@ -701,7 +721,9 @@ class _ProfilePageState extends State<ProfilePage>
               value: '${stats?.totalLessonsCompleted ?? 0}',
               label: 'Lessons',
               icon: Icons.menu_book,
-              color: AppColors.primary,
+              color: AppColorRoles.primary(
+                Theme.of(context).brightness == Brightness.dark,
+              ),
             ),
             Container(
               height: 40,
@@ -740,6 +762,7 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildLevelProgressCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
         final level = levelProvider.displayLevel;
@@ -766,8 +789,8 @@ class _ProfilePageState extends State<ProfilePage>
               const SizedBox(height: 12),
               AnimatedProgressBar(
                 progress: progress,
-                primaryColor: AppColors.primaryGradient[0],
-                secondaryColor: AppColors.primaryGradient[1],
+                primaryColor: AppColorRoles.primaryGradient(isDark)[0],
+                secondaryColor: AppColorRoles.primaryGradient(isDark)[1],
                 height: 12,
               ),
               const SizedBox(height: 12),
@@ -783,8 +806,8 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   Text(
                     '${(progress * 100).toStringAsFixed(0)}% complete',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: AppColorRoles.primary(isDark),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -799,21 +822,22 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Color _getTierColor(String tierCode) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (tierCode) {
       case 'A1':
         return AppColors.greenSuccessBright;
       case 'A2':
         return AppColors.teal;
       case 'B1':
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
       case 'B2':
-        return AppColors.primaryDark;
+        return AppColorRoles.primaryDeep(isDark);
       case 'C1':
         return AppColors.purple;
       case 'C2':
         return AppColors.warning;
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
@@ -822,7 +846,6 @@ class _ProfilePageState extends State<ProfilePage>
       builder: (context, profileProvider, child) {
         // Use stats from ProfileProvider (backend API)
         final stats = profileProvider.stats;
-        final streak = stats?.currentStreak ?? user?.currentStreak ?? 0;
         final lessonsCompleted = stats?.totalLessonsCompleted ?? 0;
         final coursesCompleted = stats?.totalCoursesCompleted ?? 0;
         final vocabularyMastered = stats?.totalVocabularyMastered ?? 0;
@@ -860,24 +883,6 @@ class _ProfilePageState extends State<ProfilePage>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  GlassmorphicStatCard(
-                    icon: Icons.local_fire_department,
-                    color: AppColors.primary,
-                    title: 'Streak',
-                    value: '$streak',
-                    subtitle: streak > 0 ? 'days in a row' : 'start today',
-                    isAction: true,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CourseListScreen()),
-                    ),
-                    valueFontSize: 24,
-                    iconBoxSize: 32,
-                    iconSize: 16,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    middleSpacing: 8,
-                  ),
-                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -887,18 +892,21 @@ class _ProfilePageState extends State<ProfilePage>
                           title: 'Lessons',
                           value: '$lessonsCompleted',
                           subtitle: 'completed',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
                           isAction: true,
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const CourseListScreen(),
+                              builder: (_) => const LearningLessonsStatsPage(),
                             ),
                           ),
-                          valueFontSize: 22,
-                          iconBoxSize: 30,
-                          iconSize: 15,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          middleSpacing: 6,
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -909,18 +917,21 @@ class _ProfilePageState extends State<ProfilePage>
                           title: 'Courses',
                           value: '$coursesCompleted',
                           subtitle: 'finished',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
                           isAction: true,
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const CourseListScreen(),
+                              builder: (_) => const LearningCoursesStatsPage(),
                             ),
                           ),
-                          valueFontSize: 22,
-                          iconBoxSize: 30,
-                          iconSize: 15,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          middleSpacing: 6,
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                       ),
                     ],
@@ -935,18 +946,21 @@ class _ProfilePageState extends State<ProfilePage>
                           title: 'Vocabulary',
                           value: '$vocabularyMastered',
                           subtitle: 'mastered',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
                           isAction: true,
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const VocabLibraryPage(),
+                              builder: (_) => const LearningVocabularyStatsPage(),
                             ),
                           ),
-                          valueFontSize: 22,
-                          iconBoxSize: 30,
-                          iconSize: 15,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          middleSpacing: 6,
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -959,18 +973,21 @@ class _ProfilePageState extends State<ProfilePage>
                           subtitle: avgScore > 0
                               ? '${avgScore.toStringAsFixed(0)}% avg'
                               : 'passed',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
                           isAction: true,
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const MyProgressScreen(),
+                              builder: (_) => const LearningTestsStatsPage(),
                             ),
                           ),
-                          valueFontSize: 22,
-                          iconBoxSize: 30,
-                          iconSize: 15,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          middleSpacing: 6,
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                       ),
                     ],
@@ -1006,17 +1023,14 @@ class _ProfilePageState extends State<ProfilePage>
           mainAxisSpacing: 12,
           childAspectRatio: 1.15,
           children: List.generate(
-            5,
+            4,
             (index) => Container(
               decoration: BoxDecoration(
                 color: AppColors.slate200,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary,
-                ),
+                child: LottieLoadingWidget.medium(),
               ),
             ),
           ),
@@ -1061,7 +1075,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24.0),
-                        child: CircularProgressIndicator(),
+                        child: LottieLoadingWidget.medium(),
                       ),
                     )
                   : activities.isEmpty
@@ -1201,7 +1215,7 @@ class _ProfilePageState extends State<ProfilePage>
             SizedBox(
               height: 100,
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: LottieLoadingWidget.medium())
                   : visibleBadges.isEmpty
                   ? _buildEmptyBadges()
                   : ListView.separated(
@@ -1273,6 +1287,7 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildBadgeItemFromEntity(UserAchievementEntity badge) {
     final achievement = badge.achievement;
     const badgeSize = 64.0;
+    final badgeMask = _buildBadgeShineMask(badge, badgeSize);
 
     return Tooltip(
       message: '${achievement.name}\n${badge.unlockedTimeAgo}',
@@ -1281,37 +1296,55 @@ class _ProfilePageState extends State<ProfilePage>
           SizedBox(
             width: badgeSize,
             height: badgeSize,
-            child: AnimatedBuilder(
-              animation: _badgeShineController,
-              builder: (context, child) {
-                final progress = _badgeShineController.value;
-                // Perfect sweep from edge to edge (-1.5 to 1.5) with no pause at all
-                final position = -1.5 + (progress * 3.0);
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AchievementBadge(
+                  achievement: achievement,
+                  isUnlocked: true,
+                  size: badgeSize,
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _badgeShineController,
+                      builder: (context, child) {
+                        // Smaller sweep portion => longer idle pause per cycle.
+                        const sweepPortion = 0.62;
+                        final progress = _badgeShineController.value;
+                        final isSweeping = progress < sweepPortion;
+                        final sweepT = isSweeping
+                            ? Curves.easeInOut.transform(progress / sweepPortion)
+                            : 1.0;
+                        final position = isSweeping
+                            ? lerpDouble(-1.6, 1.6, sweepT)!
+                            : 2.4;
 
-                return ShaderMask(
-                  blendMode: BlendMode.srcATop,
-                  shaderCallback: (bounds) {
-                    return LinearGradient(
-                      begin: Alignment(position - 0.5, -1.0),
-                      end: Alignment(position + 0.5, 1.0),
-                      colors: [
-                        Colors.transparent,
-                        AppColors.surfaceLight.withValues(alpha: 0.1),
-                        AppColors.surfaceLight.withValues(alpha: 0.7),
-                        AppColors.surfaceLight.withValues(alpha: 0.1),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.4, 0.5, 0.6, 1.0],
-                    ).createShader(bounds);
-                  },
-                  child: child,
-                );
-              },
-              child: AchievementBadge(
-                achievement: achievement,
-                isUnlocked: true,
-                size: badgeSize,
-              ),
+                        return ShaderMask(
+                          // Apply shine only where the badge image has alpha.
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) {
+                            return LinearGradient(
+                              begin: Alignment(position - 0.45, -1.0),
+                              end: Alignment(position + 0.45, 1.0),
+                              colors: [
+                                Colors.transparent,
+                                AppColors.surfaceLight.withValues(alpha: 0.06),
+                                AppColors.surfaceLight.withValues(alpha: 0.56),
+                                AppColors.surfaceLight.withValues(alpha: 0.06),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.42, 0.5, 0.58, 1.0],
+                            ).createShader(bounds);
+                          },
+                          child: child,
+                        );
+                      },
+                      child: badgeMask,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -1323,5 +1356,46 @@ class _ProfilePageState extends State<ProfilePage>
         ],
       ),
     );
+  }
+
+  Widget _buildBadgeShineMask(UserAchievementEntity badge, double badgeSize) {
+    final achievement = badge.achievement;
+
+    final networkBadge = achievement.badgeIcon?.trim();
+    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
+        ? Uri.tryParse(networkBadge)
+        : null;
+    final hasValidNetworkBadge =
+        networkBadgeUri != null &&
+        (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
+        networkBadgeUri.host.isNotEmpty;
+
+    if (hasValidNetworkBadge) {
+      return ClipOval(
+        child: Image.network(
+          networkBadge!,
+          width: badgeSize,
+          height: badgeSize,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    final lookupKey = (achievement.slug ?? achievement.id).trim();
+    final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
+    if (assetPath != null) {
+      return ClipOval(
+        child: Image.asset(
+          assetPath,
+          width: badgeSize,
+          height: badgeSize,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
