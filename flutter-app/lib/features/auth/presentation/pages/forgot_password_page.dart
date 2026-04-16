@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -139,7 +140,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: LottieLoadingWidget.tiny(),
                               )
                             : const Text(
                                 'Send Reset Instructions',

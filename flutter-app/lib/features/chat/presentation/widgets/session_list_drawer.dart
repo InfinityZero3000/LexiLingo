@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_session.dart';
 import 'package:intl/intl.dart';
@@ -167,9 +168,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                                    child: LottieLoadingWidget.tiny(),
                                   )
                                 : TextButton(
                                     onPressed: widget.onLoadMoreSessions,

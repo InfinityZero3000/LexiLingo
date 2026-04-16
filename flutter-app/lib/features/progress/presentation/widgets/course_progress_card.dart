@@ -17,6 +17,7 @@ class CourseProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progressPercent = (courseProgress.progressPercentage / 100);
 
     return Card(
@@ -90,7 +91,10 @@ class CourseProgressCard extends StatelessWidget {
                         context,
                       ).colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(courseProgress.progressPercentage),
+                        _getProgressColor(
+                          courseProgress.progressPercentage,
+                          isDark: isDark,
+                        ),
                       ),
                     ),
                   ),
@@ -123,13 +127,13 @@ class CourseProgressCard extends StatelessWidget {
     );
   }
 
-  Color _getProgressColor(double progress) {
+  Color _getProgressColor(double progress, {bool isDark = false}) {
     if (progress >= 80) {
       return AppColors.greenSuccessBright;
     } else if (progress >= 50) {
       return AppColors.orange;
     } else {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 

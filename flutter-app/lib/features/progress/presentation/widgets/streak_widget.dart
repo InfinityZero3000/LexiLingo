@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../providers/streak_provider.dart';
@@ -42,7 +43,7 @@ class StreakWidget extends StatelessWidget {
           return const SizedBox(
             width: 40,
             height: 40,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: LottieLoadingWidget.small(),
           );
         }
 
@@ -460,10 +461,14 @@ class StreakDetailsSheet extends StatelessWidget {
                             final success = await provider.useFreeze();
                             if (success && context.mounted) {
                               Navigator.pop(context);
+                              final isDark =
+                                  Theme.of(context).brightness ==
+                                  Brightness.dark;
+                              final accent = AppColorRoles.primary(isDark);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Streak freeze activated!'),
-                                  backgroundColor: Colors.blue,
+                                SnackBar(
+                                  content: const Text('Streak freeze activated!'),
+                                  backgroundColor: accent,
                                 ),
                               );
                             }
@@ -471,7 +476,9 @@ class StreakDetailsSheet extends StatelessWidget {
                     icon: Icon(Icons.ac_unit, size: 18, color: Colors.cyan),
                     label: const Text('Use Streak Freeze'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppColorRoles.primary(
+                        Theme.of(context).brightness == Brightness.dark,
+                      ),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),

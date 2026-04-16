@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/daily_challenge_entity.dart';
 import '../providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 
 /// Daily Challenges Card for Home Screen
 /// Shows today's challenges with progress
@@ -35,7 +39,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  const CircularProgressIndicator(),
+                  const LottieLoadingWidget.small(),
                   const SizedBox(height: 12),
                   Text(
                     'Loading challenges...',
@@ -177,12 +181,13 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
     DailyChallengeEntity challenge,
     DailyChallengesProvider provider,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Icon(
           _getCategoryIcon(challenge.category),
           size: 16,
-          color: _getCategoryColor(challenge.category),
+          color: _getCategoryColor(challenge.category, isDark: isDark),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -221,10 +226,10 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(String category, {bool isDark = false}) {
     switch (category) {
       case 'lesson':
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
       case 'vocabulary':
         return AppColors.purple;
       case 'streak':
@@ -425,6 +430,8 @@ class DailyChallengesSheet extends StatelessWidget {
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );
+      // Fetch level updates to reflect claimed XP
+      context.read<LevelProvider>().fetchLevelFull(sl<ApiClient>());
     }
   }
 }
@@ -444,6 +451,7 @@ class _ChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -465,6 +473,7 @@ class _ChallengeCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: _getCategoryColor(
                 challenge.category,
+                isDark: isDark,
               ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -472,7 +481,7 @@ class _ChallengeCard extends StatelessWidget {
               child: Icon(
                 _getCategoryIcon(challenge.category),
                 size: 24,
-                color: _getCategoryColor(challenge.category),
+                color: _getCategoryColor(challenge.category, isDark: isDark),
               ),
             ),
           ),
@@ -512,7 +521,10 @@ class _ChallengeCard extends StatelessWidget {
                           valueColor: AlwaysStoppedAnimation<Color>(
                             challenge.isCompleted
                                 ? AppColors.greenSuccessBright
-                                : _getCategoryColor(challenge.category),
+                                : _getCategoryColor(
+                                    challenge.category,
+                                    isDark: isDark,
+                                  ),
                           ),
                           minHeight: 6,
                         ),
@@ -579,10 +591,10 @@ class _ChallengeCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(String category, {bool isDark = false}) {
     switch (category) {
       case 'lesson':
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
       case 'vocabulary':
         return AppColors.purple;
       case 'streak':

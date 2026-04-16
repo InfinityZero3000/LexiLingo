@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Compact podcast card for list/grid display.
 ///

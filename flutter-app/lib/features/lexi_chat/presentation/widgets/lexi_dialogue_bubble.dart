@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Minimalist dialogue bubble for Lexi chat.
 ///
@@ -105,15 +108,7 @@ class LexiDialogueBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Message text
-              Text(
-                message.content,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: isDark ? Colors.white : AppColors.textDark,
-                  letterSpacing: -0.1,
-                ),
-              ),
+              _buildLexiMessageContent(context, isDark),
               // Action buttons row
               if (message.hasAudio || message.hasCorrections)
                 Padding(
@@ -144,6 +139,57 @@ class LexiDialogueBubble extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLexiMessageContent(BuildContext context, bool isDark) {
+    final baseTextStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: isDark ? Colors.white : AppColors.textDark,
+      letterSpacing: -0.1,
+    );
+
+    final highlightColor = isDark
+        ? AppColors.accentYellow.withValues(alpha: 0.25)
+        : AppColors.accentYellow.withValues(alpha: 0.2);
+
+    return QuickSaveSelectionArea(
+      sourceType: 'lexi_chat',
+      sourceReference: message.id,
+      contextSentence: message.content,
+      child: MarkdownBody(
+        data: message.content,
+        selectable: false,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+          p: baseTextStyle,
+          listBullet: baseTextStyle.copyWith(
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : AppColors.textDark,
+          ),
+          strong: baseTextStyle.copyWith(
+            fontWeight: FontWeight.w700,
+            backgroundColor: highlightColor,
+          ),
+          em: baseTextStyle.copyWith(
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w600,
+            backgroundColor: highlightColor,
+          ),
+          a: baseTextStyle.copyWith(
+            color: AppColors.primary,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+        onTapLink: (text, href, title) async {
+          if (href == null || href.isEmpty) return;
+          final uri = Uri.tryParse(href);
+          if (uri == null) return;
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
+      ),
     );
   }
 

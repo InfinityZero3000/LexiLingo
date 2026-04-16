@@ -103,6 +103,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -112,15 +114,20 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, Color(0xFF0D6ABD)],
+            gradient: LinearGradient(
+              colors: [
+                isDark ? accent : AppColors.primary,
+                isDark ? AppColorRoles.primaryDeep(true) : const Color(0xFF0D6ABD),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: (isDark ? accent : AppColors.primary).withValues(
+                  alpha: 0.3,
+                ),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -200,7 +207,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                       child: const Text(
                         'Start',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.slate900,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

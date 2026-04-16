@@ -85,6 +85,9 @@ class GlassmorphicStatCard extends StatefulWidget {
   final double titleFontSize;
   final double subtitleFontSize;
   final double middleSpacing;
+  final bool valueInRightCircle;
+  final double valueCircleSize;
+  final double valueCircleFontSize;
 
   const GlassmorphicStatCard({
     super.key,
@@ -102,6 +105,9 @@ class GlassmorphicStatCard extends StatefulWidget {
     this.titleFontSize = 14,
     this.subtitleFontSize = 12,
     this.middleSpacing = 18,
+    this.valueInRightCircle = false,
+    this.valueCircleSize = 46,
+    this.valueCircleFontSize = 20,
   });
 
   @override
@@ -164,6 +170,12 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
     final subtitleColor = isDark
         ? AppColors.textInverted.withValues(alpha: 0.6)
         : AppColors.textSlate;
+    final valueCircleBg = isDark
+      ? widget.color.withValues(alpha: 0.22)
+      : widget.color.withValues(alpha: 0.14);
+    final valueCircleBorder = isDark
+      ? widget.color.withValues(alpha: 0.45)
+      : widget.color.withValues(alpha: 0.30);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -193,76 +205,166 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
               ),
               child: Padding(
                 padding: widget.contentPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: widget.iconBoxSize,
-                          height: widget.iconBoxSize,
-                          decoration: BoxDecoration(
-                            color: iconBgColor,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            widget.icon,
-                            color: widget.color,
-                            size: widget.iconSize,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              color: titleColor,
-                              fontSize: widget.titleFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: widget.middleSpacing),
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 250),
-                      style: TextStyle(
-                        fontSize: widget.valueFontSize,
-                        height: 1,
-                        fontWeight: FontWeight.w700,
-                        color: valueColor,
-                        letterSpacing: -1,
-                      ),
-                      child: Text(widget.value),
-                    ),
-                    if (widget.subtitle != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
+                child: widget.valueInRightCircle
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              widget.subtitle!,
-                              style: TextStyle(
-                                color: widget.isAction ? widget.color : subtitleColor,
-                                fontSize: widget.subtitleFontSize,
-                                fontWeight: widget.isAction
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: widget.iconBoxSize,
+                                height: widget.iconBoxSize,
+                                decoration: BoxDecoration(
+                                  color: iconBgColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: widget.iconSize,
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  widget.title,
+                                  style: TextStyle(
+                                    color: titleColor,
+                                    fontSize: widget.titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: widget.valueCircleSize,
+                                height: widget.valueCircleSize,
+                                decoration: BoxDecoration(
+                                  color: valueCircleBg,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: valueCircleBorder,
+                                    width: 1.4,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    widget.value,
+                                    style: TextStyle(
+                                      fontSize: widget.valueCircleFontSize,
+                                      fontWeight: FontWeight.w800,
+                                      color: valueColor,
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          if (widget.isAction)
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: widget.color,
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.subtitle!,
+                                    style: TextStyle(
+                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      fontSize: widget.subtitleFontSize,
+                                      fontWeight: widget.isAction
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (widget.isAction)
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: widget.color,
+                                  ),
+                              ],
                             ),
+                          ],
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: widget.iconBoxSize,
+                                height: widget.iconBoxSize,
+                                decoration: BoxDecoration(
+                                  color: iconBgColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: widget.iconSize,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  widget.title,
+                                  style: TextStyle(
+                                    color: titleColor,
+                                    fontSize: widget.titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: widget.middleSpacing),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 250),
+                            style: TextStyle(
+                              fontSize: widget.valueFontSize,
+                              height: 1,
+                              fontWeight: FontWeight.w700,
+                              color: valueColor,
+                              letterSpacing: -1,
+                            ),
+                            child: Text(widget.value),
+                          ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.subtitle!,
+                                    style: TextStyle(
+                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      fontSize: widget.subtitleFontSize,
+                                      fontWeight: widget.isAction
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                if (widget.isAction)
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: widget.color,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
-                    ],
-                  ],
-                ),
               ),
             ),
           );

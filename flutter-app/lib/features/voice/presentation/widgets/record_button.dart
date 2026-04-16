@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Record Button Widget
 /// Animated button for recording audio
@@ -109,10 +110,7 @@ class _RecordButtonState extends State<RecordButton>
                           child: SizedBox(
                             width: 32,
                             height: 32,
-                            child: CircularProgressIndicator(
-                              color: Theme.of(context).colorScheme.surface,
-                              strokeWidth: 3,
-                            ),
+                            child: LottieLoadingWidget.tiny(),
                           ),
                         )
                       : Icon(

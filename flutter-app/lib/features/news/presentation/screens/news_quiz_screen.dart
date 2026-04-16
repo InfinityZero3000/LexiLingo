@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../games/data/repositories/games_repository.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News Quiz Screen — comprehension quiz after reading an article.
 ///
@@ -72,7 +72,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
         child: Consumer<NewsProvider>(
           builder: (context, provider, _) {
             if (provider.isLoadingQuiz) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: LottieLoadingWidget.medium());
             }
 
             if (provider.currentQuiz == null) {

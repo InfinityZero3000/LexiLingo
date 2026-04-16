@@ -21,7 +21,6 @@ import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
-import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 
 class HomePageNew extends StatefulWidget {
@@ -105,41 +104,41 @@ class _HomePageNewState extends State<HomePageNew> {
                 homeProvider.refreshData(),
                 context.read<StreakProvider>().loadStreak(),
               ]),
-              child: SingleChildScrollView(
+              child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(context, homeProvider, authProvider),
-                    const SizedBox(height: 12),
-                    _buildStreakCard(context, homeProvider),
-                    const SizedBox(height: 12),
-                    _buildSectionTitle(context, 'Quick Actions'),
-                    const SizedBox(height: 8),
-                    _buildQuickActionsHorizontal(context),
-                    const SizedBox(height: 12),
-                    _buildLevelAndDailyGoalRow(context, homeProvider),
-                    const SizedBox(height: 12),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: DailyChallengesCard(),
-                    ),
-                    const SizedBox(height: 12),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: DailyReviewCard(),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSectionTitle(context, 'Continue Learning'),
-                    const SizedBox(height: 8),
-                    _buildEnrolledCoursesSection(context, homeProvider),
-                    const SizedBox(height: 12),
-                    _buildSectionTitle(context, 'Featured Courses'),
-                    const SizedBox(height: 8),
-                    _buildFeaturedCourses(context, homeProvider),
-                  ],
-                ),
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildHeader(context, homeProvider, authProvider),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStreakCard(context, homeProvider),
+                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Quick Actions'),
+                  const SizedBox(height: 8),
+                  _buildQuickActionsHorizontal(context),
+                  const SizedBox(height: 12),
+                  _buildLevelAndDailyGoalRow(context, homeProvider),
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DailyChallengesCard(),
+                  ),
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DailyReviewCard(),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Continue Learning'),
+                  const SizedBox(height: 8),
+                  _buildEnrolledCoursesSection(context, homeProvider),
+                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Featured Courses'),
+                  const SizedBox(height: 8),
+                  _buildFeaturedCourses(context, homeProvider),
+                ],
               ),
             );
           },
@@ -279,13 +278,16 @@ class _HomePageNewState extends State<HomePageNew> {
     bool compact = false,
     EdgeInsetsGeometry? margin,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final percentage = provider.dailyProgressPercentage;
     final isCompleted = percentage >= 1.0;
     final colorScheme = Theme.of(context).colorScheme;
+    final accent = AppColorRoles.primary(isDark);
+    final accentDeep = AppColorRoles.primaryDeep(isDark);
     final surfaceBg = colorScheme.surfaceContainerHighest;
     final compactBg = isCompleted
         ? AppColors.greenSuccessBright.withValues(alpha: 0.10)
-        : AppColors.primary.withValues(alpha: 0.05);
+        : accent.withValues(alpha: 0.07);
     final cardPadding = compact ? 14.0 : 20.0;
     final ringSize = compact ? 58.0 : 70.0;
     final ringStroke = compact ? 5.0 : 6.0;
@@ -304,7 +306,7 @@ class _HomePageNewState extends State<HomePageNew> {
         border: Border.all(
           color: isCompleted
               ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
-              : AppColors.primary.withValues(alpha: 0.3),
+              : accent.withValues(alpha: 0.35),
         ),
       ),
       child: compact
@@ -325,7 +327,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         isCompleted ? Icons.emoji_events : Icons.bolt,
                         color: isCompleted
                             ? AppColors.greenSuccessBright
-                            : AppColors.primary,
+                          : accent,
                         size: badgeIconSize,
                       ),
                     ),
@@ -340,7 +342,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           fontSize: 15,
                           color: isCompleted
                               ? AppColors.greenSuccess
-                              : AppColors.primaryDark,
+                              : accentDeep,
                         ),
                       ),
                     ),
@@ -363,7 +365,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 AppColors.greenSuccessBright,
                                 AppColors.greenSuccess,
                               ]
-                            : const [AppColors.primary, AppColors.primary],
+                            : AppColorRoles.primaryGradient(isDark),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -379,7 +381,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 style: TextStyle(
                                   fontSize: ringValueFontSize,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: accent,
                                 ),
                               ),
                           ],
@@ -398,7 +400,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     fontSize: 16,
                     color: isCompleted
                         ? AppColors.greenSuccessBright
-                        : AppColors.primary,
+                        : accent,
                   ),
                 ),
               ],
@@ -464,7 +466,7 @@ class _HomePageNewState extends State<HomePageNew> {
                               isCompleted ? Icons.emoji_events : Icons.bolt,
                               color: isCompleted
                                   ? AppColors.greenSuccessBright
-                                  : AppColors.primary,
+                                  : accent,
                               size: badgeIconSize,
                             ),
                           ),
@@ -480,7 +482,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                     fontSize: titleFontSize,
                                     color: isCompleted
                                         ? AppColors.greenSuccess
-                                        : AppColors.primaryDark,
+                                        : accentDeep,
                                   ),
                             ),
                           ),
@@ -495,7 +497,7 @@ class _HomePageNewState extends State<HomePageNew> {
                               fontSize: valueFontSize,
                               color: isCompleted
                                   ? AppColors.greenSuccessBright
-                                  : AppColors.primary,
+                                      : accent,
                             ),
                       ),
                       SizedBox(height: compact ? 2 : 4),
@@ -518,7 +520,7 @@ class _HomePageNewState extends State<HomePageNew> {
                               size: 14,
                               color: isCompleted
                                   ? AppColors.greenSuccessBright
-                                  : AppColors.primary,
+                                  : accent,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -528,7 +530,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 fontWeight: FontWeight.w600,
                                 color: isCompleted
                                     ? AppColors.greenSuccessBright
-                                    : AppColors.primary,
+                                  : accent,
                               ),
                             ),
                           ],
@@ -636,12 +638,13 @@ class _HomePageNewState extends State<HomePageNew> {
   }
 
   Widget _buildEnrolledCourseCard(BuildContext context, CourseEntity course) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = course.userProgress ?? 0;
     final progressColor = progress >= 80
         ? AppColors.greenSuccessBright
         : progress >= 50
         ? AppColors.orange
-        : AppColors.primary;
+      : AppColorRoles.primary(isDark);
     final colorScheme = Theme.of(context).colorScheme;
     final surfaceBg = colorScheme.surfaceContainerHighest;
 
@@ -727,7 +730,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         Text(
                           '${course.totalLessons} lessons',
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
+                            ?.copyWith(color: AppColorRoles.textSecondary(isDark)),
                         ),
                       ],
                     ),
@@ -808,7 +811,7 @@ class _HomePageNewState extends State<HomePageNew> {
     // Show skeleton loading while courses are loading
     if (provider.isLoading && provider.featuredCourses.isEmpty) {
       return SizedBox(
-        height: 240,
+        height: 220,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -825,7 +828,7 @@ class _HomePageNewState extends State<HomePageNew> {
     }
 
     return SizedBox(
-      height: 240,
+      height: 220,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -835,8 +838,9 @@ class _HomePageNewState extends State<HomePageNew> {
           // Staggered animation for featured courses
           return AnimatedListItem(
             index: index,
-            duration: const Duration(milliseconds: 350),
+            duration: const Duration(milliseconds: 400),
             delayPerItem: const Duration(milliseconds: 100),
+            beginOffset: const Offset(0, 60),
             child: _buildCourseCard(context, course, provider),
           );
         },
@@ -849,8 +853,8 @@ class _HomePageNewState extends State<HomePageNew> {
     CourseEntity course,
     HomeProvider provider,
   ) {
-    final levelColor = _getLevelColor(course.level);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final levelColor = _getLevelColor(course.level, isDark: isDark);
 
     return GestureDetector(
       onTap: () {
@@ -1031,7 +1035,10 @@ class _HomePageNewState extends State<HomePageNew> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           shadows: [
-                            Shadow(color: Colors.black54, blurRadius: 4),
+                            Shadow(
+                              color: AppColors.backgroundDark.withValues(alpha: 0.75),
+                              blurRadius: 4,
+                            ),
                           ],
                         ),
                         maxLines: 2,
@@ -1045,7 +1052,7 @@ class _HomePageNewState extends State<HomePageNew> {
             // Bottom section with info and action
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1056,7 +1063,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         _buildInfoChip(
                           icon: Icons.menu_book_rounded,
                           label: '${course.totalLessons} lessons',
-                          color: AppColors.primary,
+                          color: AppColorRoles.primary(isDark),
                         ),
                         const SizedBox(width: 8),
                         _buildInfoChip(
@@ -1066,11 +1073,11 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     // Action button
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: levelColor,
                         borderRadius: BorderRadius.circular(14),
@@ -1139,7 +1146,7 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, {bool isDark = false}) {
     switch (level.toLowerCase()) {
       case 'beginner':
         return AppColors.greenSuccessBright;
@@ -1152,12 +1159,14 @@ class _HomePageNewState extends State<HomePageNew> {
       case 'advanced':
         return AppColors.dangerGradient[0];
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
   /// Quick Actions - Horizontal scrollable section with circular buttons
   Widget _buildQuickActionsHorizontal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     final quickActions = [
       {
         'icon': Icons.smart_display,
@@ -1169,8 +1178,8 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.article,
         'label': 'News',
-        'color': AppColors.primary,
-        'bgColor': AppColors.backgroundLight,
+        'color': AppColors.teal,
+        'bgColor': AppColors.teal.withValues(alpha: 0.1),
         'route': '/news',
       },
       {
@@ -1183,8 +1192,8 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.podcasts,
         'label': 'Podcast',
-        'color': AppColors.primary,
-        'bgColor': AppColors.primary.withValues(alpha: 0.1),
+        'color': accent,
+        'bgColor': accent.withValues(alpha: 0.12),
         'route': '/podcast',
       },
       {
@@ -1302,6 +1311,7 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildQuickStats(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final stats = [
@@ -1309,7 +1319,7 @@ class _HomePageNewState extends State<HomePageNew> {
         icon: Icons.article_rounded,
         label: 'Articles',
         value: '—',
-        color: AppColors.primary,
+          color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.sports_esports_rounded,
@@ -1321,7 +1331,7 @@ class _HomePageNewState extends State<HomePageNew> {
         icon: Icons.headphones_rounded,
         label: 'Listened',
         value: '—',
-        color: AppColors.primary,
+          color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.menu_book_rounded,
@@ -1378,6 +1388,7 @@ class _HomePageNewState extends State<HomePageNew> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildContinueSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<BookProvider>(
@@ -1397,7 +1408,7 @@ class _HomePageNewState extends State<HomePageNew> {
             icon: Icons.article_rounded,
             title: 'News',
             subtitle: 'Continue reading',
-            color: AppColors.primary,
+            color: AppColorRoles.primary(isDark),
             route: '/news',
           ),
           _ContinueItem(
@@ -1411,7 +1422,7 @@ class _HomePageNewState extends State<HomePageNew> {
             icon: Icons.podcasts_rounded,
             title: 'Podcast',
             subtitle: 'Continue listening',
-            color: AppColors.primary,
+            color: AppColorRoles.primary(isDark),
             route: '/podcast',
           ),
           if (currentBook != null)
@@ -1512,7 +1523,7 @@ class _HomePageNewState extends State<HomePageNew> {
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
           fontSize: 18,
-          color: isDark ? AppColors.textInverted : AppColors.slate900,
+          color: AppColorRoles.textPrimary(isDark),
         ),
       ),
     );

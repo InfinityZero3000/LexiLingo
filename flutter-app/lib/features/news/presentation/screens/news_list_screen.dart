@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News List Screen — browse English news articles by category and CEFR level.
 ///
@@ -107,7 +107,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.articles.isEmpty) {
                     return const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: LottieLoadingWidget.medium()),
                     );
                   }
 
@@ -173,7 +173,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               ? const Padding(
                                   padding: EdgeInsets.all(16),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: LottieLoadingWidget.tiny(),
                                   ),
                                 )
                               : const SizedBox.shrink();

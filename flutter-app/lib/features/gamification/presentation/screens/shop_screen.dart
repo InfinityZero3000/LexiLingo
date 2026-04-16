@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -338,7 +339,7 @@ class _ShopScreenState extends State<ShopScreen>
       body: Consumer<GamificationProvider>(
         builder: (context, provider, child) {
           if (provider.isLoadingShop && provider.shopItems.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LottieLoadingWidget.medium());
           }
 
           if (provider.shopError != null && provider.shopItems.isEmpty) {

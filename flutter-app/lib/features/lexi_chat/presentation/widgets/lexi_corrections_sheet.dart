@@ -154,6 +154,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
                     children: linkedConcepts
                         .map(
                           (c) => Container(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width - 88,
+                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 8,
@@ -172,6 +175,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
                             ),
                             child: Text(
                               c,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -209,6 +214,35 @@ class LexiCorrectionsSheet extends StatelessWidget {
   Widget _correctionCard(BuildContext context, LexiCorrection correction) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Widget correctionChip({
+      required String text,
+      required Color textColor,
+      required Color backgroundColor,
+      required Color borderColor,
+      bool strikeThrough = false,
+      FontWeight fontWeight = FontWeight.w500,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Text(
+          text,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: fontWeight,
+            decoration: strikeThrough ? TextDecoration.lineThrough : null,
+          ),
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -227,26 +261,15 @@ class LexiCorrectionsSheet extends StatelessWidget {
         children: [
           // Error → Correction
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Error
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  correction.errorSpan,
-                  style: const TextStyle(
-                    color: AppColors.errorBright,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.lineThrough,
-                  ),
+              Expanded(
+                child: correctionChip(
+                  text: correction.errorSpan,
+                  textColor: AppColors.errorBright,
+                  backgroundColor: Colors.red.withValues(alpha: 0.08),
+                  borderColor: Colors.red.withValues(alpha: 0.15),
+                  strikeThrough: true,
                 ),
               ),
               const Padding(
@@ -258,23 +281,13 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 ),
               ),
               // Correction
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.greenSuccess.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.greenSuccess.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  correction.correction,
-                  style: const TextStyle(
-                    color: AppColors.greenSuccess,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Expanded(
+                child: correctionChip(
+                  text: correction.correction,
+                  textColor: AppColors.greenSuccess,
+                  backgroundColor: AppColors.greenSuccess.withValues(alpha: 0.08),
+                  borderColor: AppColors.greenSuccess.withValues(alpha: 0.2),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],

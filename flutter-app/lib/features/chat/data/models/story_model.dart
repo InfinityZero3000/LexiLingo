@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 /// Story models for Topic-Based Conversation
 /// Defines story/topic data structures for language learning scenarios
 library;

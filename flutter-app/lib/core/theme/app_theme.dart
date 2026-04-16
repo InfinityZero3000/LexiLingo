@@ -107,6 +107,18 @@ class AppColors {
   static const Color accentMintDark = Color(0xFF112121);
   static const Color teal = Color(0xFF00897B);
 
+  // ── Accent: Cyan glow ─────────────────────────────────────────────────────
+  static const Color cyanGlow = Color(0xFF19FCFC);
+  static const Color cyanGlowDark = Color(0xFF30E8E8);
+
+  // ── Dark-Mode Accent & Text Roles ─────────────────────────────────────────
+  static const Color primaryDarkMode = Color(0xFF19FCFC);
+  static const Color primaryDarkModeSoft = Color(0xFF8CFDFF);
+  static const Color primaryDarkModeDeep = Color(0xFF0AAEB8);
+  static const Color textOnDarkPrimary = Color(0xFFEFFDFF);
+  static const Color textOnDarkSecondary = Color(0xFFB8D7DF);
+  static const Color textOnDarkMuted = Color(0xFF88A6B0);
+  
   // ── Slate / Ink ───────────────────────────────────────────────────────────
   static const Color slate900 = Color(0xFF0F172A);
   static const Color slate800 = Color(0xFF1E293B);
@@ -134,6 +146,11 @@ class AppColors {
   static const List<Color> primaryGradient = [
     Color(0xFF137FEC),
     Color(0xFF3B5BDB),
+  ];
+
+  static const List<Color> primaryGradientDark = [
+    Color(0xFF19FCFC),
+    Color(0xFF0AAEB8),
   ];
 
   /// Amber → Deep-Orange (warm, used for XP / Shop)
@@ -177,6 +194,34 @@ class AppColors {
     Color(0xFFFF9F0A),
     Color(0xFFFF5722),
   ];
+}
+
+class AppColorRoles {
+  const AppColorRoles._();
+
+  static Color primary(bool isDark) => isDark
+    ? AppColors.primaryDarkMode
+    : AppColors.primary;
+
+  static Color primaryDeep(bool isDark) => isDark
+    ? AppColors.primaryDarkModeDeep
+    : AppColors.primaryDark;
+
+  static List<Color> primaryGradient(bool isDark) => isDark
+    ? AppColors.primaryGradientDark
+    : AppColors.primaryGradient;
+
+  static Color textPrimary(bool isDark) => isDark
+    ? AppColors.textOnDarkPrimary
+    : AppColors.textDark;
+
+  static Color textSecondary(bool isDark) => isDark
+    ? AppColors.textOnDarkSecondary
+    : AppColors.textGrey;
+
+  static Color textMuted(bool isDark) => isDark
+    ? AppColors.textOnDarkMuted
+    : AppColors.textMuted;
 }
 
 class AppTheme {
@@ -229,28 +274,29 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
+        seedColor: AppColors.primaryDarkMode,
+        primary: AppColors.primaryDarkMode,
+        secondary: AppColors.primaryDarkModeSoft,
         surface: AppColors.surfaceDark,
         surfaceContainer: AppColors.backgroundDark,
         surfaceContainerHighest: AppColors.surfaceDarkMuted,
         brightness: Brightness.dark,
       ),
       textTheme: GoogleFonts.lexendTextTheme().apply(
-        bodyColor: Colors.white,
-        displayColor: Colors.white,
+        bodyColor: AppColors.textOnDarkPrimary,
+        displayColor: AppColors.textOnDarkPrimary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          color: Colors.white,
+          color: AppColors.textOnDarkPrimary,
           fontSize: 18,
           fontWeight: FontWeight.bold,
           fontFamily: 'Lexend',
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: AppColors.textOnDarkPrimary),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -258,8 +304,8 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1C2A38), // Darker shade for nav bar
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Color(0xFF9CA3AF),
+        selectedItemColor: AppColors.primaryDarkMode,
+        unselectedItemColor: AppColors.textOnDarkMuted,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,

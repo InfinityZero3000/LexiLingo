@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -6,7 +7,6 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Library screen showing curated books by CEFR level + global search.
 ///
@@ -121,7 +121,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     return Consumer<BookProvider>(
       builder: (context, provider, _) {
         if (provider.isSearching) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
         if (provider.searchResults.isEmpty &&
             _searchController.text.length >= 2) {
@@ -225,7 +225,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     return Consumer<BookProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.error != null) {

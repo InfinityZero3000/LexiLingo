@@ -127,6 +127,9 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+  firebase_auth_platform_interface: any
+  firebase_messaging_platform_interface: any
+  cloud_firestore_platform_interface: any
 flutter:
 
   # The following line ensures that the Material Icons font is

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -390,7 +392,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
           const SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: LottieLoadingWidget.tiny(),
           ),
           const SizedBox(width: 12),
           Text(
@@ -556,6 +558,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _getCategoryIcon(String category) {
     IconData icon;
     Color color;
@@ -741,6 +744,10 @@ class _TopicMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
+    final bubbleTextStyle = TextStyle(
+      color: isUser ? Colors.white : Colors.black87,
+      fontSize: 15,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -784,13 +791,20 @@ class _TopicMessageBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Text(
-                    message.displayContent,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black87,
-                      fontSize: 15,
-                    ),
-                  ),
+                  child: isUser
+                      ? Text(
+                          message.displayContent,
+                          style: bubbleTextStyle,
+                        )
+                      : QuickSaveSelectionArea(
+                          sourceType: 'topic_chat',
+                          sourceReference: message.id,
+                          contextSentence: message.displayContent,
+                          child: Text(
+                            message.displayContent,
+                            style: bubbleTextStyle,
+                          ),
+                        ),
                 ),
               ),
             ],

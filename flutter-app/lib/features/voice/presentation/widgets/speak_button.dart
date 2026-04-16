@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Speak Button Widget
 /// A reusable button that uses TTS to speak text
@@ -179,10 +180,7 @@ class _SpeakButtonState extends State<SpeakButton> {
         child: SizedBox(
           width: widget.size * 0.4,
           height: widget.size * 0.4,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
+          child: LottieLoadingWidget.tiny(),
         ),
       );
     }
@@ -307,10 +305,7 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
           ? SizedBox(
               width: widget.size,
               height: widget.size,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-              ),
+              child: LottieLoadingWidget.tiny(),
             )
           : Icon(
               _isPlaying ? Icons.stop : Icons.volume_up,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -171,7 +172,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
       builder: (context, provider, _) {
         if (provider.isLoading || !_gameLoaded) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: LottieLoadingWidget.medium()),
           );
         }
         final game = provider.spellingBee!;

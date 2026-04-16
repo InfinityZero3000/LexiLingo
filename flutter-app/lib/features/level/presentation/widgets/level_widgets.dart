@@ -108,6 +108,8 @@ class LevelProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final accent = AppColorRoles.primary(isDark);
         final level = levelProvider.displayLevel;
         final xpIn = levelProvider.displayXpInLevel;
         final xpFor = levelProvider.displayXpForNextLevel;
@@ -151,13 +153,13 @@ class LevelProgressCard extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.all(iconPadding),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
+                          color: accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           Icons.workspace_premium_rounded,
                           size: iconSize,
-                          color: AppColors.primary,
+                          color: accent,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -199,13 +201,13 @@ class LevelProgressCard extends StatelessWidget {
                           Container(
                             padding: EdgeInsets.all(iconPadding),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
+                              color: accent.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               Icons.workspace_premium_rounded,
                               size: iconSize,
-                              color: AppColors.primary,
+                              color: accent,
                             ),
                           ),
                           SizedBox(width: compact ? 8 : 12),
@@ -240,7 +242,7 @@ class LevelProgressCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: accent,
                                   fontSize: totalXpFontSize,
                                 ),
                           ),
@@ -264,7 +266,7 @@ class LevelProgressCard extends StatelessWidget {
                         '${(progress * 100).toInt()}% complete',
                         style: Theme.of(context).textTheme.bodySmall
                             ?.copyWith(
-                              color: AppColors.primary,
+                              color: accent,
                               fontWeight: FontWeight.w600,
                               fontSize: compact ? 10.5 : null,
                             ),
@@ -277,7 +279,7 @@ class LevelProgressCard extends StatelessWidget {
                         value: progress,
                         backgroundColor: AppColors.grey200,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                          accent,
                         ),
                         minHeight: progressHeight,
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_detail_entity.dart';
@@ -33,7 +34,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
           if (provider.isLoadingDetail) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LottieLoadingWidget.medium());
           }
 
           if (provider.detailError != null) {
@@ -202,12 +203,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(
-                                        Colors.white,
-                                      ),
-                                    ),
+                                    child: LottieLoadingWidget.tiny(),
                                   )
                                 : const Icon(Icons.play_arrow),
                             label: Text(

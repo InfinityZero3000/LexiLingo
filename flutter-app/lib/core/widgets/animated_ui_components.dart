@@ -171,6 +171,7 @@ class AnimatedListItem extends StatelessWidget {
   final int index;
   final Duration duration;
   final Duration delayPerItem;
+  final Offset beginOffset;
 
   const AnimatedListItem({
     super.key,
@@ -178,6 +179,7 @@ class AnimatedListItem extends StatelessWidget {
     required this.index,
     this.duration = const Duration(milliseconds: 400),
     this.delayPerItem = const Duration(milliseconds: 50),
+    this.beginOffset = const Offset(0, 20),
   });
 
   @override
@@ -185,7 +187,7 @@ class AnimatedListItem extends StatelessWidget {
     return SlideFadeTransition(
       duration: duration,
       delay: Duration(milliseconds: delayPerItem.inMilliseconds * index),
-      beginOffset: const Offset(0, 20),
+      beginOffset: beginOffset,
       child: child,
     );
   }

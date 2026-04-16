@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Full-width list tile for a single podcast episode.
 ///
@@ -285,7 +285,7 @@ class _DownloadButton extends StatelessWidget {
         return const SizedBox(
           width: 22,
           height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: LottieLoadingWidget.tiny(),
         );
       case DownloadState.notDownloaded:
         return GestureDetector(

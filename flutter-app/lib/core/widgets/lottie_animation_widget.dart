@@ -110,7 +110,7 @@ class LottieAnimationWidget extends StatelessWidget {
     this.controller,
     this.onLoaded,
     this.duration,
-  }) : animation = LottieAnimation.spinningDots;
+  }) : animation = LottieAnimation.sandyLoading;
 
   /// Quick constructor for pulse loader
   const LottieAnimationWidget.pulse({
@@ -138,11 +138,11 @@ class LottieAnimationWidget extends StatelessWidget {
       onLoaded: onLoaded,
       frameRate: FrameRate.max,
       errorBuilder: (context, error, stackTrace) {
-        // Fallback to simple loading indicator
+        // Fallback when lottie decode fails
         return SizedBox(
           width: width ?? 80,
           height: height ?? 80,
-          child: const CircularProgressIndicator(),
+          child: const Icon(Icons.hourglass_top_rounded),
         );
       },
     );

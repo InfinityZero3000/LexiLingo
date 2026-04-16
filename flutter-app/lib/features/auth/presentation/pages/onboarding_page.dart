@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class OnboardingAnswers {
@@ -191,7 +192,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.2),
+                          child: LottieLoadingWidget.tiny(),
                         )
                       : Text(
                           _currentPage < 2 ? 'Continue' : 'Create My Plan',

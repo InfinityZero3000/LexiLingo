@@ -31,6 +31,56 @@ class LexiChatDataSource {
 
   LexiChatDataSource({required this.apiClient});
 
+  String _normalizeMarkdownBoldMarkers(String text) {
+    if (!text.contains('**')) return text;
+
+    final out = <String>[];
+    var inBold = false;
+    int? openMarkerIndex;
+    var i = 0;
+
+    while (i < text.length) {
+      final isDoubleStar = i + 1 < text.length && text[i] == '*' && text[i + 1] == '*';
+      final isExactPair =
+          isDoubleStar &&
+          (i == 0 || text[i - 1] != '*') &&
+          (i + 2 >= text.length || text[i + 2] != '*');
+
+      if (!isExactPair) {
+        out.add(text[i]);
+        i += 1;
+        continue;
+      }
+
+      final prevChar = i > 0 ? text[i - 1] : '';
+      final nextChar = i + 2 < text.length ? text[i + 2] : '';
+      final canOpen = nextChar.isNotEmpty && nextChar.trim().isNotEmpty;
+      final canClose = prevChar.isNotEmpty && prevChar.trim().isNotEmpty;
+
+      if (!inBold) {
+        if (canOpen) {
+          out.add('**');
+          openMarkerIndex = out.length - 1;
+          inBold = true;
+        }
+      } else {
+        if (canClose) {
+          out.add('**');
+          openMarkerIndex = null;
+          inBold = false;
+        }
+      }
+
+      i += 2;
+    }
+
+    if (inBold && openMarkerIndex != null && openMarkerIndex < out.length) {
+      out.removeAt(openMarkerIndex);
+    }
+
+    return out.join();
+  }
+
   String _sanitizeAssistantContent(String input) {
     var text = input;
 
@@ -58,10 +108,20 @@ class LexiChatDataSource {
       '',
     );
 
-    // Remove markdown wrappers that should not appear in plain chat bubbles.
-    text = text.replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (m) => m[1] ?? '');
-    text = text.replaceAllMapped(RegExp(r'__(.*?)__'), (m) => m[1] ?? '');
-    text = text.replaceAll('`', '');
+    // Preserve markdown markers so the UI can render lists/emphasis correctly.
+    // Normalize common model output like "1) item" to markdown ordered list style.
+    text = text.replaceAllMapped(RegExp(r'(\d+)\)\s+'), (m) => '${m[1]}. ');
+    text = text.replaceAllMapped(
+      RegExp(r'(?<!\n)(\d+\.\s+)'),
+      (m) => '\n${m[1]}',
+    );
+
+    // Unescape markdown punctuation if model returns escaped symbols.
+    text = text.replaceAll('\\*', '*');
+    text = text.replaceAll('\\_', '_');
+
+    // Remove malformed bold markers while preserving valid markdown emphasis.
+    text = _normalizeMarkdownBoldMarkers(text);
 
     // Normalize excessive blank lines from stripped sections.
     text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();

@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
+import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
@@ -46,7 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
       body: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           if (settings.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LottieLoadingWidget.medium());
           }
 
           return ListView(
@@ -546,8 +548,25 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
             final isSelected = settings.theme == theme['code'];
+            Offset? tapOrigin;
+
             return InkWell(
-              onTap: () => settings.updateTheme(theme['code'] as String),
+              onTapDown: (details) {
+                tapOrigin = details.globalPosition;
+              },
+              onTap: () {
+                if (isSelected) return;
+
+                final themeCode = theme['code'] as String;
+                final origin = tapOrigin ?? _screenCenter(context);
+
+                ThemeRippleBus.instance.emit(
+                  origin: origin,
+                  themeCode: themeCode,
+                );
+
+                settings.updateTheme(themeCode);
+              },
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -589,6 +608,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Offset _screenCenter(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Offset(size.width / 2, size.height / 2);
   }
 
   Widget _buildAccountSection(BuildContext context) {

@@ -588,7 +588,6 @@ class LessonProgressIndicator extends StatelessWidget {
                   value: value,
                   strokeWidth: strokeWidth,
                   color: color,
-                  strokeCap: StrokeCap.round,
                 ),
               );
             },

@@ -8,7 +8,6 @@ import '../../../games/data/repositories/games_repository.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
 import '../widgets/transcript_panel.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Full podcast player screen.
 ///

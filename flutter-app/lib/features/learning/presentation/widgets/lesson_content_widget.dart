@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 
 /// Lesson Content Widget for Fill in Blank and Translation exercises
 class LessonContentWidget extends StatefulWidget {
@@ -73,12 +74,17 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          widget.exercise.question,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
+                        child: QuickSaveSelectionArea(
+                          sourceType: 'course_lesson',
+                          sourceReference: widget.exercise.id,
+                          contextSentence: widget.exercise.question,
+                          child: Text(
+                            widget.exercise.question,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),
@@ -111,12 +117,17 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              widget.exercise.hint!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue,
-                                height: 1.4,
+                            child: QuickSaveSelectionArea(
+                              sourceType: 'course_lesson',
+                              sourceReference: widget.exercise.id,
+                              contextSentence: widget.exercise.hint!,
+                              child: Text(
+                                widget.exercise.hint!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.blue,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ),
@@ -265,11 +276,16 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        widget.exercise.correctAnswer,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.correctAnswer,
+                        child: Text(
+                          widget.exercise.correctAnswer,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -278,9 +294,14 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                       const SizedBox(height: 12),
                       const Divider(),
                       const SizedBox(height: 8),
-                      Text(
-                        widget.exercise.explanation!,
-                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.explanation!,
+                        child: Text(
+                          widget.exercise.explanation!,
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
                       ),
                     ],
                   ],

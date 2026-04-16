@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
@@ -133,7 +134,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: LottieLoadingWidget.tiny(),
                   )
                 : const Text(
                     'Save',
@@ -261,10 +262,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         ? SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(
-                              color: AppColors.surfaceLight,
-                              strokeWidth: 2,
-                            ),
+                            child: LottieLoadingWidget.tiny(),
                           )
                         : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,

@@ -36,18 +36,18 @@ IconData getTimeBasedIcon() {
 }
 
 /// Get icon color based on time of day
-Color getTimeBasedIconColor() {
+Color getTimeBasedIconColor({required bool isDark}) {
   final hour = DateTime.now().hour;
   if (hour < 5) {
-    return AppColors.primary; // Indigo for night
+    return AppColorRoles.primary(isDark);
   } else if (hour < 12) {
     return AppColors.warning; // Amber for morning
   } else if (hour < 17) {
-    return AppColors.primary; // Blue for afternoon
+    return AppColorRoles.primary(isDark);
   } else if (hour < 21) {
     return AppColors.orange; // Deep orange for evening
   } else {
-    return AppColors.primary; // Indigo for night
+    return AppColorRoles.primary(isDark);
   }
 }
 
@@ -75,7 +75,8 @@ class PersonalizedGreetingHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final greeting = getTimeBasedGreeting();
     final timeIcon = getTimeBasedIcon();
-    final iconColor = getTimeBasedIconColor();
+    final iconColor = getTimeBasedIconColor(isDark: isDark);
+    final accent = AppColorRoles.primary(isDark);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -87,7 +88,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? AppColors.primary.withValues(alpha: 0.2)
+              ? accent.withValues(alpha: 0.25)
               : AppColors.primary.withValues(alpha: 0.15),
         ),
       ),
@@ -96,7 +97,11 @@ class PersonalizedGreetingHeader extends StatelessWidget {
           // Avatar with animated ring
           GestureDetector(
             onTap: onAvatarTap,
-            child: _AnimatedAvatarRing(avatarUrl: avatarUrl, size: 56),
+            child: _AnimatedAvatarRing(
+              avatarUrl: avatarUrl,
+              size: 56,
+              useDarkAccent: isDark,
+            ),
           ),
           const SizedBox(width: 14),
           // Greeting text
@@ -146,8 +151,13 @@ class PersonalizedGreetingHeader extends StatelessWidget {
 class _AnimatedAvatarRing extends StatefulWidget {
   final String? avatarUrl;
   final double size;
+  final bool useDarkAccent;
 
-  const _AnimatedAvatarRing({this.avatarUrl, this.size = 56});
+  const _AnimatedAvatarRing({
+    this.avatarUrl,
+    this.size = 56,
+    this.useDarkAccent = false,
+  });
 
   @override
   State<_AnimatedAvatarRing> createState() => _AnimatedAvatarRingState();
@@ -177,6 +187,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final accent = AppColorRoles.primary(widget.useDarkAccent);
         return Container(
           width: widget.size,
           height: widget.size,
@@ -185,10 +196,10 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             gradient: SweepGradient(
               startAngle: _controller.value * 2 * math.pi,
               colors: [
-                AppColors.primary,
+                accent,
                 AppColors.purple,
                 AppColors.purple,
-                AppColors.primary,
+                accent,
               ],
             ),
           ),
@@ -213,9 +224,10 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
   }
 
   Widget _buildDefaultAvatar() {
+    final accent = AppColorRoles.primary(widget.useDarkAccent);
     return Container(
-      color: AppColors.primary.withValues(alpha: 0.2),
-      child: const Icon(Icons.person, color: AppColors.primary, size: 28),
+      color: accent.withValues(alpha: 0.2),
+      child: Icon(Icons.person, color: accent, size: 28),
     );
   }
 }
@@ -489,16 +501,35 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final weekly = widget.weeklyActivity ?? List.filled(7, false);
+    final completedDays = weekly.where((active) => active).length;
+    final weekProgress = completedDays / 7;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.grey100,
+        gradient: isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.surfaceDark,
+                  const Color(0xFF1A1F26),
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFF6F0),
+                  Color(0xFFFFEFE3),
+                ],
+              ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.slate200,
+              : const Color(0xFFF4DCCB),
         ),
         boxShadow: [
           BoxShadow(
@@ -533,30 +564,69 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : AppColors.textGrey,
+                        color: isDark ? Colors.white70 : const Color(0xFF5F6573),
                       ),
                     ),
                   ],
                 ),
               ),
-              TextButton(
+              TextButton.icon(
                 onPressed: widget.onTap,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.accentMint,
+                  foregroundColor: isDark
+                      ? const Color(0xFF8AF1E5)
+                      : const Color(0xFF0D9B8E),
+                  backgroundColor: isDark
+                      ? const Color(0xFF123934).withValues(alpha: 0.45)
+                      : const Color(0xFFDDFBF5),
                   textStyle: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    side: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF5DD8CA).withValues(alpha: 0.55)
+                          : const Color(0xFF9DE9DD),
+                    ),
+                  ),
                 ),
-                child: const Text('View Calendar'),
+                icon: const Icon(Icons.calendar_month_rounded, size: 14),
+                label: const Text('Calendar'),
               ),
             ],
           ),
           const SizedBox(height: 16),
           _buildWeekCalendar(),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: weekProgress,
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFF3E4D7),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                widget.isActiveToday
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFFF915F),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$completedDays/7 active days this week',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white60 : const Color(0xFF7A6A5F),
+            ),
+          ),
         ],
       ),
     );
@@ -642,6 +712,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     final now = DateTime.now();
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Use real per-day activity data when available; fall back to no highlights
     final activity = widget.weeklyActivity ?? List.filled(7, false);
@@ -661,7 +732,11 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-                  color: isToday ? AppColors.deepOrange : Colors.grey[500],
+                  color: isToday
+                      ? AppColors.deepOrange
+                      : isDark
+                      ? Colors.white54
+                      : const Color(0xFF9A8F86),
                 ),
               ),
               const SizedBox(height: 8),
@@ -672,13 +747,17 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   shape: BoxShape.circle,
                   color: isActive
                       ? AppColors.deepOrange
-                      : Colors.transparent,
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : const Color(0xFFF8EBDF)),
                   border: Border.all(
                     color: isToday
                         ? AppColors.deepOrange
                         : isActive
                         ? Colors.transparent
-                        : Colors.grey.withValues(alpha: 0.3),
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : const Color(0xFFE8CCB6)),
                     width: isToday ? 2 : 1,
                   ),
                 ),

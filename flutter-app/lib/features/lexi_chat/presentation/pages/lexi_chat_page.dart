@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -41,7 +42,6 @@ class _LexiChatPageState extends State<LexiChatPage>
   bool _isRecording = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
-  String? _recordingPath;
   int _lastMessageCount = 0;
   final List<String> _quickReplies = const [
     'Hi Lexi, can we practice speaking?',
@@ -137,8 +137,6 @@ class _LexiChatPageState extends State<LexiChatPage>
         recordingPath =
         '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       }
-
-      _recordingPath = recordingPath;
 
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
@@ -511,10 +509,7 @@ class _LexiChatPageState extends State<LexiChatPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(
-                  color: AppColors.primary,
-                  strokeWidth: 2,
-                ),
+                LottieLoadingWidget.medium(),
                 const SizedBox(height: 12),
                 Text(
                   'Starting conversation...',

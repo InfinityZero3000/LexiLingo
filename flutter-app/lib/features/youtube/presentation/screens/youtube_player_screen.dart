@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// YouTube Player Screen — video player with synced subtitle overlay.
 ///
@@ -54,7 +55,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     super.dispose();
   }
 
-  void _onWordTap(String word) {
+  void _onWordTap(String word, {String? contextSentence}) {
     // Clean word (remove punctuation)
     final cleanWord = word.replaceAll(RegExp(r'[^\w\s]'), '').toLowerCase();
     if (cleanWord.isEmpty) return;
@@ -62,7 +63,10 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildDictionarySheet(cleanWord),
+      builder: (context) => _buildDictionarySheet(
+        cleanWord,
+        contextSentence: contextSentence,
+      ),
     );
   }
 
@@ -324,7 +328,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     : AppColors.grey200,
               ),
             ),
-            child: const Center(child: CircularProgressIndicator()),
+            child: const Center(child: LottieLoadingWidget.medium()),
           );
         }
 
@@ -463,7 +467,10 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               runSpacing: 2,
               children: segment.text.split(' ').map((word) {
                 return GestureDetector(
-                  onTap: () => _onWordTap(word),
+                  onTap: () => _onWordTap(
+                    word,
+                    contextSentence: segment.text,
+                  ),
                   child: Text(
                     word,
                     style: TextStyle(
@@ -494,7 +501,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   //  Dictionary Bottom Sheet (Placeholder)
   // ──────────────────────────────────────
 
-  Widget _buildDictionarySheet(String word) {
+  Widget _buildDictionarySheet(String word, {String? contextSentence}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -537,6 +544,16 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
+                    Future.microtask(() {
+                      if (!mounted) return;
+                      showQuickSaveWordSheet(
+                        context,
+                        word: word,
+                        sourceType: 'youtube',
+                        sourceReference: widget.video.videoId,
+                        contextSentence: contextSentence,
+                      );
+                    });
                   },
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
                   label: const Text('Save Word'),

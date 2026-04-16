@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Base shimmer container with consistent styling
 class ShimmerContainer extends StatelessWidget {

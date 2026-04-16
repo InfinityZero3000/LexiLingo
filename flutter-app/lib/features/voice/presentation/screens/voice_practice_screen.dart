@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -41,7 +40,6 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   Timer? _recordingTimer;
   StreamSubscription<PlayerState>? _playerStateSub;
   Duration _recordingDuration = Duration.zero;
-  String? _recordingPath;
   bool _isRecording = false;
   bool _isPlaying = false;
   bool _isProcessing = false;
@@ -117,8 +115,6 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                 ? 'recording_${DateTime.now().millisecondsSinceEpoch}.wav'
                 : recordingPath!,
       );
-
-      _recordingPath = recordingPath;
 
       if (!mounted) return;
 

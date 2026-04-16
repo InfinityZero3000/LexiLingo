@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Card widget displaying book cover, title, author, and CEFR badge.
 ///

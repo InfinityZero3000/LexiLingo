@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/core/network/badge_image_cache.dart';
@@ -224,7 +225,7 @@ class AchievementBadge extends StatelessWidget {
                   child: SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: LottieLoadingWidget.tiny(),
                   ),
                 ),
                 errorWidget: (context, url, error) {

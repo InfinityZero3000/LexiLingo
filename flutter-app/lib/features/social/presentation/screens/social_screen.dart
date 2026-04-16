@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -93,7 +94,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFeed && provider.activityFeed.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.feedError != null && provider.activityFeed.isEmpty) {
@@ -119,7 +120,7 @@ class _SocialScreenState extends State<SocialScreen>
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+                    child: LottieLoadingWidget.tiny(),
                   ),
                 );
               }
@@ -171,7 +172,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFollowers && provider.followers.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.followers.isEmpty) {
@@ -212,7 +213,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFollowing && provider.following.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.following.isEmpty) {
@@ -647,7 +648,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
             child: Consumer<SocialProvider>(
               builder: (context, provider, child) {
                 if (provider.isSearching) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: LottieLoadingWidget.medium());
                 }
 
                 if (provider.searchQuery.isEmpty) {

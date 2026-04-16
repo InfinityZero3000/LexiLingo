@@ -23,6 +23,7 @@ class LexiChatProvider extends ChangeNotifier {
   final LexiChatRepository repository;
   static const String _savedSessionsKey = 'lexi_saved_sessions';
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const int _messagesPageSize = 50;
 
   LexiChatProvider({required this.repository}) {
     _loadSavedSessions();
@@ -35,6 +36,9 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSending = false;
   bool _isLoadingSessions = false;
+  bool _isLoadingMoreMessages = false;
+  bool _hasMoreMessages = false;
+  String? _nextMessageCursor;
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   bool _isRestoringSession = false;
@@ -58,6 +62,8 @@ class LexiChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
   bool get isLoadingSessions => _isLoadingSessions;
+  bool get isLoadingMoreMessages => _isLoadingMoreMessages;
+  bool get hasMoreMessages => _hasMoreMessages;
   bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
   bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
@@ -84,6 +90,9 @@ class LexiChatProvider extends ChangeNotifier {
         ),
       );
       _messages.clear();
+      _isLoadingMoreMessages = false;
+      _hasMoreMessages = false;
+      _nextMessageCursor = null;
 
       // Add Lexi's greeting
       _messages.add(
@@ -150,7 +159,22 @@ class LexiChatProvider extends ChangeNotifier {
         messageCount: summary.messageCount,
       );
 
-      final loaded = await repository.getMessages(sessionId: summary.sessionId);
+      final page = await repository.getMessagesPaged(
+        sessionId: summary.sessionId,
+        limit: _messagesPageSize,
+      );
+
+      var loaded = page.messages;
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
+
+      if (loaded.isEmpty && summary.messageCount > 0) {
+        // Fallback for older servers that don't support paged contract yet.
+        loaded = await repository.getMessages(sessionId: summary.sessionId);
+        _hasMoreMessages = false;
+        _nextMessageCursor = null;
+      }
+
       _messages
         ..clear()
         ..addAll(loaded);
@@ -194,6 +218,33 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> loadOlderMessages() async {
+    if (_session == null || _isLoadingMoreMessages || !_hasMoreMessages) return;
+
+    _isLoadingMoreMessages = true;
+    notifyListeners();
+
+    try {
+      final page = await repository.getMessagesPaged(
+        sessionId: _session!.sessionId,
+        limit: _messagesPageSize,
+        cursor: _nextMessageCursor,
+      );
+
+      if (page.messages.isNotEmpty) {
+        _messages.insertAll(0, page.messages);
+      }
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
+    } catch (e) {
+      _error = 'Failed to load older messages: $e';
+      logWarn(_tag, _error!);
+    } finally {
+      _isLoadingMoreMessages = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> renameSession(String sessionId, String title) async {
     final idx = _sessions.indexWhere((s) => s.sessionId == sessionId);
     if (idx == -1) return;
@@ -209,6 +260,9 @@ class LexiChatProvider extends ChangeNotifier {
     if (_session?.sessionId == sessionId) {
       _session = null;
       _messages.clear();
+      _isLoadingMoreMessages = false;
+      _hasMoreMessages = false;
+      _nextMessageCursor = null;
     }
     await _saveSessions();
     notifyListeners();

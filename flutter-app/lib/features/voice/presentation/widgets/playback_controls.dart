@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Playback Controls Widget
@@ -122,10 +123,7 @@ class PlaybackControls extends StatelessWidget {
                           child: SizedBox(
                             width: 28,
                             height: 28,
-                            child: CircularProgressIndicator(
-                              color: AppColors.surfaceLight,
-                              strokeWidth: 2.5,
-                            ),
+                            child: LottieLoadingWidget.tiny(),
                           ),
                         )
                       : Icon(

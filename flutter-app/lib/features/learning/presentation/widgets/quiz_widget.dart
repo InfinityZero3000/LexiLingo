@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -94,12 +95,17 @@ class _QuizWidgetState extends State<QuizWidget>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          widget.exercise.question,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
+                        child: QuickSaveSelectionArea(
+                          sourceType: 'course_lesson',
+                          sourceReference: widget.exercise.id,
+                          contextSentence: widget.exercise.question,
+                          child: Text(
+                            widget.exercise.question,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),
@@ -131,11 +137,16 @@ class _QuizWidgetState extends State<QuizWidget>
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              widget.exercise.hint!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue,
+                            child: QuickSaveSelectionArea(
+                              sourceType: 'course_lesson',
+                              sourceReference: widget.exercise.id,
+                              contextSentence: widget.exercise.hint!,
+                              child: Text(
+                                widget.exercise.hint!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.blue,
+                                ),
                               ),
                             ),
                           ),
@@ -268,9 +279,14 @@ class _QuizWidgetState extends State<QuizWidget>
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        widget.exercise.explanation!,
-                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.explanation!,
+                        child: Text(
+                          widget.exercise.explanation!,
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
                       ),
                     ],
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
@@ -31,6 +32,7 @@ class ProficiencyCard extends StatelessWidget {
   Widget _buildContent(BuildContext context, ProficiencyProvider provider) {
     final profile = provider.profile;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     final hasEnoughData =
         profile.exercisesCompleted >= unlockThreshold ||
         profile.lessonsCompleted >= unlockThreshold;
@@ -58,7 +60,7 @@ class ProficiencyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.2)
+              ? accent.withValues(alpha: 0.22)
                   : AppColors.slate200,
             ),
           ),
@@ -98,9 +100,9 @@ class ProficiencyCard extends StatelessWidget {
                               },
                         size: 240,
                         fillColor: isDark
-                            ? AppColors.primary.withValues(alpha: 0.25)
+                          ? accent.withValues(alpha: 0.25)
                             : AppColors.primary.withValues(alpha: 0.15),
-                        strokeColor: AppColors.primary,
+                        strokeColor: accent,
                         gridColor: isDark
                             ? Colors.white.withValues(alpha: 0.1)
                             : AppColors.slate200,
@@ -129,7 +131,7 @@ class ProficiencyCard extends StatelessWidget {
                             Icons.hourglass_bottom_rounded,
                             size: 28,
                             color: isDark
-                                ? AppColors.primary.withValues(alpha: 0.6)
+                            ? accent.withValues(alpha: 0.6)
                                 : const Color(
                                     0xFF6366F1,
                                   ).withValues(alpha: 0.4),
@@ -217,7 +219,7 @@ class ProficiencyCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: accent,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -247,6 +249,7 @@ class ProficiencyCard extends StatelessWidget {
 
   Widget _buildLoadingState(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -267,14 +270,14 @@ class ProficiencyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.2)
+              ? accent.withValues(alpha: 0.22)
                   : AppColors.slate200,
             ),
           ),
           child: const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: LottieLoadingWidget.medium(),
             ),
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
@@ -235,12 +236,7 @@ class _MessageBubbleState extends State<MessageBubble>
                                   SizedBox(
                                     width: 12,
                                     height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: isUser
-                                          ? Colors.white
-                                          : AppColors.primary,
-                                    ),
+                                    child: LottieLoadingWidget.tiny(),
                                   )
                                 else if (widget.message.hasError)
                                   Icon(

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
@@ -87,7 +88,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     });
   }
 
-  void _onWordTap(String word) {
+  void _onWordTap(String word, {String? contextSentence}) {
     final cleanWord = word
         .replaceAll(RegExp(r'[^\w\s]'), '')
         .toLowerCase()
@@ -97,7 +98,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _buildDictionarySheet(cleanWord),
+      builder: (_) => _buildDictionarySheet(
+        cleanWord,
+        contextSentence: contextSentence,
+      ),
     );
   }
 
@@ -351,7 +355,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             child: SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: LottieLoadingWidget.tiny(),
                             ),
                           ),
                         ),
@@ -461,7 +465,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
                 child: GestureDetector(
-                  onTap: () => _onWordTap(word),
+                  onTap: () => _onWordTap(
+                    word,
+                    contextSentence: paragraph,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 2,
@@ -557,7 +564,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   //  Dictionary Sheet (shared with YouTube)
   // ──────────────────────────────────────
 
-  Widget _buildDictionarySheet(String word) {
+  Widget _buildDictionarySheet(String word, {String? contextSentence}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
@@ -602,7 +609,21 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Future.microtask(() {
+                      if (!mounted) return;
+                      showQuickSaveWordSheet(
+                        context,
+                        word: word,
+                        sourceType: 'news',
+                        sourceReference: widget.article.id.isNotEmpty
+                            ? widget.article.id
+                            : widget.article.url,
+                        contextSentence: contextSentence,
+                      );
+                    });
+                  },
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
                   label: const Text('Save Word'),
                   style: OutlinedButton.styleFrom(

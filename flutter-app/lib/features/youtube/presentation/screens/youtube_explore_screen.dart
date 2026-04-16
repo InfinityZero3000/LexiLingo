@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
@@ -182,7 +183,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget _buildChannelsSection(YouTubeProvider provider, bool isDark) {
     if (provider.isLoading) {
       return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: LottieLoadingWidget.medium()),
       );
     }
 
@@ -385,7 +386,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget _buildSearchResults(YouTubeProvider provider, bool isDark) {
     if (provider.isSearching && provider.searchResults.isEmpty) {
       return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: LottieLoadingWidget.medium()),
       );
     }
 
@@ -419,7 +420,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
             return provider.isSearching
                 ? const Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: LottieLoadingWidget.medium()),
                   )
                 : const SizedBox.shrink();
           }

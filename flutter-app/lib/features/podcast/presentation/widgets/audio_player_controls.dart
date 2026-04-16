@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Bottom-bar style audio player controls widget.
 ///

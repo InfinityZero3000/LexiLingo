@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -47,6 +48,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
+
     return Scaffold(
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
@@ -59,18 +62,31 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 floating: true,
                 pinned: true,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                automaticallyImplyLeading: false,
+                leading: canPop
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Back',
+                      )
+                    : null,
+                leadingWidth: canPop ? 56 : 0,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
+                  background: SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        canPop ? 72 : 20,
+                        12,
+                        20,
+                        0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: AppColors.primary,
@@ -83,50 +99,47 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     ).colorScheme.surface,
                                     size: 24,
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Discover Courses',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Text(
-                                      '${provider.courses.length} courses available',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF3B82F6,
-                                    ).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Discover Courses',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.tune_rounded,
-                                      color: AppColors.primary,
-                                    ),
-                                    onPressed: () => _showFilterSheet(context),
-                                    tooltip: 'Filter',
+                                  Text(
+                                    '${provider.courses.length} courses available',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.grey[600]),
                                   ),
+                                ],
+                              ),
+                              const Spacer(),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.tune_rounded,
+                                    color: AppColors.primary,
+                                  ),
+                                  onPressed: () => _showFilterSheet(context),
+                                  tooltip: 'Filter',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -139,7 +152,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   provider.courses.isEmpty &&
                   provider.categories.isEmpty)
                 const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: LottieLoadingWidget.medium()),
                 )
               else if (provider.coursesError != null &&
                   provider.courses.isEmpty)
@@ -183,7 +196,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
+              child: LottieLoadingWidget.small(),
             ),
           );
         }

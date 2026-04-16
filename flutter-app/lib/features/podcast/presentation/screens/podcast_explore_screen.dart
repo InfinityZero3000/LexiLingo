@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../providers/podcast_provider.dart';
 import '../widgets/podcast_card.dart';
 import 'podcast_detail_screen.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Main podcast browse screen.
 ///
@@ -142,7 +142,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                 // Loading state (initial load only)
                 if (provider.isLoading && provider.curatedCategories.isEmpty) {
                   return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: LottieLoadingWidget.medium()),
                   );
                 }
 
@@ -201,7 +201,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   Widget _buildSearchResults(PodcastProvider provider, bool isDark) {
     if (provider.isSearching) {
       return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: LottieLoadingWidget.medium()),
       );
     }
 

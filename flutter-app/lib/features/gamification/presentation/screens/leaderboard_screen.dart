@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -175,11 +176,11 @@ class _LeaderboardTab extends StatelessWidget {
       builder: (context, provider, child) {
         // Only show content for the selected league
         if (provider.selectedLeague != league) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.isLoadingLeaderboard && provider.leaderboard == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.leaderboardError != null && provider.leaderboard == null) {

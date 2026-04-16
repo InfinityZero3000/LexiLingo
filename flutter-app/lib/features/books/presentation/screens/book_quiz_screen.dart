@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../providers/book_provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Comprehension quiz screen for a book chapter.
 ///
@@ -78,7 +78,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: LottieLoadingWidget.medium(),
             );
           }
 

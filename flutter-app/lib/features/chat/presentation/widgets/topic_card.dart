@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../data/models/story_model.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -161,7 +162,7 @@ class TopicCard extends StatelessWidget {
                       const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: LottieLoadingWidget.tiny(),
                       ),
                       const SizedBox(height: 8),
                       Text(

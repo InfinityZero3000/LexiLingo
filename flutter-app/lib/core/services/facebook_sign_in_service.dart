@@ -31,7 +31,7 @@ class FacebookSignInService {
       ..addScope('email')
       ..addScope('public_profile');
 
-    final userCredential = await FirebaseAuth.instance.signInWithPopup(
+    await FirebaseAuth.instance.signInWithPopup(
       provider,
     );
     

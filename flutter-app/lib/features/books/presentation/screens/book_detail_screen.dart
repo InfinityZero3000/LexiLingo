@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -6,7 +7,6 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import 'book_quiz_screen.dart';
 import 'book_reader_screen.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Book detail screen showing cover, synopsis, CEFR badge, and Read/Download actions.
 ///
@@ -336,9 +336,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
+                                      child: LottieLoadingWidget.tiny(),
                                     )
                                   : Icon(
                                       isDownloaded

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -213,7 +214,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
           builder: (context, provider, _) {
             if (provider.isLoading || !_gameLoaded) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: Center(child: LottieLoadingWidget.medium()),
               );
             }
             final game = provider.wordScramble!;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'forgot_password_page.dart';
@@ -276,7 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: LottieLoadingWidget.tiny(),
                               )
                             : const Text(
                                 'Sign In',
