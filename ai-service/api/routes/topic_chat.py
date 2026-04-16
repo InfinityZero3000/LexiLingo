@@ -7,6 +7,9 @@ Includes starting topic sessions and sending messages within topic context.
 
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+import base64
+import json
 from datetime import datetime
 import uuid
 import time
@@ -55,6 +58,68 @@ async def _load_full_cursor(cursor, batch_size: int = 500) -> list[dict]:
         if len(batch) < batch_size:
             break
     return rows
+
+
+def _to_iso_timestamp(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
+def _serialize_topic_message(doc: dict) -> dict:
+    return {
+        "id": doc.get("message_id") or str(doc.get("_id", "")),
+        "message_id": doc.get("message_id") or str(doc.get("_id", "")),
+        "session_id": doc.get("session_id", ""),
+        "content": doc.get("content", ""),
+        "role": doc.get("role", "user"),
+        "timestamp": _to_iso_timestamp(doc.get("timestamp")),
+    }
+
+
+def _encode_cursor(doc: dict) -> str:
+    ts = _to_iso_timestamp(doc.get("timestamp"))
+    oid = str(doc.get("_id", ""))
+    payload = json.dumps({"ts": ts, "oid": oid}, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("utf-8")
+
+
+def _decode_cursor(cursor: str) -> tuple[datetime, ObjectId]:
+    try:
+        padding = "=" * (-len(cursor) % 4)
+        raw = base64.urlsafe_b64decode(f"{cursor}{padding}".encode("utf-8"))
+        data = json.loads(raw.decode("utf-8"))
+        ts_raw = str(data["ts"])
+        ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
+        if ts.tzinfo is not None:
+            ts = ts.astimezone().replace(tzinfo=None)
+        oid = ObjectId(str(data["oid"]))
+        return ts, oid
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+
+def _build_pagination(
+    *,
+    total_count: int,
+    returned: int,
+    has_more: bool,
+    next_cursor: str | None,
+    prev_cursor: str | None,
+    window_start_ts: str | None,
+    window_end_ts: str | None,
+) -> dict:
+    return {
+        "total_count": total_count,
+        "returned": returned,
+        "has_more": has_more,
+        "next_cursor": next_cursor,
+        "prev_cursor": prev_cursor,
+        "window_start_ts": window_start_ts,
+        "window_end_ts": window_end_ts,
+    }
 
 
 @router.get(
@@ -529,6 +594,141 @@ async def get_topic_messages(
             msg["timestamp"] = msg["timestamp"].isoformat()
     
     return {"messages": messages}
+
+
+@router.get(
+    "/topic-sessions/{session_id}/messages/paged",
+    summary="Get topic messages with cursor pagination",
+)
+async def get_topic_messages_paged(
+    session_id: str,
+    limit: int = 50,
+    cursor: str | None = None,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="limit must be >= 1")
+
+    safe_limit = min(limit, 200)
+    base_query: dict = {"session_id": session_id}
+    query: dict = dict(base_query)
+
+    if cursor:
+        cursor_ts, cursor_oid = _decode_cursor(cursor)
+        query = {
+            "session_id": session_id,
+            "$or": [
+                {"timestamp": {"$lt": cursor_ts}},
+                {"timestamp": cursor_ts, "_id": {"$lt": cursor_oid}},
+            ],
+        }
+
+    docs_desc = await (
+        db["chat_messages"]
+        .find(query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(safe_limit + 1)
+        .to_list(length=safe_limit + 1)
+    )
+
+    has_more = len(docs_desc) > safe_limit
+    docs_desc = docs_desc[:safe_limit]
+    docs = list(reversed(docs_desc))
+    messages = [_serialize_topic_message(doc) for doc in docs]
+
+    total_count = await db["chat_messages"].count_documents(base_query)
+    next_cursor = _encode_cursor(docs[0]) if has_more and docs else None
+    prev_cursor = _encode_cursor(docs[-1]) if docs else None
+    window_start_ts = _to_iso_timestamp(docs[0].get("timestamp")) if docs else None
+    window_end_ts = _to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
+
+    return {
+        "messages": messages,
+        "pagination": _build_pagination(
+            total_count=total_count,
+            returned=len(messages),
+            has_more=has_more,
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            window_start_ts=window_start_ts,
+            window_end_ts=window_end_ts,
+        ),
+    }
+
+
+@router.get(
+    "/topic-sessions/{session_id}/messages/metadata",
+    summary="Get topic message metadata",
+)
+async def get_topic_messages_metadata(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    base_query: dict = {"session_id": session_id}
+    total_count = await db["chat_messages"].count_documents(base_query)
+
+    if total_count == 0:
+        return {
+            "metadata": {
+                "total_count": 0,
+                "has_messages": False,
+                "latest_cursor": None,
+                "oldest_cursor": None,
+                "latest_ts": None,
+                "oldest_ts": None,
+                "has_more": False,
+                "next_cursor": None,
+                "prev_cursor": None,
+                "window_start_ts": None,
+                "window_end_ts": None,
+            }
+        }
+
+    latest_docs = await (
+        db["chat_messages"]
+        .find(base_query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+    oldest_docs = await (
+        db["chat_messages"]
+        .find(base_query)
+        .sort([("timestamp", 1), ("_id", 1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+
+    latest = latest_docs[0]
+    oldest = oldest_docs[0]
+    latest_cursor = _encode_cursor(latest)
+    oldest_cursor = _encode_cursor(oldest)
+    latest_ts = _to_iso_timestamp(latest.get("timestamp"))
+    oldest_ts = _to_iso_timestamp(oldest.get("timestamp"))
+
+    return {
+        "metadata": {
+            "total_count": total_count,
+            "has_messages": True,
+            "latest_cursor": latest_cursor,
+            "oldest_cursor": oldest_cursor,
+            "latest_ts": latest_ts,
+            "oldest_ts": oldest_ts,
+            "has_more": total_count > 0,
+            "next_cursor": oldest_cursor,
+            "prev_cursor": latest_cursor,
+            "window_start_ts": oldest_ts,
+            "window_end_ts": latest_ts,
+        }
+    }
 
 
 @router.get(

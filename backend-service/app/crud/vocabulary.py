@@ -4,6 +4,7 @@ Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
 import uuid
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy import select, func, and_, or_
@@ -17,12 +18,20 @@ from app.models.vocabulary import (
     VocabularyReview,
     VocabularyDeck,
     VocabularyDeckItem,
-    VocabularyStatus
+    VocabularyStatus,
+    PartOfSpeech,
+    DifficultyLevel,
 )
 
 
 class VocabularyCRUD:
     """CRUD operations for vocabulary management"""
+
+    def normalize_word(self, word: str) -> str:
+        """Normalize user-selected text for stable vocabulary lookup/creation."""
+        cleaned = re.sub(r"[^a-zA-Z0-9'\-\s]", "", (word or "").strip().lower())
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned
     
     # ===== VocabularyItem CRUD =====
     
@@ -78,6 +87,59 @@ class VocabularyCRUD:
         
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    async def find_vocabulary_by_word(
+        self,
+        db: AsyncSession,
+        word: str,
+    ) -> Optional[VocabularyItem]:
+        """Find vocabulary item by normalized exact word match."""
+        normalized = self.normalize_word(word)
+        if not normalized:
+            return None
+
+        result = await db.execute(
+            select(VocabularyItem)
+            .where(func.lower(VocabularyItem.word) == normalized)
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def create_vocabulary_item(
+        self,
+        db: AsyncSession,
+        word: str,
+        definition: Optional[str] = None,
+        translation: Optional[str] = None,
+        part_of_speech: Optional[str] = None,
+        difficulty_level: Optional[str] = None,
+    ) -> VocabularyItem:
+        """Create a master vocabulary item for user-discovered words."""
+        normalized = self.normalize_word(word)
+        if not normalized:
+            raise ValueError("Invalid word")
+
+        allowed_pos = {item.value for item in PartOfSpeech}
+        pos = (part_of_speech or PartOfSpeech.NOUN.value).lower()
+        if pos not in allowed_pos:
+            pos = PartOfSpeech.NOUN.value
+
+        allowed_levels = {item.value for item in DifficultyLevel}
+        level = (difficulty_level or DifficultyLevel.A1.value).upper()
+        if level not in allowed_levels:
+            level = DifficultyLevel.A1.value
+
+        item = VocabularyItem(
+            word=normalized,
+            definition=(definition or f"A user-saved word: {normalized}").strip(),
+            translation={"vi": translation.strip()} if translation and translation.strip() else None,
+            part_of_speech=pos,
+            difficulty_level=level,
+        )
+        db.add(item)
+        await db.commit()
+        await db.refresh(item)
+        return item
     
     # ===== UserVocabulary CRUD =====
     

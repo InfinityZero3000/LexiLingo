@@ -169,3 +169,40 @@ async def test_delete_lexi_session_cleans_db_and_cache(mock_db, mock_store):
     mock_db["lexi_messages"].delete_many.assert_awaited_once_with({"session_id": "s1"})
     mock_store.delete_session.assert_awaited_once_with("s1")
     mock_store.delete_messages.assert_awaited_once_with("s1")
+
+
+def test_sanitize_lexi_response_preserves_valid_bold_markdown():
+    text = "Ah, a **wonderful** question!"
+    sanitized = lexi_route._sanitize_lexi_response(text)
+
+    assert sanitized == text
+
+
+def test_sanitize_lexi_response_fixes_misaligned_bold_markers():
+    raw = (
+        "1. Daily practice** (15 mins), **\n"
+        "2. Focus on one skill at a time\n"
+        "3. Keep **good** habits"
+    )
+
+    sanitized = lexi_route._sanitize_lexi_response(raw)
+
+    assert "Daily practice**" not in sanitized
+    assert "(15 mins), **" not in sanitized
+    assert "**good**" in sanitized
+    assert sanitized.count("**") == 2
+
+
+def test_sanitize_lexi_response_fixes_escaped_misaligned_bold_markers():
+    raw = (
+        "1. Daily practice\\*\\* (15 mins), \\*\\*\n"
+        "2. Focus on one skill at a time\\*\\*\n"
+        "3. Keep \\*\\*good\\*\\* habits"
+    )
+
+    sanitized = lexi_route._sanitize_lexi_response(raw)
+
+    assert "Daily practice**" not in sanitized
+    assert "(15 mins), **" not in sanitized
+    assert "**good**" in sanitized
+    assert sanitized.count("**") == 2

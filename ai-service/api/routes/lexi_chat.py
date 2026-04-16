@@ -24,6 +24,7 @@ from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
 from pydantic import BaseModel, Field
 from api.core.database import get_database
 
@@ -141,6 +142,112 @@ async def _load_full_cursor(cursor, batch_size: int = 500) -> List[Dict[str, Any
     return rows
 
 
+def _to_iso_timestamp(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
+def _serialize_lexi_message(doc: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": doc.get("id") or doc.get("message_id") or str(doc.get("_id", "")),
+        "session_id": doc.get("session_id", ""),
+        "role": doc.get("role", "user"),
+        "content": doc.get("content", ""),
+        "timestamp": _to_iso_timestamp(doc.get("timestamp")),
+    }
+
+
+def _encode_cursor(doc: Dict[str, Any]) -> str:
+    ts = _to_iso_timestamp(doc.get("timestamp"))
+    oid = str(doc.get("_id", ""))
+    payload = json.dumps({"ts": ts, "oid": oid}, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("utf-8")
+
+
+def _decode_cursor(cursor: str) -> tuple[str, ObjectId]:
+    try:
+        padding = "=" * (-len(cursor) % 4)
+        raw = base64.urlsafe_b64decode(f"{cursor}{padding}".encode("utf-8"))
+        data = json.loads(raw.decode("utf-8"))
+        ts = str(data["ts"])
+        oid = ObjectId(str(data["oid"]))
+        return ts, oid
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+
+def _build_pagination(
+    *,
+    total_count: int,
+    returned: int,
+    has_more: bool,
+    next_cursor: str | None,
+    prev_cursor: str | None,
+    window_start_ts: str | None,
+    window_end_ts: str | None,
+) -> Dict[str, Any]:
+    return {
+        "total_count": total_count,
+        "returned": returned,
+        "has_more": has_more,
+        "next_cursor": next_cursor,
+        "prev_cursor": prev_cursor,
+        "window_start_ts": window_start_ts,
+        "window_end_ts": window_end_ts,
+    }
+
+
+def _normalize_markdown_for_lexi(text: str) -> str:
+    """Normalize malformed markdown emphasis markers produced by model output."""
+    if "**" not in text:
+        return text
+
+    out: List[str] = []
+    in_bold = False
+    open_idx: Optional[int] = None
+    i = 0
+    n = len(text)
+
+    while i < n:
+        is_double_star = text[i:i + 2] == "**"
+        is_exact_pair = (
+            is_double_star
+            and (i == 0 or text[i - 1] != "*")
+            and (i + 2 >= n or text[i + 2] != "*")
+        )
+
+        if not is_exact_pair:
+            out.append(text[i])
+            i += 1
+            continue
+
+        prev_ch = text[i - 1] if i > 0 else ""
+        next_ch = text[i + 2] if i + 2 < n else ""
+        can_open = bool(next_ch) and not next_ch.isspace()
+        can_close = bool(prev_ch) and not prev_ch.isspace()
+
+        if not in_bold:
+            if can_open:
+                open_idx = len(out)
+                out.append("**")
+                in_bold = True
+        else:
+            if can_close:
+                out.append("**")
+                in_bold = False
+                open_idx = None
+
+        i += 2
+
+    if in_bold and open_idx is not None:
+        out.pop(open_idx)
+
+    return "".join(out)
+
+
 def _sanitize_lexi_response(text: str) -> str:
     """Remove internal GraphCAG debug payloads from user-facing Lexi output."""
     cleaned = str(text or "")
@@ -165,6 +272,12 @@ def _sanitize_lexi_response(text: str) -> str:
         cleaned,
         flags=re.IGNORECASE | re.MULTILINE,
     )
+
+    # Normalize escaped markdown punctuation before balancing emphasis markers.
+    cleaned = cleaned.replace("\\*", "*")
+    cleaned = cleaned.replace("\\_", "_")
+
+    cleaned = _normalize_markdown_for_lexi(cleaned)
 
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
@@ -695,6 +808,141 @@ async def get_lexi_messages(
         "success": True,
         "session_id": session_id,
         "messages": payload,
+    }
+
+
+@router.get("/sessions/{session_id}/messages/paged")
+async def get_lexi_messages_paged(
+    session_id: str,
+    limit: int = 50,
+    cursor: str | None = None,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
+    if not session_doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="limit must be >= 1")
+
+    safe_limit = min(limit, 200)
+    base_query: Dict[str, Any] = {"session_id": session_id}
+    query: Dict[str, Any] = dict(base_query)
+
+    if cursor:
+        cursor_ts, cursor_oid = _decode_cursor(cursor)
+        query = {
+            "session_id": session_id,
+            "$or": [
+                {"timestamp": {"$lt": cursor_ts}},
+                {"timestamp": cursor_ts, "_id": {"$lt": cursor_oid}},
+            ],
+        }
+
+    docs_desc = await (
+        db["lexi_messages"]
+        .find(query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(safe_limit + 1)
+        .to_list(length=safe_limit + 1)
+    )
+
+    has_more = len(docs_desc) > safe_limit
+    docs_desc = docs_desc[:safe_limit]
+    docs = list(reversed(docs_desc))
+    messages = [_serialize_lexi_message(doc) for doc in docs]
+
+    total_count = await db["lexi_messages"].count_documents(base_query)
+    next_cursor = _encode_cursor(docs[0]) if has_more and docs else None
+    prev_cursor = _encode_cursor(docs[-1]) if docs else None
+    window_start_ts = _to_iso_timestamp(docs[0].get("timestamp")) if docs else None
+    window_end_ts = _to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "messages": messages,
+        "pagination": _build_pagination(
+            total_count=total_count,
+            returned=len(messages),
+            has_more=has_more,
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            window_start_ts=window_start_ts,
+            window_end_ts=window_end_ts,
+        ),
+    }
+
+
+@router.get("/sessions/{session_id}/messages/metadata")
+async def get_lexi_messages_metadata(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
+    if not session_doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    base_query: Dict[str, Any] = {"session_id": session_id}
+    total_count = await db["lexi_messages"].count_documents(base_query)
+
+    if total_count == 0:
+        return {
+            "success": True,
+            "session_id": session_id,
+            "metadata": {
+                "total_count": 0,
+                "has_messages": False,
+                "latest_cursor": None,
+                "oldest_cursor": None,
+                "latest_ts": None,
+                "oldest_ts": None,
+                "has_more": False,
+                "next_cursor": None,
+                "prev_cursor": None,
+                "window_start_ts": None,
+                "window_end_ts": None,
+            },
+        }
+
+    latest_docs = await (
+        db["lexi_messages"]
+        .find(base_query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+    oldest_docs = await (
+        db["lexi_messages"]
+        .find(base_query)
+        .sort([("timestamp", 1), ("_id", 1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+
+    latest = latest_docs[0]
+    oldest = oldest_docs[0]
+    latest_cursor = _encode_cursor(latest)
+    oldest_cursor = _encode_cursor(oldest)
+    latest_ts = _to_iso_timestamp(latest.get("timestamp"))
+    oldest_ts = _to_iso_timestamp(oldest.get("timestamp"))
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "metadata": {
+            "total_count": total_count,
+            "has_messages": True,
+            "latest_cursor": latest_cursor,
+            "oldest_cursor": oldest_cursor,
+            "latest_ts": latest_ts,
+            "oldest_ts": oldest_ts,
+            "has_more": total_count > 0,
+            "next_cursor": oldest_cursor,
+            "prev_cursor": latest_cursor,
+            "window_start_ts": oldest_ts,
+            "window_end_ts": latest_ts,
+        },
     }
 
 

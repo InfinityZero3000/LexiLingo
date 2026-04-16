@@ -7,6 +7,7 @@ Covers:
 - GET  /api/v1/vocabulary/items/{id}         — get vocab item (public)
 - GET  /api/v1/vocabulary/collection         — user vocab collection (auth)
 - POST /api/v1/vocabulary/collection         — add to collection (auth, query param)
+- POST /api/v1/vocabulary/collection/quick-save — quick-save from app surfaces
 - POST /api/v1/vocabulary/collection/bulk    — bulk add (auth)
 - GET  /api/v1/vocabulary/due                — due for review (auth)
 - POST /api/v1/vocabulary/review/{id}        — submit review (auth)
@@ -330,6 +331,80 @@ class TestAddToCollection:
         client, _, _, _ = auth_client
         response = await client.post(
             f"{BASE}/collection", params={"vocabulary_id": "not-a-uuid"}
+        )
+        assert response.status_code == 422
+
+
+# ============================================================================
+# POST /api/v1/vocabulary/collection/quick-save  — Quick save (auth)
+# ============================================================================
+
+class TestQuickSaveToCollection:
+    """Tests for POST /api/v1/vocabulary/collection/quick-save."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.post(
+            f"{BASE}/collection/quick-save",
+            json={"word": "consistency", "source_type": "lexi_chat"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_creates_new_vocab_item_when_missing(self, auth_client):
+        client, _, _, _ = auth_client
+        mock_vocab = _make_mock_vocab_item()
+        mock_vocab.word = "consistency"
+        mock_user_vocab = _make_mock_user_vocab()
+
+        with patch("app.crud.vocabulary.vocabulary_crud.find_vocabulary_by_word", new=AsyncMock(return_value=None)), \
+             patch("app.crud.vocabulary.vocabulary_crud.create_vocabulary_item", new=AsyncMock(return_value=mock_vocab)), \
+             patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary", new=AsyncMock(return_value=None)), \
+             patch("app.crud.vocabulary.vocabulary_crud.add_to_collection", new=AsyncMock(return_value=mock_user_vocab)):
+            response = await client.post(
+                f"{BASE}/collection/quick-save",
+                json={
+                    "word": "Consistency",
+                    "source_type": "news",
+                    "source_reference": "article_123",
+                },
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["created_new_item"] is True
+        assert data["already_in_collection"] is False
+        assert "user_vocabulary" in data
+        assert "vocabulary" in data
+
+    @pytest.mark.asyncio
+    async def test_uses_existing_item_when_already_in_collection(self, auth_client):
+        client, _, _, _ = auth_client
+        mock_vocab = _make_mock_vocab_item()
+        mock_vocab.word = "curiosity"
+        mock_user_vocab = _make_mock_user_vocab()
+
+        mock_add = AsyncMock(return_value=mock_user_vocab)
+        with patch("app.crud.vocabulary.vocabulary_crud.find_vocabulary_by_word", new=AsyncMock(return_value=mock_vocab)), \
+             patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary", new=AsyncMock(return_value=mock_user_vocab)), \
+             patch("app.crud.vocabulary.vocabulary_crud.add_to_collection", new=mock_add):
+            response = await client.post(
+                f"{BASE}/collection/quick-save",
+                json={"word": "curiosity", "source_type": "topic_chat"},
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["created_new_item"] is False
+        assert data["already_in_collection"] is True
+        mock_add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_rejects_blank_word(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.post(
+            f"{BASE}/collection/quick-save",
+            json={"word": "   "},
         )
         assert response.status_code == 422
 

@@ -29,6 +29,8 @@ from app.schemas.vocabulary import (
     UserVocabularyResponse,
     UserVocabularyWithItem,
     UserVocabularyListResponse,
+    QuickSaveVocabularyRequest,
+    QuickSaveVocabularyResponse,
     ReviewSubmission,
     ReviewResponse,
     DueVocabularyResponse,
@@ -221,6 +223,89 @@ async def add_to_collection(
     )
     
     return user_vocab
+
+
+@router.post("/collection/quick-save", response_model=QuickSaveVocabularyResponse, status_code=status.HTTP_201_CREATED)
+async def quick_save_to_collection(
+    request: QuickSaveVocabularyRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Quick-save vocabulary from app surfaces (chat/news/youtube/course/etc.).
+
+    Behavior:
+    - Normalize selected word
+    - Reuse existing master vocabulary item when found
+    - Create new master item when missing
+    - Add to user collection idempotently
+    """
+    normalized_word = vocabulary_crud.normalize_word(request.word)
+    if not normalized_word:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid word selection",
+        )
+
+    vocab_item = await vocabulary_crud.find_vocabulary_by_word(db, normalized_word)
+    created_new_item = False
+
+    if not vocab_item:
+        try:
+            vocab_item = await vocabulary_crud.create_vocabulary_item(
+                db,
+                word=normalized_word,
+                definition=request.definition,
+                translation=request.translation,
+                part_of_speech=request.part_of_speech,
+                difficulty_level=request.difficulty_level,
+            )
+            created_new_item = True
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+
+    existing_user_vocab = await vocabulary_crud.get_user_vocabulary(
+        db,
+        user_id=current_user.id,
+        vocabulary_id=vocab_item.id,
+    )
+    already_in_collection = existing_user_vocab is not None
+
+    user_vocab = existing_user_vocab or await vocabulary_crud.add_to_collection(
+        db,
+        user_id=current_user.id,
+        vocabulary_id=vocab_item.id,
+    )
+
+    note_parts = []
+    if request.source_type:
+        note_parts.append(f"source:{request.source_type}")
+    if request.source_reference:
+        note_parts.append(f"ref:{request.source_reference}")
+    if request.context_sentence:
+        context_snippet = request.context_sentence.strip()
+        if len(context_snippet) > 240:
+            context_snippet = f"{context_snippet[:237]}..."
+        note_parts.append(f"context:{context_snippet}")
+
+    if note_parts:
+        metadata_line = " | ".join(note_parts)
+        existing_notes = (user_vocab.notes or "").strip()
+        if metadata_line not in existing_notes:
+            user_vocab.notes = f"{existing_notes}\n{metadata_line}".strip()
+            await db.commit()
+            await db.refresh(user_vocab)
+
+    return QuickSaveVocabularyResponse(
+        user_vocabulary=UserVocabularyResponse.model_validate(user_vocab),
+        vocabulary=VocabularyItemResponse.model_validate(vocab_item),
+        created_new_item=created_new_item,
+        already_in_collection=already_in_collection,
+        normalized_word=normalized_word,
+    )
 
 
 @router.post("/collection/bulk", response_model=List[UserVocabularyResponse])
