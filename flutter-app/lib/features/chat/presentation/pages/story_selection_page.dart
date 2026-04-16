@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../../data/models/story_model.dart';
@@ -38,6 +39,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
 
     return Scaffold(
       backgroundColor: isDark
@@ -57,7 +59,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: accent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -75,7 +77,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                       'Conversation Topics',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.textDark,
+                        color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
                     Text(
@@ -120,7 +122,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
               // Content
               Expanded(
                 child: provider.isLoading && provider.stories.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: LottieLoadingWidget.medium())
                     : _buildStoryList(filteredStories, theme, isDark),
               ),
             ],
@@ -131,6 +133,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   }
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final accent = AppColorRoles.primary(isDark);
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -138,7 +141,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.35 : 0.10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -147,17 +150,29 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       child: TextField(
         controller: _searchController,
         onChanged: (val) => setState(() => _searchQuery = val),
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        textAlignVertical: TextAlignVertical.center,
+        style: TextStyle(
+          color: AppColorRoles.textPrimary(isDark),
+        ),
         decoration: InputDecoration(
+          isDense: true,
           hintText: 'Search topics...',
           hintStyle: TextStyle(
-            color: isDark ? Colors.grey[500] : Colors.grey[400],
+            color: AppColorRoles.textMuted(isDark),
           ),
-          prefixIcon: Icon(Icons.search, color: theme.primaryColor),
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? accent : theme.primaryColor,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 16,
+          contentPadding: const EdgeInsets.only(
+            top: 0,
+            bottom: 0,
+            right: 16,
           ),
         ),
       ),
@@ -224,22 +239,27 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     ThemeData theme,
     bool isDark,
   ) {
+    final accent = AppColorRoles.primary(isDark);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.primaryColor
+              ? accent
               : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
           borderRadius: BorderRadius.circular(999),
           border: isSelected
               ? null
-              : Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
+              : Border.all(
+                  color: (isDark ? accent : theme.primaryColor)
+                      .withValues(alpha: 0.2),
+                ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: theme.primaryColor.withValues(alpha: 0.3),
+                    color: (isDark ? accent : theme.primaryColor)
+                        .withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -250,8 +270,8 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           label,
           style: TextStyle(
             color: isSelected
-                ? (isDark ? Colors.black : Colors.white)
-                : (isDark ? Colors.grey[300] : Colors.grey[700]),
+                ? AppColors.slate900
+                : AppColorRoles.textSecondary(isDark),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
@@ -284,13 +304,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: AppColorRoles.textPrimary(isDark),
                   ),
                 ),
                 Text(
                   'See all',
                   style: TextStyle(
-                    color: theme.primaryColor,
+                    color: isDark
+                        ? AppColorRoles.primary(isDark)
+                        : theme.primaryColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -326,7 +348,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             'No topics found',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : Colors.black54,
+              color: AppColorRoles.textSecondary(isDark),
             ),
           ),
         ],
@@ -354,6 +376,7 @@ class _TopicListItem extends StatelessWidget {
     required this.onTap,
     required this.theme,
     required this.isDark,
+    // ignore: unused_element_parameter
     this.isWarming = false,
   });
 
@@ -373,11 +396,14 @@ class _TopicListItem extends StatelessWidget {
             color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.primaryColor.withValues(alpha: 0.05),
+              color: (isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor)
+                  .withValues(alpha: isDark ? 0.20 : 0.05),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.25 : 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -390,12 +416,17 @@ class _TopicListItem extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withValues(alpha: 0.15),
+                  color: (isDark
+                          ? AppColorRoles.primary(isDark)
+                          : theme.primaryColor)
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   _getCategoryIcon(story.category),
-                  color: theme.primaryColor,
+                  color: isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor,
                   size: 28,
                 ),
               ),
@@ -410,7 +441,7 @@ class _TopicListItem extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -438,14 +469,14 @@ class _TopicListItem extends StatelessWidget {
                         Icon(
                           Icons.timer_outlined,
                           size: 14,
-                          color: Colors.grey[500],
+                          color: AppColorRoles.textMuted(isDark),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${story.estimatedMinutes} mins',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: AppColorRoles.textMuted(isDark),
                           ),
                         ),
                       ],
@@ -457,10 +488,16 @@ class _TopicListItem extends StatelessWidget {
                 const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: LottieLoadingWidget.tiny(),
                 )
               else
-                Icon(Icons.chevron_right, color: theme.primaryColor, size: 24),
+                Icon(
+                  Icons.chevron_right,
+                  color: isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor,
+                  size: 24,
+                ),
             ],
           ),
         ),
@@ -475,7 +512,7 @@ class _TopicListItem extends StatelessWidget {
         return AppColors.greenSuccessBright;
       case DifficultyLevel.B1:
       case DifficultyLevel.B2:
-        return Colors.blue;
+        return isDark ? AppColors.primaryDarkMode : AppColors.primary;
       case DifficultyLevel.C1:
       case DifficultyLevel.C2:
         return Colors.amber[700]!;
