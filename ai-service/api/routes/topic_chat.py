@@ -12,6 +12,8 @@ from datetime import datetime
 import uuid
 import time
 import logging
+import base64
+from typing import Any, Dict, Optional, Tuple
 
 from api.core.database import get_database
 from api.core.config import settings
@@ -39,6 +41,38 @@ from api.services.educational_hints_parser import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _encode_cursor(timestamp: datetime, message_id: str) -> str:
+    payload = f"{timestamp.isoformat()}|{message_id}"
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8")
+
+
+def _decode_cursor(cursor: str) -> Tuple[datetime, str]:
+    try:
+        raw = base64.urlsafe_b64decode(cursor.encode("utf-8")).decode("utf-8")
+        ts_str, msg_id = raw.split("|", 1)
+        return datetime.fromisoformat(ts_str), msg_id
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+
+def _cursor_filter(session_id: str, cursor: Optional[str]) -> Dict[str, Any]:
+    query: Dict[str, Any] = {"session_id": session_id}
+    if not cursor:
+        return query
+
+    cursor_ts, cursor_msg_id = _decode_cursor(cursor)
+    query["$or"] = [
+        {"timestamp": {"$lt": cursor_ts}},
+        {
+            "$and": [
+                {"timestamp": cursor_ts},
+                {"message_id": {"$lt": cursor_msg_id}},
+            ]
+        },
+    ]
+    return query
 
 # Configure Gemini API as fallback (gateway handles primary Qwen + Gemini fallback)
 try:
@@ -513,6 +547,130 @@ async def get_topic_messages(
             msg["timestamp"] = msg["timestamp"].isoformat()
     
     return {"messages": messages}
+
+
+@router.get(
+    "/topic-sessions/{session_id}/messages/metadata",
+    summary="Get metadata for a topic session message history"
+)
+async def get_topic_messages_metadata(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get topic session message metadata for metadata-first restore."""
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    total_count = await db["chat_messages"].count_documents({"session_id": session_id})
+    if total_count == 0:
+        return {
+            "success": True,
+            "session_id": session_id,
+            "metadata": {
+                "total_count": 0,
+                "has_messages": False,
+                "latest_cursor": None,
+                "oldest_cursor": None,
+                "latest_ts": None,
+                "oldest_ts": None,
+            },
+        }
+
+    latest = await db["chat_messages"].find_one(
+        {"session_id": session_id},
+        sort=[("timestamp", -1), ("message_id", -1)],
+    )
+    oldest = await db["chat_messages"].find_one(
+        {"session_id": session_id},
+        sort=[("timestamp", 1), ("message_id", 1)],
+    )
+
+    latest_cursor = None
+    latest_ts = None
+    if latest:
+        latest_cursor = _encode_cursor(latest["timestamp"], latest["message_id"])
+        latest_ts = latest["timestamp"].isoformat()
+
+    oldest_cursor = None
+    oldest_ts = None
+    if oldest:
+        oldest_cursor = _encode_cursor(oldest["timestamp"], oldest["message_id"])
+        oldest_ts = oldest["timestamp"].isoformat()
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "metadata": {
+            "total_count": total_count,
+            "has_messages": total_count > 0,
+            "latest_cursor": latest_cursor,
+            "oldest_cursor": oldest_cursor,
+            "latest_ts": latest_ts,
+            "oldest_ts": oldest_ts,
+        },
+    }
+
+
+@router.get(
+    "/topic-sessions/{session_id}/messages/paged",
+    summary="Get paged messages for a topic session"
+)
+async def get_topic_messages_paged(
+    session_id: str,
+    limit: int = 50,
+    cursor: Optional[str] = None,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get topic session messages with cursor-based pagination (latest-first pages)."""
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    safe_limit = max(1, min(limit, 200))
+    query = _cursor_filter(session_id, cursor)
+
+    raw_messages = await (
+        db["chat_messages"]
+        .find(query)
+        .sort([("timestamp", -1), ("message_id", -1)])
+        .limit(safe_limit + 1)
+        .to_list(length=safe_limit + 1)
+    )
+
+    has_more = len(raw_messages) > safe_limit
+    page_items = raw_messages[:safe_limit]
+    page_items.reverse()
+
+    messages = []
+    for msg in page_items:
+        msg_copy = dict(msg)
+        msg_copy.pop("_id", None)
+        if "timestamp" in msg_copy and isinstance(msg_copy["timestamp"], datetime):
+            msg_copy["timestamp"] = msg_copy["timestamp"].isoformat()
+        messages.append(msg_copy)
+
+    next_cursor = None
+    if has_more and page_items:
+        oldest = page_items[0]
+        next_cursor = _encode_cursor(oldest["timestamp"], oldest["message_id"])
+
+    window_start_ts = page_items[0]["timestamp"].isoformat() if page_items else None
+    window_end_ts = page_items[-1]["timestamp"].isoformat() if page_items else None
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "messages": messages,
+        "pagination": {
+            "limit": safe_limit,
+            "returned": len(messages),
+            "has_more": has_more,
+            "next_cursor": next_cursor,
+            "window_start_ts": window_start_ts,
+            "window_end_ts": window_end_ts,
+        },
+    }
 
 
 @router.get(

@@ -35,6 +35,10 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSending = false;
   bool _isLoadingSessions = false;
+  bool _isLoadingMoreMessages = false;
+  bool _hasMoreMessages = true;
+  String? _nextMessageCursor;
+  final int _messagesPageSize = 20;
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   String? _error;
@@ -52,6 +56,8 @@ class LexiChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
   bool get isLoadingSessions => _isLoadingSessions;
+  bool get isLoadingMoreMessages => _isLoadingMoreMessages;
+  bool get hasMoreMessages => _hasMoreMessages;
   bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
   bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
@@ -78,6 +84,8 @@ class LexiChatProvider extends ChangeNotifier {
         ),
       );
       _messages.clear();
+      _hasMoreMessages = false;
+      _nextMessageCursor = null;
 
       // Add Lexi's greeting
       _messages.add(
@@ -136,10 +144,15 @@ class LexiChatProvider extends ChangeNotifier {
         updatedAt: summary.updatedAt,
       );
 
-      final loaded = await repository.getMessages(sessionId: summary.sessionId);
+      final page = await repository.getMessagesPaged(
+        sessionId: summary.sessionId,
+        limit: _messagesPageSize,
+      );
       _messages
         ..clear()
-        ..addAll(loaded);
+        ..addAll(page.messages);
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
 
       _touchSession(summary.sessionId);
 
@@ -167,6 +180,8 @@ class LexiChatProvider extends ChangeNotifier {
     if (_session?.sessionId == sessionId) {
       _session = null;
       _messages.clear();
+      _hasMoreMessages = true;
+      _nextMessageCursor = null;
     }
     await _saveSessions();
     notifyListeners();
@@ -367,6 +382,34 @@ class LexiChatProvider extends ChangeNotifier {
     unawaited(_saveSessions());
   }
 
+  Future<void> loadOlderMessages() async {
+    if (_session == null || _isLoadingMoreMessages || !_hasMoreMessages) {
+      return;
+    }
+
+    _isLoadingMoreMessages = true;
+    notifyListeners();
+
+    try {
+      final page = await repository.getMessagesPaged(
+        sessionId: _session!.sessionId,
+        limit: _messagesPageSize,
+        cursor: _nextMessageCursor,
+      );
+      if (page.messages.isNotEmpty) {
+        _messages.insertAll(0, page.messages);
+      }
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
+    } catch (e) {
+      _error = 'Failed to load older messages: $e';
+      logWarn(_tag, _error!);
+    }
+
+    _isLoadingMoreMessages = false;
+    notifyListeners();
+  }
+
   Future<void> syncSessions(String userId) async {
     try {
       final remote = await repository.getSessions(userId: userId);
@@ -382,6 +425,7 @@ class LexiChatProvider extends ChangeNotifier {
               title: s.title ?? 'Lexi Chat',
               createdAt: s.createdAt,
               updatedAt: s.updatedAt ?? s.createdAt,
+              messageCount: s.messageCount,
             ),
           ),
         );
@@ -438,6 +482,7 @@ class LexiSessionSummary {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? messageCount;
 
   const LexiSessionSummary({
     required this.sessionId,
@@ -445,15 +490,17 @@ class LexiSessionSummary {
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    this.messageCount,
   });
 
-  LexiSessionSummary copyWith({String? title, DateTime? updatedAt}) {
+  LexiSessionSummary copyWith({String? title, DateTime? updatedAt, int? messageCount}) {
     return LexiSessionSummary(
       sessionId: sessionId,
       userId: userId,
       title: title ?? this.title,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      messageCount: messageCount ?? this.messageCount,
     );
   }
 
@@ -464,6 +511,7 @@ class LexiSessionSummary {
       'title': title,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'message_count': messageCount,
     };
   }
 
@@ -474,6 +522,7 @@ class LexiSessionSummary {
       title: json['title'] ?? 'Lexi Chat',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      messageCount: (json['message_count'] as num?)?.toInt(),
     );
   }
 }

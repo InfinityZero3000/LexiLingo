@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/chat_message.dart';
+import '../entities/chat_messages_page.dart';
 import '../entities/chat_session.dart';
 import '../entities/ai_analysis_result.dart';
 
@@ -145,6 +146,13 @@ abstract class ChatRepository {
 
   /// Get all messages for a session
   Future<Either<Failure, List<ChatMessage>>> getMessages(String sessionId);
+
+  /// Get paged messages for a session using cursor pagination.
+  Future<Either<Failure, ChatMessagesPage>> getMessagesPaged(
+    String sessionId, {
+    int limit = 50,
+    String? cursor,
+  });
 
   /// Update message status
   Future<Either<Failure, Unit>> updateMessageStatus({

@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/chat/domain/repositories/chat_repository.
 import 'package:lexilingo_app/features/chat/domain/repositories/story_repository.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/create_session_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/get_chat_history_usecase.dart';
+import 'package:lexilingo_app/features/chat/domain/usecases/get_paged_chat_history_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/get_sessions_usecase.dart';
 import 'package:lexilingo_app/features/chat/domain/usecases/send_message_usecase.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
@@ -68,6 +69,7 @@ void registerChatModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => CreateSessionUseCase(sl()));
   sl.registerLazySingleton(() => GetSessionsUseCase(sl()));
   sl.registerLazySingleton(() => GetChatHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => GetPagedChatHistoryUseCase(sl()));
   sl.registerLazySingleton(() => SendMessageUseCase(sl()));
 
   sl.registerFactory(
@@ -75,6 +77,7 @@ void registerChatModule({required bool skipDatabase}) {
       createSessionUseCase: sl(),
       getSessionsUseCase: sl(),
       getChatHistoryUseCase: sl(),
+      getPagedChatHistoryUseCase: sl(),
       sendMessageUseCase: sl(),
     ),
   );

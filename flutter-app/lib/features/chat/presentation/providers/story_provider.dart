@@ -32,6 +32,10 @@ class StoryProvider extends ChangeNotifier {
   TopicSession? _currentSession;
   List<TopicChatMessage> _messages = [];
   bool _isSendingMessage = false;
+  bool _isLoadingMoreMessages = false;
+  bool _hasMoreMessages = true;
+  String? _nextMessageCursor;
+  final int _messagesPageSize = 20;
   String? _sessionError;
 
   // Getters
@@ -47,6 +51,8 @@ class StoryProvider extends ChangeNotifier {
   TopicSession? get currentSession => _currentSession;
   List<TopicChatMessage> get messages => _messages;
   bool get isSendingMessage => _isSendingMessage;
+  bool get isLoadingMoreMessages => _isLoadingMoreMessages;
+  bool get hasMoreMessages => _hasMoreMessages;
   String? get sessionError => _sessionError;
   bool get hasActiveSession => _currentSession != null;
 
@@ -235,6 +241,9 @@ class StoryProvider extends ChangeNotifier {
             timestamp: session.createdAt,
           ),
         ];
+        _hasMoreMessages = false;
+        _nextMessageCursor = null;
+        _isLoadingMoreMessages = false;
         _isLoading = false;
         notifyListeners();
         return true;
@@ -246,6 +255,9 @@ class StoryProvider extends ChangeNotifier {
   void clearActiveSession() {
     _currentSession = null;
     _messages = [];
+    _isLoadingMoreMessages = false;
+    _hasMoreMessages = true;
+    _nextMessageCursor = null;
     _sessionError = null;
     notifyListeners();
   }
@@ -314,17 +326,68 @@ class StoryProvider extends ChangeNotifier {
     _sessionError = null;
     notifyListeners();
 
-    final result = await repository.getTopicMessages(sessionId);
+    final result = await repository.getTopicMessagesPaged(
+      sessionId,
+      limit: _messagesPageSize,
+    );
+
+    result.fold(
+      (failure) {
+        // Fallback to legacy full-history endpoint.
+        repository.getTopicMessages(sessionId).then((legacy) {
+          legacy.fold(
+            (legacyFailure) {
+              _sessionError = legacyFailure.message;
+              _isLoading = false;
+              notifyListeners();
+            },
+            (messages) {
+              _messages = messages;
+              _hasMoreMessages = false;
+              _nextMessageCursor = null;
+              _isLoading = false;
+              notifyListeners();
+            },
+          );
+        });
+      },
+      (page) {
+        _messages = page.messages;
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+
+  Future<void> loadOlderMessages() async {
+    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) {
+      return;
+    }
+
+    _isLoadingMoreMessages = true;
+    notifyListeners();
+
+    final result = await repository.getTopicMessagesPaged(
+      _currentSession!.sessionId,
+      limit: _messagesPageSize,
+      cursor: _nextMessageCursor,
+    );
 
     result.fold(
       (failure) {
         _sessionError = failure.message;
-        _isLoading = false;
+        _isLoadingMoreMessages = false;
         notifyListeners();
       },
-      (messages) {
-        _messages = messages;
-        _isLoading = false;
+      (page) {
+        if (page.messages.isNotEmpty) {
+          _messages.insertAll(0, page.messages);
+        }
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoadingMoreMessages = false;
         notifyListeners();
       },
     );

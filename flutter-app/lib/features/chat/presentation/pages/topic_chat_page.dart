@@ -34,6 +34,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleTopReached);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _openTopicAndWarmContext();
     });
@@ -42,6 +43,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   @override
   void dispose() {
     _autoHideTimer?.cancel();
+    _scrollController.removeListener(_handleTopReached);
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -51,6 +53,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
       provider.clearActiveSession();
     });
     super.dispose();
+  }
+
+  void _handleTopReached() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels > 40) return;
+
+    final provider = context.read<StoryProvider>();
+    if (!provider.hasMoreMessages || provider.isLoadingMoreMessages) return;
+
+    unawaited(provider.loadOlderMessages());
   }
 
   Future<void> _openTopicAndWarmContext() async {

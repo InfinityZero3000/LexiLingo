@@ -21,7 +21,7 @@ import uuid
 import time
 import base64
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -109,6 +109,20 @@ class _LexiStore:
 
 
 _store = _LexiStore()
+
+
+def _encode_cursor(timestamp: str, message_id: str) -> str:
+    payload = f"{timestamp}|{message_id}"
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8")
+
+
+def _decode_cursor(cursor: str) -> Tuple[str, str]:
+    try:
+        raw = base64.urlsafe_b64decode(cursor.encode("utf-8")).decode("utf-8")
+        ts_str, msg_id = raw.split("|", 1)
+        return ts_str, msg_id
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
 
 # ─── Lexi Persona System Prompt ─────────────────────────────────────────────
@@ -566,6 +580,114 @@ async def get_lexi_messages(session_id: str) -> Dict[str, Any]:
         "success": True,
         "session_id": session_id,
         "messages": await _store.get_messages(session_id),
+    }
+
+
+@router.get("/sessions/{session_id}/messages/metadata")
+async def get_lexi_messages_metadata(session_id: str) -> Dict[str, Any]:
+    """Get message metadata for metadata-first restore."""
+    if not await _store.has_session(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    messages = await _store.get_messages(session_id)
+    total_count = len(messages)
+
+    if total_count == 0:
+        return {
+            "success": True,
+            "session_id": session_id,
+            "metadata": {
+                "total_count": 0,
+                "has_messages": False,
+                "latest_cursor": None,
+                "oldest_cursor": None,
+                "latest_ts": None,
+                "oldest_ts": None,
+            },
+        }
+
+    oldest = messages[0]
+    latest = messages[-1]
+
+    oldest_ts = oldest.get("timestamp")
+    latest_ts = latest.get("timestamp")
+    oldest_id = oldest.get("id", "")
+    latest_id = latest.get("id", "")
+
+    oldest_cursor = None
+    if oldest_ts:
+        oldest_cursor = _encode_cursor(oldest_ts, oldest_id)
+
+    latest_cursor = None
+    if latest_ts:
+        latest_cursor = _encode_cursor(latest_ts, latest_id)
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "metadata": {
+            "total_count": total_count,
+            "has_messages": total_count > 0,
+            "latest_cursor": latest_cursor,
+            "oldest_cursor": oldest_cursor,
+            "latest_ts": latest_ts,
+            "oldest_ts": oldest_ts,
+        },
+    }
+
+
+@router.get("/sessions/{session_id}/messages/paged")
+async def get_lexi_messages_paged(
+    session_id: str,
+    limit: int = 50,
+    cursor: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Get Lexi messages with cursor-based pagination (latest-first pages)."""
+    if not await _store.has_session(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    safe_limit = max(1, min(limit, 200))
+    messages = await _store.get_messages(session_id)
+
+    end_index = len(messages)
+    if cursor:
+        cursor_ts, cursor_message_id = _decode_cursor(cursor)
+        cursor_index = next(
+            (
+                idx
+                for idx, msg in enumerate(messages)
+                if msg.get("id") == cursor_message_id and msg.get("timestamp") == cursor_ts
+            ),
+            None,
+        )
+        if cursor_index is None:
+            raise HTTPException(status_code=400, detail="Cursor not found in session history")
+        end_index = cursor_index
+
+    start_index = max(0, end_index - safe_limit)
+    page_items = messages[start_index:end_index]
+    has_more = start_index > 0
+
+    next_cursor = None
+    if has_more and page_items:
+        oldest = page_items[0]
+        next_cursor = _encode_cursor(oldest.get("timestamp", ""), oldest.get("id", ""))
+
+    window_start_ts = page_items[0].get("timestamp") if page_items else None
+    window_end_ts = page_items[-1].get("timestamp") if page_items else None
+
+    return {
+        "success": True,
+        "session_id": session_id,
+        "messages": page_items,
+        "pagination": {
+            "limit": safe_limit,
+            "returned": len(page_items),
+            "has_more": has_more,
+            "next_cursor": next_cursor,
+            "window_start_ts": window_start_ts,
+            "window_end_ts": window_end_ts,
+        },
     }
 
 

@@ -1,4 +1,5 @@
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 
 /// Abstract repository for Lexi chat operations.
@@ -20,6 +21,13 @@ abstract class LexiChatRepository {
 
   /// Get message history for a session.
   Future<List<LexiMessage>> getMessages({required String sessionId});
+
+  /// Get paged message history for a session.
+  Future<LexiMessagesPage> getMessagesPaged({
+    required String sessionId,
+    int limit = 50,
+    String? cursor,
+  });
 
   /// Get all sessions for a user.
   Future<List<LexiSession>> getSessions({required String userId});

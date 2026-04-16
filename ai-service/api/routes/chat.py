@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+import base64
 
 from api.core.database import get_database
 from api.core.config import settings
@@ -47,6 +48,48 @@ async def get_ai_response(request: Request, message: str, db: AsyncIOMotorDataba
         return response, f"ollama/{settings.OLLAMA_MODEL}"
     
     return "I'm having trouble connecting to my brain. Please try again later.", "fallback"
+
+
+def _encode_cursor(timestamp: datetime, message_id: str) -> str:
+    payload = f"{timestamp.isoformat()}|{message_id}"
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8")
+
+
+def _decode_cursor(cursor: str) -> Tuple[datetime, str]:
+    try:
+        raw = base64.urlsafe_b64decode(cursor.encode("utf-8")).decode("utf-8")
+        ts_str, msg_id = raw.split("|", 1)
+        return datetime.fromisoformat(ts_str), msg_id
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+
+def _cursor_filter(session_id: str, cursor: Optional[str]) -> Dict[str, Any]:
+    base_query: Dict[str, Any] = {"session_id": session_id}
+    if not cursor:
+        return base_query
+
+    cursor_ts, cursor_msg_id = _decode_cursor(cursor)
+    base_query["$or"] = [
+        {"timestamp": {"$lt": cursor_ts}},
+        {
+            "$and": [
+                {"timestamp": cursor_ts},
+                {"message_id": {"$lt": cursor_msg_id}},
+            ]
+        },
+    ]
+    return base_query
+
+
+def _serialize_chat_message(msg: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": msg["message_id"],
+        "session_id": msg["session_id"],
+        "content": msg["content"],
+        "role": MessageRole(msg["role"]),
+        "timestamp": msg["timestamp"],
+    }
 
 
 @router.post(
@@ -172,6 +215,129 @@ async def get_session_messages(
                 timestamp=msg["timestamp"]
             ) for msg in messages
         ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/sessions/{session_id}/messages/metadata",
+    summary="Get session messages metadata"
+)
+async def get_session_messages_metadata(
+    session_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get metadata for session messages to support metadata-first restore."""
+    try:
+        session = await db["chat_sessions"].find_one({"session_id": session_id})
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        total_count = await db["chat_messages"].count_documents({"session_id": session_id})
+        if total_count == 0:
+            return {
+                "success": True,
+                "session_id": session_id,
+                "metadata": {
+                    "total_count": 0,
+                    "has_messages": False,
+                    "latest_cursor": None,
+                    "oldest_cursor": None,
+                    "latest_ts": None,
+                    "oldest_ts": None,
+                },
+            }
+
+        latest = await db["chat_messages"].find_one(
+            {"session_id": session_id},
+            sort=[("timestamp", -1), ("message_id", -1)],
+        )
+        oldest = await db["chat_messages"].find_one(
+            {"session_id": session_id},
+            sort=[("timestamp", 1), ("message_id", 1)],
+        )
+
+        latest_cursor = None
+        latest_ts = None
+        if latest:
+            latest_cursor = _encode_cursor(latest["timestamp"], latest["message_id"])
+            latest_ts = latest["timestamp"].isoformat()
+
+        oldest_cursor = None
+        oldest_ts = None
+        if oldest:
+            oldest_cursor = _encode_cursor(oldest["timestamp"], oldest["message_id"])
+            oldest_ts = oldest["timestamp"].isoformat()
+
+        return {
+            "success": True,
+            "session_id": session_id,
+            "metadata": {
+                "total_count": total_count,
+                "has_messages": total_count > 0,
+                "latest_cursor": latest_cursor,
+                "oldest_cursor": oldest_cursor,
+                "latest_ts": latest_ts,
+                "oldest_ts": oldest_ts,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/sessions/{session_id}/messages/paged",
+    summary="Get paged session messages"
+)
+async def get_session_messages_paged(
+    session_id: str,
+    limit: int = 50,
+    cursor: Optional[str] = None,
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get session messages with cursor-based pagination (latest-first pages)."""
+    try:
+        safe_limit = max(1, min(limit, 200))
+        query = _cursor_filter(session_id, cursor)
+
+        raw_messages = await (
+            db["chat_messages"]
+            .find(query)
+            .sort([("timestamp", -1), ("message_id", -1)])
+            .limit(safe_limit + 1)
+            .to_list(length=safe_limit + 1)
+        )
+
+        has_more = len(raw_messages) > safe_limit
+        page_items = raw_messages[:safe_limit]
+        page_items.reverse()
+
+        messages = [_serialize_chat_message(msg) for msg in page_items]
+        next_cursor = None
+        if has_more and page_items:
+            oldest = page_items[0]
+            next_cursor = _encode_cursor(oldest["timestamp"], oldest["message_id"])
+
+        window_start_ts = page_items[0]["timestamp"].isoformat() if page_items else None
+        window_end_ts = page_items[-1]["timestamp"].isoformat() if page_items else None
+
+        return {
+            "success": True,
+            "session_id": session_id,
+            "messages": messages,
+            "pagination": {
+                "limit": safe_limit,
+                "returned": len(messages),
+                "has_more": has_more,
+                "next_cursor": next_cursor,
+                "window_start_ts": window_start_ts,
+                "window_end_ts": window_end_ts,
+            },
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
