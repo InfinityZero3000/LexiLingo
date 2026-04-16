@@ -25,6 +25,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
+from pymongo.errors import OperationFailure
 from pydantic import BaseModel, Field
 from api.core.database import get_database
 
@@ -951,8 +952,15 @@ async def list_lexi_sessions(
     user_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
 ) -> LexiSessionListResponse:
-    cursor = db["lexi_sessions"].find({"user_id": user_id}).sort("updated_at", -1)
-    rows = await cursor.to_list(length=100)
+    try:
+        cursor = db["lexi_sessions"].find({"user_id": user_id}).sort("updated_at", -1)
+        rows = await cursor.to_list(length=100)
+    except Exception as exc:
+        msg = str(exc).lower()
+        if not (isinstance(exc, OperationFailure) and ("order-by item is excluded" in msg or "index path corresponding" in msg)):
+            raise
+        rows = await db["lexi_sessions"].find({"user_id": user_id}).limit(100).to_list(length=100)
+        rows.sort(key=lambda row: row.get("updated_at") or row.get("created_at") or "", reverse=True)
     sessions = [
         LexiSessionSummary(
             session_id=row.get("session_id", ""),

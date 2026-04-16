@@ -27,11 +27,22 @@ class Settings(BaseSettings):
     # ============================================================
     # MongoDB Configuration
     # ============================================================
+    MONGODB_ATLAS_URI: str = os.getenv("MONGODB_ATLAS_URI", "").strip()
     MONGODB_URI: str = os.getenv(
         "MONGODB_URI",
-        "mongodb://localhost:27017/"
+        ""
+    ).strip() or MONGODB_ATLAS_URI or (
+        "mongodb://localhost:10255/?"
+        "ssl=true&replicaSet=globaldb&retrywrites=false"
+        "&maxIdleTimeMS=120000&tlsAllowInvalidCertificates=true"
     )
     MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
+    MONGODB_TLS_ALLOW_INVALID_CERTIFICATES: bool = (
+        os.getenv("MONGODB_TLS_ALLOW_INVALID_CERTIFICATES", "true").lower() == "true"
+    )
+    MONGODB_SERVER_SELECTION_TIMEOUT_MS: int = int(
+        os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "10000")
+    )
     MONGODB_MIN_POOL_SIZE: int = 2
     MONGODB_MAX_POOL_SIZE: int = 50 if ENVIRONMENT == "production" else 10
     

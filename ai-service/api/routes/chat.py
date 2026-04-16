@@ -7,6 +7,7 @@ Endpoints for chat functionality with GraphCAG-first orchestration.
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
+from pymongo.errors import OperationFailure
 import base64
 import json
 import uuid
@@ -33,6 +34,14 @@ SAFE_FIXED_RESPONSE = (
     "I'm sorry, I'm temporarily unavailable right now. "
     "Please try again in a moment."
 )
+
+
+def _is_cosmos_order_by_index_error(exc: Exception) -> bool:
+    """Detect Cosmos Mongo API ORDER BY errors caused by missing index paths."""
+    if not isinstance(exc, OperationFailure):
+        return False
+    msg = str(exc).lower()
+    return "order-by item is excluded" in msg or "index path corresponding" in msg
 
 
 def _build_conversation_history(messages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
@@ -179,10 +188,17 @@ async def send_message(
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
 
-        history_cursor = db["chat_messages"].find(
-            {"session_id": msg_req.session_id}
-        ).sort("timestamp", -1).limit(10)
-        history_docs = await history_cursor.to_list(length=10)
+        try:
+            history_cursor = db["chat_messages"].find(
+                {"session_id": msg_req.session_id}
+            ).sort("timestamp", -1).limit(10)
+            history_docs = await history_cursor.to_list(length=10)
+        except Exception as exc:
+            if not _is_cosmos_order_by_index_error(exc):
+                raise
+            history_docs = await db["chat_messages"].find(
+                {"session_id": msg_req.session_id}
+            ).limit(10).to_list(length=10)
         history_docs.reverse()
         conversation_history = _build_conversation_history(history_docs)
         
@@ -326,15 +342,26 @@ async def get_session_messages(
         if limit < 0:
             raise HTTPException(status_code=400, detail="limit must be >= 0")
 
-        cursor = db["chat_messages"].find(
-            {"session_id": session_id}
-        ).sort("timestamp", 1)
+        try:
+            cursor = db["chat_messages"].find(
+                {"session_id": session_id}
+            ).sort("timestamp", 1)
 
-        if limit > 0:
-            cursor = cursor.limit(limit)
-            messages = await cursor.to_list(length=limit)
-        else:
-            messages = await _load_full_cursor(cursor)
+            if limit > 0:
+                cursor = cursor.limit(limit)
+                messages = await cursor.to_list(length=limit)
+            else:
+                messages = await _load_full_cursor(cursor)
+        except Exception as exc:
+            if not _is_cosmos_order_by_index_error(exc):
+                raise
+            fallback_cursor = db["chat_messages"].find({"session_id": session_id})
+            if limit > 0:
+                fallback_cursor = fallback_cursor.limit(limit)
+                messages = await fallback_cursor.to_list(length=limit)
+            else:
+                messages = await _load_full_cursor(fallback_cursor)
+            messages.sort(key=lambda row: row.get("timestamp") or datetime.min)
         
         return [
             ChatMessage(
