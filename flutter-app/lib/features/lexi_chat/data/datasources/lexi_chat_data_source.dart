@@ -2,9 +2,28 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 
 const _tag = 'LexiChatDataSource';
+
+class LexiMessagesMetadata {
+  final int totalCount;
+  final bool hasMessages;
+  final String? latestCursor;
+  final String? oldestCursor;
+  final String? latestTs;
+  final String? oldestTs;
+
+  const LexiMessagesMetadata({
+    required this.totalCount,
+    required this.hasMessages,
+    required this.latestCursor,
+    required this.oldestCursor,
+    required this.latestTs,
+    required this.oldestTs,
+  });
+}
 
 /// Remote data source for Lexi Chat — talks to AI Service at :8001.
 class LexiChatDataSource {
@@ -185,6 +204,103 @@ class LexiChatDataSource {
       logWarn(_tag, 'getMessages failed: $e');
       rethrow;
     }
+  }
+
+  Future<LexiMessagesPage> getMessagesPaged({
+    required String sessionId,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    if (sessionId.isEmpty) {
+      return const LexiMessagesPage(
+        messages: [],
+        hasMore: false,
+        nextCursor: null,
+        returned: 0,
+      );
+    }
+
+    final safeLimit = limit < 1 ? 1 : (limit > 200 ? 200 : limit);
+
+    try {
+      final query = StringBuffer('limit=$safeLimit');
+      if (cursor != null && cursor.isNotEmpty) {
+        query.write('&cursor=${Uri.encodeComponent(cursor)}');
+      }
+
+      final json = await apiClient.get(
+        '/lexi/sessions/$sessionId/messages/paged?${query.toString()}',
+      );
+      final data = json['data'] ?? json;
+      final rawMessages = data['messages'] as List? ?? [];
+      final pagination = Map<String, dynamic>.from(
+        (data['pagination'] ?? const <String, dynamic>{}) as Map,
+      );
+
+      final messages = rawMessages.map((m) {
+        final map = Map<String, dynamic>.from(m as Map);
+        final role = map['role'] ?? 'user';
+        final rawContent = map['content'] ?? '';
+        return LexiMessage(
+          id: map['id'] ?? '',
+          role: role,
+          content: role == 'assistant'
+              ? _sanitizeAssistantContent(rawContent)
+              : rawContent,
+          timestamp: DateTime.tryParse(map['timestamp'] ?? '') ?? DateTime.now(),
+        );
+      }).toList();
+
+      return LexiMessagesPage(
+        messages: messages,
+        hasMore: pagination['has_more'] == true,
+        nextCursor: pagination['next_cursor']?.toString(),
+        returned: (pagination['returned'] as num?)?.toInt() ?? messages.length,
+      );
+    } catch (e) {
+      logWarn(_tag, 'getMessagesPaged fallback to full history: $e');
+      final all = await getMessages(sessionId: sessionId);
+      final page = all.length <= safeLimit
+          ? all
+          : all.sublist(all.length - safeLimit);
+      return LexiMessagesPage(
+        messages: page,
+        hasMore: all.length > safeLimit,
+        nextCursor: null,
+        returned: page.length,
+      );
+    }
+  }
+
+  Future<LexiMessagesMetadata> getMessagesMetadata({
+    required String sessionId,
+  }) async {
+    if (sessionId.isEmpty) {
+      return const LexiMessagesMetadata(
+        totalCount: 0,
+        hasMessages: false,
+        latestCursor: null,
+        oldestCursor: null,
+        latestTs: null,
+        oldestTs: null,
+      );
+    }
+
+    final json = await apiClient.get('/lexi/sessions/$sessionId/messages/metadata');
+    final data = json['data'] ?? json;
+    final metadata = Map<String, dynamic>.from(
+      (data['metadata'] ?? const <String, dynamic>{}) as Map,
+    );
+    final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
+
+    return LexiMessagesMetadata(
+      totalCount: totalCount,
+      hasMessages: metadata['has_messages'] == true,
+      latestCursor: metadata['latest_cursor']?.toString(),
+      oldestCursor: metadata['oldest_cursor']?.toString(),
+      latestTs: metadata['latest_ts']?.toString(),
+      oldestTs: metadata['oldest_ts']?.toString(),
+    );
   }
 
   Future<List<LexiSession>> getSessions({required String userId}) async {

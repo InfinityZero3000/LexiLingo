@@ -181,12 +181,18 @@ class TopicChatMessage {
   });
 
   factory TopicChatMessage.fromJson(Map<String, dynamic> json) {
+    final roleRaw = (json['role'] ?? '').toString().toLowerCase();
+    final bool computedIsUser =
+        json['is_user'] as bool? ??
+        json['isUser'] as bool? ??
+        roleRaw == 'user';
+
     return TopicChatMessage(
       id: json['id'] as String? ?? json['message_id'] as String? ?? '',
       sessionId:
           json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
       content: json['content'] as String? ?? json['message'] as String? ?? '',
-      isUser: json['is_user'] as bool? ?? json['isUser'] as bool? ?? false,
+      isUser: computedIsUser,
       timestamp: json['timestamp'] != null
           ? DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -215,6 +221,21 @@ class TopicChatMessage {
 
   String get displayContent => content;
   bool get hasHints => hints?.hasAnyHints ?? false;
+}
+
+/// Cursor-based page result for topic chat messages.
+class TopicMessagesPageResult {
+  final List<TopicChatMessage> messages;
+  final bool hasMore;
+  final String? nextCursor;
+  final int returned;
+
+  const TopicMessagesPageResult({
+    required this.messages,
+    required this.hasMore,
+    required this.nextCursor,
+    required this.returned,
+  });
 }
 
 /// Response from stories list API

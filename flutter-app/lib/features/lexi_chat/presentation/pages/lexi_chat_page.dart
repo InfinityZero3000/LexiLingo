@@ -97,8 +97,8 @@ class _LexiChatPageState extends State<LexiChatPage>
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels <= 30) {
       final provider = context.read<LexiChatProvider>();
-      if (provider.messages.isNotEmpty) {
-        _showSnack('Showing full saved history for this session');
+      if (!provider.isLoadingMoreMessages && provider.hasMoreMessages) {
+        unawaited(provider.loadOlderMessages());
       }
     }
   }

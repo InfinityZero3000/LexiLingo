@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/chat_messages_page.dart';
 import '../../domain/entities/chat_session.dart';
 import '../../domain/entities/ai_analysis_result.dart';
 import '../../domain/repositories/chat_repository.dart';
@@ -162,6 +163,71 @@ class ChatRepositoryImpl implements ChatRepository {
       return Left(CacheFailure(e.message));
     } catch (e) {
       return Left(CacheFailure('Failed to get messages: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ChatMessagesPage>> getMessagesPaged(
+    String sessionId, {
+    int limit = 50,
+    String? cursor,
+  }) async {
+    try {
+      if (apiDataSource != null && await networkInfo.isConnected) {
+        if (cursor == null || cursor.isEmpty) {
+          try {
+            final metadata = await apiDataSource!.getMessagesMetadata(sessionId);
+            if (!metadata.hasMessages || metadata.totalCount == 0) {
+              return const Right(
+                ChatMessagesPage(
+                  messages: [],
+                  hasMore: false,
+                  nextCursor: null,
+                  returned: 0,
+                ),
+              );
+            }
+          } catch (e) {
+            // Metadata endpoint is an optimization layer only.
+            logWarn(_tag, 'getMessagesMetadata failed, continue paged fetch: $e');
+          }
+        }
+
+        final page = await apiDataSource!.getMessagesPaged(
+          sessionId: sessionId,
+          limit: limit,
+          cursor: cursor,
+        );
+        return Right(
+          ChatMessagesPage(
+            messages: page.messages.map((m) => m.toEntity()).toList(),
+            hasMore: page.hasMore,
+            nextCursor: page.nextCursor,
+            returned: page.returned,
+          ),
+        );
+      }
+
+      // Offline fallback: emulate last-N paging from local cache.
+      final localMessages = await localDataSource.getMessages(sessionId);
+      final all = localMessages.map((m) => m.toEntity()).toList();
+      final safeLimit = limit < 1 ? 1 : limit;
+      final endIndex = all.length;
+      final startIndex = (endIndex - safeLimit) < 0 ? 0 : (endIndex - safeLimit);
+      final page = all.sublist(startIndex, endIndex);
+
+      return Right(
+        ChatMessagesPage(
+          messages: page,
+          hasMore: startIndex > 0,
+          nextCursor: null,
+          returned: page.length,
+        ),
+      );
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    } catch (e) {
+      return Left(CacheFailure('Failed to get paged messages: $e'));
     }
   }
 

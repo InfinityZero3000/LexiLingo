@@ -48,6 +48,13 @@ abstract class StoryRepository {
     String sessionId,
   );
 
+  /// Get paged messages for a topic session.
+  Future<Either<Failure, TopicMessagesPageResult>> getTopicMessagesPaged(
+    String sessionId, {
+    int limit = 50,
+    String? cursor,
+  });
+
   /// Check LLM health status
   Future<Either<Failure, Map<String, dynamic>>> checkLlmHealth();
 }

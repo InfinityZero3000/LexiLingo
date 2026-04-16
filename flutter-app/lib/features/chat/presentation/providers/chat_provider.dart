@@ -4,6 +4,7 @@ import '../../domain/entities/chat_session.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../domain/usecases/create_session_usecase.dart';
 import '../../domain/usecases/get_chat_history_usecase.dart';
+import '../../domain/usecases/get_paged_chat_history_usecase.dart';
 import '../../domain/usecases/get_sessions_usecase.dart';
 import '../../domain/usecases/send_message_usecase.dart';
 
@@ -12,12 +13,14 @@ class ChatProvider extends ChangeNotifier {
   final CreateSessionUseCase createSessionUseCase;
   final GetSessionsUseCase getSessionsUseCase;
   final GetChatHistoryUseCase getChatHistoryUseCase;
+  final GetPagedChatHistoryUseCase getPagedChatHistoryUseCase;
   final SendMessageUseCase sendMessageUseCase;
 
   ChatProvider({
     required this.createSessionUseCase,
     required this.getSessionsUseCase,
     required this.getChatHistoryUseCase,
+    required this.getPagedChatHistoryUseCase,
     required this.sendMessageUseCase,
   });
 
@@ -33,6 +36,7 @@ class ChatProvider extends ChangeNotifier {
   bool _hasMoreMessages = true;
   bool _isLoadingMoreMessages = false;
   final int _messagesPageSize = 20;
+  String? _nextMessageCursor;
 
   // Pagination for sessions
   bool _hasMoreSessions = true;
@@ -128,6 +132,7 @@ class ChatProvider extends ChangeNotifier {
     _error = null;
     _messages = []; // Clear messages when switching session
     _hasMoreMessages = true; // Reset pagination
+    _nextMessageCursor = null;
     notifyListeners();
     await loadChatHistory(session.id);
   }
@@ -135,6 +140,28 @@ class ChatProvider extends ChangeNotifier {
   Future<void> loadChatHistory(String sessionId) async {
     _isLoading = true;
     notifyListeners();
+
+    final pagedResult = await getPagedChatHistoryUseCase(
+      GetPagedChatHistoryParams(
+        sessionId: sessionId,
+        limit: _messagesPageSize,
+      ),
+    );
+
+    pagedResult.fold(
+      (_) {},
+      (page) {
+        _messages = page.messages;
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+
+    if (! _isLoading) {
+      return;
+    }
 
     final result = await getChatHistoryUseCase(sessionId);
     result.fold(
@@ -150,6 +177,7 @@ class ChatProvider extends ChangeNotifier {
             : messages;
         _messages = recentMessages;
         _hasMoreMessages = messages.length > _messagesPageSize;
+        _nextMessageCursor = null;
         _isLoading = false;
         notifyListeners();
       },
@@ -163,6 +191,32 @@ class ChatProvider extends ChangeNotifier {
 
     _isLoadingMoreMessages = true;
     notifyListeners();
+
+    final pagedResult = await getPagedChatHistoryUseCase(
+      GetPagedChatHistoryParams(
+        sessionId: _currentSession!.id,
+        limit: _messagesPageSize,
+        cursor: _nextMessageCursor,
+      ),
+    );
+
+    final pagedSuccess = pagedResult.fold(
+      (_) => false,
+      (page) {
+        if (page.messages.isNotEmpty) {
+          _messages.insertAll(0, page.messages);
+        }
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoadingMoreMessages = false;
+        notifyListeners();
+        return true;
+      },
+    );
+
+    if (pagedSuccess) {
+      return;
+    }
 
     final result = await getChatHistoryUseCase(_currentSession!.id);
     result.fold(
@@ -284,6 +338,7 @@ class ChatProvider extends ChangeNotifier {
     _selectedModel = AIModel.gemini;
     _hasMoreMessages = true;
     _isLoadingMoreMessages = false;
+    _nextMessageCursor = null;
     _hasMoreSessions = true;
     _isLoadingMoreSessions = false;
     notifyListeners();
