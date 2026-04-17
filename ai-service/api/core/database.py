@@ -48,7 +48,7 @@ class MongoDBManager:
         
         Similar to Flutter's DatabaseHelper.database getter.
         """
-        if self._client is not None:
+        if self._client is not None and self._db is not None:
             logger.info("MongoDB already connected")
             return
         
@@ -96,6 +96,14 @@ class MongoDBManager:
             logger.info(f"MongoDB connected: {settings.MONGODB_DATABASE}")
             
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            # Reset partial state so subsequent requests can retry a clean connect.
+            if self._client is not None:
+                try:
+                    self._client.close()
+                except Exception:
+                    pass
+            self._client = None
+            self._db = None
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
     
@@ -122,7 +130,7 @@ class MongoDBManager:
     @property
     def is_connected(self) -> bool:
         """Check if database is connected."""
-        return self._client is not None
+        return self._client is not None and self._db is not None
 
 
 # Global instance (similar to Flutter's GetIt registration)

@@ -5,7 +5,7 @@ Main entry point for the AI Service.
 Initializes resources and includes modular routers.
 """
 
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -291,6 +291,31 @@ async def visualizer_redirect():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+async def _run_model_warmup() -> None:
+    """Best-effort warmup for AI models; errors are non-fatal."""
+    try:
+        from api.services.model_gateway import get_model_gateway
+        gateway = get_model_gateway()
+        await gateway.preload_models()
+        logger.info("Warmup: model preload complete")
+    except Exception as exc:
+        logger.warning(f"Warmup: preload error (non-fatal): {exc}")
+
+
+@app.post("/warmup")
+@app.get("/warmup")
+@app.post("/api/v1/warmup")
+@app.get("/api/v1/warmup")
+async def warmup(background_tasks: BackgroundTasks):
+    """
+    Trigger background model warmup.
+
+    Supports legacy and versioned paths/methods for compatibility.
+    """
+    background_tasks.add_task(_run_model_warmup)
+    return {"status": "warming_up", "message": "Model preload started in background"}
 
 @app.get("/")
 async def root():

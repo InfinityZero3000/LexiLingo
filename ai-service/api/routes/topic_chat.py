@@ -5,6 +5,7 @@ Endpoints for topic-based conversation feature.
 Includes starting topic sessions and sending messages within topic context.
 """
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
@@ -14,6 +15,7 @@ from datetime import datetime
 import uuid
 import time
 import logging
+import re
 
 from api.core.database import get_database
 from api.core.config import settings
@@ -44,6 +46,11 @@ router = APIRouter()
 SAFE_FIXED_RESPONSE = (
     "I'm sorry, I can't respond right now. "
     "Please try again shortly."
+)
+
+TOPIC_GRAPHCAG_TIMEOUT_SEC = float(getattr(settings, "TOPIC_GRAPHCAG_TIMEOUT_SEC", 12.0))
+TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC = float(
+    getattr(settings, "TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC", 6.0)
 )
 
 
@@ -120,6 +127,24 @@ def _build_pagination(
         "window_start_ts": window_start_ts,
         "window_end_ts": window_end_ts,
     }
+
+
+def _sanitize_topic_response(text: str) -> str:
+    """Best-effort cleanup for malformed JSON tails leaked by model outputs."""
+    candidate = (text or "").strip()
+    if not candidate:
+        return candidate
+
+    # Common case: normal sentence followed by broken JSON tail like `],"e":[]}`.
+    last_sentence_end = max(candidate.rfind("."), candidate.rfind("!"), candidate.rfind("?"))
+    if 0 <= last_sentence_end < len(candidate) - 1:
+        tail = candidate[last_sentence_end + 1 :].strip()
+        has_json_punct = any(ch in tail for ch in "{}[]") and ":" in tail
+        long_alpha_tokens = re.findall(r"[A-Za-z]{2,}", tail)
+        if tail and has_json_punct and not long_alpha_tokens:
+            candidate = candidate[: last_sentence_end + 1].strip()
+
+    return candidate
 
 
 @router.get(
@@ -393,13 +418,18 @@ async def send_topic_message(
 
             graph_start = time.time()
             orchestrator = await get_orchestrator()
-            graph_result = await orchestrator.process(
-                user_input=request.message,
-                session_id=session_id,
-                user_id=request.user_id,
-                learner_profile={"level": session.get("difficulty_level", "B1")},
-                conversation_history=conversation_history,
-                retrieval_policy="rapid",
+            graph_result = await asyncio.wait_for(
+                orchestrator.process(
+                    user_input=request.message,
+                    session_id=session_id,
+                    user_id=request.user_id,
+                    learner_profile={"level": session.get("difficulty_level", "B1")},
+                    conversation_history=conversation_history[-6:],
+                    retrieval_policy="rapid",
+                    diagnosis_policy="rules",
+                    generation_policy="auto",
+                ),
+                timeout=TOPIC_GRAPHCAG_TIMEOUT_SEC,
             )
 
             ai_response = str(graph_result.get("tutor_response") or "").strip()
@@ -421,16 +451,19 @@ async def send_topic_message(
 
                 retry_start = time.time()
                 orchestrator = await get_orchestrator()
-                retry_result = await orchestrator.process(
-                    user_input=request.message,
-                    session_id=session_id,
-                    user_id=request.user_id,
-                    learner_profile={"level": session.get("difficulty_level", "B1")},
-                    conversation_history=[],
-                    cache_policy="off",
-                    retrieval_policy="rapid",
-                    diagnosis_policy="rules",
-                    generation_policy="auto",
+                retry_result = await asyncio.wait_for(
+                    orchestrator.process(
+                        user_input=request.message,
+                        session_id=session_id,
+                        user_id=request.user_id,
+                        learner_profile={"level": session.get("difficulty_level", "B1")},
+                        conversation_history=[],
+                        cache_policy="off",
+                        retrieval_policy="rapid",
+                        diagnosis_policy="rules",
+                        generation_policy="auto",
+                    ),
+                    timeout=TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC,
                 )
                 ai_response = str(retry_result.get("tutor_response") or "").strip()
                 retry_meta = retry_result.get("metadata", {}) or {}
@@ -467,12 +500,16 @@ async def send_topic_message(
         }
         await db["chat_messages"].insert_one(user_message)
         
+        # Parse educational hints and sanitize response before persisting/displaying
+        clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
+        display_response = _sanitize_topic_response(clean_response or ai_response)
+
         # Save AI message
         ai_message_id = str(uuid.uuid4())
         ai_message_doc = {
             "message_id": ai_message_id,
             "session_id": session_id,
-            "content": ai_response,
+            "content": display_response,
             "role": "assistant",
             "timestamp": datetime.utcnow()
         }
@@ -489,9 +526,6 @@ async def send_topic_message(
         
         processing_time = int((time.time() - start_time) * 1000)
         
-        # Parse educational hints using enhanced parser
-        clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
-        
         # Convert parsed hints to dict for API response
         educational_hints_dict = None
         if parsed_hints and parsed_hints.has_hints():
@@ -499,8 +533,8 @@ async def send_topic_message(
         
         return TopicChatResponse(
             message_id=ai_message_id,
-            ai_response=ai_response,
-            clean_response=clean_response,
+            ai_response=display_response,
+            clean_response=display_response,
             educational_hints=educational_hints_dict,
             processing_time_ms=processing_time,
             llm_metadata=llm_metadata,
