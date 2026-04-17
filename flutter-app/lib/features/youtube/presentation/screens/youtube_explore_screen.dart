@@ -266,17 +266,17 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget _buildChannelCard(YouTubeChannel channel, bool isDark) {
     final gradient = _channelGradient(channel.category);
     final iconTileBg = isDark
-      ? Colors.black.withValues(alpha: 0.28)
-      : Colors.white.withValues(alpha: 0.92);
+        ? Colors.black.withValues(alpha: 0.28)
+        : Colors.white.withValues(alpha: 0.92);
     final iconColor = isDark
-      ? AppColors.surfaceLight
-      : gradient.first.withValues(alpha: 0.95);
+        ? AppColors.surfaceLight
+        : gradient.first.withValues(alpha: 0.95);
     final levelChipBg = isDark
-      ? Colors.white.withValues(alpha: 0.20)
-      : Colors.white.withValues(alpha: 0.92);
+        ? Colors.white.withValues(alpha: 0.20)
+        : Colors.white.withValues(alpha: 0.92);
     final levelChipTextColor = isDark
-      ? AppColors.surfaceLight
-      : AppColors.textDark;
+        ? AppColors.surfaceLight
+        : AppColors.textDark;
 
     return GestureDetector(
       onTap: () {

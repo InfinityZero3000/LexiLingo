@@ -558,7 +558,15 @@ class TopicData {
 const List<TopicData> defaultTopics = [
   TopicData(label: 'Daily Life', icon: Icons.wb_sunny, color: AppColors.orange),
   TopicData(label: 'Travel', icon: Icons.flight, color: Colors.blue),
-  TopicData(label: 'Food', icon: Icons.restaurant, color: AppColors.errorBright),
+  TopicData(
+    label: 'Food',
+    icon: Icons.restaurant,
+    color: AppColors.errorBright,
+  ),
   TopicData(label: 'Work', icon: Icons.work, color: AppColors.purple),
-  TopicData(label: 'Hobbies', icon: Icons.palette, color: AppColors.greenSuccessBright),
+  TopicData(
+    label: 'Hobbies',
+    icon: Icons.palette,
+    color: AppColors.greenSuccessBright,
+  ),
 ];

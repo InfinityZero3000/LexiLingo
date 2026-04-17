@@ -17,7 +17,8 @@ class LearningStreakStatsPage extends StatelessWidget {
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final summary = progressProvider.summary;
-        final currentStreak = stats?.currentStreak ?? summary?.currentStreak ?? 0;
+        final currentStreak =
+            stats?.currentStreak ?? summary?.currentStreak ?? 0;
         final longestStreak = summary?.longestStreak ?? 0;
 
         return _singleCard(
@@ -117,7 +118,10 @@ class LearningCoursesStatsPage extends StatelessWidget {
     );
   }
 
-  Widget _courseProgressCard(BuildContext context, CourseProgressDetail course) {
+  Widget _courseProgressCard(
+    BuildContext context,
+    CourseProgressDetail course,
+  ) {
     final progress = course.progressPercentage;
 
     return InkWell(
@@ -154,7 +158,11 @@ class LearningCoursesStatsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textGrey),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.textGrey,
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -163,7 +171,9 @@ class LearningCoursesStatsPage extends StatelessWidget {
               minHeight: 7,
               borderRadius: BorderRadius.circular(8),
               backgroundColor: AppColors.grey300,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -224,7 +234,9 @@ class LearningTestsStatsPage extends StatelessWidget {
             const Divider(height: 20),
             _detailRow(
               'Average score',
-              averageScore > 0 ? '${averageScore.toStringAsFixed(1)}%' : 'No score yet',
+              averageScore > 0
+                  ? '${averageScore.toStringAsFixed(1)}%'
+                  : 'No score yet',
             ),
           ],
         );
@@ -239,12 +251,10 @@ class _StatsPageScaffold extends StatefulWidget {
     BuildContext context,
     ProfileProvider profileProvider,
     ProgressProvider progressProvider,
-  ) builder;
+  )
+  builder;
 
-  const _StatsPageScaffold({
-    required this.title,
-    required this.builder,
-  });
+  const _StatsPageScaffold({required this.title, required this.builder});
 
   @override
   State<_StatsPageScaffold> createState() => _StatsPageScaffoldState();

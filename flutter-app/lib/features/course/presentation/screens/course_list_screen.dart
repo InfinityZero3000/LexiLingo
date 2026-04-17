@@ -74,12 +74,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   background: SafeArea(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        canPop ? 72 : 20,
-                        12,
-                        20,
-                        0,
-                      ),
+                      padding: EdgeInsets.fromLTRB(canPop ? 72 : 20, 12, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -87,18 +82,16 @@ class _CourseListScreenState extends State<CourseListScreen> {
                           Row(
                             children: [
                               Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.explore,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.surface,
-                                    size: 24,
-                                  ),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.explore,
+                                  color: Theme.of(context).colorScheme.surface,
+                                  size: 24,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Column(
@@ -109,15 +102,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Text(
                                     '${provider.courses.length} courses available',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(color: Colors.grey[600]),
                                   ),
                                 ],
@@ -125,7 +114,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                               const Spacer(),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                                  color: const Color(
+                                    0xFF3B82F6,
+                                  ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: IconButton(

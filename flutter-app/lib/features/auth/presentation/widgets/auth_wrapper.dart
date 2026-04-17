@@ -269,10 +269,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       child: KeyedSubtree(
         key: ValueKey<String>(
           authProvider.isAuthenticated
-            ? (_showOnboarding ? 'onboarding' : 'main')
-            : (_showPreAuthWelcome
-              ? 'welcome'
-              : (_isShowingRegister ? 'register' : 'login')),
+              ? (_showOnboarding ? 'onboarding' : 'main')
+              : (_showPreAuthWelcome
+                    ? 'welcome'
+                    : (_isShowingRegister ? 'register' : 'login')),
         ),
         child: currentPage,
       ),

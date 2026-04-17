@@ -118,7 +118,7 @@ class AppColors {
   static const Color textOnDarkPrimary = Color(0xFFEFFDFF);
   static const Color textOnDarkSecondary = Color(0xFFB8D7DF);
   static const Color textOnDarkMuted = Color(0xFF88A6B0);
-  
+
   // ── Slate / Ink ───────────────────────────────────────────────────────────
   static const Color slate900 = Color(0xFF0F172A);
   static const Color slate800 = Color(0xFF1E293B);
@@ -199,29 +199,23 @@ class AppColors {
 class AppColorRoles {
   const AppColorRoles._();
 
-  static Color primary(bool isDark) => isDark
-    ? AppColors.primaryDarkMode
-    : AppColors.primary;
+  static Color primary(bool isDark) =>
+      isDark ? AppColors.primaryDarkMode : AppColors.primary;
 
-  static Color primaryDeep(bool isDark) => isDark
-    ? AppColors.primaryDarkModeDeep
-    : AppColors.primaryDark;
+  static Color primaryDeep(bool isDark) =>
+      isDark ? AppColors.primaryDarkModeDeep : AppColors.primaryDark;
 
-  static List<Color> primaryGradient(bool isDark) => isDark
-    ? AppColors.primaryGradientDark
-    : AppColors.primaryGradient;
+  static List<Color> primaryGradient(bool isDark) =>
+      isDark ? AppColors.primaryGradientDark : AppColors.primaryGradient;
 
-  static Color textPrimary(bool isDark) => isDark
-    ? AppColors.textOnDarkPrimary
-    : AppColors.textDark;
+  static Color textPrimary(bool isDark) =>
+      isDark ? AppColors.textOnDarkPrimary : AppColors.textDark;
 
-  static Color textSecondary(bool isDark) => isDark
-    ? AppColors.textOnDarkSecondary
-    : AppColors.textGrey;
+  static Color textSecondary(bool isDark) =>
+      isDark ? AppColors.textOnDarkSecondary : AppColors.textGrey;
 
-  static Color textMuted(bool isDark) => isDark
-    ? AppColors.textOnDarkMuted
-    : AppColors.textMuted;
+  static Color textMuted(bool isDark) =>
+      isDark ? AppColors.textOnDarkMuted : AppColors.textMuted;
 }
 
 class AppTheme {

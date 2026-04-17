@@ -5,10 +5,7 @@ class ThemeRippleEvent {
   final Offset origin;
   final Color color;
 
-  const ThemeRippleEvent({
-    required this.origin,
-    required this.color,
-  });
+  const ThemeRippleEvent({required this.origin, required this.color});
 }
 
 class ThemeRippleBus {
@@ -16,7 +13,8 @@ class ThemeRippleBus {
 
   static final ThemeRippleBus instance = ThemeRippleBus._();
 
-  final ValueNotifier<ThemeRippleEvent?> notifier = ValueNotifier<ThemeRippleEvent?>(null);
+  final ValueNotifier<ThemeRippleEvent?> notifier =
+      ValueNotifier<ThemeRippleEvent?>(null);
 
   void emit({required Offset origin, required String themeCode}) {
     notifier.value = ThemeRippleEvent(

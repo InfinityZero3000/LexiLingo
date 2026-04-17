@@ -326,7 +326,9 @@ class GlassmorphicAuthCard extends StatelessWidget {
         child: Container(
           padding: padding ?? EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
+            color: Theme.of(
+              context,
+            ).colorScheme.surface.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: [
               BoxShadow(
@@ -337,7 +339,9 @@ class GlassmorphicAuthCard extends StatelessWidget {
               ),
             ],
             border: Border.all(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.45),
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.45),
               width: 1.5,
             ),
           ),

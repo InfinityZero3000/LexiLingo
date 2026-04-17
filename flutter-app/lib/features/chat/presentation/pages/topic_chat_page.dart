@@ -792,10 +792,7 @@ class _TopicMessageBubble extends StatelessWidget {
                     ],
                   ),
                   child: isUser
-                      ? Text(
-                          message.displayContent,
-                          style: bubbleTextStyle,
-                        )
+                      ? Text(message.displayContent, style: bubbleTextStyle)
                       : QuickSaveSelectionArea(
                           sourceType: 'topic_chat',
                           sourceReference: message.id,

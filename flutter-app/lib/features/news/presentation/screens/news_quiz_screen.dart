@@ -88,10 +88,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     const SizedBox(height: 12),
                     Text(
                       'Quiz not available',
-                      style: TextStyle(
-                        color: AppColors.grey500,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: AppColors.grey500, fontSize: 16),
                     ),
                   ],
                 ),
@@ -478,7 +475,9 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         isCorrect
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
-                        color: isCorrect ? AppColors.greenSuccessBright : AppColors.errorBright,
+                        color: isCorrect
+                            ? AppColors.greenSuccessBright
+                            : AppColors.errorBright,
                         size: 20,
                       ),
                       const SizedBox(width: 8),

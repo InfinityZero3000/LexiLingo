@@ -135,7 +135,7 @@ class _LexiChatPageState extends State<LexiChatPage>
             'lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       } else {
         recordingPath =
-        '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+            '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       }
 
       await _recorder.start(
@@ -261,7 +261,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight,
+              color: isDark
+                  ? AppColors.surfaceDarkChat
+                  : AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -346,7 +348,9 @@ class _LexiChatPageState extends State<LexiChatPage>
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight,
+              color: isDark
+                  ? AppColors.surfaceDarkChat
+                  : AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -748,7 +752,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         decoration: BoxDecoration(
           color: _isRecording
               ? Colors.red.withValues(alpha: 0.1)
-              : (isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight),
+              : (isDark
+                    ? AppColors.surfaceDarkChat
+                    : AppColors.backgroundLight),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: _isRecording

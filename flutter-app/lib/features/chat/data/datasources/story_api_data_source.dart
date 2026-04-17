@@ -228,7 +228,9 @@ class StoryApiDataSource {
     required String message,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages');
+      final uri = Uri.parse(
+        '$baseUrl/topics/topic-sessions/$sessionId/messages',
+      );
       logDebug(_tag, 'sendTopicMessage: $uri');
 
       final body = {
@@ -329,7 +331,9 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException('Failed to get paged messages: ${response.statusCode}');
+        throw ServerException(
+          'Failed to get paged messages: ${response.statusCode}',
+        );
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -362,7 +366,9 @@ class StoryApiDataSource {
   Future<TopicMessagesMetadataResult> getTopicMessagesMetadata(
     String sessionId,
   ) async {
-    final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages/metadata');
+    final uri = Uri.parse(
+      '$baseUrl/topics/topic-sessions/$sessionId/messages/metadata',
+    );
     logDebug(_tag, 'getTopicMessagesMetadata: $uri');
 
     final response = await _client.get(
@@ -371,7 +377,9 @@ class StoryApiDataSource {
     );
 
     if (response.statusCode != 200) {
-      throw ServerException('Failed to get topic metadata: ${response.statusCode}');
+      throw ServerException(
+        'Failed to get topic metadata: ${response.statusCode}',
+      );
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -438,7 +446,8 @@ class StoryApiDataSource {
       final found = allMessages.indexWhere((m) {
         final idMatch = cursorId != null && m.id == cursorId;
         final tsMatch =
-            cursorTs != null && m.timestamp.toIso8601String().startsWith(cursorTs);
+            cursorTs != null &&
+            m.timestamp.toIso8601String().startsWith(cursorTs);
         return idMatch || tsMatch;
       });
       if (found >= 0) {

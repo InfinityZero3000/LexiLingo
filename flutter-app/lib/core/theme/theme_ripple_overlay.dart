@@ -7,10 +7,7 @@ import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
 class ThemeRippleOverlay extends StatefulWidget {
   final Widget child;
 
-  const ThemeRippleOverlay({
-    super.key,
-    required this.child,
-  });
+  const ThemeRippleOverlay({super.key, required this.child});
 
   @override
   State<ThemeRippleOverlay> createState() => _ThemeRippleOverlayState();
@@ -102,17 +99,23 @@ class _ThemeRipplePainter extends CustomPainter {
     final baseRadius = ui.lerpDouble(0, maxRadius, progress) ?? 0;
 
     final fillPaint = Paint()
-      ..color = color.withValues(alpha: (0.24 - (progress * 0.16)).clamp(0.0, 0.24))
+      ..color = color.withValues(
+        alpha: (0.24 - (progress * 0.16)).clamp(0.0, 0.24),
+      )
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(origin, baseRadius, fillPaint);
 
     final ring1 = Paint()
-      ..color = color.withValues(alpha: (0.35 - (progress * 0.30)).clamp(0.0, 0.35))
+      ..color = color.withValues(
+        alpha: (0.35 - (progress * 0.30)).clamp(0.0, 0.35),
+      )
       ..style = PaintingStyle.stroke
       ..strokeWidth = ui.lerpDouble(16, 2, progress) ?? 4;
     final ring2 = Paint()
-      ..color = color.withValues(alpha: (0.24 - (progress * 0.20)).clamp(0.0, 0.24))
+      ..color = color.withValues(
+        alpha: (0.24 - (progress * 0.20)).clamp(0.0, 0.24),
+      )
       ..style = PaintingStyle.stroke
       ..strokeWidth = ui.lerpDouble(10, 1.5, progress) ?? 3;
 

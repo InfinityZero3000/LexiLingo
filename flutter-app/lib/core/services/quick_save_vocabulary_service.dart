@@ -50,7 +50,8 @@ class QuickSaveVocabularyService {
           'source_reference': sourceReference,
         if (contextSentence != null && contextSentence.isNotEmpty)
           'context_sentence': contextSentence,
-        if (definition != null && definition.isNotEmpty) 'definition': definition,
+        if (definition != null && definition.isNotEmpty)
+          'definition': definition,
         if (translation != null && translation.isNotEmpty)
           'translation': translation,
         if (partOfSpeech != null && partOfSpeech.isNotEmpty)

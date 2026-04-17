@@ -229,7 +229,11 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(settings.currentGoalIcon, size: 32, color: Theme.of(context).colorScheme.surface),
+                  Icon(
+                    settings.currentGoalIcon,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     children: [
@@ -244,7 +248,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         settings.currentGoalLabel,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -727,11 +733,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.grey400,
-                    size: 20,
-                  ),
+                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
                 ],
               ),
             ),

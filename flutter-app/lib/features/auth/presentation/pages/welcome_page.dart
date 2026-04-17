@@ -275,7 +275,10 @@ class _WelcomePageState extends State<WelcomePage>
       height: 32,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Theme.of(context).colorScheme.surface, width: 1.5),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.surface,
+          width: 1.5,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: Image.network(

@@ -67,7 +67,9 @@ class AnimationShowcasePage extends StatelessWidget {
               ),
               child: FloatingParticles(
                 particleCount: 20,
-                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.6),
                 maxSize: 4,
               ),
             ),
@@ -179,7 +181,12 @@ class AnimationShowcasePage extends StatelessWidget {
             AnimatedGradientBorder(
               borderWidth: 3,
               borderRadius: 16,
-              colors: [Colors.blue, AppColors.purple, Colors.pink, AppColors.orange],
+              colors: [
+                Colors.blue,
+                AppColors.purple,
+                Colors.pink,
+                AppColors.orange,
+              ],
               child: Container(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -208,7 +215,10 @@ class AnimationShowcasePage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                AnimatedCheckmark(color: AppColors.greenSuccessBright, size: 60),
+                AnimatedCheckmark(
+                  color: AppColors.greenSuccessBright,
+                  size: 60,
+                ),
                 AnimatedCheckmark(color: Colors.blue, size: 60),
                 AnimatedCheckmark(color: AppColors.purple, size: 60),
               ],

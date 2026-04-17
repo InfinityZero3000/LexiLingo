@@ -117,7 +117,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
             gradient: LinearGradient(
               colors: [
                 isDark ? accent : AppColors.primary,
-                isDark ? AppColorRoles.primaryDeep(true) : const Color(0xFF0D6ABD),
+                isDark
+                    ? AppColorRoles.primaryDeep(true)
+                    : const Color(0xFF0D6ABD),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

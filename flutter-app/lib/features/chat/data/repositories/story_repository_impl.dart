@@ -173,7 +173,9 @@ class StoryRepositoryImpl implements StoryRepository {
     try {
       if (cursor == null || cursor.isEmpty) {
         try {
-          final metadata = await apiDataSource.getTopicMessagesMetadata(sessionId);
+          final metadata = await apiDataSource.getTopicMessagesMetadata(
+            sessionId,
+          );
           if (!metadata.hasMessages || metadata.totalCount == 0) {
             return const Right(
               TopicMessagesPageResult(
@@ -186,7 +188,10 @@ class StoryRepositoryImpl implements StoryRepository {
           }
         } catch (e) {
           // Metadata endpoint is an optimization layer only.
-          logWarn(_tag, 'getTopicMessagesMetadata failed, continue paged fetch: $e');
+          logWarn(
+            _tag,
+            'getTopicMessagesMetadata failed, continue paged fetch: $e',
+          );
         }
       }
 

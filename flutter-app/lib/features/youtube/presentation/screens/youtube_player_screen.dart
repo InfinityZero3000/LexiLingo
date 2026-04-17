@@ -63,10 +63,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildDictionarySheet(
-        cleanWord,
-        contextSentence: contextSentence,
-      ),
+      builder: (context) =>
+          _buildDictionarySheet(cleanWord, contextSentence: contextSentence),
     );
   }
 
@@ -467,10 +465,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               runSpacing: 2,
               children: segment.text.split(' ').map((word) {
                 return GestureDetector(
-                  onTap: () => _onWordTap(
-                    word,
-                    contextSentence: segment.text,
-                  ),
+                  onTap: () => _onWordTap(word, contextSentence: segment.text),
                   child: Text(
                     word,
                     style: TextStyle(

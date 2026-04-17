@@ -78,7 +78,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> loginWithFacebook(String firebaseIdToken) async {
+  Future<Either<Failure, UserEntity>> loginWithFacebook(
+    String firebaseIdToken,
+  ) async {
     try {
       // Login and save tokens
       await backendDataSource.loginWithFacebook(firebaseIdToken);

@@ -327,7 +327,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         isCompleted ? Icons.emoji_events : Icons.bolt,
                         color: isCompleted
                             ? AppColors.greenSuccessBright
-                          : accent,
+                            : accent,
                         size: badgeIconSize,
                       ),
                     ),
@@ -398,9 +398,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isCompleted
-                        ? AppColors.greenSuccessBright
-                        : accent,
+                    color: isCompleted ? AppColors.greenSuccessBright : accent,
                   ),
                 ),
               ],
@@ -497,7 +495,7 @@ class _HomePageNewState extends State<HomePageNew> {
                               fontSize: valueFontSize,
                               color: isCompleted
                                   ? AppColors.greenSuccessBright
-                                      : accent,
+                                  : accent,
                             ),
                       ),
                       SizedBox(height: compact ? 2 : 4),
@@ -530,7 +528,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                 fontWeight: FontWeight.w600,
                                 color: isCompleted
                                     ? AppColors.greenSuccessBright
-                                  : accent,
+                                    : accent,
                               ),
                             ),
                           ],
@@ -644,7 +642,7 @@ class _HomePageNewState extends State<HomePageNew> {
         ? AppColors.greenSuccessBright
         : progress >= 50
         ? AppColors.orange
-      : AppColorRoles.primary(isDark);
+        : AppColorRoles.primary(isDark);
     final colorScheme = Theme.of(context).colorScheme;
     final surfaceBg = colorScheme.surfaceContainerHighest;
 
@@ -730,7 +728,9 @@ class _HomePageNewState extends State<HomePageNew> {
                         Text(
                           '${course.totalLessons} lessons',
                           style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColorRoles.textSecondary(isDark)),
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                       ],
                     ),
@@ -1036,7 +1036,9 @@ class _HomePageNewState extends State<HomePageNew> {
                           fontWeight: FontWeight.bold,
                           shadows: [
                             Shadow(
-                              color: AppColors.backgroundDark.withValues(alpha: 0.75),
+                              color: AppColors.backgroundDark.withValues(
+                                alpha: 0.75,
+                              ),
                               blurRadius: 4,
                             ),
                           ],
@@ -1052,7 +1054,10 @@ class _HomePageNewState extends State<HomePageNew> {
             // Bottom section with info and action
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1319,7 +1324,7 @@ class _HomePageNewState extends State<HomePageNew> {
         icon: Icons.article_rounded,
         label: 'Articles',
         value: '—',
-          color: AppColorRoles.primary(isDark),
+        color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.sports_esports_rounded,
@@ -1331,7 +1336,7 @@ class _HomePageNewState extends State<HomePageNew> {
         icon: Icons.headphones_rounded,
         label: 'Listened',
         value: '—',
-          color: AppColorRoles.primary(isDark),
+        color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.menu_book_rounded,

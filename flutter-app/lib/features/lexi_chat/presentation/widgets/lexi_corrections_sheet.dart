@@ -55,7 +55,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(top: 16, bottom: 8),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.3),
+              color: isDark
+                  ? Colors.white24
+                  : Colors.grey.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -285,7 +287,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 child: correctionChip(
                   text: correction.correction,
                   textColor: AppColors.greenSuccess,
-                  backgroundColor: AppColors.greenSuccess.withValues(alpha: 0.08),
+                  backgroundColor: AppColors.greenSuccess.withValues(
+                    alpha: 0.08,
+                  ),
                   borderColor: AppColors.greenSuccess.withValues(alpha: 0.2),
                   fontWeight: FontWeight.w600,
                 ),

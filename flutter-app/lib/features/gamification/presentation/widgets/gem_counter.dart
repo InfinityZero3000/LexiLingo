@@ -135,7 +135,11 @@ class _GemCounterState extends State<GemCounter>
           ),
         ],
       ),
-      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 14),
+      child: Icon(
+        Icons.diamond,
+        color: Theme.of(context).colorScheme.surface,
+        size: 14,
+      ),
     );
   }
 
@@ -178,7 +182,11 @@ class GemIcon extends StatelessWidget {
               ]
             : null,
       ),
-      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: size * 0.6),
+      child: Icon(
+        Icons.diamond,
+        color: Theme.of(context).colorScheme.surface,
+        size: size * 0.6,
+      ),
     );
   }
 }

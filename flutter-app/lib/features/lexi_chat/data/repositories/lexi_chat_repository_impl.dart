@@ -73,7 +73,9 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String? cursor,
   }) async {
     try {
-      final metadata = await dataSource.getMessagesMetadata(sessionId: sessionId);
+      final metadata = await dataSource.getMessagesMetadata(
+        sessionId: sessionId,
+      );
       if (!metadata.hasMessages || metadata.totalCount == 0) {
         return const LexiMessagesPage(
           messages: [],

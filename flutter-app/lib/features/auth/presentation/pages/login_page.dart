@@ -132,7 +132,9 @@ class _LoginPageState extends State<LoginPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -140,7 +142,9 @@ class _LoginPageState extends State<LoginPage> {
                       'Continue your English language journey',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -149,7 +153,9 @@ class _LoginPageState extends State<LoginPage> {
                       'Email Address',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -160,7 +166,9 @@ class _LoginPageState extends State<LoginPage> {
                         hintText: 'name@example.com',
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -184,7 +192,9 @@ class _LoginPageState extends State<LoginPage> {
                             'Password',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.surfaceDarkInput,
                             ),
                           ),
                         ),
@@ -213,7 +223,9 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -233,11 +245,14 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.isLoading || _isLockedAfterFailures
+                        onPressed:
+                            authProvider.isLoading || _isLockedAfterFailures
                             ? null
                             : () async {
                                 if (_formKey.currentState!.validate()) {
-                                  final messenger = ScaffoldMessenger.of(context);
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
                                   await authProvider.signInWithEmailPassword(
                                     _emailController.text.trim(),
                                     _passwordController.text,
@@ -312,7 +327,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.lock_outline, color: Colors.orange.shade700),
+                            Icon(
+                              Icons.lock_outline,
+                              color: Colors.orange.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -408,7 +426,9 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'Don\'t have an account?',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDark ? Colors.white70 : AppColors.textSlate,
+                            color: isDark
+                                ? Colors.white70
+                                : AppColors.textSlate,
                           ),
                         ),
                         TextButton(
@@ -438,7 +458,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red.shade700),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

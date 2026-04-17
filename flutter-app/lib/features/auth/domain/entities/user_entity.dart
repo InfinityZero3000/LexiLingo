@@ -60,7 +60,7 @@ class UserEntity {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       provider: provider ?? this.provider,
       isVerified: isVerified ?? this.isVerified,
-        isOnboardingCompleted:
+      isOnboardingCompleted:
           isOnboardingCompleted ?? this.isOnboardingCompleted,
       level: level ?? this.level,
       xp: xp ?? this.xp,

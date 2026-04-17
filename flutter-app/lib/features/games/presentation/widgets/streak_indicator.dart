@@ -112,7 +112,10 @@ class StreakIndicator extends StatelessWidget {
               ),
               Text(
                 'streak',
-                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color.withValues(alpha: 0.7),
+                ),
               ),
             ],
           ),

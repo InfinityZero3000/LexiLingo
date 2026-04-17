@@ -17,9 +17,18 @@ class UserStatsModel extends UserStatsEntity {
     return UserStatsModel(
       totalXP: json['total_xp'] as int? ?? 0,
       currentStreak: json['current_streak'] as int? ?? 0,
-      totalCoursesCompleted: (json['courses_completed'] ?? json['total_courses_completed']) as int? ?? 0,
-      totalLessonsCompleted: (json['lessons_completed'] ?? json['total_lessons_completed']) as int? ?? 0,
-      totalVocabularyMastered: (json['words_mastered'] ?? json['total_vocabulary_mastered']) as int? ?? 0,
+      totalCoursesCompleted:
+          (json['courses_completed'] ?? json['total_courses_completed'])
+              as int? ??
+          0,
+      totalLessonsCompleted:
+          (json['lessons_completed'] ?? json['total_lessons_completed'])
+              as int? ??
+          0,
+      totalVocabularyMastered:
+          (json['words_mastered'] ?? json['total_vocabulary_mastered'])
+              as int? ??
+          0,
       totalTestsPassed: json['total_tests_passed'] as int? ?? 0,
       totalCertificatesEarned: json['total_certificates_earned'] as int? ?? 0,
       averageTestScore: (json['average_test_score'] as num?)?.toDouble() ?? 0.0,

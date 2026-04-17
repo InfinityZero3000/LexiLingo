@@ -40,7 +40,8 @@ class LexiChatDataSource {
     var i = 0;
 
     while (i < text.length) {
-      final isDoubleStar = i + 1 < text.length && text[i] == '*' && text[i + 1] == '*';
+      final isDoubleStar =
+          i + 1 < text.length && text[i] == '*' && text[i + 1] == '*';
       final isExactPair =
           isDoubleStar &&
           (i == 0 || text[i - 1] != '*') &&
@@ -307,7 +308,8 @@ class LexiChatDataSource {
           content: role == 'assistant'
               ? _sanitizeAssistantContent(rawContent)
               : rawContent,
-          timestamp: DateTime.tryParse(map['timestamp'] ?? '') ?? DateTime.now(),
+          timestamp:
+              DateTime.tryParse(map['timestamp'] ?? '') ?? DateTime.now(),
         );
       }).toList();
 
@@ -346,7 +348,9 @@ class LexiChatDataSource {
       );
     }
 
-    final json = await apiClient.get('/lexi/sessions/$sessionId/messages/metadata');
+    final json = await apiClient.get(
+      '/lexi/sessions/$sessionId/messages/metadata',
+    );
     final data = json['data'] ?? json;
     final metadata = Map<String, dynamic>.from(
       (data['metadata'] ?? const <String, dynamic>{}) as Map,

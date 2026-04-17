@@ -67,10 +67,7 @@ class GameCard extends StatelessWidget {
                 Icon(gameType.icon, color: foregroundColor, size: 28),
                 if (bestScore != null)
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: foregroundColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -108,10 +105,7 @@ class GameCard extends StatelessWidget {
             Expanded(
               child: Text(
                 gameType.description,
-                style: TextStyle(
-                  color: secondaryForeground,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: secondaryForeground, fontSize: 11),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -121,10 +115,7 @@ class GameCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: playChipBg,
                     borderRadius: BorderRadius.circular(12),

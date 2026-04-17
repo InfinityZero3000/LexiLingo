@@ -44,7 +44,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Create New Password'),
         centerTitle: true,
@@ -67,7 +69,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -75,7 +79,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       'Use the reset token from your email and choose a new password.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -86,7 +92,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         labelText: 'Reset token',
                         prefixIcon: const Icon(Icons.vpn_key_outlined),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -118,7 +126,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -148,12 +158,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                              _isConfirmPasswordVisible =
+                                  !_isConfirmPasswordVisible;
                             });
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -177,10 +190,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             : () async {
                                 if (!_formKey.currentState!.validate()) return;
                                 final messenger = ScaffoldMessenger.of(context);
-                                final success = await authProvider.resetPassword(
-                                  token: _tokenController.text.trim(),
-                                  newPassword: _newPasswordController.text,
-                                );
+                                final success = await authProvider
+                                    .resetPassword(
+                                      token: _tokenController.text.trim(),
+                                      newPassword: _newPasswordController.text,
+                                    );
 
                                 if (!mounted) return;
 
@@ -222,7 +236,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         },
                         child: const Text('Back to login'),
                       ),
@@ -238,7 +254,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red.shade700),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

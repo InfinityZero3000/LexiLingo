@@ -47,7 +47,9 @@ void registerAuthModule() {
 
   // Facebook Sign In Service
   if (!sl.isRegistered<FacebookSignInService>()) {
-    sl.registerLazySingleton<FacebookSignInService>(() => FacebookSignInService());
+    sl.registerLazySingleton<FacebookSignInService>(
+      () => FacebookSignInService(),
+    );
   }
 
   sl.registerFactory(

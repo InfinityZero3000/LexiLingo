@@ -284,7 +284,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   Widget _buildLevelPicker(GamesProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor = isDark ? Colors.white70 : AppColors.textGrey;
-    final unselectedLabel = isDark ? AppColors.textInverted : AppColors.textDark;
+    final unselectedLabel = isDark
+        ? AppColors.textInverted
+        : AppColors.textDark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,32 +408,17 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             children: [
               if (second != null)
                 Expanded(
-                  child: _buildPodiumColumn(
-                    second,
-                    1,
-                    72,
-                    AppColors.silver,
-                  ),
+                  child: _buildPodiumColumn(second, 1, 72, AppColors.silver),
                 ),
               if (second != null) const SizedBox(width: 8),
               if (first != null)
                 Expanded(
-                  child: _buildPodiumColumn(
-                    first,
-                    0,
-                    104,
-                    AppColors.gold,
-                  ),
+                  child: _buildPodiumColumn(first, 0, 104, AppColors.gold),
                 ),
               if (third != null) const SizedBox(width: 8),
               if (third != null)
                 Expanded(
-                  child: _buildPodiumColumn(
-                    third,
-                    2,
-                    56,
-                    AppColors.bronze,
-                  ),
+                  child: _buildPodiumColumn(third, 2, 56, AppColors.bronze),
                 ),
             ],
           ),
@@ -515,11 +502,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final anims = [_anim1st, _anim2nd, _anim3rd];
     final anim = anims[rank];
     const rankLabels = ['1st', '2nd', '3rd'];
-    const medalColors = [
-      AppColors.gold,
-      AppColors.silver,
-      AppColors.bronze,
-    ];
+    const medalColors = [AppColors.gold, AppColors.silver, AppColors.bronze];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility
         : color.withValues(alpha: 0.85);

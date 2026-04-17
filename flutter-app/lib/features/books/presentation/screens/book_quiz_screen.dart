@@ -77,9 +77,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
       body: Consumer<BookProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
-            return const Center(
-              child: LottieLoadingWidget.medium(),
-            );
+            return const Center(child: LottieLoadingWidget.medium());
           }
 
           if (provider.quizCompleted) {
@@ -463,7 +461,11 @@ class _OptionTile extends StatelessWidget {
                 size: 20,
               ),
             if (showRed)
-              const Icon(Icons.cancel_rounded, color: AppColors.errorBright, size: 20),
+              const Icon(
+                Icons.cancel_rounded,
+                color: AppColors.errorBright,
+                size: 20,
+              ),
           ],
         ),
       ),

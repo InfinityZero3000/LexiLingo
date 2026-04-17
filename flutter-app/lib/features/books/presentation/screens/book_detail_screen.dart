@@ -461,7 +461,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       ),
     ),
     child: Center(
-      child: Icon(Icons.menu_book_rounded, size: 48, color: AppColors.surfaceLight),
+      child: Icon(
+        Icons.menu_book_rounded,
+        size: 48,
+        color: AppColors.surfaceLight,
+      ),
     ),
   );
 }

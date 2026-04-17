@@ -340,7 +340,11 @@ class _CelebrationScreenState extends State<CelebrationScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.stars, color: Theme.of(context).colorScheme.surface, size: 28),
+          Icon(
+            Icons.stars,
+            color: Theme.of(context).colorScheme.surface,
+            size: 28,
+          ),
           const SizedBox(width: 8),
           Text(
             '+${widget.xpEarned} XP',
