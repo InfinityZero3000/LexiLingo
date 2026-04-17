@@ -8,11 +8,34 @@ Falls back gracefully (no caching) when Redis is unavailable.
 import json
 import hashlib
 import logging
+import time
 from typing import Any, Optional
 
 from app.core.redis import RedisClient
 
 logger = logging.getLogger(__name__)
+
+# Fallback cache used when Redis is unavailable (tests/local dev).
+_memory_cache: dict[str, tuple[float, Any]] = {}
+
+
+def _memory_get(key: str) -> Optional[Any]:
+    entry = _memory_cache.get(key)
+    if not entry:
+        return None
+    expires_at, value = entry
+    if expires_at <= time.time():
+        _memory_cache.pop(key, None)
+        return None
+    return value
+
+
+def _memory_set(key: str, value: Any, ttl: int) -> None:
+    _memory_cache[key] = (time.time() + max(ttl, 1), value)
+
+
+def _memory_delete(key: str) -> None:
+    _memory_cache.pop(key, None)
 
 
 def compute_cache_version(value: Any) -> str:
@@ -33,36 +56,41 @@ async def get_cached(key: str) -> Optional[Any]:
     """Get a cached value from Redis. Returns None on miss or error."""
     redis = await RedisClient.get_instance()
     if redis is None:
-        return None
+        return _memory_get(key)
     try:
         data = await redis.get(key)
         if data is not None:
             return json.loads(data)
     except Exception as exc:
         logger.debug(f"Cache read error: {exc}")
-    return None
+        return _memory_get(key)
+    return _memory_get(key)
 
 
 async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
     """Store a value in Redis with TTL. Silently ignores errors."""
     redis = await RedisClient.get_instance()
     if redis is None:
+        _memory_set(key, value, ttl)
         return
     try:
         await redis.set(key, json.dumps(value, default=str), ex=ttl)
     except Exception as exc:
         logger.debug(f"Cache write error: {exc}")
+        _memory_set(key, value, ttl)
 
 
 async def delete_cached(key: str) -> None:
     """Delete a single cache entry by exact key. Silently ignores errors."""
     redis = await RedisClient.get_instance()
     if redis is None:
+        _memory_delete(key)
         return
     try:
         await redis.delete(key)
     except Exception as exc:
         logger.debug(f"Cache delete error: {exc}")
+        _memory_delete(key)
 
 
 async def invalidate_cache(prefix: str) -> int:
@@ -72,14 +100,23 @@ async def invalidate_cache(prefix: str) -> int:
     """
     redis = await RedisClient.get_instance()
     if redis is None:
-        return 0
+        keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
+        for key in keys:
+            _memory_cache.pop(key, None)
+        return len(keys)
     try:
         keys = []
         async for key in redis.scan_iter(match=f"{prefix}:*", count=200):
             keys.append(key)
         if keys:
             return await redis.delete(*keys)
-        return 0
+        memory_keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
+        for key in memory_keys:
+            _memory_cache.pop(key, None)
+        return len(memory_keys)
     except Exception as exc:
         logger.debug(f"Cache invalidation error: {exc}")
-        return 0
+        keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
+        for key in keys:
+            _memory_cache.pop(key, None)
+        return len(keys)
