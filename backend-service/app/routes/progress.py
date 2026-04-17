@@ -9,13 +9,19 @@ Following agent-skills/language-learning-patterns:
 from datetime import date, datetime, timedelta
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.cache import build_cache_key, get_cached, set_cached, delete_cached
+from app.core.cache import (
+    build_cache_key,
+    compute_cache_version,
+    delete_cached,
+    get_cached,
+    set_cached,
+)
 from app.crud.progress import ProgressCRUD
 from app.crud.course import CourseCRUD
 from app.schemas.progress import (
@@ -41,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/me", response_model=ApiResponse[ProgressStatsResponse])
 async def get_my_progress(
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -56,6 +63,8 @@ async def get_my_progress(
     cache_key = build_cache_key("progress_me", user_id=uid)
     cached = await get_cached(cache_key)
     if cached is not None:
+        response.headers["X-Cache-Version"] = compute_cache_version(cached)
+        response.headers["X-Cache-Source"] = "redis"
         return ApiResponse(success=True, message="Progress retrieved successfully", data=cached)
 
     # Get user stats
@@ -86,6 +95,8 @@ async def get_my_progress(
     }
 
     await set_cached(cache_key, response_data, ttl=30)
+    response.headers["X-Cache-Version"] = compute_cache_version(response_data)
+    response.headers["X-Cache-Source"] = "origin"
 
     return ApiResponse(
         success=True,

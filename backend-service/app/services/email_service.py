@@ -30,14 +30,18 @@ class EmailService:
 
     @staticmethod
     def _send_message_blocking(message: EmailMessage) -> None:
+        smtp_host = settings.SMTP_HOST
+        if not smtp_host:
+            raise ValueError("SMTP_HOST is not configured")
+
         if settings.SMTP_USE_SSL:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            with smtplib.SMTP_SSL(smtp_host, settings.SMTP_PORT) as server:
                 if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
                     server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
                 server.send_message(message)
             return
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+        with smtplib.SMTP(smtp_host, settings.SMTP_PORT) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
             if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
@@ -58,7 +62,7 @@ class EmailService:
         False after logging a warning and the generated reset URL for local dev.
         """
         encoded_token = quote(reset_token, safe="")
-        reset_link = f"{settings.PASSWORD_RESET_URL_BASE}?token={encoded_token}"
+        reset_link = f"{settings.effective_password_reset_url_base}?token={encoded_token}"
 
         if not settings.SMTP_HOST:
             logger.warning(

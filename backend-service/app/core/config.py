@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     SMTP_USE_SSL: bool = False
     EMAIL_FROM: str = "noreply@lexilingo.app"
     PASSWORD_RESET_URL_BASE: str = "http://localhost:8080/#/reset-password"
+    PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
@@ -181,6 +182,13 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.APP_ENV == "production"
+
+    @property
+    def effective_password_reset_url_base(self) -> str:
+        """Return reset URL base according to current environment."""
+        if self.is_production and self.PASSWORD_RESET_URL_BASE_PRODUCTION:
+            return self.PASSWORD_RESET_URL_BASE_PRODUCTION
+        return self.PASSWORD_RESET_URL_BASE
 
 
 # Global settings instance

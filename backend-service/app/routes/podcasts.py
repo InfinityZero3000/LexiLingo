@@ -49,14 +49,14 @@ CEFR_LEVELS = {
 CURATED_PODCASTS = [
     # A1-A2 — slow, clear speech
     {
-        "id": hashlib.md5(b"https://feeds.megaphone.fm/bbclearningenglish").hexdigest()[:12],
+        "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9tn.rss").hexdigest()[:12],
         "title": "BBC 6 Minute English",
         "author": "BBC Learning English",
         "description": (
             "Every week we ask an interesting question about the world and discuss"
             " the answer in easy, B1-level English. With vocabulary explanations."
         ),
-        "feed_url": "https://feeds.megaphone.fm/bbclearningenglish",
+        "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9tn.rss",
         "artwork_url": "https://ichef.bbci.co.uk/images/ic/1200x1200/p09jnvlt.jpg",
         "episode_count": 0,
         "categories": ["education", "learning"],

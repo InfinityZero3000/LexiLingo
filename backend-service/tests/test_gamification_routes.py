@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
+from app.core.cache import build_cache_key, set_cached
 from app.models.gamification import Achievement, ShopItem, UserWallet
 from app.models.user import User
 
@@ -279,3 +280,109 @@ class TestSocial:
         data = response.json()
         assert data["success"] is True
         assert "activities" in data["data"]
+
+    @pytest.mark.asyncio
+    async def test_get_friend_suggestions(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+    ):
+        """Test getting friend suggestions endpoint."""
+        candidate = User(
+            email=f"suggest-{uuid4()}@test.dev",
+            username=f"suggest_{uuid4().hex[:8]}",
+            hashed_password="hashed",
+            display_name="Suggestion Candidate",
+            target_language="en",
+            level="A1",
+            numeric_level=1,
+            total_xp=120,
+            rank="bronze",
+            is_active=True,
+        )
+        db_session.add(candidate)
+        await db_session.commit()
+
+        response = await async_client.get(
+            "/api/v1/gamification/users/suggestions?limit=5",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "users" in data["data"]
+        assert "total" in data["data"]
+
+    @pytest.mark.asyncio
+    async def test_update_location_and_get_nearby_users(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        test_user: User,
+        db_session: AsyncSession,
+    ):
+        """Test hybrid location sharing and nearby learners endpoint."""
+        candidate = User(
+            email=f"nearby-{uuid4()}@test.dev",
+            username=f"nearby_{uuid4().hex[:8]}",
+            hashed_password="hashed",
+            display_name="Nearby Candidate",
+            target_language="en",
+            level="A1",
+            numeric_level=1,
+            total_xp=200,
+            rank="bronze",
+            is_active=True,
+        )
+        db_session.add(candidate)
+        await db_session.commit()
+
+        # Seed candidate coarse location in cache (normally this user sets it from their own client).
+        candidate_key = build_cache_key("social_location", user_id=str(candidate.id))
+        await set_cached(
+            candidate_key,
+            {
+                "user_id": str(candidate.id),
+                "latitude": 10.78,
+                "longitude": 106.69,
+                "updated_at": "2026-04-17T10:00:00+00:00",
+            },
+            ttl=600,
+        )
+
+        update_response = await async_client.post(
+            "/api/v1/gamification/users/location",
+            headers=auth_headers,
+            json={
+                "enabled": True,
+                "latitude": 10.77,
+                "longitude": 106.68,
+                "accuracy_meters": 120,
+            },
+        )
+        assert update_response.status_code == 200
+        update_data = update_response.json()
+        assert update_data["success"] is True
+        assert update_data["data"]["enabled"] is True
+
+        nearby_response = await async_client.get(
+            "/api/v1/gamification/users/nearby?limit=10&radius_km=25",
+            headers=auth_headers,
+        )
+        assert nearby_response.status_code == 200
+        nearby_data = nearby_response.json()
+        assert nearby_data["success"] is True
+        assert nearby_data["data"]["location_enabled"] is True
+        assert "users" in nearby_data["data"]
+
+        disable_response = await async_client.post(
+            "/api/v1/gamification/users/location",
+            headers=auth_headers,
+            json={"enabled": False},
+        )
+        assert disable_response.status_code == 200
+        disable_data = disable_response.json()
+        assert disable_data["success"] is True
+        assert disable_data["data"]["enabled"] is False

@@ -15,6 +15,12 @@ from app.core.redis import RedisClient
 logger = logging.getLogger(__name__)
 
 
+def compute_cache_version(value: Any) -> str:
+    """Compute a stable cache-version hash for any JSON-serializable payload."""
+    raw = json.dumps(value, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
 def build_cache_key(prefix: str, **params) -> str:
     """Build a deterministic Redis key from prefix + keyword params."""
     safe = {k: str(v) for k, v in sorted(params.items()) if v is not None}
