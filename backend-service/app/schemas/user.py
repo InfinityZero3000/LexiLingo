@@ -14,7 +14,7 @@ class UserBase(BaseModel):
     display_name: Optional[str] = None
     native_language: str = "vi"
     target_language: str = "en"
-    level: str = "beginner"
+    level: str = "A1"
 
 
 class UserCreate(UserBase):
@@ -29,6 +29,7 @@ class UserUpdate(BaseModel):
     native_language: Optional[str] = None
     target_language: Optional[str] = None
     level: Optional[str] = None
+    cefr_level: Optional[str] = None
     is_onboarding_completed: Optional[bool] = None
 
 
@@ -43,6 +44,7 @@ class UserResponse(UserBase):
     last_login: Optional[datetime] = None
     
     # Level & Rank fields
+    cefr_level: str = "A1"
     total_xp: int = 0
     numeric_level: int = 1
     rank: str = "bronze"

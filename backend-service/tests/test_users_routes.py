@@ -288,6 +288,53 @@ class TestGetUserLevel:
 
 
 # ============================================================================
+# GET /api/v1/users/me/level-full  — Full level info (numeric + CEFR)
+# ============================================================================
+
+class TestGetUserLevelFull:
+    """Tests for GET /api/v1/users/me/level-full."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_returns_200(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_uses_persisted_cefr_not_xp_derived(self, auth_client):
+        client, _, _, mock_user = auth_client
+        mock_user.level = "B1"
+        mock_user.total_xp = 0  # XP-derived CEFR would be A1
+
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+        data = response.json()["data"]
+        assert data["cefr_level"] == "B1"
+        assert data["proficiency_level"] == "B1"  # backward-compatible alias
+        assert data["xp_derived_cefr_level"] == "A1"
+        assert data["numeric_level"] == 1
+
+    @pytest.mark.asyncio
+    async def test_includes_split_cefr_fields(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+        data = response.json()["data"]
+        assert "cefr_level" in data
+        assert "cefr_name" in data
+        assert "cefr_progression_source" in data
+        assert "xp_derived_cefr_level" in data
+        assert "xp_derived_cefr_name" in data
+
+
+# ============================================================================
 # GET /api/v1/users/me/stats  — User stats
 # ============================================================================
 

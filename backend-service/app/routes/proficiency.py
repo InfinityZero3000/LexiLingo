@@ -37,6 +37,8 @@ from app.schemas.proficiency import (
     LevelCheckResponse,
     LEVEL_THRESHOLDS,
     SkillType,
+    ExamGatedProgressionRequest,
+    ExamGatedProgressionResponse,
 )
 from app.services.proficiency_service import ProficiencyService
 from app.services.rank_service import calculate_rank
@@ -781,3 +783,86 @@ async def submit_placement_test(
         "rank_name": new_rank.name,
         "details": details,
     }
+
+
+@router.post("/exam-gated/submit", response_model=ExamGatedProgressionResponse)
+async def submit_exam_gated_progression(
+    payload: ExamGatedProgressionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Skeleton endpoint for CEFR exam-gated progression.
+
+    Rules implemented in ProficiencyService:
+    - must pass exam at threshold,
+    - exam tier must be current tier or higher,
+    - promotion is at most one CEFR tier.
+    """
+    # Ensure profile exists.
+    profile_result = await db.execute(
+        select(UserProficiencyProfile).where(UserProficiencyProfile.user_id == current_user.id)
+    )
+    profile = profile_result.scalar_one_or_none()
+    if profile is None:
+        profile = UserProficiencyProfile(
+            user_id=current_user.id,
+            assessed_level=(current_user.level or "A1").upper(),
+        )
+        db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+
+    previous_level = ProficiencyLevel((profile.assessed_level or current_user.level or "A1").upper())
+    new_level, decision = ProficiencyService.apply_exam_gated_promotion(
+        current_level=previous_level,
+        exam_level=payload.exam_level,
+        passed=payload.passed,
+        score=payload.score,
+        passing_score=payload.passing_score,
+    )
+
+    promoted = bool(decision.get("promoted")) and new_level != previous_level
+
+    if promoted:
+        profile.assessed_level = new_level.value
+        profile.last_level_change_at = datetime.now(timezone.utc)
+        profile.last_assessment_at = datetime.now(timezone.utc)
+
+        # Keep compatibility field in users table aligned.
+        current_user.level = new_level.value
+
+        # Keep rank compatibility in sync.
+        rank_info = calculate_rank(
+            numeric_level=current_user.numeric_level or 1,
+            proficiency_level=current_user.level,
+        )
+        current_user.rank = rank_info.rank.value
+
+        history = UserLevelHistory(
+            profile_id=profile.id,
+            previous_level=previous_level.value,
+            new_level=new_level.value,
+            change_type="promotion",
+            reason=f"Exam-gated progression via {payload.exam_source or 'assessment'}",
+            overall_score=profile.overall_score or 0.0,
+            skill_scores_snapshot={},
+            exercises_completed=profile.total_exercises_completed or 0,
+            accuracy=profile.accuracy,
+        )
+        db.add(history)
+        await db.commit()
+        await db.refresh(profile)
+
+    return ExamGatedProgressionResponse(
+        previous_level=previous_level,
+        current_level=new_level,
+        promoted=promoted,
+        promoted_to=new_level if promoted else None,
+        eligible=bool(decision.get("eligible")),
+        reason=str(decision.get("reason")),
+        exam_level=payload.exam_level,
+        passed=payload.passed,
+        score=payload.score,
+        passing_score=payload.passing_score,
+    )

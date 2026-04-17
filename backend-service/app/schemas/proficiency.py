@@ -274,3 +274,26 @@ class LevelCheckResponse(BaseModel):
     
     # What's blocking level up
     blockers: List[str] = Field(default_factory=list)
+
+
+class ExamGatedProgressionRequest(BaseModel):
+    """Exam submission used for CEFR exam-gated progression checks."""
+    exam_level: ProficiencyLevel
+    passed: bool
+    score: float = Field(..., ge=0, le=100)
+    passing_score: float = Field(default=70.0, ge=0, le=100)
+    exam_source: Optional[str] = Field(default=None, description="Optional exam provider/source")
+
+
+class ExamGatedProgressionResponse(BaseModel):
+    """Decision payload for exam-gated CEFR progression."""
+    previous_level: ProficiencyLevel
+    current_level: ProficiencyLevel
+    promoted: bool = False
+    promoted_to: Optional[ProficiencyLevel] = None
+    eligible: bool = False
+    reason: str
+    exam_level: ProficiencyLevel
+    passed: bool
+    score: float
+    passing_score: float

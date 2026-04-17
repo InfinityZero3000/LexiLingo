@@ -80,6 +80,15 @@ class User(Base):
         if p not in providers:
             providers.append(p)
         self.provider = providers
+
+    @property
+    def cefr_level(self) -> str:
+        """Explicit CEFR alias for API contracts while preserving legacy `level`."""
+        return self.level
+
+    @cefr_level.setter
+    def cefr_level(self, value: str) -> None:
+        self.level = value
     
     # Relationships
     role = relationship("Role", back_populates="users", lazy="selectin")

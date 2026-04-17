@@ -651,3 +651,131 @@ class TestSubmitPlacementTest:
             json={"answers": []},
         )
         assert response.status_code in (401, 403)
+
+
+# ===========================================================================
+# POST /proficiency/exam-gated/submit
+# ===========================================================================
+
+class TestExamGatedProgression:
+
+    async def test_exam_gated_submit_returns_200(self, auth_client_with_profile):
+        """Valid exam-gated payload returns 200."""
+        response = await auth_client_with_profile.post(
+            f"{BASE}/exam-gated/submit",
+            json={
+                "exam_level": "A1",
+                "passed": True,
+                "score": 90,
+                "passing_score": 70,
+            },
+        )
+        assert response.status_code == 200
+
+    async def test_exam_gated_promotes_one_tier_when_eligible(self, auth_client_with_profile):
+        """Passing current-tier exam promotes to the next CEFR tier (max +1)."""
+        response = await auth_client_with_profile.post(
+            f"{BASE}/exam-gated/submit",
+            json={
+                "exam_level": "A1",
+                "passed": True,
+                "score": 85,
+                "passing_score": 70,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["previous_level"] == "A1"
+        assert data["current_level"] == "A2"
+        assert data["promoted"] is True
+        assert data["promoted_to"] == "A2"
+
+    async def test_exam_gated_does_not_promote_when_failed(self, auth_client_with_profile):
+        """Failed exam (or below threshold) does not promote."""
+        response = await auth_client_with_profile.post(
+            f"{BASE}/exam-gated/submit",
+            json={
+                "exam_level": "A1",
+                "passed": False,
+                "score": 69,
+                "passing_score": 70,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["current_level"] == "A1"
+        assert data["promoted"] is False
+        assert data["promoted_to"] is None
+
+    async def test_exam_gated_rejects_lower_tier_exam(self, auth_client_with_profile):
+        """Exam tier below current level is ineligible for promotion."""
+        mock_profile = _make_mock_profile()
+        mock_profile.assessed_level = "B1"
+
+        from app.main import app
+        from app.core.database import get_db
+        from app.core.dependencies import get_current_user
+
+        mock_user = MagicMock()
+        mock_user.id = TEST_USER_ID
+        mock_user.level = "B1"
+        mock_user.numeric_level = 3
+        mock_user.total_xp = 600
+        mock_user.rank = "silver"
+
+        async def mock_get_db_b1():
+            mock_result = MagicMock()
+            mock_result.scalar.return_value = 0
+            mock_result.scalar_one_or_none.return_value = mock_profile
+            mock_result.scalars.return_value.all.return_value = []
+
+            mock_session = MagicMock()
+
+            async def fake_execute(query):
+                return mock_result
+
+            mock_session.execute = fake_execute
+            mock_session.add = MagicMock()
+            mock_session.commit = AsyncMock()
+            mock_session.refresh = AsyncMock()
+            yield mock_session
+
+        async def mock_get_current_user_b1():
+            return mock_user
+
+        app.dependency_overrides[get_db] = mock_get_db_b1
+        app.dependency_overrides[get_current_user] = mock_get_current_user_b1
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{BASE}/exam-gated/submit",
+                json={
+                    "exam_level": "A2",
+                    "passed": True,
+                    "score": 95,
+                    "passing_score": 70,
+                },
+            )
+
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["previous_level"] == "B1"
+        assert data["current_level"] == "B1"
+        assert data["promoted"] is False
+        assert data["eligible"] is False
+
+    async def test_exam_gated_without_auth_returns_401_or_403(self, no_auth_client):
+        """Unauthenticated exam-gated submission is rejected."""
+        response = await no_auth_client.post(
+            f"{BASE}/exam-gated/submit",
+            json={
+                "exam_level": "A1",
+                "passed": True,
+                "score": 88,
+                "passing_score": 70,
+            },
+        )
+        assert response.status_code in (401, 403)
