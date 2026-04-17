@@ -5,7 +5,7 @@ Endpoints for topic-based conversation feature.
 Includes starting topic sessions and sending messages within topic context.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 import base64
@@ -16,7 +16,10 @@ import time
 import logging
 
 from api.core.database import get_database
+from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
+from api.core.quota_guard import enforce_user_quota
 from api.models.story_schemas import (
     StartTopicSessionRequest,
     StartTopicSessionResponse,
@@ -122,6 +125,21 @@ def _build_pagination(
     }
 
 
+async def _ensure_topic_session_owner(
+    session_id: str,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
+) -> dict:
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    owner_user_id = str(session.get("user_id") or "")
+    if owner_user_id and owner_user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    return session
+
+
 @router.get(
     "/stories",
     response_model=ListStoriesResponse,
@@ -185,13 +203,17 @@ async def list_categories(
 )
 async def warm_topic_cache(
     request: WarmTopicCacheRequest,
-    preloader = Depends(get_topic_preloader)
+    preloader = Depends(get_topic_preloader),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """
     Preload topic context into GraphCache (Redis).
     This makes the subsequent session start and first message instant.
     """
     try:
+        auth_user_id = enforce_user_scope(current_user, request.user_id)
+        request = request.model_copy(update={"user_id": auth_user_id})
+
         import json
         bundle = await preloader.warm_cache(request.story_id, request.user_id)
         
@@ -236,9 +258,11 @@ async def get_story(
     summary="Start a topic-based chat session"
 )
 async def start_topic_session(
+    request_context: Request,
     request: StartTopicSessionRequest,
     db: AsyncIOMotorDatabase = Depends(get_database),
-    redis_client = Depends(get_redis)
+    redis_client = Depends(get_redis),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """
     Start a new topic-based conversation session.
@@ -246,6 +270,12 @@ async def start_topic_session(
     This endpoint checks GraphCache for preloaded context to skip MongoDB lookups.
     """
     try:
+        request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+        auth_user_id = enforce_user_scope(current_user, request.user_id)
+        request = request.model_copy(update={"user_id": auth_user_id})
+
+        quota = await enforce_user_quota(current_user.user_id, "topic.start_session")
+
         import json
         
         # 1. Check cache for preloaded context (Phase 2.4)
@@ -319,6 +349,23 @@ async def start_topic_session(
             tags=story.tags
         )
         
+        await emit_ai_audit_event(
+            {
+                "request_id": request_id,
+                "user_id": current_user.user_id,
+                "endpoint": "topic.start_session",
+                "status": "success",
+                "session_id": session_id,
+                "story_id": request.story_id,
+                "quota": {
+                    "rpm_used": quota.rpm_used,
+                    "rpm_limit": quota.rpm_limit,
+                    "rpd_used": quota.rpd_used,
+                    "rpd_limit": quota.rpd_limit,
+                },
+            }
+        )
+
         return StartTopicSessionResponse(
             session_id=session_id,
             story=story_list_item,
@@ -344,9 +391,11 @@ async def start_topic_session(
     summary="Send message in topic session"
 )
 async def send_topic_message(
+    request_context: Request,
     session_id: str,
     request: TopicChatRequest,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """
     Send a message in a topic-based conversation.
@@ -356,11 +405,14 @@ async def send_topic_message(
     """
     try:
         start_time = time.time()
+        request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+        auth_user_id = enforce_user_scope(current_user, request.user_id)
+        request = request.model_copy(update={"user_id": auth_user_id})
+
+        quota = await enforce_user_quota(current_user.user_id, "topic.send_message")
         
         # Get session
-        session = await db["chat_sessions"].find_one({"session_id": session_id})
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+        session = await _ensure_topic_session_owner(session_id, current_user, db)
         
         if session.get("session_type") != "topic_based":
             raise HTTPException(
@@ -497,6 +549,23 @@ async def send_topic_message(
         if parsed_hints and parsed_hints.has_hints():
             educational_hints_dict = parsed_hints.to_dict()
         
+        await emit_ai_audit_event(
+            {
+                "request_id": request_id,
+                "user_id": current_user.user_id,
+                "endpoint": "topic.send_message",
+                "status": "success",
+                "session_id": session_id,
+                "latency_ms": processing_time,
+                "quota": {
+                    "rpm_used": quota.rpm_used,
+                    "rpm_limit": quota.rpm_limit,
+                    "rpd_used": quota.rpd_used,
+                    "rpd_limit": quota.rpd_limit,
+                },
+            }
+        )
+
         return TopicChatResponse(
             message_id=ai_message_id,
             ai_response=ai_response,
@@ -542,12 +611,11 @@ async def get_categories(
 )
 async def get_topic_session(
     session_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """Get details of a specific topic session."""
-    session = await db["chat_sessions"].find_one({"session_id": session_id})
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = await _ensure_topic_session_owner(session_id, current_user, db)
     
     # Remove MongoDB _id field
     session.pop("_id", None)
@@ -566,13 +634,12 @@ async def get_topic_session(
 async def get_topic_messages(
     session_id: str,
     limit: int = 0,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """Get all messages in a topic session."""
     # Verify session exists
-    session = await db["chat_sessions"].find_one({"session_id": session_id})
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    await _ensure_topic_session_owner(session_id, current_user, db)
     
     if limit < 0:
         raise HTTPException(status_code=400, detail="limit must be >= 0")
@@ -605,10 +672,9 @@ async def get_topic_messages_paged(
     limit: int = 50,
     cursor: str | None = None,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    session = await db["chat_sessions"].find_one({"session_id": session_id})
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    await _ensure_topic_session_owner(session_id, current_user, db)
 
     if limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
@@ -667,10 +733,9 @@ async def get_topic_messages_paged(
 async def get_topic_messages_metadata(
     session_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    session = await db["chat_sessions"].find_one({"session_id": session_id})
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    await _ensure_topic_session_owner(session_id, current_user, db)
 
     base_query: dict = {"session_id": session_id}
     total_count = await db["chat_messages"].count_documents(base_query)

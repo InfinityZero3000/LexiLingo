@@ -22,11 +22,14 @@ import base64
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from pymongo.errors import OperationFailure
 from pydantic import BaseModel, Field
+from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.audit_emitter import emit_ai_audit_event
+from api.core.quota_guard import enforce_user_quota
 from api.core.database import get_database
 
 logger = logging.getLogger(__name__)
@@ -199,6 +202,21 @@ def _build_pagination(
         "window_start_ts": window_start_ts,
         "window_end_ts": window_end_ts,
     }
+
+
+async def _ensure_session_owner(
+    session_id: str,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
+) -> Dict[str, Any]:
+    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
+    if not session_doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    owner_user_id = str(session_doc.get("user_id") or "")
+    if owner_user_id and owner_user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    return session_doc
 
 
 def _normalize_markdown_for_lexi(text: str) -> str:
@@ -432,8 +450,12 @@ async def _transcribe_audio(audio_base64: str) -> Optional[str]:
 async def create_lexi_session(
     request: LexiSessionRequest = LexiSessionRequest(),
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> LexiSessionResponse:
     """Create a new conversation session with Lexi."""
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
     session_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     
@@ -471,8 +493,10 @@ async def create_lexi_session(
 
 @router.post("/chat", response_model=LexiChatResponse)
 async def lexi_chat(
+    request_context: Request,
     request: LexiChatRequest,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> LexiChatResponse:
     """
     Chat with Lexi — the full AI pipeline.
@@ -486,6 +510,11 @@ async def lexi_chat(
       6. Return structured response
     """
     start_time = time.time()
+    request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
+    quota = await enforce_user_quota(current_user.user_id, "lexi.chat")
     metadata: Dict[str, Any] = {"pipeline_steps": []}
     
     # ── 1. Session management ──
@@ -727,10 +756,29 @@ async def lexi_chat(
     # ── 7. Build response ──
     total_ms = int((time.time() - start_time) * 1000)
     metadata["latency_ms"] = total_ms
+    metadata["quota"] = {
+        "rpm_used": quota.rpm_used,
+        "rpm_limit": quota.rpm_limit,
+        "rpd_used": quota.rpd_used,
+        "rpd_limit": quota.rpd_limit,
+    }
     
     logger.info(
         f"🦜 Lexi chat complete — {total_ms}ms, model: {model_used}, "
         f"steps: {metadata['pipeline_steps']}"
+    )
+
+    await emit_ai_audit_event(
+        {
+            "request_id": request_id,
+            "user_id": current_user.user_id,
+            "endpoint": "lexi.chat",
+            "status": "success",
+            "session_id": session_id,
+            "model_used": model_used,
+            "latency_ms": total_ms,
+            "quota": metadata["quota"],
+        }
     )
     
     return LexiChatResponse(
@@ -751,9 +799,10 @@ async def lexi_chat(
 async def get_lexi_messages(
     session_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Get all messages in a Lexi session."""
-    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
+    session_doc = await _ensure_session_owner(session_id, current_user, db)
     cached_session = await _store.get_session(session_id)
     cached_messages = await _store.get_messages(session_id) if cached_session else []
 
@@ -818,10 +867,9 @@ async def get_lexi_messages_paged(
     limit: int = 50,
     cursor: str | None = None,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
-    if not session_doc:
-        raise HTTPException(status_code=404, detail="Session not found")
+    await _ensure_session_owner(session_id, current_user, db)
 
     if limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
@@ -879,10 +927,9 @@ async def get_lexi_messages_paged(
 async def get_lexi_messages_metadata(
     session_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
-    if not session_doc:
-        raise HTTPException(status_code=404, detail="Session not found")
+    await _ensure_session_owner(session_id, current_user, db)
 
     base_query: Dict[str, Any] = {"session_id": session_id}
     total_count = await db["lexi_messages"].count_documents(base_query)
@@ -951,7 +998,9 @@ async def get_lexi_messages_metadata(
 async def list_lexi_sessions(
     user_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> LexiSessionListResponse:
+    enforce_user_scope(current_user, user_id)
     try:
         cursor = db["lexi_sessions"].find({"user_id": user_id}).sort("updated_at", -1)
         rows = await cursor.to_list(length=100)
@@ -981,7 +1030,10 @@ async def rename_lexi_session(
     session_id: str,
     request: LexiSessionRenameRequest,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
+    await _ensure_session_owner(session_id, current_user, db)
+
     title = request.title.strip()
     if not title:
         raise HTTPException(status_code=400, detail="Title cannot be empty")
@@ -1007,7 +1059,10 @@ async def rename_lexi_session(
 async def delete_lexi_session(
     session_id: str,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
+    await _ensure_session_owner(session_id, current_user, db)
+
     await db["lexi_sessions"].delete_one({"session_id": session_id})
     await db["lexi_messages"].delete_many({"session_id": session_id})
     await _store.delete_session(session_id)
