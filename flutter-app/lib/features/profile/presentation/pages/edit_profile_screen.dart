@@ -119,6 +119,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    final primaryDeepColor = AppColorRoles.primaryDeep(isDark);
 
     return Scaffold(
       appBar: AppBar(
@@ -136,10 +138,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     height: 20,
                     child: LottieLoadingWidget.tiny(),
                   )
-                : const Text(
+                : Text(
                     'Save',
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: primaryColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -191,7 +193,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   ),
 
                 // Avatar Section
-                _buildAvatarSection(user, isDark),
+                _buildAvatarSection(
+                  user,
+                  isDark,
+                  primaryColor,
+                  primaryDeepColor,
+                ),
                 const SizedBox(height: 32),
 
                 // Display Name
@@ -214,6 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     return null;
                   },
                   isDark: isDark,
+                  primaryColor: primaryColor,
                 ),
                 const SizedBox(height: 24),
 
@@ -236,7 +244,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 const SizedBox(height: 12),
                 _buildReadOnlyField(
                   label: 'Level',
-                  value: user?.level ?? 'A1',
+                  value: user?.cefrLevel ?? 'A1',
                   icon: Icons.school_outlined,
                   isDark: isDark,
                 ),
@@ -250,13 +258,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: primaryColor,
                       foregroundColor: AppColors.surfaceLight,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 4,
-                      shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                      shadowColor: primaryColor.withValues(alpha: 0.3),
                     ),
                     child: _isSaving
                         ? SizedBox(
@@ -289,7 +297,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  Widget _buildAvatarSection(UserEntity? user, bool isDark) {
+  Widget _buildAvatarSection(
+    UserEntity? user,
+    bool isDark,
+    Color primaryColor,
+    Color primaryDeepColor,
+  ) {
     final currentAvatar = AvatarUtils.normalizeAvatarUrl(
       _selectedAvatarUrl ?? user?.avatarUrl,
     );
@@ -309,8 +322,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.3),
-                      AppColors.primary.withValues(alpha: 0.3),
+                      primaryColor.withValues(alpha: 0.3),
+                      primaryDeepColor.withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -327,7 +340,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: primaryColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       spreadRadius: 2,
                     ),
@@ -340,9 +353,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           fit: BoxFit.cover,
                           width: 120,
                           height: 120,
-                          fallback: _buildDefaultAvatar(),
+                          fallback: _buildDefaultAvatar(isDark, primaryColor),
                         )
-                      : _buildDefaultAvatar(),
+                      : _buildDefaultAvatar(isDark, primaryColor),
                 ),
               ),
               // Camera icon
@@ -355,13 +368,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.primary],
+                        colors: [primaryColor, primaryDeepColor],
                       ),
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.surfaceLight, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
+                          color: primaryColor.withValues(alpha: 0.4),
                           blurRadius: 8,
                         ),
                       ],
@@ -379,19 +392,22 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           const SizedBox(height: 12),
           Text(
             'Tap camera to change avatar',
-            style: const TextStyle(color: AppColors.grey600, fontSize: 12),
+            style: TextStyle(
+              color: AppColorRoles.textMuted(isDark),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDefaultAvatar() {
+  Widget _buildDefaultAvatar(bool isDark, Color primaryColor) {
     return Container(
       width: 120,
       height: 120,
-      color: AppColors.primary.withValues(alpha: 0.2),
-      child: const Icon(Icons.person, size: 60, color: AppColors.primary),
+      color: primaryColor.withValues(alpha: isDark ? 0.24 : 0.2),
+      child: Icon(Icons.person, size: 60, color: primaryColor),
     );
   }
 
@@ -419,104 +435,112 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   }
 
   void _showAvatarPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surfaceLight.withValues(alpha: 0),
       isScrollControlled: true,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        return FractionallySizedBox(
+          heightFactor: 0.66,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Choose Avatar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _avatarOptions.length,
-                itemBuilder: (context, index) {
-                  final url = _avatarOptions[index];
-                  final isSelected = _selectedAvatarUrl == url;
-                  return GestureDetector(
-                    onTap: () {
-                      final normalized = AvatarUtils.normalizeAvatarUrl(url);
-                      setState(() {
-                        _selectedAvatarUrl = normalized;
-                        _avatarUrlController.text = normalized ?? '';
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.grey400.withValues(alpha: 0.6),
-                          width: isSelected ? 3 : 1,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                  blurRadius: 8,
-                                ),
-                              ]
-                            : null,
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Choose Avatar',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: GridView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                       ),
-                      child: ClipOval(
-                        child: _buildAvatarImage(
-                          url,
-                          fit: BoxFit.cover,
-                          fallback: Container(
-                            color: AppColors.grey200,
-                            child: const Icon(
-                              Icons.person,
-                              color: AppColors.grey500,
+                      itemCount: _avatarOptions.length,
+                      itemBuilder: (context, index) {
+                        final url = _avatarOptions[index];
+                        final isSelected = _selectedAvatarUrl == url;
+                        return GestureDetector(
+                          onTap: () {
+                            final normalized = AvatarUtils.normalizeAvatarUrl(url);
+                            setState(() {
+                              _selectedAvatarUrl = normalized;
+                              _avatarUrlController.text = normalized ?? '';
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? primaryColor
+                                    : AppColors.grey400.withValues(alpha: 0.6),
+                                width: isSelected ? 3 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: primaryColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        blurRadius: 8,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: ClipOval(
+                              child: _buildAvatarImage(
+                                url,
+                                fit: BoxFit.cover,
+                                fallback: Container(
+                                  color: AppColors.grey200,
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: AppColors.grey500,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 8),
+                  // Custom URL option
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showCustomUrlDialog();
+                    },
+                    icon: const Icon(Icons.link),
+                    label: const Text('Use custom URL'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Custom URL option
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showCustomUrlDialog();
-                },
-                icon: const Icon(Icons.link),
-                label: const Text('Use custom URL'),
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         );
       },
@@ -562,7 +586,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColorRoles.primary(
+                  Theme.of(context).brightness == Brightness.dark,
+                ),
                 foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -593,6 +619,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     required IconData icon,
     String? Function(String?)? validator,
     required bool isDark,
+    required Color primaryColor,
   }) {
     return TextFormField(
       controller: controller,
@@ -600,7 +627,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       style: const TextStyle(fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+        prefixIcon: Icon(icon, color: primaryColor, size: 20),
         filled: true,
         fillColor: isDark ? AppColors.grey900 : AppColors.grey50,
         border: OutlineInputBorder(
@@ -613,7 +640,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

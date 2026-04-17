@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/di/injection_container.dart' as di;
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import '../providers/auth_provider.dart';
 import '../../../home/presentation/pages/main_screen.dart';
@@ -89,7 +92,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Backward compatibility: sync old local completion state to backend once.
     if (!isCompleted && localCompleted) {
       await authProvider.submitOnboarding({
-        'level': currentUser?.level ?? 'A1',
+        'level': currentUser?.cefrLevel ?? 'A1',
       });
       isCompleted = true;
     }
@@ -128,6 +131,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
     await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
 
     await authProvider.submitOnboarding(answers.toJson());
+
+    // Refresh authoritative CEFR + numeric level snapshot immediately.
+    if (mounted) {
+      try {
+        await context.read<LevelProvider>().fetchLevelFull(di.sl<ApiClient>());
+      } catch (_) {
+        // Keep onboarding non-blocking if level refresh fails.
+      }
+    }
 
     if (!mounted) return;
     setState(() {

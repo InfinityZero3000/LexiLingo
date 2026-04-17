@@ -234,8 +234,10 @@ class LevelProvider with ChangeNotifier {
       _xpForNextLevel = data['xp_for_next_level'] ?? 100;
       _levelProgressPercent = (data['level_progress_percent'] ?? 0).toDouble();
       _totalXp = data['total_xp'] ?? 0;
-      _proficiencyLevel = data['proficiency_level'] ?? 'A1';
-      _proficiencyName = data['proficiency_name'] ?? 'Beginner';
+        _proficiencyLevel =
+          data['cefr_level'] ?? data['proficiency_level'] ?? 'A1';
+        _proficiencyName =
+          data['cefr_name'] ?? data['proficiency_name'] ?? 'Beginner';
       _rank = data['rank'] ?? 'bronze';
       _rankName = data['rank_name'] ?? 'Bronze';
       _rankScore = (data['rank_score'] ?? 0).toDouble();

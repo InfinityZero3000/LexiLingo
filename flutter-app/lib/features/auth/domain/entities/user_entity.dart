@@ -9,8 +9,9 @@ class UserEntity {
   final String provider; // 'local', 'google', 'facebook'
   final bool isVerified;
   final bool isOnboardingCompleted;
-  final String level; // CEFR level: A1, A2, B1, B2, C1, C2
-  final int xp;
+  final String cefrLevel; // CEFR level: A1, A2, B1, B2, C1, C2
+  final int totalXp;
+  final int numericLevel;
   final int currentStreak;
   final DateTime? lastLogin;
   final String? lastLoginIp;
@@ -26,8 +27,9 @@ class UserEntity {
     this.provider = 'local',
     this.isVerified = false,
     this.isOnboardingCompleted = false,
-    this.level = 'A1',
-    this.xp = 0,
+    this.cefrLevel = 'A1',
+    this.totalXp = 0,
+    this.numericLevel = 1,
     this.currentStreak = 0,
     this.lastLogin,
     this.lastLoginIp,
@@ -44,8 +46,9 @@ class UserEntity {
     String? provider,
     bool? isVerified,
     bool? isOnboardingCompleted,
-    String? level,
-    int? xp,
+    String? cefrLevel,
+    int? totalXp,
+    int? numericLevel,
     int? currentStreak,
     DateTime? lastLogin,
     String? lastLoginIp,
@@ -62,8 +65,9 @@ class UserEntity {
       isVerified: isVerified ?? this.isVerified,
         isOnboardingCompleted:
           isOnboardingCompleted ?? this.isOnboardingCompleted,
-      level: level ?? this.level,
-      xp: xp ?? this.xp,
+      cefrLevel: cefrLevel ?? this.cefrLevel,
+      totalXp: totalXp ?? this.totalXp,
+      numericLevel: numericLevel ?? this.numericLevel,
       currentStreak: currentStreak ?? this.currentStreak,
       lastLogin: lastLogin ?? this.lastLogin,
       lastLoginIp: lastLoginIp ?? this.lastLoginIp,
