@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -70,6 +71,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
           final isFollowed = provider.followedPodcasts.any(
             (f) => f.feedUrl == widget.podcast.feedUrl,
           );
+          final episodeCount = provider.currentEpisodes.isNotEmpty
+              ? provider.currentEpisodes.length
+              : widget.podcast.episodeCount;
 
           return CustomScrollView(
             slivers: [
@@ -94,7 +98,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: LottieLoadingWidget.tiny(),
                             ),
                           )
                         : TextButton.icon(
@@ -139,7 +143,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${widget.podcast.episodeCount} Episodes',
+                        '$episodeCount Episodes',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -181,7 +185,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'Failed to load episodes',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: AppColors.grey500),
                           ),
                           TextButton(
                             onPressed: () =>
@@ -199,7 +203,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     child: Text(
                       'No episodes available',
                       style: TextStyle(
-                        color: isDark ? Colors.white38 : Colors.grey.shade400,
+                        color: isDark ? Colors.white38 : AppColors.grey400,
                       ),
                     ),
                   ),
@@ -259,6 +263,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                         width: 160,
                         height: 160,
                         fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
                         errorBuilder: (_, __, ___) =>
                             _buildArtworkFallback(cefrColor),
                       )
@@ -309,8 +314,8 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                       ),
                       child: Text(
                         podcast.cefrLevel,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.surfaceLight,
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
@@ -365,10 +370,10 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
   Widget _buildEpisodeSkeleton(bool isDark) {
     final baseColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade200;
+        : AppColors.grey200;
     final highlightColor = isDark
         ? Colors.white.withValues(alpha: 0.15)
-        : Colors.grey.shade100;
+        : AppColors.grey100;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -376,7 +381,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(12),
         ),
       ),
@@ -418,17 +423,17 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

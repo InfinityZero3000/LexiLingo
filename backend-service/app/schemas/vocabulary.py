@@ -6,7 +6,7 @@ Phase 3: Request/Response models for vocabulary API
 import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ===== VocabularyItem Schemas =====
@@ -102,6 +102,39 @@ class UserVocabularyListResponse(BaseModel):
     limit: int
     offset: int
     has_more: bool
+
+
+class QuickSaveVocabularyRequest(BaseModel):
+    """Request payload for quick-saving a word from app surfaces."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    word: str = Field(..., min_length=1, max_length=255)
+    source_type: Optional[str] = Field(None, max_length=50)
+    source_reference: Optional[str] = Field(None, max_length=255)
+    context_sentence: Optional[str] = Field(None, max_length=1200)
+    definition: Optional[str] = Field(None, max_length=2000)
+    translation: Optional[str] = Field(None, max_length=255)
+    part_of_speech: Optional[str] = Field("noun", max_length=32)
+    difficulty_level: Optional[str] = Field("A1", max_length=2)
+
+    @field_validator("difficulty_level")
+    def normalize_difficulty_level(cls, v: Optional[str]) -> Optional[str]:
+        return v.upper() if isinstance(v, str) else v
+
+    @field_validator("part_of_speech")
+    def normalize_part_of_speech(cls, v: Optional[str]) -> Optional[str]:
+        return v.lower() if isinstance(v, str) else v
+
+
+class QuickSaveVocabularyResponse(BaseModel):
+    """Response payload for quick-save operation."""
+
+    user_vocabulary: UserVocabularyResponse
+    vocabulary: VocabularyItemResponse
+    created_new_item: bool
+    already_in_collection: bool
+    normalized_word: str
 
 
 # ===== Review Schemas =====

@@ -1,0 +1,318 @@
+_format_version: "3.0"
+_transform: true
+
+# Declarative Kong config for LexiLingo API Gateway
+# - Authentication: key-auth
+# - Authorization: ACL groups
+# - Quota / Throttling: rate-limiting
+# - Observability: correlation-id + prometheus + opentelemetry
+
+consumers:
+  - username: mobile-app
+    custom_id: mobile-app
+    keyauth_credentials:
+      - key: replace-mobile-key
+    acls:
+      - group: mobile-app
+
+  - username: admin-web
+    custom_id: admin-web
+    keyauth_credentials:
+      - key: replace-admin-key
+    acls:
+      - group: admin-web
+
+  - username: internal-backend
+    custom_id: internal-backend
+    keyauth_credentials:
+      - key: replace-internal-key
+    acls:
+      - group: internal
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:8080
+        - http://localhost:5173
+        - https://lexilingo.vercel.app
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - X-Api-Key
+        - X-Request-Id
+      exposed_headers:
+        - X-Request-Id
+        - X-RateLimit-Remaining-Minute
+        - X-RateLimit-Remaining-Day
+      credentials: true
+      max_age: 3600
+
+  - name: correlation-id
+    config:
+      header_name: X-Request-Id
+      generator: uuid
+      echo_downstream: true
+
+  - name: prometheus
+
+  - name: opentelemetry
+    config:
+      endpoint: http://otel-collector:4318/v1/traces
+      resource_attributes:
+        service.name: lexilingo-kong-gateway
+        service.namespace: lexilingo
+        deployment.environment: local
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 12
+      size_unit: megabytes
+      require_content_length: false
+
+services:
+  - name: backend-service
+    url: http://backend-service:8000
+    routes:
+      - name: backend-health
+        paths:
+          - /backend-health
+        methods:
+          - GET
+        strip_path: true
+
+      - name: backend-admin
+        paths:
+          - /api/v1/admin
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - admin-web
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 60
+              hour: 1000
+              day: 5000
+              limit_by: consumer
+              hide_client_headers: false
+
+      - name: backend-api-catchall
+        paths:
+          - /api/v1
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - mobile-app
+                - admin-web
+                - internal
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 180
+              hour: 5000
+              day: 30000
+              limit_by: consumer
+              hide_client_headers: false
+
+  - name: ai-service
+    url: http://ai-service:8001
+    routes:
+      - name: ai-health
+        paths:
+          - /ai-health
+        methods:
+          - GET
+        strip_path: true
+
+      - name: ai-stt
+        paths:
+          - /api/v1/stt
+        methods:
+          - POST
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - mobile-app
+                - admin-web
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 30
+              hour: 400
+              day: 2000
+              limit_by: consumer
+              hide_client_headers: false
+
+      - name: ai-tts
+        paths:
+          - /api/v1/tts
+        methods:
+          - POST
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - mobile-app
+                - admin-web
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 40
+              hour: 500
+              day: 3000
+              limit_by: consumer
+              hide_client_headers: false
+
+      - name: ai-chat
+        paths:
+          - /api/v1/chat
+          - /api/v1/lexi
+          - /api/v1/topics
+        methods:
+          - GET
+          - POST
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - mobile-app
+                - admin-web
+                - internal
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 80
+              hour: 1500
+              day: 9000
+              limit_by: consumer
+              hide_client_headers: false
+
+      - name: ai-analytics
+        paths:
+          - /api/v1/ai
+        methods:
+          - GET
+          - POST
+          - OPTIONS
+        strip_path: false
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - admin-web
+                - internal
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 50
+              hour: 1000
+              day: 6000
+              limit_by: consumer
+              hide_client_headers: false
+
+      # Intentionally exposed with an external prefix to avoid path collision
+      # with backend /api/v1/admin.
+      - name: ai-admin
+        paths:
+          - /api/v1/ai-admin
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        strip_path: true
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - X-Api-Key
+              hide_credentials: true
+              run_on_preflight: false
+          - name: acl
+            config:
+              allow:
+                - admin-web
+                - internal
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 30
+              hour: 500
+              day: 3000
+              limit_by: consumer
+              hide_client_headers: false
+          - name: request-transformer
+            config:
+              replace:
+                uri: /api/v1/admin

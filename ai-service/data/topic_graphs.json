@@ -1,0 +1,55 @@
+{
+  "version": "1.1.0",
+  "description": "Topic-specific knowledge graphs for LexiLingo GraphCAG",
+  "concepts": [
+    {
+      "id": "topic:apartment_renting",
+      "title": "Apartment Renting Context",
+      "keywords": "landlord tenant lease agreement security deposit utilities furnished unfurnished studio balcony rent maintenance notice period"
+    },
+    {
+      "id": "topic:software_interview",
+      "title": "Software Engineering Interview Context",
+      "keywords": "technical stack fullstack backend frontend architecture scalability code review agile scrum sprint deployment testing bugs refactoring"
+    },
+    {
+      "id": "topic:cafe_ordering",
+      "title": "Cafe Ordering Context",
+      "keywords": "espresso latte cappuccino pastry muffin croissant sugar decaf extra shot dine-in take-away loyalty card receipt"
+    },
+    {
+      "id": "topic:medical_consultation",
+      "title": "Medical Consultation Context",
+      "keywords": "symptoms prescription dosage allergy side effects blood test referral specialist follow-up recovery insurance"
+    },
+    {
+      "id": "entity:lease_agreement",
+      "title": "Lease Agreement",
+      "keywords": "legal contract duration terms conditions signature landlord tenant"
+    },
+    {
+      "id": "entity:security_deposit",
+      "title": "Security Deposit",
+      "keywords": "money upfront damage refund move-in move-out"
+    },
+    {
+      "id": "entity:technical_debt",
+      "title": "Technical Debt",
+      "keywords": "refactoring legacy code quality deadline tradeoff maintainability"
+    },
+    {
+      "id": "entity:microservices",
+      "title": "Microservices Architecture",
+      "keywords": "distributed systems scaling api gateway service mesh database per service"
+    }
+  ],
+  "edges": [
+    {"from": "topic:apartment_renting", "to": "entity:lease_agreement", "relation": "requires"},
+    {"from": "topic:apartment_renting", "to": "entity:security_deposit", "relation": "includes_cost"},
+    {"from": "topic:software_interview", "to": "entity:technical_debt", "relation": "discusses"},
+    {"from": "topic:software_interview", "to": "entity:microservices", "relation": "discusses"},
+    {"from": "topic:cafe_ordering", "to": "concept:vocab.food", "relation": "specialization_of"},
+    {"from": "topic:medical_consultation", "to": "concept:vocab.health", "relation": "specialization_of"},
+    {"from": "entity:lease_agreement", "to": "concept:vocab.shopping", "relation": "related_to"}
+  ]
+}

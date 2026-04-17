@@ -82,5 +82,89 @@
     "account_subtitle": "개인 정보 관리",
     "sign_out": "로그아웃",
     "sign_out_confirm": "로그아웃하시겠습니까?"
+  },
+  "ai_tutor": {
+    "title": "AI 튜터",
+    "analyzeText": "텍스트 분석",
+    "evaluateGrammar": "문법 평가",
+    "explainWord": "이 단어 설명하기",
+    "generateExercise": "연습 문제 생성",
+    "fixPronunciation": "발음 교정",
+    "translate": "번역",
+    "transcribeAudio": "오디오 텍스트 변환",
+    "skillLevel": "기술 레벨",
+    "feedback": "피드백",
+    "giveMeHint": "힌트 주기"
+  },
+  "topics": {
+    "storyMode": "스토리 모드",
+    "roleplay": "역할극",
+    "scenario": "시나리오",
+    "dialogue": "대화",
+    "chooseCharacter": "캐릭터 선택",
+    "vocabularyList": "단어 목록",
+    "grammarPoints": "문법 포인트",
+    "category": "카테고리",
+    "difficultyLevel": "난이도"
+  },
+  "dictionary": {
+    "searchWord": "단어 검색",
+    "definition": "정의",
+    "synonyms": "동의어",
+    "antonyms": "반의어",
+    "examples": "예문",
+    "partOfSpeech": "품사",
+    "noun": "명사",
+    "verb": "동사",
+    "adjective": "형용사",
+    "adverb": "부사",
+    "pronunciation": "발음"
+  },
+  "assessment": {
+    "placementTest": "배치 시험",
+    "cefrLevel": "CEFR 레벨",
+    "readingSpeed": "읽기 속도",
+    "retakeTest": "시험 다시 보기",
+    "yourLevelIs": "당신의 레벨은 {level}입니다",
+    "testCompleted": "시험 완료"
+  },
+  "premium": {
+    "title": "LexiLingo 프리미엄",
+    "upgrade": "프리미엄으로 업그레이드",
+    "proFeatures": "프로 기능 잠금 해제",
+    "subscriptionPlan": "구독 플랜",
+    "monthly": "월간",
+    "yearly": "연간",
+    "lifetime": "평생",
+    "restorePurchases": "구매 복원",
+    "manageSubscription": "구독 관리",
+    "cancelSubscription": "구독 취소",
+    "noAds": "광고 없는 경험",
+    "unlimitedHearts": "무제한 하트"
+  },
+  "support": {
+    "faq": "자주 묻는 질문",
+    "helpCenter": "고객 센터",
+    "contactUs": "문의하기",
+    "reportIssue": "문제 신고",
+    "sendFeedback": "의견 보내기",
+    "rateApp": "앱 평가하기",
+    "appTutorial": "앱 튜토리얼"
+  },
+  "datetime": {
+    "today": "오늘",
+    "yesterday": "어제",
+    "tomorrow": "내일",
+    "justNow": "방금",
+    "minutesAgo": "{minutes}분 전",
+    "hoursAgo": "{hours}시간 전",
+    "daysAgo": "{days}일 전"
+  },
+  "offline": {
+    "downloadOffline": "오프라인 다운로드",
+    "availableOffline": "오프라인에서 사용 가능",
+    "downloading": "다운로드 중...",
+    "storageUsage": "저장소 사용량",
+    "clearCache": "캐시 지우기"
   }
 }

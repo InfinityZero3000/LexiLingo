@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import '../providers/streak_provider.dart';
 import '../../domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Helper function to get icon from streak identifier
 IconData _getStreakIcon(String identifier) {
@@ -41,7 +43,7 @@ class StreakWidget extends StatelessWidget {
           return const SizedBox(
             width: 40,
             height: 40,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: LottieLoadingWidget.small(),
           );
         }
 
@@ -56,11 +58,12 @@ class StreakWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: _getStreakGradient(streak.currentStreak),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: streak.currentStreak > 0
+              boxShadow: streak.currentStreak >= 3
                   ? [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: AppColors.orange.withValues(alpha: 0.45),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                         offset: const Offset(0, 2),
                       ),
                     ]
@@ -70,18 +73,18 @@ class StreakWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (streak.streakAtRisk)
-                  const LottieAnimationWidget.heartbeat(width: 22, height: 22)
+                  LottieAnimationWidget.heartbeat(width: 22, height: 22)
                 else
                   Icon(
                     _getStreakIcon(streak.streakIcon),
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     size: 18,
                   ),
                 const SizedBox(width: 4),
                 Text(
                   '${streak.currentStreak}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.surface,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -120,7 +123,7 @@ class StreakWidget extends StatelessWidget {
         colors: [Color(0xFFFFCC00), Color(0xFFFF8C00)],
       );
     }
-    return LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500]);
+    return LinearGradient(colors: [AppColors.grey400, AppColors.grey500]);
   }
 
   void _showStreakDetails(BuildContext context, StreakEntity streak) {
@@ -181,21 +184,21 @@ class StreakCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: streak.currentStreak > 0
-                                ? [Colors.orange, Colors.deepOrange]
-                                : [Colors.grey.shade300, Colors.grey.shade400],
+                                ? [AppColors.orange, AppColors.deepOrange]
+                                : [AppColors.grey300, AppColors.grey400],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: streak.streakAtRisk
-                            ? const LottieAnimationWidget.heartbeat(
+                            ? LottieAnimationWidget.heartbeat(
                                 width: 32,
                                 height: 32,
                               )
                             : Icon(
                                 _getStreakIcon(streak.streakIcon),
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 size: 24,
                               ),
                       ),
@@ -244,7 +247,7 @@ class StreakCard extends StatelessWidget {
                                   Icon(
                                     Icons.check_circle,
                                     size: 14,
-                                    color: Colors.green,
+                                    color: AppColors.greenSuccessBright,
                                   ),
                                 if (streak.isActiveToday)
                                   const SizedBox(width: 4),
@@ -254,7 +257,7 @@ class StreakCard extends StatelessWidget {
                                       : 'Practice now to keep your streak!',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: streak.isActiveToday
-                                        ? Colors.green
+                                        ? AppColors.greenSuccessBright
                                         : Colors.grey,
                                   ),
                                 ),
@@ -269,7 +272,7 @@ class StreakCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.emoji_events,
-                            color: Colors.amber,
+                            color: AppColors.warning,
                             size: 16,
                           ),
                           Text(
@@ -347,7 +350,7 @@ class StreakDetailsSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -356,7 +359,7 @@ class StreakDetailsSheet extends StatelessWidget {
           // Big streak display
           Icon(
             _getStreakIcon(streak.streakIcon),
-            color: Colors.orange,
+            color: AppColors.orange,
             size: 64,
           ),
           const SizedBox(height: 8),
@@ -369,7 +372,7 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             streak.streakLevel,
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.orange),
+            style: theme.textTheme.titleMedium?.copyWith(color: AppColors.orange),
           ),
 
           const SizedBox(height: 32),
@@ -409,7 +412,7 @@ class StreakDetailsSheet extends StatelessWidget {
                   ? Colors.green.shade50
                   : streak.streakAtRisk
                   ? Colors.orange.shade50
-                  : Colors.grey.shade100,
+                  : AppColors.grey100,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -421,9 +424,9 @@ class StreakDetailsSheet extends StatelessWidget {
                       ? Icons.warning_rounded
                       : Icons.info_outline,
                   color: streak.isActiveToday
-                      ? Colors.green
+                      ? AppColors.greenSuccessBright
                       : streak.streakAtRisk
-                      ? Colors.orange
+                      ? AppColors.orange
                       : Colors.grey,
                 ),
                 const SizedBox(width: 12),
@@ -458,10 +461,14 @@ class StreakDetailsSheet extends StatelessWidget {
                             final success = await provider.useFreeze();
                             if (success && context.mounted) {
                               Navigator.pop(context);
+                              final isDark =
+                                  Theme.of(context).brightness ==
+                                  Brightness.dark;
+                              final accent = AppColorRoles.primary(isDark);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Streak freeze activated!'),
-                                  backgroundColor: Colors.blue,
+                                SnackBar(
+                                  content: const Text('Streak freeze activated!'),
+                                  backgroundColor: accent,
                                 ),
                               );
                             }
@@ -469,7 +476,9 @@ class StreakDetailsSheet extends StatelessWidget {
                     icon: Icon(Icons.ac_unit, size: 18, color: Colors.cyan),
                     label: const Text('Use Streak Freeze'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppColorRoles.primary(
+                        Theme.of(context).brightness == Brightness.dark,
+                      ),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -493,7 +502,7 @@ class StreakDetailsSheet extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(icon, size: 24, color: Colors.orange),
+        Icon(icon, size: 24, color: AppColors.orange),
         const SizedBox(height: 4),
         Text(
           value,
@@ -531,7 +540,7 @@ class StreakBadge extends StatelessWidget {
             decoration: BoxDecoration(
               color: streak.currentStreak > 0
                   ? Colors.orange.shade100
-                  : Colors.grey.shade200,
+                  : AppColors.grey200,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -541,7 +550,7 @@ class StreakBadge extends StatelessWidget {
                   _getStreakIcon(streak.streakIcon),
                   color: streak.currentStreak > 0
                       ? Colors.orange.shade800
-                      : Colors.grey.shade600,
+                      : AppColors.grey600,
                   size: 14,
                 ),
                 const SizedBox(width: 2),
@@ -552,7 +561,7 @@ class StreakBadge extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: streak.currentStreak > 0
                         ? Colors.orange.shade800
-                        : Colors.grey.shade600,
+                        : AppColors.grey600,
                   ),
                 ),
               ],

@@ -65,7 +65,7 @@ class DailyProgressModel extends DailyProgressEntity {
 /// Model for weekly progress response from API
 class WeeklyProgressModel extends WeeklyProgressEntity {
   const WeeklyProgressModel({
-    required List<DailyProgressEntity> weekProgress,
+    required super.weekProgress,
     required super.totalXP,
     required super.totalLessons,
     required super.totalStudyTime,
@@ -73,7 +73,7 @@ class WeeklyProgressModel extends WeeklyProgressEntity {
     required super.currentStreak,
     required super.longestStreak,
     required super.weekGoalProgress,
-  }) : super(weekProgress: weekProgress);
+  });
 
   factory WeeklyProgressModel.fromJson(Map<String, dynamic> json) {
     // Support both 'days' (new API) and 'week_progress' (legacy) format

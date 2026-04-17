@@ -1,8 +1,12 @@
 /// Achievement Remote Datasource
 /// Handles API calls for achievements
+library;
+
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/network/badge_image_cache.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 
 abstract class AchievementRemoteDataSource {
@@ -24,6 +28,41 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
   final ApiClient apiClient;
 
   AchievementRemoteDataSourceImpl({required this.apiClient});
+
+  bool _isNetworkUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    final uri = Uri.tryParse(trimmed);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
+  Future<void> _warmBadgeCache(List<UserAchievementModel> badges) async {
+    final Set<String> urls = <String>{};
+
+    for (final badge in badges) {
+      final achievement = badge.achievement;
+      final rawBadgeIcon = achievement.badgeIcon?.trim();
+      if (rawBadgeIcon != null && _isNetworkUrl(rawBadgeIcon)) {
+        urls.add(rawBadgeIcon);
+      }
+    }
+
+    if (urls.isEmpty) return;
+
+    try {
+      await Future.wait(
+        urls.map(
+          (url) => BadgeImageCache.instance
+              .downloadFile(url)
+              .timeout(BadgeImageCache.networkTimeout),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Badge cache warm-up skipped due to error: $e');
+    }
+  }
 
   @override
   Future<List<AchievementModel>> getAllAchievements() async {
@@ -71,9 +110,11 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
 
       if (data['success'] == true && data['data'] != null) {
         final List<dynamic> badgesList = data['data'];
-        return badgesList
+        final badges = badgesList
             .map((json) => UserAchievementModel.fromJson(json))
             .toList();
+        unawaited(_warmBadgeCache(badges));
+        return badges;
       }
       return [];
     } catch (e) {

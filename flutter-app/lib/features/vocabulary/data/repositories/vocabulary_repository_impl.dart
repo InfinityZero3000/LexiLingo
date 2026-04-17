@@ -69,9 +69,7 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     int offset = 0,
   }) async {
     try {
-      final statusString = status != null
-          ? status.toString().split('.').last
-          : null;
+      final statusString = status?.toString().split('.').last;
 
       final models = await remoteDataSource.getUserCollection(
         status: statusString,

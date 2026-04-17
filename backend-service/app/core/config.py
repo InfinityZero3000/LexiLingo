@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "LexiLingo Backend Service"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
-    DEBUG: bool = True
+    DEBUG: bool = False
     PORT: int = 8000
     
     # Database
@@ -52,13 +52,13 @@ class Settings(BaseSettings):
 
     @property
     def effective_pool_size(self) -> int:
-        """Return larger pool in production."""
-        return 50 if self.is_production else self.DB_POOL_SIZE
+        """Return larger pool in production (sized for 10k concurrent users)."""
+        return 100 if self.is_production else self.DB_POOL_SIZE
 
     @property
     def effective_max_overflow(self) -> int:
         """Return larger overflow in production."""
-        return 20 if self.is_production else self.DB_MAX_OVERFLOW
+        return 50 if self.is_production else self.DB_MAX_OVERFLOW
     
     # Security
     SECRET_KEY: str
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5176"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
         r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
@@ -93,6 +93,17 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Email (SMTP)
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+    EMAIL_FROM: str = "noreply@lexilingo.app"
+    PASSWORD_RESET_URL_BASE: str = "http://localhost:8080/#/reset-password"
+    PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
@@ -144,6 +155,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_PASSWORD: str | None = None
+    # Trusted reverse-proxy IPs (comma-separated) allowed to set X-Forwarded-For.
+    # Set to your load balancer IP(s) in production; leave empty for dev/direct deployments.
+    TRUSTED_PROXIES: str = ""
 
     # ── External API Keys (Phase 0+ Content Features) ──
     YOUTUBE_API_KEY: str | None = None           # YouTube Data API v3
@@ -169,6 +183,13 @@ class Settings(BaseSettings):
         """Check if running in production mode."""
         return self.APP_ENV == "production"
 
+    @property
+    def effective_password_reset_url_base(self) -> str:
+        """Return reset URL base according to current environment."""
+        if self.is_production and self.PASSWORD_RESET_URL_BASE_PRODUCTION:
+            return self.PASSWORD_RESET_URL_BASE_PRODUCTION
+        return self.PASSWORD_RESET_URL_BASE
+
 
 # Global settings instance
-settings = Settings()
+settings = Settings()  # pyright: ignore[reportCallIssue]

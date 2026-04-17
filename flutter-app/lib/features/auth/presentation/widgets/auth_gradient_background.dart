@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthGradientBackground
@@ -219,7 +220,7 @@ class _Particle {
 
   factory _Particle.random(math.Random rng, int index) {
     final colors = const [
-      Color(0xFFFFD700), // gold
+      AppColors.gold, // gold
       Color(0xFF80DEEA), // cyan
       Color(0xFFA5D6A7), // mint
       Color(0xFFCE93D8), // lavender
@@ -323,20 +324,20 @@ class GlassmorphicAuthCard extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
-          padding: padding ?? const EdgeInsets.all(24),
+          padding: padding ?? EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.35),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 24,
                 spreadRadius: 2,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.45),
               width: 1.5,
             ),
           ),

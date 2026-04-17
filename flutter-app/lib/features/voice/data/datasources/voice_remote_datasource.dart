@@ -54,8 +54,9 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
         final data = json.decode(response.body) as Map<String, dynamic>;
         return data;
       } else {
+        final detail = _extractErrorDetail(response.body);
         throw ServerException(
-          'Failed to transcribe audio: ${response.statusCode}',
+          'Failed to transcribe audio (${response.statusCode})${detail.isNotEmpty ? ': $detail' : ''}',
         );
       }
     } catch (e) {
@@ -78,13 +79,38 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
+        final detail = _extractErrorDetail(response.body);
         throw ServerException(
-          'Failed to synthesize speech: ${response.statusCode}',
+          'Failed to synthesize speech (${response.statusCode})${detail.isNotEmpty ? ': $detail' : ''}',
         );
       }
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException('TTS service error: $e');
     }
+  }
+
+  String _extractErrorDetail(String body) {
+    final trimmed = body.trim();
+    if (trimmed.isEmpty) return '';
+
+    try {
+      final decoded = json.decode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final detail = decoded['detail'];
+        if (detail is String && detail.isNotEmpty) {
+          return detail;
+        }
+        final message = decoded['message'];
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+      }
+    } catch (_) {
+      // Fall back to plain-text response body below.
+    }
+
+    if (trimmed.length <= 220) return trimmed;
+    return '${trimmed.substring(0, 220)}...';
   }
 }

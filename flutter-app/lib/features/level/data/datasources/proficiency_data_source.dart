@@ -1,16 +1,24 @@
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/proficiency_entity.dart';
 
 /// Data source for proficiency assessment API calls
 class ProficiencyDataSource {
   final ApiClient _apiClient;
+  final LocalCacheService _cache;
 
   ProficiencyDataSource({required ApiClient apiClient})
-    : _apiClient = apiClient;
+    : _apiClient = apiClient,
+      _cache = LocalCacheService.instance;
 
   /// Get user's proficiency profile
   Future<ProficiencyProfile> getProfile() async {
-    final response = await _apiClient.get('/proficiency/profile');
+    final cached = await _cache.getOrFetch(
+      key: 'proficiency:profile:v1',
+      type: 'game',
+      fetchFn: () => _apiClient.get('/proficiency/profile'),
+    );
+    final response = cached ?? await _apiClient.get('/proficiency/profile');
     return ProficiencyProfile.fromJson(response);
   }
 
@@ -32,7 +40,12 @@ class ProficiencyDataSource {
 
   /// Get all level thresholds
   Future<Map<String, dynamic>> getLevelThresholds() async {
-    return await _apiClient.get('/proficiency/level-thresholds');
+    final cached = await _cache.getOrFetch(
+      key: 'proficiency:thresholds:v1',
+      type: 'dictionary',
+      fetchFn: () => _apiClient.get('/proficiency/level-thresholds'),
+    );
+    return cached ?? await _apiClient.get('/proficiency/level-thresholds');
   }
 
   /// Get level change history

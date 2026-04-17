@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Speech Recognition Button Widget
 /// A microphone button that uses Web Speech API on web platform
@@ -147,13 +148,13 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: provider.isListening
-                          ? Colors.red
+                          ? AppColors.errorBright
                           : Theme.of(context).primaryColor,
                       boxShadow: [
                         BoxShadow(
                           color:
                               (provider.isListening
-                                      ? Colors.red
+                                      ? AppColors.errorBright
                                       : Theme.of(context).primaryColor)
                                   .withValues(alpha: 0.3),
                           blurRadius: provider.isListening ? 20 : 10,
@@ -163,7 +164,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
                     ),
                     child: Icon(
                       provider.isListening ? Icons.stop : Icons.mic,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       size: widget.size * 0.5,
                     ),
                   ),

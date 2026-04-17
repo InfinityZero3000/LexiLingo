@@ -42,7 +42,7 @@ class ResourceManager:
         
         # Model memory sizes (in GB)
         self.model_sizes = {
-            "qwen": 1.6,       # Qwen2.5-1.5B + Unified LoRA
+            "qwen": 1.6,       # Qwen3-1.7B + Unified LoRA
             "hubert": 2.0,     # HuBERT-large
             "llama": 4.0,      # LLaMA3-8B-VI (4-bit quantization)
             "whisper": 0.3,    # Faster-Whisper small

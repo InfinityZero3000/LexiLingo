@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -171,7 +172,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
       builder: (context, provider, _) {
         if (provider.isLoading || !_gameLoaded) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: LottieLoadingWidget.medium()),
           );
         }
         final game = provider.spellingBee!;
@@ -180,7 +181,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Word ${_wordIndex + 1}/${game.words.length}',
@@ -220,7 +221,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             boxShadow: _playsLeft > 0
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withOpacity(0.4),
+                                      color: AppColors.primary.withValues(alpha: 0.4),
                                       blurRadius: 16,
                                       offset: const Offset(0, 6),
                                     ),
@@ -232,7 +233,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             _isPlaying
                                 ? Icons.volume_up
                                 : Icons.play_arrow_rounded,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             size: 52,
                           ),
                         ),
@@ -257,9 +258,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Type the word...',
-                          hintStyle: const TextStyle(color: AppColors.textGrey),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.surfaceLight,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
@@ -306,13 +307,13 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: _isCorrect
-                                ? AppColors.greenSuccess.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.08),
+                                ? AppColors.greenSuccess.withValues(alpha: 0.1)
+                                : Colors.red.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _isCorrect
                                   ? AppColors.greenSuccess
-                                  : Colors.red,
+                                  : AppColors.errorBright,
                             ),
                           ),
                           child: Column(
@@ -323,7 +324,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: _isCorrect
                                       ? AppColors.greenSuccess
-                                      : Colors.red,
+                                      : AppColors.errorBright,
                                 ),
                               ),
                               if (!_isCorrect) ...[

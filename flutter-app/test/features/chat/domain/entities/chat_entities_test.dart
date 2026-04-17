@@ -7,7 +7,7 @@ void main() {
     test('ChatMessage entity should be created correctly', () {
       // Arrange
       final timestamp = DateTime.now();
-      
+
       // Act
       final message = ChatMessage(
         id: '1',
@@ -40,9 +40,7 @@ void main() {
       );
 
       // Act
-      final updated = original.copyWith(
-        status: MessageStatus.sent,
-      );
+      final updated = original.copyWith(status: MessageStatus.sent);
 
       // Assert
       expect(updated.id, original.id);
@@ -53,7 +51,7 @@ void main() {
     test('ChatSession entity should be created correctly', () {
       // Arrange
       final now = DateTime.now();
-      
+
       // Act
       final session = ChatSession(
         id: 'session_1',
@@ -123,7 +121,10 @@ void main() {
       expect(MessageStatus.error.toShortString(), 'error');
 
       // Test fromString
-      expect(MessageStatusExtension.fromString('sending'), MessageStatus.sending);
+      expect(
+        MessageStatusExtension.fromString('sending'),
+        MessageStatus.sending,
+      );
       expect(MessageStatusExtension.fromString('sent'), MessageStatus.sent);
       expect(MessageStatusExtension.fromString('error'), MessageStatus.error);
     });

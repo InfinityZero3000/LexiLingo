@@ -56,6 +56,9 @@ htmlcov/
 # Database
 *.db
 *.sqlite3
+seed_*
+!tests/seed_*
+
 
 # Logs
 *.log

@@ -11,6 +11,7 @@ import uuid
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.crud.course_category import CourseCategoryCRUD
 from app.schemas.course_category import (
@@ -41,6 +42,15 @@ async def get_categories(
     
     Returns list of categories ordered by order_index.
     """
+    cache_key = build_cache_key("categories", active_only=active_only)
+    cached = await get_cached(cache_key)
+    if cached:
+        return ApiResponse(
+            success=True,
+            data=cached,
+            message="Categories retrieved successfully"
+        )
+    
     categories, _ = await CourseCategoryCRUD.get_all_categories(
         db,
         active_only=active_only,
@@ -49,8 +59,10 @@ async def get_categories(
     )
     
     category_items = [
-        CourseCategoryListItem.model_validate(cat) for cat in categories
+        CourseCategoryListItem.model_validate(cat).model_dump(mode="json") for cat in categories
     ]
+    
+    await set_cached(cache_key, category_items, ttl=120)
     
     return ApiResponse(
         success=True,

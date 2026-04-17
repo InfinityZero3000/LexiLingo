@@ -39,7 +39,7 @@ async def get_current_user(
     
     # 1) Try local JWT (backward compatibility)
     payload = decode_token(token)
-    if payload and (sub := payload.get("sub")):
+    if payload and payload.get("type") == "access" and (sub := payload.get("sub")):
         try:
             # Convert string to UUID for query
             user_id = uuid.UUID(sub) if isinstance(sub, str) else sub
@@ -92,7 +92,7 @@ async def get_current_user_optional(
     
     # 1) Try local JWT
     payload = decode_token(token)
-    if payload and (sub := payload.get("sub")):
+    if payload and payload.get("type") == "access" and (sub := payload.get("sub")):
         try:
             # Convert string to UUID for query
             user_id = uuid.UUID(sub) if isinstance(sub, str) else sub

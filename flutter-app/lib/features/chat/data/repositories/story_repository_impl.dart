@@ -53,6 +53,26 @@ class StoryRepositoryImpl implements StoryRepository {
   }
 
   @override
+  Future<Either<Failure, Map<String, dynamic>>> warmTopicCache({
+    required String storyId,
+    required String userId,
+  }) async {
+    try {
+      final result = await apiDataSource.warmTopicCache(
+        storyId: storyId,
+        userId: userId,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      logError(_tag, 'warmTopicCache server error: $e');
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      logError(_tag, 'warmTopicCache error: $e');
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<String>>> getCategories() async {
     try {
       final categories = await apiDataSource.getCategories();
@@ -71,7 +91,7 @@ class StoryRepositoryImpl implements StoryRepository {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   }) async {
     try {
       final session = await apiDataSource.startTopicSession(
@@ -140,6 +160,47 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getTopicMessages error: $e');
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, TopicMessagesPageResult>> getTopicMessagesPaged(
+    String sessionId, {
+    int limit = 50,
+    String? cursor,
+  }) async {
+    try {
+      if (cursor == null || cursor.isEmpty) {
+        try {
+          final metadata = await apiDataSource.getTopicMessagesMetadata(sessionId);
+          if (!metadata.hasMessages || metadata.totalCount == 0) {
+            return const Right(
+              TopicMessagesPageResult(
+                messages: [],
+                hasMore: false,
+                nextCursor: null,
+                returned: 0,
+              ),
+            );
+          }
+        } catch (e) {
+          // Metadata endpoint is an optimization layer only.
+          logWarn(_tag, 'getTopicMessagesMetadata failed, continue paged fetch: $e');
+        }
+      }
+
+      final page = await apiDataSource.getTopicMessagesPaged(
+        sessionId: sessionId,
+        limit: limit,
+        cursor: cursor,
+      );
+      return Right(page);
+    } on ServerException catch (e) {
+      logError(_tag, 'getTopicMessagesPaged server error: $e');
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      logError(_tag, 'getTopicMessagesPaged error: $e');
       return Left(ServerFailure(e.toString()));
     }
   }

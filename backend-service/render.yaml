@@ -60,7 +60,10 @@ services:
       # Environment
       - key: APP_ENV
         value: production
-      
+
+      - key: DEBUG
+        value: false
+
       - key: LOG_LEVEL
         value: INFO
       

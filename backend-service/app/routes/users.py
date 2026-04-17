@@ -154,8 +154,14 @@ async def get_user_level_full(
     # Numeric level info
     level_info = get_numeric_level_progress(current_user.total_xp)
     
-    # CEFR proficiency
-    proficiency_status = LevelService.calculate_level_status(current_user.total_xp)
+    # CEFR proficiency (authoritative from persisted profile)
+    normalized_cefr = (current_user.level or "A1").upper()
+    persisted_tier = LevelService.get_tier_by_code(normalized_cefr)
+    if persisted_tier is None:
+        persisted_tier = LevelService.get_tier_by_code("A1")
+
+    # XP-derived CEFR kept as diagnostic signal only (not profile source-of-truth)
+    xp_derived_status = LevelService.calculate_level_status(current_user.total_xp)
     
     # Rank info
     rank_info = calc_rank(
@@ -171,8 +177,14 @@ async def get_user_level_full(
             xp_for_next_level=level_info.xp_for_next_level,
             level_progress_percent=level_info.level_progress_percent,
             total_xp=current_user.total_xp,
-            proficiency_level=proficiency_status.current_tier.code,
-            proficiency_name=proficiency_status.current_tier.name,
+            cefr_level=persisted_tier.code,
+            cefr_name=persisted_tier.name,
+            cefr_progression_source="profile",
+            xp_derived_cefr_level=xp_derived_status.current_tier.code,
+            xp_derived_cefr_name=xp_derived_status.current_tier.name,
+            # Backward-compatible fields for existing clients.
+            proficiency_level=persisted_tier.code,
+            proficiency_name=persisted_tier.name,
             rank=rank_info.rank.value,
             rank_name=rank_info.name,
             rank_score=round(rank_info.score, 2),

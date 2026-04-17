@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Collection of lightweight custom animations using CustomPaint
 /// These animations are optimized for performance without external dependencies
@@ -100,7 +101,7 @@ class _PulsePainter extends CustomPainter {
       final opacity = (1.0 - ringProgress) * 0.5;
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity)
+        ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0 * (1.0 - ringProgress);
 
@@ -127,7 +128,7 @@ class ShimmerEffect extends StatefulWidget {
   const ShimmerEffect({
     super.key,
     required this.child,
-    this.baseColor = const Color(0xFFE0E0E0),
+    this.baseColor = AppColors.grey300,
     this.highlightColor = const Color(0xFFF5F5F5),
     this.duration = const Duration(milliseconds: 1500),
   });
@@ -261,7 +262,7 @@ class _WavePainter extends CustomPainter {
       final phaseShift = progress * 2 * math.pi + (i * math.pi / 3);
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity.clamp(0.1, 0.3))
+        ..color = color.withValues(alpha: opacity.clamp(0.1, 0.3))
         ..style = PaintingStyle.fill;
 
       final path = Path();
@@ -395,7 +396,7 @@ class _ParticlesPainter extends CustomPainter {
       final y = ((particle.y + progress * particle.speed) % 1.0) * size.height;
 
       final paint = Paint()
-        ..color = color.withOpacity(particle.opacity)
+        ..color = color.withValues(alpha: particle.opacity)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), particle.size, paint);
@@ -637,7 +638,7 @@ class _RipplePainter extends CustomPainter {
     final opacity = (1.0 - progress) * 0.3;
 
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(center, radius, paint);
@@ -698,7 +699,7 @@ class _BreathingGlowState extends State<BreathingGlow>
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withOpacity(
+                color: widget.glowColor.withValues(alpha: 
                   0.3 + 0.3 * _controller.value,
                 ),
                 blurRadius: blur,
@@ -800,7 +801,7 @@ class _TypingIndicatorPainter extends CustomPainter {
       final y = size.height / 2 - bounce * dotSize / 2;
 
       final paint = Paint()
-        ..color = color.withOpacity(0.4 + 0.6 * bounce)
+        ..color = color.withValues(alpha: 0.4 + 0.6 * bounce)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), dotSize / 2, paint);
@@ -829,7 +830,7 @@ class AnimatedGradientBorder extends StatefulWidget {
     required this.child,
     this.borderWidth = 2,
     this.borderRadius = 12,
-    this.colors = const [Colors.blue, Colors.purple, Colors.pink, Colors.blue],
+    this.colors = const [Colors.blue, AppColors.purple, Colors.pink, Colors.blue],
     this.duration = const Duration(seconds: 3),
   });
 
@@ -933,7 +934,7 @@ class AnimatedCheckmark extends StatefulWidget {
   const AnimatedCheckmark({
     super.key,
     this.size = 80,
-    this.color = Colors.green,
+    this.color = AppColors.greenSuccessBright,
     this.duration = const Duration(milliseconds: 800),
     this.onComplete,
   });

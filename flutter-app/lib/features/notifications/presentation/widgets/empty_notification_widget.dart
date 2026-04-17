@@ -50,6 +50,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
 
     return Center(
       child: SingleChildScrollView(
@@ -57,14 +58,14 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildIllustration(context, isDark),
+            _buildIllustration(context, isDark, accent),
             const SizedBox(height: 40),
             _buildTitle(context, isDark),
             const SizedBox(height: 16),
             _buildDescription(context, isDark),
             if (widget.buttonText != null && widget.onRefresh != null) ...[
               const SizedBox(height: 36),
-              _buildRefreshButton(context),
+              _buildRefreshButton(context, accent),
             ],
           ],
         ),
@@ -72,7 +73,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     );
   }
 
-  Widget _buildIllustration(BuildContext context, bool isDark) {
+  Widget _buildIllustration(BuildContext context, bool isDark, Color accent) {
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -85,8 +86,8 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              AppColors.primary.withValues(alpha: 0.15),
-              AppColors.primary.withValues(alpha: 0.05),
+              accent.withValues(alpha: 0.15),
+              accent.withValues(alpha: 0.05),
               Colors.transparent,
             ],
             stops: const [0.3, 0.7, 1.0],
@@ -99,13 +100,13 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.15)
+                  ? accent.withValues(alpha: 0.15)
                   : AppColors.primary.withValues(alpha: 0.1),
             ),
             child: Icon(
               Icons.notifications_outlined,
               size: 52,
-              color: AppColors.primary.withValues(alpha: 0.6),
+              color: (isDark ? accent : AppColors.primary).withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -118,7 +119,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
       widget.title,
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
         fontWeight: FontWeight.bold,
-        color: isDark ? Colors.white : Colors.black87,
+        color: AppColorRoles.textPrimary(isDark),
         letterSpacing: -0.5,
       ),
       textAlign: TextAlign.center,
@@ -131,7 +132,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
       child: Text(
         widget.description,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: isDark ? Colors.grey[400] : Colors.grey[600],
+          color: AppColorRoles.textSecondary(isDark),
           height: 1.6,
         ),
         textAlign: TextAlign.center,
@@ -139,19 +140,20 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     );
   }
 
-  Widget _buildRefreshButton(BuildContext context) {
+  Widget _buildRefreshButton(BuildContext context, Color accent) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(
           colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.85),
+            isDark ? accent : AppColors.primary,
+            (isDark ? accent : AppColors.primary).withValues(alpha: 0.85),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: (isDark ? accent : AppColors.primary).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),

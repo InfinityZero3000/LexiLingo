@@ -39,6 +39,25 @@ fi
 # ============ Animated Banner ============
 clear 2>/dev/null || true
 
+# Interactive Prompt for Flutter Platform
+echo -e "${CYAN}Choose Flutter platform to run:${NC}"
+echo "  1) Web Hot Reload (Interactive Chrome - Port 8080) [Default]"
+echo "  2) iOS Simulator"
+echo "  3) Android Device/Emulator"
+echo "  4) iPad (Physical Device)"
+echo "  5) Skip Flutter"
+read -p "Enter choice [1-5]: " flutter_choice
+
+FLUTTER_PLATFORM="web_hot"
+case "$flutter_choice" in
+    1) FLUTTER_PLATFORM="web_hot" ;;
+    2) FLUTTER_PLATFORM="ios" ;;
+    3) FLUTTER_PLATFORM="android" ;;
+    4) FLUTTER_PLATFORM="ipad" ;;
+    5) FLUTTER_PLATFORM="none" ;;
+    *) FLUTTER_PLATFORM="web_hot" ;;
+esac
+
 # Hide cursor during animation
 printf '\033[?25l'
 
@@ -207,32 +226,33 @@ show_banner() {
 # Cleanup function
 cleanup() {
     printf '\033[?25h'  # Show cursor
-    clear 2>/dev/null || true
     echo ""
-    echo -e "${YELLOW}[STOP] Shutting down all services...${NC}"
-    
-    # Kill by PID files
-    for pidfile in "$PID_DIR"/*.pid; do
-        if [ -f "$pidfile" ]; then
-            pid=$(cat "$pidfile")
-            if kill -0 "$pid" 2>/dev/null; then
-                kill "$pid" 2>/dev/null
+    # Use the dedicated stop script for comprehensive cleanup (including Docker)
+    if [ -f "$PROJECT_ROOT/scripts/stop-all.sh" ]; then
+        bash "$PROJECT_ROOT/scripts/stop-all.sh"
+    else
+        echo -e "${YELLOW}[STOP] Shutting down services...${NC}"
+        # Fallback: Kill by PID files
+        for pidfile in "$PID_DIR"/*.pid; do
+            if [ -f "$pidfile" ]; then
+                pid=$(cat "$pidfile")
+                kill -9 "$pid" 2>/dev/null || true
+                rm -f "$pidfile"
             fi
-            rm -f "$pidfile"
-        fi
-    done
-    
-    # Kill processes on ports
-    lsof -ti :8000 | xargs kill -9 2>/dev/null || true
-    lsof -ti :8001 | xargs kill -9 2>/dev/null || true
-    lsof -ti :5176 | xargs kill -9 2>/dev/null || true
-    lsof -ti :8080 | xargs kill -9 2>/dev/null || true
-    
-    echo -e "${GREEN}[OK] All services stopped${NC}"
+        done
+        # Fallback: Kill processes on ports
+        lsof -ti :8000,8001,5176,8080 | xargs kill -9 2>/dev/null || true
+        echo -e "${GREEN}[OK] Services stopped${NC}"
+    fi
     exit 0
 }
 
 trap cleanup SIGINT SIGTERM
+
+# Function to check if a service is running on a port
+check_service() {
+    lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null 2>&1
+}
 
 # Function to check and report port status
 check_port() {
@@ -265,155 +285,243 @@ kill_port() {
     return 0
 }
 
-# Always cleanup ports before starting
-# echo -e "${YELLOW}[CLEANUP] Stopping any existing services on ports...${NC}"
-kill_port 8000 "Backend"
-kill_port 8001 "AI Service"
-kill_port 5176 "Admin Dashboard"
-kill_port 8080 "Flutter"
-# echo -e "${GREEN}[OK] All ports cleared${NC}"
+# No longer killing ports unconditionally. 
+# We will check each service before starting.
 echo ""
 
-# Clean up old PID files
-rm -f "$PID_DIR"/*.pid
+# ============ Database Services (via Docker) ============
+if command -v docker &>/dev/null; then
+    if ! check_service 5432 || ! check_service 27017 || ! check_service 6379; then
+        echo -e "${BLUE}[START] Starting Database containers (PostgreSQL, MongoDB, Redis)...${NC}"
+        docker compose -f "$PROJECT_ROOT/docker-compose.yml" up -d postgres pgadmin mongodb mongo-express redis redisinsight >> "$LOG_DIR/databases.log" 2>&1
+        # Wait up to 15s for postgres to be ready
+        for i in $(seq 1 15); do
+            docker compose -f "$PROJECT_ROOT/docker-compose.yml" exec -T postgres pg_isready -U lexilingo >/dev/null 2>&1 && break
+            sleep 1
+        done
+    else
+        echo -e "${GREEN}[OK] Database services are already running${NC}"
+    fi
+else
+    if ! check_service 5432; then
+        echo -e "   ${YELLOW}[WARN] Docker not found and PostgreSQL not running on port 5432.${NC}"
+        echo -e "   ${YELLOW}       Install Docker or start Databases manually.${NC}"
+    fi
+fi
 
 # ============ Backend Service ============
-# echo -e "${BLUE}[START] Starting Backend Service (port 8000)...${NC}"
+if ! check_service 8000; then
+    # echo -e "${BLUE}[START] Starting Backend Service (port 8000)...${NC}"
 
-BACKEND_VENV="$PROJECT_ROOT/backend-service/venv"
+    BACKEND_VENV="$PROJECT_ROOT/backend-service/venv"
 
-# Clear old logs
-> "$LOG_DIR/backend.log"
+    # Clear old logs
+    > "$LOG_DIR/backend.log"
 
-# Check if venv exists
-if [ ! -d "$BACKEND_VENV" ]; then
-    echo -e "   ${RED}[ERROR] Virtual environment not found at $BACKEND_VENV${NC}"
-    echo -e "   ${YELLOW}Run: cd backend-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
-    exit 1
+    # Check if venv exists
+    if [ ! -d "$BACKEND_VENV" ]; then
+        echo -e "   ${RED}[ERROR] Virtual environment not found at $BACKEND_VENV${NC}"
+        echo -e "   ${YELLOW}Run: cd backend-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
+        exit 1
+    fi
+
+    # Start backend
+    (
+        cd "$PROJECT_ROOT/backend-service"
+        echo "$(date): Starting Backend on port 8000" >> "$LOG_DIR/backend.log"
+        "$BACKEND_VENV/bin/python" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$LOG_DIR/backend.log" 2>&1
+    ) &
+    BACKEND_PID=$!
+    disown $BACKEND_PID
+    echo $BACKEND_PID > "$PID_DIR/backend.pid"
+    # echo -e "${GREEN}[OK] Backend started (PID: $BACKEND_PID)${NC}"
+else
+    echo -e "${GREEN}[OK] Backend Service is already running on port 8000${NC}"
 fi
 
-# Start backend
-(
-    cd "$PROJECT_ROOT/backend-service"
-    source venv/bin/activate
-    echo "$(date): Starting Backend on port 8000" >> "$LOG_DIR/backend.log"
-    python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$LOG_DIR/backend.log" 2>&1
-) &
-BACKEND_PID=$!
-disown $BACKEND_PID
-echo $BACKEND_PID > "$PID_DIR/backend.pid"
-# echo -e "${GREEN}[OK] Backend started (PID: $BACKEND_PID)${NC}"
-
-# Wait logic removed for immediate dashboard
+sleep 0.5
 
 # ============ AI Service ============
-# echo -e "${BLUE}[START] Starting AI Service (port 8001)...${NC}"
+if ! check_service 8001; then
+    # echo -e "${BLUE}[START] Starting AI Service (port 8001)...${NC}"
 
-AI_VENV="$PROJECT_ROOT/.venv"
+    AI_VENV="$PROJECT_ROOT/ai-service/venv"
 
-# Check if venv exists
-if [ ! -d "$AI_VENV" ]; then
-    echo -e "   ${RED}[ERROR] Virtual environment not found at $AI_VENV${NC}"
-    echo -e "   ${YELLOW}Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r ai-service/requirements.txt${NC}"
-    exit 1
+    # Check if venv exists
+    if [ ! -d "$AI_VENV" ]; then
+        echo -e "   ${RED}[ERROR] Virtual environment not found at $AI_VENV${NC}"
+        echo -e "   ${YELLOW}Run: cd ai-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
+        exit 1
+    fi
+
+    # Check if Gemini API key is set (optional warning)
+    if [ -z "$GEMINI_API_KEY" ]; then
+        echo -e "   ${YELLOW}[WARN] GEMINI_API_KEY not set - AI will use Qwen model only${NC}"
+        echo -e "   [INFO] To enable Gemini: export GEMINI_API_KEY='your-key' in .env${NC}"
+    fi
+
+    # Clear old logs
+    > "$LOG_DIR/ai-service.log"
+
+    # Start AI service with main.py (full endpoints for Flutter)
+    (
+        cd "$PROJECT_ROOT/ai-service"
+        export PYTHONPATH="$PROJECT_ROOT/ai-service"
+        export GEMINI_API_KEY="$GEMINI_API_KEY"
+        export CHAT_MODEL="${CHAT_MODEL:-qwen}"
+        export OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:1.5b}"
+        export USE_GRAPHCAG="${USE_GRAPHCAG:-true}"
+        echo "$(date): Starting AI Service on port 8001" >> "$LOG_DIR/ai-service.log"
+        echo "$(date): CHAT_MODEL=$CHAT_MODEL, OLLAMA_MODEL=$OLLAMA_MODEL, USE_GRAPHCAG=$USE_GRAPHCAG" >> "$LOG_DIR/ai-service.log"
+        "$AI_VENV/bin/python" -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
+    ) &
+    AI_PID=$!
+    disown $AI_PID
+    echo $AI_PID > "$PID_DIR/ai-service.pid"
+    # echo -e "${GREEN}[OK] AI Service started (PID: $AI_PID)${NC}"
+else
+    echo -e "${GREEN}[OK] AI Service is already running on port 8001${NC}"
 fi
 
-# Check if Gemini API key is set (optional warning)
-if [ -z "$GEMINI_API_KEY" ]; then
-    echo -e "   ${YELLOW}[WARN] GEMINI_API_KEY not set - AI will use Qwen model only${NC}"
-    echo -e "   [INFO] To enable Gemini: export GEMINI_API_KEY='your-key' in .env${NC}"
-fi
-
-# Clear old logs
-> "$LOG_DIR/ai-service.log"
-
-# Start AI service with main.py (full endpoints for Flutter)
-(
-    cd "$PROJECT_ROOT/ai-service"
-    source "$AI_VENV/bin/activate"
-    export PYTHONPATH="$PROJECT_ROOT/ai-service"
-    export GEMINI_API_KEY="$GEMINI_API_KEY"
-    export CHAT_MODEL="${CHAT_MODEL:-qwen}"
-    export OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:1.5b}"
-    export USE_GRAPHCAG="${USE_GRAPHCAG:-true}"
-    echo "$(date): Starting AI Service on port 8001" >> "$LOG_DIR/ai-service.log"
-    echo "$(date): CHAT_MODEL=$CHAT_MODEL, OLLAMA_MODEL=$OLLAMA_MODEL, USE_GRAPHCAG=$USE_GRAPHCAG" >> "$LOG_DIR/ai-service.log"
-    python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 >> "$LOG_DIR/ai-service.log" 2>&1
-) &
-AI_PID=$!
-disown $AI_PID
-echo $AI_PID > "$PID_DIR/ai-service.pid"
-# echo -e "${GREEN}[OK] AI Service started (PID: $AI_PID)${NC}"
-
-# Wait logic removed for immediate dashboard
+sleep 0.5
 
 # ============ Admin Dashboard ============
-# echo -e "${BLUE}[START] Starting Admin Dashboard (port 5176)...${NC}"
+if ! check_service 5176; then
+    # echo -e "${BLUE}[START] Starting Admin Dashboard (port 5176)...${NC}"
 
-ADMIN_DIR="$PROJECT_ROOT/admin-service"
+    ADMIN_DIR="$PROJECT_ROOT/admin-service"
 
-# Check if node_modules exists
-if [ ! -d "$ADMIN_DIR/node_modules" ]; then
-    echo -e "   ${YELLOW}[SETUP] Installing admin dependencies...${NC}"
-    (cd "$ADMIN_DIR" && npm install >> "$LOG_DIR/admin.log" 2>&1)
-fi
+    # Check if node_modules exists
+    if [ ! -d "$ADMIN_DIR/node_modules" ]; then
+        echo -e "   ${YELLOW}[SETUP] Installing admin dependencies...${NC}"
+        (cd "$ADMIN_DIR" && npm install >> "$LOG_DIR/admin.log" 2>&1)
+    fi
 
-# Clear old logs
-> "$LOG_DIR/admin.log"
+    # Clear old logs
+    > "$LOG_DIR/admin.log"
 
-# Start admin dashboard
-(
-    cd "$ADMIN_DIR"
-    echo "$(date): Starting Admin Dashboard on port 5176" >> "$LOG_DIR/admin.log"
-    npx vite --port 5176 >> "$LOG_DIR/admin.log" 2>&1
-) &
-ADMIN_PID=$!
-echo $ADMIN_PID > "$PID_DIR/admin.pid"
-# echo -e "${GREEN}[OK] Admin Dashboard started (PID: $ADMIN_PID)${NC}"
-
-# Wait logic removed for immediate dashboard
-
-# ============ Flutter Web ============
-# echo -e "${BLUE}[START] Starting Flutter Web (port 8080)...${NC}"
-
-FLUTTER_RUNNING=false
-
-# Check if Flutter is already running
-if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
-    FLUTTER_RUNNING=true
-fi
-
-cd "$PROJECT_ROOT/flutter-app"
-
-# Clean Chrome cache
-rm -rf .dart_tool/chrome-device 2>/dev/null || true
-
-HAS_FLUTTER=true
-# Check if flutter command exists
-if ! command -v flutter &> /dev/null; then
-    HAS_FLUTTER=false
-    echo -e "   ${YELLOW}[WARN] Flutter CLI not found in PATH${NC}"
-fi
-
-# Start Flutter in background if available and not running
-if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
+    # Start admin dashboard
     (
-        cd "$PROJECT_ROOT/flutter-app"
-        flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 --web-allowed-hosts all >> "$LOG_DIR/flutter.log" 2>&1
+        cd "$ADMIN_DIR"
+        echo "$(date): Starting Admin Dashboard on port 5176" >> "$LOG_DIR/admin.log"
+        npx vite --port 5176 >> "$LOG_DIR/admin.log" 2>&1
     ) &
-    FLUTTER_PID=$!
-    echo $FLUTTER_PID > "$PID_DIR/flutter.pid"
-    # echo -e "${GREEN}[OK] Flutter starting in background (PID: $FLUTTER_PID)${NC}"
+    ADMIN_PID=$!
+    echo $ADMIN_PID > "$PID_DIR/admin.pid"
+    # echo -e "${GREEN}[OK] Admin Dashboard started (PID: $ADMIN_PID)${NC}"
+else
+    echo -e "${GREEN}[OK] Admin Dashboard is already running on port 5176${NC}"
+fi
+
+sleep 0.5
+
+# ============ Flutter App ============
+if [ "$FLUTTER_PLATFORM" != "none" ]; then
+    echo -e "${BLUE}[START] Starting Flutter App ($FLUTTER_PLATFORM)...${NC}"
+
+    FLUTTER_RUNNING=false
+
+    # Check if Flutter is already running on port 8080 (only applicable for web modes)
+    if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+        if check_service 8080; then
+            echo -e "${GREEN}[OK] Flutter Web already running on port 8080${NC}"
+            FLUTTER_RUNNING=true
+        fi
+    fi
+
+    cd "$PROJECT_ROOT/flutter-app"
+
+    HAS_FLUTTER=true
+    # Check if flutter command exists
+    if ! command -v flutter &> /dev/null; then
+        HAS_FLUTTER=false
+        echo -e "   ${YELLOW}[WARN] Flutter CLI not found in PATH${NC}"
+    fi
+
+    # Start Flutter in background if available and not running
+    if [ "$FLUTTER_RUNNING" = false ] && [ "$HAS_FLUTTER" = true ]; then
+        # Check if Flutter app is already running (e.g. from Xcode or manually)
+        if pgrep -f "flutter_tools.snapshot run" > /dev/null || pgrep -x "Runner" > /dev/null; then
+            echo -e "   ${GREEN}[OK] Flutter App detected as already running natively or via IDE. Skipping start.${NC}"
+            # Create a mock PID to allow the dashboard to display it as running
+            echo "1" > "$PID_DIR/flutter.pid"
+        else
+            (
+                cd "$PROJECT_ROOT/flutter-app"
+                if [ "$FLUTTER_PLATFORM" = "web" ]; then
+                    # Clean Chrome cache
+                    rm -rf .dart_tool/chrome-device 2>/dev/null || true
+                    nohup flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1 &
+                elif [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                    if command -v osascript >/dev/null 2>&1; then
+                        osascript <<EOF >/dev/null 2>&1
+tell application "Terminal"
+    do script "cd '$PROJECT_ROOT/flutter-app' && flutter run -d chrome --web-port=8080"
+    activate
+end tell
+EOF
+                        echo -e "   ${GREEN}[OK] Opened interactive Flutter terminal (Hot Reload supported)${NC}"
+                    else
+                        echo -e "   ${YELLOW}[WARN] osascript unavailable. Falling back to web-server mode.${NC}"
+                        rm -rf .dart_tool/chrome-device 2>/dev/null || true
+                        nohup flutter run -d web-server --web-port=8080 --web-hostname=0.0.0.0 >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
+                elif [ "$FLUTTER_PLATFORM" = "ios" ]; then
+                    IOS_ID=$(flutter devices | grep -i simulator | head -n 1 | awk -F '•' '{print $2}' | xargs)
+                    if [ -n "$IOS_ID" ]; then
+                        echo -e "   ${GREEN}[INFO] Found iOS Simulator ($IOS_ID). Starting app...${NC}"
+                        nohup flutter run -d "$IOS_ID" >> "$LOG_DIR/flutter.log" 2>&1 &
+                    else
+                        echo -e "   ${YELLOW}[WARN] No iOS Simulator found. Make sure a simulator is running. Falling back to default 'ios'...${NC}"
+                        nohup flutter run -d ios >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
+                elif [ "$FLUTTER_PLATFORM" = "android" ]; then
+                    # Check if the specific Xiaomi device is connected
+                    if flutter devices | grep -q "23053RN02A"; then
+                        echo -e "   ${GREEN}[INFO] Found physical device (Xiaomi 23053RN02A). Prioritizing it.${NC}"
+                        nohup flutter run -d 23053RN02A >> "$LOG_DIR/flutter.log" 2>&1 &
+                    else
+                        echo -e "   ${YELLOW}[INFO] Physical device not found. Falling back to default Android device/emulator.${NC}"
+                        nohup flutter run -d android >> "$LOG_DIR/flutter.log" 2>&1 &
+                    fi
+                elif [ "$FLUTTER_PLATFORM" = "ipad" ]; then
+                    # ID cụ thể của iPad mà bạn đã cung cấp
+                    nohup flutter run -d 00008030-000531940152202E >> "$LOG_DIR/flutter.log" 2>&1 &
+                fi
+                echo $! > "$PID_DIR/flutter.pid"
+            )
+            # Wait for Flutter to start (up to 10 seconds)
+            echo -e "   ${DIM}Waiting for Flutter ($FLUTTER_PLATFORM) to initialize...${NC}"
+            for i in $(seq 1 20); do
+                # For web modes we can check the port, for iOS/Android we just wait a bit
+                if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                    if check_service 8080; then
+                        if [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                            echo -e "   ${GREEN}[OK] Flutter Web Hot Reload started on port 8080${NC}"
+                        else
+                            echo -e "   ${GREEN}[OK] Flutter Web started successfully${NC}"
+                        fi
+                        break
+                    fi
+                fi
+                sleep 0.5
+            done
+            
+            # Final check if web modes
+            if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                if ! check_service 8080; then
+                    echo -e "   ${YELLOW}[WARN] Flutter Web may not have started correctly. Check logs: tail -f logs/flutter.log${NC}"
+                fi
+            fi
+        fi
+    fi
+else
+    HAS_FLUTTER=false
+    echo -e "${BLUE}[INFO] Skipping Flutter app as chosen.${NC}"
 fi
 
 # ============ Persistent Animated Dashboard ============
 START_TIME=$(date +%s)
-
-# Check service status
-check_service() {
-    lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null 2>&1
-}
 
 # Format uptime
 format_uptime() {
@@ -562,15 +670,29 @@ animated_dashboard() {
             printf "  ${RED}  [ ] Admin${NC}          ${DIM}offline${NC}\033[K\n"
         fi
 
-        # Flutter Web
-        if check_service 8080; then
-            printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
-        elif [ "$HAS_FLUTTER" = false ]; then
-            printf "  ${RED}  [!] Flutter Web${NC}    ${DIM}not installed${NC}\033[K\n"
-        elif [ -f "$PID_DIR/flutter.pid" ]; then
-            printf "  ${YELLOW}  [~] Flutter Web${NC}    ${DIM}starting...${NC}\033[K\n"
+        # Flutter Web/App logic logic
+        if [ "$FLUTTER_PLATFORM" = "web" ] || [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+            if check_service 8080; then
+                if [ "$FLUTTER_PLATFORM" = "web_hot" ]; then
+                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
+                else
+                    printf "  ${GREEN}  [*] Flutter Web${NC}    ${DIM}http://localhost:${NC}${C2}8080${NC}\033[K\n"
+                fi
+            elif [ "$HAS_FLUTTER" = false ]; then
+                printf "  ${RED}  [!] Flutter Web${NC}    ${DIM}not installed${NC}\033[K\n"
+            elif [ -f "$PID_DIR/flutter.pid" ]; then
+                printf "  ${YELLOW}  [~] Flutter Web${NC}    ${DIM}starting...${NC}\033[K\n"
+            else
+                printf "  ${RED}  [ ] Flutter Web${NC}    ${DIM}offline${NC}\033[K\n"
+            fi
+        elif [ "$FLUTTER_PLATFORM" = "ios" ] || [ "$FLUTTER_PLATFORM" = "android" ] || [ "$FLUTTER_PLATFORM" = "ipad" ]; then
+            if [ -f "$PID_DIR/flutter.pid" ]; then
+                printf "  ${GREEN}  [*] Flutter App${NC}    ${DIM}running on $FLUTTER_PLATFORM${NC}\033[K\n"
+            else
+                printf "  ${RED}  [ ] Flutter App${NC}    ${DIM}offline${NC}\033[K\n"
+            fi
         else
-            printf "  ${RED}  [ ] Flutter Web${NC}    ${DIM}offline${NC}\033[K\n"
+             printf "  ${RED}  [ ] Flutter App${NC}    ${DIM}skipped${NC}\033[K\n"
         fi
 
         printf '\033[K\n'

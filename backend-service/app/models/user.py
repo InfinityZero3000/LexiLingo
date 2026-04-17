@@ -9,7 +9,7 @@ from sqlalchemy import String, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID, TZDateTime
+from app.core.db_types import GUID, TZDateTime, PortableJSON
 
 
 class User(Base):
@@ -41,6 +41,11 @@ class User(Base):
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
     rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, diamond, master
+    is_onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     
     # RBAC
     role_id: Mapped[uuid.UUID] = mapped_column(
@@ -53,7 +58,37 @@ class User(Base):
     # Status & Verification (Phase 1 requirements)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    provider: Mapped[str] = mapped_column(String(20), default="local")  # local, google, facebook
+    # Linked auth providers — list of strings, e.g. ["local"], ["google"], ["local", "google"]
+    # Guarded rules:
+    #   - Registration only creates ["local"]
+    #   - Google OAuth *adds* "google" to this list (never self-registerable as "google")
+    #   - Admin dashboard requires "google" in this list (real Google account ownership)
+    provider: Mapped[list] = mapped_column(PortableJSON, default=lambda: ["local"])
+
+    # Convenience helpers — never stored
+    @property
+    def has_local_auth(self) -> bool:
+        return isinstance(self.provider, list) and "local" in self.provider
+
+    @property
+    def has_google_auth(self) -> bool:
+        return isinstance(self.provider, list) and "google" in self.provider
+
+    def add_provider(self, p: str) -> None:
+        """Add a provider to the list if not already present."""
+        providers = list(self.provider) if isinstance(self.provider, list) else [self.provider]
+        if p not in providers:
+            providers.append(p)
+        self.provider = providers
+
+    @property
+    def cefr_level(self) -> str:
+        """Explicit CEFR alias for API contracts while preserving legacy `level`."""
+        return self.level
+
+    @cefr_level.setter
+    def cefr_level(self, value: str) -> None:
+        self.level = value
     
     # Relationships
     role = relationship("Role", back_populates="users", lazy="selectin")

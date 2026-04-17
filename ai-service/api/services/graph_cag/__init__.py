@@ -1,9 +1,9 @@
 """
-GraphCAG - Graph-based Content-Augmented Generation
+GraphCAG - Graph-based Cache-Aware Generation.
 
-LangGraph-based orchestration system for LexiLingo AI Tutor.
-Uses Knowledge Graph (KuzuDB) for concept expansion and 
-StateGraph for pipeline coordination.
+LangGraph-based orchestration pipeline for LexiLingo AI Tutor.
+Uses RAPID cache gate + Knowledge Graph (KuzuDB) retrieval +
+StateGraph routing for low-latency grounded responses.
 """
 
 from api.services.graph_cag.state import GraphCAGState, create_initial_state

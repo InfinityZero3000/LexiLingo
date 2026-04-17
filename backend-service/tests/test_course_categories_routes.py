@@ -199,7 +199,7 @@ class TestGetCategoryById:
         ):
             response = await no_auth_client.get(f"{BASE}/{CATEGORY_ID}")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_200_when_found(self, no_auth_client: AsyncClient):
@@ -315,7 +315,7 @@ class TestCreateCategory:
                 json={"name": "Grammar", "slug": "grammar"},
             )
         assert response.status_code == 400
-        assert "slug" in response.json()["detail"].lower()
+        assert "slug" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_creates_category_successfully(self, auth_client: AsyncClient):

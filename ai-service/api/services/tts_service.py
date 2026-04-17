@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import logging
+import os
+import wave
 from typing import Optional
 
 from api.core.config import settings
@@ -29,14 +31,62 @@ class TTSService:
         model_path = settings.TTS_MODEL_PATH
         config_path = settings.TTS_CONFIG_PATH
 
-        logger.info(f"Loading TTS model: {model_path}")
-        self._voice = PiperVoice.load(model_path, config_path=config_path)
+        # Support both absolute model paths and voice IDs like "en_US-lessac-medium".
+        model_candidates = [
+            model_path,
+            f"{model_path}.onnx",
+            os.path.join("models", "piper", model_path),
+            os.path.join("models", "piper", f"{model_path}.onnx"),
+            os.path.join(os.path.dirname(__file__), "..", "..", "models", "piper", model_path),
+            os.path.join(os.path.dirname(__file__), "..", "..", "models", "piper", f"{model_path}.onnx"),
+        ]
+
+        resolved_model_path = next(
+            (candidate for candidate in model_candidates if candidate and os.path.exists(candidate)),
+            model_path,
+        )
+
+        resolved_config_path: Optional[str] = None
+        if config_path:
+            resolved_config_path = config_path
+        else:
+            json_candidates = [
+                f"{resolved_model_path}.json",
+                resolved_model_path.replace('.onnx', '.onnx.json'),
+            ]
+            resolved_config_path = next(
+                (candidate for candidate in json_candidates if os.path.exists(candidate)),
+                None,
+            )
+
+        logger.info(f"Loading TTS model: {resolved_model_path}")
+        self._voice = PiperVoice.load(
+            resolved_model_path,
+            config_path=resolved_config_path,
+        )
         return self._voice
 
     def synthesize(self, text: str) -> bytes:
         voice = self._load_voice()
+
+        # Newer piper-tts versions return AudioChunk iterables.
+        chunks = list(voice.synthesize(text))
+        if chunks:
+            wav_io = io.BytesIO()
+            with wave.open(wav_io, "wb") as wav_file:
+                wav_file.setnchannels(chunks[0].sample_channels)
+                wav_file.setsampwidth(chunks[0].sample_width)
+                wav_file.setframerate(chunks[0].sample_rate)
+                for chunk in chunks:
+                    wav_file.writeframes(chunk.audio_int16_bytes)
+            return wav_io.getvalue()
+
+        # Keep compatibility with older piper APIs that write into a buffer.
         wav_io = io.BytesIO()
-        voice.synthesize(text, wav_io, speaker_id=settings.TTS_SPEAKER_ID)
+        try:
+            voice.synthesize(text, wav_io, speaker_id=settings.TTS_SPEAKER_ID)
+        except TypeError:
+            voice.synthesize(text, wav_io)
         return wav_io.getvalue()
 
 

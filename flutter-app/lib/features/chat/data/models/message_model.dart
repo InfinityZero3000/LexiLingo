@@ -2,10 +2,10 @@ import 'package:lexilingo_app/features/chat/domain/entities/message.dart';
 
 class MessageModel extends Message {
   MessageModel({
-    required String content,
-    required bool isUser,
-    required DateTime timestamp,
-  }) : super(content: content, isUser: isUser, timestamp: timestamp);
+    required super.content,
+    required super.isUser,
+    required super.timestamp,
+  });
 
   // Convert from JSON to Model
   factory MessageModel.fromJson(Map<String, dynamic> json) {

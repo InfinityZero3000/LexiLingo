@@ -219,5 +219,89 @@
     "step3Desc": "Thực hành giao tiếp với trợ lý AI thông minh",
     "getStarted": "Bắt đầu ngay",
     "skipTour": "Bỏ qua hướng dẫn"
+  },
+  "ai_tutor": {
+    "title": "Gia sư AI",
+    "analyzeText": "Phân tích văn bản",
+    "evaluateGrammar": "Kiểm tra ngữ pháp",
+    "explainWord": "Giải thích từ này",
+    "generateExercise": "Tạo bài tập",
+    "fixPronunciation": "Sửa lỗi phát âm",
+    "translate": "Dịch",
+    "transcribeAudio": "Chuyển giọng nói thành văn bản",
+    "skillLevel": "Trình độ kỹ năng",
+    "feedback": "Nhận xét",
+    "giveMeHint": "Cho tôi gợi ý"
+  },
+  "topics": {
+    "storyMode": "Chế độ Cốt truyện",
+    "roleplay": "Nhập vai",
+    "scenario": "Tình huống",
+    "dialogue": "Hội thoại",
+    "chooseCharacter": "Chọn nhân vật của bạn",
+    "vocabularyList": "Danh sách từ vựng",
+    "grammarPoints": "Điểm ngữ pháp",
+    "category": "Danh mục",
+    "difficultyLevel": "Mức độ khó"
+  },
+  "dictionary": {
+    "searchWord": "Tra từ",
+    "definition": "Định nghĩa",
+    "synonyms": "Từ đồng nghĩa",
+    "antonyms": "Từ trái nghĩa",
+    "examples": "Câu ví dụ",
+    "partOfSpeech": "Từ loại",
+    "noun": "Danh từ",
+    "verb": "Động từ",
+    "adjective": "Tính từ",
+    "adverb": "Trạng từ",
+    "pronunciation": "Phát âm"
+  },
+  "assessment": {
+    "placementTest": "Bài kiểm tra trình độ",
+    "cefrLevel": "Trình độ CEFR",
+    "readingSpeed": "Tốc độ đọc",
+    "retakeTest": "Làm lại bài kiểm tra",
+    "yourLevelIs": "Trình độ của bạn là {level}",
+    "testCompleted": "Đã hoàn thành kiểm tra"
+  },
+  "premium": {
+    "title": "LexiLingo Premium",
+    "upgrade": "Nâng cấp Premium",
+    "proFeatures": "Mở khóa tính năng Pro",
+    "subscriptionPlan": "Gói đăng ký",
+    "monthly": "Hàng tháng",
+    "yearly": "Hàng năm",
+    "lifetime": "Trọn đời",
+    "restorePurchases": "Khôi phục giao dịch",
+    "manageSubscription": "Quản lý gói đăng ký",
+    "cancelSubscription": "Hủy đăng ký",
+    "noAds": "Không quảng cáo",
+    "unlimitedHearts": "Không giới hạn trái tim"
+  },
+  "support": {
+    "faq": "Câu hỏi thường gặp",
+    "helpCenter": "Trung tâm trợ giúp",
+    "contactUs": "Liên hệ với chúng tôi",
+    "reportIssue": "Báo cáo sự cố",
+    "sendFeedback": "Gửi phản hồi",
+    "rateApp": "Đánh giá ứng dụng",
+    "appTutorial": "Hướng dẫn sử dụng ứng dụng"
+  },
+  "datetime": {
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua",
+    "tomorrow": "Ngày mai",
+    "justNow": "Vừa xong",
+    "minutesAgo": "{minutes} phút trước",
+    "hoursAgo": "{hours} giờ trước",
+    "daysAgo": "{days} ngày trước"
+  },
+  "offline": {
+    "downloadOffline": "Tải xuống để dùng ngoại tuyến",
+    "availableOffline": "Có sẵn ngoại tuyến",
+    "downloading": "Đang tải xuống...",
+    "storageUsage": "Mức sử dụng bộ nhớ",
+    "clearCache": "Xóa bộ nhớ đệm"
   }
 }

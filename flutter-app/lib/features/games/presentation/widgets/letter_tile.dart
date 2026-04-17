@@ -61,7 +61,7 @@ class _LetterTileState extends State<LetterTile>
 
   Color get _tileColor {
     if (widget.isCorrect) return AppColors.greenSuccess;
-    if (widget.isWrong) return const Color(0xFFC62828);
+    if (widget.isWrong) return AppColors.errorDark;
     if (widget.isSelected) return AppColors.primary;
     return Colors.white;
   }
@@ -95,13 +95,13 @@ class _LetterTileState extends State<LetterTile>
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.isSelected
-                  ? AppColors.primary.withOpacity(0.6)
+                  ? AppColors.primary.withValues(alpha: 0.6)
                   : AppColors.grey300,
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: _tileColor.withOpacity(0.3),
+                color: _tileColor.withValues(alpha: 0.3),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

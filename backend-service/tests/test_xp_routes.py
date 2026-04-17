@@ -209,8 +209,8 @@ class TestAwardXP:
             },
         )
         assert response.status_code == 400
-        assert "short" in response.json()["detail"].lower() or \
-               "cheat" in response.json()["detail"].lower()
+        assert "short" in response.json()["error"]["message"].lower() or \
+               "cheat" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_requires_base_xp_minimum_1(self, auth_client: AsyncClient):

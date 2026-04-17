@@ -5,11 +5,11 @@ Extended for Phase 3: Smart Learning Engine & Spaced Repetition
 
 import uuid
 from datetime import datetime, date, timezone
-from sqlalchemy import String, Integer, Date, ForeignKey, Boolean, Float, JSON, Text, Index
+from sqlalchemy import String, Integer, Date, ForeignKey, Boolean, Float, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID, GUIDArray, TZDateTime
+from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
 
 
 class UserCourseProgress(Base):
@@ -290,7 +290,7 @@ class UserVocabKnowledge(Base):
     consecutive_correct: Mapped[int] = mapped_column(Integer, default=0)
     
     # Performance history (JSON array of scores)
-    review_history: Mapped[dict] = mapped_column(JSON, nullable=True)
+    review_history: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
     
     # Status
     mastery_level: Mapped[str] = mapped_column(String(20), default="learning")  # learning, reviewing, mastered
@@ -340,7 +340,7 @@ class DailyReviewSession(Base):
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Vocabulary IDs in this session (JSON array)
-    vocab_list: Mapped[dict] = mapped_column(JSON, nullable=True)
+    vocab_list: Mapped[dict] = mapped_column(PortableJSON, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     

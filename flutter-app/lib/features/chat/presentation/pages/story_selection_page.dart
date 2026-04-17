@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../../data/models/story_model.dart';
 import '../providers/story_provider.dart';
 import 'topic_chat_page.dart';
 
-/// Story Selection Page
-/// Grid layout with cover images, difficulty badges, and category filters
+/// Story Selection Page - Modern Redesign
 class StorySelectionPage extends StatefulWidget {
   const StorySelectionPage({super.key});
 
@@ -14,565 +15,542 @@ class StorySelectionPage extends StatefulWidget {
 }
 
 class _StorySelectionPageState extends State<StorySelectionPage> {
-  String? _selectedCategory;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   DifficultyLevel? _selectedDifficulty;
 
   @override
   void initState() {
     super.initState();
-    // Load stories on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StoryProvider>().loadStories();
-      context.read<StoryProvider>().loadCategories();
+      final provider = context.read<StoryProvider>();
+      provider.loadStories();
+      provider.loadCategories();
     });
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
+
     return Scaffold(
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Choose a Topic'),
-        centerTitle: true,
+        toolbarHeight: 86,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
-            tooltip: 'Filter',
-          ),
-        ],
+        automaticallyImplyLeading: false,
+        titleSpacing: 16,
+        title: Consumer<StoryProvider>(
+          builder: (context, provider, _) {
+            final total = provider.stories.length;
+            return Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.forum_rounded,
+                    color: Theme.of(context).colorScheme.surface,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Conversation Topics',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColorRoles.textPrimary(isDark),
+                      ),
+                    ),
+                    Text(
+                      '$total topics available',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textMuted
+                            : AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+        actions: const [],
       ),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading && provider.stories.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          final filteredStories = provider.stories.where((s) {
+            final matchesSearch =
+                s.title.en.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                s.category.toLowerCase().contains(_searchQuery.toLowerCase());
+            final matchesDifficulty =
+                _selectedDifficulty == null ||
+                s.difficultyLevel == _selectedDifficulty;
+            return matchesSearch && matchesDifficulty;
+          }).toList();
 
-          if (provider.error != null && provider.stories.isEmpty) {
-            return _buildErrorView(provider.error!);
-          }
+          return Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildSearchBar(theme, isDark),
+              ),
 
-          return RefreshIndicator(
-            onRefresh: () => provider.loadStories(
-              category: _selectedCategory,
-              difficultyLevel: _selectedDifficulty,
-            ),
-            child: CustomScrollView(
-              slivers: [
-                // Category chips
-                if (provider.categories.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: _buildCategoryChips(provider.categories),
-                  ),
+              // Filter Chips
+              _buildFilterChips(theme, isDark),
 
-                // Difficulty filter
-                SliverToBoxAdapter(child: _buildDifficultyFilter()),
-
-                // Stories grid
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: _buildStoriesGrid(provider.filteredStories),
-                ),
-              ],
-            ),
+              // Content
+              Expanded(
+                child: provider.isLoading && provider.stories.isEmpty
+                    ? const Center(child: LottieLoadingWidget.medium())
+                    : _buildStoryList(filteredStories, theme, isDark),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildErrorView(String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'Failed to load stories',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => context.read<StoryProvider>().loadStories(),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final accent = AppColorRoles.primary(isDark);
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.35 : 0.10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) => setState(() => _searchQuery = val),
+        textAlignVertical: TextAlignVertical.center,
+        style: TextStyle(
+          color: AppColorRoles.textPrimary(isDark),
+        ),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: 'Search topics...',
+          hintStyle: TextStyle(
+            color: AppColorRoles.textMuted(isDark),
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? accent : theme.primaryColor,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.only(
+            top: 0,
+            bottom: 0,
+            right: 16,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildCategoryChips(List<String> categories) {
+  Widget _buildFilterChips(ThemeData theme, bool isDark) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          FilterChip(
-            label: const Text('All'),
-            selected: _selectedCategory == null,
-            onSelected: (_) => _filterByCategory(null),
+          _buildChip(
+            'All',
+            _selectedDifficulty == null,
+            () {
+              setState(() => _selectedDifficulty = null);
+            },
+            theme,
+            isDark,
           ),
           const SizedBox(width: 8),
-          ...categories.map(
-            (category) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(_capitalize(category)),
-                selected: _selectedCategory == category,
-                onSelected: (_) => _filterByCategory(category),
-              ),
-            ),
+          _buildChip(
+            'Beginner',
+            _selectedDifficulty == DifficultyLevel.A1 ||
+                _selectedDifficulty == DifficultyLevel.A2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.A1);
+            },
+            theme,
+            isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildChip(
+            'Intermediate',
+            _selectedDifficulty == DifficultyLevel.B1 ||
+                _selectedDifficulty == DifficultyLevel.B2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.B1);
+            },
+            theme,
+            isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildChip(
+            'Advanced',
+            _selectedDifficulty == DifficultyLevel.C1 ||
+                _selectedDifficulty == DifficultyLevel.C2,
+            () {
+              setState(() => _selectedDifficulty = DifficultyLevel.C1);
+            },
+            theme,
+            isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDifficultyFilter() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          const Text('Level: ', style: TextStyle(fontWeight: FontWeight.w500)),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('All'),
-            selected: _selectedDifficulty == null,
-            onSelected: (_) => _filterByDifficulty(null),
-          ),
-          const SizedBox(width: 8),
-          ...DifficultyLevel.values.map(
-            (level) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(level.shortName),
-                selected: _selectedDifficulty == level,
-                onSelected: (_) => _filterByDifficulty(level),
-                backgroundColor: _getDifficultyColor(level).withOpacity(0.2),
-                selectedColor: _getDifficultyColor(level),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStoriesGrid(List<StoryListItem> stories) {
-    if (stories.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 80),
-              Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
-              const SizedBox(height: 16),
-              Text(
-                'No stories found',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Try changing your filters',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+  Widget _buildChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final accent = AppColorRoles.primary(isDark);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accent
+              : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
+          borderRadius: BorderRadius.circular(999),
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: (isDark ? accent : theme.primaryColor)
+                      .withValues(alpha: 0.2),
+                ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: (isDark ? accent : theme.primaryColor)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? AppColors.slate900
+                : AppColorRoles.textSecondary(isDark),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 14,
           ),
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _buildStoryList(
+    List<StoryListItem> stories,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    if (stories.isEmpty) {
+      return _buildEmptyState(isDark);
     }
 
-    return SliverGrid(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.75,
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: stories.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16, top: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Popular Scenarios',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
+                ),
+                Text(
+                  'See all',
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColorRoles.primary(isDark)
+                        : theme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final story = stories[index - 1];
+        return _TopicListItem(
+          story: story,
+          onTap: () => _handleTopicSelection(story),
+          theme: theme,
+          isDark: isDark,
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: isDark ? Colors.grey[700] : Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No topics found',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColorRoles.textSecondary(isDark),
+            ),
+          ),
+        ],
       ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => _StoryCard(
-          story: stories[index],
-          onTap: () => _openStory(stories[index]),
-        ),
-        childCount: stories.length,
-      ),
     );
   }
 
-  void _filterByCategory(String? category) {
-    setState(() => _selectedCategory = category);
-    context.read<StoryProvider>().setFilter(
-      category: category,
-      difficultyLevel: _selectedDifficulty,
-    );
-  }
-
-  void _filterByDifficulty(DifficultyLevel? difficulty) {
-    setState(() => _selectedDifficulty = difficulty);
-    context.read<StoryProvider>().setFilter(
-      category: _selectedCategory,
-      difficultyLevel: difficulty,
-    );
-  }
-
-  void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => _FilterSheet(
-        selectedCategory: _selectedCategory,
-        selectedDifficulty: _selectedDifficulty,
-        onApply: (category, difficulty) {
-          _filterByCategory(category);
-          _filterByDifficulty(difficulty);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _openStory(StoryListItem story) {
-    Navigator.push(
+  Future<void> _handleTopicSelection(StoryListItem story) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
     );
   }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
-
-  Color _getDifficultyColor(DifficultyLevel level) {
-    switch (level) {
-      case DifficultyLevel.A1:
-        return Colors.green;
-      case DifficultyLevel.A2:
-        return Colors.lightGreen;
-      case DifficultyLevel.B1:
-        return Colors.orange;
-      case DifficultyLevel.B2:
-        return Colors.deepOrange;
-      case DifficultyLevel.C1:
-        return Colors.red;
-      case DifficultyLevel.C2:
-        return Colors.purple;
-    }
-  }
 }
 
-/// Story card widget
-class _StoryCard extends StatelessWidget {
+class _TopicListItem extends StatelessWidget {
   final StoryListItem story;
   final VoidCallback onTap;
+  final ThemeData theme;
+  final bool isDark;
+  final bool isWarming;
 
-  const _StoryCard({required this.story, required this.onTap});
+  const _TopicListItem({
+    required this.story,
+    required this.onTap,
+    required this.theme,
+    required this.isDark,
+    // ignore: unused_element_parameter
+    this.isWarming = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final difficultyColor = _getDifficultyColor(story.difficultyLevel);
+    final difficultyLabel = _getDifficultyLabel(story.difficultyLevel);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Cover image
-            Expanded(
-              flex: 3,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildCoverImage(),
-                  // Difficulty badge
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: _DifficultyBadge(level: story.difficultyLevel),
-                  ),
-                  // Category tag
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _capitalize(story.category),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: (isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor)
+                  .withValues(alpha: isDark ? 0.20 : 0.05),
             ),
-            // Title and info
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.25 : 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: (isDark
+                          ? AppColorRoles.primary(isDark)
+                          : theme.primaryColor)
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _getCategoryIcon(story.category),
+                  color: isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Info
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       story.title.en,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColorRoles.textPrimary(isDark),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: difficultyColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            difficultyLabel,
+                            style: TextStyle(
+                              color: difficultyColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         Icon(
-                          Icons.access_time,
+                          Icons.timer_outlined,
                           size: 14,
-                          color: Colors.grey.shade600,
+                          color: AppColorRoles.textMuted(isDark),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${story.estimatedMinutes} min',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey.shade600),
+                          '${story.estimatedMinutes} mins',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColorRoles.textMuted(isDark),
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              if (isWarming)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: LottieLoadingWidget.tiny(),
+                )
+              else
+                Icon(
+                  Icons.chevron_right,
+                  color: isDark
+                      ? AppColorRoles.primary(isDark)
+                      : theme.primaryColor,
+                  size: 24,
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCoverImage() {
-    if (story.coverImageUrl != null && story.coverImageUrl!.isNotEmpty) {
-      return Image.network(
-        story.coverImageUrl!,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: Colors.grey.shade200,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-      );
+  Color _getDifficultyColor(DifficultyLevel level) {
+    switch (level) {
+      case DifficultyLevel.A1:
+      case DifficultyLevel.A2:
+        return AppColors.greenSuccessBright;
+      case DifficultyLevel.B1:
+      case DifficultyLevel.B2:
+        return isDark ? AppColors.primaryDarkMode : AppColors.primary;
+      case DifficultyLevel.C1:
+      case DifficultyLevel.C2:
+        return Colors.amber[700]!;
     }
-    return _buildPlaceholder();
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
-      color: _getCategoryColor(story.category),
-      child: Center(
-        child: Icon(
-          _getCategoryIcon(story.category),
-          size: 48,
-          color: Colors.white.withOpacity(0.8),
-        ),
-      ),
-    );
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'travel':
-        return Colors.blue.shade400;
-      case 'business':
-        return Colors.indigo.shade400;
-      case 'daily_life':
-        return Colors.teal.shade400;
-      case 'food':
-        return Colors.orange.shade400;
-      case 'shopping':
-        return Colors.pink.shade400;
-      case 'health':
-        return Colors.red.shade400;
-      default:
-        return Colors.grey.shade400;
+  String _getDifficultyLabel(DifficultyLevel level) {
+    switch (level) {
+      case DifficultyLevel.A1:
+      case DifficultyLevel.A2:
+        return 'Beginner';
+      case DifficultyLevel.B1:
+      case DifficultyLevel.B2:
+        return 'Intermediate';
+      case DifficultyLevel.C1:
+      case DifficultyLevel.C2:
+        return 'Advanced';
     }
   }
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'travel':
-        return Icons.flight;
+        return Icons.flight_takeoff;
       case 'business':
-        return Icons.business_center;
+      case 'work':
+        return Icons.work;
       case 'daily_life':
         return Icons.home;
       case 'food':
-        return Icons.restaurant;
+      case 'cafe':
+        return Icons.coffee;
       case 'shopping':
-        return Icons.shopping_bag;
+        return Icons.shopping_cart;
       case 'health':
         return Icons.local_hospital;
       default:
         return Icons.chat_bubble;
     }
-  }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
-}
-
-/// Difficulty badge widget
-class _DifficultyBadge extends StatelessWidget {
-  final DifficultyLevel level;
-
-  const _DifficultyBadge({required this.level});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: _getColor(),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        level.shortName,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Color _getColor() {
-    switch (level) {
-      case DifficultyLevel.A1:
-        return Colors.green;
-      case DifficultyLevel.A2:
-        return Colors.lightGreen.shade700;
-      case DifficultyLevel.B1:
-        return Colors.orange;
-      case DifficultyLevel.B2:
-        return Colors.deepOrange;
-      case DifficultyLevel.C1:
-        return Colors.red;
-      case DifficultyLevel.C2:
-        return Colors.purple;
-    }
-  }
-}
-
-/// Filter sheet widget
-class _FilterSheet extends StatefulWidget {
-  final String? selectedCategory;
-  final DifficultyLevel? selectedDifficulty;
-  final void Function(String?, DifficultyLevel?) onApply;
-
-  const _FilterSheet({
-    this.selectedCategory,
-    this.selectedDifficulty,
-    required this.onApply,
-  });
-
-  @override
-  State<_FilterSheet> createState() => _FilterSheetState();
-}
-
-class _FilterSheetState extends State<_FilterSheet> {
-  late String? _category;
-  late DifficultyLevel? _difficulty;
-
-  @override
-  void initState() {
-    super.initState();
-    _category = widget.selectedCategory;
-    _difficulty = widget.selectedDifficulty;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Filter Stories', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 24),
-          Text(
-            'Difficulty Level',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              ChoiceChip(
-                label: const Text('All'),
-                selected: _difficulty == null,
-                onSelected: (_) => setState(() => _difficulty = null),
-              ),
-              ...DifficultyLevel.values.map(
-                (level) => ChoiceChip(
-                  label: Text(level.shortName),
-                  selected: _difficulty == level,
-                  onSelected: (_) => setState(() => _difficulty = level),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => widget.onApply(_category, _difficulty),
-                  child: const Text('Apply'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }

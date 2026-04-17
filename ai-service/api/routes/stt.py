@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import tempfile
+import os
 from typing import Optional
+import logging
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
+from starlette.concurrency import run_in_threadpool
 
 from api.services.stt_service import get_stt_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -24,17 +28,26 @@ async def transcribe_audio(
     try:
         stt = get_stt_service()
 
-        with tempfile.NamedTemporaryFile(delete=True, suffix=f"_{audio.filename}") as tmp:
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{audio.filename}") as tmp:
             content = await audio.read()
             tmp.write(content)
-            tmp.flush()
+            tmp_path = tmp.name
 
-            result = stt.transcribe_file(tmp.name, language=language)
+        try:
+            # Run blocking transcription in threadpool
+            result = await run_in_threadpool(stt.transcribe_file, tmp_path, language)
 
-        return {
-            "text": result.get("text", ""),
-            "language": result.get("language", ""),
-        }
+            return {
+                "success": True,
+                "text": result.get("text", ""),
+                "language": result.get("language", ""),
+                "model": "faster-whisper",
+            }
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
     except Exception as exc:
+        logger.error(f"STT error: {exc}")
         raise HTTPException(status_code=500, detail=str(exc))

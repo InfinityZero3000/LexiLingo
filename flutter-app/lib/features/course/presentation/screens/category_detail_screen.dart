@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Sort options for courses
 enum CourseSortOption {
@@ -22,8 +23,7 @@ enum CourseSortOption {
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
 
-  const CategoryDetailScreen({Key? key, required this.categoryId})
-    : super(key: key);
+  const CategoryDetailScreen({super.key, required this.categoryId});
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -106,14 +106,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               SliverAppBar(
                 expandedHeight: 200,
                 pinned: true,
+                backgroundColor: categoryColor,
+                foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     category.name,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
-                          color: Colors.black26,
+                          color: Colors.black45,
                           offset: Offset(0, 1),
                           blurRadius: 4,
                         ),
@@ -135,7 +138,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       child: Icon(
                         categoryIcon,
                         size: 80,
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -190,7 +193,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                       const Icon(
                                         Icons.check,
                                         size: 18,
-                                        color: Colors.green,
+                                        color: AppColors.greenSuccessBright,
                                       ),
                                     ],
                                   ],
@@ -345,14 +348,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Color _parseCategoryColor(String? colorHex) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (colorHex == null || colorHex.isEmpty) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     try {
       final hex = colorHex.replaceAll('#', '');
       return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
     } catch (e) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 }
@@ -362,11 +366,11 @@ class _CourseCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseCard({Key? key, required this.course, required this.onTap})
-    : super(key: key);
+  const _CourseCard({required this.course, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -434,15 +438,15 @@ class _CourseCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(
-                          course.level,
-                        ).withValues(alpha: 0.1),
+                        color: _getLevelColor(course.level, isDark).withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level),
+                          color: _getLevelColor(course.level, isDark),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -467,22 +471,22 @@ class _CourseCard extends StatelessWidget {
     );
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, bool isDark) {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'a1':
       case 'a2':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'intermediate':
       case 'b1':
       case 'b2':
-        return Colors.orange;
+        return AppColors.orange;
       case 'advanced':
       case 'c1':
       case 'c2':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 }
@@ -492,11 +496,11 @@ class _CourseGridCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback onTap;
 
-  const _CourseGridCard({Key? key, required this.course, required this.onTap})
-    : super(key: key);
+  const _CourseGridCard({required this.course, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -551,15 +555,15 @@ class _CourseGridCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(
-                          course.level,
-                        ).withValues(alpha: 0.1),
+                        color: _getLevelColor(course.level, isDark).withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level),
+                          color: _getLevelColor(course.level, isDark),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -581,22 +585,22 @@ class _CourseGridCard extends StatelessWidget {
     );
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, bool isDark) {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'a1':
       case 'a2':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'intermediate':
       case 'b1':
       case 'b2':
-        return Colors.orange;
+        return AppColors.orange;
       case 'advanced':
       case 'c1':
       case 'c2':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 }

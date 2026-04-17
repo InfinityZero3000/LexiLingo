@@ -103,7 +103,7 @@ class BookRepository {
     required String bookId,
     required int chapter,
   }) async {
-    final cacheKey = 'books:quiz:${bookId}:ch:$chapter';
+    final cacheKey = 'books:quiz:$bookId:ch:$chapter';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,

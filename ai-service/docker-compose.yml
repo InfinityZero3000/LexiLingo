@@ -5,18 +5,26 @@ services:
   ai-service:
     build: .
     container_name: lexilingo-ai-service
+    mem_limit: 2g
+    memswap_limit: 2g
     ports:
       - "8001:8001"
     environment:
       - ENVIRONMENT=development
       - MONGODB_URI=mongodb://mongodb:27017
       - MONGODB_DB_NAME=lexilingo
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_URL=redis://redis:6379/0
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
     volumes:
       - ./api:/app/api
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
@@ -27,6 +35,8 @@ services:
     image: mongo:7.0
     container_name: lexilingo-mongo
     restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
     ports:
       - "27017:27017"
     environment:
@@ -48,12 +58,14 @@ services:
     image: mongo-express:latest
     container_name: lexilingo-mongo-express
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
     ports:
       - "8081:8081"
     environment:
       - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
     depends_on:
       - mongodb
     networks:
@@ -64,9 +76,11 @@ services:
     image: redis:7-alpine
     container_name: lexilingo-redis
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu
     volumes:
       - redis_data:/data
     healthcheck:

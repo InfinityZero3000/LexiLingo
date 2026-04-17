@@ -36,71 +36,83 @@ void main() {
       courseProgress: [],
     );
 
-    test('should return progress stats when call to remote data source is successful',
-        () async {
-      // arrange
-      when(mockRemoteDataSource.getMyProgress())
-          .thenAnswer((_) async => tProgressStats);
+    test(
+      'should return progress stats when call to remote data source is successful',
+      () async {
+        // arrange
+        when(
+          mockRemoteDataSource.getMyProgress(),
+        ).thenAnswer((_) async => tProgressStats);
 
-      // act
-      final result = await repository.getMyProgress();
+        // act
+        final result = await repository.getMyProgress();
 
-      // assert
-      verify(mockRemoteDataSource.getMyProgress());
-      expect(result, Right(tProgressStats));
-    });
+        // assert
+        verify(mockRemoteDataSource.getMyProgress());
+        expect(result, Right(tProgressStats));
+      },
+    );
 
-    test('should return ServerFailure when remote data source throws ServerException',
-        () async {
-      // arrange
-      when(mockRemoteDataSource.getMyProgress())
-          .thenThrow(ServerException('Server error'));
+    test(
+      'should return ServerFailure when remote data source throws ServerException',
+      () async {
+        // arrange
+        when(
+          mockRemoteDataSource.getMyProgress(),
+        ).thenThrow(ServerException('Server error'));
 
-      // act
-      final result = await repository.getMyProgress();
+        // act
+        final result = await repository.getMyProgress();
 
-      // assert
-      verify(mockRemoteDataSource.getMyProgress());
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<ServerFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
+        // assert
+        verify(mockRemoteDataSource.getMyProgress());
+        expect(result.isLeft(), true);
+        result.fold(
+          (failure) => expect(failure, isA<ServerFailure>()),
+          (_) => fail('Expected Left but got Right'),
+        );
+      },
+    );
 
-    test('should return NetworkFailure when remote data source throws NetworkException',
-        () async {
-      // arrange
-      when(mockRemoteDataSource.getMyProgress())
-          .thenThrow(NetworkException('No internet'));
+    test(
+      'should return NetworkFailure when remote data source throws NetworkException',
+      () async {
+        // arrange
+        when(
+          mockRemoteDataSource.getMyProgress(),
+        ).thenThrow(NetworkException('No internet'));
 
-      // act
-      final result = await repository.getMyProgress();
+        // act
+        final result = await repository.getMyProgress();
 
-      // assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<NetworkFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
+        // assert
+        expect(result.isLeft(), true);
+        result.fold(
+          (failure) => expect(failure, isA<NetworkFailure>()),
+          (_) => fail('Expected Left but got Right'),
+        );
+      },
+    );
 
-    test('should return UnauthorizedFailure when remote data source throws UnauthorizedException',
-        () async {
-      // arrange
-      when(mockRemoteDataSource.getMyProgress())
-          .thenThrow(UnauthorizedException('Token expired'));
+    test(
+      'should return UnauthorizedFailure when remote data source throws UnauthorizedException',
+      () async {
+        // arrange
+        when(
+          mockRemoteDataSource.getMyProgress(),
+        ).thenThrow(UnauthorizedException('Token expired'));
 
-      // act
-      final result = await repository.getMyProgress();
+        // act
+        final result = await repository.getMyProgress();
 
-      // assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<UnauthorizedFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
+        // assert
+        expect(result.isLeft(), true);
+        result.fold(
+          (failure) => expect(failure, isA<UnauthorizedFailure>()),
+          (_) => fail('Expected Left but got Right'),
+        );
+      },
+    );
   });
 
   group('completeLesson', () {
@@ -120,10 +132,12 @@ void main() {
 
     test('should return completion result when call is successful', () async {
       // arrange
-      when(mockRemoteDataSource.completeLesson(
-        lessonId: anyNamed('lessonId'),
-        score: anyNamed('score'),
-      )).thenAnswer((_) async => tCompletionResult);
+      when(
+        mockRemoteDataSource.completeLesson(
+          lessonId: anyNamed('lessonId'),
+          score: anyNamed('score'),
+        ),
+      ).thenAnswer((_) async => tCompletionResult);
 
       // act
       final result = await repository.completeLesson(
@@ -132,19 +146,20 @@ void main() {
       );
 
       // assert
-      verify(mockRemoteDataSource.completeLesson(
-        lessonId: tLessonId,
-        score: tScore,
-      ));
+      verify(
+        mockRemoteDataSource.completeLesson(lessonId: tLessonId, score: tScore),
+      );
       expect(result, Right(tCompletionResult));
     });
 
     test('should return ServerFailure when server error occurs', () async {
       // arrange
-      when(mockRemoteDataSource.completeLesson(
-        lessonId: anyNamed('lessonId'),
-        score: anyNamed('score'),
-      )).thenThrow(ServerException('Failed to complete lesson'));
+      when(
+        mockRemoteDataSource.completeLesson(
+          lessonId: anyNamed('lessonId'),
+          score: anyNamed('score'),
+        ),
+      ).thenThrow(ServerException('Failed to complete lesson'));
 
       // act
       final result = await repository.completeLesson(
@@ -162,10 +177,12 @@ void main() {
 
     test('should return UnauthorizedFailure when not enrolled', () async {
       // arrange
-      when(mockRemoteDataSource.completeLesson(
-        lessonId: anyNamed('lessonId'),
-        score: anyNamed('score'),
-      )).thenThrow(UnauthorizedException('Not enrolled in course'));
+      when(
+        mockRemoteDataSource.completeLesson(
+          lessonId: anyNamed('lessonId'),
+          score: anyNamed('score'),
+        ),
+      ).thenThrow(UnauthorizedException('Not enrolled in course'));
 
       // act
       final result = await repository.completeLesson(
@@ -203,8 +220,9 @@ void main() {
 
     test('should return course progress when call is successful', () async {
       // arrange
-      when(mockRemoteDataSource.getCourseProgress(any))
-          .thenAnswer((_) async => tCourseProgress);
+      when(
+        mockRemoteDataSource.getCourseProgress(any),
+      ).thenAnswer((_) async => tCourseProgress);
 
       // act
       final result = await repository.getCourseProgress(tCourseId);
@@ -216,8 +234,9 @@ void main() {
 
     test('should return ServerFailure when course not found', () async {
       // arrange
-      when(mockRemoteDataSource.getCourseProgress(any))
-          .thenThrow(ServerException('Course not found'));
+      when(
+        mockRemoteDataSource.getCourseProgress(any),
+      ).thenThrow(ServerException('Course not found'));
 
       // act
       final result = await repository.getCourseProgress(tCourseId);
@@ -236,8 +255,7 @@ void main() {
 
     test('should return total XP when call is successful', () async {
       // arrange
-      when(mockRemoteDataSource.getTotalXp())
-          .thenAnswer((_) async => tTotalXp);
+      when(mockRemoteDataSource.getTotalXp()).thenAnswer((_) async => tTotalXp);
 
       // act
       final result = await repository.getTotalXp();
@@ -249,8 +267,9 @@ void main() {
 
     test('should return ServerFailure when error occurs', () async {
       // arrange
-      when(mockRemoteDataSource.getTotalXp())
-          .thenThrow(ServerException('Failed to fetch XP'));
+      when(
+        mockRemoteDataSource.getTotalXp(),
+      ).thenThrow(ServerException('Failed to fetch XP'));
 
       // act
       final result = await repository.getTotalXp();

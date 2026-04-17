@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/dictionary_service.dart';
+import '../../../../core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
@@ -82,7 +84,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1A2E)
+          ? AppColors.readingNight
           : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -130,7 +132,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
   void _showWordDefinition(String word) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sheetBg = isDark ? const Color(0xFF1C2B3A) : Colors.white;
+    final sheetBg = isDark ? AppColors.surfaceDarkElevated : Colors.white;
     final textColor = isDark ? Colors.white : AppColors.textDark;
     final subtextColor = isDark ? Colors.white54 : AppColors.textGrey;
 
@@ -143,6 +145,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       ),
       builder: (_) => _DictionarySheet(
         word: word,
+        sourceReference: widget.book.id,
         sheetBg: sheetBg,
         textColor: textColor,
         subtextColor: subtextColor,
@@ -168,7 +171,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(color: AppColors.primary),
+                      const LottieLoadingWidget.medium(),
                       const SizedBox(height: 16),
                       Text(
                         'Loading book...',
@@ -426,11 +429,11 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
   Color _readerBg(ReaderTheme theme) {
     switch (theme) {
       case ReaderTheme.light:
-        return const Color(0xFFF8F5EE);
+        return AppColors.readingPaper;
       case ReaderTheme.sepia:
-        return const Color(0xFFF4ECD8);
+        return AppColors.readingSepia;
       case ReaderTheme.dark:
-        return const Color(0xFF1A1A2E);
+        return AppColors.readingNight;
     }
   }
 
@@ -439,9 +442,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       case ReaderTheme.light:
         return Colors.black87;
       case ReaderTheme.sepia:
-        return const Color(0xFF4B3B2A);
+        return AppColors.readingSepiaText;
       case ReaderTheme.dark:
-        return const Color(0xFFE8E0D0);
+        return AppColors.readingNightAlt;
     }
   }
 }
@@ -449,12 +452,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 /// Bottom sheet widget that asynchronously looks up a word definition.
 class _DictionarySheet extends StatefulWidget {
   final String word;
+  final String? sourceReference;
   final Color sheetBg;
   final Color textColor;
   final Color subtextColor;
 
   const _DictionarySheet({
     required this.word,
+    this.sourceReference,
     required this.sheetBg,
     required this.textColor,
     required this.subtextColor,
@@ -467,6 +472,7 @@ class _DictionarySheet extends StatefulWidget {
 class _DictionarySheetState extends State<_DictionarySheet> {
   WordDefinition? _definition;
   bool _loading = true;
+  bool _isSaving = false;
   bool _notFound = false;
 
   @override
@@ -483,6 +489,43 @@ class _DictionarySheetState extends State<_DictionarySheet> {
       _loading = false;
       _notFound = result == null;
     });
+  }
+
+  Future<void> _saveWord() async {
+    if (_isSaving) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final result = await sl<QuickSaveVocabularyService>().quickSaveWord(
+        word: widget.word,
+        sourceType: 'book',
+        sourceReference: widget.sourceReference,
+      );
+
+      if (!mounted) return;
+      final message = result.alreadyInCollection
+          ? '"${result.normalizedWord}" is already in your vocabulary.'
+          : 'Saved "${result.normalizedWord}" to vocabulary.';
+
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.greenSuccess,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Could not save this word right now.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.errorBright,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -516,10 +559,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
+                          const LottieLoadingWidget.tiny(),
                           const SizedBox(height: 10),
                           Text(
                             'Looking up "${widget.word}"…',
@@ -581,6 +621,21 @@ class _DictionarySheetState extends State<_DictionarySheet> {
         ],
         const SizedBox(height: 12),
         const Divider(),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _isSaving ? null : _saveWord,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: LottieLoadingWidget.tiny(),
+                  )
+                : const Icon(Icons.bookmark_add_outlined, size: 18),
+            label: const Text('Save Word to Vocabulary'),
+          ),
+        ),
         const SizedBox(height: 8),
         // Meanings
         ...def.meanings.map((m) => _buildMeaning(m)),

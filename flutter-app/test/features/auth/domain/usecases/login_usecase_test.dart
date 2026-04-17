@@ -40,29 +40,35 @@ void main() {
 
   test('should login user successfully', () async {
     // Arrange
-    when(mockAuthRepository.login(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenAnswer((_) async => Right(testUser));
+    when(
+      mockAuthRepository.login(
+        email: anyNamed('email'),
+        password: anyNamed('password'),
+      ),
+    ).thenAnswer((_) async => Right(testUser));
 
     // Act
     final result = await usecase(testParams);
 
     // Assert
     expect(result, Right(testUser));
-    verify(mockAuthRepository.login(
-      email: 'test@example.com',
-      password: 'password123',
-    ));
+    verify(
+      mockAuthRepository.login(
+        email: 'test@example.com',
+        password: 'password123',
+      ),
+    );
     verifyNoMoreInteractions(mockAuthRepository);
   });
 
   test('should return AuthFailure for invalid credentials', () async {
     // Arrange
-    when(mockAuthRepository.login(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenAnswer((_) async => Left(AuthFailure('Invalid credentials')));
+    when(
+      mockAuthRepository.login(
+        email: anyNamed('email'),
+        password: anyNamed('password'),
+      ),
+    ).thenAnswer((_) async => Left(AuthFailure('Invalid credentials')));
 
     // Act
     final result = await usecase(testParams);
@@ -77,10 +83,12 @@ void main() {
 
   test('should return NetworkFailure when offline', () async {
     // Arrange
-    when(mockAuthRepository.login(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenAnswer((_) async => Left(NetworkFailure()));
+    when(
+      mockAuthRepository.login(
+        email: anyNamed('email'),
+        password: anyNamed('password'),
+      ),
+    ).thenAnswer((_) async => Left(NetworkFailure()));
 
     // Act
     final result = await usecase(testParams);
@@ -95,10 +103,14 @@ void main() {
 
   test('should return RateLimitFailure when rate limited', () async {
     // Arrange
-    when(mockAuthRepository.login(
-      email: anyNamed('email'),
-      password: anyNamed('password'),
-    )).thenAnswer((_) async => Left(RateLimitFailure('Too many login attempts')));
+    when(
+      mockAuthRepository.login(
+        email: anyNamed('email'),
+        password: anyNamed('password'),
+      ),
+    ).thenAnswer(
+      (_) async => Left(RateLimitFailure('Too many login attempts')),
+    );
 
     // Act
     final result = await usecase(testParams);

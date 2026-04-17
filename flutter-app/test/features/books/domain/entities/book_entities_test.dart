@@ -2,6 +2,7 @@
 ///
 /// Covers: CefrInfo, Book, UserBook, Bookmark,
 ///         BookQuizQuestion, BookQuiz, ReaderSettings, ReaderTheme
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/books/domain/entities/book_entities.dart';
@@ -201,7 +202,9 @@ void main() {
 
     test('fromJson defaults note to empty string when missing', () {
       final bm = Bookmark.fromJson({
-        'id': 'bm-002', 'book_id': 'test', 'page': 1,
+        'id': 'bm-002',
+        'book_id': 'test',
+        'page': 1,
         'created_at': '2024-01-01T00:00:00Z',
       });
       expect(bm.note, '');
@@ -210,10 +213,15 @@ void main() {
     test('fromJson uses now when created_at is null', () {
       final before = DateTime.now();
       final bm = Bookmark.fromJson({
-        'id': 'bm-003', 'book_id': 'test', 'page': 5, 'created_at': null,
+        'id': 'bm-003',
+        'book_id': 'test',
+        'page': 5,
+        'created_at': null,
       });
-      expect(bm.createdAt.isAfter(before.subtract(const Duration(seconds: 1))),
-          isTrue);
+      expect(
+        bm.createdAt.isAfter(before.subtract(const Duration(seconds: 1))),
+        isTrue,
+      );
     });
 
     test('toJson roundtrip preserves page', () {
@@ -261,21 +269,28 @@ void main() {
 
     test('fromJson defaults correctIndex to 0 when missing', () {
       final q = BookQuizQuestion.fromJson({
-        'id': 'q1', 'question': 'Q?', 'options': ['A', 'B'],
+        'id': 'q1',
+        'question': 'Q?',
+        'options': ['A', 'B'],
       });
       expect(q.correctIndex, 0);
     });
 
     test('fromJson defaults explanation to empty string when missing', () {
       final q = BookQuizQuestion.fromJson({
-        'id': 'q1', 'question': 'Q?', 'options': ['A', 'B'], 'correct_index': 1,
+        'id': 'q1',
+        'question': 'Q?',
+        'options': ['A', 'B'],
+        'correct_index': 1,
       });
       expect(q.explanation, '');
     });
 
     test('fromJson handles empty options list', () {
       final q = BookQuizQuestion.fromJson({
-        'id': 'q1', 'question': 'Q?', 'options': [],
+        'id': 'q1',
+        'question': 'Q?',
+        'options': [],
       });
       expect(q.options, isEmpty);
     });
@@ -317,14 +332,18 @@ void main() {
 
     test('fromJson defaults xpReward to 25 when missing', () {
       final quiz = BookQuiz.fromJson({
-        'book_id': 'gutenberg-11', 'chapter': 1, 'questions': [],
+        'book_id': 'gutenberg-11',
+        'chapter': 1,
+        'questions': [],
       });
       expect(quiz.xpReward, 25);
     });
 
     test('fromJson handles null questions list', () {
       final quiz = BookQuiz.fromJson({
-        'book_id': 'gutenberg-11', 'chapter': 1, 'questions': null,
+        'book_id': 'gutenberg-11',
+        'chapter': 1,
+        'questions': null,
       });
       expect(quiz.questions, isEmpty);
     });
@@ -369,14 +388,18 @@ void main() {
   group('ReaderSettings', () {
     test('fromJson parses fontSize', () {
       final s = ReaderSettings.fromJson({
-        'font_size': 20.0, 'theme': 'light', 'line_spacing': 1.5,
+        'font_size': 20.0,
+        'theme': 'light',
+        'line_spacing': 1.5,
       });
       expect(s.fontSize, closeTo(20.0, 0.001));
     });
 
     test('fromJson parses lineSpacing', () {
       final s = ReaderSettings.fromJson({
-        'font_size': 17.0, 'theme': 'sepia', 'line_spacing': 1.8,
+        'font_size': 17.0,
+        'theme': 'sepia',
+        'line_spacing': 1.8,
       });
       expect(s.lineSpacing, closeTo(1.8, 0.001));
     });
@@ -413,7 +436,9 @@ void main() {
 
     test('toJson roundtrip preserves fontSize and lineSpacing', () {
       final s = ReaderSettings.fromJson({
-        'font_size': 22.0, 'theme': 'sepia', 'line_spacing': 1.6,
+        'font_size': 22.0,
+        'theme': 'sepia',
+        'line_spacing': 1.6,
       });
       final json = s.toJson();
       expect(json['font_size'], closeTo(22.0, 0.001));

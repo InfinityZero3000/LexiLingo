@@ -107,6 +107,22 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
           as _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>);
 
   @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>> loginWithFacebook(
+    String? firebaseIdToken,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#loginWithFacebook, [firebaseIdToken]),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>.value(
+                  _FakeEither_0<_i5.Failure, _i6.UserEntity>(
+                    this,
+                    Invocation.method(#loginWithFacebook, [firebaseIdToken]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>);
+
+  @override
   _i4.Future<_i2.Either<_i5.Failure, void>> logout() =>
       (super.noSuchMethod(
             Invocation.method(#logout, []),
@@ -137,11 +153,19 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
   _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>> updateProfile({
     String? displayName,
     String? avatarUrl,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? level,
+    bool? isOnboardingCompleted,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updateProfile, [], {
               #displayName: displayName,
               #avatarUrl: avatarUrl,
+              #nativeLanguage: nativeLanguage,
+              #targetLanguage: targetLanguage,
+              #level: level,
+              #isOnboardingCompleted: isOnboardingCompleted,
             }),
             returnValue:
                 _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>.value(
@@ -150,6 +174,10 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
                     Invocation.method(#updateProfile, [], {
                       #displayName: displayName,
                       #avatarUrl: avatarUrl,
+                      #nativeLanguage: nativeLanguage,
+                      #targetLanguage: targetLanguage,
+                      #level: level,
+                      #isOnboardingCompleted: isOnboardingCompleted,
                     }),
                   ),
                 ),

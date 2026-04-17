@@ -51,11 +51,10 @@ void main() {
         // Arrange
         const email = 'test@example.com';
         const password = 'password123';
-        
-        when(mockAuth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).thenAnswer((_) async => mockUserCredential);
+
+        when(
+          mockAuth.signInWithEmailAndPassword(email: email, password: password),
+        ).thenAnswer((_) async => mockUserCredential);
         when(mockUserCredential.user).thenReturn(mockUser);
         when(mockUser.uid).thenReturn('test_user_id');
 
@@ -68,24 +67,24 @@ void main() {
         // Assert
         expect(result, equals(mockUserCredential));
         expect(result.user?.uid, equals('test_user_id'));
-        verify(mockAuth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).called(1);
+        verify(
+          mockAuth.signInWithEmailAndPassword(email: email, password: password),
+        ).called(1);
       });
 
       test('should throw exception for invalid credentials', () async {
         // Arrange
         const email = 'wrong@example.com';
         const password = 'wrongpassword';
-        
-        when(mockAuth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).thenThrow(FirebaseAuthException(
-          code: 'wrong-password',
-          message: 'The password is invalid',
-        ));
+
+        when(
+          mockAuth.signInWithEmailAndPassword(email: email, password: password),
+        ).thenThrow(
+          FirebaseAuthException(
+            code: 'wrong-password',
+            message: 'The password is invalid',
+          ),
+        );
 
         // Act & Assert
         expect(
@@ -103,11 +102,13 @@ void main() {
         // Arrange
         const email = 'newuser@example.com';
         const password = 'password123';
-        
-        when(mockAuth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).thenAnswer((_) async => mockUserCredential);
+
+        when(
+          mockAuth.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          ),
+        ).thenAnswer((_) async => mockUserCredential);
         when(mockUserCredential.user).thenReturn(mockUser);
         when(mockUser.uid).thenReturn('new_user_id');
 
@@ -119,24 +120,30 @@ void main() {
 
         // Assert
         expect(result.user?.uid, equals('new_user_id'));
-        verify(mockAuth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).called(1);
+        verify(
+          mockAuth.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          ),
+        ).called(1);
       });
 
       test('should throw exception for existing email', () async {
         // Arrange
         const email = 'existing@example.com';
         const password = 'password123';
-        
-        when(mockAuth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        )).thenThrow(FirebaseAuthException(
-          code: 'email-already-in-use',
-          message: 'The email address is already in use',
-        ));
+
+        when(
+          mockAuth.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          ),
+        ).thenThrow(
+          FirebaseAuthException(
+            code: 'email-already-in-use',
+            message: 'The email address is already in use',
+          ),
+        );
 
         // Act & Assert
         expect(
@@ -166,8 +173,9 @@ void main() {
       test('should send password reset email successfully', () async {
         // Arrange
         const email = 'test@example.com';
-        when(mockAuth.sendPasswordResetEmail(email: email))
-            .thenAnswer((_) async => {});
+        when(
+          mockAuth.sendPasswordResetEmail(email: email),
+        ).thenAnswer((_) async => {});
 
         // Act
         await mockAuth.sendPasswordResetEmail(email: email);
@@ -179,11 +187,12 @@ void main() {
       test('should throw exception for non-existent email', () async {
         // Arrange
         const email = 'nonexistent@example.com';
-        when(mockAuth.sendPasswordResetEmail(email: email))
-            .thenThrow(FirebaseAuthException(
-          code: 'user-not-found',
-          message: 'There is no user record corresponding to this email',
-        ));
+        when(mockAuth.sendPasswordResetEmail(email: email)).thenThrow(
+          FirebaseAuthException(
+            code: 'user-not-found',
+            message: 'There is no user record corresponding to this email',
+          ),
+        );
 
         // Act & Assert
         expect(
@@ -196,8 +205,9 @@ void main() {
     group('Auth State Changes', () {
       test('should emit auth state changes', () async {
         // Arrange
-        when(mockAuth.authStateChanges())
-            .thenAnswer((_) => Stream.fromIterable([null, mockUser]));
+        when(
+          mockAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.fromIterable([null, mockUser]));
         when(mockUser.uid).thenReturn('test_user_id');
 
         // Act

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -67,12 +68,13 @@ class _ShopScreenState extends State<ShopScreen>
 
     // Confirm purchase
     final confirmed = await _showPurchaseConfirmation(item);
-    if (!confirmed) return;
+    if (!mounted || !confirmed) return;
 
     setState(() => _purchasingItemId = item.id);
 
     final success = await provider.purchaseItem(item.id);
 
+    if (!mounted) return;
     setState(() => _purchasingItemId = null);
 
     if (success) {
@@ -81,13 +83,14 @@ class _ShopScreenState extends State<ShopScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Purchase failed. Please try again.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.errorBright,
         ),
       );
     }
   }
 
   Future<bool> _showPurchaseConfirmation(ShopItemEntity item) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -101,7 +104,7 @@ class _ShopScreenState extends State<ShopScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    color: AppColors.purple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -110,12 +113,12 @@ class _ShopScreenState extends State<ShopScreen>
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6),
+                          color: AppColors.purple,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.card_giftcard,
-                          color: Colors.white,
+                          color: AppColors.surfaceLight,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -134,13 +137,13 @@ class _ShopScreenState extends State<ShopScreen>
                                 const Icon(
                                   Icons.diamond,
                                   size: 16,
-                                  color: Color(0xFF8B5CF6),
+                                  color: AppColors.purple,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${item.priceGems}',
                                   style: const TextStyle(
-                                    color: Color(0xFF8B5CF6),
+                                    color: AppColors.purple,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -155,7 +158,7 @@ class _ShopScreenState extends State<ShopScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Are you sure you want to purchase this item?',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -168,8 +171,8 @@ class _ShopScreenState extends State<ShopScreen>
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.greenSuccessBright,
+                  foregroundColor: AppColors.surfaceLight,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -183,6 +186,8 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   void _showPurchaseSuccess(ShopItemEntity item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -194,12 +199,12 @@ class _ShopScreenState extends State<ShopScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                color: AppColors.greenSuccessBright.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle,
-                color: Color(0xFF10B981),
+                color: AppColors.greenSuccessBright,
                 size: 48,
               ),
             ),
@@ -211,7 +216,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 8),
             Text(
               '${item.name} has been added to your inventory.',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -221,8 +226,8 @@ class _ShopScreenState extends State<ShopScreen>
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: primaryColor,
+                foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -236,6 +241,8 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   void _showNotEnoughGemsDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -247,12 +254,12 @@ class _ShopScreenState extends State<ShopScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.2),
+                color: AppColors.orange.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.diamond_outlined,
-                color: Colors.orange,
+                color: AppColors.orange,
                 size: 48,
               ),
             ),
@@ -264,7 +271,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 8),
             Text(
               'Complete lessons and challenges to earn more gems!',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -274,8 +281,8 @@ class _ShopScreenState extends State<ShopScreen>
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: primaryColor,
+                foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -290,6 +297,8 @@ class _ShopScreenState extends State<ShopScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shop'),
@@ -318,9 +327,9 @@ class _ShopScreenState extends State<ShopScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          labelColor: AppColors.primary,
+          labelColor: primaryColor,
           unselectedLabelColor: AppColors.textGrey,
-          indicatorColor: AppColors.primary,
+          indicatorColor: primaryColor,
           tabs: _categories.map((cat) {
             return Tab(
               child: Row(
@@ -337,7 +346,7 @@ class _ShopScreenState extends State<ShopScreen>
       body: Consumer<GamificationProvider>(
         builder: (context, provider, child) {
           if (provider.isLoadingShop && provider.shopItems.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LottieLoadingWidget.medium());
           }
 
           if (provider.shopError != null && provider.shopItems.isEmpty) {
@@ -357,12 +366,15 @@ class _ShopScreenState extends State<ShopScreen>
                   Icon(
                     Icons.shopping_bag_outlined,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppColors.grey400,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No items in this category',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColorRoles.textMuted(isDark),
+                    ),
                   ),
                 ],
               ),

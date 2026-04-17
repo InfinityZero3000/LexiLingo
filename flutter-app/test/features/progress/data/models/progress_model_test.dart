@@ -42,7 +42,7 @@ void main() {
 
     test('should handle null/missing values with defaults', () {
       final jsonWithMissing = <String, dynamic>{};
-      
+
       final result = UserProgressSummaryModel.fromJson(jsonWithMissing);
 
       expect(result.totalXp, 0);

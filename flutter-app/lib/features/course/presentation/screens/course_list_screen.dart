@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -10,7 +11,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
 class CourseListScreen extends StatefulWidget {
-  const CourseListScreen({Key? key}) : super(key: key);
+  const CourseListScreen({super.key});
 
   @override
   State<CourseListScreen> createState() => _CourseListScreenState();
@@ -47,6 +48,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
+
     return Scaffold(
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
@@ -59,72 +63,71 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 floating: true,
                 pinned: true,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                automaticallyImplyLeading: false,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
+                  background: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary,
+                                    color: primaryAccent,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.explore,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
                                     size: 24,
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Discover Courses',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Text(
-                                      '${provider.courses.length} courses available',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF3B82F6,
-                                    ).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Discover Courses',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.tune_rounded,
-                                      color: Color(0xFF3B82F6),
-                                    ),
-                                    onPressed: () => _showFilterSheet(context),
-                                    tooltip: 'Filter',
+                                  Text(
+                                    '${provider.courses.length} courses available',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.grey[600]),
                                   ),
+                                ],
+                              ),
+                              const Spacer(),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: primaryAccent.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.tune_rounded,
+                                    color: primaryAccent,
+                                  ),
+                                  onPressed: () => _showFilterSheet(context),
+                                  tooltip: 'Filter',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -137,7 +140,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   provider.courses.isEmpty &&
                   provider.categories.isEmpty)
                 const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: LottieLoadingWidget.medium()),
                 )
               else if (provider.coursesError != null &&
                   provider.courses.isEmpty)
@@ -169,6 +172,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
   }
 
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = provider.categories;
     final shouldUseCategories = categories.isNotEmpty;
     final sections = shouldUseCategories
@@ -181,7 +185,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
+              child: LottieLoadingWidget.small(),
             ),
           );
         }
@@ -208,7 +212,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             description:
                 '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
             icon: _parseCategoryIcon(category.icon ?? 'book'),
-            color: _parseCategoryColor(category.color),
+            color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
             onCourseTap: (courseId) =>
                 _navigateToCourseDetail(context, courseId),
@@ -225,7 +229,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             description:
                 '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
             icon: _getLevelIcon(levelKey),
-            color: _getLevelColor(levelKey),
+            color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
             onCourseTap: (courseId) =>
                 _navigateToCourseDetail(context, courseId),
@@ -280,9 +284,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
     }
   }
 
-  Color _parseCategoryColor(String? colorHex) {
+  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
     if (colorHex == null || colorHex.isEmpty) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     try {
       // Remove # if present
@@ -290,7 +294,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       // Parse hex color (supports both RGB and ARGB)
       return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
     } catch (e) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 
@@ -307,16 +311,16 @@ class _CourseListScreenState extends State<CourseListScreen> {
     }
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, {bool isDark = false}) {
     switch (level.toLowerCase()) {
       case 'beginner':
         return AppColors.greenSuccess;
       case 'intermediate':
-        return const Color(0xFF3B82F6); // blue — on-theme
+        return AppColors.primary; // blue — on-theme
       case 'advanced':
-        return const Color(0xFF8B5CF6); // violet — premium feel
+        return AppColors.purple; // violet — premium feel
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
@@ -341,7 +345,6 @@ class _CategorySection extends StatelessWidget {
   final VoidCallback? onSeeAll;
 
   const _CategorySection({
-    Key? key,
     required this.categoryId,
     required this.title,
     required this.description,
@@ -350,25 +353,35 @@ class _CategorySection extends StatelessWidget {
     required this.courses,
     required this.onCourseTap,
     this.onSeeAll,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompactMobile = screenWidth < 390;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Category Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: isCompactMobile ? 14 : 16,
+            vertical: isCompactMobile ? 6 : 8,
+          ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(isCompactMobile ? 7 : 8),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: isCompactMobile ? 18 : 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -398,10 +411,12 @@ class _CategorySection extends StatelessWidget {
 
         // Horizontal Course List with staggered animation
         SizedBox(
-          height: 280,
+          height: isCompactMobile ? 220 : 250,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompactMobile ? 10 : 12,
+            ),
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
@@ -411,6 +426,7 @@ class _CategorySection extends StatelessWidget {
                 delayPerItem: const Duration(milliseconds: 80),
                 child: _HorizontalCourseCard(
                   course: course,
+                  compact: isCompactMobile,
                   onTap: () => onCourseTap(course.id),
                 ),
               );
@@ -428,28 +444,36 @@ class _CategorySection extends StatelessWidget {
 /// Compact card design for horizontal scrolling with enhanced hero images
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
+  final bool compact;
   final VoidCallback onTap;
 
   const _HorizontalCourseCard({
-    Key? key,
     required this.course,
+    this.compact = false,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardWidth = compact ? 150.0 : 170.0;
+    final cardRadius = compact ? 14.0 : 16.0;
+    final contentPadding = compact ? 10.0 : 12.0;
+    final titleFontSize = compact ? 13.0 : 14.0;
+    final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
 
     return Container(
-      width: 200,
+      width: cardWidth,
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Card(
         elevation: 4,
         shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardRadius),
+        ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(cardRadius),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -457,11 +481,11 @@ class _HorizontalCourseCard extends StatelessWidget {
               Hero(
                 tag: 'discovery-course-image-${course.id}',
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(cardRadius),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 16 / 10,
+                    aspectRatio: imageAspectRatio,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -502,6 +526,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _getLevelColor(
                                 course.level,
+                                isDark: isDark,
                               ).withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
@@ -514,8 +539,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                             child: Text(
                               course.level,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.surfaceLight,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -546,16 +571,16 @@ class _HorizontalCourseCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.star,
                                   size: 12,
-                                  color: Colors.white,
+                                  color: AppColors.surfaceLight,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${course.totalXp}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: AppColors.surfaceLight,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -573,7 +598,7 @@ class _HorizontalCourseCard extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(contentPadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -655,12 +680,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.08)
-                                        : Colors.grey.shade100,
+                                        : AppColors.grey100,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: isDark
                                           ? Colors.white24
-                                          : Colors.grey.shade300,
+                                          : AppColors.grey300,
                                       width: 0.8,
                                     ),
                                   ),
@@ -671,7 +696,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                       color: isDark
                                           ? Colors.white70
-                                          : Colors.grey.shade700,
+                                          : AppColors.grey700,
                                     ),
                                   ),
                                 ),
@@ -681,15 +706,16 @@ class _HorizontalCourseCard extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 4),
 
                       // Title
                       Text(
                         course.title,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
+                          height: 1.15,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -703,7 +729,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                           _buildStatChip(
                             icon: Icons.book_outlined,
                             value: '${course.totalLessons}',
-                            color: Colors.blue,
+                            color: AppColorRoles.primary(isDark),
                           ),
                           const SizedBox(width: 8),
                           if (course.isEnrolled == true)
@@ -717,8 +743,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                       ),
 
                       // Progress or Enroll indicator
-                      const SizedBox(height: 4),
                       if (course.isEnrolled == true) ...[
+                        const SizedBox(height: 4),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -728,44 +754,11 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 : Colors.grey[200],
                             minHeight: 4,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              _getProgressColor(course.userProgress ?? 0),
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.8),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                color: Colors.white,
-                                size: 14,
+                              _getProgressColor(
+                                course.userProgress ?? 0,
+                                isDark: isDark,
                               ),
-                              SizedBox(width: 2),
-                              Text(
-                                'Start',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
@@ -804,7 +797,9 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -816,22 +811,26 @@ class _HorizontalCourseCard extends StatelessWidget {
               height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.1),
               ),
             ),
           ),
           // Icon in center
           Center(
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 _getLanguageIcon(course.language),
                 size: 32,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
               ),
             ),
           ),
@@ -842,8 +841,8 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   List<Color> _getGradientFromHash(int hash) {
     final gradients = [
-      [const Color(0xFF667eea), const Color(0xFF764ba2)], // Purple
-      [const Color(0xFFf093fb), const Color(0xFFf5576c)], // Pink
+      [AppColors.primary, AppColors.purple], // Purple
+      [AppColors.purple, const Color(0xFFf5576c)], // Pink
       [const Color(0xFF4facfe), const Color(0xFF00f2fe)], // Blue
       [const Color(0xFF43e97b), const Color(0xFF38f9d7)], // Green
       [const Color(0xFFfa709a), const Color(0xFFfee140)], // Sunset
@@ -898,27 +897,27 @@ class _HorizontalCourseCard extends StatelessWidget {
     }
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, {bool isDark = false}) {
     switch (level.toLowerCase()) {
       case 'beginner':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'elementary':
         return Colors.lightGreen;
       case 'intermediate':
-        return Colors.orange;
+        return AppColors.orange;
       case 'upper-intermediate':
-        return Colors.deepOrange;
+        return AppColors.deepOrange;
       case 'advanced':
-        return Colors.red;
+        return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 
-  Color _getProgressColor(double progress) {
-    if (progress >= 80) return Colors.green;
-    if (progress >= 50) return Colors.orange;
-    return Colors.blue;
+  Color _getProgressColor(double progress, {bool isDark = false}) {
+    if (progress >= 80) return AppColors.greenSuccessBright;
+    if (progress >= 50) return AppColors.orange;
+    return AppColorRoles.primary(isDark);
   }
 
   Widget _buildStatChip({
@@ -954,20 +953,33 @@ class _HorizontalCourseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: _getProgressColor(progress).withValues(alpha: 0.1),
+        color: _getProgressColor(
+          progress,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        ).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.trending_up, size: 12, color: _getProgressColor(progress)),
+          Icon(
+            Icons.trending_up,
+            size: 12,
+            color: _getProgressColor(
+              progress,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
+          ),
           const SizedBox(width: 4),
           Text(
             '${progress.toStringAsFixed(0)}%',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: _getProgressColor(progress),
+              color: _getProgressColor(
+                progress,
+                isDark: Theme.of(context).brightness == Brightness.dark,
+              ),
             ),
           ),
         ],
@@ -978,15 +990,17 @@ class _HorizontalCourseCard extends StatelessWidget {
 
 /// Filter Sheet Widget
 class _FilterSheet extends StatelessWidget {
-  const _FilterSheet({Key? key}) : super(key: key);
+  const _FilterSheet();
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CourseProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
@@ -1013,12 +1027,12 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6),
+                  color: primaryAccent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.tune_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 20,
                 ),
               ),
@@ -1049,10 +1063,10 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
+                  color: primaryAccent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.language, size: 16, color: Colors.blue),
+                child: Icon(Icons.language, size: 16, color: primaryAccent),
               ),
               const SizedBox(width: 8),
               const Text(
@@ -1080,10 +1094,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'English',
                 isSelected: provider.selectedLanguage == 'English',
-                color: Colors.blue,
+                color: primaryAccent,
                 iconWidget: _buildLanguageIcon(
                   'EN',
-                  Colors.blue,
+                  primaryAccent,
                   provider.selectedLanguage == 'English',
                 ),
                 onTap: () {
@@ -1095,10 +1109,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Spanish',
                 isSelected: provider.selectedLanguage == 'Spanish',
-                color: Colors.orange,
+                color: AppColors.orange,
                 iconWidget: _buildLanguageIcon(
                   'ES',
-                  Colors.orange,
+                  AppColors.orange,
                   provider.selectedLanguage == 'Spanish',
                 ),
                 onTap: () {
@@ -1110,10 +1124,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Vietnamese',
                 isSelected: provider.selectedLanguage == 'Vietnamese',
-                color: Colors.red,
+                color: AppColors.errorBright,
                 iconWidget: _buildLanguageIcon(
                   'VI',
-                  Colors.red,
+                  AppColors.errorBright,
                   provider.selectedLanguage == 'Vietnamese',
                 ),
                 onTap: () {
@@ -1132,13 +1146,13 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.1),
+                  color: AppColors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.signal_cellular_alt,
                   size: 16,
-                  color: Colors.purple,
+                  color: AppColors.purple,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1167,7 +1181,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Beginner',
                 isSelected: provider.selectedLevel == 'Beginner',
-                color: Colors.green,
+                color: AppColors.greenSuccessBright,
                 onTap: () {
                   provider.filterByLevel('Beginner');
                   Navigator.pop(context);
@@ -1177,7 +1191,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Intermediate',
                 isSelected: provider.selectedLevel == 'Intermediate',
-                color: Colors.orange,
+                color: AppColors.orange,
                 onTap: () {
                   provider.filterByLevel('Intermediate');
                   Navigator.pop(context);
@@ -1187,7 +1201,7 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'Advanced',
                 isSelected: provider.selectedLevel == 'Advanced',
-                color: Colors.red,
+                color: AppColors.errorBright,
                 onTap: () {
                   provider.filterByLevel('Advanced');
                   Navigator.pop(context);
@@ -1249,7 +1263,11 @@ class _FilterSheet extends StatelessWidget {
             ),
             if (isSelected) ...[
               const SizedBox(width: 4),
-              const Icon(Icons.check, size: 14, color: Colors.white),
+              Icon(
+                Icons.check,
+                size: 14,
+                color: Theme.of(context).colorScheme.surface,
+              ),
             ],
           ],
         ),

@@ -202,7 +202,7 @@ class TestGetCourseProgress:
              patch("app.crud.course.CourseCRUD.is_user_enrolled", new=AsyncMock(return_value=False)):
             response = await client.get(f"{BASE}/courses/{COURSE_ID}")
         assert response.status_code == 403
-        assert "enrolled" in response.json()["detail"].lower()
+        assert "enrolled" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_404_when_no_progress_record(self, auth_client):
@@ -475,7 +475,7 @@ class TestUseStreakFreeze:
         mock_result.scalar_one_or_none.return_value = mock_streak
         response = await client.post(f"{BASE}/streak/freeze")
         assert response.status_code == 400
-        assert "no streak freezes" in response.json()["detail"].lower()
+        assert "no streak freezes" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_400_when_already_active_today(self, auth_client):
@@ -486,7 +486,7 @@ class TestUseStreakFreeze:
         mock_result.scalar_one_or_none.return_value = mock_streak
         response = await client.post(f"{BASE}/streak/freeze")
         assert response.status_code == 400
-        assert "already active" in response.json()["detail"].lower()
+        assert "already active" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_uses_freeze_successfully(self, auth_client):

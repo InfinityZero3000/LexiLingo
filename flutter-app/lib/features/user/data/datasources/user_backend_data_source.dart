@@ -35,7 +35,9 @@ class UserBackendDataSourceImpl implements UserBackendDataSource {
       // Handle response based on its structure
       List<dynamic> activitiesList;
 
-      if (response.containsKey('weekly_activity')) {
+      if (response.containsKey('activities')) {
+        activitiesList = response['activities'] as List<dynamic>;
+      } else if (response.containsKey('weekly_activity')) {
         activitiesList = response['weekly_activity'] as List<dynamic>;
       } else if (response is List) {
         activitiesList = response as List<dynamic>;

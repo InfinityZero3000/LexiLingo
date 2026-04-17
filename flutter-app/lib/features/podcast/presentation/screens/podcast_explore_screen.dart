@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/podcast_entities.dart';
@@ -141,7 +142,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                 // Loading state (initial load only)
                 if (provider.isLoading && provider.curatedCategories.isEmpty) {
                   return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: LottieLoadingWidget.medium()),
                   );
                 }
 
@@ -161,7 +162,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'Failed to load podcasts',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: AppColors.grey500),
                           ),
                           const SizedBox(height: 8),
                           TextButton(
@@ -200,7 +201,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   Widget _buildSearchResults(PodcastProvider provider, bool isDark) {
     if (provider.isSearching) {
       return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: LottieLoadingWidget.medium()),
       );
     }
 
@@ -213,17 +214,17 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               Icon(
                 Icons.podcasts_rounded,
                 size: 64,
-                color: Colors.grey.shade300,
+                color: AppColors.grey300,
               ),
               const SizedBox(height: 12),
               Text(
                 'No podcasts found',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                style: TextStyle(color: AppColors.grey500, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Try a different search term',
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                style: TextStyle(color: AppColors.grey400, fontSize: 13),
               ),
             ],
           ),
@@ -262,7 +263,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
         child: Center(
           child: Text(
             'No curated podcasts yet',
-            style: TextStyle(color: Colors.grey.shade400),
+            style: TextStyle(color: AppColors.grey400),
           ),
         ),
       );
@@ -306,8 +307,8 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                 ),
                 child: Text(
                   category.cefrLevel,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.surfaceLight,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -373,7 +374,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       case 'A1':
       case 'A2':
       case 'A1-A2':
-        return const Color(0xFF4CAF50); // green
+        return AppColors.greenSuccessBright; // green
       case 'B1':
       case 'B2':
       case 'B1-B2':
@@ -381,7 +382,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       case 'C1':
       case 'C2':
       case 'C1-C2':
-        return const Color(0xFF9C27B0); // purple
+        return AppColors.purple; // purple
       default:
         return AppColors.primary;
     }
@@ -436,6 +437,7 @@ class _SearchResultTile extends StatelessWidget {
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
                       errorBuilder: (_, __, ___) => Container(
                         width: 60,
                         height: 60,
@@ -496,8 +498,8 @@ class _SearchResultTile extends StatelessWidget {
                         ),
                         child: Text(
                           podcast.cefrLevel,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 10,
                           ),
@@ -522,7 +524,7 @@ class _SearchResultTile extends StatelessWidget {
                   : Icons.chevron_right_rounded,
               color: isFollowed
                   ? AppColors.greenSuccess
-                  : (isDark ? Colors.white38 : Colors.grey.shade400),
+                  : (isDark ? Colors.white38 : AppColors.grey400),
             ),
           ],
         ),
@@ -533,17 +535,17 @@ class _SearchResultTile extends StatelessWidget {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

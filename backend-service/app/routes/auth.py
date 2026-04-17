@@ -3,25 +3,46 @@ Authentication Routes
 """
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
-from app.models.user import User
+from app.core.security import verify_password_async, get_password_hash_async, get_password_hash, create_access_token, create_refresh_token
+from app.models.user import User, RefreshToken
 from app.models.rbac import Role
+from app.services.email_service import EmailService
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
-    ChangePasswordRequest, GoogleLoginRequest, ForgotPasswordRequest, 
-    ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse
+    ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
+    ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse, LogoutRequest
 )
 from app.schemas.user import UserResponse
-from app.schemas.common import MessageResponse
+from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
 router = APIRouter()
+
+# Pre-computed bcrypt hash used when a login email is not found.
+# Always running bcrypt ensures the response time is the same whether the email
+# exists or not, preventing user enumeration via timing side-channels.
+_DUMMY_HASH: str = get_password_hash("_lexilingo_timing_normalization_placeholder_")
+
+async def _save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str):
+    """Save refresh token to database for revocation/rotation support."""
+    from app.core.config import settings
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    db_token = RefreshToken(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at
+    )
+    db.add(db_token)
+    await db.commit()
+
+# ... rest of code ...
 
 
 async def _get_role_id(db: AsyncSession, role_slug: str) -> uuid.UUID | None:
@@ -86,9 +107,11 @@ async def register(
     user = User(
         email=request.email,
         username=request.username,
-        hashed_password=get_password_hash(request.password),
+        hashed_password=await get_password_hash_async(request.password),
         display_name=request.display_name or request.username,
         role_id=role_id,
+        provider=["local"],  # self-registration is always local — never "google"
+        is_onboarding_completed=False,
     )
     
     db.add(user)
@@ -114,7 +137,11 @@ async def login(
     )
     user = result.scalar_one_or_none()
     
-    if not user or not user.hashed_password or not verify_password(request.password, user.hashed_password):
+    # Always run bcrypt — skipping it when user is None would create a ~100 ms timing
+    # delta that reveals whether an email is registered (user enumeration via timing).
+    hash_to_check = user.hashed_password if (user and user.hashed_password) else _DUMMY_HASH
+    password_ok = await verify_password_async(request.password, hash_to_check)
+    if not user or not password_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -127,22 +154,34 @@ async def login(
             detail="User account is inactive"
         )
     
-    # Update last login
-    user.last_login = datetime.now(timezone.utc)
-    await db.commit()
+    # Cache user fields before the commit so they survive a rollback
+    user_id = str(user.id)
+    username = user.username
+    email = user.email
+    role = user.role_slug if hasattr(user, 'role_slug') else "user"
+
+    # Update last login — best-effort, don't fail the login if DB is locked under load
+    try:
+        user.last_login = datetime.now(timezone.utc)
+        await db.commit()
+    except Exception:
+        await db.rollback()
     
     # Create tokens
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    access_token = create_access_token({"sub": user_id})
+    refresh_token = create_refresh_token({"sub": user_id})
+    
+    # FIX: Save refresh token for revocation support
+    await _save_refresh_token(db, uuid.UUID(user_id), refresh_token)
     
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        user_id=str(user.id),
-        username=user.username,
-        email=user.email,
-        role=user.role_slug if hasattr(user, 'role_slug') else "user",
+        user_id=user_id,
+        username=username,
+        email=email,
+        role=role,
     )
 
 
@@ -172,6 +211,24 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
+    # FIX: Verify token exists and is valid in DB
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.token == request.refresh_token,
+            RefreshToken.is_revoked == False,
+            RefreshToken.is_used == False,
+            RefreshToken.expires_at > datetime.now(timezone.utc)
+        )
+    )
+    db_token = result.scalar_one_or_none()
+    
+    if not db_token:
+        # Potential reuse attack or revoked token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
     user_id_str = payload.get("sub")
     if not user_id_str:
         raise HTTPException(
@@ -199,9 +256,15 @@ async def refresh_token(
             detail="User not found or inactive"
         )
     
+    # FIX: Implement token rotation
+    db_token.is_used = True
+    
     # Create new tokens
     access_token = create_access_token({"sub": str(user.id)})
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
+    
+    # Save new refresh token
+    await _save_refresh_token(db, user.id, new_refresh_token)
     
     return TokenResponse(
         access_token=access_token,
@@ -224,16 +287,27 @@ async def get_current_user_via_auth(
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout():
+async def logout(
+    request: LogoutRequest,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Logout user.
-    
-    Note: JWT tokens are stateless. Client should discard the token.
-    For production, implement token blacklist with Redis.
     """
+    if request.refresh_token:
+        # FIX: Revoke token in DB
+        result = await db.execute(
+            select(RefreshToken).where(RefreshToken.token == request.refresh_token)
+        )
+        db_token = result.scalar_one_or_none()
+        if db_token:
+            db_token.is_revoked = True
+            db_token.revoked_at = datetime.now(timezone.utc)
+            await db.commit()
+
     return MessageResponse(
         message="Logged out successfully",
-        detail="Token is still valid until expiration. Please discard it on client side."
+        detail="Session revoked and refresh token invalidated."
     )
 
 
@@ -261,15 +335,25 @@ async def google_login(
                 detail="Admin Google OAuth not configured"
             )
     else:
-        audience = settings.GOOGLE_CLIENT_ID
+        # For Flutter app: mobile sends token with aud=GOOGLE_CLIENT_ID;
+        # Flutter web (Firebase Auth) sends token with aud=Firebase web client ID.
+        # We try strict audience first, then fall back to no-audience check.
+        audience = settings.GOOGLE_CLIENT_ID  # None is also accepted below
     
     # Verify Google token with the correct audience
     import logging
     logger = logging.getLogger(__name__)
     logger.info(f"Google login attempt: source={request.source}, audience={audience}")
-    logger.info(f"id_token length={len(request.id_token)}, first_50={request.id_token[:50]}...")
-    
+
     google_info = await verify_google_token(request.id_token, audience=audience)
+
+    # Only skip audience check when GOOGLE_CLIENT_ID is not configured.
+    # If it IS configured and verification fails, the token belongs to a different
+    # app/project — do NOT retry unchecked (would accept tokens from any Google app).
+    if not google_info and request.source != "admin" and not audience:
+        logger.info("Retrying token verification without audience restriction (GOOGLE_CLIENT_ID not configured)")
+        google_info = await verify_google_token(request.id_token, audience=None)
+
     if not google_info:
         logger.error(f"Google token verification returned None for source={request.source}")
         raise HTTPException(
@@ -307,24 +391,33 @@ async def google_login(
         user = User(
             email=email,
             username=username,
-            hashed_password=get_password_hash("OAUTH_USER_NO_PASSWORD"),
+            hashed_password=await get_password_hash_async(uuid.uuid4().hex),
             display_name=google_info.get("name", username),
             avatar_url=google_info.get("picture"),
-            provider="google",
+            provider=["google"],  # OAuth-created accounts never have local auth by default
             is_verified=email_verified,
             role_id=role_id,
+            is_onboarding_completed=False,
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
-    elif user.provider != "google":
+    elif not user.has_google_auth:
+        # "google" is NOT yet in this user's providers list
         if request.source != "admin" or not allowlisted_admin_role:
+            if not user.has_local_auth:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered with a different login method."
+                )
+            # Non-admin Google login for a local-only account: block provider switch
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered with email/password. Please login with password."
+                detail="Email already registered. Please login with your existing method."
             )
 
-        user.provider = "google"
+        # Admin source + allowlisted email → link google to this account
+        user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
 
@@ -361,6 +454,97 @@ async def google_login(
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})
     
+    # FIX: Save refresh token for revocation support
+    await _save_refresh_token(db, user.id, refresh_token)
+    
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user_id=str(user.id),
+        username=user.username,
+        email=user.email,
+        role=user.role_slug if hasattr(user, 'role_slug') else "user",
+    )
+
+
+@router.post("/facebook", response_model=LoginResponse)
+async def facebook_login(
+    request: FacebookLoginRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Login or register with Facebook via Firebase authentication.
+    
+    - Verifies Firebase ID token securely using Firebase Admin SDK
+    - Uses same account linking / admin rules logic as Google
+    - Returns JWT tokens
+    """
+    from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
+    from app.core.config import settings
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Facebook (Firebase) login attempt: source={request.source}")
+
+    # Verify Firebase ID token
+    claims = verify_firebase_token(request.id_token)
+    if not claims:
+        logger.error(f"Firebase token verification failed for Facebook login (source={request.source})")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Firebase ID token"
+        )
+
+    # Some basic checks before we accept the token:
+    if "firebase" not in claims or claims["firebase"].get("sign_in_provider") != "facebook.com":
+        logger.warning("Token provided to /facebook is not a facebook.com login token.")
+        # We might still accept it if we want generic /firebase endpoint, 
+        # but let's restrict to facebook for exactness.
+        pass # Optional to raise error here, we let get_or_create handle the user.
+
+    email = claims.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not provided by Facebook/Firebase account."
+        )
+
+    try:
+        user = await get_or_create_user_from_claims(db, claims)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc)
+        )
+
+    # For admin source verify the role (as done in Google logic)
+    if request.source == "admin":
+        await db.refresh(user, ["role"])
+        user_role = user.role.slug if user.role else None
+        if user_role not in ["admin", "super_admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Admin privileges required."
+            )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+    
+    # Update last login
+    user.last_login = datetime.now(timezone.utc)
+    await db.commit()
+    
+    # Create tokens
+    access_token = create_access_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+    
+    # Save refresh token for revocation support
+    await _save_refresh_token(db, user.id, refresh_token)
+    
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -384,21 +568,21 @@ async def change_password(
     Requires current password verification.
     """
     # Verify current password
-    if not verify_password(request.current_password, current_user.hashed_password):
+    if not await verify_password_async(request.current_password, current_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
         )
     
-    # Check if user is OAuth user
-    if current_user.provider != "local":
+    # Check if user has local auth — OAuth-only accounts cannot change password
+    if not current_user.has_local_auth:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot change password for OAuth accounts"
         )
     
     # Update password
-    current_user.hashed_password = get_password_hash(request.new_password)
+    current_user.hashed_password = await get_password_hash_async(request.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     
@@ -419,8 +603,7 @@ async def forgot_password(
     Generates a reset token and sends email (stubbed for development).
     """
     from app.core.security import create_verification_token
-    import logging
-    
+
     # Find user by email
     result = await db.execute(
         select(User).where(User.email == request.email)
@@ -434,8 +617,8 @@ async def forgot_password(
             detail="Check your email inbox."
         )
     
-    # Check if OAuth user
-    if user.provider != "local":
+    # Only local accounts can reset password
+    if not user.has_local_auth:
         return MessageResponse(
             message="This email is registered with Google. Please use Google login.",
             detail="Password reset is not available for OAuth accounts."
@@ -447,9 +630,12 @@ async def forgot_password(
         expires_minutes=60
     )
     
-    # TODO: Send email with reset link
-    # For now, log the token for development
-    logging.info(f"Password reset token for {user.email}: {reset_token}")
+    # Send reset email (best effort)
+    await EmailService.send_password_reset_email(
+        to_email=user.email,
+        reset_token=reset_token,
+        display_name=user.display_name or user.username,
+    )
     
     return MessageResponse(
         message="If the email exists, a password reset link has been sent.",
@@ -488,7 +674,7 @@ async def reset_password(
         )
     
     # Update password
-    user.hashed_password = get_password_hash(request.new_password)
+    user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
     await db.commit()
     

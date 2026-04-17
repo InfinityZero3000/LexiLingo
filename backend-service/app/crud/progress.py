@@ -4,7 +4,7 @@ Database operations for tracking user progress
 """
 from typing import Optional, List
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, func, and_, desc
+from sqlalchemy import select, func, and_, desc, case
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -195,39 +195,40 @@ class ProgressCRUD:
         if not progress:
             return None
         
-        # Get units with lessons
-        units_result = await db.execute(
-            select(Unit)
+        # Single JOIN query: lessons + passed completions per unit — no N+1
+        rows = await db.execute(
+            select(
+                Unit.id,
+                Unit.title,
+                func.count(Lesson.id).label("total_lessons"),
+                func.sum(
+                    case(
+                        (and_(LessonCompletion.user_id == user_id, LessonCompletion.is_passed == True), 1),
+                        else_=0,
+                    )
+                ).label("completed_lessons"),
+            )
+            .join(Lesson, Lesson.unit_id == Unit.id, isouter=True)
+            .join(
+                LessonCompletion,
+                and_(LessonCompletion.lesson_id == Lesson.id, LessonCompletion.user_id == user_id),
+                isouter=True,
+            )
             .where(Unit.course_id == course_id)
+            .group_by(Unit.id, Unit.title, Unit.order_index)
             .order_by(Unit.order_index)
         )
-        units = units_result.scalars().all()
-        
+
         units_progress = []
-        for unit in units:
-            # Get lessons for this unit
-            lessons_result = await db.execute(
-                select(Lesson)
-                .where(Lesson.unit_id == unit.id)
-                .order_by(Lesson.order_index)
-            )
-            lessons = lessons_result.scalars().all()
-            
-            # Count completed lessons in this unit
-            completed_count = 0
-            for lesson in lessons:
-                completion = await ProgressCRUD.get_lesson_completion(
-                    db, user_id, str(lesson.id)
-                )
-                if completion and completion.is_passed:
-                    completed_count += 1
-            
+        for row in rows:
+            total = row.total_lessons or 0
+            completed = int(row.completed_lessons or 0)
             units_progress.append({
-                'unit_id': str(unit.id),
-                'unit_title': unit.title,
-                'total_lessons': len(lessons),
-                'completed_lessons': completed_count,
-                'progress_percentage': (completed_count / len(lessons) * 100) if lessons else 0
+                'unit_id': str(row.id),
+                'unit_title': row.title,
+                'total_lessons': total,
+                'completed_lessons': completed,
+                'progress_percentage': (completed / total * 100) if total else 0,
             })
         
         return {
@@ -248,18 +249,22 @@ class ProgressCRUD:
     async def calculate_course_progress(
         db: AsyncSession,
         user_id: str,
-        course_id: str
+        course_id: str,
+        total_lessons: Optional[int] = None,
     ) -> float:
-        """Calculate course progress percentage based on completed lessons"""
-        # Get total lessons in course
-        course_result = await db.execute(
-            select(Course).where(Course.id == course_id)
-        )
-        course = course_result.scalar_one_or_none()
-        if not course or not course.total_lessons:
+        """Calculate course progress percentage based on completed lessons.
+
+        Pass ``total_lessons`` from an already-loaded Course to skip a DB round-trip.
+        """
+        if total_lessons is None:
+            course_result = await db.execute(
+                select(Course.total_lessons).where(Course.id == course_id)
+            )
+            total_lessons = course_result.scalar_one_or_none() or 0
+
+        if not total_lessons:
             return 0.0
-        
-        # Count completed lessons
+
         completed_result = await db.execute(
             select(func.count(LessonCompletion.id))
             .join(Lesson, Lesson.id == LessonCompletion.lesson_id)
@@ -268,13 +273,12 @@ class ProgressCRUD:
                 and_(
                     Unit.course_id == course_id,
                     LessonCompletion.user_id == user_id,
-                    LessonCompletion.is_passed == True
+                    LessonCompletion.is_passed == True,
                 )
             )
         )
         completed_count = completed_result.scalar() or 0
-        
-        return (completed_count / course.total_lessons) * 100
+        return (completed_count / total_lessons) * 100
     
     @staticmethod
     async def get_user_total_xp(
@@ -291,49 +295,38 @@ class ProgressCRUD:
     @staticmethod
     async def get_user_stats(
         db: AsyncSession,
-        user_id: str
+        user_id: str,
     ) -> dict:
-        """Get comprehensive user statistics"""
-        # Total XP
-        total_xp = await ProgressCRUD.get_user_total_xp(db, user_id)
-        
-        # Courses enrolled
-        enrolled_result = await db.execute(
-            select(func.count(UserCourseProgress.id))
-            .where(UserCourseProgress.user_id == user_id)
+        """Get comprehensive user statistics in a single query."""
+        # One query: XP + enrolled + completed counts from UserCourseProgress
+        progress_result = await db.execute(
+            select(
+                func.coalesce(func.sum(UserCourseProgress.total_xp_earned), 0).label("total_xp"),
+                func.count(UserCourseProgress.id).label("courses_enrolled"),
+                func.sum(
+                    case((UserCourseProgress.progress_percentage >= 100, 1), else_=0)
+                ).label("courses_completed"),
+            ).where(UserCourseProgress.user_id == user_id)
         )
-        courses_enrolled = enrolled_result.scalar() or 0
-        
-        # Courses completed (100% progress)
-        completed_result = await db.execute(
-            select(func.count(UserCourseProgress.id))
-            .where(
-                and_(
-                    UserCourseProgress.user_id == user_id,
-                    UserCourseProgress.progress_percentage >= 100
-                )
-            )
-        )
-        courses_completed = completed_result.scalar() or 0
-        
-        # Lessons completed
+        row = progress_result.one()
+
+        # Second query: passed lesson count (separate table)
         lessons_result = await db.execute(
-            select(func.count(LessonCompletion.id))
-            .where(
+            select(func.count(LessonCompletion.id)).where(
                 and_(
                     LessonCompletion.user_id == user_id,
-                    LessonCompletion.is_passed == True
+                    LessonCompletion.is_passed == True,
                 )
             )
         )
         lessons_completed = lessons_result.scalar() or 0
-        
+
         return {
-            'total_xp': total_xp,
-            'courses_enrolled': courses_enrolled,
-            'courses_completed': courses_completed,
+            'total_xp': int(row.total_xp or 0),
+            'courses_enrolled': int(row.courses_enrolled or 0),
+            'courses_completed': int(row.courses_completed or 0),
             'lessons_completed': lessons_completed,
-            'current_streak': 0,  # TODO: Implement streak calculation
-            'longest_streak': 0,  # TODO: Implement streak calculation
-            'achievements_unlocked': 0  # TODO: Implement achievements
+            'current_streak': 0,
+            'longest_streak': 0,
+            'achievements_unlocked': 0,
         }

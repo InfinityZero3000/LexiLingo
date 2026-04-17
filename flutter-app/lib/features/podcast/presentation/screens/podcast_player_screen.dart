@@ -227,6 +227,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
                         errorBuilder: (_, __, ___) =>
                             _buildArtworkFallback(cefrColor),
                       )
@@ -259,8 +260,8 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
               ),
               child: Text(
                 widget.episode.cefrLevel ?? 'B1',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.surfaceLight,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
@@ -417,17 +418,17 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

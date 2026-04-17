@@ -206,7 +206,7 @@ class TestClaimChallengeReward:
                 f"{BASE}/daily/nonexistent_challenge_xyz/claim"
             )
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     async def test_claim_already_claimed_returns_400(self):
         """Attempting to claim a reward that was already claimed today returns 400."""
@@ -250,7 +250,7 @@ class TestClaimChallengeReward:
         app.dependency_overrides.clear()
 
         assert response.status_code == 400
-        assert "already claimed" in response.json()["detail"].lower()
+        assert "already claimed" in response.json()["error"]["message"].lower()
 
     async def test_claim_not_completed_returns_400(self, auth_client):
         """Claiming a reward for an incomplete challenge returns 400."""
@@ -265,7 +265,7 @@ class TestClaimChallengeReward:
                 f"{BASE}/daily/{valid_challenge_id}/claim"
             )
         assert response.status_code == 400
-        assert "Progress" in response.json()["detail"] or "not completed" in response.json()["detail"].lower()
+        assert "Progress" in response.json()["error"]["message"] or "not completed" in response.json()["error"]["message"].lower()
 
     async def test_claim_success_returns_200(self):
         """Claiming a completed challenge returns 200 with xp_reward."""
@@ -350,7 +350,7 @@ class TestClaimDailyBonus:
         ):
             response = await auth_client.post(f"{BASE}/daily/bonus/claim")
         assert response.status_code == 400
-        assert "Complete all challenges" in response.json()["detail"]
+        assert "Complete all challenges" in response.json()["error"]["message"]
 
     async def test_bonus_claim_already_claimed_returns_400(self):
         """Claiming bonus twice on the same day returns 400."""
@@ -391,7 +391,7 @@ class TestClaimDailyBonus:
         app.dependency_overrides.clear()
 
         assert response.status_code == 400
-        assert "Bonus already claimed" in response.json()["detail"]
+        assert "Bonus already claimed" in response.json()["error"]["message"]
 
     async def test_bonus_claim_success_returns_200(self):
         """Claiming bonus after completing all challenges returns 200 with XP and gems."""

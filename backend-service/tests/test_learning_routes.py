@@ -300,7 +300,7 @@ class TestLearningSession:
         )
         
         assert response.status_code == 400
-        assert "Already completed" in response.json()["detail"]
+        assert "Already completed" in response.json()["error"]["message"]
 
 
 @pytest.mark.asyncio

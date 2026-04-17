@@ -303,8 +303,12 @@ class LearningProvider with ChangeNotifier {
     final len1 = s1.length;
     final len2 = s2.length;
     final matrix = List.generate(len1 + 1, (i) => List.filled(len2 + 1, 0));
-    for (int i = 0; i <= len1; i++) matrix[i][0] = i;
-    for (int j = 0; j <= len2; j++) matrix[0][j] = j;
+    for (int i = 0; i <= len1; i++) {
+      matrix[i][0] = i;
+    }
+    for (int j = 0; j <= len2; j++) {
+      matrix[0][j] = j;
+    }
     for (int i = 1; i <= len1; i++) {
       for (int j = 1; j <= len2; j++) {
         final cost = s1[i - 1] == s2[j - 1] ? 0 : 1;

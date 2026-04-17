@@ -9,6 +9,24 @@ import '../models/topic_session_model.dart';
 
 const _tag = 'StoryApiDataSource';
 
+class TopicMessagesMetadataResult {
+  final int totalCount;
+  final bool hasMessages;
+  final String? latestCursor;
+  final String? oldestCursor;
+  final String? latestTs;
+  final String? oldestTs;
+
+  const TopicMessagesMetadataResult({
+    required this.totalCount,
+    required this.hasMessages,
+    required this.latestCursor,
+    required this.oldestCursor,
+    required this.latestTs,
+    required this.oldestTs,
+  });
+}
+
 /// Remote data source for Story/Topic-based conversation API
 /// Connects to AI Service on port 8001
 class StoryApiDataSource {
@@ -51,6 +69,33 @@ class StoryApiDataSource {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final storiesJson = json['stories'] as List<dynamic>? ?? [];
 
+      if (storiesJson.isEmpty &&
+          queryParams['category'] == null &&
+          queryParams['difficulty_level'] == null) {
+        final retryUri = Uri.parse('$baseUrl/topics/stories').replace(
+          queryParameters: {
+            if (limit != 20) 'limit': limit.toString(),
+            'bypass_cache': 'true',
+          },
+        );
+
+        logDebug(_tag, 'getStories retry with bypass_cache: $retryUri');
+
+        final retryResponse = await _client.get(
+          retryUri,
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        if (retryResponse.statusCode == 200) {
+          final retryJson =
+              jsonDecode(retryResponse.body) as Map<String, dynamic>;
+          final retryStoriesJson = retryJson['stories'] as List<dynamic>? ?? [];
+          return retryStoriesJson
+              .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      }
+
       return storiesJson
           .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -79,6 +124,34 @@ class StoryApiDataSource {
       return Story.fromJson(json);
     } catch (e) {
       logError(_tag, 'getStoryDetails error: $e');
+      rethrow;
+    }
+  }
+
+  /// Warm the cache for a specific topic
+  Future<Map<String, dynamic>> warmTopicCache({
+    required String storyId,
+    required String userId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/topics/stories/warm');
+      logDebug(_tag, 'warmTopicCache: $uri');
+
+      final body = {'story_id': storyId, 'user_id': userId};
+
+      final response = await _client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to warm cache: ${response.statusCode}');
+      }
+
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      logError(_tag, 'warmTopicCache error: $e');
       rethrow;
     }
   }
@@ -115,7 +188,7 @@ class StoryApiDataSource {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'qwen',
+    String preferredLlm = 'graphcag',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/topics/topic-sessions');
@@ -155,9 +228,7 @@ class StoryApiDataSource {
     required String message,
   }) async {
     try {
-      final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages',
-      );
+      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages');
       logDebug(_tag, 'sendTopicMessage: $uri');
 
       final body = {
@@ -211,7 +282,7 @@ class StoryApiDataSource {
   Future<List<TopicChatMessage>> getTopicMessages(String sessionId) async {
     try {
       final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages',
+        '$baseUrl/topics/topic-sessions/$sessionId/messages?limit=0',
       );
       logDebug(_tag, 'getTopicMessages: $uri');
 
@@ -236,6 +307,89 @@ class StoryApiDataSource {
     }
   }
 
+  Future<TopicMessagesPageResult> getTopicMessagesPaged({
+    required String sessionId,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    try {
+      final query = <String, String>{
+        'limit': limit < 1 ? '1' : (limit > 200 ? '200' : '$limit'),
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      };
+
+      final uri = Uri.parse(
+        '$baseUrl/topics/topic-sessions/$sessionId/messages/paged',
+      ).replace(queryParameters: query);
+      logDebug(_tag, 'getTopicMessagesPaged: $uri');
+
+      final response = await _client.get(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to get paged messages: ${response.statusCode}');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final messagesJson = json['messages'] as List<dynamic>? ?? [];
+      final pagination = Map<String, dynamic>.from(
+        (json['pagination'] ?? const <String, dynamic>{}) as Map,
+      );
+
+      final messages = messagesJson
+          .map((e) => TopicChatMessage.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      return TopicMessagesPageResult(
+        messages: messages,
+        hasMore: pagination['has_more'] == true,
+        nextCursor: pagination['next_cursor']?.toString(),
+        returned: (pagination['returned'] as num?)?.toInt() ?? messages.length,
+      );
+    } catch (e) {
+      logWarn(_tag, 'getTopicMessagesPaged fallback to full history: $e');
+      final allMessages = await getTopicMessages(sessionId);
+      return _fallbackTopicPage(
+        allMessages: allMessages,
+        limit: limit,
+        cursor: cursor,
+      );
+    }
+  }
+
+  Future<TopicMessagesMetadataResult> getTopicMessagesMetadata(
+    String sessionId,
+  ) async {
+    final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId/messages/metadata');
+    logDebug(_tag, 'getTopicMessagesMetadata: $uri');
+
+    final response = await _client.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw ServerException('Failed to get topic metadata: ${response.statusCode}');
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final metadata = Map<String, dynamic>.from(
+      (json['metadata'] ?? const <String, dynamic>{}) as Map,
+    );
+    final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
+
+    return TopicMessagesMetadataResult(
+      totalCount: totalCount,
+      hasMessages: metadata['has_messages'] == true,
+      latestCursor: metadata['latest_cursor']?.toString(),
+      oldestCursor: metadata['oldest_cursor']?.toString(),
+      latestTs: metadata['latest_ts']?.toString(),
+      oldestTs: metadata['oldest_ts']?.toString(),
+    );
+  }
+
   /// Check LLM health
   Future<Map<String, dynamic>> checkLlmHealth() async {
     try {
@@ -257,6 +411,66 @@ class StoryApiDataSource {
     } catch (e) {
       logError(_tag, 'checkLlmHealth error: $e');
       rethrow;
+    }
+  }
+
+  TopicMessagesPageResult _fallbackTopicPage({
+    required List<TopicChatMessage> allMessages,
+    required int limit,
+    required String? cursor,
+  }) {
+    if (allMessages.isEmpty) {
+      return const TopicMessagesPageResult(
+        messages: [],
+        hasMore: false,
+        nextCursor: null,
+        returned: 0,
+      );
+    }
+
+    final safeLimit = limit < 1 ? 1 : (limit > 200 ? 200 : limit);
+    int endIndex = allMessages.length;
+
+    if (cursor != null && cursor.isNotEmpty) {
+      final decoded = _decodeCursorBestEffort(cursor);
+      final cursorId = decoded['id'];
+      final cursorTs = decoded['timestamp'];
+      final found = allMessages.indexWhere((m) {
+        final idMatch = cursorId != null && m.id == cursorId;
+        final tsMatch =
+            cursorTs != null && m.timestamp.toIso8601String().startsWith(cursorTs);
+        return idMatch || tsMatch;
+      });
+      if (found >= 0) {
+        endIndex = found;
+      }
+    }
+
+    final startIndex = (endIndex - safeLimit) < 0 ? 0 : endIndex - safeLimit;
+    final page = allMessages.sublist(startIndex, endIndex);
+    final hasMore = startIndex > 0;
+
+    return TopicMessagesPageResult(
+      messages: page,
+      hasMore: hasMore,
+      nextCursor: hasMore && page.isNotEmpty ? _encodeCursor(page.first) : null,
+      returned: page.length,
+    );
+  }
+
+  String _encodeCursor(TopicChatMessage message) {
+    final payload = '${message.timestamp.toIso8601String()}|${message.id}';
+    return base64UrlEncode(utf8.encode(payload));
+  }
+
+  Map<String, String?> _decodeCursorBestEffort(String cursor) {
+    try {
+      final raw = utf8.decode(base64Url.decode(cursor));
+      final parts = raw.split('|');
+      if (parts.length < 2) return {'timestamp': null, 'id': null};
+      return {'timestamp': parts[0], 'id': parts[1]};
+    } catch (_) {
+      return {'timestamp': null, 'id': null};
     }
   }
 }

@@ -1,6 +1,7 @@
 /// Game domain entities for the Games feature — XP System & mini-games.
 ///
 /// All entities are plain Dart classes with copyWith, fromJson, and toJson.
+library;
 // ignore: depend_on_referenced_packages
 import 'package:flutter/material.dart';
 

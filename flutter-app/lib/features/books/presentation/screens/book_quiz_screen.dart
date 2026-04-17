@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -77,7 +78,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: LottieLoadingWidget.medium(),
             );
           }
 
@@ -111,6 +112,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
     dynamic quiz,
     bool isDark,
   ) {
+    final accentColor = AppColorRoles.primary(isDark);
     final total = quiz.questions.length;
     final progress = (_currentQuestion + 1) / total;
 
@@ -131,8 +133,8 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                     backgroundColor: isDark
                         ? Colors.white12
                         : AppColors.grey200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      accentColor,
                     ),
                   ),
                 ),
@@ -183,18 +185,18 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.2),
+                  color: accentColor.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline_rounded,
-                    color: AppColors.primary,
+                    color: accentColor,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -222,7 +224,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
               child: ElevatedButton(
                 onPressed: () => _nextQuestion(provider),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -261,10 +263,10 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         ? Icons.thumb_up_rounded
         : Icons.menu_book_rounded;
     final resultIconColor = pct >= 0.8
-        ? Colors.amber
+        ? AppColors.warning
         : pct >= 0.6
-        ? Colors.green
-        : Colors.blue;
+        ? AppColors.greenSuccessBright
+      : AppColorRoles.primary(isDark);
     final msg = pct >= 0.8
         ? 'Excellent!'
         : pct >= 0.6
@@ -274,6 +276,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
     final xpEarned = quiz != null && score > 0
         ? (quiz.xpReward * pct).round().clamp(5, quiz.xpReward)
         : 0;
+    final accentColor = AppColorRoles.primary(isDark);
 
     return Center(
       child: Padding(
@@ -307,21 +310,21 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: accentColor.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.bolt_rounded, color: AppColors.primary),
+                    Icon(Icons.bolt_rounded, color: accentColor),
                     const SizedBox(width: 6),
                     Text(
                       '+$xpEarned XP earned!',
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      style: TextStyle(
+                        color: accentColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
@@ -335,7 +338,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -376,6 +379,7 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = AppColorRoles.primary(isDark);
     final bool showGreen = answered && isCorrect;
     final bool showRed = answered && selected && !isCorrect;
 
@@ -384,20 +388,20 @@ class _OptionTile extends StatelessWidget {
     Color textColor;
 
     if (showGreen) {
-      borderColor = const Color(0xFF4CAF50);
-      bgColor = const Color(0xFF4CAF50).withValues(alpha: 0.12);
-      textColor = const Color(0xFF4CAF50);
+      borderColor = AppColors.greenSuccessBright;
+      bgColor = AppColors.greenSuccessBright.withValues(alpha: 0.12);
+      textColor = AppColors.greenSuccessBright;
     } else if (showRed) {
-      borderColor = Colors.red;
+      borderColor = AppColors.errorBright;
       bgColor = Colors.red.withValues(alpha: 0.1);
-      textColor = Colors.red;
+      textColor = AppColors.errorBright;
     } else if (selected) {
-      borderColor = AppColors.primary;
-      bgColor = AppColors.primary.withValues(alpha: 0.08);
+      borderColor = accentColor;
+      bgColor = accentColor.withValues(alpha: 0.08);
       textColor = isDark ? Colors.white : AppColors.textDark;
     } else {
       borderColor = isDark ? Colors.white24 : AppColors.grey300;
-      bgColor = isDark ? const Color(0xFF1C2B3A) : Colors.white;
+      bgColor = isDark ? AppColors.surfaceDarkElevated : Colors.white;
       textColor = isDark ? Colors.white : AppColors.textDark;
     }
 
@@ -420,11 +424,11 @@ class _OptionTile extends StatelessWidget {
               height: 26,
               decoration: BoxDecoration(
                 color: showGreen
-                    ? const Color(0xFF4CAF50)
+                    ? AppColors.greenSuccessBright
                     : showRed
-                    ? Colors.red
+                    ? AppColors.errorBright
                     : selected
-                    ? AppColors.primary
+                  ? accentColor
                     : (isDark ? Colors.white12 : AppColors.grey200),
                 shape: BoxShape.circle,
               ),
@@ -458,11 +462,11 @@ class _OptionTile extends StatelessWidget {
             if (showGreen)
               const Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFF4CAF50),
+                color: AppColors.greenSuccessBright,
                 size: 20,
               ),
             if (showRed)
-              const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
+              const Icon(Icons.cancel_rounded, color: AppColors.errorBright, size: 20),
           ],
         ),
       ),

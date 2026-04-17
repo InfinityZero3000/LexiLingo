@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Speak Button Widget
 /// A reusable button that uses TTS to speak text
@@ -72,34 +75,44 @@ class _SpeakButtonState extends State<SpeakButton> {
       final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
-        // Save to temp file and play
-        final directory = await getTemporaryDirectory();
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final file = File('${directory.path}/speak_$timestamp.wav');
-        await file.writeAsBytes(result.audioData);
+        File? file;
+        if (kIsWeb) {
+          final audioUri = Uri.dataFromBytes(
+            result.audioData,
+            mimeType: 'audio/wav',
+          ).toString();
+          await _player.setUrl(audioUri);
+        } else {
+          final directory = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          file = File('${directory.path}/speak_$timestamp.wav');
+          await file.writeAsBytes(result.audioData);
+          await _player.setFilePath(file.path);
+        }
 
-        await _player.setFilePath(file.path);
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
 
         // Clean up temp file after playback
-        _player.playerStateStream
-            .firstWhere(
-              (state) => state.processingState == ProcessingState.completed,
-            )
-            .then((_) {
-              try {
-                file.deleteSync();
-              } catch (_) {}
-            });
+        if (file != null) {
+          _player.playerStateStream
+              .firstWhere(
+                (state) => state.processingState == ProcessingState.completed,
+              )
+              .then((_) {
+                try {
+                  file!.deleteSync();
+                } catch (_) {}
+              });
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to play: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.errorBright,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -167,10 +180,7 @@ class _SpeakButtonState extends State<SpeakButton> {
         child: SizedBox(
           width: widget.size * 0.4,
           height: widget.size * 0.4,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
+          child: LottieLoadingWidget.tiny(),
         ),
       );
     }
@@ -244,25 +254,36 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
       final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
-        final directory = await getTemporaryDirectory();
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final file = File('${directory.path}/speak_icon_$timestamp.wav');
-        await file.writeAsBytes(result.audioData);
+        File? file;
+        if (kIsWeb) {
+          final audioUri = Uri.dataFromBytes(
+            result.audioData,
+            mimeType: 'audio/wav',
+          ).toString();
+          await _player.setUrl(audioUri);
+        } else {
+          final directory = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          file = File('${directory.path}/speak_icon_$timestamp.wav');
+          await file.writeAsBytes(result.audioData);
+          await _player.setFilePath(file.path);
+        }
 
-        await _player.setFilePath(file.path);
         // Apply playback speed from settings
         await _player.setSpeed(ttsSettings.playbackSpeed);
         await _player.play();
 
-        _player.playerStateStream
-            .firstWhere(
-              (state) => state.processingState == ProcessingState.completed,
-            )
-            .then((_) {
-              try {
-                file.deleteSync();
-              } catch (_) {}
-            });
+        if (file != null) {
+          _player.playerStateStream
+              .firstWhere(
+                (state) => state.processingState == ProcessingState.completed,
+              )
+              .then((_) {
+                try {
+                  file!.deleteSync();
+                } catch (_) {}
+              });
+        }
       }
     } catch (e) {
       // Silent fail for icon button
@@ -284,10 +305,7 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
           ? SizedBox(
               width: widget.size,
               height: widget.size,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-              ),
+              child: LottieLoadingWidget.tiny(),
             )
           : Icon(
               _isPlaying ? Icons.stop : Icons.volume_up,

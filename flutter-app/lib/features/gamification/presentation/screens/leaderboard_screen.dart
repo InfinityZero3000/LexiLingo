@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -54,6 +55,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       body: Consumer<GamificationProvider>(
         builder: (context, provider, child) {
@@ -74,6 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                           colors: [
                             _getLeagueColor(
                               provider.selectedLeague,
+                              isDark,
                             ).withValues(alpha: 0.3),
                             Theme.of(context).scaffoldBackgroundColor,
                           ],
@@ -111,9 +115,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,
-                    labelColor: AppColors.primary,
+                    labelColor: primaryColor,
                     unselectedLabelColor: AppColors.textGrey,
-                    indicatorColor: AppColors.primary,
+                    indicatorColor: primaryColor,
                     tabs: _leagues.map((league) {
                       return Tab(
                         child: Row(
@@ -145,20 +149,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return '${league[0].toUpperCase()}${league.substring(1)}';
   }
 
-  Color _getLeagueColor(String league) {
+  Color _getLeagueColor(String league, bool isDark) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return AppColors.textMuted;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return AppColors.warning;
       case 'platinum':
-        return const Color(0xFFE5E4E2);
+        return AppColors.purple;
       case 'diamond':
-        return const Color(0xFFB9F2FF);
+        return AppColorRoles.primary(isDark);
       default:
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
     }
   }
 }
@@ -171,15 +175,17 @@ class _LeaderboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Consumer<GamificationProvider>(
       builder: (context, provider, child) {
         // Only show content for the selected league
         if (provider.selectedLeague != league) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.isLoadingLeaderboard && provider.leaderboard == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.leaderboardError != null && provider.leaderboard == null) {
@@ -191,7 +197,7 @@ class _LeaderboardTab extends StatelessWidget {
 
         final leaderboard = provider.leaderboard;
         if (leaderboard == null || leaderboard.entries.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
         final topThree = leaderboard.topThree;
@@ -213,7 +219,7 @@ class _LeaderboardTab extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -221,16 +227,16 @@ class _LeaderboardTab extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today,
                             size: 18,
-                            color: AppColors.primary,
+                            color: primaryColor,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Week ends ${_formatDate(leaderboard.weekEnd)}',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: primaryColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -238,7 +244,10 @@ class _LeaderboardTab extends StatelessWidget {
                       ),
                       Text(
                         '${leaderboard.totalParticipants} participants',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(
+                          color: AppColorRoles.textMuted(isDark),
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -253,10 +262,16 @@ class _LeaderboardTab extends StatelessWidget {
 
               // Divider
               if (remaining.isNotEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Divider(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Text(
+                      'More Ranks',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                   ),
                 ),
 
@@ -282,25 +297,26 @@ class _LeaderboardTab extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey[400]),
+          Icon(Icons.emoji_events_outlined, size: 64, color: AppColors.grey400),
           const SizedBox(height: 16),
           Text(
             'No rankings yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+              color: AppColorRoles.textSecondary(isDark),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Be the first to compete this week!',
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
         ],
       ),
@@ -329,7 +345,8 @@ class _LeagueBadgeSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _getLeagueColor(league);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getLeagueColor(league, isDark);
 
     return Container(
       width: 20,
@@ -345,24 +362,24 @@ class _LeagueBadgeSmall extends StatelessWidget {
           BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
         ],
       ),
-      child: Icon(_getLeagueIcon(league), color: Colors.white, size: 12),
+      child: Icon(_getLeagueIcon(league), color: Theme.of(context).colorScheme.surface, size: 12),
     );
   }
 
-  Color _getLeagueColor(String league) {
+  Color _getLeagueColor(String league, bool isDark) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return AppColors.textMuted;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return AppColors.warning;
       case 'platinum':
-        return const Color(0xFFE5E4E2);
+        return AppColors.purple;
       case 'diamond':
-        return const Color(0xFFB9F2FF);
+        return AppColorRoles.primary(isDark);
       default:
-        return const Color(0xFFCD7F32);
+        return AppColors.orange;
     }
   }
 

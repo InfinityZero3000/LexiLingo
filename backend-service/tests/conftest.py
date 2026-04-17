@@ -31,15 +31,11 @@ from app.models.rbac import Role
 def disable_rate_limiting(monkeypatch):
     """
     Bypass rate limiting middleware for all tests.
-    Prevents cross-test interference when many tests run in the same process
-    and exhaust the 60 req/minute in-memory counter.
+    Patches the class-level _testing flag which is checked at dispatch time
+    (not captured in self.dispatch_func), so monkeypatch works correctly.
     """
     from app.core.middleware import RateLimitMiddleware
-
-    async def mock_dispatch(self, request, call_next):
-        return await call_next(request)
-
-    monkeypatch.setattr(RateLimitMiddleware, "dispatch", mock_dispatch)
+    monkeypatch.setattr(RateLimitMiddleware, "_testing", True)
 
 
 # Test database URL (use separate test database)

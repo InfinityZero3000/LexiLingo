@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
@@ -30,6 +32,7 @@ class ProficiencyCard extends StatelessWidget {
   Widget _buildContent(BuildContext context, ProficiencyProvider provider) {
     final profile = provider.profile;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     final hasEnoughData =
         profile.exercisesCompleted >= unlockThreshold ||
         profile.lessonsCompleted >= unlockThreshold;
@@ -53,12 +56,12 @@ class ProficiencyCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.2)
-                  : const Color(0xFFE2E8F0),
+              ? accent.withValues(alpha: 0.22)
+                  : AppColors.slate200,
             ),
           ),
           child: Column(
@@ -97,12 +100,12 @@ class ProficiencyCard extends StatelessWidget {
                               },
                         size: 240,
                         fillColor: isDark
-                            ? const Color(0xFF6366F1).withValues(alpha: 0.25)
-                            : const Color(0xFF6366F1).withValues(alpha: 0.15),
-                        strokeColor: const Color(0xFF6366F1),
+                          ? accent.withValues(alpha: 0.25)
+                            : AppColors.primary.withValues(alpha: 0.15),
+                        strokeColor: accent,
                         gridColor: isDark
                             ? Colors.white.withValues(alpha: 0.1)
-                            : const Color(0xFFE2E8F0),
+                            : AppColors.slate200,
                         animate: true,
                       ),
                       // Center decorative icon
@@ -112,15 +115,13 @@ class ProficiencyCard extends StatelessWidget {
                           height: 56,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF1E293B).withValues(alpha: 0.9)
+                                ? AppColors.surfaceDarkMuted.withValues(alpha: 0.9)
                                 : Colors.white.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isDark
-                                  ? const Color(
-                                      0xFF6366F1,
-                                    ).withValues(alpha: 0.3)
-                                  : const Color(0xFFE2E8F0),
+                                  ? accent.withValues(alpha: 0.3)
+                                  : AppColors.slate200,
                               width: 1.5,
                             ),
                           ),
@@ -128,10 +129,8 @@ class ProficiencyCard extends StatelessWidget {
                             Icons.hourglass_bottom_rounded,
                             size: 28,
                             color: isDark
-                                ? const Color(0xFF6366F1).withValues(alpha: 0.6)
-                                : const Color(
-                                    0xFF6366F1,
-                                  ).withValues(alpha: 0.4),
+                                ? accent.withValues(alpha: 0.6)
+                                : accent.withValues(alpha: 0.4),
                           ),
                         ),
                     ],
@@ -173,7 +172,7 @@ class ProficiencyCard extends StatelessWidget {
                           border: Border.all(
                             color: isDark
                                 ? Colors.white.withValues(alpha: 0.15)
-                                : const Color(0xFFE2E8F0),
+                                : AppColors.slate200,
                           ),
                         ),
                         child: Row(
@@ -206,22 +205,26 @@ class ProficiencyCard extends StatelessWidget {
                     flex: 3,
                     child: GestureDetector(
                       onTap: () {
-                        // Navigate to learning tab
-                        // DefaultTabController.of(context)?.animateTo(1);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MainScreen(initialIndex: 1),
+                          ),
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6),
+                          color: accent,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Start Lessons',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -242,6 +245,7 @@ class ProficiencyCard extends StatelessWidget {
 
   Widget _buildLoadingState(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,18 +262,18 @@ class ProficiencyCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.2)
-                  : const Color(0xFFE2E8F0),
+              ? accent.withValues(alpha: 0.22)
+                  : AppColors.slate200,
             ),
           ),
           child: const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: LottieLoadingWidget.medium(),
             ),
           ),
         ),

@@ -8,6 +8,7 @@
 /// - LevelProvider: State management for XP-based level (gamification)
 /// - ProficiencyProvider: State management for proficiency assessment
 /// - LevelWidgets: UI components for level display
+library;
 
 // Domain entities
 export 'domain/entities/level_entity.dart';

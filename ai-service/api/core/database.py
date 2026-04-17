@@ -15,6 +15,16 @@ from api.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _is_cosmos_mongo_uri(uri: str) -> bool:
+    """Detect Cosmos DB Mongo API endpoints, including local emulator."""
+    lowered = uri.lower()
+    return (
+        "localhost:10255" in lowered
+        or "cosmos.azure.com" in lowered
+        or "replicaset=globaldb" in lowered
+    )
+
+
 class MongoDBManager:
     """
     MongoDB connection manager (Singleton pattern).
@@ -38,7 +48,7 @@ class MongoDBManager:
         
         Similar to Flutter's DatabaseHelper.database getter.
         """
-        if self._client is not None:
+        if self._client is not None and self._db is not None:
             logger.info("MongoDB already connected")
             return
         
@@ -52,16 +62,28 @@ class MongoDBManager:
             connection_kwargs: dict = {
                 "maxPoolSize": settings.MONGODB_MAX_POOL_SIZE,
                 "minPoolSize": settings.MONGODB_MIN_POOL_SIZE,
-                "serverSelectionTimeoutMS": 10000,
+                "serverSelectionTimeoutMS": settings.MONGODB_SERVER_SELECTION_TIMEOUT_MS,
             }
+
+            mongo_uri = settings.MONGODB_URI
+            is_cosmos = _is_cosmos_mongo_uri(mongo_uri)
             
             # Add ServerApi if using MongoDB Atlas (mongodb+srv://)
-            if "mongodb+srv://" in settings.MONGODB_URI:
+            if "mongodb+srv://" in mongo_uri:
                 connection_kwargs["server_api"] = ServerApi('1')
                 logger.info("Using MongoDB Atlas with Stable API v1")
+
+            # Cosmos DB Emulator often uses self-signed TLS certificates.
+            if is_cosmos:
+                connection_kwargs["retryWrites"] = False
+                connection_kwargs["tls"] = True
+                logger.info("Detected Azure Cosmos DB Mongo API endpoint")
+
+            if settings.MONGODB_TLS_ALLOW_INVALID_CERTIFICATES:
+                connection_kwargs["tlsAllowInvalidCertificates"] = True
             
             self._client = AsyncIOMotorClient(
-                settings.MONGODB_URI,
+                mongo_uri,
                 **connection_kwargs
             )
             
@@ -74,6 +96,14 @@ class MongoDBManager:
             logger.info(f"MongoDB connected: {settings.MONGODB_DATABASE}")
             
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            # Reset partial state so subsequent requests can retry a clean connect.
+            if self._client is not None:
+                try:
+                    self._client.close()
+                except Exception:
+                    pass
+            self._client = None
+            self._db = None
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
     
@@ -100,7 +130,7 @@ class MongoDBManager:
     @property
     def is_connected(self) -> bool:
         """Check if database is connected."""
-        return self._client is not None
+        return self._client is not None and self._db is not None
 
 
 # Global instance (similar to Flutter's GetIt registration)

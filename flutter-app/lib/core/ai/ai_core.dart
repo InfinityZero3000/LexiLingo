@@ -9,6 +9,7 @@
 /// - AI Orchestration
 ///
 /// See README.md for usage examples
+library;
 
 // Core orchestrator
 export 'orchestrator/ai_orchestrator.dart';

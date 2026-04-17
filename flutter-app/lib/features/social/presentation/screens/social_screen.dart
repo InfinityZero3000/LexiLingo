@@ -34,6 +34,8 @@ class _SocialScreenState extends State<SocialScreen>
       final userId = authProvider.user?.id ?? '';
 
       provider.loadActivityFeed(refresh: true);
+      provider.loadSuggestedUsers();
+      provider.loadNearbyUsers();
       if (userId.isNotEmpty) {
         provider.loadFollowers(userId, refresh: true);
         provider.loadFollowing(userId, refresh: true);
@@ -61,15 +63,17 @@ class _SocialScreenState extends State<SocialScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friends'),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primary,
+          labelColor: primaryColor,
           unselectedLabelColor: AppColors.textGrey,
-          indicatorColor: AppColors.primary,
+          indicatorColor: primaryColor,
           tabs: const [
             Tab(text: 'Feed'),
             Tab(text: 'Followers'),
@@ -83,8 +87,8 @@ class _SocialScreenState extends State<SocialScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showSearchSheet,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.person_add, color: Colors.white),
+        backgroundColor: primaryColor,
+        child: const Icon(Icons.person_add, color: AppColors.surfaceLight),
       ),
     );
   }
@@ -93,7 +97,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFeed && provider.activityFeed.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.feedError != null && provider.activityFeed.isEmpty) {
@@ -108,23 +112,54 @@ class _SocialScreenState extends State<SocialScreen>
         }
 
         return RefreshIndicator(
-          onRefresh: () => provider.loadActivityFeed(refresh: true),
+          onRefresh: () async {
+            await provider.loadActivityFeed(refresh: true);
+            await provider.loadSuggestedUsers();
+            await provider.loadNearbyUsers();
+          },
           child: ListView.builder(
             controller: _feedScrollController,
             padding: const EdgeInsets.only(bottom: 80),
             itemCount:
-                provider.activityFeed.length + (provider.isLoadingFeed ? 1 : 0),
+                provider.activityFeed.length +
+                (provider.isLoadingFeed ? 1 : 0) +
+                2,
             itemBuilder: (context, index) {
-              if (index == provider.activityFeed.length) {
+              if (index == 0) {
+                return _NearbyLearnersSection(
+                  users: provider.nearbyUsers,
+                  isLoading: provider.isLoadingNearby,
+                  isEnabled: provider.isNearbyEnabled,
+                  error: provider.nearbyError,
+                  onFollowToggle: _toggleFollow,
+                  onRefresh: provider.loadNearbyUsers,
+                  onDisable: provider.disableNearbySharing,
+                );
+              }
+
+              if (index == 1) {
+                return _SuggestedFriendsSection(
+                  users: provider.suggestedUsers,
+                  isLoading: provider.isLoadingSuggestions,
+                  onFollowToggle: _toggleFollow,
+                  onRefresh: provider.loadSuggestedUsers,
+                );
+              }
+
+              final feedIndex = index - 2;
+
+
+              if (feedIndex == provider.activityFeed.length &&
+                  provider.isLoadingFeed) {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+                    child: LottieLoadingWidget.tiny(),
                   ),
                 );
               }
 
-              final activity = provider.activityFeed[index];
+              final activity = provider.activityFeed[feedIndex];
               return _ActivityFeedCard(activity: activity);
             },
           ),
@@ -134,11 +169,13 @@ class _SocialScreenState extends State<SocialScreen>
   }
 
   Widget _buildEmptyFeed() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+          Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
           const SizedBox(height: 16),
           const Text(
             'No activity yet',
@@ -147,7 +184,7 @@ class _SocialScreenState extends State<SocialScreen>
           const SizedBox(height: 8),
           Text(
             'Follow friends to see their activity!',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -155,8 +192,8 @@ class _SocialScreenState extends State<SocialScreen>
             icon: const Icon(Icons.person_add),
             label: const Text('Find Friends'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: primaryColor,
+              foregroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -171,7 +208,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFollowers && provider.followers.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.followers.isEmpty) {
@@ -179,7 +216,8 @@ class _SocialScreenState extends State<SocialScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+                Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
+                
                 const SizedBox(height: 16),
                 const Text('No followers yet'),
               ],
@@ -212,7 +250,7 @@ class _SocialScreenState extends State<SocialScreen>
     return Consumer<SocialProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingFollowing && provider.following.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.following.isEmpty) {
@@ -220,7 +258,7 @@ class _SocialScreenState extends State<SocialScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+                Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
                 const SizedBox(height: 16),
                 const Text('Not following anyone yet'),
                 const SizedBox(height: 24),
@@ -229,8 +267,9 @@ class _SocialScreenState extends State<SocialScreen>
                   icon: const Icon(Icons.person_add),
                   label: const Text('Find Friends'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor:
+                        AppColorRoles.primary(Theme.of(context).brightness == Brightness.dark),
+                    foregroundColor: AppColors.surfaceLight,
                   ),
                 ),
               ],
@@ -274,9 +313,249 @@ class _SocialScreenState extends State<SocialScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surfaceLight.withValues(alpha: 0),
       builder: (context) =>
           _SearchUsersSheet(onFollow: (user) => _toggleFollow(user)),
+    );
+  }
+}
+
+class _SuggestedFriendsSection extends StatelessWidget {
+  final List<UserSocialProfileEntity> users;
+  final bool isLoading;
+  final Future<void> Function({int limit}) onRefresh;
+  final Future<void> Function(UserSocialProfileEntity user) onFollowToggle;
+
+  const _SuggestedFriendsSection({
+    required this.users,
+    required this.isLoading,
+    required this.onRefresh,
+    required this.onFollowToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: primaryColor, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Suggested Friends',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: isLoading ? null : () => onRefresh(limit: 10),
+                icon: const Icon(Icons.refresh, size: 18),
+                color: primaryColor,
+                tooltip: 'Refresh suggestions',
+              ),
+            ],
+          ),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LottieLoadingWidget.tiny(),
+            )
+          else if (users.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                'No suggestions right now',
+                style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+              ),
+            )
+          else
+            Column(
+              children: users.take(5).map((user) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: primaryColor.withValues(alpha: 0.12),
+                    child: Text(
+                      user.displayName.isNotEmpty
+                          ? user.displayName[0].toUpperCase()
+                          : user.username[0].toUpperCase(),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    user.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    user.suggestionReasons.take(2).join(' • '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => onFollowToggle(user),
+                    child: Text(user.isFollowing ? 'Following' : 'Follow'),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NearbyLearnersSection extends StatelessWidget {
+  final List<UserSocialProfileEntity> users;
+  final bool isLoading;
+  final bool isEnabled;
+  final String? error;
+  final Future<void> Function({int limit, double radiusKm}) onRefresh;
+  final Future<void> Function(UserSocialProfileEntity user) onFollowToggle;
+  final Future<void> Function() onDisable;
+
+  const _NearbyLearnersSection({
+    required this.users,
+    required this.isLoading,
+    required this.isEnabled,
+    required this.error,
+    required this.onRefresh,
+    required this.onFollowToggle,
+    required this.onDisable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.greenSuccessBright.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.near_me, color: AppColors.greenSuccessBright, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Nearby Learners',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+              ),
+              const Spacer(),
+              if (isEnabled)
+                IconButton(
+                  onPressed: isLoading ? null : onDisable,
+                  icon: const Icon(Icons.location_disabled, size: 18),
+                  tooltip: 'Disable nearby',
+                  color: AppColorRoles.textMuted(isDark),
+                ),
+              IconButton(
+                onPressed: isLoading ? null : () => onRefresh(limit: 10, radiusKm: 25),
+                icon: const Icon(Icons.refresh, size: 18),
+                color: primaryColor,
+                tooltip: 'Refresh nearby',
+              ),
+            ],
+          ),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LottieLoadingWidget.tiny(),
+            )
+          else if (error != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                error!,
+                style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+              ),
+            )
+          else if (!isEnabled)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                'Enable location permission to discover learners nearby',
+                style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+              ),
+            )
+          else if (users.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                'No nearby learners found in your area right now',
+                style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+              ),
+            )
+          else
+            Column(
+              children: users.take(5).map((user) {
+                final distance = user.distanceKm != null
+                    ? '${user.distanceKm!.toStringAsFixed(1)} km'
+                    : 'Nearby';
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.greenSuccessBright.withValues(alpha: 0.12),
+                    child: Text(
+                      user.displayName.isNotEmpty
+                          ? user.displayName[0].toUpperCase()
+                          : user.username[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.greenSuccessBright,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    user.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    distance,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => onFollowToggle(user),
+                    child: Text(user.isFollowing ? 'Following' : 'Follow'),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -289,11 +568,16 @@ class _ActivityFeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+          bottom: BorderSide(
+            color: (isDark ? AppColors.borderDarkSoft : AppColors.grey300)
+                .withValues(alpha: 0.35),
+          ),
         ),
       ),
       child: Row(
@@ -305,9 +589,9 @@ class _ActivityFeedCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: primaryColor.withValues(alpha: 0.3),
               ),
             ),
             child: activity.avatarUrl != null && activity.avatarUrl!.isNotEmpty
@@ -315,10 +599,10 @@ class _ActivityFeedCard extends StatelessWidget {
                     child: Image.network(
                       activity.avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildInitial(),
+                  errorBuilder: (_, __, ___) => _buildInitial(context),
                     ),
-                  )
-                : _buildInitial(),
+                )
+              : _buildInitial(context),
           ),
           const SizedBox(width: 12),
 
@@ -343,7 +627,9 @@ class _ActivityFeedCard extends StatelessWidget {
                             const TextSpan(text: ' '),
                             TextSpan(
                               text: activity.message,
-                              style: TextStyle(color: Colors.grey[700]),
+                              style: TextStyle(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                             ),
                           ],
                         ),
@@ -357,12 +643,15 @@ class _ActivityFeedCard extends StatelessWidget {
                     Icon(
                       _getActivityIcon(),
                       size: 14,
-                      color: _getActivityColor(),
+                      color: _getActivityColor(context),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _formatTime(activity.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
                     ),
                   ],
                 ),
@@ -374,16 +663,17 @@ class _ActivityFeedCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInitial() {
+  Widget _buildInitial(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         activity.displayName.isNotEmpty
             ? activity.displayName[0].toUpperCase()
             : activity.username[0].toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.primary,
+          color: AppColorRoles.primary(isDark),
         ),
       ),
     );
@@ -406,20 +696,21 @@ class _ActivityFeedCard extends StatelessWidget {
     }
   }
 
-  Color _getActivityColor() {
+  Color _getActivityColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (activity.activityType) {
       case ActivityFeedItemEntity.typeAchievement:
-        return const Color(0xFFFFD700);
+        return AppColors.gold;
       case ActivityFeedItemEntity.typeCourse:
-        return const Color(0xFF10B981);
+        return AppColors.greenSuccessBright;
       case ActivityFeedItemEntity.typeLesson:
-        return const Color(0xFF3B82F6);
+        return AppColorRoles.primary(isDark);
       case ActivityFeedItemEntity.typeStreak:
-        return const Color(0xFFF59E0B);
+        return AppColors.orange;
       case ActivityFeedItemEntity.typeLevel:
-        return const Color(0xFF8B5CF6);
+        return AppColors.purple;
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
@@ -449,11 +740,16 @@ class _UserProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+          bottom: BorderSide(
+            color: (isDark ? AppColors.borderDarkSoft : AppColors.grey300)
+                .withValues(alpha: 0.35),
+          ),
         ),
       ),
       child: Row(
@@ -464,17 +760,17 @@ class _UserProfileCard extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.1),
             ),
             child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                 ? ClipOval(
                     child: Image.network(
                       user.avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildInitial(),
+                  errorBuilder: (_, __, ___) => _buildInitial(context),
                     ),
-                  )
-                : _buildInitial(),
+                )
+              : _buildInitial(context),
           ),
           const SizedBox(width: 12),
 
@@ -492,7 +788,10 @@ class _UserProfileCard extends StatelessWidget {
                 ),
                 Text(
                   '@${user.username}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: AppColorRoles.textMuted(isDark),
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -501,18 +800,24 @@ class _UserProfileCard extends StatelessWidget {
                       Icon(
                         Icons.local_fire_department,
                         size: 14,
-                        color: Colors.orange[400],
+                        color: AppColors.orange,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '${user.currentStreak}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColorRoles.textMuted(isDark),
+                        ),
                       ),
                       const SizedBox(width: 8),
                     ],
                     Text(
                       '${user.xp} XP',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
                     ),
                   ],
                 ),
@@ -526,7 +831,9 @@ class _UserProfileCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: user.isFollowing ? Colors.grey[200] : AppColors.primary,
+                color: user.isFollowing
+                    ? (isDark ? AppColors.surfaceDarkMuted : AppColors.grey200)
+                  : primaryColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -534,7 +841,9 @@ class _UserProfileCard extends StatelessWidget {
                     ? (showUnfollow ? 'Unfollow' : 'Following')
                     : 'Follow',
                 style: TextStyle(
-                  color: user.isFollowing ? Colors.grey[700] : Colors.white,
+                  color: user.isFollowing
+                      ? AppColorRoles.textSecondary(isDark)
+                      : AppColors.surfaceLight,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -546,16 +855,17 @@ class _UserProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInitial() {
+  Widget _buildInitial(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         user.displayName.isNotEmpty
             ? user.displayName[0].toUpperCase()
             : user.username[0].toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.primary,
+          color: AppColorRoles.primary(isDark),
         ),
       ),
     );
@@ -583,6 +893,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
@@ -597,7 +908,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -619,7 +930,9 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     hintText: 'Search by username or name',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: isDark
+                      ? AppColors.surfaceDarkMuted
+                      : AppColors.grey100,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -647,7 +960,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
             child: Consumer<SocialProvider>(
               builder: (context, provider, child) {
                 if (provider.isSearching) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: LottieLoadingWidget.medium());
                 }
 
                 if (provider.searchQuery.isEmpty) {
@@ -655,11 +968,13 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search, size: 48, color: Colors.grey[400]),
+                        Icon(Icons.search, size: 48, color: AppColors.grey400),
                         const SizedBox(height: 16),
                         Text(
                           'Search for friends',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(
+                            color: AppColorRoles.textMuted(isDark),
+                          ),
                         ),
                       ],
                     ),
@@ -674,12 +989,14 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                         Icon(
                           Icons.person_off,
                           size: 48,
-                          color: Colors.grey[400],
+                          color: AppColors.grey400,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No users found',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(
+                            color: AppColorRoles.textMuted(isDark),
+                          ),
                         ),
                       ],
                     ),

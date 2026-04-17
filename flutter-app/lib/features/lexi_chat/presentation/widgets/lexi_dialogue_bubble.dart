@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// Game-style dialogue bubble for Lexi chat.
+/// Minimalist dialogue bubble for Lexi chat.
 ///
-/// Two styles:
-///  - Lexi (left-aligned): parrot avatar + speech bubble with tail
-///  - User (right-aligned): colored bubble, no avatar
+/// Clean, simple design without avatars:
+///  - Lexi (left-aligned): Simple text bubble with subtle styling
+///  - User (right-aligned): Clean colored bubble
 class LexiDialogueBubble extends StatelessWidget {
   final LexiMessage message;
   final VoidCallback? onPlayAudio;
@@ -31,192 +34,214 @@ class LexiDialogueBubble extends StatelessWidget {
   Widget _buildLexiBubble(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 8, right: 48, top: 4, bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Parrot avatar
-          _buildLexiAvatar(context),
-          const SizedBox(width: 8),
-          // Speech bubble
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name tag
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, bottom: 2),
-                  child: Text(
-                    'Lexi 🦜',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? const Color(0xFF4FC3F7)
-                          : AppColors.primary,
-                    ),
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sender label
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Lexi',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white54 : AppColors.textGrey,
+                  letterSpacing: 0.2,
                 ),
-                // Bubble with tail
+              ),
+              if (message.hasCorrections) ...[
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF1E3A5F), const Color(0xFF14304D)]
-                          : [const Color(0xFFF0F7FF), const Color(0xFFE8F4FD)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4),
-                      topRight: Radius.circular(18),
-                      bottomLeft: Radius.circular(18),
-                      bottomRight: Radius.circular(18),
-                    ),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF2A5A8E).withValues(alpha: 0.4)
-                          : AppColors.primary.withValues(alpha: 0.15),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.25 : 0.06,
-                        ),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: AppColors.accentYellow.withValues(alpha: isDark ? 0.2 : 0.15),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Message text
+                      Icon(
+                        Icons.auto_fix_high_rounded,
+                        size: 10,
+                        color: AppColors.accentYellow,
+                      ),
+                      const SizedBox(width: 2),
                       Text(
-                        message.content,
+                        'Correction',
                         style: TextStyle(
-                          fontSize: 14,
-                          height: 1.4,
-                          color: isDark ? Colors.white : AppColors.textDark,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.accentYellow,
                         ),
                       ),
-                      // Action buttons row
-                      if (message.hasAudio || message.hasCorrections)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (message.hasAudio)
-                                _buildActionChip(
-                                  context,
-                                  icon: Icons.volume_up_rounded,
-                                  label: 'Listen',
-                                  onTap: onPlayAudio,
-                                ),
-                              if (message.hasCorrections) ...[
-                                const SizedBox(width: 6),
-                                _buildActionChip(
-                                  context,
-                                  icon: Icons.auto_fix_high_rounded,
-                                  label: 'Corrections',
-                                  onTap: onShowCorrections,
-                                  color: AppColors.accentYellow,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
                     ],
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+        // Message bubble
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceDark
+                : AppColors.backgroundLight,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.surfaceDarkChat
+                  : AppColors.chatBgLight,
+              width: 1,
             ),
           ),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Message text
+              _buildLexiMessageContent(context, isDark),
+              // Action buttons row
+              if (message.hasAudio || message.hasCorrections)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      if (message.hasAudio)
+                        _buildActionChip(
+                          context,
+                          icon: Icons.volume_up_rounded,
+                          label: 'Listen',
+                          onTap: onPlayAudio,
+                        ),
+                      if (message.hasCorrections)
+                        _buildActionChip(
+                          context,
+                          icon: Icons.auto_fix_high_rounded,
+                          label: 'View Notes',
+                          onTap: onShowCorrections,
+                          color: AppColors.accentYellow,
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLexiMessageContent(BuildContext context, bool isDark) {
+    final baseTextStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: isDark ? Colors.white : AppColors.textDark,
+      letterSpacing: -0.1,
+    );
+
+    final highlightColor = isDark
+        ? AppColors.accentYellow.withValues(alpha: 0.25)
+        : AppColors.accentYellow.withValues(alpha: 0.2);
+
+    return QuickSaveSelectionArea(
+      sourceType: 'lexi_chat',
+      sourceReference: message.id,
+      contextSentence: message.content,
+      child: MarkdownBody(
+        data: message.content,
+        selectable: false,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+          p: baseTextStyle,
+          listBullet: baseTextStyle.copyWith(
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : AppColors.textDark,
+          ),
+          strong: baseTextStyle.copyWith(
+            fontWeight: FontWeight.w700,
+            backgroundColor: highlightColor,
+          ),
+          em: baseTextStyle.copyWith(
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w600,
+            backgroundColor: highlightColor,
+          ),
+          a: baseTextStyle.copyWith(
+            color: AppColorRoles.primary(isDark),
+            decoration: TextDecoration.underline,
+          ),
+        ),
+        onTapLink: (text, href, title) async {
+          if (href == null || href.isEmpty) return;
+          final uri = Uri.tryParse(href);
+          if (uri == null) return;
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
       ),
     );
   }
 
   Widget _buildUserBubble(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 48, right: 8, top: 4, bottom: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: AppColors.primaryGradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  topRight: Radius.circular(4),
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                message.content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: Colors.white,
-                ),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColorRoles.primary(isDark),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(4),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLexiAvatar(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF43E97B).withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+          child: Text(
+            message.content,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: Theme.of(context).colorScheme.surface,
+              letterSpacing: -0.1,
+            ),
           ),
-        ],
-      ),
-      child: ClipOval(
-        child: Image.asset(
-          'assets/avatar/avatar-ai-chat.png',
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              const Center(child: Text('🦜', style: TextStyle(fontSize: 22))),
         ),
-      ),
+        if (message.isPendingSync)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 12,
+                  color: isDark ? Colors.white60 : AppColors.textGrey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Pending sync',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -228,27 +253,30 @@ class LexiDialogueBubble extends StatelessWidget {
     Color? color,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final chipColor = color ?? AppColors.primary;
+    final chipColor = color ?? AppColorRoles.primary(isDark);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: chipColor.withValues(alpha: isDark ? 0.2 : 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: chipColor.withValues(alpha: 0.3), width: 1),
+          color: chipColor.withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: chipColor.withValues(alpha: isDark ? 0.3 : 0.2),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: chipColor),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: chipColor,
               ),

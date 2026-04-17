@@ -21,6 +21,7 @@ export const UnitsPage = () => {
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   // Course filter (standalone mode)
   const [courses, setCourses] = useState<CourseItem[]>([]);
@@ -58,7 +59,7 @@ export const UnitsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await listUnitsAdmin(activeCourseId);
+      const res = await listUnitsAdmin(activeCourseId, search || undefined);
       setUnits(res.data || []);
     } catch (err: any) {
       setError(err?.message || t.units.loadFailed);
@@ -72,6 +73,11 @@ export const UnitsPage = () => {
   }, []);
 
   useEffect(() => { void loadUnits(); }, [paramCourseId, selectedCourseId]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    void loadUnits();
+  };
 
   // Build course name lookup
   const courseMap = new Map(courses.map(c => [c.id, c.title]));
@@ -131,17 +137,28 @@ export const UnitsPage = () => {
       {error && <div className="form-error">{error}</div>}
 
       <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          {isStandalone && (
-            <select
-              value={selectedCourseId}
-              onChange={(e) => setSelectedCourseId(e.target.value)}
-              style={{ minWidth: 220, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
-            >
-              <option value="">-- Tất cả khóa học --</option>
-              {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-            </select>
-          )}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 300 }}>
+            <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flex: 1 }}>
+              <input
+                placeholder={t.units.searchPlaceholder}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
+              />
+              <button className="ghost-button" type="submit">{t.common.search}</button>
+            </form>
+            {isStandalone && (
+              <select
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                style={{ minWidth: 220, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
+              >
+                <option value="">-- Tất cả khóa học --</option>
+                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+            )}
+          </div>
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
             {t.units.createUnit}
           </button>

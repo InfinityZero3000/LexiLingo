@@ -21,10 +21,7 @@ void main() {
 
   const tLessonId = 'lesson-123';
   const tScore = 85.0;
-  const tParams = CompleteLessonParams(
-    lessonId: tLessonId,
-    score: tScore,
-  );
+  const tParams = CompleteLessonParams(lessonId: tLessonId, score: tScore);
 
   final tCompletionResult = LessonCompletionResult(
     lessonId: tLessonId,
@@ -39,20 +36,19 @@ void main() {
 
   test('should complete lesson with passing score', () async {
     // arrange
-    when(mockRepository.completeLesson(
-      lessonId: anyNamed('lessonId'),
-      score: anyNamed('score'),
-    )).thenAnswer((_) async => Right(tCompletionResult));
+    when(
+      mockRepository.completeLesson(
+        lessonId: anyNamed('lessonId'),
+        score: anyNamed('score'),
+      ),
+    ).thenAnswer((_) async => Right(tCompletionResult));
 
     // act
     final result = await usecase(tParams);
 
     // assert
     expect(result, Right(tCompletionResult));
-    verify(mockRepository.completeLesson(
-      lessonId: tLessonId,
-      score: tScore,
-    ));
+    verify(mockRepository.completeLesson(lessonId: tLessonId, score: tScore));
     verifyNoMoreInteractions(mockRepository);
   });
 
@@ -63,7 +59,7 @@ void main() {
       lessonId: tLessonId,
       score: failingScore,
     );
-    
+
     final failedResult = LessonCompletionResult(
       lessonId: tLessonId,
       isPassed: false,
@@ -75,10 +71,12 @@ void main() {
       message: 'Keep practicing! Score must be 80% or higher to pass.',
     );
 
-    when(mockRepository.completeLesson(
-      lessonId: anyNamed('lessonId'),
-      score: anyNamed('score'),
-    )).thenAnswer((_) async => Right(failedResult));
+    when(
+      mockRepository.completeLesson(
+        lessonId: anyNamed('lessonId'),
+        score: anyNamed('score'),
+      ),
+    ).thenAnswer((_) async => Right(failedResult));
 
     // act
     final result = await usecase(failingParams);
@@ -93,10 +91,12 @@ void main() {
   test('should return ServerFailure when repository call fails', () async {
     // arrange
     final failure = ServerFailure('Server error');
-    when(mockRepository.completeLesson(
-      lessonId: anyNamed('lessonId'),
-      score: anyNamed('score'),
-    )).thenAnswer((_) async => Left(failure));
+    when(
+      mockRepository.completeLesson(
+        lessonId: anyNamed('lessonId'),
+        score: anyNamed('score'),
+      ),
+    ).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(tParams);
@@ -107,19 +107,18 @@ void main() {
       (l) => expect(l, isA<ServerFailure>()),
       (r) => fail('Should be Left'),
     );
-    verify(mockRepository.completeLesson(
-      lessonId: tLessonId,
-      score: tScore,
-    ));
+    verify(mockRepository.completeLesson(lessonId: tLessonId, score: tScore));
   });
 
   test('should return UnauthorizedFailure when not enrolled', () async {
     // arrange
     final failure = UnauthorizedFailure('Not enrolled in course');
-    when(mockRepository.completeLesson(
-      lessonId: anyNamed('lessonId'),
-      score: anyNamed('score'),
-    )).thenAnswer((_) async => Left(failure));
+    when(
+      mockRepository.completeLesson(
+        lessonId: anyNamed('lessonId'),
+        score: anyNamed('score'),
+      ),
+    ).thenAnswer((_) async => Left(failure));
 
     // act
     final result = await usecase(tParams);
@@ -134,18 +133,9 @@ void main() {
 
   group('CompleteLessonParams', () {
     test('should have correct props', () {
-      const params1 = CompleteLessonParams(
-        lessonId: 'lesson-1',
-        score: 90.0,
-      );
-      const params2 = CompleteLessonParams(
-        lessonId: 'lesson-1',
-        score: 90.0,
-      );
-      const params3 = CompleteLessonParams(
-        lessonId: 'lesson-2',
-        score: 90.0,
-      );
+      const params1 = CompleteLessonParams(lessonId: 'lesson-1', score: 90.0);
+      const params2 = CompleteLessonParams(lessonId: 'lesson-1', score: 90.0);
+      const params3 = CompleteLessonParams(lessonId: 'lesson-2', score: 90.0);
 
       expect(params1, equals(params2));
       expect(params1, isNot(equals(params3)));

@@ -2,6 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Native build deps are needed for packages like llama-cpp-python.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	gcc \
+	g++ \
+	make \
+	cmake \
+	&& rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

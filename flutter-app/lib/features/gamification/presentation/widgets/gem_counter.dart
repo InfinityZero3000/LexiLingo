@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Gem Counter Widget
 /// Shows gem balance with animation on value change
@@ -82,15 +83,15 @@ class _GemCounterState extends State<GemCounter>
               ? BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                      const Color(0xFFA855F7).withValues(alpha: 0.1),
+                      AppColors.purple.withValues(alpha: 0.15),
+                      AppColors.purpleLight.withValues(alpha: 0.1),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                    color: AppColors.purple.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 )
@@ -105,7 +106,7 @@ class _GemCounterState extends State<GemCounter>
                 style: TextStyle(
                   fontSize: widget.fontSize,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF8B5CF6),
+                  color: AppColors.purple,
                 ),
               ),
             ],
@@ -121,20 +122,20 @@ class _GemCounterState extends State<GemCounter>
       height: widget.iconSize,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFFA855F7)],
+          colors: [AppColors.purple, AppColors.purpleLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+            color: AppColors.purple.withValues(alpha: 0.4),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: const Icon(Icons.diamond, color: Colors.white, size: 14),
+      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 14),
     );
   }
 
@@ -162,7 +163,7 @@ class GemIcon extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFFA855F7)],
+          colors: [AppColors.purple, AppColors.purpleLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -170,14 +171,14 @@ class GemIcon extends StatelessWidget {
         boxShadow: withShadow
             ? [
                 BoxShadow(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                  color: AppColors.purple.withValues(alpha: 0.4),
                   blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  offset: Offset(0, 3),
                 ),
               ]
             : null,
       ),
-      child: Icon(Icons.diamond, color: Colors.white, size: size * 0.6),
+      child: Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: size * 0.6),
     );
   }
 }

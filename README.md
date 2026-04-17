@@ -288,7 +288,6 @@ AI-generated exercises that adapt to each learner's profile:
 | Auth | **JWT** | Token-based authentication |
 | ORM | **SQLAlchemy** + Alembic | Database abstraction & migrations |
 | Containerization | **Docker Compose** | Multi-service orchestration |
-| MCP Server | **Model Context Protocol** | External tool integration |
 
 ### Frontend
 

@@ -3,7 +3,6 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 
 void main() {
   group('CourseProvider - Course Grouping', () {
-
     final testCourses = [
       CourseEntity(
         id: '1',
@@ -98,8 +97,14 @@ void main() {
         final grouped = _groupCoursesByCategory(testCourses);
 
         final intermediateCourses = grouped['Intermediate']!;
-        expect(intermediateCourses.any((c) => c.title == 'Intermediate English'), true);
-        expect(intermediateCourses.any((c) => c.title == 'Intermediate Spanish'), true);
+        expect(
+          intermediateCourses.any((c) => c.title == 'Intermediate English'),
+          true,
+        );
+        expect(
+          intermediateCourses.any((c) => c.title == 'Intermediate Spanish'),
+          true,
+        );
       });
 
       test('should have advanced courses with correct data', () {
@@ -271,7 +276,9 @@ void main() {
 }
 
 // Helper functions that mirror the provider's logic for testing
-Map<String, List<CourseEntity>> _groupCoursesByCategory(List<CourseEntity> courses) {
+Map<String, List<CourseEntity>> _groupCoursesByCategory(
+  List<CourseEntity> courses,
+) {
   final Map<String, List<CourseEntity>> grouped = {};
   const categoryOrder = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -292,7 +299,9 @@ Map<String, List<CourseEntity>> _groupCoursesByCategory(List<CourseEntity> cours
   return grouped;
 }
 
-Map<String, List<CourseEntity>> _groupCoursesByLanguage(List<CourseEntity> courses) {
+Map<String, List<CourseEntity>> _groupCoursesByLanguage(
+  List<CourseEntity> courses,
+) {
   final Map<String, List<CourseEntity>> grouped = {};
 
   for (final course in courses) {
@@ -307,7 +316,9 @@ Map<String, List<CourseEntity>> _groupCoursesByLanguage(List<CourseEntity> cours
   return grouped;
 }
 
-Map<String, List<CourseEntity>> _groupCoursesByTopic(List<CourseEntity> courses) {
+Map<String, List<CourseEntity>> _groupCoursesByTopic(
+  List<CourseEntity> courses,
+) {
   final Map<String, List<CourseEntity>> grouped = {};
 
   for (final course in courses) {

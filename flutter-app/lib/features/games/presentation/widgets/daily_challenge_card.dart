@@ -38,7 +38,7 @@ class DailyChallengeCard extends StatelessWidget {
           gradient: completed
               ? null
               : const LinearGradient(
-                  colors: [Color(0xFF137FEC), Color(0xFF5B9BF5)],
+                  colors: [AppColors.primary, Color(0xFF5B9BF5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -48,7 +48,7 @@ class DailyChallengeCard extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -65,16 +65,16 @@ class DailyChallengeCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: completed
                     ? AppColors.grey300
-                    : Colors.white.withOpacity(0.2),
+                    : Colors.white.withValues(alpha: 0.2),
               ),
               alignment: Alignment.center,
               child: completed
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_circle_rounded,
                       color: AppColors.greenSuccess,
                       size: 28,
                     )
-                  : Icon(icon, color: Colors.white, size: 26),
+                  : Icon(icon, color: Theme.of(context).colorScheme.surface, size: 26),
             ),
             const SizedBox(width: 14),
 
@@ -109,7 +109,7 @@ class DailyChallengeCard extends StatelessWidget {
                       fontSize: 11,
                       color: completed
                           ? AppColors.textGrey
-                          : Colors.white.withOpacity(0.7),
+                          : Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -130,19 +130,19 @@ class DailyChallengeCard extends StatelessWidget {
                   children: [
                     Text(
                       '${challenge.bonusMultiplier}x',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         height: 1,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'XP',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                       ),
                     ),
                   ],

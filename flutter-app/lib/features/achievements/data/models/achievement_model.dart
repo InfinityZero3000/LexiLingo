@@ -1,5 +1,6 @@
 /// Achievement Model - Data layer
 /// Maps API responses to domain entities
+library;
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 

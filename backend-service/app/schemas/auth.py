@@ -2,7 +2,7 @@
 Authentication Schemas
 """
 
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -40,6 +40,11 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    """Logout request."""
+    refresh_token: Optional[str] = None
+
+
 class ChangePasswordRequest(BaseModel):
     """Change password request."""
     current_password: str
@@ -51,7 +56,12 @@ class ChangePasswordRequest(BaseModel):
 class GoogleLoginRequest(BaseModel):
     """Google OAuth login request."""
     id_token: str = Field(..., description="Google ID token from client")
-    source: str = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
+    source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
+
+class FacebookLoginRequest(BaseModel):
+    """Facebook login request (via Firebase)."""
+    id_token: str = Field(..., description="Firebase ID token from client")
+    source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
 
 
 class ForgotPasswordRequest(BaseModel):

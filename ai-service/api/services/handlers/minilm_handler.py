@@ -142,27 +142,6 @@ class MiniLMHandler:
         )
         return embeddings
 
-
-def _l2_normalize(vectors: np.ndarray) -> np.ndarray:
-    denom = np.linalg.norm(vectors, axis=1, keepdims=True)
-    denom[denom == 0.0] = 1.0
-    return vectors / denom
-
-
-def _hashing_encode(texts: List[str], dim: int) -> np.ndarray:
-    """Dependency-free embedding via hashing trick.
-
-    Not a semantic model; robust fallback for offline benchmarks.
-    """
-    vectors = np.zeros((len(texts), dim), dtype=np.float32)
-    for row, text in enumerate(texts):
-        for token in (text or "").lower().split():
-            h = hash(token)
-            idx = h % dim
-            sign = 1.0 if (h & 1) == 0 else -1.0
-            vectors[row, idx] += sign
-    return vectors
-
     async def similarity(
         self, query: str, candidates: List[str]
     ) -> List[Dict[str, Any]]:
@@ -190,17 +169,18 @@ def _hashing_encode(texts: List[str], dim: int) -> np.ndarray:
         results.sort(key=lambda r: r["score"], reverse=True)
         return results
 
-    # ── Gateway interface (invoke) ───────────────────────────────────────
-    async def invoke(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def invoke(
+        self,
+        task: str = "encode",
+        **params: Any,
+    ) -> Dict[str, Any]:
         """
         Gateway-compatible invoke interface.
 
         Supported tasks:
-        - encode: {"texts": [...]} → {"embeddings": [...]}
-        - similarity: {"query": "...", "candidates": [...]} → {"results": [...]}
+        - encode: {"texts": [...]} -> {"embeddings": [...]}
+        - similarity: {"query": "...", "candidates": [...]} -> {"results": [...]}
         """
-        task = params.get("task", "encode")
-
         try:
             if task in ("encode", "embed"):
                 texts = params.get("texts") or params.get("text", "")
@@ -213,7 +193,7 @@ def _hashing_encode(texts: List[str], dim: int) -> np.ndarray:
                     },
                 }
 
-            elif task in ("similarity", "semantic_search"):
+            if task in ("similarity", "semantic_search"):
                 query = params.get("query", "")
                 candidates = params.get("candidates", [])
                 results = await self.similarity(query, candidates)
@@ -222,9 +202,29 @@ def _hashing_encode(texts: List[str], dim: int) -> np.ndarray:
                     "data": {"results": results},
                 }
 
-            else:
-                return {"success": False, "error": f"Unknown task: {task}"}
+            return {"success": False, "error": f"Unknown task: {task}"}
 
         except Exception as e:
             logger.error("MiniLM invoke error: %s", e)
             return {"success": False, "error": str(e)}
+
+
+def _l2_normalize(vectors: np.ndarray) -> np.ndarray:
+    denom = np.linalg.norm(vectors, axis=1, keepdims=True)
+    denom[denom == 0.0] = 1.0
+    return vectors / denom
+
+
+def _hashing_encode(texts: List[str], dim: int) -> np.ndarray:
+    """Dependency-free embedding via hashing trick.
+
+    Not a semantic model; robust fallback for offline benchmarks.
+    """
+    vectors = np.zeros((len(texts), dim), dtype=np.float32)
+    for row, text in enumerate(texts):
+        for token in (text or "").lower().split():
+            h = hash(token)
+            idx = h % dim
+            sign = 1.0 if (h & 1) == 0 else -1.0
+            vectors[row, idx] += sign
+    return vectors

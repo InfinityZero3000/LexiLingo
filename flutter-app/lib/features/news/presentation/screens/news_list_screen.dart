@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
@@ -106,7 +107,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.articles.isEmpty) {
                     return const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: LottieLoadingWidget.medium()),
                     );
                   }
 
@@ -124,7 +125,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'Failed to load articles',
-                              style: TextStyle(color: Colors.grey.shade500),
+                              style: TextStyle(color: AppColors.grey500),
                             ),
                             const SizedBox(height: 8),
                             TextButton(
@@ -147,13 +148,13 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             Icon(
                               Icons.article_outlined,
                               size: 64,
-                              color: Colors.grey.shade400,
+                              color: AppColors.grey400,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'No articles found',
                               style: TextStyle(
-                                color: Colors.grey.shade500,
+                                color: AppColors.grey500,
                                 fontSize: 16,
                               ),
                             ),
@@ -172,7 +173,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               ? const Padding(
                                   padding: EdgeInsets.all(16),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: LottieLoadingWidget.tiny(),
                                   ),
                                 )
                               : const SizedBox.shrink();
@@ -310,7 +311,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
               ),
               backgroundColor: isDark
                   ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.grey.shade100,
+                  : AppColors.grey100,
               selectedColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -409,8 +410,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           ),
                           child: Text(
                             article.cefrLevel,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.surfaceLight,
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),
@@ -544,17 +545,17 @@ class _NewsListScreenState extends State<NewsListScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

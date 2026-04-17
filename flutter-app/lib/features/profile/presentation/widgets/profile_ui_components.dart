@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated gradient background for profile header
 class AnimatedProfileBackground extends StatefulWidget {
@@ -11,9 +12,9 @@ class AnimatedProfileBackground extends StatefulWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF667eea),
-      Color(0xFF764ba2),
-      Color(0xFFf093fb),
+      AppColors.primary,
+      AppColors.primaryDark,
+      AppColors.purple,
     ],
     this.duration = const Duration(seconds: 4),
   });
@@ -77,6 +78,16 @@ class GlassmorphicStatCard extends StatefulWidget {
   final String? subtitle;
   final bool isAction;
   final VoidCallback? onTap;
+  final double valueFontSize;
+  final EdgeInsetsGeometry contentPadding;
+  final double iconBoxSize;
+  final double iconSize;
+  final double titleFontSize;
+  final double subtitleFontSize;
+  final double middleSpacing;
+  final bool valueInRightCircle;
+  final double valueCircleSize;
+  final double valueCircleFontSize;
 
   const GlassmorphicStatCard({
     super.key,
@@ -87,6 +98,16 @@ class GlassmorphicStatCard extends StatefulWidget {
     this.subtitle,
     this.isAction = false,
     this.onTap,
+    this.valueFontSize = 42,
+    this.contentPadding = const EdgeInsets.all(16),
+    this.iconBoxSize = 48,
+    this.iconSize = 22,
+    this.titleFontSize = 14,
+    this.subtitleFontSize = 12,
+    this.middleSpacing = 18,
+    this.valueInRightCircle = false,
+    this.valueCircleSize = 46,
+    this.valueCircleFontSize = 20,
   });
 
   @override
@@ -97,7 +118,6 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
@@ -109,12 +129,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _glowAnimation = Tween<double>(
-      begin: 0.2,
-      end: 0.4,
+      end: 0.98,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
@@ -130,7 +145,6 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
 
   void _onTapUp(TapUpDetails details) {
     _controller.reverse();
-    widget.onTap?.call();
   }
 
   void _onTapCancel() {
@@ -140,8 +154,31 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark
+      ? widget.color.withValues(alpha: 0.12)
+      : widget.color.withValues(alpha: 0.08);
+    final borderColor = isDark
+      ? widget.color.withValues(alpha: 0.36)
+      : widget.color.withValues(alpha: 0.28);
+    final iconBgColor = isDark
+      ? widget.color.withValues(alpha: 0.22)
+      : widget.color.withValues(alpha: 0.16);
+    final titleColor = isDark
+        ? AppColors.textInverted.withValues(alpha: 0.7)
+        : AppColors.textGrey;
+    final valueColor = isDark ? AppColors.textInverted : AppColors.textDark;
+    final subtitleColor = isDark
+        ? AppColors.textInverted.withValues(alpha: 0.6)
+        : AppColors.textSlate;
+    final valueCircleBg = isDark
+      ? widget.color.withValues(alpha: 0.22)
+      : widget.color.withValues(alpha: 0.14);
+    final valueCircleBorder = isDark
+      ? widget.color.withValues(alpha: 0.45)
+      : widget.color.withValues(alpha: 0.30);
 
     return GestureDetector(
+      onTap: widget.onTap,
       onTapDown: widget.onTap != null ? _onTapDown : null,
       onTapUp: widget.onTap != null ? _onTapUp : null,
       onTapCancel: widget.onTap != null ? _onTapCancel : null,
@@ -153,113 +190,181 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.9),
-                          Colors.white.withValues(alpha: 0.7),
-                        ],
-                ),
+                color: surfaceColor,
                 border: Border.all(
-                  color: widget.color.withValues(alpha: _glowAnimation.value),
-                  width: 1.5,
+                  color: borderColor,
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: widget.color.withValues(alpha: isDark ? 0.08 : 0.14),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: widget.color.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                widget.icon,
-                                color: widget.color,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                widget.title,
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+              child: Padding(
+                padding: widget.contentPadding,
+                child: widget.valueInRightCircle
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: widget.iconBoxSize,
+                                height: widget.iconBoxSize,
+                                decoration: BoxDecoration(
+                                  color: iconBgColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: widget.iconSize,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 300),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.grey[800],
-                          ),
-                          child: Text(widget.value),
-                        ),
-                        if (widget.subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  widget.subtitle!,
+                                  widget.title,
                                   style: TextStyle(
-                                    color: widget.isAction
-                                        ? widget.color
-                                        : (isDark
-                                              ? Colors.grey[500]
-                                              : Colors.grey[600]),
-                                    fontSize: 11,
-                                    fontWeight: widget.isAction
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
+                                    color: titleColor,
+                                    fontSize: widget.titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: widget.valueCircleSize,
+                                height: widget.valueCircleSize,
+                                decoration: BoxDecoration(
+                                  color: valueCircleBg,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: valueCircleBorder,
+                                    width: 1.4,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    widget.value,
+                                    style: TextStyle(
+                                      fontSize: widget.valueCircleFontSize,
+                                      fontWeight: FontWeight.w800,
+                                      color: valueColor,
+                                      letterSpacing: -0.4,
+                                    ),
                                   ),
                                 ),
                               ),
-                              if (widget.isAction)
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 10,
-                                  color: widget.color,
-                                ),
                             ],
                           ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.subtitle!,
+                                    style: TextStyle(
+                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      fontSize: widget.subtitleFontSize,
+                                      fontWeight: widget.isAction
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (widget.isAction)
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: widget.color,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: widget.iconBoxSize,
+                                height: widget.iconBoxSize,
+                                decoration: BoxDecoration(
+                                  color: iconBgColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: widget.iconSize,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  widget.title,
+                                  style: TextStyle(
+                                    color: titleColor,
+                                    fontSize: widget.titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: widget.middleSpacing),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 250),
+                            style: TextStyle(
+                              fontSize: widget.valueFontSize,
+                              height: 1,
+                              fontWeight: FontWeight.w700,
+                              color: valueColor,
+                              letterSpacing: -1,
+                            ),
+                            child: Text(widget.value),
+                          ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.subtitle!,
+                                    style: TextStyle(
+                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      fontSize: widget.subtitleFontSize,
+                                      fontWeight: widget.isAction
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                if (widget.isAction)
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: widget.color,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
               ),
             ),
           );
@@ -352,7 +457,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
               Container(
                 height: widget.height,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[800] : const Color(0xFFDBE0E6),
+                  color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
                 ),
               ),
               // Progress
@@ -381,7 +486,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                             ).createShader(bounds);
                           },
                           blendMode: BlendMode.srcATop,
-                          child: Container(color: Colors.white),
+                          child: Container(color: Theme.of(context).colorScheme.surface),
                         )
                       : null,
                 ),
@@ -490,7 +595,7 @@ class _AnimatedSocialStatState extends State<AnimatedSocialStat>
                   widget.label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -571,24 +676,24 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withValues(alpha: 0.2),
-                        Colors.white.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.2),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(widget.icon, size: 16, color: Colors.white),
+                      Icon(widget.icon, size: 16, color: Theme.of(context).colorScheme.surface),
                       const SizedBox(width: 6),
                       Text(
                         widget.text,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -618,7 +723,7 @@ class AnimatedActivityBar extends StatefulWidget {
     required this.label,
     required this.value,
     required this.xpValue,
-    this.color = const Color(0xFF6366F1),
+    this.color = AppColors.primary,
     this.delay = Duration.zero,
   });
 
@@ -714,7 +819,7 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: isDark ? AppColors.grey500 : AppColors.grey600,
                 ),
               ),
             ],
@@ -762,12 +867,12 @@ class GlassmorphicContainer extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        Colors.white.withValues(alpha: 0.1),
-                        Colors.white.withValues(alpha: 0.05),
+                        AppColors.surfaceLight.withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.05),
                       ]
                     : [
-                        Colors.white.withValues(alpha: 0.8),
-                        Colors.white.withValues(alpha: 0.6),
+                        AppColors.surfaceLight.withValues(alpha: 0.8),
+                        AppColors.surfaceLight.withValues(alpha: 0.6),
                       ],
               ),
               borderRadius: BorderRadius.circular(borderRadius),
@@ -775,12 +880,12 @@ class GlassmorphicContainer extends StatelessWidget {
                 color:
                     borderColor ??
                     (isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.white.withValues(alpha: 0.5)),
+                        ? AppColors.surfaceLight.withValues(alpha: 0.1)
+                        : AppColors.surfaceLight.withValues(alpha: 0.5)),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: AppColors.textDark.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

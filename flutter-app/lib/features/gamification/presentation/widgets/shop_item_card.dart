@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Shop Item Card Widget
 /// Displays a purchasable item in the shop
@@ -26,7 +28,7 @@ class ShopItemCard extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _getCategoryColor(item.category).withValues(alpha: 0.2),
+          color: _getCategoryColor(context, item.category).withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
@@ -47,8 +49,8 @@ class ShopItemCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _getCategoryColor(item.category).withValues(alpha: 0.15),
-                    _getCategoryColor(item.category).withValues(alpha: 0.05),
+                    _getCategoryColor(context, item.category).withValues(alpha: 0.15),
+                    _getCategoryColor(context, item.category).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -60,7 +62,7 @@ class ShopItemCard extends StatelessWidget {
               child: Stack(
                 children: [
                   // Item Icon
-                  Center(child: _buildItemIcon()),
+                  Center(child: _buildItemIcon(context)),
 
                   // Limited stock badge
                   if (item.isLimitedStock)
@@ -75,17 +77,17 @@ class ShopItemCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: item.isOutOfStock
                               ? Colors.red.withValues(alpha: 0.9)
-                              : Colors.orange.withValues(alpha: 0.9),
+                              : AppColors.orange.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           item.isOutOfStock
                               ? 'SOLD OUT'
                               : '${item.stockRemaining} LEFT',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                           ),
                         ),
                       ),
@@ -102,24 +104,26 @@ class ShopItemCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.9),
+                          color: AppColorRoles.primary(
+                            Theme.of(context).brightness == Brightness.dark,
+                          ).withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.timer,
                               size: 12,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${item.effectDuration}h',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                               ),
                             ),
                           ],
@@ -169,7 +173,7 @@ class ShopItemCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          color: AppColors.purple.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -178,7 +182,7 @@ class ShopItemCard extends StatelessWidget {
                             const Icon(
                               Icons.diamond,
                               size: 14,
-                              color: Color(0xFF8B5CF6),
+                              color: AppColors.purple,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -186,7 +190,7 @@ class ShopItemCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF8B5CF6),
+                                color: AppColors.purple,
                               ),
                             ),
                           ],
@@ -206,18 +210,15 @@ class ShopItemCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: canAfford && !item.isOutOfStock
-                                ? const Color(0xFF10B981)
+                                ? AppColors.greenSuccessBright
                                 : Colors.grey[300],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
+                                  child: LottieLoadingWidget.tiny(),
                                 )
                               : Text(
                                   item.isOutOfStock ? 'SOLD' : 'BUY',
@@ -242,7 +243,7 @@ class ShopItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildItemIcon() {
+  Widget _buildItemIcon(BuildContext context) {
     IconData icon;
     switch (item.effectType) {
       case ShopItemEntity.effectStreakFreeze:
@@ -267,8 +268,8 @@ class ShopItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _getCategoryColor(item.category),
-            _getCategoryColor(item.category).withValues(alpha: 0.7),
+            _getCategoryColor(context, item.category),
+            _getCategoryColor(context, item.category).withValues(alpha: 0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -276,26 +277,27 @@ class ShopItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _getCategoryColor(item.category).withValues(alpha: 0.4),
+            color: _getCategoryColor(context, item.category).withValues(alpha: 0.4),
             blurRadius: 12,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: 32),
+      child: Icon(icon, color: AppColors.surfaceLight, size: 32),
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(BuildContext context, String category) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (category) {
       case ShopItemEntity.categoryPowerUps:
-        return const Color(0xFF3B82F6); // Blue
+        return AppColorRoles.primary(isDark);
       case ShopItemEntity.categoryCosmetics:
         return const Color(0xFFEC4899); // Pink
       case ShopItemEntity.categoryBoosts:
-        return const Color(0xFFF59E0B); // Amber
+        return AppColors.orange; // Amber
       case ShopItemEntity.categorySpecial:
-        return const Color(0xFF8B5CF6); // Purple
+        return AppColors.purple; // Purple
       default:
         return const Color(0xFF6B7280); // Gray
     }

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 /// Firebase Integration Tests
-/// 
+///
 /// These tests verify the Firebase configuration and integration
 /// Run these tests with: flutter test test/integration/firebase_integration_test.dart
 void main() {
@@ -15,7 +15,7 @@ void main() {
     test('Firebase project ID should be configured', () {
       // Expected project ID from firebase_options.dart
       const expectedProjectId = 'lexilingo-88492';
-      
+
       // Verify configuration matches
       expect(expectedProjectId, isNotEmpty);
       expect(expectedProjectId, contains('lexilingo'));
@@ -23,13 +23,7 @@ void main() {
 
     test('All platforms should be configured', () {
       // List of expected platforms
-      final expectedPlatforms = [
-        'web',
-        'android',
-        'ios',
-        'macos',
-        'windows',
-      ];
+      final expectedPlatforms = ['web', 'android', 'ios', 'macos', 'windows'];
 
       // Verify all platforms are expected
       expect(expectedPlatforms.length, equals(5));
@@ -109,10 +103,7 @@ class FirebaseTestHelper {
 
   /// Get test user credentials
   static Map<String, String> getTestCredentials() {
-    return {
-      'email': 'test@lexilingo.com',
-      'password': 'testPassword123',
-    };
+    return {'email': 'test@lexilingo.com', 'password': 'testPassword123'};
   }
 
   /// Mock FCM token for testing

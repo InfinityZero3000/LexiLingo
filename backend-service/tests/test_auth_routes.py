@@ -29,7 +29,7 @@ def _make_mock_user(
     *,
     is_active: bool = True,
     is_verified: bool = True,
-    provider: str = "local",
+    provider: list[str] = ["local"],
     hashed_password: str = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
 ) -> MagicMock:
     """Build a minimal mock User ORM object."""
@@ -236,7 +236,7 @@ class TestRegister:
         app.dependency_overrides.clear()
 
         assert response.status_code == 400
-        assert "Email already registered" in response.json()["detail"]
+        assert "Email already registered" in response.json()["error"]["message"]
 
     async def test_register_duplicate_username_returns_400(self):
         """Registration with an already-taken username returns 400."""
@@ -272,7 +272,7 @@ class TestRegister:
         app.dependency_overrides.clear()
 
         assert response.status_code == 400
-        assert "Username already taken" in response.json()["detail"]
+        assert "Username already taken" in response.json()["error"]["message"]
 
     async def test_register_invalid_email_returns_422(self, client):
         """Invalid email format triggers 422 validation error."""
@@ -320,7 +320,7 @@ class TestLogin:
             json={"email": "ghost@example.com", "password": "testpass"},
         )
         assert response.status_code == 401
-        assert "Incorrect email or password" in response.json()["detail"]
+        assert "Incorrect email or password" in response.json()["error"]["message"]
 
     async def test_login_wrong_password_returns_401(self):
         """Login with wrong password returns 401."""
@@ -336,7 +336,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=False):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=False)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",
@@ -345,7 +345,7 @@ class TestLogin:
         app.dependency_overrides.clear()
 
         assert response.status_code == 401
-        assert "Incorrect email or password" in response.json()["detail"]
+        assert "Incorrect email or password" in response.json()["error"]["message"]
 
     async def test_login_success_returns_200_with_tokens(self):
         """Valid credentials return 200 with access_token and refresh_token."""
@@ -361,7 +361,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=True):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=True)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",
@@ -389,7 +389,7 @@ class TestLogin:
         app.dependency_overrides[get_db] = mock_get_db
         transport = ASGITransport(app=app)
 
-        with patch("app.routes.auth.verify_password", return_value=True):
+        with patch("app.routes.auth.verify_password_async", new=AsyncMock(return_value=True)):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(
                     f"{BASE}/login",
@@ -398,7 +398,7 @@ class TestLogin:
         app.dependency_overrides.clear()
 
         assert response.status_code == 403
-        assert "inactive" in response.json()["detail"].lower()
+        assert "inactive" in response.json()["error"]["message"].lower()
 
     async def test_login_missing_password_returns_422(self, client):
         """Missing password field triggers 422 validation error."""
@@ -423,7 +423,7 @@ class TestRefreshToken:
                 json={"refresh_token": "completely.invalid.token"},
             )
         assert response.status_code == 401
-        assert "Invalid refresh token" in response.json()["detail"]
+        assert "Invalid refresh token" in response.json()["error"]["message"]
 
     async def test_refresh_wrong_token_type_returns_401(self, client):
         """An access token (type='access') used as refresh token returns 401."""
@@ -436,7 +436,7 @@ class TestRefreshToken:
                 json={"refresh_token": "access.token.here"},
             )
         assert response.status_code == 401
-        assert "Invalid token type" in response.json()["detail"]
+        assert "Invalid token type" in response.json()["error"]["message"]
 
     async def test_refresh_valid_token_returns_new_tokens(self):
         """Valid refresh token returns new access_token + refresh_token."""
@@ -508,12 +508,12 @@ class TestLogout:
 
     async def test_logout_returns_200(self, client):
         """Logout endpoint always returns 200."""
-        response = await client.post(f"{BASE}/logout")
+        response = await client.post(f"{BASE}/logout", json={})
         assert response.status_code == 200
 
     async def test_logout_response_has_message(self, client):
         """Logout response contains a 'message' field."""
-        response = await client.post(f"{BASE}/logout")
+        response = await client.post(f"{BASE}/logout", json={})
         data = response.json()
         assert "message" in data
         assert "Logged out" in data["message"]
@@ -589,7 +589,7 @@ class TestResetPassword:
                 json={"token": "bad-token", "new_password": "newpassword123"},
             )
         assert response.status_code == 400
-        assert "Invalid or expired reset token" in response.json()["detail"]
+        assert "Invalid or expired reset token" in response.json()["error"]["message"]
 
     async def test_reset_password_valid_token_returns_200(self):
         """Valid reset token + new password returns 200."""
@@ -641,7 +641,7 @@ class TestVerifyEmail:
                 json={"token": "bad-verification-token"},
             )
         assert response.status_code == 400
-        assert "Invalid or expired verification token" in response.json()["detail"]
+        assert "Invalid or expired verification token" in response.json()["error"]["message"]
 
     async def test_verify_email_valid_token_unverified_user_returns_200(self):
         """Valid token for an unverified user returns verified=True."""

@@ -44,29 +44,33 @@ void main() {
       test('should request notification permission', () async {
         // Arrange
         final mockSettings = MockNotificationSettings();
-        when(mockMessaging.requestPermission(
-          alert: anyNamed('alert'),
-          announcement: anyNamed('announcement'),
-          badge: anyNamed('badge'),
-          carPlay: anyNamed('carPlay'),
-          criticalAlert: anyNamed('criticalAlert'),
-          provisional: anyNamed('provisional'),
-          sound: anyNamed('sound'),
-        )).thenAnswer((_) async => mockSettings);
+        when(
+          mockMessaging.requestPermission(
+            alert: anyNamed('alert'),
+            announcement: anyNamed('announcement'),
+            badge: anyNamed('badge'),
+            carPlay: anyNamed('carPlay'),
+            criticalAlert: anyNamed('criticalAlert'),
+            provisional: anyNamed('provisional'),
+            sound: anyNamed('sound'),
+          ),
+        ).thenAnswer((_) async => mockSettings);
 
         // Act
         final settings = await mockMessaging.requestPermission();
 
         // Assert
-        verify(mockMessaging.requestPermission(
-          alert: anyNamed('alert'),
-          announcement: anyNamed('announcement'),
-          badge: anyNamed('badge'),
-          carPlay: anyNamed('carPlay'),
-          criticalAlert: anyNamed('criticalAlert'),
-          provisional: anyNamed('provisional'),
-          sound: anyNamed('sound'),
-        )).called(1);
+        verify(
+          mockMessaging.requestPermission(
+            alert: anyNamed('alert'),
+            announcement: anyNamed('announcement'),
+            badge: anyNamed('badge'),
+            carPlay: anyNamed('carPlay'),
+            criticalAlert: anyNamed('criticalAlert'),
+            provisional: anyNamed('provisional'),
+            sound: anyNamed('sound'),
+          ),
+        ).called(1);
         expect(settings, isNotNull);
       });
     });
@@ -75,8 +79,7 @@ void main() {
       test('should subscribe to topic successfully', () async {
         // Arrange
         const topic = 'daily_reminders';
-        when(mockMessaging.subscribeToTopic(topic))
-            .thenAnswer((_) async => {});
+        when(mockMessaging.subscribeToTopic(topic)).thenAnswer((_) async => {});
 
         // Act
         await mockMessaging.subscribeToTopic(topic);
@@ -88,8 +91,9 @@ void main() {
       test('should unsubscribe from topic successfully', () async {
         // Arrange
         const topic = 'daily_reminders';
-        when(mockMessaging.unsubscribeFromTopic(topic))
-            .thenAnswer((_) async => {});
+        when(
+          mockMessaging.unsubscribeFromTopic(topic),
+        ).thenAnswer((_) async => {});
 
         // Act
         await mockMessaging.unsubscribeFromTopic(topic);

@@ -4,11 +4,11 @@ Content models for admin-managed grammar, questions, and test exams.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, JSON, Index
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.db_types import GUID, TZDateTime
+from app.core.db_types import GUID, TZDateTime, PortableJSON
 
 
 class GrammarItem(Base):
@@ -20,8 +20,8 @@ class GrammarItem(Base):
     topic: Mapped[str | None] = mapped_column(String(100), nullable=True)
     summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    examples: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of examples
-    tags: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of tags
+    examples: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of examples
+    tags: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of tags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
@@ -41,11 +41,11 @@ class QuestionItem(Base):
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     question_type: Mapped[str] = mapped_column(String(50), nullable=False, default="mcq")
-    options: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of options
-    answer: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    options: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of options
+    answer: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     difficulty_level: Mapped[str] = mapped_column(String(20), nullable=False, default="A1")
-    tags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    tags: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     grammar_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -72,7 +72,7 @@ class TestExam(Base):
     level: Mapped[str] = mapped_column(String(20), nullable=False, default="A1")
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
     passing_score: Mapped[int] = mapped_column(Integer, nullable=False, default=70)
-    question_ids: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # list of question UUIDs
+    question_ids: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of question UUIDs
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))

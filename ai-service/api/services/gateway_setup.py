@@ -54,19 +54,25 @@ async def setup_gateway(
 
 
 async def _register_qwen(gateway: ModelGateway) -> None:
-    """Register Qwen model for chat and grammar."""
-    from api.services.handlers.qwen_handler import QwenHandler, QwenConfig
-    
-    handler: Optional[QwenHandler] = None
+    """Register Qwen model via Ollama for chat and grammar."""
+    from api.services.handlers.ollama_qwen_handler import (
+        OllamaQwenConfig,
+        OllamaQwenHandler,
+    )
+
+    handler: Optional[OllamaQwenHandler] = None
     
     async def loader():
         nonlocal handler
-        config = QwenConfig(
-            model_path=os.getenv("QWEN_MODEL_PATH", "models/qwen3-1.7b"),
-            model_id=os.getenv("QWEN_MODEL_ID", "Qwen/Qwen2.5-1.5B-Instruct"),
-            device=os.getenv("MODEL_DEVICE", "auto"),
+        config = OllamaQwenConfig(
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            model=os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b"),
+            timeout=float(os.getenv("OLLAMA_TIMEOUT", "120")),
+            context_length=int(os.getenv("OLLAMA_CONTEXT_LENGTH", "2048")),
+            num_threads=int(os.getenv("OLLAMA_NUM_THREADS", "8")),
+            keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "24h"),
         )
-        handler = QwenHandler(config)
+        handler = OllamaQwenHandler(config)
         await handler.load()
         return handler
     
@@ -79,11 +85,11 @@ async def _register_qwen(gateway: ModelGateway) -> None:
         model_type="chat",
         loader_fn=loader,
         unloader_fn=unloader,
-        description="Qwen3-1.7B for chat, grammar analysis, and response generation",
-        estimated_memory_mb=3500,
+        description="Qwen via Ollama for chat, grammar analysis, and response generation",
+        estimated_memory_mb=200,
         priority=ModelPriority.CRITICAL,  # Main chat model
         idle_timeout_seconds=600,  # 10 minutes
-        preload=False,  # Lazy load
+        preload=True,  # Preload for performance
     )
     
     logger.info("Registered: qwen (chat)")
@@ -116,7 +122,7 @@ async def _register_whisper(gateway: ModelGateway) -> None:
         estimated_memory_mb=500,
         priority=ModelPriority.NORMAL,
         idle_timeout_seconds=300,  # 5 minutes
-        preload=False,
+        preload=True, # Preload for performance
     )
     
     logger.info("Registered: whisper (stt)")

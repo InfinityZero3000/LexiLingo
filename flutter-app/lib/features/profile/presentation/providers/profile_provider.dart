@@ -11,6 +11,8 @@ import 'package:lexilingo_app/features/user/domain/usecases/get_weekly_activity_
 /// Following agent-skills/language-learning-patterns:
 /// - gamification-achievement-badges: Display recent badges for 25-40% engagement boost
 class ProfileProvider with ChangeNotifier {
+  static const int _recentBadgesLimit = 10;
+
   final GetUserStatsUseCase getUserStatsUseCase;
   final GetWeeklyActivityUseCase getWeeklyActivityUseCase;
   final GetRecentBadgesUseCase? getRecentBadgesUseCase;
@@ -102,8 +104,8 @@ class ProfileProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final badges = await getRecentBadgesUseCase!.call(limit: 4);
-      _recentBadges = badges;
+      final badges = await getRecentBadgesUseCase!.call(limit: _recentBadgesLimit);
+      _recentBadges = badges.take(_recentBadgesLimit).toList();
       _isLoadingBadges = false;
       notifyListeners();
     } catch (e) {

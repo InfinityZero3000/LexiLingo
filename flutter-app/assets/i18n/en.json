@@ -219,5 +219,89 @@
     "step3Desc": "Practice conversations with smart AI assistant",
     "getStarted": "Get started",
     "skipTour": "Skip tour"
+  },
+  "ai_tutor": {
+    "title": "AI Tutor",
+    "analyzeText": "Analyze text",
+    "evaluateGrammar": "Evaluate grammar",
+    "explainWord": "Explain this word",
+    "generateExercise": "Generate exercise",
+    "fixPronunciation": "Fix my pronunciation",
+    "translate": "Translate",
+    "transcribeAudio": "Transcribe audio",
+    "skillLevel": "Skill level",
+    "feedback": "Feedback",
+    "giveMeHint": "Give me a hint"
+  },
+  "topics": {
+    "storyMode": "Story Mode",
+    "roleplay": "Roleplay",
+    "scenario": "Scenario",
+    "dialogue": "Dialogue",
+    "chooseCharacter": "Choose your character",
+    "vocabularyList": "Vocabulary list",
+    "grammarPoints": "Grammar points",
+    "category": "Category",
+    "difficultyLevel": "Difficulty Level"
+  },
+  "dictionary": {
+    "searchWord": "Search word",
+    "definition": "Definition",
+    "synonyms": "Synonyms",
+    "antonyms": "Antonyms",
+    "examples": "Example sentences",
+    "partOfSpeech": "Part of speech",
+    "noun": "Noun",
+    "verb": "Verb",
+    "adjective": "Adjective",
+    "adverb": "Adverb",
+    "pronunciation": "Pronunciation"
+  },
+  "assessment": {
+    "placementTest": "Placement test",
+    "cefrLevel": "CEFR Level",
+    "readingSpeed": "Reading speed",
+    "retakeTest": "Retake test",
+    "yourLevelIs": "Your level is {level}",
+    "testCompleted": "Test completed"
+  },
+  "premium": {
+    "title": "LexiLingo Premium",
+    "upgrade": "Upgrade to Premium",
+    "proFeatures": "Unlock Pro features",
+    "subscriptionPlan": "Subscription plan",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "lifetime": "Lifetime",
+    "restorePurchases": "Restore purchases",
+    "manageSubscription": "Manage subscription",
+    "cancelSubscription": "Cancel subscription",
+    "noAds": "Ad-free experience",
+    "unlimitedHearts": "Unlimited hearts"
+  },
+  "support": {
+    "faq": "FAQ",
+    "helpCenter": "Help Center",
+    "contactUs": "Contact us",
+    "reportIssue": "Report an issue",
+    "sendFeedback": "Send feedback",
+    "rateApp": "Rate our app",
+    "appTutorial": "App tutorial"
+  },
+  "datetime": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "justNow": "Just now",
+    "minutesAgo": "{minutes} m ago",
+    "hoursAgo": "{hours} h ago",
+    "daysAgo": "{days} d ago"
+  },
+  "offline": {
+    "downloadOffline": "Download for offline use",
+    "availableOffline": "Available offline",
+    "downloading": "Downloading...",
+    "storageUsage": "Storage usage",
+    "clearCache": "Clear cache"
   }
 }

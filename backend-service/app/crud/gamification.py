@@ -123,17 +123,27 @@ class WalletCRUD:
     
     @staticmethod
     async def get_or_create_wallet(db: AsyncSession, user_id: UUID) -> UserWallet:
-        """Get user's wallet, create if not exists"""
+        """Get user's wallet, create if not exists (handles race condition)."""
         result = await db.execute(
             select(UserWallet).where(UserWallet.user_id == user_id)
         )
         wallet = result.scalar_one_or_none()
         
         if not wallet:
-            wallet = UserWallet(user_id=user_id, gems=0)
-            db.add(wallet)
-            await db.commit()
-            await db.refresh(wallet)
+            try:
+                wallet = UserWallet(user_id=user_id, gems=0)
+                db.add(wallet)
+                await db.commit()
+                await db.refresh(wallet)
+            except Exception:
+                await db.rollback()
+                # Another request created it concurrently — re-fetch
+                result = await db.execute(
+                    select(UserWallet).where(UserWallet.user_id == user_id)
+                )
+                wallet = result.scalar_one_or_none()
+                if not wallet:
+                    raise
         
         return wallet
     
@@ -143,7 +153,8 @@ class WalletCRUD:
         user_id: UUID,
         amount: int,
         source: str,
-        description: str = None
+        description: str = None,
+        commit: bool = True,
     ) -> Tuple[UserWallet, WalletTransaction]:
         """Add gems to user's wallet"""
         wallet = await WalletCRUD.get_or_create_wallet(db, user_id)
@@ -161,8 +172,11 @@ class WalletCRUD:
             description=description
         )
         db.add(transaction)
-        await db.commit()
-        await db.refresh(wallet)
+        if commit:
+            await db.commit()
+            await db.refresh(wallet)
+        else:
+            await db.flush()
         
         return wallet, transaction
     
@@ -173,7 +187,8 @@ class WalletCRUD:
         amount: int,
         source: str,
         reference_id: str = None,
-        description: str = None
+        description: str = None,
+        commit: bool = True,
     ) -> Tuple[Optional[UserWallet], Optional[WalletTransaction]]:
         """Spend gems from wallet. Returns None if insufficient balance.
         Uses SELECT FOR UPDATE to prevent double-spending race conditions."""
@@ -206,8 +221,11 @@ class WalletCRUD:
             description=description
         )
         db.add(transaction)
-        await db.commit()
-        await db.refresh(wallet)
+        if commit:
+            await db.commit()
+            await db.refresh(wallet)
+        else:
+            await db.flush()
         
         return wallet, transaction
     
@@ -270,8 +288,22 @@ class LeaderboardCRUD:
                 league=league
             )
             db.add(entry)
-            await db.commit()
-            await db.refresh(entry)
+            try:
+                await db.commit()
+                await db.refresh(entry)
+            except IntegrityError:
+                await db.rollback()
+                result = await db.execute(
+                    select(LeaderboardEntry).where(
+                        and_(
+                            LeaderboardEntry.user_id == user_id,
+                            LeaderboardEntry.week_start == week_start,
+                        )
+                    )
+                )
+                entry = result.scalar_one_or_none()
+                if not entry:
+                    raise
         
         return entry
     
@@ -312,6 +344,36 @@ class LeaderboardCRUD:
             .limit(limit)
         )
         return list(result.all())
+
+    @staticmethod
+    async def get_leaderboard_from_users(
+        db: AsyncSession,
+        league: str,
+        limit: int = 30,
+    ) -> Tuple[List[User], int]:
+        """Fallback leaderboard from users table when weekly entries are empty."""
+        league_filter = league.lower().strip()
+
+        base_query = select(User).where(User.is_active == True)
+        if league_filter:
+            base_query = base_query.where(func.lower(User.rank) == league_filter)
+
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total = int((await db.execute(count_query)).scalar() or 0)
+
+        if total == 0:
+            # If no users in requested league, fallback to global XP ranking.
+            base_query = select(User).where(User.is_active == True)
+            total = int((await db.execute(
+                select(func.count()).select_from(base_query.subquery())
+            )).scalar() or 0)
+
+        result = await db.execute(
+            base_query
+            .order_by(desc(User.total_xp), desc(User.updated_at))
+            .limit(limit)
+        )
+        return list(result.scalars().all()), total
     
     @staticmethod
     async def get_user_rank(
@@ -386,7 +448,8 @@ class ShopCRUD:
             db, user_id, total_cost,
             source="shop_purchase",
             reference_id=str(item_id),
-            description=f"Purchased {quantity}x {item.name}"
+            description=f"Purchased {quantity}x {item.name}",
+            commit=False,
         )
         
         if not wallet:
@@ -652,3 +715,104 @@ class SocialCRUD:
             .limit(limit)
         )
         return list(result.all())
+
+    @staticmethod
+    async def get_friend_suggestions(
+        db: AsyncSession,
+        user_id: UUID,
+        limit: int = 10,
+    ) -> List[Tuple[User, float, int, List[str]]]:
+        """Suggest users based on CEFR level, XP proximity, language, and mutual follows."""
+        current_user_result = await db.execute(
+            select(User).where(User.id == user_id)
+        )
+        current_user = current_user_result.scalar_one_or_none()
+        if not current_user:
+            return []
+
+        following_result = await db.execute(
+            select(UserFollowing.following_id).where(UserFollowing.follower_id == user_id)
+        )
+        following_ids = {row[0] for row in following_result.all()}
+
+        candidate_limit = max(limit * 8, 80)
+        candidates_query = (
+            select(User)
+            .where(
+                and_(
+                    User.is_active == True,
+                    User.id != user_id,
+                    User.id.notin_(list(following_ids)) if following_ids else True,
+                )
+            )
+            .order_by(desc(User.updated_at))
+            .limit(candidate_limit)
+        )
+        candidates = list((await db.execute(candidates_query)).scalars().all())
+        if not candidates:
+            return []
+
+        candidate_ids = [candidate.id for candidate in candidates]
+        mutual_counts: dict[UUID, int] = {}
+        if following_ids:
+            mutual_rows = await db.execute(
+                select(
+                    UserFollowing.following_id,
+                    func.count(UserFollowing.follower_id),
+                )
+                .where(
+                    and_(
+                        UserFollowing.following_id.in_(candidate_ids),
+                        UserFollowing.follower_id.in_(list(following_ids)),
+                    )
+                )
+                .group_by(UserFollowing.following_id)
+            )
+            mutual_counts = {row[0]: int(row[1]) for row in mutual_rows.all()}
+
+        now = datetime.now(timezone.utc)
+        denominator = max(current_user.total_xp, 500)
+        scored: List[Tuple[User, float, int, List[str]]] = []
+
+        for candidate in candidates:
+            reasons: List[str] = []
+
+            level_score = 0.0
+            if candidate.level == current_user.level:
+                level_score = 1.0
+                reasons.append("same_cefr")
+            elif abs((candidate.numeric_level or 1) - (current_user.numeric_level or 1)) <= 1:
+                level_score = 0.5
+
+            xp_diff = abs((candidate.total_xp or 0) - (current_user.total_xp or 0))
+            xp_score = max(0.0, 1.0 - min(1.0, xp_diff / denominator))
+            if xp_score >= 0.7:
+                reasons.append("similar_xp")
+
+            language_score = 0.0
+            if candidate.target_language == current_user.target_language:
+                language_score = 1.0
+                reasons.append("same_target_language")
+
+            mutual_count = mutual_counts.get(candidate.id, 0)
+            mutual_score = min(1.0, mutual_count / 5)
+            if mutual_count > 0:
+                reasons.append("mutual_connections")
+
+            recency_score = 0.0
+            if candidate.updated_at:
+                hours = max((now - candidate.updated_at).total_seconds() / 3600.0, 0.0)
+                recency_score = max(0.0, 1.0 - min(1.0, hours / (24 * 14)))
+
+            final_score = (
+                0.30 * level_score
+                + 0.25 * xp_score
+                + 0.20 * language_score
+                + 0.15 * mutual_score
+                + 0.10 * recency_score
+            )
+
+            scored.append((candidate, round(final_score, 4), mutual_count, reasons))
+
+        scored.sort(key=lambda row: (-row[1], -(row[2]), -(row[0].total_xp or 0)))
+        return scored[:limit]

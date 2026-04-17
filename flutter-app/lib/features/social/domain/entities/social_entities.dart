@@ -10,6 +10,10 @@ class UserSocialProfileEntity extends Equatable {
   final int xp;
   final String? league;
   final int currentStreak;
+  final int mutualConnections;
+  final List<String> suggestionReasons;
+  final double? similarityScore;
+  final double? distanceKm;
 
   const UserSocialProfileEntity({
     required this.userId,
@@ -20,18 +24,36 @@ class UserSocialProfileEntity extends Equatable {
     this.xp = 0,
     this.league,
     this.currentStreak = 0,
+    this.mutualConnections = 0,
+    this.suggestionReasons = const [],
+    this.similarityScore,
+    this.distanceKm,
   });
 
   factory UserSocialProfileEntity.fromJson(Map<String, dynamic> json) {
     return UserSocialProfileEntity(
       userId: json['user_id'] ?? json['userId'] ?? '',
       username: json['username'] ?? '',
-      displayName: json['display_name'] ?? json['displayName'] ?? '',
+        displayName:
+          json['display_name'] ?? json['displayName'] ?? json['username'] ?? '',
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
       isFollowing: json['is_following'] ?? json['isFollowing'] ?? false,
-      xp: json['xp'] ?? 0,
+        xp: (json['xp'] ?? json['total_xp'] ?? json['totalXp'] ?? 0) as int,
       league: json['league'],
       currentStreak: json['current_streak'] ?? json['currentStreak'] ?? 0,
+        mutualConnections:
+          json['mutual_connections'] ?? json['mutualConnections'] ?? 0,
+        suggestionReasons:
+          (json['suggestion_reasons'] as List?)?.map((e) => '$e').toList() ??
+          (json['suggestionReasons'] as List?)?.map((e) => '$e').toList() ??
+          const [],
+        similarityScore:
+          (json['similarity_score'] ?? json['similarityScore']) is num
+          ? (json['similarity_score'] ?? json['similarityScore']).toDouble()
+          : null,
+        distanceKm: (json['distance_km'] ?? json['distanceKm']) is num
+          ? (json['distance_km'] ?? json['distanceKm']).toDouble()
+          : null,
     );
   }
 
@@ -44,6 +66,10 @@ class UserSocialProfileEntity extends Equatable {
     int? xp,
     String? league,
     int? currentStreak,
+    int? mutualConnections,
+    List<String>? suggestionReasons,
+    double? similarityScore,
+    double? distanceKm,
   }) {
     return UserSocialProfileEntity(
       userId: userId ?? this.userId,
@@ -54,6 +80,10 @@ class UserSocialProfileEntity extends Equatable {
       xp: xp ?? this.xp,
       league: league ?? this.league,
       currentStreak: currentStreak ?? this.currentStreak,
+      mutualConnections: mutualConnections ?? this.mutualConnections,
+      suggestionReasons: suggestionReasons ?? this.suggestionReasons,
+      similarityScore: similarityScore ?? this.similarityScore,
+      distanceKm: distanceKm ?? this.distanceKm,
     );
   }
 

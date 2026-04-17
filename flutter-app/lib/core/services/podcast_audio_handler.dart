@@ -59,6 +59,7 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   /// Set playback speed (0.5x – 2.0x).
+  @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
 
   // ── BaseAudioHandler overrides ────────────────────────────────────────────

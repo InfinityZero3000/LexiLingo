@@ -10,11 +10,12 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const googleBtnRef = useRef<HTMLDivElement>(null);
+  const isGsiInitialized = useRef(false);
   const [gsiReady, setGsiReady] = useState(false);
   const { t } = useI18n();
 
   const handleGoogleCallback = useCallback(
-    async (response: CredentialResponse) => {
+    async (response: any) => {
       setError(null);
       try {
         const role = await signInWithGoogle(response.credential);
@@ -30,7 +31,7 @@ export const LoginPage = () => {
         }
       }
     },
-    [signInWithGoogle, navigate]
+    [signInWithGoogle, navigate, t.login]
   );
 
   useEffect(() => {
@@ -42,14 +43,19 @@ export const LoginPage = () => {
 
     const initGsi = () => {
       if (!window.google?.accounts?.id) return false;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleCallback,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-        context: "signin",
-        ux_mode: "popup",
-      });
+      
+      if (!isGsiInitialized.current) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCallback,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          context: "signin",
+          ux_mode: "popup",
+        });
+        isGsiInitialized.current = true;
+      }
+
       if (googleBtnRef.current) {
         // Use container width capped at 360px so button fits all screen sizes
         const containerW = Math.min(

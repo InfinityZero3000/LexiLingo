@@ -22,8 +22,9 @@ class Result<T> {
   }
 
   Failure get failure {
-    if (_failure == null)
+    if (_failure == null) {
       throw Exception("Cannot get failure from a success result");
+    }
     return _failure;
   }
 

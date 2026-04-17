@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/quick_save_selection_area.dart';
 
 /// Scrollable transcript panel shown inside the podcast player.
 ///
@@ -14,12 +15,14 @@ class TranscriptPanel extends StatelessWidget {
   final String? transcript;
   final bool isLoading;
   final VoidCallback? onGenerateTranscript;
+  final String? sourceReference;
 
   const TranscriptPanel({
     super.key,
     this.transcript,
     required this.isLoading,
     this.onGenerateTranscript,
+    this.sourceReference,
   });
 
   @override
@@ -78,10 +81,10 @@ class TranscriptPanel extends StatelessWidget {
   Widget _buildShimmer(bool isDark) {
     final baseColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
-        : Colors.grey.shade200;
+        : AppColors.grey200;
     final highlightColor = isDark
         ? Colors.white.withValues(alpha: 0.15)
-        : Colors.grey.shade100;
+        : AppColors.grey100;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -91,12 +94,12 @@ class TranscriptPanel extends StatelessWidget {
         children: List.generate(5, (i) {
           final isShort = i % 3 == 2;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: 8),
             child: Container(
               height: 14,
               width: isShort ? double.infinity * 0.6 : double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
@@ -120,37 +123,42 @@ class TranscriptPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: paragraphs
-          .map(
-            (para) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.grey200,
-                  ),
-                ),
-                child: Text(
-                  para,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: isDark
-                        ? Colors.white.withOpacity(0.87)
-                        : AppColors.textDark,
-                  ),
-                ),
-              ),
-            ),
-          )
+          .map((para) => _buildTranscriptParagraph(para, isDark))
           .toList(),
+    );
+  }
+
+  Widget _buildTranscriptParagraph(String para, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : AppColors.grey200,
+          ),
+        ),
+        child: QuickSaveSelectionArea(
+          sourceType: 'podcast',
+          sourceReference: sourceReference,
+          contextSentence: para,
+          child: Text(
+            para,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.6,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.87)
+                  : AppColors.textDark,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -164,7 +172,7 @@ class TranscriptPanel extends StatelessWidget {
         Icon(
           Icons.subtitles_off_rounded,
           size: 48,
-          color: isDark ? Colors.white24 : Colors.grey.shade300,
+          color: isDark ? Colors.white24 : AppColors.grey300,
         ),
         const SizedBox(height: 10),
         Text(

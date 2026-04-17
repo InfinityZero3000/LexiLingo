@@ -375,8 +375,14 @@ void main() {
 
   group('NotificationType', () {
     test('should have all expected values', () {
-      expect(NotificationType.values, contains(NotificationType.streakReminder));
-      expect(NotificationType.values, contains(NotificationType.lessonReminder));
+      expect(
+        NotificationType.values,
+        contains(NotificationType.streakReminder),
+      );
+      expect(
+        NotificationType.values,
+        contains(NotificationType.lessonReminder),
+      );
       expect(NotificationType.values, contains(NotificationType.achievement));
       expect(NotificationType.values, contains(NotificationType.newContent));
       expect(NotificationType.values, contains(NotificationType.weeklySummary));

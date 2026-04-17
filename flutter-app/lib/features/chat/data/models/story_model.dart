@@ -1,5 +1,7 @@
+// ignore_for_file: constant_identifier_names
 /// Story models for Topic-Based Conversation
 /// Defines story/topic data structures for language learning scenarios
+library;
 
 /// Difficulty levels matching CEFR standard
 enum DifficultyLevel {
@@ -258,6 +260,7 @@ class Story {
   final List<GrammarPoint> grammarPoints;
   final ConversationFlow conversationFlow;
   final bool isPublished;
+  final List<String> suggestedPrompts;
   final List<String> tags;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -275,6 +278,7 @@ class Story {
     this.grammarPoints = const [],
     required this.conversationFlow,
     this.isPublished = true,
+    this.suggestedPrompts = const [],
     this.tags = const [],
     this.createdAt,
     this.updatedAt,
@@ -344,6 +348,14 @@ class Story {
           : const ConversationFlow(openingPrompt: ''),
       isPublished:
           json['is_published'] as bool? ?? json['isPublished'] as bool? ?? true,
+      suggestedPrompts:
+          (json['suggested_prompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['suggestedPrompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           [],
@@ -369,6 +381,7 @@ class Story {
     'grammar_points': grammarPoints.map((g) => g.toJson()).toList(),
     'conversation_flow': conversationFlow.toJson(),
     'is_published': isPublished,
+    'suggested_prompts': suggestedPrompts,
     'tags': tags,
   };
 }
@@ -381,6 +394,7 @@ class StoryListItem {
   final String category;
   final int estimatedMinutes;
   final String? coverImageUrl;
+  final List<String> suggestedPrompts;
   final List<String> tags;
 
   const StoryListItem({
@@ -390,6 +404,7 @@ class StoryListItem {
     required this.category,
     this.estimatedMinutes = 15,
     this.coverImageUrl,
+    this.suggestedPrompts = const [],
     this.tags = const [],
   });
 
@@ -410,6 +425,14 @@ class StoryListItem {
       coverImageUrl:
           json['cover_image_url'] as String? ??
           json['coverImageUrl'] as String?,
+      suggestedPrompts:
+          (json['suggested_prompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['suggestedPrompts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           [],
@@ -423,6 +446,7 @@ class StoryListItem {
     'difficulty_level': difficultyLevel.code,
     'estimated_minutes': estimatedMinutes,
     'cover_image_url': coverImageUrl,
+    'suggested_prompts': suggestedPrompts,
     'tags': tags,
   };
 }

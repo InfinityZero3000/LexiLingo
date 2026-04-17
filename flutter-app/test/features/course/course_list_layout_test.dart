@@ -5,14 +5,13 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 void main() {
   group('Course List Horizontal Layout Tests', () {
     group('Category Section UI Tests', () {
-      testWidgets('should render category header with correct icon and color', (tester) async {
+      testWidgets('should render category header with correct icon and color', (
+        tester,
+      ) async {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: _TestCategoryHeader(
-                title: 'Beginner',
-                courseCount: 5,
-              ),
+              body: _TestCategoryHeader(title: 'Beginner', courseCount: 5),
             ),
           ),
         );
@@ -30,14 +29,13 @@ void main() {
         expect(find.text('See All'), findsOneWidget);
       });
 
-      testWidgets('should render singular course text for single course', (tester) async {
+      testWidgets('should render singular course text for single course', (
+        tester,
+      ) async {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: _TestCategoryHeader(
-                title: 'Advanced',
-                courseCount: 1,
-              ),
+              body: _TestCategoryHeader(title: 'Advanced', courseCount: 1),
             ),
           ),
         );
@@ -45,7 +43,9 @@ void main() {
         expect(find.text('1 course'), findsOneWidget);
       });
 
-      testWidgets('should use correct colors for different categories', (tester) async {
+      testWidgets('should use correct colors for different categories', (
+        tester,
+      ) async {
         // Test Beginner - Green
         expect(_getCategoryColor('Beginner'), Colors.green);
 
@@ -59,7 +59,9 @@ void main() {
         expect(_getCategoryColor('Unknown'), Colors.blue);
       });
 
-      testWidgets('should use correct icons for different categories', (tester) async {
+      testWidgets('should use correct icons for different categories', (
+        tester,
+      ) async {
         // Test Beginner
         expect(_getCategoryIcon('Beginner'), Icons.school_outlined);
 
@@ -95,21 +97,20 @@ void main() {
       testWidgets('should render course card with title', (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestCourseCard(course: testCourse),
-            ),
+            home: Scaffold(body: _TestCourseCard(course: testCourse)),
           ),
         );
 
-        expect(find.text('English for Beginners - Complete Guide'), findsOneWidget);
+        expect(
+          find.text('English for Beginners - Complete Guide'),
+          findsOneWidget,
+        );
       });
 
       testWidgets('should render language chip', (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestCourseCard(course: testCourse),
-            ),
+            home: Scaffold(body: _TestCourseCard(course: testCourse)),
           ),
         );
 
@@ -119,9 +120,7 @@ void main() {
       testWidgets('should render XP and lesson count', (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestCourseCard(course: testCourse),
-            ),
+            home: Scaffold(body: _TestCourseCard(course: testCourse)),
           ),
         );
 
@@ -129,12 +128,12 @@ void main() {
         expect(find.text('12'), findsOneWidget);
       });
 
-      testWidgets('should show Start Learning button when not enrolled', (tester) async {
+      testWidgets('should show Start Learning button when not enrolled', (
+        tester,
+      ) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestCourseCard(course: testCourse),
-            ),
+            home: Scaffold(body: _TestCourseCard(course: testCourse)),
           ),
         );
 
@@ -160,9 +159,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestCourseCard(course: enrolledCourse),
-            ),
+            home: Scaffold(body: _TestCourseCard(course: enrolledCourse)),
           ),
         );
 
@@ -190,7 +187,9 @@ void main() {
     });
 
     group('Horizontal Scroll Layout Tests', () {
-      testWidgets('should render horizontal ListView for courses', (tester) async {
+      testWidgets('should render horizontal ListView for courses', (
+        tester,
+      ) async {
         final courses = List.generate(
           5,
           (i) => CourseEntity(
@@ -210,9 +209,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestHorizontalCourseList(courses: courses),
-            ),
+            home: Scaffold(body: _TestHorizontalCourseList(courses: courses)),
           ),
         );
 
@@ -224,7 +221,9 @@ void main() {
         expect(listView.scrollDirection, Axis.horizontal);
       });
 
-      testWidgets('should have fixed height for horizontal course list', (tester) async {
+      testWidgets('should have fixed height for horizontal course list', (
+        tester,
+      ) async {
         final courses = [
           CourseEntity(
             id: '1',
@@ -243,9 +242,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(
-              body: _TestHorizontalCourseList(courses: courses),
-            ),
+            home: Scaffold(body: _TestHorizontalCourseList(courses: courses)),
           ),
         );
 
@@ -255,7 +252,9 @@ void main() {
         expect(sizedBox.height, 280);
       });
 
-      testWidgets('should render all courses in horizontal list', (tester) async {
+      testWidgets('should render all courses in horizontal list', (
+        tester,
+      ) async {
         final courses = [
           _createTestCourse(id: '1', title: 'Course A'),
           _createTestCourse(id: '2', title: 'Course B'),
@@ -336,10 +335,7 @@ class _TestCategoryHeader extends StatelessWidget {
   final String title;
   final int courseCount;
 
-  const _TestCategoryHeader({
-    required this.title,
-    required this.courseCount,
-  });
+  const _TestCategoryHeader({required this.title, required this.courseCount});
 
   @override
   Widget build(BuildContext context) {
@@ -369,22 +365,19 @@ class _TestCategoryHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   '$courseCount ${courseCount == 1 ? 'course' : 'courses'}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                 ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('See All'),
-          ),
+          TextButton(onPressed: () {}, child: const Text('See All')),
         ],
       ),
     );
@@ -395,10 +388,7 @@ class _TestCourseCard extends StatelessWidget {
   final CourseEntity course;
   final VoidCallback? onTap;
 
-  const _TestCourseCard({
-    required this.course,
-    this.onTap,
-  });
+  const _TestCourseCard({required this.course, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -407,9 +397,7 @@ class _TestCourseCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Card(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
@@ -433,32 +421,30 @@ class _TestCourseCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         course.language,
                         style: TextStyle(
                           fontSize: 10,
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Colors.amber[700],
-                        ),
+                        Icon(Icons.star, size: 14, color: Colors.amber[700]),
                         const SizedBox(width: 2),
                         Text(
                           '${course.totalXp} XP',
@@ -496,10 +482,7 @@ class _TestCourseCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '${course.userProgress?.toStringAsFixed(0) ?? '0'}% Complete',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                       ),
                     ] else ...[
                       Container(
@@ -580,7 +563,8 @@ IconData _getCategoryIcon(String category) {
 }
 
 Map<String, List<CourseEntity>> _groupCoursesByCategory(
-    List<CourseEntity> courses) {
+  List<CourseEntity> courses,
+) {
   final Map<String, List<CourseEntity>> grouped = {};
   const categoryOrder = ['Beginner', 'Intermediate', 'Advanced'];
 

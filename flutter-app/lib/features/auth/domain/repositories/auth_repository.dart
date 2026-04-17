@@ -22,6 +22,9 @@ abstract class AuthRepository {
   /// Login with Google OAuth
   Future<Either<Failure, UserEntity>> loginWithGoogle(String idToken);
 
+  /// Login with Facebook OAuth (via Firebase)
+  Future<Either<Failure, UserEntity>> loginWithFacebook(String firebaseIdToken);
+
   /// Logout current user
   Future<Either<Failure, void>> logout();
 
@@ -32,6 +35,10 @@ abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> updateProfile({
     String? displayName,
     String? avatarUrl,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? level,
+    bool? isOnboardingCompleted,
   });
 
   /// Check if user is authenticated

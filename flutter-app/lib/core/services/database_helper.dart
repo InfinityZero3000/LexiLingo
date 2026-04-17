@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'background_sync_queue_service.dart';
+import 'encrypted_local_cache_service.dart';
 import 'local_cache_service.dart';
 
 class DatabaseHelper {
@@ -27,7 +29,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -72,6 +74,12 @@ class DatabaseHelper {
       // Phase 0: API cache table for offline-first content features
       await LocalCacheService.createTable(db);
     }
+
+    if (oldVersion < 6) {
+      // Phase 2: Encrypted cache + persistent sync queue
+      await EncryptedLocalCacheService.createTable(db);
+      await BackgroundSyncQueueService.createTable(db);
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -89,6 +97,10 @@ class DatabaseHelper {
 
     // Phase 0: API cache table
     await LocalCacheService.createTable(db);
+
+    // Phase 2: Encrypted cache and background sync queue
+    await EncryptedLocalCacheService.createTable(db);
+    await BackgroundSyncQueueService.createTable(db);
 
     // Seed initial data
     await _seedInitialData(db);

@@ -22,11 +22,17 @@ from app.core.database import init_db, close_db
 from app.core.redis import RedisClient
 from app.core.middleware import (
     RateLimitMiddleware,
-    ErrorHandlerMiddleware,
     RequestLoggingMiddleware,
     RequestIDMiddleware,
     PrivateNetworkAccessMiddleware,
 )
+from app.core.exceptions import (
+    http_exception_handler,
+    validation_exception_handler,
+    unhandled_exception_handler
+)
+from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, Request, status, HTTPException
 from app.routes import (
     health_router,
     auth_router,
@@ -77,6 +83,21 @@ async def lifespan(app: FastAPI):
             logger.info("Database initialized")
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
+    else:
+        # Production migration check
+        try:
+            from alembic import command
+            from alembic.config import Config
+            import os
+            
+            # Find alembic.ini relative to this file
+            ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alembic.ini")
+            if os.path.exists(ini_path):
+                alembic_cfg = Config(ini_path)
+                command.upgrade(alembic_cfg, "head")
+                logger.info("Alembic migrations applied (upgrade head)")
+        except Exception as e:
+            logger.warning(f"Alembic check failed: {e}")
     
     # Initialize Redis (rate limiting, token blacklist, caching)
     try:
@@ -145,10 +166,10 @@ app = FastAPI(
 # ===== MIDDLEWARE CONFIGURATION =====
 # Order matters! Last added = outermost (executes first for requests).
 # 
-# Execution order (request): PNA → CORS → RequestID → Logging → ErrorHandler → App
-# Execution order (response): App → ErrorHandler → Logging → RequestID → CORS → PNA
+# Execution order (request): PNA → CORS → RateLimit → RequestID → Logging → App
+# Execution order (response): App → Logging → RequestID → RateLimit → CORS → PNA
 #
-# KEY: CORS must be OUTSIDE ErrorHandler so error 500 responses also get CORS headers.
+# KEY: CORS must be OUTSIDE RateLimit and Logging so error responses get CORS headers.
 # PNA must be OUTSIDE CORS so it can add PNA headers to CORS preflight responses.
 
 # 1. Trusted Host - Security (innermost, closest to app)
@@ -158,16 +179,23 @@ if settings.is_production:
         allowed_hosts=settings.ALLOWED_HOSTS
     )
 
-# 2. Error Handler - Catch unhandled exceptions
-app.add_middleware(ErrorHandlerMiddleware)
-
-# 3. Request Logging - Log all requests
+# 2. Request Logging - Log all requests
 app.add_middleware(RequestLoggingMiddleware)
 
-# 4. Request ID - Add unique ID to each request
+# 3. Request ID - Add unique ID to each request
 app.add_middleware(RequestIDMiddleware)
 
-# 5. CORS - Must be OUTSIDE ErrorHandler so error responses get CORS headers
+# 4. Rate Limiting - Prevent abuse (Phase 1: Security)
+# Higher limits in development to avoid blocking local testing
+_rate_rpm = 300 if settings.is_development else 120
+_rate_rph = 5000 if settings.is_development else 5000
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=_rate_rpm,
+    requests_per_hour=_rate_rph,
+)
+
+# 5. CORS - Must be OUTSIDE RateLimit so error responses get CORS headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -175,17 +203,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_private_network=True,
 )
 
-# 6. Private Network Access - OUTERMOST, wraps CORS to add PNA headers to preflight
+# 6. Private Network Access - Chrome CORS-RFC1918 (outermost)
 app.add_middleware(PrivateNetworkAccessMiddleware)
 
-# 7. Rate Limiting - Prevent abuse (Phase 1: Security)
-app.add_middleware(
-    RateLimitMiddleware,
-    requests_per_minute=60,
-    requests_per_hour=1000
-)
+# ===== EXCEPTION HANDLERS =====
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 # ===== Request Body Size Limit (Phase 4) =====
@@ -231,9 +258,9 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    """Root endpoint."""
+    """Root endpoint. Supports HEAD for Render/load-balancer health probes."""
     return {
         "message": f"Welcome to {settings.APP_NAME}",
         "version": "1.0.0",
@@ -253,4 +280,5 @@ if __name__ == "__main__":
         port=settings.PORT,
         reload=settings.DEBUG,
         workers=1 if settings.DEBUG else workers,
+        timeout_keep_alive=5,
     )

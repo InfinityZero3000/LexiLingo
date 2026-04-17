@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// League Card Widget
 /// Shows user's current league status
@@ -49,11 +50,11 @@ class LeagueCard extends StatelessWidget {
                   BoxShadow(
                     color: leagueData.color.withValues(alpha: 0.4),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
-              child: Icon(leagueData.icon, color: Colors.white, size: 28),
+              child: Icon(leagueData.icon, color: Theme.of(context).colorScheme.surface, size: 28),
             ),
             const SizedBox(width: 16),
 
@@ -88,7 +89,7 @@ class LeagueCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                              color: AppColors.greenSuccessBright,
                             ),
                           ),
                         ),
@@ -146,21 +147,21 @@ class LeagueCard extends StatelessWidget {
         return _LeagueData(
           name: 'Bronze League',
           icon: Icons.shield_outlined,
-          color: const Color(0xFFCD7F32),
-          colorDark: const Color(0xFFB8720E),
+          color: AppColors.bronze,
+          colorDark: AppColors.goldDark,
         );
       case 'silver':
         return _LeagueData(
           name: 'Silver League',
           icon: Icons.shield,
-          color: const Color(0xFFC0C0C0),
-          colorDark: const Color(0xFF9E9E9E),
+          color: AppColors.silver,
+          colorDark: AppColors.grey500,
         );
       case 'gold':
         return _LeagueData(
           name: 'Gold League',
           icon: Icons.emoji_events_outlined,
-          color: const Color(0xFFFFD700),
+          color: AppColors.gold,
           colorDark: const Color(0xFFE5C100),
         );
       case 'platinum':
@@ -181,8 +182,8 @@ class LeagueCard extends StatelessWidget {
         return _LeagueData(
           name: 'Bronze League',
           icon: Icons.shield_outlined,
-          color: const Color(0xFFCD7F32),
-          colorDark: const Color(0xFFB8720E),
+          color: AppColors.bronze,
+          colorDark: AppColors.goldDark,
         );
     }
   }
@@ -227,11 +228,11 @@ class LeagueBadge extends StatelessWidget {
           BoxShadow(
             color: data.$1.withValues(alpha: 0.4),
             blurRadius: 6,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: Icon(data.$3, color: Colors.white, size: size * 0.5),
+      child: Icon(data.$3, color: Theme.of(context).colorScheme.surface, size: size * 0.5),
     );
   }
 
@@ -239,15 +240,15 @@ class LeagueBadge extends StatelessWidget {
     switch (league.toLowerCase()) {
       case 'bronze':
         return (
-          const Color(0xFFCD7F32),
-          const Color(0xFFB8720E),
+          AppColors.bronze,
+          AppColors.goldDark,
           Icons.shield_outlined,
         );
       case 'silver':
-        return (const Color(0xFFC0C0C0), const Color(0xFF9E9E9E), Icons.shield);
+        return (AppColors.silver, AppColors.grey500, Icons.shield);
       case 'gold':
         return (
-          const Color(0xFFFFD700),
+          AppColors.gold,
           const Color(0xFFE5C100),
           Icons.emoji_events_outlined,
         );
@@ -265,8 +266,8 @@ class LeagueBadge extends StatelessWidget {
         );
       default:
         return (
-          const Color(0xFFCD7F32),
-          const Color(0xFFB8720E),
+          AppColors.bronze,
+          AppColors.goldDark,
           Icons.shield_outlined,
         );
     }

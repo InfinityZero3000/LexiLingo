@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Enhanced Lesson Card with glassmorphism and micro-animations
 class GlassmorphicLessonCard extends StatefulWidget {
@@ -240,7 +241,7 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
                 child: Icon(
                   isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
                   size: 22,
-                  color: isFilled ? Colors.amber : Colors.grey[300],
+                  color: isFilled ? AppColors.warning : Colors.grey[300],
                 ),
               ),
             );
@@ -262,7 +263,7 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
     } else if (widget.isCompleted) {
       text = 'Completed';
       icon = Icons.check_circle_outline;
-      color = Colors.green;
+      color = AppColors.greenSuccessBright;
     } else if (widget.isCurrent) {
       text = 'In Progress';
       icon = Icons.play_circle_outline;
@@ -355,19 +356,19 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
           BoxShadow(
             color: widget.statusColor.withValues(alpha: 0.3),
             blurRadius: 8,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
+          Icon(Icons.play_arrow_rounded, color: AppColors.surfaceLight, size: 22),
           SizedBox(width: 8),
           Text(
             'Continue',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.surfaceLight,
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
@@ -525,14 +526,14 @@ class _AnimatedTimelineNodeState extends State<AnimatedTimelineNode>
       return Icon(Icons.lock_rounded, size: 16, color: Colors.grey[500]);
     }
     if (widget.isCompleted) {
-      return const Icon(Icons.check_rounded, size: 18, color: Colors.white);
+      return Icon(Icons.check_rounded, size: 18, color: AppColors.surfaceLight);
     }
     if (widget.isCurrent) {
       return Container(
         width: 12,
         height: 12,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
           shape: BoxShape.circle,
         ),
       );
@@ -551,7 +552,7 @@ class LessonProgressIndicator extends StatelessWidget {
   const LessonProgressIndicator({
     super.key,
     required this.progress,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.size = 48,
     this.strokeWidth = 4,
   });
@@ -587,7 +588,6 @@ class LessonProgressIndicator extends StatelessWidget {
                   value: value,
                   strokeWidth: strokeWidth,
                   color: color,
-                  strokeCap: StrokeCap.round,
                 ),
               );
             },

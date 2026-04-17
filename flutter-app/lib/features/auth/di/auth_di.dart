@@ -11,6 +11,8 @@ import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_email_p
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dart';
+import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_facebook_usecase.dart';
+import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 
 void registerAuthModule() {
@@ -32,6 +34,7 @@ void registerAuthModule() {
   );
 
   sl.registerLazySingleton(() => SignInWithGoogleUseCase(sl()));
+  sl.registerLazySingleton(() => SignInWithFacebookUseCase(sl()));
   sl.registerLazySingleton(() => SignInWithEmailPasswordUseCase(sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
@@ -42,15 +45,22 @@ void registerAuthModule() {
     sl.registerLazySingleton<GoogleSignInService>(() => GoogleSignInService());
   }
 
+  // Facebook Sign In Service
+  if (!sl.isRegistered<FacebookSignInService>()) {
+    sl.registerLazySingleton<FacebookSignInService>(() => FacebookSignInService());
+  }
+
   sl.registerFactory(
     () => AuthProvider(
       signInWithGoogleUseCase: sl(),
+      signInWithFacebookUseCase: sl(),
       signInWithEmailPasswordUseCase: sl(),
       signOutUseCase: sl(),
       getCurrentUserUseCase: sl(),
       registerUseCase: sl(),
       authRepository: sl(),
       googleSignInService: sl(),
+      facebookSignInService: sl(),
     ),
   );
 }

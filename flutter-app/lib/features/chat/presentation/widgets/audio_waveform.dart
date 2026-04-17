@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Audio Waveform Widget for voice recording visualization
 /// Creates an animated waveform effect during voice recording
@@ -15,7 +17,7 @@ class AudioWaveform extends StatefulWidget {
   const AudioWaveform({
     super.key,
     required this.isRecording,
-    this.color = Colors.red,
+    this.color = AppColors.errorBright,
     this.barCount = 20,
     this.barWidth = 3,
     this.minHeight = 4,
@@ -149,7 +151,7 @@ class VoiceRecordingIndicator extends StatelessWidget {
     required this.isProcessing,
     required this.recordingDuration,
     required this.onCancel,
-    this.recordingColor = Colors.red,
+    this.recordingColor = AppColors.errorBright,
     this.processingColor = Colors.blue,
   });
 
@@ -226,10 +228,7 @@ class VoiceRecordingIndicator extends StatelessWidget {
             SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(processingColor),
-              ),
+              child: LottieLoadingWidget.tiny(),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -398,7 +397,7 @@ class _VoiceMessagePlaybackState extends State<VoiceMessagePlayback> {
               ),
               child: Icon(
                 widget.isPlaying ? Icons.pause : Icons.play_arrow,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 size: 20,
               ),
             ),

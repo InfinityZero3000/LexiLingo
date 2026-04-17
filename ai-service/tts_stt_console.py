@@ -7,8 +7,14 @@ Công cụ kiểm tra TTS và STT với giao diện console tương tác
 import os
 import sys
 import wave
+import threading
 from pathlib import Path
 from datetime import datetime
+
+# Fix: torch (piper) và ctranslate2 (faster-whisper) đều dùng OpenMP → conflict → crash
+# Phải set trước khi import bất kỳ ML library nào
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 # Change to backend directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -16,6 +22,11 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # Global variables for models (lazy load)
 tts_voice = None
 stt_model = None
+_stt_loading = False
+_stt_load_error = None
+
+# Local model path (tránh download lại từ HuggingFace)
+_STT_MODEL_PATH = "./models/whisper/models--Systran--faster-whisper-large-v3"
 
 
 def print_header():
@@ -64,22 +75,75 @@ def load_tts_model():
         return None
 
 
+def _background_load_stt():
+    """Load STT model in background thread (called at startup)"""
+    global stt_model, _stt_loading, _stt_load_error
+    _stt_loading = True
+    try:
+        from faster_whisper import WhisperModel
+        model_path = _STT_MODEL_PATH
+        if not os.path.exists(model_path):
+            model_path = "large-v3"  # fallback: download if local not found
+        stt_model = WhisperModel(
+            model_path,
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=4,
+            num_workers=1,
+        )
+    except Exception as e:
+        _stt_load_error = str(e)
+    finally:
+        _stt_loading = False
+
+
 def load_stt_model():
-    """Load STT (Faster-Whisper) model"""
-    global stt_model
-    
+    """Load STT (Faster-Whisper) model — dùng local path để tránh download lại"""
+    global stt_model, _stt_loading, _stt_load_error
+
+    # Đã load xong từ background thread
     if stt_model is not None:
         return stt_model
-    
+
+    # Background thread báo lỗi
+    if _stt_load_error:
+        print(f"❌ Error loading STT model: {_stt_load_error}")
+        return None
+
+    # Đang load ở background → chờ
+    if _stt_loading:
+        print("⏳ STT model đang load, vui lòng chờ...", end="", flush=True)
+        import time
+        while _stt_loading:
+            print(".", end="", flush=True)
+            time.sleep(1)
+        print()
+        if stt_model is not None:
+            print("✅ STT model ready!")
+            return stt_model
+        if _stt_load_error:
+            print(f"❌ Error: {_stt_load_error}")
+            return None
+
+    # Chưa start load (nếu user bỏ qua preload) → load trực tiếp
     try:
         print("🔄 Loading STT model (Faster-Whisper large-v3)...")
-        print("⚠️  This may take 20-30 seconds on first load...")
         from faster_whisper import WhisperModel
-        
-        stt_model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+        model_path = _STT_MODEL_PATH
+        if not os.path.exists(model_path):
+            print(f"⚠️  Local model not found, falling back to HuggingFace download...")
+            model_path = "large-v3"
+        else:
+            print(f"   📁 Using local model: {model_path}")
+        stt_model = WhisperModel(
+            model_path,
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=4,
+            num_workers=1,
+        )
         print("✅ STT model loaded successfully")
         return stt_model
-        
     except Exception as e:
         print(f"❌ Error loading STT model: {e}")
         return None
@@ -375,7 +439,16 @@ def show_system_info():
 def main():
     """Main application loop"""
     print_header()
-    
+
+    # Preload STT model ngay khi khởi động (background thread)
+    # Khi user chọn chức năng STT thì model đã sẵn sàng hoặc gần xong
+    if os.path.exists(_STT_MODEL_PATH):
+        print("⏳ Pre-loading STT model in background (dùng local model)...")
+        t = threading.Thread(target=_background_load_stt, daemon=True)
+        t.start()
+    else:
+        print(f"⚠️  Local STT model not found at {_STT_MODEL_PATH}")
+
     while True:
         print_menu()
         

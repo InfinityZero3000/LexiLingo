@@ -1,5 +1,6 @@
 /// Sample Achievements Data
 /// Fallback data when API returns empty or errors
+library;
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 
@@ -649,7 +650,6 @@ class SampleAchievements {
     'lessons',
     'streak',
     'vocabulary',
-    'xp',
     'quiz',
     'course',
     'voice',
