@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ../../../backend-service
+      dockerfile: Dockerfile
+    image: lexilingo/backend:latest
+    container_name: lexilingo-backend
+    restart: unless-stopped
+    env_file:
+      - ./.env.backend
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
