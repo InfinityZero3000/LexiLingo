@@ -38,6 +38,7 @@ def _make_mock_user(user_id: str = "550e8400-e29b-41d4-a716-446655440001"):
     user.is_active = True
     user.is_verified = True
     user.level = "A1"
+    user.cefr_level = "A1"
     user.native_language = "vi"
     user.target_language = "en"
     user.total_xp = 100
