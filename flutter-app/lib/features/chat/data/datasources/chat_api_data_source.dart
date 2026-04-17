@@ -48,6 +48,11 @@ class ChatApiDataSource {
 
   ChatApiDataSource({required this.apiClient});
 
+  bool _isSessionNotFoundError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+  }
+
   Future<ChatSessionModel> createSession({
     required String userId,
     String? title,
@@ -138,6 +143,10 @@ class ChatApiDataSource {
         returned: (pagination['returned'] as num?)?.toInt() ?? parsedMessages.length,
       );
     } catch (e) {
+      if (_isSessionNotFoundError(e)) {
+        logWarn(_tag, 'Paged endpoint session not found, skip legacy fallback: $e');
+        rethrow;
+      }
       logWarn(_tag, 'Paged endpoint failed, fallback to legacy getMessages: $e');
       final allMessages = await getMessages(sessionId);
       return _fallbackPageFromAll(

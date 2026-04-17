@@ -1,4 +1,5 @@
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/user_scope_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 import '../models/user_model.dart';
@@ -70,6 +71,7 @@ class AuthBackendDataSource {
 
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
     logDebug(_tag, 'Tokens saved, now registering device...');
 
     // Register device with FCM token
@@ -91,6 +93,7 @@ class AuthBackendDataSource {
     final loginResponse = LoginResponse.fromJson(envelope.data);
 
     await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
     await _registerDevice();
 
     return loginResponse;
@@ -108,6 +111,7 @@ class AuthBackendDataSource {
     final loginResponse = LoginResponse.fromJson(envelope.data);
 
     await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
     await _registerDevice();
 
     return loginResponse;
@@ -141,6 +145,7 @@ class AuthBackendDataSource {
       // Even if logout fails, clear local tokens
     } finally {
       await tokenStorage.clearTokens();
+      await UserScopeService.clearActiveUserId();
     }
   }
 
@@ -154,7 +159,10 @@ class AuthBackendDataSource {
     );
     logDebug(_tag, 'User received: ${envelope.data['email']}');
 
-    return UserModel.fromJson(envelope.data);
+    final userModel = UserModel.fromJson(envelope.data);
+    await UserScopeService.setActiveUserId(userModel.id);
+
+    return userModel;
   }
 
   /// Update user profile

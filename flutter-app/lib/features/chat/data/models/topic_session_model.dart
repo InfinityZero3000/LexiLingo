@@ -119,9 +119,13 @@ class TopicChatResponse {
   }) : _messageId = messageId;
 
   factory TopicChatResponse.fromJson(Map<String, dynamic> json) {
+    final clean = (json['clean_response'] as String?)?.trim();
+    final raw =
+      (json['ai_response'] as String? ?? json['response'] as String? ?? '')
+        .trim();
+
     return TopicChatResponse(
-      response:
-          json['ai_response'] as String? ?? json['response'] as String? ?? '',
+      response: (clean != null && clean.isNotEmpty) ? clean : raw,
       messageId: json['message_id'] as String? ?? json['messageId'] as String?,
       educationalHints: json['educational_hints'] != null
           ? EducationalHints.fromJson(

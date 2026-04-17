@@ -217,9 +217,13 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: _buildAppBar(),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
+      appBar: _buildAppBar(isDark),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
           return Column(
@@ -237,7 +241,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                               ? 'Preparing your topic...'
                               : 'Say hello to start practicing.',
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: AppColorRoles.textMuted(isDark),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -256,14 +260,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
               // 3. Suggested Prompts (if any)
               if (widget.story.suggestedPrompts.isNotEmpty &&
                   !provider.isSendingMessage)
-                _buildSuggestedPrompts(),
+                _buildSuggestedPrompts(isDark),
 
               // 4. Typing indicator
-              if (provider.isSendingMessage) _buildTypingIndicator(),
+              if (provider.isSendingMessage) _buildTypingIndicator(isDark),
 
               // 5. Input field
-              if (!_taskBannerDismissedByUser) _buildTaskBanner(),
-              _buildInputField(isEnabled: provider.hasActiveSession),
+              if (!_taskBannerDismissedByUser) _buildTaskBanner(isDark),
+              _buildInputField(isEnabled: provider.hasActiveSession, isDark: isDark),
             ],
           );
         },
@@ -271,11 +275,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(bool isDark) {
     return AppBar(
       toolbarHeight: 86,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      foregroundColor: AppColors.textDark,
+      foregroundColor: AppColorRoles.textPrimary(isDark),
       elevation: 0,
       leading: BackButton(
         onPressed: () {
@@ -289,7 +293,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColorRoles.primary(isDark),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -306,17 +310,17 @@ class _TopicChatPageState extends State<TopicChatPage> {
               children: [
                 Text(
                   widget.story.title.en,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: AppColorRoles.textPrimary(isDark),
                   ),
                 ),
                 Text(
                   '${widget.story.difficultyLevel.shortName} • ${widget.story.estimatedMinutes}m left',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textGrey,
+                    color: AppColorRoles.textSecondary(isDark),
                   ),
                 ),
               ],
@@ -342,22 +346,26 @@ class _TopicChatPageState extends State<TopicChatPage> {
   IconData _getCategoryIconData(String category) {
     switch (category.toLowerCase()) {
       case 'travel':
-        return Icons.flight_rounded;
+        return Icons.flight_takeoff;
       case 'business':
-        return Icons.business_center_rounded;
-      case 'food':
-        return Icons.restaurant_rounded;
-      case 'health':
-        return Icons.health_and_safety_rounded;
+      case 'work':
+        return Icons.work;
       case 'daily_life':
       case 'daily life':
-        return Icons.home_rounded;
+        return Icons.home;
+      case 'food':
+      case 'cafe':
+        return Icons.coffee;
+      case 'shopping':
+        return Icons.shopping_cart;
+      case 'health':
+        return Icons.local_hospital;
       default:
-        return Icons.forum_rounded;
+        return Icons.chat_bubble;
     }
   }
 
-  Widget _buildSuggestedPrompts() {
+  Widget _buildSuggestedPrompts(bool isDark) {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -372,10 +380,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
             child: ActionChip(
               label: Text(prompt, style: TextStyle(fontSize: 12)),
               onPressed: () => _sendMessage(prompt),
-              backgroundColor: AppColors.surfaceLight,
+              backgroundColor: isDark
+                  ? AppColors.surfaceDarkInk
+                  : AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: Colors.blue.withValues(alpha: 0.3)),
+                side: BorderSide(
+                  color: AppColorRoles.primary(isDark).withValues(alpha: 0.3),
+                ),
               ),
             ),
           );
@@ -384,7 +396,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildTypingIndicator() {
+  Widget _buildTypingIndicator(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Row(
@@ -399,7 +411,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
             '${widget.story.title.en.split(' ').first} is typing...',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: AppColorRoles.textMuted(isDark),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -408,9 +420,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildTaskBanner() {
+  Widget _buildTaskBanner(bool isDark) {
     final Color accent = switch (_taskBannerType) {
-      _TaskBannerType.loading => AppColors.primary,
+      _TaskBannerType.loading => AppColorRoles.primary(isDark),
       _TaskBannerType.complete => AppColors.greenSuccessBright,
       _TaskBannerType.error => AppColors.orange,
     };
@@ -437,12 +449,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
+                color: isDark
+                    ? AppColors.surfaceDarkCard
+                    : AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: accent.withValues(alpha: 0.25)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.08),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -460,13 +474,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
                           _taskBannerTitle,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: Colors.grey[900],
+                            color: AppColorRoles.textPrimary(isDark),
                           ),
                         ),
                       ),
                       Text(
                         'Swipe to close',
-                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColorRoles.textMuted(isDark),
+                        ),
                       ),
                     ],
                   ),
@@ -474,7 +491,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     const SizedBox(height: 4),
                     Text(
                       _taskBannerDetail,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColorRoles.textSecondary(isDark),
+                      ),
                     ),
                   ],
                   if (_taskBannerProgress != null) ...[
@@ -498,7 +518,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildInputField({required bool isEnabled}) {
+  Widget _buildInputField({required bool isEnabled, required bool isDark}) {
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -507,10 +527,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: isDark
+            ? AppColors.surfaceDarkMuted
+            : AppColors.surfaceLight,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -521,15 +543,28 @@ class _TopicChatPageState extends State<TopicChatPage> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isDark
+                    ? AppColors.surfaceDarkInk
+                    : AppColors.grey100,
                 borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.borderDarkSoft
+                      : AppColors.grey200,
+                ),
               ),
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
                 enabled: isEnabled,
-                decoration: const InputDecoration(
+                style: TextStyle(
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+                decoration: InputDecoration(
                   hintText: 'Type in English...',
+                  hintStyle: TextStyle(
+                    color: AppColorRoles.textMuted(isDark),
+                  ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 20,
@@ -547,10 +582,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isEnabled ? Colors.blue : Colors.grey,
+                color: isEnabled
+                    ? AppColorRoles.primary(isDark)
+                    : AppColors.grey500,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.send, color: AppColors.surfaceLight, size: 20),
+              child: Icon(
+                Icons.send,
+                color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -560,24 +601,36 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   // ignore: unused_element
   Widget _getCategoryIcon(String category) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     IconData icon;
     Color color;
     switch (category.toLowerCase()) {
       case 'travel':
-        icon = Icons.flight;
-        color = Colors.blue;
+        icon = Icons.flight_takeoff;
+        color = AppColorRoles.primary(isDark);
         break;
       case 'business':
-        icon = Icons.business_center;
+      case 'work':
+        icon = Icons.work;
         color = Colors.indigo;
         break;
       case 'daily_life':
+      case 'daily life':
         icon = Icons.home;
         color = AppColors.teal;
         break;
       case 'food':
-        icon = Icons.restaurant;
+      case 'cafe':
+        icon = Icons.coffee;
         color = AppColors.orange;
+        break;
+      case 'shopping':
+        icon = Icons.shopping_cart;
+        color = Colors.pinkAccent;
+        break;
+      case 'health':
+        icon = Icons.local_hospital;
+        color = Colors.redAccent;
         break;
       default:
         icon = Icons.chat_bubble;
@@ -662,15 +715,19 @@ class _StoryContextHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(12),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isDark
+            ? AppColors.surfaceDarkCard
+            : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -680,13 +737,13 @@ class _StoryContextHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: Colors.blue.withValues(alpha: 0.1),
+            backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.16),
             child: Text(
               session.rolePersona.name.isNotEmpty
                   ? session.rolePersona.name[0]
                   : '?',
-              style: const TextStyle(
-                color: Colors.blue,
+              style: TextStyle(
+                color: AppColorRoles.primary(isDark),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -698,11 +755,17 @@ class _StoryContextHeader extends StatelessWidget {
               children: [
                 Text(
                   session.rolePersona.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
                 ),
                 Text(
                   session.rolePersona.role,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColorRoles.textSecondary(isDark),
+                  ),
                 ),
               ],
             ),
@@ -743,9 +806,12 @@ class _TopicMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isUser = message.isUser;
     final bubbleTextStyle = TextStyle(
-      color: isUser ? Colors.white : Colors.black87,
+      color: isUser
+          ? (isDark ? AppColors.slate900 : AppColors.surfaceLight)
+          : AppColorRoles.textPrimary(isDark),
       fontSize: 15,
     );
 
@@ -763,9 +829,14 @@ class _TopicMessageBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!isUser) ...[
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 14,
-                  child: Icon(Icons.smart_toy, size: 16),
+                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.16),
+                  child: Icon(
+                    Icons.smart_toy,
+                    size: 16,
+                    color: AppColorRoles.primary(isDark),
+                  ),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -776,16 +847,23 @@ class _TopicMessageBubble extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: isUser ? Colors.blue : Colors.white,
+                    color: isUser
+                        ? AppColorRoles.primary(isDark)
+                        : (isDark ? AppColors.surfaceDarkCard : AppColors.surfaceLight),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
                       bottomLeft: Radius.circular(isUser ? 20 : 4),
                       bottomRight: Radius.circular(isUser ? 4 : 20),
                     ),
+                    border: Border.all(
+                      color: isUser
+                          ? AppColorRoles.primary(isDark).withValues(alpha: 0.3)
+                          : (isDark ? AppColors.borderDarkSoft : AppColors.grey200),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.05),
                         blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
@@ -819,7 +897,10 @@ class _TopicMessageBubble extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4, left: 36),
               child: Text(
                 'AI optimized with ${message.llmMetadata!.provider}',
-                style: TextStyle(fontSize: 9, color: Colors.grey[400]),
+                style: TextStyle(
+                  fontSize: 9,
+                  color: AppColorRoles.textMuted(isDark),
+                ),
               ),
             ),
         ],
@@ -841,6 +922,8 @@ class VocabularyPreviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -853,7 +936,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: isDark ? AppColors.textOnDarkMuted : Colors.grey[300],
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -861,7 +944,10 @@ class VocabularyPreviewSheet extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                const Icon(Icons.menu_book, color: Colors.blue),
+                Icon(
+                  Icons.menu_book,
+                  color: AppColorRoles.primary(isDark),
+                ),
                 const SizedBox(width: 12),
                 const Text(
                   'Key Vocabulary',

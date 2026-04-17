@@ -15,7 +15,7 @@ class ApiConfig {
   // ── Environment ─────────────────────────────────────────────────────────────
 
   static String get environment =>
-      dotenv.env['ENVIRONMENT']?.trim() ?? 'development';
+  _readEnv('ENVIRONMENT')?.trim() ?? 'development';
 
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';
@@ -75,7 +75,7 @@ class ApiConfig {
   // ── Internals ────────────────────────────────────────────────────────────────
 
   static String? _normalizedEnvUrl(String key) {
-    final envUrl = dotenv.env[key]?.trim();
+    final envUrl = _readEnv(key)?.trim();
     if (envUrl == null || envUrl.isEmpty) return null;
     final normalized = envUrl.endsWith('/')
         ? envUrl.substring(0, envUrl.length - 1)
@@ -111,5 +111,10 @@ class ApiConfig {
         host == '127.0.0.1' ||
         host == '0.0.0.0' ||
         host == '::1';
+  }
+
+  static String? _readEnv(String key) {
+    if (!dotenv.isInitialized) return null;
+    return dotenv.env[key];
   }
 }

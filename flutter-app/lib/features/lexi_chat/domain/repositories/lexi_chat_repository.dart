@@ -17,6 +17,7 @@ abstract class LexiChatRepository {
     bool enableTts = true,
     String learnerLevel = 'B1',
     String? storyContext,
+    String? idempotencyKey,
   });
 
   /// Get message history for a session.

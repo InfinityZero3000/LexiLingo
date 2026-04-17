@@ -111,8 +111,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF1A2E3F)
-                          : const Color(0xFFFFF8F0),
+                          ? AppColors.surfaceDarkCard
+                          : AppColors.surfaceWarmSoft,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isDark
@@ -168,7 +168,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFF3A4A5A)
+                                    ? AppColors.borderDarkSoft
                                     : AppColors.primary.withValues(alpha: 0.2),
                                 width: 1,
                               ),
@@ -247,7 +247,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2E3F) : const Color(0xFFFFFBF5),
+        color: isDark ? AppColors.surfaceDarkCard : AppColors.surfaceWarm,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
@@ -297,7 +297,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0A1628) : Colors.white,
+                color: isDark ? AppColors.surfaceDarkInk : Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

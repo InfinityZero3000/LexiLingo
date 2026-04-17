@@ -31,6 +31,11 @@ class ChatRepositoryImpl implements ChatRepository {
     this.apiDataSource,
   });
 
+  bool _isSessionNotFoundError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+  }
+
   // ===== Session Management =====
 
   @override
@@ -188,6 +193,9 @@ class ChatRepositoryImpl implements ChatRepository {
               );
             }
           } catch (e) {
+            if (_isSessionNotFoundError(e)) {
+              rethrow;
+            }
             // Metadata endpoint is an optimization layer only.
             logWarn(_tag, 'getMessagesMetadata failed, continue paged fetch: $e');
           }

@@ -31,6 +31,11 @@ class LexiChatDataSource {
 
   LexiChatDataSource({required this.apiClient});
 
+  bool _isSessionNotFoundError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+  }
+
   String _normalizeMarkdownBoldMarkers(String text) {
     if (!text.contains('**')) return text;
 
@@ -170,6 +175,7 @@ class LexiChatDataSource {
     bool enableTts = true,
     String learnerLevel = 'B1',
     String? storyContext,
+    String? idempotencyKey,
   }) async {
     final payload = {
       'user_id': userId,
@@ -185,6 +191,10 @@ class LexiChatDataSource {
     final json = await apiClient.post(
       '/lexi/chat',
       body: payload,
+      headers: {
+        if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+          'X-Idempotency-Key': idempotencyKey,
+      },
       timeout: AppConstants.aiOperationTimeout,
     );
 
@@ -318,6 +328,10 @@ class LexiChatDataSource {
         returned: (pagination['returned'] as num?)?.toInt() ?? messages.length,
       );
     } catch (e) {
+      if (_isSessionNotFoundError(e)) {
+        logWarn(_tag, 'getMessagesPaged session not found, skip legacy fallback: $e');
+        rethrow;
+      }
       logWarn(_tag, 'getMessagesPaged fallback to full history: $e');
       final all = await getMessages(sessionId: sessionId);
       final page = all.length <= safeLimit

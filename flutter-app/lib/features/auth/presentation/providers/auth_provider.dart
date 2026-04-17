@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
@@ -78,6 +79,7 @@ class AuthProvider extends ChangeNotifier {
             _errorMessage = _getFailureMessage(failure);
           }
           _user = null;
+          UserScopeService.clearActiveUserId();
         },
         (user) {
           _user = user;
@@ -89,6 +91,7 @@ class AuthProvider extends ChangeNotifier {
       // Don't show error for auth check failures - user just not logged in
       _errorMessage = null;
       _user = null;
+      UserScopeService.clearActiveUserId();
     } finally {
       _isCheckingAuth = false;
       notifyListeners();

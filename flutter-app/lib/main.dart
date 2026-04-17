@@ -17,7 +17,10 @@ import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
+import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
@@ -82,9 +85,12 @@ void main() async {
   };
 
   try {
-    // Load .env.production for release builds, .env for dev
-    final envFile = kReleaseMode ? '.env.production' : '.env';
-    await dotenv.load(fileName: envFile);
+    // On web, rely on safe defaults/dart-defines to avoid hidden-file asset issues.
+    if (!kIsWeb) {
+      // Load .env.production for release builds, .env for dev
+      final envFile = kReleaseMode ? '.env.production' : '.env';
+      await dotenv.load(fileName: envFile);
+    }
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
@@ -108,6 +114,7 @@ void main() async {
   }
 
   // Initialize Dependency Injection (skip database on web)
+  await LocalStateMigrationService().runIfNeeded();
   await di.initializeDependencies(skipDatabase: kIsWeb);
 
   // Initialize local notifications early so Settings sync can schedule reliably.
@@ -176,8 +183,40 @@ void main() async {
   });
 }
 
-class LexiLingoApp extends StatelessWidget {
+class LexiLingoApp extends StatefulWidget {
   const LexiLingoApp({super.key});
+
+  @override
+  State<LexiLingoApp> createState() => _LexiLingoAppState();
+}
+
+class _LexiLingoAppState extends State<LexiLingoApp>
+    with WidgetsBindingObserver {
+  late final SyncQueueLifecycleRunner _syncQueueRunner;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncQueueRunner.start();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _syncQueueRunner.stop();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncQueueRunner.onAppResumed();
+    }
+  }
 
   String? _extractResetTokenFromDeepLink() {
     final queryToken = Uri.base.queryParameters['token'];
@@ -286,7 +325,7 @@ class LexiLingoApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
-            themeAnimationDuration: const Duration(milliseconds: 700),
+            themeAnimationDuration: const Duration(milliseconds: 280),
             themeAnimationCurve: Curves.easeInOutCubic,
             // Localization — easy_localization handles locale state
             locale: context.locale,

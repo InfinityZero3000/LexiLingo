@@ -28,6 +28,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     bool enableTts = true,
     String learnerLevel = 'B1',
     String? storyContext,
+    String? idempotencyKey,
   }) {
     return dataSource.sendMessage(
       userId: userId,
@@ -38,6 +39,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       enableTts: enableTts,
       learnerLevel: learnerLevel,
       storyContext: storyContext,
+      idempotencyKey: idempotencyKey,
     );
   }
 
@@ -83,6 +85,10 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
         );
       }
     } catch (e) {
+      if (_isSessionNotFoundError(e)) {
+        // Let provider handle stale session cleanup and auto-create a new session.
+        rethrow;
+      }
       // Metadata endpoint is an optimization layer only.
       logWarn(_tag, 'getMessagesMetadata failed, continue paged fetch: $e');
     }
@@ -92,6 +98,11 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       limit: limit,
       cursor: cursor,
     );
+  }
+
+  bool _isSessionNotFoundError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
   }
 
   @override

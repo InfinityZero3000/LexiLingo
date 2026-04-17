@@ -177,7 +177,7 @@ class LexiDialogueBubble extends StatelessWidget {
             backgroundColor: highlightColor,
           ),
           a: baseTextStyle.copyWith(
-            color: AppColors.primary,
+            color: AppColorRoles.primary(isDark),
             decoration: TextDecoration.underline,
           ),
         ),
@@ -194,13 +194,14 @@ class LexiDialogueBubble extends StatelessWidget {
   }
 
   Widget _buildUserBubble(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: AppColorRoles.primary(isDark),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16),
               topRight: Radius.circular(4),
@@ -218,6 +219,28 @@ class LexiDialogueBubble extends StatelessWidget {
             ),
           ),
         ),
+        if (message.isPendingSync)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 12,
+                  color: isDark ? Colors.white60 : AppColors.textGrey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Pending sync',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -230,7 +253,7 @@ class LexiDialogueBubble extends StatelessWidget {
     Color? color,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final chipColor = color ?? AppColors.primary;
+    final chipColor = color ?? AppColorRoles.primary(isDark);
 
     return InkWell(
       onTap: onTap,

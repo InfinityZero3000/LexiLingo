@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/background_sync_queue_service.dart';
+import '../../../../core/services/encrypted_local_cache_service.dart';
+import '../../../../core/services/user_scope_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 
@@ -129,11 +132,21 @@ class TokenStorage {
 
   /// Clear all stored tokens (logout)
   Future<void> clearTokens() async {
+    final userScope = await UserScopeService.getActiveUserId();
+
     await Future.wait([
       _delete(_accessTokenKey),
       _delete(_refreshTokenKey),
       _delete(_tokenTypeKey),
     ]);
+
+    if (userScope != null && userScope.isNotEmpty) {
+      // Security hardening: wipe scoped cache + pending jobs on logout.
+      await EncryptedLocalCacheService.instance.clearUserScope(userScope);
+      await BackgroundSyncQueueService.instance.clearUserScope(userScope);
+    }
+
+    await UserScopeService.clearActiveUserId();
   }
 
   /// Clear all secure storage (complete wipe)
@@ -144,5 +157,9 @@ class TokenStorage {
     } else {
       await _secureStorage.deleteAll();
     }
+
+    await EncryptedLocalCacheService.instance.clearAll();
+    // Clear pending mutation queue to avoid replay across users.
+    await BackgroundSyncQueueService.instance.clearAll();
   }
 }

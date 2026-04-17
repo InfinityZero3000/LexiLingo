@@ -225,8 +225,8 @@ class _LexiChatPageState extends State<LexiChatPage>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [const Color(0xFF0A1628), AppColors.backgroundDark]
-                : [const Color(0xFFFAFBFC), const Color(0xFFF8F9FA)],
+                ? [AppColors.surfaceDarkInk, AppColors.backgroundDark]
+                : [AppColors.backgroundLight, AppColors.grey50],
           ),
         ),
         child: SafeArea(
@@ -304,7 +304,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                       style: TextStyle(
                         fontSize: 12,
                         color: isActive
-                            ? AppColors.primary
+                            ? AppColorRoles.primary(isDark)
                             : (isDark ? Colors.white54 : AppColors.textGrey),
                         fontWeight: isActive
                             ? FontWeight.w600
@@ -332,7 +332,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                         ? Icons.volume_up_rounded
                         : Icons.volume_off_rounded,
                     color: provider.ttsEnabled
-                        ? AppColors.primary
+                        ? AppColorRoles.primary(isDark)
                         : (isDark ? Colors.white38 : AppColors.textGrey),
                     size: 20,
                   ),
@@ -419,7 +419,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                                 provider.session?.sessionId == s.sessionId;
                             return ListTile(
                               selected: selected,
-                              selectedTileColor: AppColors.primary.withValues(
+                              selectedTileColor: AppColorRoles.primary(isDark).withValues(
                                 alpha: 0.08,
                               ),
                               title: Text(
@@ -630,7 +630,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                           : AppColors.chatBgLight,
                     ),
                     backgroundColor: isDark
-                        ? const Color(0xFF0A1628)
+                        ? AppColors.surfaceDarkInk
                         : AppColors.backgroundLight,
                   );
                 },
@@ -648,7 +648,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                 child: Container(
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF0A1628)
+                        ? AppColors.surfaceDarkInk
                         : AppColors.backgroundLight,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
@@ -692,11 +692,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColorRoles.primary(isDark),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.25),
+                          color: AppColorRoles.primary(isDark).withValues(alpha: 0.25),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -707,7 +707,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                         provider.isSending
                             ? Icons.hourglass_empty_rounded
                             : Icons.send_rounded,
-                        color: AppColors.surfaceLight,
+                        color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
                         size: 20,
                       ),
                       onPressed: provider.isSending ? null : _sendMessage,
