@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Roadmap Header Widget
 /// Displays course info, progress stats, and streak at the top of roadmap
@@ -8,14 +9,16 @@ class RoadmapHeaderWidget extends StatelessWidget {
   final VoidCallback onBack;
 
   const RoadmapHeaderWidget({
-    Key? key,
+    super.key,
     required this.roadmap,
     required this.onBack,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
 
     return Container(
       decoration: BoxDecoration(
@@ -38,21 +41,21 @@ class RoadmapHeaderWidget extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.surface),
                     onPressed: onBack,
                   ),
                   Expanded(
                     child: Text(
                       roadmap.courseTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _buildLevelBadge(roadmap.level),
+                  _buildLevelBadge(roadmap.level, isDark: isDark),
                 ],
               ),
             ),
@@ -67,27 +70,27 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     icon: Icons.local_fire_department,
                     value: '${roadmap.currentStreak}',
                     label: 'Streak',
-                    iconColor: Colors.orange,
+                    iconColor: AppColors.orange,
                   ),
                   _buildStatItem(
                     icon: Icons.star,
                     value: '${roadmap.totalXpEarned}',
                     label: 'XP',
-                    iconColor: Colors.amber,
+                    iconColor: AppColors.warning,
                   ),
                   _buildStatItem(
                     icon: Icons.check_circle,
                     value:
                         '${roadmap.completedLessons}/${roadmap.totalLessons}',
                     label: 'Lessons',
-                    iconColor: Colors.green,
+                    iconColor: AppColors.greenSuccessBright,
                   ),
                   _buildStatItem(
                     icon: Icons.pie_chart,
                     value:
                         '${roadmap.completionPercentage.toStringAsFixed(0)}%',
                     label: 'Progress',
-                    iconColor: Colors.blue,
+                    iconColor: primaryAccent,
                   ),
                 ],
               ),
@@ -108,21 +111,21 @@ class RoadmapHeaderWidget extends StatelessWidget {
                       ),
                       Text(
                         '${roadmap.completionPercentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.surfaceLight,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
                       value: roadmap.completionPercentage / 100,
                       minHeight: 8,
-                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                      backgroundColor: AppColors.surfaceLight,
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Colors.white,
                       ),
@@ -138,7 +141,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
             Container(
               height: 24,
               decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
+                color: Colors.transparent,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -151,20 +154,20 @@ class RoadmapHeaderWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelBadge(String level) {
+  Widget _buildLevelBadge(String level, {required bool isDark}) {
     Color badgeColor;
     switch (level.toLowerCase()) {
       case 'beginner':
-        badgeColor = Colors.green;
+        badgeColor = AppColors.greenSuccessBright;
         break;
       case 'intermediate':
-        badgeColor = Colors.orange;
+        badgeColor = AppColors.orange;
         break;
       case 'advanced':
-        badgeColor = Colors.red;
+        badgeColor = AppColors.errorBright;
         break;
       default:
-        badgeColor = Colors.blue;
+        badgeColor = AppColorRoles.primary(isDark);
     }
 
     return Container(
@@ -194,9 +197,9 @@ class RoadmapHeaderWidget extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 24),
@@ -204,17 +207,17 @@ class RoadmapHeaderWidget extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.surfaceLight,
           ),
         ),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.8),
+            color: AppColors.surfaceLight,
           ),
         ),
       ],

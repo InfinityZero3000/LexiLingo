@@ -1,4 +1,5 @@
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/user_scope_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 import '../models/user_model.dart';
@@ -70,6 +71,7 @@ class AuthBackendDataSource {
 
     // Save tokens securely
     await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
     logDebug(_tag, 'Tokens saved, now registering device...');
 
     // Register device with FCM token
@@ -91,6 +93,25 @@ class AuthBackendDataSource {
     final loginResponse = LoginResponse.fromJson(envelope.data);
 
     await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
+    await _registerDevice();
+
+    return loginResponse;
+  }
+
+  /// Login with Facebook (via Firebase)
+  /// POST /auth/facebook
+  Future<LoginResponse> loginWithFacebook(String firebaseIdToken) async {
+    final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
+      '/auth/facebook',
+      body: {'id_token': firebaseIdToken, 'source': 'app'},
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+
+    final loginResponse = LoginResponse.fromJson(envelope.data);
+
+    await tokenStorage.saveTokens(loginResponse.tokens);
+    await UserScopeService.setActiveUserId(loginResponse.userId);
     await _registerDevice();
 
     return loginResponse;
@@ -124,6 +145,7 @@ class AuthBackendDataSource {
       // Even if logout fails, clear local tokens
     } finally {
       await tokenStorage.clearTokens();
+      await UserScopeService.clearActiveUserId();
     }
   }
 
@@ -137,7 +159,10 @@ class AuthBackendDataSource {
     );
     logDebug(_tag, 'User received: ${envelope.data['email']}');
 
-    return UserModel.fromJson(envelope.data);
+    final userModel = UserModel.fromJson(envelope.data);
+    await UserScopeService.setActiveUserId(userModel.id);
+
+    return userModel;
   }
 
   /// Update user profile
@@ -145,12 +170,21 @@ class AuthBackendDataSource {
   Future<UserModel> updateProfile({
     String? displayName,
     String? avatarUrl,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? level,
+    bool? isOnboardingCompleted,
   }) async {
     final envelope = await apiClient.putEnvelope<Map<String, dynamic>>(
       '/users/me',
       body: {
         if (displayName != null) 'display_name': displayName,
         if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (nativeLanguage != null) 'native_language': nativeLanguage,
+        if (targetLanguage != null) 'target_language': targetLanguage,
+        if (level != null) 'level': level,
+        if (isOnboardingCompleted != null)
+          'is_onboarding_completed': isOnboardingCompleted,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );

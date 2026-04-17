@@ -32,23 +32,23 @@ class StreakIndicator extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.45),
+                  color: AppColors.orange.withValues(alpha: 0.45),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
               ],
-              color: const Color(0xFFFFF3E0),
+              color: AppColors.orange.withValues(alpha: 0.1),
             )
           : BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: const Color(0xFFFFF3E0),
+              color: AppColors.orange.withValues(alpha: 0.1),
             ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
             Icons.local_fire_department_rounded,
-            color: Colors.orange,
+            color: AppColors.orange,
             size: 16,
           ),
           const SizedBox(width: 3),
@@ -70,7 +70,7 @@ class StreakIndicator extends StatelessWidget {
   Widget _buildFull() {
     final color = streakDays > 0 ? Colors.orange.shade800 : AppColors.textGrey;
     final bgColor = streakDays > 0
-        ? const Color(0xFFFFF3E0)
+        ? AppColors.orange.withValues(alpha: 0.1)
         : AppColors.grey200;
 
     return AnimatedContainer(
@@ -82,7 +82,7 @@ class StreakIndicator extends StatelessWidget {
         boxShadow: _hasGlow
             ? [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.5),
+                  color: AppColors.orange.withValues(alpha: 0.5),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -94,7 +94,7 @@ class StreakIndicator extends StatelessWidget {
         children: [
           Icon(
             Icons.local_fire_department_rounded,
-            color: Colors.orange,
+            color: AppColors.orange,
             size: _hasGlow ? 22 : 18,
           ),
           const SizedBox(width: 6),
@@ -112,7 +112,7 @@ class StreakIndicator extends StatelessWidget {
               ),
               Text(
                 'streak',
-                style: TextStyle(fontSize: 11, color: color.withOpacity(0.7)),
+                style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7)),
               ),
             ],
           ),

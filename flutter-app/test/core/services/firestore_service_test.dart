@@ -38,7 +38,9 @@ void main() {
           'createdAt': Timestamp.now(),
         };
 
-        when(mockFirestore.collection(collectionPath)).thenReturn(mockCollection);
+        when(
+          mockFirestore.collection(collectionPath),
+        ).thenReturn(mockCollection);
         when(mockCollection.doc(documentId)).thenReturn(mockDocument);
         when(mockDocument.get()).thenAnswer((_) async => mockDocSnapshot);
         when(mockDocSnapshot.exists).thenReturn(true);
@@ -69,10 +71,7 @@ void main() {
 
       test('should set document data successfully', () async {
         // Arrange
-        final testData = {
-          'name': 'New User',
-          'email': 'new@example.com',
-        };
+        final testData = {'name': 'New User', 'email': 'new@example.com'};
         when(mockDocument.set(testData)).thenAnswer((_) async => {});
 
         // Act
@@ -109,11 +108,10 @@ void main() {
     group('Collection Operations', () {
       test('should add document to collection', () async {
         // Arrange
-        final testData = {
-          'title': 'Test Course',
-          'language': 'en',
-        };
-        when(mockCollection.add(testData)).thenAnswer((_) async => mockDocument);
+        final testData = {'title': 'Test Course', 'language': 'en'};
+        when(
+          mockCollection.add(testData),
+        ).thenAnswer((_) async => mockDocument);
         when(mockDocument.id).thenReturn('new_doc_id');
 
         // Act
@@ -131,15 +129,15 @@ void main() {
         final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
         final mockQueryDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-        when(mockCollection.where('status', isEqualTo: 'active'))
-            .thenReturn(mockCollection);
+        when(
+          mockCollection.where('status', isEqualTo: 'active'),
+        ).thenReturn(mockCollection);
         when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
         when(mockQuerySnapshot.docs).thenReturn([mockQueryDoc]);
         when(mockQueryDoc.id).thenReturn('doc_1');
-        when(mockQueryDoc.data()).thenReturn({
-          'status': 'active',
-          'title': 'Active Course',
-        });
+        when(
+          mockQueryDoc.data(),
+        ).thenReturn({'status': 'active', 'title': 'Active Course'});
 
         // Act
         final query = mockCollection.where('status', isEqualTo: 'active');
@@ -170,8 +168,9 @@ void main() {
     group('Real-time Updates', () {
       test('should listen to document changes', () async {
         // Arrange
-        when(mockDocument.snapshots())
-            .thenAnswer((_) => Stream.fromIterable([mockDocSnapshot]));
+        when(
+          mockDocument.snapshots(),
+        ).thenAnswer((_) => Stream.fromIterable([mockDocSnapshot]));
         when(mockDocSnapshot.exists).thenReturn(true);
         when(mockDocSnapshot.data()).thenReturn({'name': 'Updated'});
 
@@ -194,10 +193,7 @@ void main() {
         'email': 'test@example.com',
         'displayName': 'Test User',
         'createdAt': Timestamp.now(),
-        'settings': {
-          'theme': 'dark',
-          'language': 'en',
-        },
+        'settings': {'theme': 'dark', 'language': 'en'},
       };
 
       // Assert

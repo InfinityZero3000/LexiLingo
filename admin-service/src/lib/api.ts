@@ -23,15 +23,60 @@ export class ApiError extends Error {
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
-/**
- * Attempt to refresh the access token using the stored refresh token.
- * Returns true if refresh succeeded, false otherwise.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Fallback fetch: thử primary URL trước, nếu network error → thử fallback.
+// Chỉ fallback khi lỗi là TypeError (connection refused / DNS / network down).
+// Lỗi HTTP (4xx, 5xx) KHÔNG fallback — đó là response hợp lệ từ server.
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchWithFallback(
+  primaryUrl: string,
+  options: RequestInit
+): Promise<Response> {
+  // Xác định base và fallback tương ứng
+  let fallbackBase = "";
+  if (primaryUrl.startsWith(ENV.backendUrl)) {
+    fallbackBase = ENV.backendUrlFallback;
+  } else if (primaryUrl.startsWith(ENV.aiUrl)) {
+    fallbackBase = ENV.aiUrlFallback;
+  }
+
+  try {
+    return await fetch(primaryUrl, options);
+  } catch (err) {
+    // Chỉ fallback khi là network error (không phải HTTP error)
+    if (!(err instanceof TypeError) || !fallbackBase) {
+      throw err;
+    }
+
+    // Tái cấu trúc URL với fallback base
+    const primaryBase = primaryUrl.startsWith(ENV.backendUrl)
+      ? ENV.backendUrl
+      : ENV.aiUrl;
+    const path = primaryUrl.slice(primaryBase.length);
+    const fallbackUrl = `${fallbackBase}${path}`;
+
+    console.warn(
+      `[API] Primary không reach được (${primaryBase}), thử fallback: ${fallbackBase}`
+    );
+
+    try {
+      return await fetch(fallbackUrl, options);
+    } catch {
+      throw new Error(
+        `[API] Không thể kết nối đến cả primary (${primaryBase}) ` +
+        `lẫn fallback (${fallbackBase}). Kiểm tra kết nối mạng hoặc trạng thái server.`
+      );
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Refresh token (cũng có fallback)
+// ─────────────────────────────────────────────────────────────────────────────
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = authStore.refreshToken;
   if (!refreshToken) return false;
 
-  // If already refreshing, wait for the existing promise
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
@@ -39,7 +84,7 @@ async function tryRefreshToken(): Promise<boolean> {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      const response = await fetch(`${ENV.backendUrl}/auth/refresh`, {
+      const response = await fetchWithFallback(`${ENV.backendUrl}/auth/refresh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,7 +94,6 @@ async function tryRefreshToken(): Promise<boolean> {
       });
 
       if (!response.ok) {
-        // Refresh failed — clear session
         authStore.clear();
         return false;
       }
@@ -72,6 +116,9 @@ async function tryRefreshToken(): Promise<boolean> {
   return refreshPromise;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main API fetch — gọi với full URL, tự động attach token + refresh + fallback
+// ─────────────────────────────────────────────────────────────────────────────
 export const apiFetch = async <T>(
   url: string,
   options: RequestInit = {}
@@ -88,7 +135,7 @@ export const apiFetch = async <T>(
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    return fetch(url, { ...options, headers });
+    return fetchWithFallback(url, { ...options, headers });
   };
 
   // First attempt
@@ -98,10 +145,8 @@ export const apiFetch = async <T>(
   if (response.status === 401 && authStore.refreshToken) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
-      // Retry with the new access token
       response = await makeRequest(authStore.accessToken);
     } else {
-      // Refresh failed, redirect to login
       window.location.href = "/login";
       throw new ApiError("Session expired. Please log in again.", 401);
     }
@@ -113,7 +158,6 @@ export const apiFetch = async <T>(
     : await response.text();
 
   if (!response.ok) {
-    // If still 401 after refresh attempt, redirect to login
     if (response.status === 401) {
       authStore.clear();
       window.location.href = "/login";

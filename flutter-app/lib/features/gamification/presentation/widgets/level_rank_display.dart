@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_badge.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Combined Level + Rank display widget for profile / home page.
 ///
@@ -89,8 +90,8 @@ class LevelRankDisplay extends StatelessWidget {
                   ),
                   child: Text(
                     'Lv.$numericLevel',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -194,9 +195,9 @@ class LevelRankDisplay extends StatelessWidget {
       case 'C1':
         return const Color(0xFF9C27B0);
       case 'C2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       default:
-        return const Color(0xFF9E9E9E);
+        return AppColors.grey500;
     }
   }
 

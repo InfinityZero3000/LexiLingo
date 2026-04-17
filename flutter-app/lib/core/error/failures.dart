@@ -7,53 +7,45 @@ abstract class Failure {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'Server Failure']) : super(message);
+  const ServerFailure([super.message = 'Server Failure']);
 }
 
 class CacheFailure extends Failure {
-  const CacheFailure([String message = 'Cache Failure']) : super(message);
+  const CacheFailure([super.message = 'Cache Failure']);
 }
 
 class NetworkFailure extends Failure {
-  const NetworkFailure([String message = 'No Internet Connection'])
-    : super(message);
+  const NetworkFailure([super.message = 'No Internet Connection']);
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure([String message = 'Authentication Failed'])
-    : super(message);
+  const AuthFailure([super.message = 'Authentication Failed']);
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure([String message = 'Unauthorized']) : super(message);
+  const UnauthorizedFailure([super.message = 'Unauthorized']);
 }
 
 class ValidationFailure extends Failure {
-  const ValidationFailure([String message = 'Validation Failed'])
-    : super(message);
+  const ValidationFailure([super.message = 'Validation Failed']);
 }
 
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([String message = 'Resource Not Found'])
-    : super(message);
+  const NotFoundFailure([super.message = 'Resource Not Found']);
 }
 
 class ConflictFailure extends Failure {
-  const ConflictFailure([String message = 'Resource Already Exists'])
-    : super(message);
+  const ConflictFailure([super.message = 'Resource Already Exists']);
 }
 
 class RateLimitFailure extends Failure {
-  const RateLimitFailure([String message = 'Rate Limit Exceeded'])
-    : super(message);
+  const RateLimitFailure([super.message = 'Rate Limit Exceeded']);
 }
 
 class PermissionFailure extends Failure {
-  const PermissionFailure([String message = 'Permission Denied'])
-    : super(message);
+  const PermissionFailure([super.message = 'Permission Denied']);
 }
 
 class UnexpectedFailure extends Failure {
-  const UnexpectedFailure([String message = 'Unexpected Error'])
-    : super(message);
+  const UnexpectedFailure([super.message = 'Unexpected Error']);
 }

@@ -9,12 +9,19 @@ Following agent-skills/language-learning-patterns:
 from datetime import date, datetime, timedelta
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.cache import (
+    build_cache_key,
+    compute_cache_version,
+    delete_cached,
+    get_cached,
+    set_cached,
+)
 from app.crud.progress import ProgressCRUD
 from app.crud.course import CourseCRUD
 from app.schemas.progress import (
@@ -40,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/me", response_model=ApiResponse[ProgressStatsResponse])
 async def get_my_progress(
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -51,12 +59,20 @@ async def get_my_progress(
     - Recent activity: Last 7 days of activity
     - Course progress: Progress for all enrolled courses
     """
+    uid = str(current_user.id)
+    cache_key = build_cache_key("progress_me", user_id=uid)
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        response.headers["X-Cache-Version"] = compute_cache_version(cached)
+        response.headers["X-Cache-Source"] = "redis"
+        return ApiResponse(success=True, message="Progress retrieved successfully", data=cached)
+
     # Get user stats
-    stats = await ProgressCRUD.get_user_stats(db, str(current_user.id))
+    stats = await ProgressCRUD.get_user_stats(db, uid)
     
     # Get progress with course data in a single JOIN query (no N+1)
     rows = await ProgressCRUD.get_user_progress_with_courses(
-        db, str(current_user.id), limit=10
+        db, uid, limit=10
     )
     
     course_progress_list = []
@@ -77,7 +93,11 @@ async def get_my_progress(
         'recent_activity': [],  # TODO: Implement activity tracking
         'course_progress': course_progress_list
     }
-    
+
+    await set_cached(cache_key, response_data, ttl=30)
+    response.headers["X-Cache-Version"] = compute_cache_version(response_data)
+    response.headers["X-Cache-Source"] = "origin"
+
     return ApiResponse(
         success=True,
         message="Progress retrieved successfully",
@@ -313,7 +333,12 @@ async def complete_lesson(
             'achievements_unlocked': all_unlocked,
             'message': message
         }
-        
+
+        # Invalidate user's progress caches since XP/lessons changed
+        _uid = str(current_user.id)
+        await delete_cached(build_cache_key("progress_me", user_id=_uid))
+        await delete_cached(build_cache_key("progress_xp", user_id=_uid))
+
         return ApiResponse(
             success=True,
             message=message,
@@ -343,12 +368,20 @@ async def get_total_xp(
     Returns:
     - total_xp: Sum of XP from all courses
     """
-    total_xp = await ProgressCRUD.get_user_total_xp(db, str(current_user.id))
-    
+    uid = str(current_user.id)
+    cache_key = build_cache_key("progress_xp", user_id=uid)
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return ApiResponse(success=True, message="Total XP retrieved successfully", data=cached)
+
+    total_xp = await ProgressCRUD.get_user_total_xp(db, uid)
+    payload = {'total_xp': total_xp}
+    await set_cached(cache_key, payload, ttl=30)
+
     return ApiResponse(
         success=True,
         message="Total XP retrieved successfully",
-        data={'total_xp': total_xp}
+        data=payload
     )
 
 
@@ -388,14 +421,23 @@ async def get_weekly_progress(
         .order_by(DailyActivity.activity_date)
     )
     activities = result.scalars().all()
-    
+
+    # Aggregate weekly totals directly from DB records (missing days = 0)
+    total_lessons = sum(a.lessons_completed for a in activities)
+    total_study_time = sum(a.study_time_minutes for a in activities)
+    goals_met_count = sum(1 for a in activities if a.daily_goal_met)
+
+    # Fetch streak for current_streak / longest_streak
+    streak_result = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
+    streak = streak_result.scalar_one_or_none()
+
     # Create a map for quick lookup
     activity_map = {a.activity_date: a for a in activities}
-    
+
     # Build response for each day of the week
     days = []
     day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    
+
     total_xp = 0
     best_day = None
     best_xp = 0
@@ -436,6 +478,11 @@ async def get_weekly_progress(
         'days_active': days_with_activity,
         'week_start': week_start.isoformat(),
         'week_end': today.isoformat(),
+        'total_lessons': total_lessons,
+        'total_study_time': total_study_time,
+        'week_goal_progress': round(goals_met_count / 7, 2),
+        'current_streak': streak.current_streak if streak else 0,
+        'longest_streak': streak.longest_streak if streak else 0,
     }
     
     return ApiResponse(
@@ -466,6 +513,12 @@ async def get_my_streak(
     - is_active_today: Whether user has learned today
     - streak_at_risk: Whether streak will be lost if no activity today
     """
+    uid = str(current_user.id)
+    cache_key = build_cache_key("progress_streak", user_id=uid)
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return ApiResponse(success=True, message="Streak retrieved successfully", data=cached)
+
     result = await db.execute(
         select(Streak).where(Streak.user_id == current_user.id)
     )
@@ -474,17 +527,27 @@ async def get_my_streak(
     today = date.today()
     
     if not streak:
-        # Create new streak record for user
-        streak = Streak(
-            user_id=current_user.id,
-            current_streak=0,
-            longest_streak=0,
-            total_days_active=0,
-            freeze_count=0
-        )
-        db.add(streak)
-        await db.commit()
-        await db.refresh(streak)
+        # Create new streak record for user — handle race condition
+        try:
+            streak = Streak(
+                user_id=current_user.id,
+                current_streak=0,
+                longest_streak=0,
+                total_days_active=0,
+                freeze_count=0
+            )
+            db.add(streak)
+            await db.commit()
+            await db.refresh(streak)
+        except Exception:
+            await db.rollback()
+            # Another concurrent request created it — re-fetch
+            result = await db.execute(
+                select(Streak).where(Streak.user_id == current_user.id)
+            )
+            streak = result.scalar_one_or_none()
+            if not streak:
+                raise
     
     # Determine if active today and if streak is at risk
     is_active_today = streak.last_activity_date == today if streak.last_activity_date else False
@@ -531,7 +594,9 @@ async def get_my_streak(
         'streak_at_risk': streak_at_risk and streak.current_streak > 0,
         'weekly_activity': weekly_activity,
     }
-    
+
+    await set_cached(cache_key, response_data, ttl=30)
+
     return ApiResponse(
         success=True,
         message="Streak retrieved successfully",
@@ -675,7 +740,12 @@ async def update_streak(
         'streak_saved': streak_saved,
         'achievements_unlocked': unlocked_achievements,
     }
-    
+
+    # Invalidate the streak cache so the next GET reflects the new value
+    uid = str(current_user.id)
+    await delete_cached(build_cache_key("progress_streak", user_id=uid))
+    await delete_cached(build_cache_key("progress_me", user_id=uid))
+
     return ApiResponse(
         success=True,
         message=message,

@@ -45,7 +45,7 @@ class AudioPlayerControls extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2A38) : Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -66,7 +66,7 @@ class AudioPlayerControls extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.grey.shade300,
+                  : AppColors.grey300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -144,7 +144,7 @@ class AudioPlayerControls extends StatelessWidget {
                   icon: Icon(
                     isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     size: 30,
-                    color: Colors.white,
+                    color: AppColors.surfaceLight,
                   ),
                   tooltip: isPlaying ? 'Pause' : 'Play',
                 ),
@@ -198,7 +198,7 @@ class AudioPlayerControls extends StatelessWidget {
                   return ListTile(
                     leading: const Icon(Icons.speed_rounded),
                     title: Text(
-                      s == 1.0 ? '1.0× (Normal)' : '${s}×',
+                      s == 1.0 ? '1.0× (Normal)' : '$s×',
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.w700
@@ -290,7 +290,7 @@ class _SpeedButton extends StatelessWidget {
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: Text(
-          '${speed}×',
+          '$speed×',
           style: const TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,

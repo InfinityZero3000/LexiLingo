@@ -5,10 +5,9 @@ Database models for tracking user proficiency across multiple language skills.
 This system provides a more accurate CEFR level assessment than simple XP accumulation.
 """
 
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from app.core.db_types import TZDateTime
+from app.core.db_types import TZDateTime, PortableJSON, GUID
 from datetime import datetime, timezone
 import uuid
 import enum
@@ -36,8 +35,8 @@ class UserProficiencyProfile(Base):
     """
     __tablename__ = "user_proficiency_profiles"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     
     # Official CEFR level based on proficiency assessment
     assessed_level = Column(String(5), default="A1", nullable=False)
@@ -78,8 +77,8 @@ class UserSkillScore(Base):
     """
     __tablename__ = "user_skill_scores"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    profile_id = Column(UUID(as_uuid=True), ForeignKey("user_proficiency_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    profile_id = Column(GUID(), ForeignKey("user_proficiency_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     
     skill = Column(SQLEnum(SkillType), nullable=False)
     score = Column(Float, default=0.0)  # 0-100 scale
@@ -128,8 +127,8 @@ class UserLevelHistory(Base):
     """
     __tablename__ = "user_level_history"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    profile_id = Column(UUID(as_uuid=True), ForeignKey("user_proficiency_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    profile_id = Column(GUID(), ForeignKey("user_proficiency_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     
     previous_level = Column(String(5), nullable=False)
     new_level = Column(String(5), nullable=False)
@@ -137,7 +136,7 @@ class UserLevelHistory(Base):
     
     # Context at time of change
     overall_score = Column(Float, nullable=True)
-    skill_scores_snapshot = Column(JSON, nullable=True)  # Snapshot of all skill scores
+    skill_scores_snapshot = Column(PortableJSON, nullable=True)  # Snapshot of all skill scores
     exercises_completed = Column(Integer, nullable=True)
     accuracy = Column(Float, nullable=True)
     
@@ -157,8 +156,8 @@ class ExerciseAttempt(Base):
     """
     __tablename__ = "exercise_attempts"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # Exercise details
     exercise_type = Column(String(50), nullable=False)  # vocab_fill_blank, grammar_choice, etc.
@@ -171,14 +170,14 @@ class ExerciseAttempt(Base):
     time_spent_seconds = Column(Integer, default=0)
     
     # Context
-    lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id", ondelete="SET NULL"), nullable=True)
+    lesson_id = Column(GUID(), ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True)
+    course_id = Column(GUID(), ForeignKey("courses.id", ondelete="SET NULL"), nullable=True)
     
     # Metadata
     attempted_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Additional data (wrong answer, hints used, etc.)
-    attempt_metadata = Column(JSON, nullable=True)
+    attempt_metadata = Column(PortableJSON, nullable=True)
 
 
 class LevelAssessmentTest(Base):
@@ -190,15 +189,15 @@ class LevelAssessmentTest(Base):
     """
     __tablename__ = "level_assessment_tests"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     test_type = Column(String(20), nullable=False)  # 'initial', 'quick', 'comprehensive'
     
     # Results
     assessed_level = Column(String(5), nullable=False)
     overall_score = Column(Float, nullable=False)
-    skill_scores = Column(JSON, nullable=False)  # {skill: score, ...}
+    skill_scores = Column(PortableJSON, nullable=False)  # {skill: score, ...}
     
     # Test metadata
     questions_count = Column(Integer, nullable=False)

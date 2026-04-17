@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -24,7 +25,7 @@ class _HangmanScreenState extends State<HangmanScreen>
   late ConfettiController _confettiController;
 
   int _wrongGuesses = 0;
-  Set<String> _guessedLetters = {};
+  final Set<String> _guessedLetters = {};
   bool _gameLoaded = false;
   bool _gameOver = false;
   bool _gameWon = false;
@@ -180,7 +181,7 @@ class _HangmanScreenState extends State<HangmanScreen>
           builder: (context, provider, _) {
             if (provider.isLoading || !_gameLoaded) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: Center(child: LottieLoadingWidget.medium()),
               );
             }
             final game = provider.hangman!;
@@ -189,7 +190,7 @@ class _HangmanScreenState extends State<HangmanScreen>
             return Scaffold(
               backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: const Text(
                   'Hangman',
@@ -204,7 +205,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                         (i) => Icon(
                           Icons.favorite,
                           color: i < maxWrong - _wrongGuesses
-                              ? Colors.red
+                              ? AppColors.errorBright
                               : AppColors.grey300,
                           size: 18,
                         ),
@@ -231,7 +232,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                               color: AppColors.primary,
                             ),
                           ),
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                           side: const BorderSide(color: AppColors.primary),
                         ),
                         const Spacer(),
@@ -255,7 +256,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.accentYellow.withOpacity(0.2),
+                          color: AppColors.accentYellow.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: AppColors.accentYellow),
                         ),
@@ -326,7 +327,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                       child: Text(
                         'The word was: ${game.word}',
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: AppColors.errorBright,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -357,7 +358,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                           used: _hint2Used,
                           disabled: _gameOver,
                           onTap: () => _useHint2(game),
-                          color: Colors.orange,
+                          color: AppColors.orange,
                         ),
                         const SizedBox(width: 8),
                         _HintButton(
@@ -366,7 +367,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                           used: _hint3Used,
                           disabled: _gameOver,
                           onTap: () => _useHint3(game),
-                          color: Colors.purple,
+                          color: AppColors.purple,
                         ),
                       ],
                     ),
@@ -430,7 +431,7 @@ class _HintButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.1) : AppColors.grey200,
+          color: active ? color.withValues(alpha: 0.1) : AppColors.grey200,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: active ? color : AppColors.grey300,
@@ -452,7 +453,7 @@ class _HintButton extends StatelessWidget {
               used ? 'Used' : detail,
               style: TextStyle(
                 fontSize: 10,
-                color: active ? color.withOpacity(0.7) : AppColors.textGrey,
+                color: active ? color.withValues(alpha: 0.7) : AppColors.textGrey,
               ),
             ),
           ],

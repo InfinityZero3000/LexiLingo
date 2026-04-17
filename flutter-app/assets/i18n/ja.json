@@ -83,5 +83,89 @@
     "account_subtitle": "個人情報の管理",
     "sign_out": "サインアウト",
     "sign_out_confirm": "サインアウトしますか？"
+  },
+  "ai_tutor": {
+    "title": "AI家庭教師",
+    "analyzeText": "テキストを分析",
+    "evaluateGrammar": "文法を評価",
+    "explainWord": "この単語を説明",
+    "generateExercise": "練習問題を作成",
+    "fixPronunciation": "発音を修正",
+    "translate": "翻訳",
+    "transcribeAudio": "音声を文字起こし",
+    "skillLevel": "スキルレベル",
+    "feedback": "フィードバック",
+    "giveMeHint": "ヒントをください"
+  },
+  "topics": {
+    "storyMode": "ストーリーモード",
+    "roleplay": "ロールプレイ",
+    "scenario": "シナリオ",
+    "dialogue": "会話",
+    "chooseCharacter": "キャラクターを選択",
+    "vocabularyList": "単語リスト",
+    "grammarPoints": "文法ポイント",
+    "category": "カテゴリー",
+    "difficultyLevel": "難易度"
+  },
+  "dictionary": {
+    "searchWord": "単語を検索",
+    "definition": "定義",
+    "synonyms": "同義語",
+    "antonyms": "対義語",
+    "examples": "例文",
+    "partOfSpeech": "品詞",
+    "noun": "名詞",
+    "verb": "動詞",
+    "adjective": "形容詞",
+    "adverb": "副詞",
+    "pronunciation": "発音"
+  },
+  "assessment": {
+    "placementTest": "クラス分けテスト",
+    "cefrLevel": "CEFRレベル",
+    "readingSpeed": "読解速度",
+    "retakeTest": "テストを再受験する",
+    "yourLevelIs": "あなたのレベルは {level} です",
+    "testCompleted": "テスト完了"
+  },
+  "premium": {
+    "title": "LexiLingo プレミアム",
+    "upgrade": "プレミアムにアップグレード",
+    "proFeatures": "プロ機能をロック解除",
+    "subscriptionPlan": "サブスクリプションプラン",
+    "monthly": "月額",
+    "yearly": "年額",
+    "lifetime": "永久",
+    "restorePurchases": "購入を復元",
+    "manageSubscription": "サブスクリプションを管理",
+    "cancelSubscription": "サブスクリプションをキャンセル",
+    "noAds": "広告なしの体験",
+    "unlimitedHearts": "無制限のハート"
+  },
+  "support": {
+    "faq": "よくある質問",
+    "helpCenter": "ヘルプセンター",
+    "contactUs": "お問い合わせ",
+    "reportIssue": "問題を報告",
+    "sendFeedback": "フィードバックを送信",
+    "rateApp": "アプリを評価",
+    "appTutorial": "アプリのチュートリアル"
+  },
+  "datetime": {
+    "today": "今日",
+    "yesterday": "昨日",
+    "tomorrow": "明日",
+    "justNow": "たった今",
+    "minutesAgo": "{minutes} 分前",
+    "hoursAgo": "{hours} 時間前",
+    "daysAgo": "{days} 日前"
+  },
+  "offline": {
+    "downloadOffline": "オフラインでダウンロード",
+    "availableOffline": "オフラインで利用可能",
+    "downloading": "ダウンロード中...",
+    "storageUsage": "ストレージ使用量",
+    "clearCache": "キャッシュをクリア"
   }
 }

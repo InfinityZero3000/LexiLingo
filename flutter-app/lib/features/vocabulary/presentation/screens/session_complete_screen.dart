@@ -80,8 +80,8 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                 AppColors.primary,
                 AppColors.accentYellow,
                 AppColors.greenSuccess,
-                Colors.red,
-                Colors.purple,
+                AppColors.errorBright,
+                AppColors.purple,
               ],
             ),
           ),
@@ -255,7 +255,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1C2632)
+            ? AppColors.surfaceDarkMuted
             : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [

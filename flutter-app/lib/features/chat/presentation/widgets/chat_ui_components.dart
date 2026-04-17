@@ -195,7 +195,7 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                           child: Icon(
                             widget.isRecording ? Icons.mic : Icons.mic_none,
                             color: widget.isRecording
-                                ? Colors.red
+                                ? AppColors.errorBright
                                 : (isDark
                                       ? Colors.white60
                                       : AppColors.textGrey),
@@ -240,9 +240,9 @@ class _GlassmorphicChatInputState extends State<GlassmorphicChatInput>
                             child: InkWell(
                               onTap: _hasText ? widget.onSend : null,
                               borderRadius: BorderRadius.circular(20),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.send_rounded,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                                 size: 20,
                               ),
                             ),
@@ -322,15 +322,15 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
   Color get _moodColor {
     switch (widget.mood) {
       case AIMood.happy:
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case AIMood.thinking:
-        return Colors.orange;
+        return AppColors.orange;
       case AIMood.excited:
         return Colors.pink;
       case AIMood.helpful:
         return Colors.blue;
       case AIMood.neutral:
-        return Colors.green;
+        return AppColors.greenSuccessBright;
     }
   }
 
@@ -556,9 +556,9 @@ class TopicData {
 
 /// Default conversation topics
 const List<TopicData> defaultTopics = [
-  TopicData(label: 'Daily Life', icon: Icons.wb_sunny, color: Colors.orange),
+  TopicData(label: 'Daily Life', icon: Icons.wb_sunny, color: AppColors.orange),
   TopicData(label: 'Travel', icon: Icons.flight, color: Colors.blue),
-  TopicData(label: 'Food', icon: Icons.restaurant, color: Colors.red),
-  TopicData(label: 'Work', icon: Icons.work, color: Colors.purple),
-  TopicData(label: 'Hobbies', icon: Icons.palette, color: Colors.green),
+  TopicData(label: 'Food', icon: Icons.restaurant, color: AppColors.errorBright),
+  TopicData(label: 'Work', icon: Icons.work, color: AppColors.purple),
+  TopicData(label: 'Hobbies', icon: Icons.palette, color: AppColors.greenSuccessBright),
 ];

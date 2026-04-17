@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +46,7 @@ class PodcastRepository {
           '$_baseUrl/search',
         ).replace(queryParameters: params);
         final response = await _client.get(uri);
-        _checkResponse(response);
+        _checkResponse(response, uri);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
     );
@@ -69,7 +70,7 @@ class PodcastRepository {
       fetchFn: () async {
         final uri = Uri.parse('$_baseUrl/curated');
         final response = await _client.get(uri);
-        _checkResponse(response);
+        _checkResponse(response, uri);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
     );
@@ -131,7 +132,7 @@ class PodcastRepository {
           '$_baseUrl/episodes',
         ).replace(queryParameters: params);
         final response = await _client.get(uri);
-        _checkResponse(response);
+        _checkResponse(response, uri);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
     );
@@ -288,8 +289,15 @@ class PodcastRepository {
 
   // ──── Helpers ────
 
-  void _checkResponse(http.Response response) {
+  void _checkResponse(http.Response response, Uri uri) {
     if (response.statusCode >= 400) {
+      final bodyPreview = response.body.length > 400
+          ? '${response.body.substring(0, 400)}...'
+          : response.body;
+      debugPrint(
+        '[PodcastRepository] HTTP ${response.statusCode} ${response.reasonPhrase} '
+        'for $uri\nResponse: $bodyPreview',
+      );
       throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
     }
   }

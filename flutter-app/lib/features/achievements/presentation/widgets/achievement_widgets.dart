@@ -1,11 +1,17 @@
 /// Achievement Widgets - UI components for displaying achievements
+library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
+import 'package:lexilingo_app/core/network/badge_image_cache.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -113,32 +119,60 @@ class AchievementBadge extends StatelessWidget {
     this.size = 80,
     this.useNewStyle = true, // Default to new style
     this.preferImageAsset = true, // Default to prefer image assets
-    this.useCdnFirst = true, // Default to CDN first for better performance
+    this.useCdnFirst = kReleaseMode, // Use CDN in production, local-first in dev
   });
+
+  bool _isNetworkUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    final uri = Uri.tryParse(trimmed);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
+  bool _looksLikeImageFileName(String value) {
+    final lower = value.toLowerCase().trim();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
+  }
 
   @override
   Widget build(BuildContext context) {
     if (preferImageAsset) {
       // Prefer slug (stable ID) over id (UUID) for badge asset lookup
-      final lookupKey = achievement.slug ?? achievement.id;
+      final lookupKey = (achievement.slug ?? achievement.id).trim();
+      final badgeIcon = achievement.badgeIcon?.trim();
 
-      // Priority 1: Network image from backend API (badgeIcon field)
-      if (achievement.badgeIcon != null && achievement.badgeIcon!.isNotEmpty) {
-        return _buildNetworkBadge(achievement.badgeIcon!);
-      }
-
-      // Priority 2: CDN URL (if useCdnFirst is true)
+      final mappedAssetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
       if (useCdnFirst) {
+        // In production, try network first and fall back to local assets on error.
+        if (badgeIcon != null && badgeIcon.isNotEmpty && _isNetworkUrl(badgeIcon)) {
+          return _buildNetworkBadge(badgeIcon);
+        }
+
         final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
         if (cdnUrl != null) {
           return _buildNetworkBadge(cdnUrl);
         }
       }
 
-      // Priority 3: Local asset
-      final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-      if (assetPath != null) {
-        return _buildImageAssetBadge(assetPath);
+      // Local mapped asset (deterministic and offline-safe).
+      if (mappedAssetPath != null) {
+        return _buildImageAssetBadge(mappedAssetPath);
+      }
+
+      // Allow raw filenames in DB, e.g. "course-graduate.png".
+      if (badgeIcon != null && badgeIcon.isNotEmpty && _looksLikeImageFileName(badgeIcon)) {
+        return _buildImageAssetBadge('assets/badges/$badgeIcon');
+      }
+
+      // If CDN-first is disabled, still allow explicit network URL from backend.
+      if (!useCdnFirst && badgeIcon != null && badgeIcon.isNotEmpty && _isNetworkUrl(badgeIcon)) {
+        return _buildNetworkBadge(badgeIcon);
       }
     }
 
@@ -151,6 +185,8 @@ class AchievementBadge extends StatelessWidget {
 
   /// Build badge from network URL (CDN or backend)
   Widget _buildNetworkBadge(String imageUrl) {
+    final cacheSidePx = (size * 2).round();
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -173,25 +209,28 @@ class AchievementBadge extends StatelessWidget {
           children: [
             // Badge image from network
             ClipOval(
-              child: Image.network(
-                imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                cacheManager: BadgeImageCache.instance,
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                          : null,
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
+                memCacheWidth: cacheSidePx,
+                memCacheHeight: cacheSidePx,
+                maxWidthDiskCache: cacheSidePx,
+                maxHeightDiskCache: cacheSidePx,
+                fadeInDuration: Duration.zero,
+                fadeOutDuration: Duration.zero,
+                placeholder: (_, __) => const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: LottieLoadingWidget.tiny(),
+                  ),
+                ),
+                errorWidget: (context, url, error) {
                   // Fallback to local asset or generated badge
-                  final lookupKey = achievement.slug ?? achievement.id;
+                  final lookupKey = (achievement.slug ?? achievement.id).trim();
                   final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
                   if (assetPath != null) {
                     return Image.asset(
@@ -215,7 +254,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
+                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
               ),
           ],
         ),
@@ -267,7 +306,7 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: Colors.white),
+                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
               ),
           ],
         ),
@@ -329,7 +368,7 @@ class AchievementBadge extends StatelessWidget {
               ? Icon(
                   _getBadgeIcon(achievement.badgeIcon),
                   size: size * 0.4,
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                 )
               : Icon(Icons.lock, size: size * 0.35, color: Colors.grey),
         ),
@@ -361,7 +400,7 @@ class AchievementCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isUnlocked ? rarityColor : Colors.grey.shade300,
+          color: isUnlocked ? rarityColor : AppColors.grey300,
           width: isUnlocked ? 2 : 1,
         ),
       ),
@@ -460,7 +499,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
               radix: 16,
             ),
           )
-        : Colors.amber;
+        : AppColors.warning;
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -476,11 +515,11 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
           blastDirectionality: BlastDirectionality.explosive,
           shouldLoop: false,
           colors: const [
-            Colors.green,
+            AppColors.greenSuccessBright,
             Colors.blue,
             Colors.pink,
-            Colors.orange,
-            Colors.purple,
+            AppColors.orange,
+            AppColors.purple,
             Colors.yellow,
           ],
           numberOfParticles: 30,
@@ -533,7 +572,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     child: Icon(
                       _getBadgeIcon(achievement.badgeIcon),
                       size: 48,
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                     ),
                   ),
                 ),
@@ -564,7 +603,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                       _RewardChip(
                         icon: Icons.star,
                         value: '+${achievement.xpReward} XP',
-                        color: Colors.amber,
+                        color: AppColors.warning,
                       ),
                       const SizedBox(width: 12),
                     ],

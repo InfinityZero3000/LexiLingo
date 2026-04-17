@@ -6,11 +6,19 @@ Phase 4: Endpoints for Achievements, Leaderboards, Shop, and Social Features
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from math import radians, sin, cos, sqrt, atan2
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.cache import (
+    build_cache_key,
+    compute_cache_version,
+    delete_cached,
+    get_cached,
+    set_cached,
+)
 from app.models.user import User
 from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
@@ -22,11 +30,36 @@ from app.schemas.gamification import (
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
     InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
     FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
-    ActivityFeedResponse, ActivityFeedItem
+    ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
+    LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse
 )
 from app.schemas.response import ApiResponse
 
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
+
+
+SOCIAL_LOCATION_TTL_SECONDS = 6 * 60 * 60
+
+
+def _social_location_key(user_id: UUID) -> str:
+    return build_cache_key("social_location", user_id=str(user_id))
+
+
+def _round_coarse(value: float) -> float:
+    # 2 decimals ~= 1.1km. This keeps nearby useful while protecting privacy.
+    return round(value, 2)
+
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    earth_radius_km = 6371.0
+    d_lat = radians(lat2 - lat1)
+    d_lon = radians(lon2 - lon1)
+    a = (
+        sin(d_lat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
+    )
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return earth_radius_km * c
 
 
 # ============================================================================
@@ -35,6 +68,7 @@ router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
 @router.get("/achievements", response_model=ApiResponse[List[AchievementResponse]])
 async def get_all_achievements(
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
@@ -49,6 +83,9 @@ async def get_all_achievements(
     response_data = []
     for achievement in achievements:
         response_data.append(AchievementResponse.model_validate(achievement))
+
+    response.headers["X-Cache-Version"] = compute_cache_version(response_data)
+    response.headers["X-Cache-Source"] = "origin"
     
     return ApiResponse(
         success=True,
@@ -59,6 +96,7 @@ async def get_all_achievements(
 
 @router.get("/achievements/me", response_model=ApiResponse[List[UserAchievementResponse]])
 async def get_my_achievements(
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -67,17 +105,32 @@ async def get_my_achievements(
     
     Returns all achievements the user has earned with unlock dates.
     """
+    cache_key = build_cache_key("achievements_me", user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        response.headers["X-Cache-Version"] = compute_cache_version(cached)
+        response.headers["X-Cache-Source"] = "redis"
+        return ApiResponse(
+            success=True,
+            message=f"Retrieved {len(cached)} achievements",
+            data=cached
+        )
+    
     user_achievements = await AchievementCRUD.get_user_achievements_with_details(db, current_user.id)
     
     response_data = []
     for ua, achievement in user_achievements:
         response_data.append({
             "id": ua.id,
-            "achievement": AchievementResponse.model_validate(achievement),
-            "unlocked_at": ua.unlocked_at,
+            "achievement": AchievementResponse.model_validate(achievement).model_dump(mode="json"),
+            "unlocked_at": ua.unlocked_at.isoformat() if ua.unlocked_at else None,
             "progress": ua.progress,
             "is_showcased": ua.is_showcased
         })
+    
+    await set_cached(cache_key, response_data, ttl=30)
+    response.headers["X-Cache-Version"] = compute_cache_version(response_data)
+    response.headers["X-Cache-Source"] = "origin"
     
     return ApiResponse(
         success=True,
@@ -156,6 +209,9 @@ async def check_all_achievements(
         }
         for a in unlocked
     ]
+
+    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,
@@ -178,12 +234,23 @@ async def get_my_wallet(
     
     Returns gem balance and totals.
     """
+    cache_key = build_cache_key("wallet", user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        return ApiResponse(
+            success=True,
+            message="Wallet retrieved successfully",
+            data=cached
+        )
+    
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+    wallet_data = WalletResponse.model_validate(wallet).model_dump(mode="json")
+    await set_cached(cache_key, wallet_data, ttl=30)
     
     return ApiResponse(
         success=True,
         message="Wallet retrieved successfully",
-        data=WalletResponse.model_validate(wallet)
+        data=wallet_data
     )
 
 
@@ -217,6 +284,7 @@ async def get_wallet_history(
 
 @router.get("/leaderboard", response_model=ApiResponse[LeaderboardResponse])
 async def get_leaderboard(
+    response: Response,
     league: str = Query("bronze", description="League: bronze, silver, gold, platinum, diamond"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -226,17 +294,51 @@ async def get_leaderboard(
     
     Returns top players in the league with XP earned this week.
     """
+    cache_key = build_cache_key("leaderboard", league=league, user_id=str(current_user.id))
+    cached = await get_cached(cache_key)
+    if cached:
+        response.headers["X-Cache-Version"] = compute_cache_version(cached)
+        response.headers["X-Cache-Source"] = "redis"
+        return ApiResponse(
+            success=True,
+            message="Leaderboard retrieved successfully",
+            data=cached
+        )
+    
     entries = await LeaderboardCRUD.get_leaderboard(db, league)
     week_start, week_end = LeaderboardCRUD.get_current_week_range()
     
     leaderboard_entries = []
     current_user_rank = None
+    total_participants = len(entries)
+
+    if not entries:
+        fallback_users, fallback_total = await LeaderboardCRUD.get_leaderboard_from_users(
+            db,
+            league,
+        )
+        total_participants = fallback_total
+        for rank, user in enumerate(fallback_users, 1):
+            is_current = user.id == current_user.id
+            if is_current:
+                current_user_rank = rank
+
+            leaderboard_entries.append(LeaderboardUserEntry(
+                rank=rank,
+                user_id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                avatar_url=user.avatar_url,
+                xp_earned=user.total_xp,
+                lessons_completed=0,
+                is_current_user=is_current,
+            ))
     
     for rank, (entry, user) in enumerate(entries, 1):
         is_current = entry.user_id == current_user.id
         if is_current:
             current_user_rank = rank
-        
+
         leaderboard_entries.append(LeaderboardUserEntry(
             rank=rank,
             user_id=user.id,
@@ -247,18 +349,29 @@ async def get_leaderboard(
             lessons_completed=entry.lessons_completed,
             is_current_user=is_current
         ))
+
+    if not current_user_rank and total_participants > 0:
+        current_user_rank = next(
+            (entry.rank for entry in leaderboard_entries if entry.user_id == current_user.id),
+            None,
+        )
+    
+    leaderboard_data = LeaderboardResponse(
+        league=league,
+        week_start=week_start,
+        week_end=week_end,
+        entries=leaderboard_entries,
+        current_user_rank=current_user_rank,
+        total_participants=total_participants
+    ).model_dump(mode="json")
+    await set_cached(cache_key, leaderboard_data, ttl=30)
+    response.headers["X-Cache-Version"] = compute_cache_version(leaderboard_data)
+    response.headers["X-Cache-Source"] = "origin"
     
     return ApiResponse(
         success=True,
         message="Leaderboard retrieved successfully",
-        data=LeaderboardResponse(
-            league=league,
-            week_start=week_start,
-            week_end=week_end,
-            entries=leaderboard_entries,
-            current_user_rank=current_user_rank,
-            total_participants=len(leaderboard_entries)
-        )
+        data=leaderboard_data
     )
 
 
@@ -341,6 +454,8 @@ async def purchase_item(
     
     item = await ShopCRUD.get_item(db, request.item_id)
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,
@@ -420,6 +535,8 @@ async def use_inventory_item(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message
         )
+
+    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     
     return ApiResponse(
         success=True,
@@ -557,6 +674,10 @@ async def get_user_followers(
             user_id=user.id,
             username=user.username,
             display_name=user.display_name,
+            avatar_url=user.avatar_url,
+            total_xp=user.total_xp,
+            current_streak=0,
+            league=user.rank,
             is_following=user.id in following_ids
         ))
     
@@ -591,6 +712,10 @@ async def get_user_following(
             user_id=user.id,
             username=user.username,
             display_name=user.display_name,
+            avatar_url=user.avatar_url,
+            total_xp=user.total_xp,
+            current_streak=0,
+            league=user.rank,
             is_following=user.id in following_ids
         ))
     
@@ -624,6 +749,7 @@ async def get_activity_feed(
             user_id=user.id,
             username=user.username,
             display_name=user.display_name,
+            avatar_url=user.avatar_url,
             activity_type=activity.activity_type,
             message=activity.message,
             activity_data=activity.activity_data,
@@ -637,5 +763,191 @@ async def get_activity_feed(
             activities=feed_items,
             total=len(feed_items),
             has_more=len(feed_items) == limit
+        )
+    )
+
+
+@router.get("/users/suggestions", response_model=ApiResponse[FriendSuggestionsResponse])
+async def get_friend_suggestions(
+    limit: int = Query(10, ge=1, le=30),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get friend suggestions for the current user based on profile similarity."""
+    suggestions = await SocialCRUD.get_friend_suggestions(db, current_user.id, limit)
+
+    users = [
+        UserSocialProfile(
+            user_id=user.id,
+            username=user.username,
+            display_name=user.display_name,
+            avatar_url=user.avatar_url,
+            total_xp=user.total_xp,
+            current_streak=0,
+            league=user.rank,
+            is_following=False,
+            mutual_connections=mutual_count,
+            suggestion_reasons=reasons,
+            similarity_score=score,
+        )
+        for user, score, mutual_count, reasons in suggestions
+    ]
+
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(users)} friend suggestions",
+        data=FriendSuggestionsResponse(users=users, total=len(users)),
+    )
+
+
+@router.post("/users/location", response_model=ApiResponse[LocationUpdateResponse])
+async def update_social_location(
+    request: LocationUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Update nearby location sharing for current user using hybrid privacy model.
+
+    - Stores only coarse location (rounded coordinates)
+    - Uses short TTL to avoid persistent tracking
+    - Allows explicit opt-out via enabled=false
+    """
+    _ = db
+    location_key = _social_location_key(current_user.id)
+
+    if not request.enabled:
+        await delete_cached(location_key)
+        return ApiResponse(
+            success=True,
+            message="Nearby location sharing disabled",
+            data=LocationUpdateResponse(
+                enabled=False,
+                expires_in_seconds=0,
+            ),
+        )
+
+    if request.latitude is None or request.longitude is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="latitude and longitude are required when enabled=true",
+        )
+
+    payload = {
+        "user_id": str(current_user.id),
+        "latitude": _round_coarse(request.latitude),
+        "longitude": _round_coarse(request.longitude),
+        "accuracy_meters": request.accuracy_meters,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await set_cached(location_key, payload, ttl=SOCIAL_LOCATION_TTL_SECONDS)
+
+    return ApiResponse(
+        success=True,
+        message="Nearby location sharing updated",
+        data=LocationUpdateResponse(
+            enabled=True,
+            stored_latitude=payload["latitude"],
+            stored_longitude=payload["longitude"],
+            expires_in_seconds=SOCIAL_LOCATION_TTL_SECONDS,
+        ),
+    )
+
+
+@router.get("/users/nearby", response_model=ApiResponse[NearbyUsersResponse])
+async def get_nearby_users(
+    limit: int = Query(10, ge=1, le=30),
+    radius_km: float = Query(25.0, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get nearby learners from short-lived coarse location cache."""
+    location_key = _social_location_key(current_user.id)
+    current_location = await get_cached(location_key)
+    if not current_location:
+        return ApiResponse(
+            success=True,
+            message="Location sharing is disabled or expired",
+            data=NearbyUsersResponse(
+                users=[],
+                total=0,
+                radius_km=radius_km,
+                location_enabled=False,
+            ),
+        )
+
+    current_lat = float(current_location["latitude"])
+    current_lon = float(current_location["longitude"])
+    suggestions = await SocialCRUD.get_friend_suggestions(db, current_user.id, limit * 4)
+
+    nearby_users: List[UserSocialProfile] = []
+    for user, score, mutual_count, reasons in suggestions:
+        user_location = await get_cached(_social_location_key(user.id))
+        if not user_location:
+            continue
+
+        candidate_lat = float(user_location["latitude"])
+        candidate_lon = float(user_location["longitude"])
+        distance = _haversine_km(current_lat, current_lon, candidate_lat, candidate_lon)
+        if distance > radius_km:
+            continue
+
+        suggestion_reasons = list(reasons)
+        if "nearby" not in suggestion_reasons:
+            suggestion_reasons.append("nearby")
+
+        nearby_users.append(
+            UserSocialProfile(
+                user_id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                avatar_url=user.avatar_url,
+                total_xp=user.total_xp,
+                current_streak=0,
+                league=user.rank,
+                is_following=False,
+                mutual_connections=mutual_count,
+                suggestion_reasons=suggestion_reasons,
+                similarity_score=score,
+                distance_km=round(distance, 2),
+            )
+        )
+
+    nearby_users.sort(
+        key=lambda p: (
+            p.distance_km if p.distance_km is not None else 9999.0,
+            -(p.similarity_score or 0.0),
+        )
+    )
+    nearby_users = nearby_users[:limit]
+
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(nearby_users)} nearby learners",
+        data=NearbyUsersResponse(
+            users=nearby_users,
+            total=len(nearby_users),
+            radius_km=radius_km,
+            location_enabled=True,
+        ),
+    )
+
+
+@router.post("/users/{user_id}/unfollow", response_model=ApiResponse[FollowResponse])
+async def unfollow_user_compat(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Backward-compatible unfollow endpoint for clients still using POST."""
+    success, message = await SocialCRUD.unfollow_user(db, current_user.id, user_id)
+
+    return ApiResponse(
+        success=success,
+        message=message,
+        data=FollowResponse(
+            success=success,
+            is_following=not success,
+            message=message
         )
     )

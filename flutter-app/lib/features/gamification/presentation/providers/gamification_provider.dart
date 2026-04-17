@@ -15,6 +15,15 @@ class GamificationProvider extends ChangeNotifier {
     _apiClient = sl<ApiClient>();
   }
 
+  bool _isSuccessResponse(Map<String, dynamic> response) {
+    final success = response['success'];
+    return success is bool ? success : true;
+  }
+
+  dynamic _extractData(Map<String, dynamic> response) {
+    return response.containsKey('data') ? response['data'] : response;
+  }
+
   // ============== Wallet State ==============
   WalletEntity? _wallet;
   List<WalletTransactionEntity> _transactions = [];
@@ -75,8 +84,9 @@ class GamificationProvider extends ChangeNotifier {
 
     try {
       final response = await _apiClient.get('/gamification/wallet');
-      if (response['success'] == true && response['data'] != null) {
-        _wallet = WalletEntity.fromJson(response['data']);
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        _wallet = WalletEntity.fromJson(data);
       }
     } catch (e) {
       _walletError = e.toString();
@@ -92,8 +102,9 @@ class GamificationProvider extends ChangeNotifier {
       final response = await _apiClient.get(
         '/gamification/wallet/history?limit=$limit',
       );
-      if (response['success'] == true && response['data'] != null) {
-        _transactions = (response['data'] as List)
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is List) {
+        _transactions = data
             .map((e) => WalletTransactionEntity.fromJson(e))
             .toList();
         notifyListeners();
@@ -111,8 +122,9 @@ class GamificationProvider extends ChangeNotifier {
 
     try {
       final response = await _apiClient.get('/gamification/shop');
-      if (response['success'] == true && response['data'] != null) {
-        _shopItems = (response['data'] as List)
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is List) {
+        _shopItems = data
             .map((e) => ShopItemEntity.fromJson(e))
             .toList();
       }
@@ -137,7 +149,7 @@ class GamificationProvider extends ChangeNotifier {
         body: {'item_id': itemId, 'quantity': quantity},
       );
 
-      if (response['success'] == true) {
+      if (_isSuccessResponse(response)) {
         // Reload wallet and inventory
         await Future.wait([loadWallet(), loadInventory()]);
         return true;
@@ -157,8 +169,9 @@ class GamificationProvider extends ChangeNotifier {
 
     try {
       final response = await _apiClient.get('/gamification/inventory');
-      if (response['success'] == true && response['data'] != null) {
-        final items = response['data']['items'] as List? ?? [];
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        final items = data['items'] as List? ?? [];
         _inventory = items.map((e) => InventoryItemEntity.fromJson(e)).toList();
       }
     } catch (e) {
@@ -176,7 +189,7 @@ class GamificationProvider extends ChangeNotifier {
         '/gamification/inventory/$inventoryId/use',
       );
 
-      if (response['success'] == true) {
+      if (_isSuccessResponse(response)) {
         await loadInventory();
         return true;
       }
@@ -200,9 +213,12 @@ class GamificationProvider extends ChangeNotifier {
         '/gamification/leaderboard?league=$targetLeague',
       );
 
-      if (response['success'] == true && response['data'] != null) {
-        _leaderboard = LeaderboardEntity.fromJson(response['data']);
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        _leaderboard = LeaderboardEntity.fromJson(data);
         _selectedLeague = targetLeague;
+      } else {
+        _leaderboardError = 'Leaderboard payload is invalid';
       }
     } catch (e) {
       _leaderboardError = e.toString();
@@ -216,8 +232,9 @@ class GamificationProvider extends ChangeNotifier {
   Future<void> loadLeagueStatus() async {
     try {
       final response = await _apiClient.get('/gamification/leaderboard/me');
-      if (response['success'] == true && response['data'] != null) {
-        _leagueStatus = LeagueStatusEntity.fromJson(response['data']);
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        _leagueStatus = LeagueStatusEntity.fromJson(data);
         notifyListeners();
       }
     } catch (e) {

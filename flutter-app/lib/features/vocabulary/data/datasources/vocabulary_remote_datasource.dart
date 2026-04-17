@@ -66,8 +66,9 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       pathParams.add('offset=$offset');
       if (courseId != null) pathParams.add('course_id=$courseId');
       if (lessonId != null) pathParams.add('lesson_id=$lessonId');
-      if (difficultyLevel != null)
+      if (difficultyLevel != null) {
         pathParams.add('difficulty_level=$difficultyLevel');
+      }
       if (search != null) pathParams.add('search=$search');
 
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
@@ -144,8 +145,8 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
     try {
       final response = await apiClient.get('/vocabulary/due?limit=$limit');
 
-      // Response: {"due_items": [...], "total_due": 10}
-      final List<dynamic> dueItems = response['due_items'] as List<dynamic>;
+      // Response: {"items": [...], "total_due": 10}
+      final List<dynamic> dueItems = response['items'] as List<dynamic>;
 
       return dueItems
           .map((json) => UserVocabularyModel.fromJson(json))

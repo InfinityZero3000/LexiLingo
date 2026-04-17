@@ -1,0 +1,46 @@
+# Local metadata
+.git/
+.vercel/
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets and local env
+.env
+.env.local
+.env.*.local
+
+# Flutter and Dart generated files
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+.packages
+.metadata
+
+# Build outputs
+build/*
+!build/web/
+!build/web/**
+
+# Coverage and logs
+coverage/
+logs/
+*.log
+*.log.*
+
+# Native dependency caches
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+android/.gradle/
+
+# Tooling caches and temporary files
+*.tmp
+*.temp
+*~
+*.swp

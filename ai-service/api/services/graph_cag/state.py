@@ -41,6 +41,16 @@ class VectorHit(TypedDict):
     content: str
 
 
+class RetrievalTraceItem(TypedDict, total=False):
+    """Ranked retrieval item for benchmark analysis."""
+    item_id: str
+    title: str
+    text: str
+    rank: int
+    score: float
+    is_relevant: bool
+
+
 class CacheFingerprint(TypedDict, total=False):
     """Fingerprint for PCC-aware cache keying (paper Alg. 1)."""
     query_norm: str          # normalized user input
@@ -53,14 +63,30 @@ class CacheFingerprint(TypedDict, total=False):
 class CacheEntry(TypedDict, total=False):
     """Structured cache entry ⟨F, P_c, R, B, σ, t_c⟩ (paper §4.1)."""
     fingerprint: CacheFingerprint
+    graph_bucket: str                  # cheap concept-state bucket for L1 lookup
     profile_snapshot: Dict[str, Any]   # P_c: profile at creation time
     response: str                      # R: tutor response text
     evidence_bundle: List[Dict[str, Any]]  # B: KG snippets, examples
+    retrieval_trace: List[RetrievalTraceItem]
     execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
     diagnosis_errors: List[Dict[str, Any]]
     overall_score: float
     created_at: float                  # t_c: timestamp (monotonic)
     ttl: int                           # seconds
+
+
+class BucketVersionRecord(TypedDict, total=False):
+    """
+    Version tuple for an L1 graph bucket  v_b = ⟨ν_graph, ν_policy, ν_profile, t_refresh⟩
+    (paper §5.3, Algorithm 3).
+
+    A bucket is invalidated when any version field drifts from the current
+    deployment constants, or when t_refresh exceeds the bucket TTL.
+    """
+    nu_graph: int     # graph-schema / neighborhood version (bump on KG rebuild)
+    nu_policy: int    # policy-template version (bump on prompt/strategy changes)
+    nu_profile: int   # profile-state epoch (future: per-user epoch counter)
+    t_refresh: float  # monotonic timestamp of last successful write
 
 
 class GraphCAGState(TypedDict, total=False):
@@ -78,6 +104,9 @@ class GraphCAGState(TypedDict, total=False):
     user_id: Optional[str]
     input_type: str  # "text" or "voice"
     audio_bytes: Optional[bytes]  # Raw audio if voice input
+    benchmark_task: Optional[str]
+    benchmark_context: Optional[str]
+    benchmark_metadata: Optional[Dict[str, Any]]
     
     # ============================================
     # Learner Context (from Redis cache)
@@ -104,7 +133,11 @@ class GraphCAGState(TypedDict, total=False):
     # Retrieval (Vector + KG combined)
     # ============================================
     vector_hits: List[VectorHit]
+    jit_soft_graph: Optional[str]  # Compact JIT graph prompt payload
+    jit_graph_meta: Dict[str, Any]  # Extraction timing/quality metadata
     retrieved_context: str  # Combined context for generation
+    retrieval_trace: List[RetrievalTraceItem]
+    retrieval_meta: Dict[str, Any]
     
     # ============================================
     # Response Generation
@@ -134,7 +167,12 @@ class GraphCAGState(TypedDict, total=False):
     # ============================================
     cache_fingerprint: Optional[CacheFingerprint]
     cache_decision: str  # "reuse" | "patch" | "full"
+    cache_layer: str     # "none" | "L0" | "L1"
+    cache_bucket: str    # graph-aware bucket identifier for L1 lookup
     reuse_risk: float    # ρ ∈ [0,1] from Eq. 2
+    adaptive_profile: Optional[str]
+    adaptive_features: Dict[str, float]
+    adaptive_controller: Dict[str, Any]
 
     # ============================================
     # Metadata
@@ -143,11 +181,14 @@ class GraphCAGState(TypedDict, total=False):
     cache_policy: str  # "on" | "off"
     retrieval_policy: str  # "full" | "rapid"
     diagnosis_policy: str  # "auto" | "rules"
-    generation_policy: str  # "auto" | "template"
+    generation_policy: str  # "auto" | "extractive" (template is deprecated alias)
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
+    ttft_ms: int
+    graph_update: Dict[str, int]
     cache_hit: bool
     path: str  # "fast" or "slow"
+    tokens_saved: int  # Estimated LLM tokens saved via cache (0 on slow path)
     error: Optional[str]  # Error message if any
 
 
@@ -162,6 +203,9 @@ def create_initial_state(
     retrieval_policy: str = "full",
     diagnosis_policy: str = "auto",
     generation_policy: str = "auto",
+    benchmark_task: Optional[str] = None,
+    benchmark_context: Optional[str] = None,
+    benchmark_metadata: Optional[Dict[str, Any]] = None,
 ) -> GraphCAGState:
     """
     Create initial state for GraphCAG pipeline.
@@ -183,6 +227,9 @@ def create_initial_state(
         user_id=user_id,
         input_type=input_type,
         audio_bytes=None,
+        benchmark_task=benchmark_task,
+        benchmark_context=benchmark_context,
+        benchmark_metadata=benchmark_metadata or {},
         
         # Context (will be populated by input_node)
         learner_profile=learner_profile or {"level": "B1"},
@@ -201,7 +248,11 @@ def create_initial_state(
         
         # Retrieval (will be populated by retrieve_node)
         vector_hits=[],
+        jit_soft_graph=None,
+        jit_graph_meta={},
         retrieved_context="",
+        retrieval_trace=[],
+        retrieval_meta={},
         
         # Response (will be populated by generate_node)
         tutor_response="",
@@ -223,7 +274,12 @@ def create_initial_state(
         # RAPID cache control
         cache_fingerprint=None,
         cache_decision="full",
+        cache_layer="none",
+        cache_bucket="",
         reuse_risk=1.0,
+        adaptive_profile=None,
+        adaptive_features={},
+        adaptive_controller={},
         
         # Metadata
         cache_policy=cache_policy,
@@ -232,7 +288,10 @@ def create_initial_state(
         generation_policy=generation_policy,
         models_used=[],
         latency_ms=0,
+        ttft_ms=0,
+        graph_update={"latency_ms": 0, "nodes_added": 0, "edges_added": 0},
         cache_hit=False,
         path="slow",
+        tokens_saved=0,
         error=None,
     )

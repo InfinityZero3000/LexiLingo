@@ -15,6 +15,12 @@ from app.core.redis import RedisClient
 logger = logging.getLogger(__name__)
 
 
+def compute_cache_version(value: Any) -> str:
+    """Compute a stable cache-version hash for any JSON-serializable payload."""
+    raw = json.dumps(value, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
 def build_cache_key(prefix: str, **params) -> str:
     """Build a deterministic Redis key from prefix + keyword params."""
     safe = {k: str(v) for k, v in sorted(params.items()) if v is not None}
@@ -46,6 +52,17 @@ async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
         await redis.set(key, json.dumps(value, default=str), ex=ttl)
     except Exception as exc:
         logger.debug(f"Cache write error: {exc}")
+
+
+async def delete_cached(key: str) -> None:
+    """Delete a single cache entry by exact key. Silently ignores errors."""
+    redis = await RedisClient.get_instance()
+    if redis is None:
+        return
+    try:
+        await redis.delete(key)
+    except Exception as exc:
+        logger.debug(f"Cache delete error: {exc}")
 
 
 async def invalidate_cache(prefix: str) -> int:

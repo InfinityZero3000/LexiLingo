@@ -20,7 +20,7 @@ class ReviewQualityButtons extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1C2632)
+            ? AppColors.surfaceDarkMuted
             : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
@@ -47,7 +47,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'Again',
                   subLabel: 'Hard',
-                  color: Colors.red,
+                  color: AppColors.errorBright,
                   quality: ReviewQuality.hard,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),
@@ -57,7 +57,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'Good',
                   subLabel: 'Medium',
-                  color: Colors.orange,
+                  color: AppColors.orange,
                   quality: ReviewQuality.good,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),
@@ -67,7 +67,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'Easy',
                   subLabel: 'Perfect!',
-                  color: Colors.green,
+                  color: AppColors.greenSuccessBright,
                   quality: ReviewQuality.easy,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),

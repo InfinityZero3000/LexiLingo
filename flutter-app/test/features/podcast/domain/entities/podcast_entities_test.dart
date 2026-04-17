@@ -361,7 +361,7 @@ void main() {
             'author': 'Lindsay McMahon',
             'feed_url': 'https://allears.libsyn.com/rss',
             'cefr_level': 'B1',
-          }
+          },
         ],
       });
       expect(cat.podcasts.length, 1);
@@ -408,7 +408,7 @@ void main() {
             'title': 'Podcast A',
             'feed_url': 'https://example.com/feed.rss',
             'cefr_level': 'B2',
-          }
+          },
         ],
       });
       final json = cat.toJson();

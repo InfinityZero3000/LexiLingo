@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 
 /// Leaderboard Podium Widget
@@ -16,49 +17,93 @@ class LeaderboardPodium extends StatelessWidget {
     final third = topThree.length > 2 ? topThree[2] : null;
 
     return Container(
-      height: 200,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
         children: [
-          // 2nd Place
-          Expanded(
-            child: _buildPodiumItem(
-              context,
-              entry: second,
-              rank: 2,
-              podiumHeight: 100,
-              color: const Color(0xFFC0C0C0),
-              medalColor: const Color(0xFFC0C0C0),
-            ),
+          const SizedBox(height: 4),
+          Row(
+            children: const [
+              Expanded(
+                child: Center(
+                  child: Text(
+                    '2',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    '1',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-
-          // 1st Place
-          Expanded(
-            child: _buildPodiumItem(
-              context,
-              entry: first,
-              rank: 1,
-              podiumHeight: 130,
-              color: const Color(0xFFFFD700),
-              medalColor: const Color(0xFFFFD700),
-              showCrown: true,
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // 3rd Place
-          Expanded(
-            child: _buildPodiumItem(
-              context,
-              entry: third,
-              rank: 3,
-              podiumHeight: 80,
-              color: const Color(0xFFCD7F32),
-              medalColor: const Color(0xFFCD7F32),
-            ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: _buildPodiumItem(
+                  context,
+                  entry: second,
+                  rank: 2,
+                  podiumHeight: 94,
+                  color: AppColors.slate200,
+                  medalColor: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPodiumItem(
+                  context,
+                  entry: first,
+                  rank: 1,
+                  podiumHeight: 116,
+                  color: AppColors.warning,
+                  medalColor: AppColors.orange,
+                  showCrown: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPodiumItem(
+                  context,
+                  entry: third,
+                  rank: 3,
+                  podiumHeight: 86,
+                  color: AppColors.orange.withValues(alpha: 0.45),
+                  medalColor: AppColors.deepOrange,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -74,26 +119,25 @@ class LeaderboardPodium extends StatelessWidget {
     required Color medalColor,
     bool showCrown = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Crown for 1st place
         if (showCrown && entry != null)
           Container(
             margin: const EdgeInsets.only(bottom: 4),
             child: const Icon(
               Icons.emoji_events,
-              color: Color(0xFFFFD700),
+              color: AppColors.warning,
               size: 28,
             ),
           ),
 
-        // Avatar with medal
         Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            // Avatar
             Container(
               width: rank == 1 ? 60 : 50,
               height: rank == 1 ? 60 : 50,
@@ -102,7 +146,7 @@ class LeaderboardPodium extends StatelessWidget {
                 border: Border.all(color: color, width: 3),
                 color: entry != null
                     ? (entry.isCurrentUser
-                          ? const Color(0xFF137FEC).withValues(alpha: 0.2)
+                      ? primaryColor.withValues(alpha: 0.18)
                           : Colors.grey[200])
                     : Colors.grey[200],
                 boxShadow: [
@@ -120,10 +164,10 @@ class LeaderboardPodium extends StatelessWidget {
                               entry.avatarUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) =>
-                                  _buildInitialAvatar(entry),
+                                  _buildInitialAvatar(context, entry),
                             ),
                           )
-                        : _buildInitialAvatar(entry))
+                        : _buildInitialAvatar(context, entry))
                   : Icon(
                       Icons.person_outline,
                       color: Colors.grey[400],
@@ -131,7 +175,6 @@ class LeaderboardPodium extends StatelessWidget {
                     ),
             ),
 
-            // Medal badge
             Positioned(
               bottom: -8,
               child: Container(
@@ -140,7 +183,7 @@ class LeaderboardPodium extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: medalColor,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.2),
@@ -151,8 +194,8 @@ class LeaderboardPodium extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$rank',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -165,58 +208,62 @@ class LeaderboardPodium extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Username
         Text(
           entry?.displayName ?? '---',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: entry?.isCurrentUser == true
                 ? FontWeight.bold
                 : FontWeight.w500,
             color: entry?.isCurrentUser == true
-                ? const Color(0xFF137FEC)
-                : Colors.grey[800],
+              ? primaryColor
+                : AppColors.textDark,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
 
-        // XP
         if (entry != null)
-          Text(
-            '${entry.xpEarned} XP',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+          Container(
+            margin: const EdgeInsets.only(top: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: AppColors.warmGradient),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '${entry.xpEarned}',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.surfaceLight,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
 
         const SizedBox(height: 8),
 
-        // Podium
         Container(
           height: podiumHeight,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.7)],
+              colors: [
+                color.withValues(alpha: 0.22),
+                color.withValues(alpha: 0.08),
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, -4),
-              ),
-            ],
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
           ),
           child: Center(
-            child: Icon(
-              _getRankIcon(rank),
-              size: 24,
-              color: _getRankColor(rank),
+            child: Text(
+              '#$rank',
+              style: TextStyle(
+                color: _getRankColor(rank).withValues(alpha: 0.8),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -224,7 +271,8 @@ class LeaderboardPodium extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialAvatar(LeaderboardEntryEntity entry) {
+  Widget _buildInitialAvatar(BuildContext context, LeaderboardEntryEntity entry) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         entry.displayName.isNotEmpty
@@ -233,35 +281,22 @@ class LeaderboardPodium extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser
-              ? const Color(0xFF137FEC)
-              : Colors.grey[600],
+          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
         ),
       ),
     );
   }
 
-  IconData _getRankIcon(int rank) {
-    switch (rank) {
-      case 1:
-      case 2:
-      case 3:
-        return Icons.workspace_premium;
-      default:
-        return Icons.circle;
-    }
-  }
-
   Color _getRankColor(int rank) {
     switch (rank) {
       case 1:
-        return const Color(0xFFFFD700); // Gold
+        return AppColors.orange;
       case 2:
-        return const Color(0xFFC0C0C0); // Silver
+        return AppColors.textMuted;
       case 3:
-        return const Color(0xFFCD7F32); // Bronze
+        return AppColors.warning;
       default:
-        return Colors.grey;
+        return AppColors.textGrey;
     }
   }
 }
@@ -275,59 +310,74 @@ class LeaderboardEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
           color: entry.isCurrentUser
-              ? const Color(0xFF137FEC).withValues(alpha: 0.1)
-              : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+              ? primaryColor.withValues(alpha: 0.08)
+              : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
+          border: Border.all(
+            color: entry.isCurrentUser
+                ? primaryColor.withValues(alpha: 0.5)
+                : Colors.grey.withValues(alpha: 0.12),
           ),
         ),
         child: Row(
           children: [
-            // Rank
-            SizedBox(
-              width: 40,
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _getRankColor(entry.rank).withValues(alpha: 0.45),
+                ),
+              ),
               child: Text(
                 '${entry.rank}',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                   color: _getRankColor(entry.rank),
                 ),
               ),
             ),
 
-            // Avatar
+            const SizedBox(width: 10),
+
             Container(
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(10),
                 color: entry.isCurrentUser
-                    ? const Color(0xFF137FEC).withValues(alpha: 0.2)
+                  ? primaryColor.withValues(alpha: 0.2)
                     : Colors.grey[200],
                 border: entry.isCurrentUser
-                    ? Border.all(color: const Color(0xFF137FEC), width: 2)
+                  ? Border.all(color: primaryColor, width: 2)
                     : null,
               ),
               child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                  ? ClipOval(
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
                       child: Image.network(
                         entry.avatarUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildInitial(),
+                        errorBuilder: (_, __, ___) => _buildInitial(context),
                       ),
                     )
-                  : _buildInitial(),
+                  : _buildInitial(context),
             ),
             const SizedBox(width: 12),
 
-            // Name
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,8 +393,10 @@ class LeaderboardEntryRow extends StatelessWidget {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: entry.isCurrentUser
-                                ? const Color(0xFF137FEC)
-                                : Colors.grey[800],
+                              ? primaryColor
+                                : (isDark
+                                      ? AppColors.textInverted
+                                      : AppColors.textDark),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -358,15 +410,15 @@ class LeaderboardEntryRow extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF137FEC),
+                            color: primaryColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'YOU',
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         ),
@@ -374,30 +426,29 @@ class LeaderboardEntryRow extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '@${entry.username}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    '${entry.lessonsCompleted} lessons completed',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
                   ),
                 ],
               ),
             ),
 
-            // XP
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${entry.xpEarned}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF137FEC),
-                  ),
+            Container(
+              constraints: const BoxConstraints(minWidth: 68),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${entry.xpEarned}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.deepOrange,
                 ),
-                Text(
-                  'XP',
-                  style: TextStyle(fontSize: 10, color: Colors.grey[500]),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -405,7 +456,8 @@ class LeaderboardEntryRow extends StatelessWidget {
     );
   }
 
-  Widget _buildInitial() {
+  Widget _buildInitial(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         entry.displayName.isNotEmpty
@@ -414,9 +466,7 @@ class LeaderboardEntryRow extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser
-              ? const Color(0xFF137FEC)
-              : Colors.grey[600],
+          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
         ),
       ),
     );
@@ -425,13 +475,13 @@ class LeaderboardEntryRow extends StatelessWidget {
   Color _getRankColor(int rank) {
     switch (rank) {
       case 1:
-        return const Color(0xFFFFD700);
+        return AppColors.orange;
       case 2:
-        return const Color(0xFFC0C0C0);
+        return AppColors.textMuted;
       case 3:
-        return const Color(0xFFCD7F32);
+        return AppColors.warning;
       default:
-        return Colors.grey[600]!;
+        return AppColors.textGrey;
     }
   }
 }

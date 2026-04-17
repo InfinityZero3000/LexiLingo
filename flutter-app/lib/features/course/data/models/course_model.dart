@@ -3,39 +3,23 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 /// Course Model
 /// Maps JSON from backend API to CourseEntity
 class CourseModel extends CourseEntity {
-  CourseModel({
-    required String id,
-    required String title,
-    String? description,
-    required String language,
-    required String level,
-    required List<String> tags,
-    String? thumbnailUrl,
-    required int totalXp,
-    required int estimatedDuration,
-    required int totalLessons,
-    required bool isPublished,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    bool? isEnrolled,
-    double? userProgress,
-  }) : super(
-         id: id,
-         title: title,
-         description: description,
-         language: language,
-         level: level,
-         tags: tags,
-         thumbnailUrl: thumbnailUrl,
-         totalXp: totalXp,
-         estimatedDuration: estimatedDuration,
-         totalLessons: totalLessons,
-         isPublished: isPublished,
-         createdAt: createdAt,
-         updatedAt: updatedAt,
-         isEnrolled: isEnrolled,
-         userProgress: userProgress,
-       );
+  const CourseModel({
+    required super.id,
+    required super.title,
+    super.description,
+    required super.language,
+    required super.level,
+    required super.tags,
+    super.thumbnailUrl,
+    required super.totalXp,
+    required super.estimatedDuration,
+    required super.totalLessons,
+    required super.isPublished,
+    required super.createdAt,
+    required super.updatedAt,
+    super.isEnrolled,
+    super.userProgress,
+  });
 
   /// Convert from JSON to Model
   factory CourseModel.fromJson(Map<String, dynamic> json) {

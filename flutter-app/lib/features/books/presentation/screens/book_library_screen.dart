@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -104,7 +105,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           hintText: 'Search books by title or author...',
           prefixIcon: const Icon(Icons.search_rounded),
           filled: true,
-          fillColor: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+          fillColor: isDark ? AppColors.surfaceDarkElevated : Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -120,7 +121,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     return Consumer<BookProvider>(
       builder: (context, provider, _) {
         if (provider.isSearching) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
         if (provider.searchResults.isEmpty &&
             _searchController.text.length >= 2) {
@@ -150,7 +151,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     final cefrColor = _cefrColor(book.cefrLevel);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(10),
@@ -196,8 +197,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
               ),
               child: Text(
                 book.cefrLevel,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -224,7 +225,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     return Consumer<BookProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LottieLoadingWidget.medium());
         }
 
         if (provider.error != null) {
@@ -335,7 +336,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           color: isSelected
               ? AppColors.primary
               : isDark
-              ? const Color(0xFF1C2B3A)
+              ? AppColors.surfaceDarkElevated
               : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -377,8 +378,8 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
               ),
               child: Text(
                 level,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -431,17 +432,17 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -176,7 +177,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
       builder: (context, provider, _) {
         if (provider.isLoading || !_gameLoaded) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: LottieLoadingWidget.medium()),
           );
         }
         final game = provider.matching!;
@@ -187,7 +188,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         return Scaffold(
           backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: const Text(
               'Matching Game',
@@ -299,8 +300,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   colors: const [
                     AppColors.primary,
                     Colors.yellow,
-                    Colors.green,
-                    Colors.orange,
+                    AppColors.greenSuccessBright,
+                    AppColors.orange,
                   ],
                 ),
               ),
@@ -353,16 +354,16 @@ class _ColumnList extends StatelessWidget {
               Color bg = Colors.white;
               Color border = AppColors.grey300;
               if (selected) {
-                bg = AppColors.primary.withOpacity(0.1);
+                bg = AppColors.primary.withValues(alpha: 0.1);
                 border = AppColors.primary;
               }
               if (state == _PairState.correct) {
-                bg = AppColors.greenSuccess.withOpacity(0.15);
+                bg = AppColors.greenSuccess.withValues(alpha: 0.15);
                 border = AppColors.greenSuccess;
               }
               if (state == _PairState.wrong) {
-                bg = Colors.red.withOpacity(0.1);
-                border = Colors.red;
+                bg = Colors.red.withValues(alpha: 0.1);
+                border = AppColors.errorBright;
               }
               return GestureDetector(
                 onTap: () => onTap(item),
@@ -408,12 +409,12 @@ class _TimerChip extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-        ? Colors.orange
-        : Colors.red;
+        ? AppColors.orange
+        : AppColors.errorBright;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),

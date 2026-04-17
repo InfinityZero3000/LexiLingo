@@ -66,8 +66,9 @@ class LevelProvider with ChangeNotifier {
   /// Level progress percentage (0.0–1.0) for the numeric level system.
   /// Uses API value if available, else computed with backend formula.
   double get displayLevelProgress {
-    if (_levelProgressPercent > 0)
+    if (_levelProgressPercent > 0) {
       return (_levelProgressPercent / 100).clamp(0.0, 1.0);
+    }
     return LevelCalculator.numericLevelProgressPercent(_levelStatus.totalXP);
   }
 
@@ -233,8 +234,10 @@ class LevelProvider with ChangeNotifier {
       _xpForNextLevel = data['xp_for_next_level'] ?? 100;
       _levelProgressPercent = (data['level_progress_percent'] ?? 0).toDouble();
       _totalXp = data['total_xp'] ?? 0;
-      _proficiencyLevel = data['proficiency_level'] ?? 'A1';
-      _proficiencyName = data['proficiency_name'] ?? 'Beginner';
+        _proficiencyLevel =
+          data['cefr_level'] ?? data['proficiency_level'] ?? 'A1';
+        _proficiencyName =
+          data['cefr_name'] ?? data['proficiency_name'] ?? 'Beginner';
       _rank = data['rank'] ?? 'bronze';
       _rankName = data['rank_name'] ?? 'Bronze';
       _rankScore = (data['rank_score'] ?? 0).toDouble();

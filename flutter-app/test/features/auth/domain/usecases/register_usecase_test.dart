@@ -41,35 +41,43 @@ void main() {
 
   test('should register user successfully', () async {
     // Arrange
-    when(mockAuthRepository.register(
-      email: anyNamed('email'),
-      username: anyNamed('username'),
-      password: anyNamed('password'),
-      displayName: anyNamed('displayName'),
-    )).thenAnswer((_) async => Right(testUser));
+    when(
+      mockAuthRepository.register(
+        email: anyNamed('email'),
+        username: anyNamed('username'),
+        password: anyNamed('password'),
+        displayName: anyNamed('displayName'),
+      ),
+    ).thenAnswer((_) async => Right(testUser));
 
     // Act
     final result = await usecase(testParams);
 
     // Assert
     expect(result, Right(testUser));
-    verify(mockAuthRepository.register(
-      email: 'test@example.com',
-      username: 'testuser',
-      password: 'password123',
-      displayName: 'Test User',
-    ));
+    verify(
+      mockAuthRepository.register(
+        email: 'test@example.com',
+        username: 'testuser',
+        password: 'password123',
+        displayName: 'Test User',
+      ),
+    );
     verifyNoMoreInteractions(mockAuthRepository);
   });
 
   test('should return ConflictFailure when email already exists', () async {
     // Arrange
-    when(mockAuthRepository.register(
-      email: anyNamed('email'),
-      username: anyNamed('username'),
-      password: anyNamed('password'),
-      displayName: anyNamed('displayName'),
-    )).thenAnswer((_) async => Left(ConflictFailure('Email already registered')));
+    when(
+      mockAuthRepository.register(
+        email: anyNamed('email'),
+        username: anyNamed('username'),
+        password: anyNamed('password'),
+        displayName: anyNamed('displayName'),
+      ),
+    ).thenAnswer(
+      (_) async => Left(ConflictFailure('Email already registered')),
+    );
 
     // Act
     final result = await usecase(testParams);
@@ -84,12 +92,14 @@ void main() {
 
   test('should return ValidationFailure for invalid input', () async {
     // Arrange
-    when(mockAuthRepository.register(
-      email: anyNamed('email'),
-      username: anyNamed('username'),
-      password: anyNamed('password'),
-      displayName: anyNamed('displayName'),
-    )).thenAnswer((_) async => Left(ValidationFailure('Invalid email format')));
+    when(
+      mockAuthRepository.register(
+        email: anyNamed('email'),
+        username: anyNamed('username'),
+        password: anyNamed('password'),
+        displayName: anyNamed('displayName'),
+      ),
+    ).thenAnswer((_) async => Left(ValidationFailure('Invalid email format')));
 
     // Act
     final result = await usecase(testParams);
@@ -104,12 +114,14 @@ void main() {
 
   test('should return NetworkFailure when no internet connection', () async {
     // Arrange
-    when(mockAuthRepository.register(
-      email: anyNamed('email'),
-      username: anyNamed('username'),
-      password: anyNamed('password'),
-      displayName: anyNamed('displayName'),
-    )).thenAnswer((_) async => Left(NetworkFailure()));
+    when(
+      mockAuthRepository.register(
+        email: anyNamed('email'),
+        username: anyNamed('username'),
+        password: anyNamed('password'),
+        displayName: anyNamed('displayName'),
+      ),
+    ).thenAnswer((_) async => Left(NetworkFailure()));
 
     // Act
     final result = await usecase(testParams);

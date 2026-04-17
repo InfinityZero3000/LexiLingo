@@ -36,9 +36,10 @@ class UserListResponse(BaseModel):
     is_verified: bool
     role_slug: str  # user, admin, super_admin
     role_level: int  # 0, 1, 2
+    provider: List[str]  # ["local"], ["google"], etc.
     created_at: datetime
     last_login: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -54,11 +55,10 @@ class UserDetailResponse(BaseModel):
     is_verified: bool
     role_slug: str  # user, admin, super_admin
     role_level: int  # 0, 1, 2
-    provider: str  # local, google, facebook
+    provider: List[str]  # ["local"], ["google"], etc.
     created_at: datetime
     last_login: Optional[datetime] = None
-    total_xp: int = 0
-    
+    total_xp: int = 0    
     # Stats
     courses_enrolled: int = 0
     courses_completed: int = 0
@@ -198,6 +198,7 @@ async def list_users(
             role_level=user.role_level,
             created_at=user.created_at,
             last_login=user.last_login,
+            provider=user.provider if isinstance(user.provider, list) else [user.provider],
         )
         for user in users
     ]

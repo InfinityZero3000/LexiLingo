@@ -5,16 +5,36 @@ Endpoints for super admin to configure AI service settings including Gemini API 
 """
 
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import logging
 import os
+import hmac
 
 from api.core.database import get_database
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Admin API key authentication
+_admin_api_key_header = APIKeyHeader(name="X-Admin-Key", auto_error=False)
+
+
+async def verify_admin_api_key(
+    api_key: Optional[str] = Depends(_admin_api_key_header),
+) -> str:
+    """Verify the admin API key from X-Admin-Key header."""
+    expected = os.getenv("AI_ADMIN_API_KEY", "")
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin API key not configured on server",
+        )
+    if not api_key or not hmac.compare_digest(api_key, expected):
+        raise HTTPException(status_code=403, detail="Invalid admin API key")
+    return api_key
 
 
 class AiConfig(BaseModel):
@@ -88,7 +108,10 @@ def get_active_api_key(stored_key: Optional[str]) -> Optional[str]:
 
 
 @router.get("/config", response_model=AiConfig)
-async def get_admin_config(db: AsyncIOMotorDatabase = Depends(get_database)):
+async def get_admin_config(
+    _key: str = Depends(verify_admin_api_key),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
     """
     Get current AI service configuration.
     
@@ -137,7 +160,8 @@ async def get_admin_config(db: AsyncIOMotorDatabase = Depends(get_database)):
 @router.put("/config")
 async def update_admin_config(
     config: AiConfig,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    _key: str = Depends(verify_admin_api_key),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Update AI service configuration.

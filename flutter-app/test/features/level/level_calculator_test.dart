@@ -122,8 +122,14 @@ void main() {
     test('should return correct XP in level', () {
       expect(LevelCalculator.getXPInCurrentLevel(500), 500); // A1
       expect(LevelCalculator.getXPInCurrentLevel(1500), 500); // A2: 1500 - 1000
-      expect(LevelCalculator.getXPInCurrentLevel(5000), 2000); // B1: 5000 - 3000
-      expect(LevelCalculator.getXPInCurrentLevel(10000), 3000); // B2: 10000 - 7000
+      expect(
+        LevelCalculator.getXPInCurrentLevel(5000),
+        2000,
+      ); // B1: 5000 - 3000
+      expect(
+        LevelCalculator.getXPInCurrentLevel(10000),
+        3000,
+      ); // B2: 10000 - 7000
     });
 
     test('should work at level boundaries', () {
@@ -134,7 +140,10 @@ void main() {
 
   group('LevelCalculator.getXPToNextLevel', () {
     test('should return correct XP to next level for A1', () {
-      expect(LevelCalculator.getXPToNextLevel(0), 1000); // Need 1000 to reach A2
+      expect(
+        LevelCalculator.getXPToNextLevel(0),
+        1000,
+      ); // Need 1000 to reach A2
       expect(LevelCalculator.getXPToNextLevel(500), 500); // Need 500 more
       expect(LevelCalculator.getXPToNextLevel(999), 1); // Just 1 more XP
     });
@@ -145,8 +154,14 @@ void main() {
     });
 
     test('should work at level boundaries', () {
-      expect(LevelCalculator.getXPToNextLevel(1000), 2000); // A2: need 2000 more
-      expect(LevelCalculator.getXPToNextLevel(3000), 4000); // B1: need 4000 more
+      expect(
+        LevelCalculator.getXPToNextLevel(1000),
+        2000,
+      ); // A2: need 2000 more
+      expect(
+        LevelCalculator.getXPToNextLevel(3000),
+        4000,
+      ); // B1: need 4000 more
     });
   });
 
@@ -223,7 +238,10 @@ void main() {
     });
 
     test('should return true for XP crossing level boundary', () {
-      expect(LevelCalculator.wouldLevelUp(900, 200), true); // 900 + 200 = 1100 (A2)
+      expect(
+        LevelCalculator.wouldLevelUp(900, 200),
+        true,
+      ); // 900 + 200 = 1100 (A2)
       expect(LevelCalculator.wouldLevelUp(999, 1), true); // 999 + 1 = 1000 (A2)
     });
 

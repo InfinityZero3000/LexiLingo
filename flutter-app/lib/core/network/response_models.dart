@@ -1,5 +1,6 @@
 /// Response envelope models matching backend API contract
 /// Based on backend-service/app/schemas/common.py
+library;
 
 import 'package:equatable/equatable.dart';
 

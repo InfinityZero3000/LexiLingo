@@ -33,16 +33,27 @@ class RedisClient:
     _instance: Optional[redis.Redis] = None
     _connected: bool = False
     
+    _VALID_SCHEMES = ("redis://", "rediss://", "unix://")
+
     @classmethod
     async def connect(cls) -> None:
         """Initialize Redis connection pool."""
         if cls._instance is not None:
             logger.warning("Redis already connected")
             return
-        
+
+        url = settings.REDIS_URL or ""
+        if not any(url.startswith(s) for s in cls._VALID_SCHEMES):
+            logger.warning(
+                "REDIS_URL not configured or has an invalid scheme — Redis disabled. "
+                "Token blacklist and caching will be skipped."
+            )
+            cls._connected = False
+            return
+
         try:
             cls._instance = redis.from_url(
-                settings.REDIS_URL,
+                url,
                 password=settings.REDIS_PASSWORD,
                 encoding="utf-8",
                 decode_responses=True,
@@ -50,13 +61,13 @@ class RedisClient:
             # Test connection
             await cls._instance.ping()
             cls._connected = True
-            logger.info(f"Redis connected: {settings.REDIS_URL}")
+            logger.info(f"Redis connected: {url}")
         except redis.ConnectionError as e:
             logger.warning(f"Redis connection failed: {e}. Token blacklist will be disabled.")
             cls._instance = None
             cls._connected = False
         except Exception as e:
-            logger.error(f"Unexpected Redis error: {e}")
+            logger.warning(f"Redis unavailable: {e}. Token blacklist will be disabled.")
             cls._instance = None
             cls._connected = False
     

@@ -342,9 +342,10 @@ export type UnitItem = {
   updated_at: string;
 };
 
-export const listUnitsAdmin = async (courseId?: string) => {
+export const listUnitsAdmin = async (courseId?: string, search?: string) => {
   const url = new URL(`${ENV.backendUrl}/admin/units`);
   if (courseId) url.searchParams.set("course_id", courseId);
+  if (search) url.searchParams.set("search", search);
   return apiFetch<AdminResponse<UnitItem[]>>(url.toString());
 };
 

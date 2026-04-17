@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/daily_challenge_entity.dart';
 import '../providers/daily_challenges_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 
 /// Daily Challenges Card for Home Screen
 /// Shows today's challenges with progress
@@ -34,7 +39,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  const CircularProgressIndicator(),
+                  const LottieLoadingWidget.small(),
                   const SizedBox(height: 12),
                   Text(
                     'Loading challenges...',
@@ -133,9 +138,9 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: provider.progress,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: AppColors.grey200,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        provider.allCompleted ? Colors.green : Colors.purple,
+                        provider.allCompleted ? AppColors.greenSuccessBright : AppColors.purple,
                       ),
                       minHeight: 8,
                     ),
@@ -176,12 +181,13 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
     DailyChallengeEntity challenge,
     DailyChallengesProvider provider,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Icon(
           _getCategoryIcon(challenge.category),
           size: 16,
-          color: _getCategoryColor(challenge.category),
+          color: _getCategoryColor(challenge.category, isDark: isDark),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -220,20 +226,20 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(String category, {bool isDark = false}) {
     switch (category) {
       case 'lesson':
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
       case 'vocabulary':
-        return Colors.purple;
+        return AppColors.purple;
       case 'streak':
-        return Colors.orange;
+        return AppColors.orange;
       case 'xp':
-        return Colors.amber;
+        return AppColors.warning;
       case 'voice':
         return Colors.pink;
       case 'social':
-        return Colors.teal;
+        return AppColors.teal;
       default:
         return Colors.grey;
     }
@@ -285,7 +291,7 @@ class DailyChallengesSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -295,7 +301,7 @@ class DailyChallengesSheet extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.star, size: 28, color: Colors.purple),
+              Icon(Icons.star, size: 28, color: AppColors.purple),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -310,7 +316,7 @@ class DailyChallengesSheet extends StatelessWidget {
                     Text(
                       'Complete all for bonus ${provider.bonusXp} XP!',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.purple,
+                        color: AppColors.purple,
                       ),
                     ),
                   ],
@@ -328,9 +334,9 @@ class DailyChallengesSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: provider.progress,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: AppColors.grey200,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      provider.allCompleted ? Colors.green : Colors.purple,
+                      provider.allCompleted ? AppColors.greenSuccessBright : AppColors.purple,
                     ),
                     minHeight: 12,
                   ),
@@ -403,7 +409,7 @@ class DailyChallengesSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.check_circle, color: Colors.green, size: 32),
+                  const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 32),
                 ],
               ),
             ),
@@ -421,9 +427,11 @@ class DailyChallengesSheet extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Reward claimed successfully!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.greenSuccessBright,
         ),
       );
+      // Fetch level updates to reflect claimed XP
+      context.read<LevelProvider>().fetchLevelFull(sl<ApiClient>());
     }
   }
 }
@@ -443,6 +451,7 @@ class _ChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -452,7 +461,7 @@ class _ChallengeCard extends StatelessWidget {
         border: Border.all(
           color: challenge.isCompleted
               ? Colors.green.shade200
-              : Colors.grey.shade200,
+              : AppColors.grey200,
         ),
       ),
       child: Row(
@@ -464,6 +473,7 @@ class _ChallengeCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: _getCategoryColor(
                 challenge.category,
+                isDark: isDark,
               ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -471,7 +481,7 @@ class _ChallengeCard extends StatelessWidget {
               child: Icon(
                 _getCategoryIcon(challenge.category),
                 size: 24,
-                color: _getCategoryColor(challenge.category),
+                color: _getCategoryColor(challenge.category, isDark: isDark),
               ),
             ),
           ),
@@ -507,11 +517,14 @@ class _ChallengeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: challenge.progress,
-                          backgroundColor: Colors.grey.shade200,
+                          backgroundColor: AppColors.grey200,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             challenge.isCompleted
-                                ? Colors.green
-                                : _getCategoryColor(challenge.category),
+                                ? AppColors.greenSuccessBright
+                                : _getCategoryColor(
+                                    challenge.category,
+                                    isDark: isDark,
+                                  ),
                           ),
                           minHeight: 6,
                         ),
@@ -557,14 +570,14 @@ class _ChallengeCard extends StatelessWidget {
               const SizedBox(height: 8),
               if (challenge.isCompleted)
                 if (isClaimed)
-                  const Icon(Icons.check_circle, color: Colors.green, size: 28)
+                  const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 28)
                 else
                   SizedBox(
                     height: 28,
                     child: ElevatedButton(
                       onPressed: onClaim,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: AppColors.greenSuccessBright,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         textStyle: const TextStyle(fontSize: 11),
                       ),
@@ -578,20 +591,20 @@ class _ChallengeCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(String category, {bool isDark = false}) {
     switch (category) {
       case 'lesson':
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
       case 'vocabulary':
-        return Colors.purple;
+        return AppColors.purple;
       case 'streak':
-        return Colors.orange;
+        return AppColors.orange;
       case 'xp':
-        return Colors.amber;
+        return AppColors.warning;
       case 'voice':
         return Colors.pink;
       case 'social':
-        return Colors.teal;
+        return AppColors.teal;
       default:
         return Colors.grey;
     }

@@ -330,7 +330,7 @@ async def seed_stories():
     load_dotenv()
     
     mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-    db_name = os.getenv("MONGODB_DB_NAME", "lexilingo")
+    db_name = os.getenv("MONGODB_DATABASE", os.getenv("MONGODB_DB_NAME", "lexilingo_dev"))
     
     logger.info(f"Connecting to MongoDB at {mongo_uri}...")
     

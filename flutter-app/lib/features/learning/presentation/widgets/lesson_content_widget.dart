@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 
 /// Lesson Content Widget for Fill in Blank and Translation exercises
 class LessonContentWidget extends StatefulWidget {
@@ -10,12 +12,12 @@ class LessonContentWidget extends StatefulWidget {
   final bool? isCorrect;
 
   const LessonContentWidget({
-    Key? key,
+    super.key,
     required this.exercise,
     required this.onSubmit,
     this.isAnswered = false,
     this.isCorrect,
-  }) : super(key: key);
+  });
 
   @override
   State<LessonContentWidget> createState() => _LessonContentWidgetState();
@@ -42,6 +44,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -72,12 +76,17 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          widget.exercise.question,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
+                        child: QuickSaveSelectionArea(
+                          sourceType: 'course_lesson',
+                          sourceReference: widget.exercise.id,
+                          contextSentence: widget.exercise.question,
+                          child: Text(
+                            widget.exercise.question,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),
@@ -97,25 +106,30 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lightbulb_outline,
                             size: 20,
-                            color: Colors.blue,
+                            color: accentColor,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              widget.exercise.hint!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue,
-                                height: 1.4,
+                            child: QuickSaveSelectionArea(
+                              sourceType: 'course_lesson',
+                              sourceReference: widget.exercise.id,
+                              contextSentence: widget.exercise.hint!,
+                              child: Text(
+                                widget.exercise.hint!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: accentColor,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ),
@@ -142,7 +156,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   : 'Fill in the blank...',
               filled: true,
               fillColor: widget.isAnswered
-                  ? (widget.isCorrect! ? Colors.green : Colors.red).withValues(
+                  ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright).withValues(
                       alpha: 0.1,
                     )
                   : Colors.grey[50],
@@ -165,7 +179,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
                   color: widget.isAnswered
-                      ? (widget.isCorrect! ? Colors.green : Colors.red)
+                      ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright)
                       : Colors.grey[300]!,
                   width: 2,
                 ),
@@ -173,7 +187,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               suffixIcon: widget.isAnswered
                   ? Icon(
                       widget.isCorrect! ? Icons.check_circle : Icons.cancel,
-                      color: widget.isCorrect! ? Colors.green : Colors.red,
+                      color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright,
                     )
                   : null,
             ),
@@ -216,11 +230,11 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
             Card(
               color: widget.isCorrect!
                   ? Colors.green.withValues(alpha: 0.1)
-                  : Colors.orange.withValues(alpha: 0.1),
+                  : AppColors.orange.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: widget.isCorrect! ? Colors.green : Colors.orange,
+                  color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.orange,
                   width: 1,
                 ),
               ),
@@ -236,8 +250,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                               ? Icons.check_circle
                               : Icons.info_outline,
                           color: widget.isCorrect!
-                              ? Colors.green
-                              : Colors.orange,
+                              ? AppColors.greenSuccessBright
+                              : AppColors.orange,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -246,8 +260,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: widget.isCorrect!
-                                ? Colors.green
-                                : Colors.orange,
+                                ? AppColors.greenSuccessBright
+                                : AppColors.orange,
                           ),
                         ),
                       ],
@@ -264,11 +278,16 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        widget.exercise.correctAnswer,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.correctAnswer,
+                        child: Text(
+                          widget.exercise.correctAnswer,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -277,9 +296,14 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                       const SizedBox(height: 12),
                       const Divider(),
                       const SizedBox(height: 8),
-                      Text(
-                        widget.exercise.explanation!,
-                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.explanation!,
+                        child: Text(
+                          widget.exercise.explanation!,
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
                       ),
                     ],
                   ],

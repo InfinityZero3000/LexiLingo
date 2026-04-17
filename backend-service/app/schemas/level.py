@@ -147,6 +147,14 @@ class LevelFullResponse(BaseModel):
     xp_for_next_level: int = Field(..., description="XP required to reach next numeric level")
     level_progress_percent: float = Field(..., ge=0, le=100, description="Progress to next level")
     total_xp: int = Field(..., description="Total XP earned")
+    cefr_level: str = Field(..., description="Persisted CEFR proficiency code from user profile (A1-C2)")
+    cefr_name: str = Field(..., description="Persisted CEFR display name")
+    cefr_progression_source: str = Field(
+        default="profile",
+        description="Authoritative CEFR source (profile|assessment)",
+    )
+    xp_derived_cefr_level: str = Field(..., description="XP-derived CEFR code (diagnostic only)")
+    xp_derived_cefr_name: str = Field(..., description="XP-derived CEFR name (diagnostic only)")
     proficiency_level: str = Field(..., description="CEFR proficiency code (A1-C2)")
     proficiency_name: str = Field(..., description="Proficiency name (e.g., 'Beginner')")
     rank: str = Field(..., description="Rank tier (bronze, silver, gold, platinum, diamond, master)")

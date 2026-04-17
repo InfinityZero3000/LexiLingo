@@ -1,5 +1,6 @@
 /// Topic Session model for Topic-Based Conversation
 /// Manages topic-based chat sessions with story context
+library;
 
 import 'story_model.dart';
 import 'educational_hints_model.dart';
@@ -15,7 +16,7 @@ class StartTopicSessionRequest {
     required this.userId,
     required this.storyId,
     this.sessionTitle,
-    this.preferredLlm = 'qwen',
+    this.preferredLlm = 'graphcag',
   });
 
   Map<String, dynamic> toJson() => {
@@ -118,9 +119,13 @@ class TopicChatResponse {
   }) : _messageId = messageId;
 
   factory TopicChatResponse.fromJson(Map<String, dynamic> json) {
+    final clean = (json['clean_response'] as String?)?.trim();
+    final raw =
+      (json['ai_response'] as String? ?? json['response'] as String? ?? '')
+        .trim();
+
     return TopicChatResponse(
-      response:
-          json['ai_response'] as String? ?? json['response'] as String? ?? '',
+      response: (clean != null && clean.isNotEmpty) ? clean : raw,
       messageId: json['message_id'] as String? ?? json['messageId'] as String?,
       educationalHints: json['educational_hints'] != null
           ? EducationalHints.fromJson(
@@ -180,12 +185,18 @@ class TopicChatMessage {
   });
 
   factory TopicChatMessage.fromJson(Map<String, dynamic> json) {
+    final roleRaw = (json['role'] ?? '').toString().toLowerCase();
+    final bool computedIsUser =
+        json['is_user'] as bool? ??
+        json['isUser'] as bool? ??
+        roleRaw == 'user';
+
     return TopicChatMessage(
       id: json['id'] as String? ?? json['message_id'] as String? ?? '',
       sessionId:
           json['session_id'] as String? ?? json['sessionId'] as String? ?? '',
       content: json['content'] as String? ?? json['message'] as String? ?? '',
-      isUser: json['is_user'] as bool? ?? json['isUser'] as bool? ?? false,
+      isUser: computedIsUser,
       timestamp: json['timestamp'] != null
           ? DateTime.tryParse(json['timestamp'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -214,6 +225,21 @@ class TopicChatMessage {
 
   String get displayContent => content;
   bool get hasHints => hints?.hasAnyHints ?? false;
+}
+
+/// Cursor-based page result for topic chat messages.
+class TopicMessagesPageResult {
+  final List<TopicChatMessage> messages;
+  final bool hasMore;
+  final String? nextCursor;
+  final int returned;
+
+  const TopicMessagesPageResult({
+    required this.messages,
+    required this.hasMore,
+    required this.nextCursor,
+    required this.returned,
+  });
 }
 
 /// Response from stories list API

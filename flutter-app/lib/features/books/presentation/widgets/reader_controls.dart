@@ -115,21 +115,21 @@ class ReaderControls extends StatelessWidget {
                 context,
                 ReaderTheme.light,
                 'Light',
-                const Color(0xFFF8F5EE),
+                AppColors.readingPaper,
                 Colors.black87,
               ),
               _themeChip(
                 context,
                 ReaderTheme.sepia,
                 'Sepia',
-                const Color(0xFFF4ECD8),
-                const Color(0xFF4B3B2A),
+                AppColors.readingSepia,
+                AppColors.readingSepiaText,
               ),
               _themeChip(
                 context,
                 ReaderTheme.dark,
                 'Dark',
-                const Color(0xFF1A1A2E),
+                AppColors.readingNight,
                 Colors.white,
               ),
             ],
@@ -220,11 +220,11 @@ class ReaderControls extends StatelessWidget {
   Color _bgColor(ReaderTheme theme) {
     switch (theme) {
       case ReaderTheme.light:
-        return const Color(0xFFF8F5EE);
+        return AppColors.readingPaper;
       case ReaderTheme.sepia:
-        return const Color(0xFFEDE0CC);
+        return AppColors.readingSepiaAlt;
       case ReaderTheme.dark:
-        return const Color(0xFF1A1A2E);
+        return AppColors.readingNight;
     }
   }
 
@@ -233,7 +233,7 @@ class ReaderControls extends StatelessWidget {
       case ReaderTheme.light:
         return Colors.black87;
       case ReaderTheme.sepia:
-        return const Color(0xFF4B3B2A);
+        return AppColors.readingSepiaText;
       case ReaderTheme.dark:
         return Colors.white;
     }

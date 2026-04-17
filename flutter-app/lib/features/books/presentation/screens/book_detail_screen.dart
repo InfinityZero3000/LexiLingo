@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -33,17 +34,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }
@@ -75,9 +76,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 20,
                 ),
               ),
@@ -165,8 +166,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         ),
                         child: Text(
                           book.cefrLevel,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 13,
                           ),
@@ -335,9 +336,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
+                                      child: LottieLoadingWidget.tiny(),
                                     )
                                   : Icon(
                                       isDownloaded
@@ -383,9 +382,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 icon: const Icon(Icons.quiz_rounded),
                                 label: const Text('Chapter Quiz'),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF8B5CF6),
+                                  foregroundColor: AppColors.purple,
                                   side: const BorderSide(
-                                    color: Color(0xFF8B5CF6),
+                                    color: AppColors.purple,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
@@ -461,8 +460,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         ],
       ),
     ),
-    child: const Center(
-      child: Icon(Icons.menu_book_rounded, size: 48, color: Colors.white),
+    child: Center(
+      child: Icon(Icons.menu_book_rounded, size: 48, color: AppColors.surfaceLight),
     ),
   );
 }

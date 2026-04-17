@@ -1,5 +1,6 @@
 /// Achievement Entity - Domain layer
 /// Represents an achievement/badge that users can unlock
+library;
 
 class AchievementEntity {
   final String id;
@@ -73,8 +74,6 @@ class AchievementEntity {
         return 'Streak';
       case 'vocabulary':
         return 'Vocabulary';
-      case 'xp':
-        return 'Experience';
       case 'quiz':
         return 'Quiz';
       case 'course':

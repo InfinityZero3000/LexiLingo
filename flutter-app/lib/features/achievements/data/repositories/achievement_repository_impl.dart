@@ -1,4 +1,5 @@
 /// Achievement Repository Implementation - Data layer
+library;
 
 import 'package:lexilingo_app/features/achievements/data/datasources/achievement_remote_datasource.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';

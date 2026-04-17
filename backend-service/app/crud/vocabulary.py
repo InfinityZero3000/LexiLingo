@@ -4,9 +4,12 @@ Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
 import uuid
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy import select, func, and_, or_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.vocabulary import (
@@ -15,12 +18,20 @@ from app.models.vocabulary import (
     VocabularyReview,
     VocabularyDeck,
     VocabularyDeckItem,
-    VocabularyStatus
+    VocabularyStatus,
+    PartOfSpeech,
+    DifficultyLevel,
 )
 
 
 class VocabularyCRUD:
     """CRUD operations for vocabulary management"""
+
+    def normalize_word(self, word: str) -> str:
+        """Normalize user-selected text for stable vocabulary lookup/creation."""
+        cleaned = re.sub(r"[^a-zA-Z0-9'\-\s]", "", (word or "").strip().lower())
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned
     
     # ===== VocabularyItem CRUD =====
     
@@ -76,6 +87,59 @@ class VocabularyCRUD:
         
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    async def find_vocabulary_by_word(
+        self,
+        db: AsyncSession,
+        word: str,
+    ) -> Optional[VocabularyItem]:
+        """Find vocabulary item by normalized exact word match."""
+        normalized = self.normalize_word(word)
+        if not normalized:
+            return None
+
+        result = await db.execute(
+            select(VocabularyItem)
+            .where(func.lower(VocabularyItem.word) == normalized)
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def create_vocabulary_item(
+        self,
+        db: AsyncSession,
+        word: str,
+        definition: Optional[str] = None,
+        translation: Optional[str] = None,
+        part_of_speech: Optional[str] = None,
+        difficulty_level: Optional[str] = None,
+    ) -> VocabularyItem:
+        """Create a master vocabulary item for user-discovered words."""
+        normalized = self.normalize_word(word)
+        if not normalized:
+            raise ValueError("Invalid word")
+
+        allowed_pos = {item.value for item in PartOfSpeech}
+        pos = (part_of_speech or PartOfSpeech.NOUN.value).lower()
+        if pos not in allowed_pos:
+            pos = PartOfSpeech.NOUN.value
+
+        allowed_levels = {item.value for item in DifficultyLevel}
+        level = (difficulty_level or DifficultyLevel.A1.value).upper()
+        if level not in allowed_levels:
+            level = DifficultyLevel.A1.value
+
+        item = VocabularyItem(
+            word=normalized,
+            definition=(definition or f"A user-saved word: {normalized}").strip(),
+            translation={"vi": translation.strip()} if translation and translation.strip() else None,
+            part_of_speech=pos,
+            difficulty_level=level,
+        )
+        db.add(item)
+        await db.commit()
+        await db.refresh(item)
+        return item
     
     # ===== UserVocabulary CRUD =====
     
@@ -104,14 +168,18 @@ class VocabularyCRUD:
         limit: int = 50,
         offset: int = 0
     ) -> List[UserVocabulary]:
-        """Get user's vocabulary collection"""
-        query = select(UserVocabulary).where(UserVocabulary.user_id == user_id)
-        
+        """Get user's vocabulary collection with vocabulary items eager-loaded."""
+        query = (
+            select(UserVocabulary)
+            .options(joinedload(UserVocabulary.vocabulary))  # avoid N+1
+            .where(UserVocabulary.user_id == user_id)
+        )
+
         if status:
             query = query.where(UserVocabulary.status == status)
-        
+
         query = query.limit(limit).offset(offset).order_by(UserVocabulary.added_at.desc())
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
     
@@ -122,30 +190,75 @@ class VocabularyCRUD:
         vocabulary_id: uuid.UUID
     ) -> UserVocabulary:
         """
-        Add vocabulary to user's collection.
-        Idempotent: Returns existing entry if already added.
+        Add vocabulary to user's collection using UPSERT (atomic, no race condition).
+        Returns existing entry if already added.
         """
-        # Check if already exists
-        existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
-        if existing:
-            return existing
-        
-        # Create new entry
-        user_vocab = UserVocabulary(
-            user_id=user_id,
-            vocabulary_id=vocabulary_id,
-            status=VocabularyStatus.LEARNING,
-            ease_factor=2.5,
-            interval=1,
-            repetitions=0,
-            next_review_date=datetime.now(timezone.utc) + timedelta(days=1)
+        now = datetime.now(timezone.utc)
+        next_review = now + timedelta(days=1)
+
+        # Try PostgreSQL INSERT … ON CONFLICT DO NOTHING first
+        try:
+            stmt = (
+                pg_insert(UserVocabulary)
+                .values(
+                    id=uuid.uuid4(),
+                    user_id=user_id,
+                    vocabulary_id=vocabulary_id,
+                    status=VocabularyStatus.LEARNING,
+                    ease_factor=2.5,
+                    interval=1,
+                    repetitions=0,
+                    next_review_date=next_review,
+                    added_at=now,
+                    total_reviews=0,
+                    correct_reviews=0,
+                    streak=0,
+                    longest_streak=0,
+                    total_xp_earned=0,
+                )
+                .on_conflict_do_nothing(index_elements=["user_id", "vocabulary_id"])
+                .returning(UserVocabulary.id)
+            )
+            await db.execute(stmt)
+            await db.commit()
+        except Exception:
+            # Fallback for SQLite / generic engines
+            await db.rollback()
+            existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
+            if existing:
+                return existing
+            try:
+                user_vocab = UserVocabulary(
+                    user_id=user_id,
+                    vocabulary_id=vocabulary_id,
+                    status=VocabularyStatus.LEARNING,
+                    ease_factor=2.5,
+                    interval=1,
+                    repetitions=0,
+                    next_review_date=next_review,
+                )
+                db.add(user_vocab)
+                await db.commit()
+                await db.refresh(user_vocab)
+                return user_vocab
+            except Exception:
+                await db.rollback()
+                # Race condition: another request inserted the same row
+                existing = await self.get_user_vocabulary(db, user_id, vocabulary_id)
+                if existing:
+                    return existing
+                raise
+
+        # Re-fetch so the ORM object is fully loaded
+        result = await db.execute(
+            select(UserVocabulary).where(
+                and_(
+                    UserVocabulary.user_id == user_id,
+                    UserVocabulary.vocabulary_id == vocabulary_id,
+                )
+            )
         )
-        
-        db.add(user_vocab)
-        await db.commit()
-        await db.refresh(user_vocab)
-        
-        return user_vocab
+        return result.scalar_one()
     
     async def get_due_vocabulary(
         self,

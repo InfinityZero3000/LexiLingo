@@ -78,6 +78,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, UserEntity>> loginWithFacebook(String firebaseIdToken) async {
+    try {
+      // Login and save tokens
+      await backendDataSource.loginWithFacebook(firebaseIdToken);
+      // Fetch full user profile after login
+      final user = await backendDataSource.getCurrentUser();
+      return Right(user);
+    } on ApiErrorException catch (e) {
+      return Left(_mapApiErrorToFailure(e));
+    } on AuthException catch (_) {
+      return Left(AuthFailure('Facebook login failed'));
+    } catch (e) {
+      return Left(AuthFailure('Facebook login failed: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> logout() async {
     try {
       await backendDataSource.logout();
@@ -111,11 +128,19 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> updateProfile({
     String? displayName,
     String? avatarUrl,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? level,
+    bool? isOnboardingCompleted,
   }) async {
     try {
       final user = await backendDataSource.updateProfile(
         displayName: displayName,
         avatarUrl: avatarUrl,
+        nativeLanguage: nativeLanguage,
+        targetLanguage: targetLanguage,
+        level: level,
+        isOnboardingCompleted: isOnboardingCompleted,
       );
       return Right(user);
     } on ApiErrorException catch (e) {

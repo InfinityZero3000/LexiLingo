@@ -1,4 +1,5 @@
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/game_entities.dart';
 
 /// Repository for the Games feature — word games, XP system, and leaderboard.
@@ -16,9 +17,11 @@ import '../../domain/entities/game_entities.dart';
 /// XP methods always bypass the cache (mutate server state).
 class GamesRepository {
   final ApiClient _apiClient;
+  final LocalCacheService _cache;
 
   GamesRepository({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient(),
+      _cache = LocalCacheService.instance;
 
   // ── Word Scramble ─────────────────────────────────────────────────────────
 
@@ -217,14 +220,21 @@ class GamesRepository {
       if (totalQuestions != null) 'total_questions': totalQuestions,
     };
     final data = await _apiClient.post('/xp/award', body: body);
+    await _cache.invalidate('xp:profile:v1');
+    await _cache.invalidate('xp:leaderboard:limit:20');
     return XPAwardResult.fromJson(data);
   }
 
   /// Fetch the current user's XP profile.
   ///
-  /// GET /xp/profile — always hits the network so streak / cap data is fresh.
+  /// GET /xp/profile — local-first with short TTL to reduce repeated load.
   Future<XPProfile> getXPProfile() async {
-    final data = await _apiClient.get('/xp/profile');
+    final cached = await _cache.getOrFetch(
+      key: 'xp:profile:v1',
+      type: 'game',
+      fetchFn: () => _apiClient.get('/xp/profile'),
+    );
+    final data = cached ?? await _apiClient.get('/xp/profile');
     // Backend may wrap the profile under a 'profile' key or return it at root.
     final profileData = data['profile'] as Map<String, dynamic>? ?? data;
     return XPProfile.fromJson(profileData);
@@ -237,6 +247,12 @@ class GamesRepository {
   /// Returns the raw JSON map. Parse entries with [LeaderboardEntry.fromJson]
   /// (new, includes isCurrentUser) or [LeaderboardUser.fromJson] (legacy).
   Future<Map<String, dynamic>> getLeaderboard({int limit = 20}) async {
-    return _apiClient.get('/xp/leaderboard?limit=$limit');
+    final cacheKey = 'xp:leaderboard:limit:$limit';
+    final cached = await _cache.getOrFetch(
+      key: cacheKey,
+      type: 'game',
+      fetchFn: () => _apiClient.get('/xp/leaderboard?limit=$limit'),
+    );
+    return cached ?? await _apiClient.get('/xp/leaderboard?limit=$limit');
   }
 }

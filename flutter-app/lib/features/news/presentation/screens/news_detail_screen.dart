@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
@@ -86,7 +88,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     });
   }
 
-  void _onWordTap(String word) {
+  void _onWordTap(String word, {String? contextSentence}) {
     final cleanWord = word
         .replaceAll(RegExp(r'[^\w\s]'), '')
         .toLowerCase()
@@ -96,7 +98,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _buildDictionarySheet(cleanWord),
+      builder: (_) => _buildDictionarySheet(
+        cleanWord,
+        contextSentence: contextSentence,
+      ),
     );
   }
 
@@ -170,8 +175,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               ),
                               child: Text(
                                 widget.article.cefrLevel,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.surface,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13,
                                 ),
@@ -308,12 +313,12 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                   return GestureDetector(
                                     onTap: () => _onWordTap(word),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(
+                                      padding: EdgeInsets.symmetric(
                                         horizontal: 10,
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: AppColors.surfaceLight,
                                         borderRadius: BorderRadius.circular(8),
                                         boxShadow: [
                                           BoxShadow(
@@ -350,7 +355,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             child: SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: LottieLoadingWidget.tiny(),
                             ),
                           ),
                         ),
@@ -460,7 +465,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
                 child: GestureDetector(
-                  onTap: () => _onWordTap(word),
+                  onTap: () => _onWordTap(
+                    word,
+                    contextSentence: paragraph,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 2,
@@ -556,14 +564,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   //  Dictionary Sheet (shared with YouTube)
   // ──────────────────────────────────────
 
-  Widget _buildDictionarySheet(String word) {
+  Widget _buildDictionarySheet(String word, {String? contextSentence}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2A38) : Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -575,7 +583,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
+                color: AppColors.grey400,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -601,7 +609,21 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Future.microtask(() {
+                      if (!mounted) return;
+                      showQuickSaveWordSheet(
+                        context,
+                        word: word,
+                        sourceType: 'news',
+                        sourceReference: widget.article.id.isNotEmpty
+                            ? widget.article.id
+                            : widget.article.url,
+                        contextSentence: contextSentence,
+                      );
+                    });
+                  },
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
                   label: const Text('Save Word'),
                   style: OutlinedButton.styleFrom(
@@ -644,17 +666,17 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

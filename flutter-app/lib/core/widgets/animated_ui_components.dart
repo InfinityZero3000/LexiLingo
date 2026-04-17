@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Notification Badge with bounce effect
 /// Shows a pulsing badge when there are unread notifications
@@ -17,7 +18,7 @@ class AnimatedNotificationBadge extends StatefulWidget {
     super.key,
     required this.count,
     required this.child,
-    this.badgeColor = Colors.red,
+    this.badgeColor = AppColors.errorBright,
     this.showPulse = true,
   });
 
@@ -146,8 +147,8 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                   child: Center(
                     child: Text(
                       widget.count > 99 ? '99+' : widget.count.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -170,6 +171,7 @@ class AnimatedListItem extends StatelessWidget {
   final int index;
   final Duration duration;
   final Duration delayPerItem;
+  final Offset beginOffset;
 
   const AnimatedListItem({
     super.key,
@@ -177,6 +179,7 @@ class AnimatedListItem extends StatelessWidget {
     required this.index,
     this.duration = const Duration(milliseconds: 400),
     this.delayPerItem = const Duration(milliseconds: 50),
+    this.beginOffset = const Offset(0, 20),
   });
 
   @override
@@ -184,7 +187,7 @@ class AnimatedListItem extends StatelessWidget {
     return SlideFadeTransition(
       duration: duration,
       delay: Duration(milliseconds: delayPerItem.inMilliseconds * index),
-      beginOffset: const Offset(0, 20),
+      beginOffset: beginOffset,
       child: child,
     );
   }
@@ -202,7 +205,7 @@ class HighlightedCard extends StatelessWidget {
     super.key,
     required this.child,
     this.isHighlighted = false,
-    this.glowColor = Colors.amber,
+    this.glowColor = AppColors.warning,
     this.borderRadius,
   });
 
@@ -235,7 +238,7 @@ class AnimatedRatingStars extends StatelessWidget {
     required this.rating,
     this.maxRating = 5,
     this.size = 20,
-    this.filledColor = Colors.amber,
+    this.filledColor = AppColors.warning,
     this.unfilledColor = Colors.grey,
   });
 
@@ -380,7 +383,7 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton> {
         child: _isFavorite
             ? HeartbeatAnimation(
                 size: widget.size,
-                color: Colors.red,
+                color: AppColors.errorBright,
                 isActive: true,
               )
             : Icon(

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Maps 6 backend skills to 5 display dimensions for radar chart
 class ProficiencyDimensionMapper {
@@ -47,9 +48,9 @@ class ProficiencyRadarChart extends StatefulWidget {
     required this.scores,
     this.size = 220,
     this.fillColor = const Color(0x336366F1),
-    this.strokeColor = const Color(0xFF6366F1),
-    this.gridColor = const Color(0xFFE2E8F0),
-    this.labelColor = const Color(0xFF64748B),
+    this.strokeColor = AppColors.primary,
+    this.gridColor = AppColors.slate200,
+    this.labelColor = AppColors.textSlateLight,
     this.animate = true,
   });
 

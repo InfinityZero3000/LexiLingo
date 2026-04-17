@@ -11,7 +11,7 @@ interface AdminUser {
   email: string;
   display_name: string;
   role: "admin" | "super_admin";
-  provider: string;
+  provider: string[];
   is_active: boolean;
   created_at: string;
   last_login_at?: string;

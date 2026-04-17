@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'custom_animations.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animation Showcase Page
 /// Demonstrates all available custom animations in the app
@@ -66,7 +67,7 @@ class AnimationShowcasePage extends StatelessWidget {
               ),
               child: FloatingParticles(
                 particleCount: 20,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
                 maxSize: 4,
               ),
             ),
@@ -82,7 +83,7 @@ class AnimationShowcasePage extends StatelessWidget {
                   size: 80,
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
-                  progressColor: Colors.red,
+                  progressColor: AppColors.errorBright,
                   child: Text(
                     '30%',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -93,7 +94,7 @@ class AnimationShowcasePage extends StatelessWidget {
                   size: 80,
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
-                  progressColor: Colors.orange,
+                  progressColor: AppColors.orange,
                   child: Text(
                     '65%',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -104,8 +105,8 @@ class AnimationShowcasePage extends StatelessWidget {
                   size: 80,
                   strokeWidth: 8,
                   backgroundColor: Colors.grey[300]!,
-                  progressColor: Colors.green,
-                  child: Icon(Icons.check, color: Colors.green),
+                  progressColor: AppColors.greenSuccessBright,
+                  child: Icon(Icons.check, color: AppColors.greenSuccessBright),
                 ),
               ],
             ),
@@ -115,12 +116,12 @@ class AnimationShowcasePage extends StatelessWidget {
             _buildDescription('Touch feedback animation'),
             Center(
               child: RippleEffect(
-                rippleColor: Colors.purple,
+                rippleColor: AppColors.purple,
                 child: Container(
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.2),
+                    color: AppColors.purple.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(child: Text('Tap me')),
@@ -133,7 +134,7 @@ class AnimationShowcasePage extends StatelessWidget {
             _buildDescription('Highlight important elements'),
             Center(
               child: BreathingGlow(
-                glowColor: Colors.amber,
+                glowColor: AppColors.warning,
                 maxBlur: 20,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -141,13 +142,13 @@ class AnimationShowcasePage extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.amber,
+                    color: AppColors.warning,
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Premium Feature',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -178,12 +179,12 @@ class AnimationShowcasePage extends StatelessWidget {
             AnimatedGradientBorder(
               borderWidth: 3,
               borderRadius: 16,
-              colors: [Colors.blue, Colors.purple, Colors.pink, Colors.orange],
+              colors: [Colors.blue, AppColors.purple, Colors.pink, AppColors.orange],
               child: Container(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Icon(Icons.star, color: Colors.amber, size: 40),
+                    Icon(Icons.star, color: AppColors.warning, size: 40),
                     const SizedBox(height: 8),
                     Text(
                       'Featured Content',
@@ -207,9 +208,9 @@ class AnimationShowcasePage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                AnimatedCheckmark(color: Colors.green, size: 60),
+                AnimatedCheckmark(color: AppColors.greenSuccessBright, size: 60),
                 AnimatedCheckmark(color: Colors.blue, size: 60),
-                AnimatedCheckmark(color: Colors.purple, size: 60),
+                AnimatedCheckmark(color: AppColors.purple, size: 60),
               ],
             ),
             const SizedBox(height: 48),

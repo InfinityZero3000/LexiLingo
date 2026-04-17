@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Celebration overlay widget with Lottie confetti animation
 /// Used when user completes a lesson, course, or achievement
@@ -109,7 +110,7 @@ class CelebrationScreen extends StatefulWidget {
     this.subtitle,
     this.xpEarned,
     this.icon = Icons.emoji_events,
-    this.iconColor = Colors.amber,
+    this.iconColor = AppColors.warning,
     required this.onContinue,
     this.extraContent,
   });
@@ -339,14 +340,14 @@ class _CelebrationScreenState extends State<CelebrationScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.stars, color: Colors.white, size: 28),
+          Icon(Icons.stars, color: Theme.of(context).colorScheme.surface, size: 28),
           const SizedBox(width: 8),
           Text(
             '+${widget.xpEarned} XP',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
             ),
           ),
         ],
@@ -362,7 +363,7 @@ void showCelebration(
   String? subtitle,
   String? xpEarned,
   IconData icon = Icons.emoji_events,
-  Color iconColor = Colors.amber,
+  Color iconColor = AppColors.warning,
   VoidCallback? onDismiss,
 }) {
   showGeneralDialog(

@@ -38,6 +38,7 @@ def _make_mock_user(user_id: str = "550e8400-e29b-41d4-a716-446655440001"):
     user.is_active = True
     user.is_verified = True
     user.level = "A1"
+    user.cefr_level = "A1"
     user.native_language = "vi"
     user.target_language = "en"
     user.total_xp = 100
@@ -241,7 +242,7 @@ class TestGetUserById:
         mock_result.scalar_one_or_none.return_value = None
         response = await client.get(f"{BASE}/{OTHER_USER_ID}")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_returns_user_when_found(self, auth_client):
@@ -285,6 +286,53 @@ class TestGetUserLevel:
         client, _, _, _ = auth_client
         response = await client.get(f"{BASE}/me/level")
         assert "data" in response.json()
+
+
+# ============================================================================
+# GET /api/v1/users/me/level-full  — Full level info (numeric + CEFR)
+# ============================================================================
+
+class TestGetUserLevelFull:
+    """Tests for GET /api/v1/users/me/level-full."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_returns_200(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_uses_persisted_cefr_not_xp_derived(self, auth_client):
+        client, _, _, mock_user = auth_client
+        mock_user.level = "B1"
+        mock_user.total_xp = 0  # XP-derived CEFR would be A1
+
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+        data = response.json()["data"]
+        assert data["cefr_level"] == "B1"
+        assert data["proficiency_level"] == "B1"  # backward-compatible alias
+        assert data["xp_derived_cefr_level"] == "A1"
+        assert data["numeric_level"] == 1
+
+    @pytest.mark.asyncio
+    async def test_includes_split_cefr_fields(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.get(f"{BASE}/me/level-full")
+        assert response.status_code == 200
+
+        data = response.json()["data"]
+        assert "cefr_level" in data
+        assert "cefr_name" in data
+        assert "cefr_progression_source" in data
+        assert "xp_derived_cefr_level" in data
+        assert "xp_derived_cefr_name" in data
 
 
 # ============================================================================

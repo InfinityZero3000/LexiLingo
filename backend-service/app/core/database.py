@@ -6,6 +6,7 @@ Async SQLAlchemy setup following Repository pattern
 
 import logging
 from typing import AsyncGenerator
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     AsyncEngine,
@@ -31,6 +32,7 @@ if _is_sqlite:
         _db_url,
         echo=settings.DB_ECHO,
         poolclass=NullPool,
+        connect_args={"timeout": 30},  # wait up to 30s for a locked DB
     )
 else:
     engine: AsyncEngine = create_async_engine(
@@ -38,7 +40,10 @@ else:
         echo=settings.DB_ECHO,
         pool_size=settings.effective_pool_size,
         max_overflow=settings.effective_max_overflow,
-        pool_pre_ping=True,
+        pool_recycle=1800,          # recycle connections every 30 min to avoid stale handles
+        pool_timeout=30,            # wait up to 30s for a free connection before raising
+        pool_pre_ping=True,         # verify connection health before checkout
+        pool_use_lifo=True,         # reuse recently-returned connections (better cache locality)
     )
 
 # Session factory
@@ -79,6 +84,10 @@ async def init_db():
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Enable WAL mode for SQLite: allows concurrent reads during writes
+        if _is_sqlite:
+            await conn.execute(text("PRAGMA journal_mode=WAL"))
+            await conn.execute(text("PRAGMA synchronous=NORMAL"))
     logger.info("Database tables created")
 
 

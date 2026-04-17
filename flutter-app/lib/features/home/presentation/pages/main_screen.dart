@@ -1,37 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:provider/provider.dart';
+import '../../../chat/presentation/providers/story_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
-import '../../../chat/presentation/pages/chat_page.dart';
+import '../../../chat/presentation/pages/story_selection_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+
+  const MainScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  bool _lexiWarmedUp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, _pages.length - 1);
+    if (_currentIndex == 2) {
+      _lexiWarmedUp = true;
+      _warmupAiModels();
+    }
+    _triggerPreWarming();
+  }
+
+  void _triggerPreWarming() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final auth = context.read<AuthProvider>();
+        final storyProvider = context.read<StoryProvider>();
+        final userId = auth.user?.id ?? 'guest';
+
+        storyProvider.preWarmRecents(userId);
+      } catch (e) {
+        debugPrint('Pre-warming skipped: $e');
+      }
+    });
+  }
 
   final List<Widget> _pages = [
     const HomePageNew(),
     const CourseListScreen(),
-    const ChatPage(),
+    const LexiChatPage(),
+    const StorySelectionPage(),
     const ProfilePage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: IndexedStack(index: _currentIndex, children: _pages),
-      floatingActionButton: _buildLexiFab(context),
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C2A38) : Colors.white,
+              color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
@@ -54,26 +94,48 @@ class _MainScreenState extends State<MainScreen> {
               ),
               child: BottomNavigationBar(
                 currentIndex: _currentIndex,
-                onTap: (index) => setState(() => _currentIndex = index),
-                items: const [
+                type: BottomNavigationBarType.fixed,
+                onTap: (index) {
+                  if (index == 2 && !_lexiWarmedUp) {
+                    _lexiWarmedUp = true;
+                    _warmupAiModels();
+                  }
+                  setState(() => _currentIndex = index);
+                },
+                items: [
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.explore_outlined),
-                    activeIcon: Icon(Icons.explore),
+                    icon: Icon(PhosphorIcons.compass()),
+                    activeIcon: Icon(
+                      PhosphorIcons.compass(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Discovery',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.menu_book_outlined),
-                    activeIcon: Icon(Icons.menu_book),
+                    icon: Icon(PhosphorIcons.bookOpen()),
+                    activeIcon: Icon(
+                      PhosphorIcons.bookOpen(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Learning',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.chat_bubble_outline),
-                    activeIcon: Icon(Icons.chat_bubble),
+                    icon: Icon(PhosphorIcons.bird()),
+                    activeIcon: Icon(
+                      PhosphorIcons.bird(PhosphorIconsStyle.fill),
+                    ),
+                    label: 'Lexi',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(PhosphorIcons.chatCircleText()),
+                    activeIcon: Icon(
+                      PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Chat',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.account_circle_outlined),
-                    activeIcon: Icon(Icons.account_circle),
+                    icon: Icon(PhosphorIcons.userCircle()),
+                    activeIcon: Icon(
+                      PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
+                    ),
                     label: 'Account',
                   ),
                 ],
@@ -85,23 +147,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  /// Floating action button to open Lexi Chat adventure.
-  Widget _buildLexiFab(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => Navigator.pushNamed(context, '/lexi'),
-      tooltip: 'Chat with Lexi 🦜',
-      backgroundColor: const Color(0xFF43E97B),
-      elevation: 6,
-      child: ClipOval(
-        child: Image.asset(
-          'assets/avatar/avatar-ai-chat.png',
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              const Text('🦜', style: TextStyle(fontSize: 24)),
-        ),
-      ),
-    );
+  void _warmupAiModels() async {
+    try {
+      final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
+      await http.post(url);
+    } catch (_) {
+      // Ignore error
+    }
   }
 }

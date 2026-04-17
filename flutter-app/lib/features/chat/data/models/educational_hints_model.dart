@@ -1,5 +1,6 @@
 /// Educational Hints model for Topic-Based Conversation
 /// Provides grammar corrections and vocabulary hints from AI responses
+library;
 
 /// Grammar correction from AI
 class GrammarCorrection {

@@ -4,6 +4,7 @@ import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
 import { StatusPill } from "../components/StatusPill";
+import { TableSkeleton } from "../components/Skeleton";
 import {
   listLessonsAdmin,
   listCoursesAdmin,
@@ -216,9 +217,18 @@ export const LessonsPage = () => {
 
       <div className="panel">
         {loading ? (
-          <div className="loading">{t.common.loading}</div>
+          <TableSkeleton rows={5} cols={isStandalone ? 8 : 7} />
         ) : lessons.length === 0 ? (
-          <EmptyState title={t.lessons.noLessons} description={t.lessons.noLessonsDesc} />
+          <EmptyState
+            title={t.lessons.noLessons}
+            description={t.lessons.noLessonsDesc}
+            icon="📖"
+            action={
+              <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+                {t.lessons.createLesson}
+              </button>
+            }
+          />
         ) : (
           <DataTable
             columns={[

@@ -101,17 +101,28 @@ void main() {
       expect(notifications.first.id, '1');
     });
 
-    test('getUnreadCount should return count of unread notifications', () async {
-      await repository.addNotification(createNotification(id: '1', isRead: false));
-      await repository.addNotification(createNotification(id: '2', isRead: true));
-      await repository.addNotification(createNotification(id: '3', isRead: false));
+    test(
+      'getUnreadCount should return count of unread notifications',
+      () async {
+        await repository.addNotification(
+          createNotification(id: '1', isRead: false),
+        );
+        await repository.addNotification(
+          createNotification(id: '2', isRead: true),
+        );
+        await repository.addNotification(
+          createNotification(id: '3', isRead: false),
+        );
 
-      final unreadCount = await repository.getUnreadCount();
-      expect(unreadCount, 2);
-    });
+        final unreadCount = await repository.getUnreadCount();
+        expect(unreadCount, 2);
+      },
+    );
 
     test('markAsRead should mark notification as read', () async {
-      await repository.addNotification(createNotification(id: '1', isRead: false));
+      await repository.addNotification(
+        createNotification(id: '1', isRead: false),
+      );
 
       await repository.markAsRead('1');
 
@@ -120,9 +131,15 @@ void main() {
     });
 
     test('markAllAsRead should mark all notifications as read', () async {
-      await repository.addNotification(createNotification(id: '1', isRead: false));
-      await repository.addNotification(createNotification(id: '2', isRead: false));
-      await repository.addNotification(createNotification(id: '3', isRead: false));
+      await repository.addNotification(
+        createNotification(id: '1', isRead: false),
+      );
+      await repository.addNotification(
+        createNotification(id: '2', isRead: false),
+      );
+      await repository.addNotification(
+        createNotification(id: '3', isRead: false),
+      );
 
       await repository.markAllAsRead();
 
@@ -152,8 +169,12 @@ void main() {
     });
 
     test('getNotificationById should return notification', () async {
-      await repository.addNotification(createNotification(id: '1', title: 'First'));
-      await repository.addNotification(createNotification(id: '2', title: 'Second'));
+      await repository.addNotification(
+        createNotification(id: '1', title: 'First'),
+      );
+      await repository.addNotification(
+        createNotification(id: '2', title: 'Second'),
+      );
 
       final notification = await repository.getNotificationById('2');
 
@@ -161,13 +182,18 @@ void main() {
       expect(notification!.title, 'Second');
     });
 
-    test('getNotificationById should return null for non-existent id', () async {
-      await repository.addNotification(createNotification(id: '1'));
+    test(
+      'getNotificationById should return null for non-existent id',
+      () async {
+        await repository.addNotification(createNotification(id: '1'));
 
-      final notification = await repository.getNotificationById('non_existent');
+        final notification = await repository.getNotificationById(
+          'non_existent',
+        );
 
-      expect(notification, isNull);
-    });
+        expect(notification, isNull);
+      },
+    );
   });
 
   group('NotificationRepositoryImpl - getGroupedNotifications', () {
@@ -176,21 +202,27 @@ void main() {
       final yesterday = now.subtract(const Duration(days: 1));
       final earlier = now.subtract(const Duration(days: 5));
 
-      await repository.addNotification(createNotification(
-        id: '1',
-        title: 'Today Notification',
-        timestamp: now,
-      ));
-      await repository.addNotification(createNotification(
-        id: '2',
-        title: 'Yesterday Notification',
-        timestamp: yesterday,
-      ));
-      await repository.addNotification(createNotification(
-        id: '3',
-        title: 'Earlier Notification',
-        timestamp: earlier,
-      ));
+      await repository.addNotification(
+        createNotification(
+          id: '1',
+          title: 'Today Notification',
+          timestamp: now,
+        ),
+      );
+      await repository.addNotification(
+        createNotification(
+          id: '2',
+          title: 'Yesterday Notification',
+          timestamp: yesterday,
+        ),
+      );
+      await repository.addNotification(
+        createNotification(
+          id: '3',
+          title: 'Earlier Notification',
+          timestamp: earlier,
+        ),
+      );
 
       final groups = await repository.getGroupedNotifications();
 
@@ -210,10 +242,9 @@ void main() {
 
     test('should skip empty groups', () async {
       final now = DateTime.now();
-      await repository.addNotification(createNotification(
-        id: '1',
-        timestamp: now,
-      ));
+      await repository.addNotification(
+        createNotification(id: '1', timestamp: now),
+      );
 
       final groups = await repository.getGroupedNotifications();
 
@@ -247,8 +278,12 @@ void main() {
       });
 
       // Add notifications
-      await repository.addNotification(createNotification(id: '1', isRead: false));
-      await repository.addNotification(createNotification(id: '2', isRead: false));
+      await repository.addNotification(
+        createNotification(id: '1', isRead: false),
+      );
+      await repository.addNotification(
+        createNotification(id: '2', isRead: false),
+      );
 
       // Give stream time to emit
       await Future.delayed(const Duration(milliseconds: 50));

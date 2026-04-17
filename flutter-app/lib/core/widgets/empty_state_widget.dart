@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Reusable empty state widget with illustration and action button
 class EmptyStateWidget extends StatelessWidget {
@@ -103,7 +104,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Add words to build your vocabulary library.',
       actionLabel: onAdd != null ? 'Add Words' : null,
       onAction: onAdd,
-      iconColor: Colors.green,
+      iconColor: AppColors.greenSuccessBright,
     );
   }
 
@@ -113,7 +114,7 @@ class EmptyStateWidget extends StatelessWidget {
       icon: Icons.notifications_none_outlined,
       title: 'No Notifications',
       description: 'You\'re all caught up! Check back later.',
-      iconColor: Colors.orange,
+      iconColor: AppColors.orange,
     );
   }
 
@@ -125,7 +126,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Start a conversation with our AI tutor.',
       actionLabel: onStartChat != null ? 'Start Chat' : null,
       onAction: onStartChat,
-      iconColor: Colors.purple,
+      iconColor: AppColors.purple,
     );
   }
 
@@ -149,7 +150,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Complete lessons to track your learning progress.',
       actionLabel: onStart != null ? 'Start Learning' : null,
       onAction: onStart,
-      iconColor: Colors.teal,
+      iconColor: AppColors.teal,
     );
   }
 
@@ -161,7 +162,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'Please check your network and try again.',
       actionLabel: onRetry != null ? 'Retry' : null,
       onAction: onRetry,
-      iconColor: Colors.red,
+      iconColor: AppColors.errorBright,
     );
   }
 
@@ -173,7 +174,7 @@ class EmptyStateWidget extends StatelessWidget {
       description: 'We\'re having trouble connecting. Please try again.',
       actionLabel: onRetry != null ? 'Retry' : null,
       onAction: onRetry,
-      iconColor: Colors.red,
+      iconColor: AppColors.errorBright,
     );
   }
 }

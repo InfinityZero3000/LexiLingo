@@ -19,11 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 # ── Sensitive endpoints that get stricter per-route limits ──
-_STRICT_RATE_LIMITS: Dict[str, int] = {
-    "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
-    "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
-    "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
-}
+# Scale with global limit: production tight values / development relaxed for load testing
+def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
+    if is_dev:
+        return {
+            "/api/v1/auth/login": 300,          # relaxed — load testing from single IP
+            "/api/v1/auth/register": 100,
+            "/api/v1/auth/forgot-password": 50,
+        }
+    return {
+        "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
+        "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
+        "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+    }
+
+try:
+    from app.core.config import settings as _settings
+    _STRICT_RATE_LIMITS: Dict[str, int] = _build_strict_limits(_settings.is_development)
+except Exception:
+    _STRICT_RATE_LIMITS = _build_strict_limits(False)
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -38,6 +52,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
       * Global: requests_per_minute / requests_per_hour (all endpoints)
       * Strict: per-path override for sensitive endpoints (login, register…)
     """
+
+    # Set to True in tests via monkeypatch.setattr(RateLimitMiddleware, "_testing", True)
+    # This is read at dispatch time (not captured by BaseHTTPMiddleware), so monkeypatch works.
+    _testing: bool = False
 
     def __init__(
         self,
@@ -57,11 +75,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _client_ip(request: Request) -> str:
-        # Respect X-Forwarded-For when behind a reverse proxy
+        # Only trust X-Forwarded-For when the direct peer is a configured trusted proxy.
+        # Accepting the header unconditionally lets any client spoof their IP and
+        # bypass all rate limiting.
+        from app.core.config import settings
+        peer_ip = request.client.host if request.client else None
         forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-        return request.client.host if request.client else "unknown"
+        if forwarded and peer_ip:
+            trusted = {ip.strip() for ip in settings.TRUSTED_PROXIES.split(",") if ip.strip()}
+            if trusted and peer_ip in trusted:
+                return forwarded.split(",")[0].strip()
+        return peer_ip or "unknown"
 
     # ── Redis-backed counting ────────────────────────────────
 
@@ -187,16 +211,27 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     # ── dispatch ─────────────────────────────────────────────
 
+    # Paths exempt from rate limiting
+    _EXEMPT_PATHS = {
+        "/health", "/health/ready", "/ping",
+        "/api/v1/health", "/api/v1/health/ready", "/api/v1/ping",
+        "/docs", "/redoc", "/openapi.json",
+        "/",
+    }
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Rate limit based on client IP with Redis → memory fallback."""
+        if self.__class__._testing:
+            return await call_next(request)
 
-        # Skip preflight and health checks
+        # Skip preflight and exempt paths (health, docs, etc.)
         if request.method == "OPTIONS":
             return await call_next(request)
-        if request.url.path in ("/health", "/api/v1/health"):
+        if request.url.path in self._EXEMPT_PATHS:
             return await call_next(request)
 
         client_ip = self._client_ip(request)
+
         path = request.url.path
 
         # Try Redis first, fallback to memory
@@ -253,7 +288,6 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 error=ErrorDetail(
                     code=ErrorCodes.INTERNAL_ERROR,
                     message="An internal server error occurred",
-                    details={"type": type(exc).__name__}
                 )
             )
             

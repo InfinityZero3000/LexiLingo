@@ -42,7 +42,7 @@ run-web: ## Run app on Chrome (web)
 
 .PHONY: run-ios
 run-ios: ## Run app on iOS simulator (macOS only)
-	@cd $(APP_DIR) && $(FLUTTER) run -d ios
+	@cd $(APP_DIR) && $(FLUTTER) run -d $$(flutter devices | grep -i simulator | head -n 1 | awk -F '•' '{print $$2}' | xargs) || $(FLUTTER) run -d ios
 
 .PHONY: run-android
 run-android: ## Run app on Android device/emulator

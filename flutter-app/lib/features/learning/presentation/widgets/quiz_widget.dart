@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -11,13 +13,13 @@ class QuizWidget extends StatefulWidget {
   final bool? isCorrect;
 
   const QuizWidget({
-    Key? key,
+    super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
     this.userAnswer,
     this.isCorrect,
-  }) : super(key: key);
+  });
 
   @override
   State<QuizWidget> createState() => _QuizWidgetState();
@@ -63,6 +65,8 @@ class _QuizWidgetState extends State<QuizWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -93,12 +97,17 @@ class _QuizWidgetState extends State<QuizWidget>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          widget.exercise.question,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
+                        child: QuickSaveSelectionArea(
+                          sourceType: 'course_lesson',
+                          sourceReference: widget.exercise.id,
+                          contextSentence: widget.exercise.question,
+                          child: Text(
+                            widget.exercise.question,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),
@@ -118,23 +127,28 @@ class _QuizWidgetState extends State<QuizWidget>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lightbulb_outline,
                             size: 20,
-                            color: Colors.blue,
+                            color: accentColor,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              widget.exercise.hint!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue,
+                            child: QuickSaveSelectionArea(
+                              sourceType: 'course_lesson',
+                              sourceReference: widget.exercise.id,
+                              contextSentence: widget.exercise.hint!,
+                              child: Text(
+                                widget.exercise.hint!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: accentColor,
+                                ),
                               ),
                             ),
                           ),
@@ -162,11 +176,11 @@ class _QuizWidgetState extends State<QuizWidget>
             if (showResult) {
               if (isCorrectAnswer) {
                 backgroundColor = Colors.green.withValues(alpha: 0.1);
-                borderColor = Colors.green;
+                borderColor = AppColors.greenSuccessBright;
                 icon = Icons.check_circle;
               } else if (isSelected && !isCorrectAnswer) {
                 backgroundColor = Colors.red.withValues(alpha: 0.1);
-                borderColor = Colors.red;
+                borderColor = AppColors.errorBright;
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
@@ -213,14 +227,14 @@ class _QuizWidgetState extends State<QuizWidget>
                       if (showResult && icon != null)
                         Icon(
                           icon,
-                          color: isCorrectAnswer ? Colors.green : Colors.red,
+                          color: isCorrectAnswer ? AppColors.greenSuccessBright : AppColors.errorBright,
                         ),
                     ],
                   ),
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           // Explanation (shown after answering)
           if (widget.isAnswered && widget.exercise.explanation != null) ...[
@@ -230,11 +244,11 @@ class _QuizWidgetState extends State<QuizWidget>
               child: Card(
                 color: widget.isCorrect!
                     ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
+                    : AppColors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: widget.isCorrect! ? Colors.green : Colors.orange,
+                    color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.orange,
                     width: 1,
                   ),
                 ),
@@ -250,8 +264,8 @@ class _QuizWidgetState extends State<QuizWidget>
                                 ? Icons.check_circle
                                 : Icons.info_outline,
                             color: widget.isCorrect!
-                                ? Colors.green
-                                : Colors.orange,
+                                ? AppColors.greenSuccessBright
+                                : AppColors.orange,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -260,16 +274,21 @@ class _QuizWidgetState extends State<QuizWidget>
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: widget.isCorrect!
-                                  ? Colors.green
-                                  : Colors.orange,
+                                  ? AppColors.greenSuccessBright
+                                  : AppColors.orange,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        widget.exercise.explanation!,
-                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      QuickSaveSelectionArea(
+                        sourceType: 'course_lesson',
+                        sourceReference: widget.exercise.id,
+                        contextSentence: widget.exercise.explanation!,
+                        child: Text(
+                          widget.exercise.explanation!,
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
                       ),
                     ],
                   ),

@@ -81,12 +81,12 @@ class _LevelUpDialogState extends State<LevelUpDialog>
           emissionFrequency: 0.06,
           numberOfParticles: 18,
           gravity: 0.3,
-          colors: const [
+          colors: [
             AppColors.primary,
             AppColors.accentYellow,
             AppColors.greenSuccess,
             Colors.pink,
-            Colors.purple,
+            AppColors.purple,
           ],
         ),
         // Dialog
@@ -95,13 +95,13 @@ class _LevelUpDialogState extends State<LevelUpDialog>
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              padding: const EdgeInsets.all(28),
+              padding: EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -122,9 +122,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.emoji_events_rounded,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       size: 36,
                     ),
                   ),
@@ -166,7 +166,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accentYellow.withOpacity(0.2),
+                      color: AppColors.accentYellow.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

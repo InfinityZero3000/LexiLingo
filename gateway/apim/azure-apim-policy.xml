@@ -1,0 +1,70 @@
+<policies>
+  <inbound>
+    <base />
+
+    <!-- Correlation -->
+    <set-header name="x-request-id" exists-action="skip">
+      <value>@(context.RequestId.ToString())</value>
+    </set-header>
+
+    <!-- Authentication: API key -->
+    <check-header name="x-api-key" failed-check-httpcode="401" failed-check-error-message="Missing API key" />
+
+    <!-- JWT validation (optional if your clients already use JWT) -->
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Invalid token" require-scheme="Bearer">
+      <openid-config url="https://YOUR_AUTH_DOMAIN/.well-known/openid-configuration" />
+      <audiences>
+        <audience>lexilingo-api</audience>
+      </audiences>
+    </validate-jwt>
+
+    <!-- Authorization by route + role claim -->
+    <choose>
+      <when condition="@(context.Request.OriginalUrl.Path.StartsWith('/api/v1/admin') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/ai-admin'))">
+        <choose>
+          <when condition="@(context.Principal == null || !context.Principal.Claims.Any(c => c.Type == 'role' && c.Value == 'admin'))">
+            <return-response>
+              <set-status code="403" reason="Forbidden" />
+              <set-body>{"error":"admin role required"}</set-body>
+            </return-response>
+          </when>
+        </choose>
+      </when>
+    </choose>
+
+    <!-- Rate limiting: burst -->
+    <rate-limit-by-key calls="180" renewal-period="60" counter-key="@(context.Request.Headers.GetValueOrDefault('x-api-key','anonymous'))" />
+
+    <!-- Quota: daily -->
+    <quota-by-key calls="30000" renewal-period="86400" counter-key="@(context.Request.Headers.GetValueOrDefault('x-api-key','anonymous'))" />
+
+    <!-- Route to backend services -->
+    <choose>
+      <when condition="@(context.Request.OriginalUrl.Path.StartsWith('/api/v1/stt') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/tts') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/chat') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/topics') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/lexi') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/ai') || context.Request.OriginalUrl.Path.StartsWith('/api/v1/ai-admin'))">
+        <set-backend-service base-url="https://YOUR_AI_SERVICE_ORIGIN" />
+      </when>
+      <otherwise>
+        <set-backend-service base-url="https://YOUR_BACKEND_SERVICE_ORIGIN" />
+      </otherwise>
+    </choose>
+  </inbound>
+
+  <backend>
+    <base />
+  </backend>
+
+  <outbound>
+    <base />
+    <set-header name="x-request-id" exists-action="override">
+      <value>@(context.RequestId.ToString())</value>
+    </set-header>
+  </outbound>
+
+  <on-error>
+    <base />
+    <!-- Observability hook -->
+    <log-to-eventhub logger-id="apim-eventhub-logger">
+      @(string.Format("{{\"requestId\":\"{0}\",\"path\":\"{1}\",\"status\":{2},\"message\":\"{3}\"}}", context.RequestId, context.Request.OriginalUrl.Path, context.Response?.StatusCode ?? 500, context.LastError?.Message ?? "unknown"))
+    </log-to-eventhub>
+  </on-error>
+</policies>

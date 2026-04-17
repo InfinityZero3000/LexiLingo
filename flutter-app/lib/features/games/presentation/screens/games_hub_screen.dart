@@ -92,13 +92,15 @@ class _GamesHubScreenState extends State<GamesHubScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.textInverted : AppColors.textDark;
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
       body: Consumer<GamesProvider>(
         builder: (context, provider, _) {
           return CustomScrollView(
             slivers: [
-              _buildAppBar(provider),
+              _buildAppBar(provider, titleColor),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -112,11 +114,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                       const SizedBox(height: 20),
                       _buildLevelPicker(provider),
                       const SizedBox(height: 20),
-                      _buildSectionTitle('Games'),
+                      _buildSectionTitle('Games', titleColor),
                       const SizedBox(height: 12),
                       _buildGameGrid(context, provider),
                       const SizedBox(height: 24),
-                      _buildSectionTitle('Leaderboard'),
+                      _buildSectionTitle('Leaderboard', titleColor),
                       const SizedBox(height: 12),
                       _buildLeaderboard(provider),
                       const SizedBox(height: 32),
@@ -131,15 +133,15 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     );
   }
 
-  SliverAppBar _buildAppBar(GamesProvider provider) {
+  SliverAppBar _buildAppBar(GamesProvider provider, Color titleColor) {
     return SliverAppBar(
       floating: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
-      title: const Text(
+      title: Text(
         'Games',
         style: TextStyle(
-          color: AppColors.textDark,
+          color: titleColor,
           fontWeight: FontWeight.bold,
           fontSize: 20,
         ),
@@ -159,12 +161,12 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   Widget _buildXpHeader(GamesProvider provider) {
     if (provider.isLoading && provider.xpProfile == null) {
       return Shimmer.fromColors(
-        baseColor: Colors.grey.shade200,
-        highlightColor: Colors.grey.shade100,
+        baseColor: AppColors.grey200,
+        highlightColor: AppColors.grey100,
         child: Container(
           height: 120,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -204,13 +206,13 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final dailyCap = dailyXp + provider.dailyCapRemaining;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -254,6 +256,8 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   ///
   /// In production this would be loaded from the backend.
   Widget _buildDailyChallenge(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.textInverted : AppColors.textDark;
     final demo = DailyChallenge(
       gameType: GameType.fillBlank.apiKey,
       description: 'Complete 5 Fill in the Blank questions',
@@ -264,7 +268,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Daily Challenge'),
+        _buildSectionTitle('Daily Challenge', titleColor),
         const SizedBox(height: 10),
         DailyChallengeCard(
           challenge: demo,
@@ -278,15 +282,18 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   }
 
   Widget _buildLevelPicker(GamesProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white70 : AppColors.textGrey;
+    final unselectedLabel = isDark ? AppColors.textInverted : AppColors.textDark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Difficulty',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.textGrey,
+            color: titleColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -303,10 +310,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   onSelected: (_) => provider.setLevel(level),
                   selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
-                    color: selected ? Colors.white : AppColors.textDark,
+                    color: selected ? Colors.white : unselectedLabel,
                     fontWeight: FontWeight.bold,
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: BorderSide(
@@ -322,13 +329,13 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color titleColor) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.bold,
-        color: AppColors.textDark,
+        color: titleColor,
       ),
     );
   }
@@ -358,9 +365,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final board = provider.leaderboard;
     if (board.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Center(
@@ -378,13 +385,13 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final third = top3.length > 2 ? top3[2] : null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+      padding: EdgeInsets.fromLTRB(12, 20, 12, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -403,7 +410,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     second,
                     1,
                     72,
-                    const Color(0xFFC0C0C0),
+                    AppColors.silver,
                   ),
                 ),
               if (second != null) const SizedBox(width: 8),
@@ -413,7 +420,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     first,
                     0,
                     104,
-                    const Color(0xFFFFD700),
+                    AppColors.gold,
                   ),
                 ),
               if (third != null) const SizedBox(width: 8),
@@ -423,7 +430,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                     third,
                     2,
                     56,
-                    const Color(0xFFCD7F32),
+                    AppColors.bronze,
                   ),
                 ),
             ],
@@ -434,6 +441,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             const Divider(height: 1),
             ...board.skip(3).take(5).toList().asMap().entries.map((e) {
               final user = e.value;
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final usernameColor = isDark
+                  ? AppColors.textInverted
+                  : AppColors.textDark;
               return ListTile(
                 dense: true,
                 leading: Container(
@@ -456,8 +467,8 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 ),
                 title: Text(
                   user.username,
-                  style: const TextStyle(
-                    color: AppColors.textDark,
+                  style: TextStyle(
+                    color: usernameColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -500,17 +511,19 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     double podiumHeight,
     Color color,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final anims = [_anim1st, _anim2nd, _anim3rd];
     final anim = anims[rank];
     const rankLabels = ['1st', '2nd', '3rd'];
     const medalColors = [
-      Color(0xFFFFD700),
-      Color(0xFFC0C0C0),
-      Color(0xFFCD7F32),
+      AppColors.gold,
+      AppColors.silver,
+      AppColors.bronze,
     ];
     final textColor = rank == 0
         ? const Color(0xFF9A7A00) // dark gold for legibility
-        : color.withOpacity(0.85);
+        : color.withValues(alpha: 0.85);
+    final usernameColor = isDark ? AppColors.textInverted : AppColors.textDark;
 
     return AnimatedBuilder(
       animation: anim,
@@ -535,7 +548,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               border: Border.all(color: color, width: 2),
             ),
             child: Center(
@@ -552,10 +565,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           const SizedBox(height: 4),
           Text(
             user.username,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+              color: usernameColor,
             ),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -574,7 +587,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color, color.withOpacity(0.75)],
+                colors: [color, color.withValues(alpha: 0.75)],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(8),
@@ -583,9 +596,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             alignment: Alignment.center,
             child: Text(
               rankLabels[rank],
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 fontSize: 15,
                 shadows: [
                   Shadow(

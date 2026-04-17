@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 
 /// Get personalized greeting based on time of day
 String getTimeBasedGreeting() {
@@ -34,18 +36,18 @@ IconData getTimeBasedIcon() {
 }
 
 /// Get icon color based on time of day
-Color getTimeBasedIconColor() {
+Color getTimeBasedIconColor({required bool isDark}) {
   final hour = DateTime.now().hour;
   if (hour < 5) {
-    return const Color(0xFF5C6BC0); // Indigo for night
+    return AppColorRoles.primary(isDark);
   } else if (hour < 12) {
-    return const Color(0xFFFFB300); // Amber for morning
+    return AppColors.warning; // Amber for morning
   } else if (hour < 17) {
-    return const Color(0xFF42A5F5); // Blue for afternoon
+    return AppColorRoles.primary(isDark);
   } else if (hour < 21) {
-    return const Color(0xFFFF7043); // Deep orange for evening
+    return AppColors.orange; // Deep orange for evening
   } else {
-    return const Color(0xFF5C6BC0); // Indigo for night
+    return AppColorRoles.primary(isDark);
   }
 }
 
@@ -73,18 +75,21 @@ class PersonalizedGreetingHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final greeting = getTimeBasedGreeting();
     final timeIcon = getTimeBasedIcon();
-    final iconColor = getTimeBasedIconColor();
+    final iconColor = getTimeBasedIconColor(isDark: isDark);
+    final accent = AppColorRoles.primary(isDark);
 
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+        color: isDark
+            ? AppColors.surfaceDarkMuted
+            : AppColors.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF6366F1).withValues(alpha: 0.2)
-              : const Color(0xFF6366F1).withValues(alpha: 0.15),
+              ? accent.withValues(alpha: 0.25)
+              : AppColors.primary.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -92,7 +97,11 @@ class PersonalizedGreetingHeader extends StatelessWidget {
           // Avatar with animated ring
           GestureDetector(
             onTap: onAvatarTap,
-            child: _AnimatedAvatarRing(avatarUrl: avatarUrl, size: 56),
+            child: _AnimatedAvatarRing(
+              avatarUrl: avatarUrl,
+              size: 56,
+              useDarkAccent: isDark,
+            ),
           ),
           const SizedBox(width: 14),
           // Greeting text
@@ -142,8 +151,13 @@ class PersonalizedGreetingHeader extends StatelessWidget {
 class _AnimatedAvatarRing extends StatefulWidget {
   final String? avatarUrl;
   final double size;
+  final bool useDarkAccent;
 
-  const _AnimatedAvatarRing({this.avatarUrl, this.size = 56});
+  const _AnimatedAvatarRing({
+    this.avatarUrl,
+    this.size = 56,
+    this.useDarkAccent = false,
+  });
 
   @override
   State<_AnimatedAvatarRing> createState() => _AnimatedAvatarRingState();
@@ -173,6 +187,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final accent = AppColorRoles.primary(widget.useDarkAccent);
         return Container(
           width: widget.size,
           height: widget.size,
@@ -180,11 +195,11 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             shape: BoxShape.circle,
             gradient: SweepGradient(
               startAngle: _controller.value * 2 * math.pi,
-              colors: const [
-                Color(0xFF667eea),
-                Color(0xFF764ba2),
-                Color(0xFFf093fb),
-                Color(0xFF667eea),
+              colors: [
+                accent,
+                AppColors.purple,
+                AppColors.purple,
+                accent,
               ],
             ),
           ),
@@ -196,13 +211,11 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             ),
             padding: const EdgeInsets.all(2),
             child: ClipOval(
-              child: widget.avatarUrl != null
-                  ? Image.network(
-                      widget.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
-                    )
-                  : _buildDefaultAvatar(),
+              child: NetworkAvatarImage(
+                imageUrl: widget.avatarUrl,
+                fit: BoxFit.cover,
+                fallback: _buildDefaultAvatar(),
+              ),
             ),
           ),
         );
@@ -211,9 +224,10 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
   }
 
   Widget _buildDefaultAvatar() {
+    final accent = AppColorRoles.primary(widget.useDarkAccent);
     return Container(
-      color: const Color(0xFF667eea).withValues(alpha: 0.2),
-      child: const Icon(Icons.person, color: Color(0xFF667eea), size: 28),
+      color: accent.withValues(alpha: 0.2),
+      child: Icon(Icons.person, color: accent, size: 28),
     );
   }
 }
@@ -275,8 +289,8 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFBBF24).withValues(alpha: 0.2),
-                    const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    AppColors.accentYellow.withValues(alpha: 0.2),
+                    AppColors.orange.withValues(alpha: 0.15),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -289,7 +303,7 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
                     child: const Icon(
                       Icons.star_rounded,
                       size: 14,
-                      color: Color(0xFFF59E0B),
+                      color: AppColors.orange,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -298,7 +312,7 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFF59E0B),
+                      color: AppColors.orange,
                     ),
                   ),
                 ],
@@ -382,7 +396,7 @@ class _NotificationBellState extends State<_NotificationBell>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey[800] : Colors.white,
+                color: isDark ? Colors.grey[800] : AppColors.grey100,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -406,8 +420,8 @@ class _NotificationBellState extends State<_NotificationBell>
                       right: 8,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
+                        decoration: BoxDecoration(
+                          color: AppColors.dangerGradient[0],
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -416,8 +430,8 @@ class _NotificationBellState extends State<_NotificationBell>
                         ),
                         child: Text(
                           widget.count > 9 ? '9+' : widget.count.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.surface,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -441,6 +455,7 @@ class AnimatedStreakCard extends StatefulWidget {
   final int longestStreak;
   final bool isActiveToday;
   final List<bool>? weeklyActivity;
+  final List<double>? weeklyProgressPercentages;
   final VoidCallback? onTap;
 
   const AnimatedStreakCard({
@@ -449,6 +464,7 @@ class AnimatedStreakCard extends StatefulWidget {
     this.longestStreak = 0,
     this.isActiveToday = false,
     this.weeklyActivity,
+    this.weeklyProgressPercentages,
     this.onTap,
   });
 
@@ -459,9 +475,7 @@ class AnimatedStreakCard extends StatefulWidget {
 class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     with TickerProviderStateMixin {
   late AnimationController _flameController;
-  late AnimationController _pulseController;
   late Animation<double> _flameAnimation;
-  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -476,177 +490,216 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     _flameAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
     );
-
-    // Pulse animation for glow
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.3, end: 0.6).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
   }
 
   @override
   void dispose() {
     _flameController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final weekly = widget.weeklyActivity ?? List.filled(7, false);
+    final completedDays = weekly.where((active) => active).length;
+    final weekProgress = completedDays / 7;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_flameAnimation, _pulseAnimation]),
-        builder: (context, child) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        gradient: isDark
+            ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: widget.streakDays > 0
-                    ? [
-                        const Color(0xFFFF6B35).withValues(alpha: 0.15),
-                        const Color(0xFFFF9A56).withValues(alpha: 0.1),
-                      ]
-                    : [
-                        Colors.grey.withValues(alpha: 0.1),
-                        Colors.grey.withValues(alpha: 0.05),
-                      ],
+                colors: [
+                  AppColors.surfaceDark,
+                  const Color(0xFF1A1F26),
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFF6F0),
+                  Color(0xFFFFEFE3),
+                ],
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: widget.streakDays > 0
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.3)
-                    : Colors.grey.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFF4DCCB),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildAnimatedFire(),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${widget.streakDays} Day Streak',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        color: isDark ? Colors.white : AppColors.textDark,
+                      ),
+                    ),
+                    Text(
+                      widget.isActiveToday ? "You're on fire today!" : "Complete a lesson today!",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white70 : const Color(0xFF5F6573),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              boxShadow: widget.streakDays > 0
-                  ? [
-                      BoxShadow(
-                        color: const Color(
-                          0xFFFF6B35,
-                        ).withValues(alpha: _pulseAnimation.value * 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              children: [
-                // Animated fire icon
-                _buildAnimatedFire(),
-                const SizedBox(width: 16),
-                // Streak info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${widget.streakDays} Day Streak',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: widget.streakDays > 0
-                              ? const Color(0xFFFF6B35)
-                              : Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      if (widget.longestStreak > 0)
-                        Text(
-                          'Longest: ${widget.longestStreak} days',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      // Week calendar
-                      _buildWeekCalendar(),
-                    ],
+              TextButton.icon(
+                onPressed: widget.onTap,
+                style: TextButton.styleFrom(
+                  foregroundColor: isDark
+                      ? AppColors.primaryDarkModeSoft
+                      : AppColors.teal,
+                  backgroundColor: isDark
+                      ? AppColors.accentMintDark.withValues(alpha: 0.45)
+                      : AppColors.accentMint.withValues(alpha: 0.16),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.accentMint.withValues(alpha: 0.55)
+                          : AppColors.accentMint.withValues(alpha: 0.35),
+                    ),
                   ),
                 ),
-                // Status indicator
-                if (widget.isActiveToday)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 14,
-                          color: Color(0xFF10B981),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Done',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+                icon: const Icon(Icons.calendar_month_rounded, size: 14),
+                label: const Text('Calendar'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildWeekCalendar(),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: weekProgress,
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFF3E4D7),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                widget.isActiveToday
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFFF915F),
+              ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$completedDays/7 active days this week',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white60 : const Color(0xFF7A6A5F),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildAnimatedFire() {
+    final hasStreak = widget.streakDays > 0;
     return AnimatedBuilder(
       animation: _flameAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: _flameAnimation.value,
+          scale: hasStreak && widget.isActiveToday ? _flameAnimation.value : 1.0,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Glow effect
               Container(
-                width: 56,
-                height: 56,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: widget.streakDays > 0
+                    colors: hasStreak
                         ? [
-                            const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                            const Color(0xFFFF6B35).withValues(alpha: 0.38),
+                            const Color(0xFFFF3D00).withValues(alpha: 0.16),
                             Colors.transparent,
                           ]
                         : [
-                            Colors.grey.withValues(alpha: 0.2),
+                            Colors.grey.withValues(alpha: 0.18),
                             Colors.transparent,
                           ],
                   ),
                 ),
               ),
-              // Fire icon
-              Icon(
-                Icons.local_fire_department_rounded,
-                size: 40,
-                color: widget.streakDays > 0
-                    ? const Color(0xFFFF6B35)
-                    : Colors.grey,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: hasStreak
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : Colors.grey.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: hasStreak
+                        ? const Color(0xFFFF7A45).withValues(alpha: 0.55)
+                        : Colors.grey.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Center(
+                  child: hasStreak
+                      ? ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFFFFB74D),
+                              Color(0xFFFF7043),
+                              Color(0xFFE53935),
+                            ],
+                          ).createShader(bounds),
+                          child: const Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 30,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.local_fire_department_rounded,
+                          size: 30,
+                          color: AppColors.grey500,
+                        ),
+                ),
               ),
             ],
           ),
@@ -659,51 +712,60 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     final now = DateTime.now();
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Use real per-day activity data when available; fall back to no highlights
     final activity = widget.weeklyActivity ?? List.filled(7, false);
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(7, (index) {
         final dayNumber = index + 1; // 1=Mon … 7=Sun
         final isToday = dayNumber == currentWeekday;
         final isActive = activity[index];
 
-        return Padding(
-          padding: const EdgeInsets.only(right: 6),
+        return Expanded(
           child: Column(
             children: [
               Text(
                 days[index],
                 style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                  color: isToday ? const Color(0xFFFF6B35) : Colors.grey[500],
+                  fontSize: 11,
+                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                  color: isToday
+                      ? AppColors.deepOrange
+                      : isDark
+                      ? Colors.white54
+                      : const Color(0xFF9A8F86),
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 8),
               Container(
-                width: 18,
-                height: 18,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
-                      ? const Color(0xFFFF6B35)
-                      : Colors.transparent,
+                      ? AppColors.deepOrange
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : const Color(0xFFF8EBDF)),
                   border: Border.all(
                     color: isToday
-                        ? const Color(0xFFFF6B35)
+                        ? AppColors.deepOrange
                         : isActive
                         ? Colors.transparent
-                        : Colors.grey.withValues(alpha: 0.3),
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : const Color(0xFFE8CCB6)),
                     width: isToday ? 2 : 1,
                   ),
                 ),
                 child: isActive
-                    ? const Icon(
+                    ? Icon(
                         Icons.local_fire_department,
-                        size: 10,
-                        color: Colors.white,
+                        size: 14,
+                        color: AppColors.surfaceLight,
                       )
                     : null,
               ),
@@ -714,6 +776,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     );
   }
 }
+
 
 /// Skeleton loading widget with shimmer effect
 class SkeletonLoader extends StatefulWidget {

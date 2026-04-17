@@ -38,6 +38,7 @@ jobs:
           --health-retries 5
 
     env:
+      PYTHONPATH: .
       DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test
       SECRET_KEY: ci-secret-key-not-for-production
       ALGORITHM: HS256
@@ -74,6 +75,8 @@ jobs:
         run: python create_tables.py
 
       - name: Seed proficiency integration test data
+        env:
+          PYTHONPATH: .
         run: python -m tests.seed_proficiency_data
 
       - name: Check app import
@@ -147,6 +150,9 @@ jobs:
 
       - name: Create .env asset placeholder
         run: touch .env
+
+      - name: Create .env.production asset placeholder
+        run: touch .env.production
 
       - name: Print Flutter and Dart versions
         run: |

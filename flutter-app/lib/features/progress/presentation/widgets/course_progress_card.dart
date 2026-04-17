@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Course Progress Card Widget
 /// Displays progress for a single course
@@ -16,6 +17,7 @@ class CourseProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progressPercent = (courseProgress.progressPercentage / 100);
 
     return Card(
@@ -89,14 +91,17 @@ class CourseProgressCard extends StatelessWidget {
                         context,
                       ).colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(courseProgress.progressPercentage),
+                        _getProgressColor(
+                          courseProgress.progressPercentage,
+                          isDark: isDark,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
 
               // Last Activity
               Row(
@@ -106,7 +111,7 @@ class CourseProgressCard extends StatelessWidget {
                     size: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'Last activity: ${_formatDate(courseProgress.lastActivityAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -122,13 +127,13 @@ class CourseProgressCard extends StatelessWidget {
     );
   }
 
-  Color _getProgressColor(double progress) {
+  Color _getProgressColor(double progress, {bool isDark = false}) {
     if (progress >= 80) {
-      return Colors.green;
+      return AppColors.greenSuccessBright;
     } else if (progress >= 50) {
-      return Colors.orange;
+      return AppColors.orange;
     } else {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 

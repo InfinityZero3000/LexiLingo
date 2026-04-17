@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// A beautiful loading widget using Lottie animation
 /// Can be used as a replacement for CircularProgressIndicator
@@ -15,51 +16,78 @@ class LottieLoadingWidget extends StatelessWidget {
     this.showMessage = false,
   });
 
+  const LottieLoadingWidget.tiny({super.key})
+    : size = 20,
+      message = null,
+      showMessage = false;
+
+  const LottieLoadingWidget.small({super.key})
+    : size = 32,
+      message = null,
+      showMessage = false;
+
+  const LottieLoadingWidget.medium({super.key})
+    : size = 64,
+      message = null,
+      showMessage = false;
+
+  const LottieLoadingWidget.large({super.key, this.message})
+    : size = 120,
+      showMessage = true;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: size,
-          height: size,
+    final animation = LayoutBuilder(
+      builder: (context, constraints) {
+        final boundedWidth = constraints.hasBoundedWidth && constraints.maxWidth > 0;
+        final boundedHeight = constraints.hasBoundedHeight && constraints.maxHeight > 0;
+
+        double effectiveSize = size;
+
+        if (boundedWidth && boundedHeight) {
+          effectiveSize = size.clamp(0.0, constraints.biggest.shortestSide);
+        } else if (boundedWidth) {
+          effectiveSize = size.clamp(0.0, constraints.maxWidth);
+        } else if (boundedHeight) {
+          effectiveSize = size.clamp(0.0, constraints.maxHeight);
+        }
+
+        if (effectiveSize <= 0) {
+          effectiveSize = size;
+        }
+
+        return SizedBox(
+          width: effectiveSize,
+          height: effectiveSize,
           child: Lottie.asset(
             'animation/Sandy Loading.json',
             fit: BoxFit.contain,
             repeat: true,
           ),
-        ),
-        if (showMessage && message != null) ...[
-          const SizedBox(height: 16),
-          Text(
-            message!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ],
+        );
+      },
     );
-  }
 
-  /// Small loading indicator (for buttons, inline)
-  factory LottieLoadingWidget.small() {
-    return const LottieLoadingWidget(size: 40);
-  }
+    // Keep compact variants layout-safe inside tight parent constraints
+    // (e.g. small avatar placeholders) by avoiding a wrapping Column.
+    if (!showMessage || message == null) {
+      return animation;
+    }
 
-  /// Medium loading indicator (for cards, sections)
-  factory LottieLoadingWidget.medium() {
-    return const LottieLoadingWidget(size: 80);
-  }
-
-  /// Large loading indicator (for full page loading)
-  factory LottieLoadingWidget.large({String? message}) {
-    return LottieLoadingWidget(
-      size: 150,
-      message: message,
-      showMessage: message != null,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        animation,
+        const SizedBox(height: 16),
+        Text(
+          message!,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
@@ -69,9 +97,9 @@ class LottieLoadingWidget extends StatelessWidget {
       color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

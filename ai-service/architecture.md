@@ -1,8 +1,8 @@
 
-# LexiLingo AI Architecture v4.0 - LangGraph + GraphCAG
+# LexiLingo AI Architecture v2.0
 
 > **Document**: Kiến trúc hệ thống AI cho ứng dụng học tiếng Anh  
-> **Version**: 4.0 (LangGraph + GraphCAG Hybrid)  
+> **Version**: 2.0 (Optimized)  
 > **Last Updated**: January 2026
 
 ---
@@ -26,28 +26,12 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DESIGN PRINCIPLES                            │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  LAYER 1: LangGraph (Orchestration + Observer)                  │
-│  ─────────────────────────────────────────────                  │
-│  ✓ StateGraph: Typed state machine for conversation flow        │
-│  ✓ Observer: Track errors → Update KG → Queue background jobs   │
-│  ✓ Checkpointing: Resumable sessions, persistence               │
-│  ✓ Async Background: Exercise generation without blocking       │
-│                                                                 │
-│  LAYER 2: GraphCAG (Core AI Pipeline)                           │
-│  ─────────────────────────────────────                          │
-│  ✓ KG (KuzuDB): Concept expansion, mastery tracking             │
-│  ✓ CAG (Redis): Cache-Augmented Generation, response patterns   │
-│  ✓ Rule-first: Grammar check rule-based, LLM as fallback        │
-│  ✓ Ultra-low latency: <10ms cache hit, <180ms cache miss        │
-│                                                                 │
-│  LAYER 3: AI Models                                             │
-│  ──────────────────                                             │
-│  ✓ Qwen3-1.7B: English NLP (grammar, dialogue, analysis)        │
-│  ✓ LLaMA3-3B: Vietnamese explanations (lazy loaded)             │
-│  ✓ HuBERT: Pronunciation analysis (lazy loaded)                 │
-│  ✓ Piper: Text-to-Speech                                        │
-│                                                                 │
+│  [*] Hybrid Models: Qwen (English) + LLaMA3 (Vietnamese)          │
+│  [*] Unified Adapter: 1 adapter xử lý 4 tasks (giảm latency 75%)  │
+│  [*] Lazy Loading: LLaMA3-VI chỉ load khi cần giải thích VI       │
+│  [*] Parallel Processing: Pronunciation analysis chạy song song   │
+│  [*] Caching: Redis cho learner profiles + common responses       │
+│  [*] Fallback: Error handling với graceful degradation            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,16 +39,14 @@
 
 | Component | Technology | Size | Latency |
 |-----------|------------|------|---------|
-| **Orchestration** | **LangGraph** | **-** | **<5ms** |
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
-| NLP (English) | **Qwen3-1.7B** + Unified LoRA | 1.7GB + 80MB | 100-150ms |
-| NLP (Vietnamese) | **LLaMA3-3B** (Q4, lazy) | 4GB | 200-500ms |
-| Knowledge Graph | KuzuDB | <50MB | <5ms |
-| Pronunciation | HuBERT-large (lazy) | 2GB | 100-200ms |
+| NLP (English) | Qwen2.5-1.5B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
+| NLP (Vietnamese) | LLaMA3-8B-VI (lazy) | 8GB | 200ms |
+| Knowledge Graph | NetworkX / KuzuDB | <50MB | <5ms |
+| Pronunciation | HuBERT-large | 960MB | 100-200ms |
 | TTS | Piper VITS | 30-60MB | 100-300ms |
-| Cache (CAG) | Redis | - | <5ms |
-| **Logging DB** | **MongoDB** | **-** | **<10ms** |
+| Cache | Redis | - | <5ms |
 
 ---
 
@@ -87,9 +69,9 @@
         │                                           │
         ▼                                           │
 ┌──────────────────────────────────────────────────────────────────┐
-│                    STT: FASTER-WHISPER v3                        │
+│                    STT: WHISPER v3                               │
 ├──────────────────────────────────────────────────────────────────┤
-│  Model: openai/whisper-small (244MB) + CTranslate2 optimization  │
+│  Model: openai/whisper + CTranslate2 optimization                │
 │  Features:                                                       │
 │  • VAD (Silero): Voice Activity Detection                        │
 │  • Streaming: Real-time transcription                            │
@@ -131,164 +113,155 @@
 │  │  • Purpose: Structured RAG & Curriculum guiding            │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  MongoDB: AI Learning Logs (Persistent Storage)            │  │
-│  │  • Collections:                                            │  │
-│  │    - ai_interactions: Full interaction logs + feedback     │  │
-│  │    - model_metrics: Performance tracking over time         │  │
-│  │    - learning_patterns: Aggregated user error patterns     │  │
-│  │    - training_queue: Curated examples for LoRA tuning      │  │
-│  │  • Environment:                                            │  │
-│  │    - Dev: Docker local (mongodb://localhost:27017)         │  │
-│  │    - Prod: Atlas FREE (mongodb+srv://...)                  │  │
-│  │  • Auto-cleanup: TTL indexes (90 days retention)           │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
 └──────────────────────────────────────────────────────────────────┘
         │
         │ Context Vector + Learner Profile
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│         LANGGRAPH + GRAPHCAG HYBRID ARCHITECTURE                 │
+│                    ORCHESTRATOR (CORE ENGINE)                    │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
+│  Central Coordinator: Điều phối toàn bộ AI pipeline              │
+│                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │            LANGGRAPH LAYER (Orchestration)                 │  │
-│  ├────────────────────────────────────────────────────────────┤  │
+│  │  Phase 1: Task Analysis                                    │  │
+│  │  ────────────────────────────────────────────────────────  │  │
+│  │  Input: User text + context + learner profile              │  │
 │  │                                                            │  │
-│  │  StateGraph: Typed state machine for conversation flow     │  │
+│  │  Analysis:                                                 │  │
+│  │  • Detect task type: fluency/grammar/vocab/dialogue        │  │
+│  │  • Assess complexity: simple/medium/complex                │  │
+│  │  • Check learner level: A2/B1/B2                           │  │
+│  │  • Identify required components                            │  │
 │  │                                                            │  │
-│  │  Responsibilities:                                         │  │
-│  │  • Track conversation state across turns                   │  │
-│  │  • Route to appropriate pipeline nodes                     │  │
-│  │  • Trigger Observer for error tracking (async)             │  │
-│  │  • Enable checkpointing for session persistence            │  │
+│  │  Output: Execution plan                                    │  │
+│  │    {                                                       │  │
+│  │      "primary_tasks": ["grammar", "fluency"],              │  │
+│  │      "parallel_tasks": ["pronunciation"],                  │  │
+│  │      "need_vietnamese": false,                             │  │
+│  │      "strategy": "socratic_questioning"                    │  │
+│  │    }                                                       │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Phase 2: Resource Allocation                              │  │
+│  │  ────────────────────────────────────────────────────────  │  │
+│  │  • Check GPU/CPU availability                              │  │
+│  │  • Load required models (lazy loading)                     │  │
+│  │  • Allocate memory budgets                                 │  │
+│  │  • Setup parallel executors                                │  │
 │  │                                                            │  │
-│  │  Observer Pattern (async, non-blocking):                   │  │
+│  │  Resource Manager:                                         │  │
 │  │  ┌──────────────────────────────────────────────────────┐  │  │
-│  │  │ 1. Qwen detects errors (verb_tense, articles, etc)   │  │  │
-│  │  │ 2. Observer logs errors to KG (update mastery)       │  │  │
-│  │  │ 3. Queue background jobs for CAG exercise gen        │  │  │
-│  │  │ 4. Next session: personalized exercises ready        │  │  │
+│  │  │ Qwen Base: Always loaded (1.6GB)                     │  │  │
+│  │  │ Unified Adapter: Loaded on-demand (80MB)             │  │  │
+│  │  │ LLaMA3-VI: Lazy load if needed (8GB)                 │  │  │
+│  │  │ HuBERT: Load for voice input only (2GB)              │  │  │
 │  │  └──────────────────────────────────────────────────────┘  │  │
-│  │                                                            │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│                              ▼                                   │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │            GRAPHCAG LAYER (Core AI Pipeline)               │  │
-│  ├────────────────────────────────────────────────────────────┤  │
-│  │                                                            │  │
-│  │  GraphCAG = KG + Cache-Augmented Generation                │  │
-│  │  Ultra-low latency (<50ms) for real-time tutoring          │  │
-│  │                                                            │  │
-│  │  Core Principle:                                           │  │
-│  │  • Pre-cache KG knowledge into LLM KV Cache                │  │
-│  │  • Avoid retrieval on every query → reduce latency         │  │
-│  │  • Rule-first, LLM-fallback → predictable performance      │  │
-│  │                                                            │  │
-│  │  Technology:                                               │  │
-│  │  • KuzuDB: Concept relationships, prerequisites            │  │
-│  │  • Redis: Cache layer, learner profiles, responses         │  │
-│  │  • Qwen3: Generation with pre-cached context               │  │
-│  │                                                            │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Architecture Comparison:                                        │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ RAG:     Query → Retrieve → Augment → Generate (200-500ms) │  │
-│  │ GraphCAG: Pre-cache → Query → Generate (<50ms) ⚡           │  │
+│  │  Phase 3: Execution Coordination                           │  │
+│  │  ────────────────────────────────────────────────────────  │  │
+│  │  Sequential Tasks:                                         │  │
+│  │  1. Qwen Unified Adapter → Comprehensive analysis          │  │
+│  │    Knowledge Graph → Query related concepts (Graph RAG)    │  │
+│  │  •  - Fluency score                                        │  │
+│  │     - Grammar correction                                   │  │
+│  │     - Vocabulary level                                     │  │
+│  │     - Tutor response                                       │  │
+│  │                                                            │  │
+│  │  Parallel Tasks (async):                                   │  │
+│  │  • HuBERT → Pronunciation analysis (if voice input)        │  │
+│  │  • Cache lookup → Check for similar responses              │  │
+│  │  • Redis update → Save learner progress                    │  │
+│  │                                                            │  │
+│  │  Conditional Tasks:                                        │  │
+│  │  • IF confidence < 0.8 OR level == "A2":                   │  │
+│  │    → Load LLaMA3-VI for Vietnamese explanation             │  │
+│  │                                                            │  │
+│  │  Execution Flow:                                           │  │
+│  │  ┌─────────────┐                                           │  │
+│  │  │   Start     │                                           │  │
+│  │  └──────┬──────┘                                           │  │
+│  │         ▼                                                  │  │
+│  │  ┌─────────────┐     ┌─────────────┐                       │  │
+│  │  │ Qwen        │────▶│  HuBERT     │ (parallel)            │  │
+│  │  │ Analysis    │     │ Phonemes    │                       │  │
+│  │  └──────┬──────┘     └──────┬──────┘                       │  │
+│  │         ▼                   ▼                              │  │
+│  │  ┌─────────────────────────────┐                           │  │
+│  │  │   Wait for all tasks        │                           │  │
+│  │  └──────────┬──────────────────┘                           │  │
+│  │             ▼                                              │  │
+│  │  ┌──────────────────┐                                      │  │
+│  │  │ IF need VI?      │                                      │  │
+│  │  └────┬─────────┬───┘                                      │  │
+│  │       Yes       No                                         │  │
+│  │       ▼         ▼                                          │  │
+│  │  ┌─────────┐  Skip                                         │  │
+│  │  │ LLaMA3  │                                               │  │
+│  │  └────┬────┘                                               │  │
+│  │       ▼                                                    │  │
+│  │  ┌──────────────────┐                                      │  │
+│  │  │ Fusion & Aggr.   │                                      │  │
+│  │  └────┬─────────────┘                                      │  │
+│  │       ▼                                                    │  │
+│  │  ┌──────────────────┐                                      │  │
+│  │  │   Response       │                                      │  │
+│  │  └──────────────────┘                                      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Pipeline Flow:                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌─────────────────────────────────────────────────────┐    │ │
-│  │  │         PHASE 1: WARM-UP (On Session Start)         │    │ │
-│  │  │                                                     │    │ │
-│  │  │  Load learner profile → Query KG prerequisites      │    │ │
-│  │  │  → Pre-cache concepts into LLM KV Cache             │    │ │
-│  │  │                                                     │    │ │
-│  │  │  ┌──────────┐   ┌──────────┐   ┌──────────────┐     │    │ │
-│  │  │  │  Redis   │──▶│  KuzuDB  │──▶│  LLM Cache   │     │    │ │
-│  │  │  │(Profile) │   │ (KG)     │   │ (KV Warmup)  │     │    │ │
-│  │  │  └──────────┘   └──────────┘   └──────────────┘     │    │ │
-│  │  │                                                     │    │ │
-│  │  └─────────────────────────────────────────────────────┘    │ │
-│  │                          │                                  │ │
-│  │                          ▼                                  │ │
-│  │  ┌─────────────────────────────────────────────────────┐    │ │
-│  │  │         PHASE 2: QUERY (Per User Message)           │    │ │
-│  │  │                                                     │    │ │
-│  │  │  User Input                                         │    │ │
-│  │  │      │                                              │    │ │
-│  │  │      ▼                                              │    │ │
-│  │  │  ┌──────────────┐                                   │    │ │
-│  │  │  │ Cache Lookup │◄── Redis: Check cached response   │    │ │
-│  │  │  └──────┬───────┘                                   │    │ │
-│  │  │         │                                           │    │ │
-│  │  │    ┌────┴────┐                                      │    │ │
-│  │  │    │Cache Hit?│                                     │    │ │
-│  │  │    └────┬────┘                                      │    │ │
-│  │  │    Yes  │  No                                       │    │ │
-│  │  │     │   └──────────────────────┐                    │    │ │
-│  │  │     ▼                          ▼                    │    │ │
-│  │  │  ┌────────┐            ┌──────────────┐             │    │ │
-│  │  │  │ Return │            │ KG Expansion │             │    │ │
-│  │  │  │ Cached │            │ (Linked      │             │    │ │
-│  │  │  │Response│            │  Concepts)   │             │    │ │
-│  │  │  └────────┘            └──────┬───────┘             │    │ │
-│  │  │      ▲                       │                      │    │ │
-│  │  │      │                       ▼                      │    │ │
-│  │  │      │                ┌──────────────┐              │    │ │
-│  │  │      │                │  Diagnose    │              │    │ │
-│  │  │      │                │ (Rule-based) │              │    │ │
-│  │  │      │                └──────┬───────┘              │    │ │
-│  │  │      │                       │                      │    │ │
-│  │  │      │                       ▼                      │    │ │
-│  │  │      │                ┌──────────────┐              │    │ │
-│  │  │      │                │   Generate   │              │    │ │
-│  │  │      │                │ (LLM/Rules)  │              │    │ │
-│  │  │      │                └──────┬───────┘              │    │ │
-│  │  │      │                       │                      │    │ │
-│  │  │      │                       ▼                      │    │ │
-│  │  │      │                ┌──────────────┐              │    │ │
-│  │  │      └────────────────│ Cache Update │              │    │ │
-│  │  │                       └──────────────┘              │    │ │
-│  │  │                                                     │    │ │
-│  │  └─────────────────────────────────────────────────────┘    │ │
-│  │                                                             │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  Component Details:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ Cache Lookup  : Redis query for similar input patterns     │  │
-│  │ KG Expansion  : KuzuDB graph traversal (1-2 hops)          │  │
-│  │ Diagnose      : Rule-based grammar check → concept mapping │  │
-│  │ Generate      : LLM with KV-cached context (fast)          │  │
-│  │ Cache Update  : Store response pattern for future use      │  │
+│  │  Phase 4: Error Handling & Fallback                        │  │
+│  │  ────────────────────────────────────────────────────────  │  │
+│  │  Try-Catch Hierarchy:                                      │  │
+│  │                                                            │  │
+│  │  Level 1: Component Failure                                │  │
+│  │  • If Qwen fails → Use cached response or rule-based       │  │
+│  │  • If HuBERT fails → Skip pronunciation, continue          │  │
+│  │  • If LLaMA3-VI fails → Use English only                   │  │
+│  │                                                            │  │
+│  │  Level 2: Timeout Management                               │  │
+│  │  • Task timeout: 500ms per component                       │  │
+│  │  • Total timeout: 2s for full pipeline                     │  │
+│  │  • If timeout → Return partial results                     │  │
+│  │                                                            │  │
+│  │  Level 3: Resource Exhaustion                              │  │
+│  │  • GPU OOM → Offload to CPU, reduce batch size             │  │
+│  │  • CPU overload → Queue request, return cached             │  │
+│  │                                                            │  │
+│  │  Graceful Degradation:                                     │  │
+│  │  Full → Basic → Minimal                                    │  │
+│  │  ↓      ↓       ↓                                          │  │
+│  │  All   Only     Rule-based                                 │  │
+│  │  AI    Qwen     grammar check                              │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Latency Breakdown:                                              │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ Component        │ Cache Hit │ Cache Miss │                │  │
-│  │──────────────────┼───────────┼────────────│                │  │
-│  │ Redis Lookup     │   <5ms    │    <5ms    │                │  │
-│  │ KG Expansion     │   skip    │   <10ms    │                │  │
-│  │ Diagnose         │   skip    │   <10ms    │                │  │
-│  │ LLM Generate     │   skip    │  100-150ms │                │  │
-│  │ Cache Update     │   skip    │    <5ms    │                │  │
-│  │──────────────────┼───────────┼────────────│                │  │
-│  │ TOTAL            │  <10ms ⚡  │  <180ms    │                │  │
+│  │  Phase 5: State Management                                 │  │
+│  │  ────────────────────────────────────────────────────────  │  │
+│  │  Conversation State:                                       │  │
+│  │  • session_id: Unique per conversation                     │  │
+│  │  • turn_count: Number of exchanges                         │  │
+│  │  • topic_context: Current discussion topic                 │  │
+│  │  • error_history: Recent mistakes for tracking             │  │
+│  │                                                            │  │
+│  │  Model State:                                              │  │
+│  │  • loaded_models: ["qwen", "hubert"]                       │  │
+│  │  • active_adapter: "unified"                               │  │
+│  │  • memory_usage: 3.2GB / 8GB                               │  │
+│  │                                                            │  │
+│  │  Cache State:                                              │  │
+│  │  • cache_hits: 12 / 20 requests (60%)                      │  │
+│  │  • recent_responses: Last 10 cached                        │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Background Observer (LangGraph, async):                          │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  1. Track detected errors from Diagnose step              │  │
-│  │  2. Update mastery scores in KG (async)                   │  │
-│  │  3. Queue background jobs for CAG exercise generation     │  │
-│  │  4. Next session: personalized exercises ready            │  │
-│  └────────────────────────────────────────────────────────────┘  │
+│  Monitoring & Logging:                                           │
+│  • Latency per component (STT: 80ms, Qwen: 120ms...)             │
+│  • Resource usage (GPU: 45%, RAM: 4.2GB)                         │
+│  • Error rates by component                                      │
+│  • Cache hit rates                                               │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
         │
@@ -462,10 +435,175 @@
 │  • Next suggested action                                         │
 └──────────────────────────────────────────────────────────────────┘
                              │
-                             ↺ (conversation loop)
+                             (loop) (conversation loop)
 ```
 
 ---
+
+### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + GraphCAG Cache)
+
+Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* thành “hệ tri thức vận hành được”, đồng thời giữ phản hồi nhanh bằng cách tách **Fast Path / Slow Path / Background Path**.
+
+Quy ước trong tài liệu này:
+- **GraphCAG** = pipeline hội thoại có **cache gate** (RAPID L0/L1) + KG retrieval + grounded generation.
+- **CAG (Content Auto-Generation)** = dịch vụ sinh bài luyện/lộ trình học chạy nền, tách riêng khỏi pipeline hội thoại GraphCAG.
+
+#### 2.2.1 Ba đường chạy (Fast/Slow/Background)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      V3 EXECUTION PATHS                          │
+├──────────────────────────────────────────────────────────────────┤
+│  FAST PATH (50-150ms)                                            │
+│  - Cache hit (exact/semantic)                                    │
+│  - Rule-based / template feedback for common errors              │
+│  - Return short helpful response + 1 clarifying question         │
+│                                                                  │
+│  SLOW PATH (250-1200ms)                                          │
+│  - Diagnose → Hybrid Retrieval (Vector + KG) → Grounded Generate │
+│  - Returns linked concepts + actionable fix                      │
+│                                                                  │
+│  BACKGROUND PATH (async, non-blocking)                           │
+│  - Update learner profile + write KG edges/weights               │
+│  - Trigger lesson generation service (Content Auto-Generation)   │
+│  - Summarize session, metrics logging                            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### 2.2.2 Pipeline chi tiết (grounded + tri thức liên kết)
+
+```
+┌──────────────────────┐
+│  Input Normalization │  (STT optional, lang detect, cleanup)
+└──────────┬───────────┘
+                     ▼
+┌──────────────────────┐
+│ Context Fetch        │  (history, learner profile, embeddings)
+└──────────┬───────────┘
+                     ▼
+┌──────────────────────┐
+│ Diagnose (cheap)     │  intent/skill/root-cause/confidence
+└───────┬─────────┬────┘
+                │         │
+                │         ├───────────────┐
+                │         │               │
+                ▼         ▼               ▼
+    ┌──────────┐  ┌──────────────────────┐   ┌──────────────────────────┐
+    │ Cache    │  │ Hybrid Retrieval     │   │ Clarify Question (if low)│
+    │ Gate     │  │ Vector → KG expand   │   │ 1 question, fast reply   │
+    └────┬─────┘  └──────────┬───────────┘   └──────────────────────────┘
+             │                  ▼
+             │        ┌──────────────────────┐
+             │        │ Evidence Bundle      │  concepts + examples + rules
+             │        └──────────┬───────────┘
+             │                   ▼
+             └──────────────────►┌──────────────────────┐
+                                 │ Grounded Generation  │  LLM constrained to evidence
+                                 └──────────┬───────────┘
+                                            ▼
+                                 ┌──────────────────────┐
+                                 │ Verify + Score       │  JSON schema + confidence
+                                 └──────────┬───────────┘
+                                            ▼
+                                 ┌──────────────────────┐
+                                 │ Respond              │  EN + optional VI
+                                 └──────────┬───────────┘
+                                            ▼
+                                 ┌──────────────────────┐
+                                 │ Background Jobs      │  KG update + cache/profile sync + optional lesson generation
+                                 └──────────────────────┘
+```
+
+#### 2.2.3 Hợp đồng dữ liệu (JSON) để GraphCAG chạy ổn định (trước đây là Orchestrator)
+
+**A) `DiagnosisV3` (đầu ra của bước Diagnose)**
+
+```json
+{
+    "intent": "fix_grammar|explain_rule|practice|translate|general_chat",
+    "skill": "grammar|vocabulary|fluency|pronunciation|mixed",
+    "user_problem": "short natural language summary",
+    "suspected_errors": [{"type": "verb_tense", "span": "I goes"}],
+    "root_cause_candidates": ["concept:grammar.subject_verb_agreement"],
+    "need_vietnamese": false,
+    "confidence": 0.0,
+    "next_best_action": "answer|ask_clarify|generate_practice"
+}
+```
+
+**B) `RetrievalBundleV3` (bằng chứng tri thức để LLM bám vào)**
+
+```json
+{
+    "query": "string",
+    "vector_hits": [
+        {"id": "concept:grammar.present_simple", "score": 0.82, "snippet": "..."}
+    ],
+    "kg_hits": {
+        "seed_nodes": ["concept:grammar.subject_verb_agreement"],
+        "expanded_nodes": [
+            {"id": "concept:grammar.third_person_s", "relation": "related_to"},
+            {"id": "concept:grammar.past_time_markers", "relation": "prerequisite_of"}
+        ],
+        "paths": [
+            {"from": "concept:grammar.subject_verb_agreement", "to": "concept:grammar.third_person_s", "hops": 1}
+        ]
+    },
+    "examples": [
+        {"good": "I go to school.", "bad": "I goes to school.", "why": "I + base verb"}
+    ]
+}
+```
+
+**C) `TutorResponseV3` (phản hồi cuối, có liên kết tri thức)**
+
+```json
+{
+    "tutor_response": "string",
+    "corrections": [{"error": "I goes", "correction": "I go", "type": "subject_verb_agreement"}],
+    "linked_concepts": [
+        {"id": "concept:grammar.subject_verb_agreement", "weight": 0.9}
+    ],
+    "action_plan": [
+        {"action": "practice", "concept": "concept:grammar.subject_verb_agreement", "count": 5}
+    ],
+    "confidence": 0.0,
+    "metadata": {
+        "path": "fast|slow",
+        "latency_ms": 0,
+        "models_used": ["qwen"],
+        "cache": {"hit": false, "key": "..."}
+    }
+}
+```
+
+**D) `CAGLessonRequestV3` (request gửi sang dịch vụ Content Auto-Generation chạy nền)**
+
+```json
+{
+    "user_id": "...",
+    "level": "A2|B1|B2",
+    "target_concepts": ["concept:grammar.subject_verb_agreement"],
+    "error_patterns": ["subject_verb_agreement"],
+    "constraints": {"duration_min": 10, "types": ["grammar", "vocabulary"]}
+}
+```
+
+#### 2.2.4 Những cải tiến then chốt để đạt “tri thức liên kết, bắt đúng vấn đề”
+
+- **Hybrid Retrieval bắt buộc**: Vector để bắt ngôn ngữ tự nhiên + KG để suy ra prerequisite/root-cause (1–2 hops) và tạo “đường giải thích”.
+- **Diagnose tách riêng**: bước rẻ, ổn định, trả JSON (intent/skill/root-cause/confidence) để quyết định hỏi làm rõ hay đi thẳng.
+- **Grounded Generation**: LLM phải nhận `RetrievalBundleV3` và bị ràng buộc trả lời dựa trên evidence + trả `linked_concepts`.
+- **GraphCAG ưu tiên phản hồi nhanh**: cache gate chạy trước để quyết định reuse/patch/full retrieval.
+- **Content Auto-Generation không chặn phản hồi**: dịch vụ sinh lesson chạy nền dựa trên `target_concepts` và `error_patterns`.
+
+#### 2.2.5 Mapping theo các Phase truyền thống
+
+- **Phase 1 (Task Analysis)**: sinh `DiagnosisV3` (cheap classifier + rules + light LLM).
+- **Phase 3 (Execution)**:
+    - Fast path: `cache_gate_node` (RAPID L0/L1) → response.
+    - Slow path: build `RetrievalBundleV3` (vector + KG) → grounded generation → verify.
+- **Phase 5/6 (State Management)**: emit background jobs: cập nhật learner profile + KG writer + invoke Content Auto-Generation service.
 
 ## 3. Component Details
 
@@ -507,52 +645,91 @@
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 LangGraph + GraphCAG Pipeline
+### 3.2 Pipeline Execution Architecture
 
-> **Note**: The old `AIOrchestrator` class has been replaced by the LangGraph + GraphCAG hybrid architecture.
-> See `api/services/graph_cag/` for the new implementation.
+The previous `AIOrchestrator` conceptual flow has been refactored
+into a LangGraph StateGraph-based architecture. Below is the mapping:
+
+| Old Conceptual Phase | LangGraph Implementation |
+|---|---|
+| Phase 1: Task Analysis | `input_node` + `diagnose_node` |
+| Phase 2: Resource Alloc | Deferred to `ModelGateway` (lazy load) |
+| Phase 3a: Cache Decision| `cache_gate_node` (RAPID algorithm) |
+| Phase 3b: KG Expansion  | `kg_expand_node` (parallel w/ diagnose) |
+| Phase 3c: Routing       | `route_after_diagnosis` edge |
+| Phase 3d: Retrieval     | `retrieve_node` |
+| Phase 3e: Generation    | `generate_node` |
+| Phase 4: Result Aggr    | `_format_response()` in `graph.py` |
+| Phase 5: State Update   | Background job (async, non-blocking) |
+
+Each node is an async function that reads/writes to `GraphCAGState`.
+
+### 3.3 Pipeline Benefits & Metrics
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│              LANGGRAPH + GRAPHCAG PIPELINE                       │
+│              WHY ORCHESTRATOR IS ESSENTIAL                       │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Implementation: api/services/graph_cag/                         │
-│                                                                  │
-│  Files:                                                          │
+│  Problem Without GraphCAG:                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  graph.py    : StateGraph definition, compiled pipeline    │  │
-│  │  nodes.py    : Node functions (diagnose, generate, etc)    │  │
-│  │  edges.py    : Routing logic (cache hit/miss, VI needed)   │  │
-│  │  state.py    : TypedDict schema for state management       │  │
+│  │  [!] Tight coupling between components                       │  │
+│  │  [!] No centralized error handling                           │  │
+│  │  [!] Inefficient resource usage (all models always loaded)   │  │
+│  │  [!] No task prioritization                                  │  │
+│  │  [!] Difficult to add new features                           │  │
+│  │  [!] No visibility into pipeline performance                 │  │
+│  │  [!] Hard to test individual components                      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Key Advantages over old AIOrchestrator:                         │
+│  Solutions With GraphCAG:                                    │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Ultra-low latency (<50ms cache hit)                       │  │
-│  │  Built-in checkpointing (LangGraph)                        │  │
-│  │  Async Observer pattern (non-blocking)                     │  │
-│  │  Typed state management (TypedDict)                        │  │
-│  │  KG-integrated (KuzuDB concepts)                           │  │
-│  │  Cache-augmented (Redis response patterns)                 │  │
+│  │  [*] Single responsibility principle                         │  │
+│  │  [*] Centralized error handling & fallback                   │  │
+│  │  [*] Lazy loading - 60% memory savings                       │  │
+│  │  [*] Intelligent task routing                                │  │
+│  │  [*] Easy to extend (add new adapters/models)                │  │
+│  │  [*] Built-in monitoring & telemetry                         │  │
+│  │  [*] Testable components in isolation                        │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Performance Comparison:                                         │
+│  Performance Improvements:                                       │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Metric            │ Old Orchestrator │ LangGraph+GraphCAG │  │
-│  │  ──────────────────┼──────────────────┼────────────────────│  │
-│  │  Cache Hit Latency │ N/A              │ <10ms ⚡            │  │
-│  │  Cache Miss Latency│ 350ms            │ <180ms             │  │
-│  │  State Persistence │ Manual           │ Built-in           │  │
-│  │  Error Tracking    │ Logged only      │ KG-integrated      │  │
-│  │  Exercise Gen      │ N/A              │ Background CAG     │  │
+│  │  Metric              │ Before    │ After     │ Improvement │  │
+│  │  ───────────────────────────────────────────────────────   │  │
+│  │  Avg Latency         │ 800ms     │ 350ms     │ -56%        │  │
+│  │  Memory Usage        │ 12GB      │ 4.8GB     │ -60%        │  │
+│  │  Cache Hit Rate      │ N/A       │ 45%       │ +45%        │  │
+│  │  Error Recovery      │ Manual    │ Auto      │ 100%        │  │
+│  │  Parallel Execution  │ No        │ Yes       │ 2x faster   │  │
+│  │  Code Maintainability│ Complex   │ Clean     │ +70%        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  Key Architectural Benefits:                                     │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  1. Separation of Concerns                                 │  │
+│  │     • LangGraph handles WHAT to run                     │  │
+│  │     • Components handle HOW to run                         │  │
+│  │                                                            │  │
+│  │  2. Flexibility                                            │  │
+│  │     • Easy to swap models (e.g., Qwen → GPT-4)             │  │
+│  │     • Add new tasks without changing core logic            │  │
+│  │                                                            │  │
+│  │  3. Observability                                          │  │
+│  │     • Track latency per component                          │  │
+│  │     • Monitor resource usage                               │  │
+│  │     • Analyze failure patterns                             │  │
+│  │                                                            │  │
+│  │  4. Scalability                                            │  │
+│  │     • Queue long-running tasks                             │  │
+│  │     • Load balancing across GPUs                           │  │
+│  │     • Horizontal scaling ready                             │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-
-### 3.3 Caching Architecture
+### 3.4 Caching Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -585,10 +762,25 @@
 │                                                                  │
 │  Response Cache:                                                 │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Key: response:{text_hash}                                 │  │
-│  │  Value: { "analysis": {...}, "audio_url": "..." }          │  │
-│  │  TTL: 7 days                                               │  │
-│  │  Hit rate target: >40%                                     │  │
+│  │  ═══ L0 EXACT-MATCH CACHE ═══                              │  │
+│  │  Key format: v1:resp:{MD5(clean(query) || level)}          │  │
+│  │  Hit condition: exact query + exact level match            │  │
+│  │  Hit rate: ~50% on repeated-query workload                 │  │
+│  │  Hit latency: ~4ms                                         │  │
+│  │  TTL: 24 hours (dynamically set per entry)                 │  │
+│  │                                                            │  │
+│  │  ═══ L1 CONCEPT-STATE BUCKET CACHE ═══                     │  │
+│  │  Bucket key: v1:resp_bucket:{MD5(...)                      │  │
+│  │  Hit condition: PCC gate (Intent, Concepts, Level)         │  │
+│  │  Hit latency: ~5-30ms                                      │  │
+│  │  Hit rate: Target 10-15%                                   │  │
+│  │  TTL: 2 hours (bucket), 24 hours (entries)                 │  │
+│  │                                                            │  │
+│  │  ═══ L2 RECONSTRUCTION ═══                                 │  │
+│  │  Cost: 110-180ms (rule-based) or 1000ms+ (LLM)             │  │
+│  │                                                            │  │
+│  │  ═══ BUCKET VERSION INVALIDATION ═══                       │  │
+│  │  v_b = {nu_graph, nu_policy, nu_profile, t_refresh}        │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  TTS Audio Cache:                                                │
@@ -1296,6 +1488,6 @@ common_voice = load_dataset("mozilla-foundation/common_voice_13_0", "en")
 
 ---
 
-> **Document Version**: 4.0 (LangGraph + GraphCAG Hybrid)  
+> **Document Version**: 5.2
 > **Last Updated**: January 2026  
 > **Author**: Nguyen Huu Thang  

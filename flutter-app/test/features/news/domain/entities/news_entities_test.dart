@@ -31,7 +31,11 @@ void main() {
     });
 
     test('handles null values with defaults', () {
-      final info = CefrInfo.fromJson({'label': null, 'color': null, 'max_words': null});
+      final info = CefrInfo.fromJson({
+        'label': null,
+        'color': null,
+        'max_words': null,
+      });
       expect(info.label, '');
       expect(info.color, '#FFC107');
       expect(info.maxWords, 0);
@@ -77,7 +81,10 @@ void main() {
 
         expect(article.id, 'art001');
         expect(article.title, 'AI Breakthrough in Language Learning');
-        expect(article.description, 'Researchers announced a major development');
+        expect(
+          article.description,
+          'Researchers announced a major development',
+        );
         expect(article.content, 'Full article content goes here...');
         expect(article.url, 'https://example.com/article');
         expect(article.imageUrl, 'https://example.com/img.jpg');
@@ -88,7 +95,11 @@ void main() {
         expect(article.provider, 'newsapi');
         expect(article.cefrLevel, 'B2');
         expect(article.readingTimeMin, 3);
-        expect(article.highlightedWords, ['breakthrough', 'linguistic', 'phenomena']);
+        expect(article.highlightedWords, [
+          'breakthrough',
+          'linguistic',
+          'phenomena',
+        ]);
       });
 
       test('parses cefrInfo correctly', () {
@@ -135,11 +146,7 @@ void main() {
       });
 
       test('handles empty highlighted_words array', () {
-        final json = {
-          'id': 'art007',
-          'title': 'Test',
-          'highlighted_words': [],
-        };
+        final json = {'id': 'art007', 'title': 'Test', 'highlighted_words': []};
         final article = NewsArticle.fromJson(json);
         expect(article.highlightedWords, isEmpty);
       });
@@ -269,12 +276,19 @@ void main() {
     });
 
     test('uses default icon public when missing', () {
-      final category = NewsCategory.fromJson({'id': 'general', 'label': 'World'});
+      final category = NewsCategory.fromJson({
+        'id': 'general',
+        'label': 'World',
+      });
       expect(category.icon, 'public');
     });
 
     test('handles null values', () {
-      final category = NewsCategory.fromJson({'id': null, 'label': null, 'icon': null});
+      final category = NewsCategory.fromJson({
+        'id': null,
+        'label': null,
+        'icon': null,
+      });
       expect(category.id, '');
       expect(category.label, '');
       expect(category.icon, 'public');
@@ -290,9 +304,15 @@ void main() {
         'id': 3,
         'type': 'vocabulary',
         'question': 'What does "algorithm" mean in this context?',
-        'options': ['A step-by-step procedure', 'A type of music', 'A cooking recipe', 'A sport'],
+        'options': [
+          'A step-by-step procedure',
+          'A type of music',
+          'A cooking recipe',
+          'A sport',
+        ],
         'correct_index': 0,
-        'explanation': 'Algorithm refers to a structured procedure for solving problems',
+        'explanation':
+            'Algorithm refers to a structured procedure for solving problems',
       };
 
       final question = QuizQuestion.fromJson(json);
@@ -303,11 +323,19 @@ void main() {
       expect(question.options.length, 4);
       expect(question.options[0], 'A step-by-step procedure');
       expect(question.correctIndex, 0);
-      expect(question.explanation, 'Algorithm refers to a structured procedure for solving problems');
+      expect(
+        question.explanation,
+        'Algorithm refers to a structured procedure for solving problems',
+      );
     });
 
     test('uses default id 0 when missing', () {
-      final question = QuizQuestion.fromJson({'type': 'comprehension', 'question': 'Q?', 'options': [], 'correct_index': 0});
+      final question = QuizQuestion.fromJson({
+        'type': 'comprehension',
+        'question': 'Q?',
+        'options': [],
+        'correct_index': 0,
+      });
       expect(question.id, 0);
     });
 
@@ -378,7 +406,7 @@ void main() {
         ],
         'total_questions': 2,
         'xp_reward': 15,
-      }
+      },
     };
 
     test('parses nested quiz field from backend response', () {
@@ -400,7 +428,7 @@ void main() {
 
     test('uses default xpReward 15 when missing', () {
       final quiz = NewsQuiz.fromJson({
-        'quiz': {'questions': [], 'total_questions': 0}
+        'quiz': {'questions': [], 'total_questions': 0},
       });
       expect(quiz.xpReward, 15);
     });
@@ -415,7 +443,7 @@ void main() {
             'options': ['A', 'B', 'C', 'D'],
             'correct_index': 3,
             'explanation': '',
-          }
+          },
         ],
         'total_questions': 1,
         'xp_reward': 15,
@@ -428,7 +456,7 @@ void main() {
 
     test('handles empty questions list', () {
       final quiz = NewsQuiz.fromJson({
-        'quiz': {'questions': [], 'total_questions': 0, 'xp_reward': 15}
+        'quiz': {'questions': [], 'total_questions': 0, 'xp_reward': 15},
       });
       expect(quiz.questions, isEmpty);
     });
@@ -441,7 +469,9 @@ void main() {
             5,
             (i) => {
               'id': i + 1,
-              'type': i < 2 ? 'comprehension' : (i < 4 ? 'vocabulary' : 'grammar'),
+              'type': i < 2
+                  ? 'comprehension'
+                  : (i < 4 ? 'vocabulary' : 'grammar'),
               'question': 'Question ${i + 1}?',
               'options': ['A', 'B', 'C', 'D'],
               'correct_index': i % 4,
@@ -450,7 +480,7 @@ void main() {
           ),
           'total_questions': 5,
           'xp_reward': 15,
-        }
+        },
       };
 
       final quiz = NewsQuiz.fromJson(json);

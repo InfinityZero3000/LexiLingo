@@ -84,6 +84,78 @@ class ProficiencyService:
         if idx <= 0:
             return None
         return LEVEL_ORDER[idx - 1]
+
+    @staticmethod
+    def evaluate_exam_gated_promotion(
+        current_level: ProficiencyLevel,
+        exam_level: ProficiencyLevel,
+        passed: bool,
+        score: float,
+        passing_score: float = 70.0,
+    ) -> Dict[str, object]:
+        """
+        Evaluate whether a user is eligible for CEFR promotion via exam gate.
+
+        Skeleton rule set:
+        1) User must pass the exam and meet passing_score.
+        2) Exam level must be current level or higher.
+        3) Promotion is at most one CEFR tier (to next tier).
+        """
+        if current_level == ProficiencyLevel.C2:
+            return {
+                "eligible": False,
+                "promoted": False,
+                "promoted_to": None,
+                "reason": "Already at maximum CEFR tier (C2).",
+            }
+
+        if not passed or score < passing_score:
+            return {
+                "eligible": False,
+                "promoted": False,
+                "promoted_to": None,
+                "reason": "Exam not passed at required threshold.",
+            }
+
+        current_idx = ProficiencyService.get_level_index(current_level)
+        exam_idx = ProficiencyService.get_level_index(exam_level)
+        if exam_idx < current_idx:
+            return {
+                "eligible": False,
+                "promoted": False,
+                "promoted_to": None,
+                "reason": "Exam tier is below current CEFR level.",
+            }
+
+        promoted_to = ProficiencyService.get_next_level(current_level)
+        return {
+            "eligible": True,
+            "promoted": promoted_to is not None,
+            "promoted_to": promoted_to,
+            "reason": "Eligible via exam-gated progression.",
+        }
+
+    @staticmethod
+    def apply_exam_gated_promotion(
+        current_level: ProficiencyLevel,
+        exam_level: ProficiencyLevel,
+        passed: bool,
+        score: float,
+        passing_score: float = 70.0,
+    ) -> Tuple[ProficiencyLevel, Dict[str, object]]:
+        """Apply exam-gated decision and return resulting level plus decision payload."""
+        decision = ProficiencyService.evaluate_exam_gated_promotion(
+            current_level=current_level,
+            exam_level=exam_level,
+            passed=passed,
+            score=score,
+            passing_score=passing_score,
+        )
+
+        promoted_to = decision.get("promoted_to")
+        if decision.get("promoted") and isinstance(promoted_to, ProficiencyLevel):
+            return promoted_to, decision
+        return current_level, decision
     
     @staticmethod
     def calculate_skill_score(

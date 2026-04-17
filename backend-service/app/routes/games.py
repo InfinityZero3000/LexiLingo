@@ -1026,7 +1026,13 @@ async def get_matching_game(
         elif variant == "vietnamese" and w.vietnamese_translation:
             valid.append(w)
         else:
-            valid.append(w)  # definition is always available
+            # For 'definition' variant, or if we need a fallback
+            valid.append(w)
+
+    # FIX: Graceful fallback if no words found for specific variant (e.g., no synonyms in DB)
+    if not valid:
+        valid = all_words  # Fallback to definitions
+        variant = "definition"
 
     selected = random.sample(valid, min(count, len(valid)))
 

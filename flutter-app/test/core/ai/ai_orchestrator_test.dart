@@ -38,9 +38,14 @@ void main() {
 
       expect(response.responseEn, isNotEmpty);
       expect(response.analysis.grammarErrors, isNotEmpty);
-      expect(response.analysis.grammarErrors.first.incorrect, contains('am go'));
-      expect(response.analysis.grammarErrors.first.correction,
-          contains('am going'));
+      expect(
+        response.analysis.grammarErrors.first.incorrect,
+        contains('am go'),
+      );
+      expect(
+        response.analysis.grammarErrors.first.correction,
+        contains('am going'),
+      );
       expect(response.confidence, lessThan(1.0));
       expect(response.latencyMs, greaterThan(0));
     });
@@ -60,9 +65,7 @@ void main() {
         List.generate(44100, (i) => (i % 256)),
       );
 
-      final response = await orchestrator.processAudio(
-        audioBytes: mockAudio,
-      );
+      final response = await orchestrator.processAudio(audioBytes: mockAudio);
 
       expect(response.responseEn, isNotEmpty);
       expect(response.analysis.pronunciation, isNotNull);
@@ -72,12 +75,14 @@ void main() {
     });
 
     test('Vietnamese explanation for A2 learner', () async {
-      contextManager.setLearnerProfile(LearnerProfile(
-        userId: 'test',
-        level: LearnerLevel.a2,
-        commonErrors: [],
-        totalSessions: 1,
-      ));
+      contextManager.setLearnerProfile(
+        LearnerProfile(
+          userId: 'test',
+          level: LearnerLevel.a2,
+          commonErrors: [],
+          totalSessions: 1,
+        ),
+      );
 
       final response = await orchestrator.processText(
         userText: 'I am go to the kitchen',
@@ -88,12 +93,14 @@ void main() {
     });
 
     test('No Vietnamese explanation for B2 learner', () async {
-      contextManager.setLearnerProfile(LearnerProfile(
-        userId: 'test',
-        level: LearnerLevel.b2,
-        commonErrors: [],
-        totalSessions: 1,
-      ));
+      contextManager.setLearnerProfile(
+        LearnerProfile(
+          userId: 'test',
+          level: LearnerLevel.b2,
+          commonErrors: [],
+          totalSessions: 1,
+        ),
+      );
 
       final response = await orchestrator.processText(
         userText: 'I am going to the kitchen',
@@ -119,10 +126,9 @@ void main() {
     });
 
     test('Add conversation turns', () {
-      contextManager.addTurn(ConversationTurn(
-        userMessage: 'Hello',
-        aiResponse: 'Hi there!',
-      ));
+      contextManager.addTurn(
+        ConversationTurn(userMessage: 'Hello', aiResponse: 'Hi there!'),
+      );
 
       expect(contextManager.history.length, equals(1));
       expect(contextManager.history.first.userMessage, equals('Hello'));
@@ -130,10 +136,12 @@ void main() {
 
     test('Sliding window keeps only 5 turns', () {
       for (int i = 0; i < 10; i++) {
-        contextManager.addTurn(ConversationTurn(
-          userMessage: 'Message $i',
-          aiResponse: 'Response $i',
-        ));
+        contextManager.addTurn(
+          ConversationTurn(
+            userMessage: 'Message $i',
+            aiResponse: 'Response $i',
+          ),
+        );
       }
 
       expect(contextManager.history.length, equals(5));
@@ -157,10 +165,9 @@ void main() {
     });
 
     test('Context summary generation', () {
-      contextManager.addTurn(ConversationTurn(
-        userMessage: 'I like coffee',
-        aiResponse: 'Great!',
-      ));
+      contextManager.addTurn(
+        ConversationTurn(userMessage: 'I like coffee', aiResponse: 'Great!'),
+      );
 
       final summary = contextManager.getContextSummary();
 
@@ -169,30 +176,36 @@ void main() {
     });
 
     test('Vietnamese needed for A2', () {
-      contextManager.setLearnerProfile(LearnerProfile(
-        userId: 'test',
-        level: LearnerLevel.a2,
-        commonErrors: [],
-        totalSessions: 1,
-      ));
+      contextManager.setLearnerProfile(
+        LearnerProfile(
+          userId: 'test',
+          level: LearnerLevel.a2,
+          commonErrors: [],
+          totalSessions: 1,
+        ),
+      );
 
       expect(contextManager.needsVietnameseExplanation(), isTrue);
     });
 
     test('Vietnamese needed for low confidence', () {
-      contextManager.setLearnerProfile(LearnerProfile(
-        userId: 'test',
-        level: LearnerLevel.b1,
-        commonErrors: [],
-        totalSessions: 1,
-      ));
+      contextManager.setLearnerProfile(
+        LearnerProfile(
+          userId: 'test',
+          level: LearnerLevel.b1,
+          commonErrors: [],
+          totalSessions: 1,
+        ),
+      );
 
       expect(
-          contextManager.needsVietnameseExplanation(confidenceScore: 0.7),
-          isTrue);
+        contextManager.needsVietnameseExplanation(confidenceScore: 0.7),
+        isTrue,
+      );
       expect(
-          contextManager.needsVietnameseExplanation(confidenceScore: 0.9),
-          isFalse);
+        contextManager.needsVietnameseExplanation(confidenceScore: 0.9),
+        isFalse,
+      );
     });
   });
 

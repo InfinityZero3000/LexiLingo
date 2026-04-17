@@ -56,7 +56,7 @@ export const EnhancedAdminDashboard = () => {
   return (
     <div className="stack">
       {/* KPI Cards */}
-      <div className="card-grid">
+      <div className="card-grid dashboard-card-grid">
         <StatCard
           label={t.dashboard.totalUsers}
           value={kpisLoading ? "--" : (kpis?.total_users?.toLocaleString() ?? "--")}
@@ -84,7 +84,7 @@ export const EnhancedAdminDashboard = () => {
       </div>
 
       {/* User Growth & Engagement Charts */}
-      <div className="grid-2">
+      <div className="grid-2 dashboard-grid-2">
         <div className="panel">
           <SectionHeader
             title={t.dashboard.userGrowth}
@@ -109,7 +109,7 @@ export const EnhancedAdminDashboard = () => {
       </div>
 
       {/* Course Analytics */}
-      <div className="grid-2">
+      <div className="grid-2 dashboard-grid-2">
         <div className="panel">
           <SectionHeader
             title={t.dashboard.popularCourses}

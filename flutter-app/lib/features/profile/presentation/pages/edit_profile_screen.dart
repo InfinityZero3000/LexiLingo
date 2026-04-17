@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/utils/avatar_utils.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 
 /// Edit Profile Screen
 /// Allows users to update their display name and avatar.
@@ -26,17 +29,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
 
-  // Predefined avatar options
-  static const List<String> _avatarOptions = [
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Max',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Mia',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Zoe',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Charlie',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Lily',
-  ];
+  static const List<String> _avatarOptions = AvatarUtils.presetAvatarUrls;
 
   @override
   void initState() {
@@ -45,8 +38,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _displayNameController = TextEditingController(
       text: user?.displayName ?? '',
     );
-    _avatarUrlController = TextEditingController(text: user?.avatarUrl ?? '');
-    _selectedAvatarUrl = user?.avatarUrl;
+    final normalizedAvatar = AvatarUtils.normalizeAvatarUrl(user?.avatarUrl);
+    _avatarUrlController = TextEditingController(text: normalizedAvatar ?? '');
+    _selectedAvatarUrl = normalizedAvatar;
 
     _animController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -78,20 +72,23 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     try {
       final authProvider = context.read<AuthProvider>();
       final newDisplayName = _displayNameController.text.trim();
-      final newAvatarUrl =
+      final selectedOrTypedAvatar =
           _selectedAvatarUrl ?? _avatarUrlController.text.trim();
+      final normalizedAvatarUrl = AvatarUtils.normalizeAvatarUrl(
+        selectedOrTypedAvatar,
+      );
 
       await authProvider.updateProfile(
         displayName: newDisplayName.isNotEmpty ? newDisplayName : null,
-        avatarUrl: newAvatarUrl.isNotEmpty ? newAvatarUrl : null,
+        avatarUrl: normalizedAvatarUrl,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
+                Icon(Icons.check_circle, color: AppColors.surfaceLight),
                 SizedBox(width: 8),
                 Text('Profile updated successfully!'),
               ],
@@ -122,6 +119,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    final primaryDeepColor = AppColorRoles.primaryDeep(isDark);
 
     return Scaffold(
       appBar: AppBar(
@@ -137,12 +136,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: LottieLoadingWidget.tiny(),
                   )
-                : const Text(
+                : Text(
                     'Save',
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: primaryColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -166,17 +165,17 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: AppColors.errorBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
+                        color: AppColors.errorBright.withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.error_outline,
-                          color: Colors.red,
+                          color: AppColors.errorBright,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -184,7 +183,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           child: Text(
                             _errorMessage!,
                             style: const TextStyle(
-                              color: Colors.red,
+                              color: AppColors.errorBright,
                               fontSize: 13,
                             ),
                           ),
@@ -194,7 +193,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   ),
 
                 // Avatar Section
-                _buildAvatarSection(user, isDark),
+                _buildAvatarSection(
+                  user,
+                  isDark,
+                  primaryColor,
+                  primaryDeepColor,
+                ),
                 const SizedBox(height: 32),
 
                 // Display Name
@@ -217,6 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     return null;
                   },
                   isDark: isDark,
+                  primaryColor: primaryColor,
                 ),
                 const SizedBox(height: 24),
 
@@ -239,7 +244,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 const SizedBox(height: 12),
                 _buildReadOnlyField(
                   label: 'Level',
-                  value: user?.level ?? 'A1',
+                  value: user?.cefrLevel ?? 'A1',
                   icon: Icons.school_outlined,
                   isDark: isDark,
                 ),
@@ -253,22 +258,19 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: primaryColor,
+                      foregroundColor: AppColors.surfaceLight,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 4,
-                      shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                      shadowColor: primaryColor.withValues(alpha: 0.3),
                     ),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
+                            child: LottieLoadingWidget.tiny(),
                           )
                         : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -295,8 +297,15 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  Widget _buildAvatarSection(UserEntity? user, bool isDark) {
-    final currentAvatar = _selectedAvatarUrl ?? user?.avatarUrl;
+  Widget _buildAvatarSection(
+    UserEntity? user,
+    bool isDark,
+    Color primaryColor,
+    Color primaryDeepColor,
+  ) {
+    final currentAvatar = AvatarUtils.normalizeAvatarUrl(
+      _selectedAvatarUrl ?? user?.avatarUrl,
+    );
 
     return Center(
       child: Column(
@@ -313,8 +322,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.3),
-                      const Color(0xFF6366F1).withValues(alpha: 0.3),
+                      primaryColor.withValues(alpha: 0.3),
+                      primaryDeepColor.withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -326,12 +335,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppColors.surfaceLight,
                     width: 3,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: primaryColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       spreadRadius: 2,
                     ),
@@ -339,14 +348,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 ),
                 child: ClipOval(
                   child: currentAvatar != null && currentAvatar.isNotEmpty
-                      ? Image.network(
+                      ? _buildAvatarImage(
                           currentAvatar,
                           fit: BoxFit.cover,
                           width: 120,
                           height: 120,
-                          errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                          fallback: _buildDefaultAvatar(isDark, primaryColor),
                         )
-                      : _buildDefaultAvatar(),
+                      : _buildDefaultAvatar(isDark, primaryColor),
                 ),
               ),
               // Camera icon
@@ -358,21 +367,21 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF137FEC), Color(0xFF6366F1)],
+                      gradient: LinearGradient(
+                        colors: [primaryColor, primaryDeepColor],
                       ),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.surfaceLight, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
+                          color: primaryColor.withValues(alpha: 0.4),
                           blurRadius: 8,
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.camera_alt,
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       size: 18,
                     ),
                   ),
@@ -383,117 +392,155 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           const SizedBox(height: 12),
           Text(
             'Tap camera to change avatar',
-            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            style: TextStyle(
+              color: AppColorRoles.textMuted(isDark),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDefaultAvatar() {
+  Widget _buildDefaultAvatar(bool isDark, Color primaryColor) {
     return Container(
       width: 120,
       height: 120,
-      color: AppColors.primary.withValues(alpha: 0.2),
-      child: const Icon(Icons.person, size: 60, color: AppColors.primary),
+      color: primaryColor.withValues(alpha: isDark ? 0.24 : 0.2),
+      child: Icon(Icons.person, size: 60, color: primaryColor),
+    );
+  }
+
+  Widget _buildAvatarImage(
+    String url, {
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+    Widget? fallback,
+  }) {
+    final fallbackWidget =
+        fallback ??
+        Container(
+          color: AppColors.grey200,
+          child: const Icon(Icons.person, color: AppColors.grey500),
+        );
+
+    return NetworkAvatarImage(
+      imageUrl: url,
+      fit: fit,
+      width: width,
+      height: height,
+      fallback: fallbackWidget,
     );
   }
 
   void _showAvatarPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.surfaceLight.withValues(alpha: 0),
       isScrollControlled: true,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        return FractionallySizedBox(
+          heightFactor: 0.66,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Choose Avatar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _avatarOptions.length,
-                itemBuilder: (context, index) {
-                  final url = _avatarOptions[index];
-                  final isSelected = _selectedAvatarUrl == url;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedAvatarUrl = url;
-                        _avatarUrlController.text = url;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : Colors.grey.withValues(alpha: 0.3),
-                          width: isSelected ? 3 : 1,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                  blurRadius: 8,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          url,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.person, color: Colors.grey),
-                          ),
-                        ),
-                      ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Choose Avatar',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: GridView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: _avatarOptions.length,
+                      itemBuilder: (context, index) {
+                        final url = _avatarOptions[index];
+                        final isSelected = _selectedAvatarUrl == url;
+                        return GestureDetector(
+                          onTap: () {
+                            final normalized = AvatarUtils.normalizeAvatarUrl(url);
+                            setState(() {
+                              _selectedAvatarUrl = normalized;
+                              _avatarUrlController.text = normalized ?? '';
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? primaryColor
+                                    : AppColors.grey400.withValues(alpha: 0.6),
+                                width: isSelected ? 3 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: primaryColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        blurRadius: 8,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: ClipOval(
+                              child: _buildAvatarImage(
+                                url,
+                                fit: BoxFit.cover,
+                                fallback: Container(
+                                  color: AppColors.grey200,
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: AppColors.grey500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Custom URL option
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showCustomUrlDialog();
+                    },
+                    icon: const Icon(Icons.link),
+                    label: const Text('Use custom URL'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Custom URL option
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showCustomUrlDialog();
-                },
-                icon: const Icon(Icons.link),
-                label: const Text('Use custom URL'),
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         );
       },
@@ -529,15 +576,20 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             ),
             ElevatedButton(
               onPressed: () {
+                final normalized = AvatarUtils.normalizeAvatarUrl(
+                  urlController.text,
+                );
                 setState(() {
-                  _selectedAvatarUrl = urlController.text.trim();
-                  _avatarUrlController.text = urlController.text.trim();
+                  _selectedAvatarUrl = normalized;
+                  _avatarUrlController.text = normalized ?? '';
                 });
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColorRoles.primary(
+                  Theme.of(context).brightness == Brightness.dark,
+                ),
+                foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -567,6 +619,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     required IconData icon,
     String? Function(String?)? validator,
     required bool isDark,
+    required Color primaryColor,
   }) {
     return TextFormField(
       controller: controller,
@@ -574,24 +627,24 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       style: const TextStyle(fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+        prefixIcon: Icon(icon, color: primaryColor, size: 20),
         filled: true,
-        fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
+        fillColor: isDark ? AppColors.grey900 : AppColors.grey50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+          borderSide: BorderSide(color: AppColors.grey400.withValues(alpha: 0.6)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+          borderSide: BorderSide(color: AppColors.grey400.withValues(alpha: 0.6)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: AppColors.errorBright),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -611,14 +664,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.grey[900]?.withValues(alpha: 0.5)
-            : Colors.grey[100],
+            ? AppColors.grey900.withValues(alpha: 0.5)
+            : AppColors.grey100,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+        border: Border.all(color: AppColors.grey400.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[500], size: 20),
+          Icon(icon, color: AppColors.grey600, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -626,8 +679,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.grey[500],
+                  style: const TextStyle(
+                    color: AppColors.grey600,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -636,7 +689,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 Text(
                   value,
                   style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.grey[800],
+                    color: isDark
+                        ? AppColors.textInverted.withValues(alpha: 0.7)
+                        : AppColors.grey800,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -644,7 +699,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               ],
             ),
           ),
-          Icon(Icons.lock_outline, color: Colors.grey[400], size: 16),
+          const Icon(Icons.lock_outline, color: AppColors.grey500, size: 16),
         ],
       ),
     );

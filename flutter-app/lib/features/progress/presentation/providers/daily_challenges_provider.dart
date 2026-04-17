@@ -15,7 +15,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   DailyChallengesResponse? _challengesResponse;
   bool _isLoading = false;
   String? _errorMessage;
-  Set<String> _claimedRewards = {};
+  final Set<String> _claimedRewards = {};
 
   // Getters
   DailyChallengesResponse? get challengesResponse => _challengesResponse;

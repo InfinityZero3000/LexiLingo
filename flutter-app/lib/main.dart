@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,7 +7,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
+import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
@@ -15,8 +17,13 @@ import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
+import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/story_provider.dart';
@@ -78,8 +85,12 @@ void main() async {
   };
 
   try {
-    // Load environment variables from .env file
-    await dotenv.load(fileName: ".env");
+    // On web, rely on safe defaults/dart-defines to avoid hidden-file asset issues.
+    if (!kIsWeb) {
+      // Load .env.production for release builds, .env for dev
+      final envFile = kReleaseMode ? '.env.production' : '.env';
+      await dotenv.load(fileName: envFile);
+    }
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
@@ -96,14 +107,18 @@ void main() async {
 
     // Initialize Firebase Cloud Messaging
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    await FirebaseMessagingService.instance.initialize();
-    debugPrint('Firebase Messaging initialized successfully');
+    // Push notification permission should not block app startup
+    // so we delay it until after runApp()
   } catch (e) {
     debugPrint('Warning: Firebase initialization failed: $e');
   }
 
   // Initialize Dependency Injection (skip database on web)
+  await LocalStateMigrationService().runIfNeeded();
   await di.initializeDependencies(skipDatabase: kIsWeb);
+
+  // Initialize local notifications early so Settings sync can schedule reliably.
+  await di.sl<NotificationService>().ensureInitialized();
 
   // Run startup tasks (health check, seeding). Non-blocking for web.
   if (!kIsWeb) {
@@ -155,10 +170,71 @@ void main() async {
       child: const LexiLingoApp(),
     ),
   );
+
+  // Initialize Firebase Messaging after UI starts rendering
+  // so the permission dialog doesn't appear over a blank screen
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await FirebaseMessagingService.instance.initialize();
+      debugPrint('Firebase Messaging initialized successfully');
+    } catch (e) {
+      debugPrint('Warning: Firebase Messaging initialization failed: $e');
+    }
+  });
 }
 
-class LexiLingoApp extends StatelessWidget {
+class LexiLingoApp extends StatefulWidget {
   const LexiLingoApp({super.key});
+
+  @override
+  State<LexiLingoApp> createState() => _LexiLingoAppState();
+}
+
+class _LexiLingoAppState extends State<LexiLingoApp>
+    with WidgetsBindingObserver {
+  late final SyncQueueLifecycleRunner _syncQueueRunner;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncQueueRunner.start();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _syncQueueRunner.stop();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncQueueRunner.onAppResumed();
+    }
+  }
+
+  String? _extractResetTokenFromDeepLink() {
+    final queryToken = Uri.base.queryParameters['token'];
+    if (queryToken != null && queryToken.isNotEmpty) {
+      return queryToken;
+    }
+
+    final fragment = Uri.base.fragment;
+    if (fragment.isNotEmpty) {
+      final fragmentUri = Uri.tryParse(fragment);
+      final fragmentToken = fragmentUri?.queryParameters['token'];
+      if (fragmentToken != null && fragmentToken.isNotEmpty) {
+        return fragmentToken;
+      }
+    }
+
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,18 +298,44 @@ class LexiLingoApp extends StatelessWidget {
         // Phase 6: Lexi Chat — Story Adventure
         ChangeNotifierProvider(create: (_) => di.sl<LexiChatProvider>()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
+      child: Consumer2<SettingsProvider, AuthProvider>(
+        builder: (context, settings, auth, child) {
+          final safeContext = context;
+          // Sync locale from settings on startup (after auth wrapper initializes)
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (auth.currentUser != null && settings.settings != null) {
+              // Sync app locale with saved settings
+              final savedLocale = await LocaleService.getSavedLocale();
+              if (!safeContext.mounted) return;
+              final settingsLanguage = settings.language;
+              
+              // If settings has a different language than saved locale, update it
+              if (savedLocale != settingsLanguage) {
+                await LocaleService.saveLocale(settingsLanguage);
+                if (!safeContext.mounted) return;
+                await safeContext.setLocale(Locale(settingsLanguage));
+                debugPrint('Locale synced from settings: $settingsLanguage');
+              }
+            }
+          });
+          
           return MaterialApp(
             title: 'LexiLingo',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
+            themeAnimationDuration: const Duration(milliseconds: 280),
+            themeAnimationCurve: Curves.easeInOutCubic,
             // Localization — easy_localization handles locale state
             locale: context.locale,
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
+            builder: (context, child) {
+              return ThemeRippleOverlay(
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             home: const AuthWrapper(),
             routes: {
               '/youtube': (context) => const YouTubeExploreScreen(),
@@ -275,6 +377,17 @@ class LexiLingoApp extends StatelessWidget {
               '/books': (context) => const BookLibraryScreen(),
               // Phase 6: Lexi Chat
               '/lexi': (context) => const LexiChatPage(),
+              '/reset-password': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                String? token;
+                if (args is String) {
+                  token = args;
+                } else if (args is Map<String, dynamic>) {
+                  token = args['token'] as String?;
+                }
+                token ??= _extractResetTokenFromDeepLink();
+                return ResetPasswordPage(initialToken: token);
+              },
             },
           );
         },

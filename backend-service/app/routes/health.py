@@ -48,16 +48,16 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
     # Redis check
     try:
         from app.core.redis import RedisClient
-        redis = RedisClient.get_client()
-        if redis:
-            await redis.ping()
+        redis_client = await RedisClient.get_instance()
+        if redis_client:
+            await redis_client.ping()  # type: ignore[misc]  # redis.asyncio stubs
         else:
             checks["redis"] = "not configured"
     except Exception as e:
         logger.error("Health check: Redis unreachable: %s", e)
         checks["redis"] = "unreachable"
 
-    all_ok = all(v == "ok" for v in checks.values())
+    all_ok = all(v in ("ok", "not configured") for v in checks.values())
     status_code = 200 if all_ok else 503
 
     from fastapi.responses import JSONResponse

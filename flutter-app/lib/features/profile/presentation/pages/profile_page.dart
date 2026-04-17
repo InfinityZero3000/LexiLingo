@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
@@ -12,10 +15,14 @@ import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_s
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/screens/my_progress_screen.dart';
 import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
+import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
+import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -26,13 +33,27 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _badgeShineController;
+
   @override
   void initState() {
     super.initState();
+    _badgeShineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _badgeShineController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -71,11 +92,48 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: false,
+        toolbarHeight: 86,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.person_rounded,
+                color: Theme.of(context).colorScheme.surface,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Profile',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  _formatMemberSince(user?.createdAt),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColorRoles.textSecondary(isDark),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         automaticallyImplyLeading: false,
         actions: [
           // Wallet/Gems Button
@@ -101,12 +159,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.diamond, color: Colors.white, size: 16),
+                      Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${gamification.wallet?.gems ?? 0}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -118,7 +176,17 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: AppColors.primary),
+            icon: Icon(Icons.mic_rounded, color: accent),
+            tooltip: 'Voice Practice',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VoicePracticeScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.settings, color: accent),
             onPressed: () {
               Navigator.push(
                 context,
@@ -174,7 +242,7 @@ class _ProfilePageState extends State<ProfilePage> {
             context,
             icon: Icons.store,
             label: 'Shop',
-            color: const Color(0xFFFF9F0A),
+            color: AppColors.orange,
             gradient: AppColors.warmGradient,
             onTap: () => Navigator.push(
               context,
@@ -186,7 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
             context,
             icon: Icons.leaderboard,
             label: 'Ranks',
-            color: const Color(0xFF10B981),
+            color: AppColors.greenSuccess,
             gradient: AppColors.successGradient,
             onTap: () => Navigator.push(
               context,
@@ -198,8 +266,12 @@ class _ProfilePageState extends State<ProfilePage> {
             context,
             icon: Icons.people,
             label: 'Friends',
-            color: const Color(0xFF3B82F6),
-            gradient: AppColors.indigoGradient,
+            color: AppColorRoles.primary(
+              Theme.of(context).brightness == Brightness.dark,
+            ),
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.primaryGradientDark
+                : AppColors.indigoGradient,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SocialScreen()),
@@ -208,13 +280,13 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(width: 12),
           _buildQuickActionButton(
             context,
-            icon: Icons.account_balance_wallet,
-            label: 'Wallet',
-            color: const Color(0xFF8B5CF6),
+            icon: Icons.insights_rounded,
+            label: 'Progress',
+            color: AppColors.purple,
             gradient: AppColors.purpleGradient,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const WalletScreen()),
+              MaterialPageRoute(builder: (_) => const MyProgressScreen()),
             ),
           ),
         ],
@@ -246,19 +318,19 @@ class _ProfilePageState extends State<ProfilePage> {
               BoxShadow(
                 color: color.withValues(alpha: 0.3),
                 blurRadius: 8,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: Colors.white, size: 24),
+              Icon(icon, color: Theme.of(context).colorScheme.surface, size: 24),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -271,6 +343,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
         // Use numeric level progress, not CEFR-based
@@ -293,19 +367,24 @@ class _ProfilePageState extends State<ProfilePage> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.primary.withValues(alpha: 0.15),
-                          const Color(0xFF6366F1).withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
+                          (isDark ? accent : AppColors.primary).withValues(
+                            alpha: 0.15,
+                          ),
+                          (isDark ? accent : AppColors.primary).withValues(
+                            alpha: 0.1,
+                          ),
+                          AppColors.surfaceLight.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: (isDark ? accent : AppColors.primary)
+                              .withValues(alpha: 0.12),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -322,10 +401,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               progress: progress,
                               size: 140,
                               strokeWidth: 6,
-                              gradientColors: const [
-                                Color(0xFF137FEC),
-                                Color(0xFF6366F1),
-                                Color(0xFF8B5CF6),
+                              gradientColors: [
+                                isDark ? accent : AppColors.primary,
+                                isDark ? accent : AppColors.primary,
+                                AppColors.purple,
                               ],
                               child: Container(
                                 width: 120,
@@ -333,12 +412,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.5),
+                                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                                     width: 3,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
                                         alpha: 0.3,
                                       ),
                                       blurRadius: 20,
@@ -347,35 +427,23 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ],
                                 ),
                                 child: ClipOval(
-                                  child:
-                                      user?.avatarUrl != null &&
-                                          user!.avatarUrl!.isNotEmpty
-                                      ? Image.network(
-                                          user.avatarUrl!,
-                                          fit: BoxFit.cover,
-                                          width: 120,
-                                          height: 120,
-                                          errorBuilder: (_, __, ___) =>
-                                              Container(
-                                                color: AppColors.primary
-                                                    .withValues(alpha: 0.2),
-                                                child: const Icon(
-                                                  Icons.person,
-                                                  size: 60,
-                                                  color: AppColors.primary,
-                                                ),
-                                              ),
-                                        )
-                                      : Container(
-                                          color: AppColors.primary.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          child: const Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
+                                  child: NetworkAvatarImage(
+                                    imageUrl: user?.avatarUrl,
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                    fallback: Container(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: isDark ? accent : AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -387,29 +455,30 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
-                                        Color(0xFF137FEC),
-                                        Color(0xFF6366F1),
+                                        isDark ? accent : AppColors.primary,
+                                        isDark ? accent : AppColors.primary,
                                       ],
                                     ),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white,
+                                      color: AppColors.surfaceLight,
                                       width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(
+                                        color: (isDark ? accent : AppColors.primary)
+                                            .withValues(
                                           alpha: 0.5,
                                         ),
                                         blurRadius: 8,
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.verified,
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                     size: 16,
                                   ),
                                 ),
@@ -432,8 +501,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (user?.email != null)
                           Text(
                             user.email,
-                            style: TextStyle(
-                              color: Colors.grey[600],
+                            style: const TextStyle(
+                              color: AppColors.grey600,
                               fontSize: 13,
                             ),
                           ),
@@ -452,13 +521,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: AppColors.primaryGradient,
+                                  gradient: LinearGradient(
+                                    colors: AppColorRoles.primaryGradient(
+                                      isDark,
+                                    ),
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(
+                                      color: (isDark ? accent : AppColors.primary)
+                                          .withValues(
                                         alpha: 0.4,
                                       ),
                                       blurRadius: 8,
@@ -469,16 +541,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.workspace_premium_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.surfaceLight,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'Level ${lp.displayLevel}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: AppColors.surfaceLight,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                       ),
@@ -553,8 +625,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         // Member Since
                         Text(
                           _formatMemberSince(user?.createdAt),
-                          style: TextStyle(
-                            color: Colors.grey[500],
+                          style: const TextStyle(
+                            color: AppColors.grey600,
                             fontSize: 12,
                           ),
                         ),
@@ -578,29 +650,30 @@ class _ProfilePageState extends State<ProfilePage> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: AppColors.primaryGradient,
+                              gradient: LinearGradient(
+                                colors: AppColorRoles.primaryGradient(isDark),
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(
+                                  color: (isDark ? accent : AppColors.primary)
+                                      .withValues(
                                     alpha: 0.3,
                                   ),
                                   blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                                  offset: Offset(0, 4),
                                 ),
                               ],
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.edit, color: Colors.white, size: 14),
+                                Icon(Icons.edit, color: AppColors.surfaceLight, size: 14),
                                 SizedBox(width: 6),
                                 Text(
                                   'Edit Profile',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -637,29 +710,31 @@ class _ProfilePageState extends State<ProfilePage> {
               value: '${stats?.totalVocabularyMastered ?? 0}',
               label: 'Words',
               icon: Icons.spellcheck_rounded,
-              color: const Color(0xFF10B981),
+              color: AppColors.greenSuccessBright,
             ),
             Container(
               height: 40,
               width: 1,
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.grey400.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.totalLessonsCompleted ?? 0}',
               label: 'Lessons',
               icon: Icons.menu_book,
-              color: const Color(0xFF3B82F6),
+              color: AppColorRoles.primary(
+                Theme.of(context).brightness == Brightness.dark,
+              ),
             ),
             Container(
               height: 40,
               width: 1,
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.grey400.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.currentStreak ?? 0}',
               label: 'Day Streak',
               icon: Icons.local_fire_department,
-              color: const Color(0xFFEF4444),
+              color: AppColors.dangerGradient[0],
             ),
           ],
         );
@@ -687,6 +762,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildLevelProgressCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<LevelProvider>(
       builder: (context, levelProvider, child) {
         final level = levelProvider.displayLevel;
@@ -713,8 +789,8 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 12),
               AnimatedProgressBar(
                 progress: progress,
-                primaryColor: AppColors.primaryGradient[0],
-                secondaryColor: AppColors.primaryGradient[1],
+                primaryColor: AppColorRoles.primaryGradient(isDark)[0],
+                secondaryColor: AppColorRoles.primaryGradient(isDark)[1],
                 height: 12,
               ),
               const SizedBox(height: 12),
@@ -730,8 +806,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   Text(
                     '${(progress * 100).toStringAsFixed(0)}% complete',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: AppColorRoles.primary(isDark),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -746,30 +822,32 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Color _getTierColor(String tierCode) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (tierCode) {
       case 'A1':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return Colors.teal;
+        return AppColors.teal;
       case 'B1':
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
       case 'B2':
-        return Colors.indigo;
+        return AppColorRoles.primaryDeep(isDark);
       case 'C1':
-        return Colors.purple;
+        return AppColors.purple;
       case 'C2':
-        return Colors.amber;
+        return AppColors.warning;
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
   Widget _buildLearningStats(BuildContext context, dynamic user) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final primaryColor = AppColorRoles.primary(isDark);
         // Use stats from ProfileProvider (backend API)
         final stats = profileProvider.stats;
-        final streak = stats?.currentStreak ?? user?.currentStreak ?? 0;
         final lessonsCompleted = stats?.totalLessonsCompleted ?? 0;
         final coursesCompleted = stats?.totalCoursesCompleted ?? 0;
         final vocabularyMastered = stats?.totalVocabularyMastered ?? 0;
@@ -788,6 +866,12 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
+                  Icon(
+                    Icons.insights_rounded,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     'Learning Stats',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -797,69 +881,121 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
-              children: [
-                GlassmorphicStatCard(
-                  icon: Icons.local_fire_department,
-                  color: Colors.orange,
-                  title: 'Streak',
-                  value: '$streak Days',
-                  subtitle: streak > 0 ? 'Keep it up!' : 'Start today!',
-                ),
-                GlassmorphicStatCard(
-                  icon: Icons.menu_book,
-                  color: Colors.blue,
-                  title: 'Lessons',
-                  value: '$lessonsCompleted',
-                  subtitle: 'Completed',
-                ),
-                GlassmorphicStatCard(
-                  icon: Icons.school,
-                  color: Colors.green,
-                  title: 'Courses',
-                  value: '$coursesCompleted',
-                  subtitle: 'Finished',
-                ),
-                GlassmorphicStatCard(
-                  icon: Icons.abc,
-                  color: Colors.purple,
-                  title: 'Vocabulary',
-                  value: '$vocabularyMastered',
-                  subtitle: 'Mastered',
-                ),
-                GlassmorphicStatCard(
-                  icon: Icons.quiz,
-                  color: Colors.teal,
-                  title: 'Tests',
-                  value: '$testsPassed',
-                  subtitle: avgScore > 0
-                      ? '${avgScore.toStringAsFixed(0)}% avg'
-                      : 'Passed',
-                ),
-                GlassmorphicStatCard(
-                  icon: Icons.stars,
-                  color: Colors.amber,
-                  title: 'Badges',
-                  value: '${stats?.totalCertificatesEarned ?? 0}',
-                  subtitle: 'View all',
-                  isAction: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AchievementsScreen(),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GlassmorphicStatCard(
+                          icon: Icons.abc,
+                          color: primaryColor,
+                          title: 'Lessons',
+                          value: '$lessonsCompleted',
+                          subtitle: 'completed',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LearningLessonsStatsPage(),
+                            ),
+                          ),
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
                       ),
-                    );
-                  },
-                ),
-              ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GlassmorphicStatCard(
+                          icon: Icons.school,
+                          color: primaryColor,
+                          title: 'Courses',
+                          value: '$coursesCompleted',
+                          subtitle: 'finished',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LearningCoursesStatsPage(),
+                            ),
+                          ),
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GlassmorphicStatCard(
+                          icon: Icons.auto_stories,
+                          color: primaryColor,
+                          title: 'Vocabulary',
+                          value: '$vocabularyMastered',
+                          subtitle: 'mastered',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LearningVocabularyStatsPage(),
+                            ),
+                          ),
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GlassmorphicStatCard(
+                          icon: Icons.quiz,
+                          color: primaryColor,
+                          title: 'Tests',
+                          value: '$testsPassed',
+                          subtitle: avgScore > 0
+                              ? '${avgScore.toStringAsFixed(0)}% avg'
+                              : 'passed',
+                          valueInRightCircle: true,
+                          valueCircleSize: 40,
+                          valueCircleFontSize: 18,
+                          isAction: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LearningTestsStatsPage(),
+                            ),
+                          ),
+                          iconBoxSize: 28,
+                          iconSize: 14,
+                          titleFontSize: 13,
+                          subtitleFontSize: 11,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         );
@@ -868,6 +1004,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildLoadingStats(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -885,18 +1022,18 @@ class _ProfilePageState extends State<ProfilePage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.5,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.15,
           children: List.generate(
-            6,
+            4,
             (index) => Container(
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: LottieLoadingWidget.medium(),
               ),
             ),
           ),
@@ -908,6 +1045,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildWeeklyActivity(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final activities = profileProvider.weeklyActivity;
         final isLoading = profileProvider.isLoadingActivity;
 
@@ -941,7 +1079,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24.0),
-                        child: CircularProgressIndicator(),
+                        child: LottieLoadingWidget.medium(),
                       ),
                     )
                   : activities.isEmpty
@@ -950,7 +1088,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           'No activity data yet',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: const TextStyle(color: AppColors.grey600),
                         ),
                       ),
                     )
@@ -981,7 +1119,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: dayLabel,
                                   value: normalizedValue,
                                   xpValue: activity.xpEarned,
-                                  color: const Color(0xFF6366F1),
+                                  color: AppColorRoles.primary(isDark),
                                   delay: Duration(milliseconds: index * 100),
                                 ),
                               );
@@ -997,19 +1135,19 @@ class _ProfilePageState extends State<ProfilePage> {
                               'Total XP',
                               '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
                               Icons.star,
-                              Colors.amber,
+                              AppColors.warning,
                             ),
                             _buildActivityStat(
                               'Lessons',
                               '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
                               Icons.menu_book,
-                              Colors.blue,
+                              AppColorRoles.primary(isDark),
                             ),
                             _buildActivityStat(
                               'Words',
                               '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
                               Icons.abc,
-                              Colors.green,
+                              AppColors.greenSuccessBright,
                             ),
                           ],
                         ),
@@ -1036,7 +1174,10 @@ class _ProfilePageState extends State<ProfilePage> {
           value,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.grey600),
+        ),
       ],
     );
   }
@@ -1046,6 +1187,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context, provider, child) {
         final badges = provider.recentBadges;
         final isLoading = provider.isLoadingBadges;
+        final visibleBadges = badges.where(_hasRenderableBadgeImage).toList();
 
         return Column(
           children: [
@@ -1077,16 +1219,16 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(
               height: 100,
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : badges.isEmpty
+                  ? const Center(child: LottieLoadingWidget.medium())
+                  : visibleBadges.isEmpty
                   ? _buildEmptyBadges()
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: badges.length,
+                      itemCount: visibleBadges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {
-                        final badge = badges[index];
+                        final badge = visibleBadges[index];
                         return _buildBadgeItemFromEntity(badge);
                       },
                     ),
@@ -1097,17 +1239,48 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  bool _hasRenderableBadgeImage(UserAchievementEntity badge) {
+    final achievement = badge.achievement;
+
+    if (achievement.category.toLowerCase() == 'xp') {
+      return false;
+    }
+
+    final networkBadge = achievement.badgeIcon?.trim();
+    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
+      ? Uri.tryParse(networkBadge)
+      : null;
+    final hasValidNetworkBadge =
+      networkBadgeUri != null &&
+      (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
+      networkBadgeUri.host.isNotEmpty;
+    if (hasValidNetworkBadge) {
+      return true;
+    }
+
+    final lookupKey = (achievement.slug ?? achievement.id).trim();
+    if (lookupKey.isEmpty) {
+      return false;
+    }
+
+    return BadgeAssetMapper.hasRenderableBadge(lookupKey);
+  }
+
   /// Build empty badges placeholder
   Widget _buildEmptyBadges() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 40, color: Colors.grey[400]),
+          const Icon(
+            Icons.emoji_events_outlined,
+            size: 40,
+            color: AppColors.grey500,
+          ),
           const SizedBox(height: 8),
           Text(
             'Complete lessons to earn badges!',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: const TextStyle(color: AppColors.grey600, fontSize: 12),
           ),
         ],
       ),
@@ -1115,17 +1288,68 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// Build badge item from UserAchievementEntity
-  Widget _buildBadgeItemFromEntity(dynamic badge) {
+  Widget _buildBadgeItemFromEntity(UserAchievementEntity badge) {
     final achievement = badge.achievement;
+    const badgeSize = 64.0;
+    final badgeMask = _buildBadgeShineMask(badge, badgeSize);
 
     return Tooltip(
       message: '${achievement.name}\n${badge.unlockedTimeAgo}',
       child: Column(
         children: [
-          AchievementBadge(
-            achievement: achievement,
-            isUnlocked: true,
-            size: 64,
+          SizedBox(
+            width: badgeSize,
+            height: badgeSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AchievementBadge(
+                  achievement: achievement,
+                  isUnlocked: true,
+                  size: badgeSize,
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _badgeShineController,
+                      builder: (context, child) {
+                        // Smaller sweep portion => longer idle pause per cycle.
+                        const sweepPortion = 0.62;
+                        final progress = _badgeShineController.value;
+                        final isSweeping = progress < sweepPortion;
+                        final sweepT = isSweeping
+                            ? Curves.easeInOut.transform(progress / sweepPortion)
+                            : 1.0;
+                        final position = isSweeping
+                            ? lerpDouble(-1.6, 1.6, sweepT)!
+                            : 2.4;
+
+                        return ShaderMask(
+                          // Apply shine only where the badge image has alpha.
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) {
+                            return LinearGradient(
+                              begin: Alignment(position - 0.45, -1.0),
+                              end: Alignment(position + 0.45, 1.0),
+                              colors: [
+                                AppColors.surfaceLight.withValues(alpha: 0),
+                                AppColors.surfaceLight.withValues(alpha: 0.06),
+                                AppColors.surfaceLight.withValues(alpha: 0.56),
+                                AppColors.surfaceLight.withValues(alpha: 0.06),
+                                AppColors.surfaceLight.withValues(alpha: 0),
+                              ],
+                              stops: const [0.0, 0.42, 0.5, 0.58, 1.0],
+                            ).createShader(bounds);
+                          },
+                          child: child,
+                        );
+                      },
+                      child: badgeMask,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1136,5 +1360,46 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildBadgeShineMask(UserAchievementEntity badge, double badgeSize) {
+    final achievement = badge.achievement;
+
+    final networkBadge = achievement.badgeIcon?.trim();
+    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
+        ? Uri.tryParse(networkBadge)
+        : null;
+    final hasValidNetworkBadge =
+        networkBadgeUri != null &&
+        (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
+        networkBadgeUri.host.isNotEmpty;
+
+    if (hasValidNetworkBadge) {
+      return ClipOval(
+        child: Image.network(
+          networkBadge!,
+          width: badgeSize,
+          height: badgeSize,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    final lookupKey = (achievement.slug ?? achievement.id).trim();
+    final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
+    if (assetPath != null) {
+      return ClipOval(
+        child: Image.asset(
+          assetPath,
+          width: badgeSize,
+          height: badgeSize,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

@@ -302,6 +302,10 @@ class UserSocialProfile(BaseModel):
     league: str = "bronze"
     achievements_count: int = 0
     is_following: Optional[bool] = None  # Only for authenticated user
+    mutual_connections: int = 0
+    suggestion_reasons: List[str] = Field(default_factory=list)
+    similarity_score: Optional[float] = None
+    distance_km: Optional[float] = None
     
     class Config:
         from_attributes = True
@@ -312,6 +316,45 @@ class FollowersListResponse(BaseModel):
     users: List[UserSocialProfile]
     total: int
     
+    class Config:
+        from_attributes = True
+
+
+class FriendSuggestionsResponse(BaseModel):
+    """Friend suggestions payload"""
+    users: List[UserSocialProfile]
+    total: int
+
+    class Config:
+        from_attributes = True
+
+
+class LocationUpdateRequest(BaseModel):
+    """Hybrid location update request (coarse + optional consent)."""
+    enabled: bool = True
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+    accuracy_meters: Optional[float] = Field(default=None, ge=0)
+
+
+class LocationUpdateResponse(BaseModel):
+    """Stored location sharing status for social nearby feature."""
+    enabled: bool
+    stored_latitude: Optional[float] = None
+    stored_longitude: Optional[float] = None
+    expires_in_seconds: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class NearbyUsersResponse(BaseModel):
+    """Nearby learners payload."""
+    users: List[UserSocialProfile]
+    total: int
+    radius_km: float
+    location_enabled: bool
+
     class Config:
         from_attributes = True
 

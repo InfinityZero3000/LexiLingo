@@ -7,12 +7,20 @@ Following architecture.md:
 - Conversation history
 """
 
+import asyncio
+import logging
+import os
 import redis.asyncio as redis
-from typing import Optional, Dict, Any, List
+from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
+from typing import Optional, Dict, Any, List, Callable, Awaitable, TypeVar
 import json
 from datetime import timedelta
 
 from api.core.config import settings
+
+
+logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
 class RedisClient:
@@ -20,45 +28,155 @@ class RedisClient:
     
     _instance: Optional[redis.Redis] = None
     _pool: Optional[redis.ConnectionPool] = None
+    _max_retries: int = 10
+
+    @classmethod
+    def _benchmark_fail_fast(cls) -> bool:
+        value = os.getenv("BENCHMARK_REDIS_FAIL_FAST", "")
+        return value.lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
+    def _effective_max_retries(cls) -> int:
+        if cls._benchmark_fail_fast():
+            raw = os.getenv("BENCHMARK_REDIS_MAX_RETRIES", "1")
+        else:
+            raw = os.getenv("REDIS_MAX_RETRIES", str(cls._max_retries))
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            return cls._max_retries
+
+    @classmethod
+    def _socket_timeouts(cls) -> tuple[float, float]:
+        if cls._benchmark_fail_fast():
+            connect_raw = os.getenv("BENCHMARK_REDIS_CONNECT_TIMEOUT", "0.2")
+            op_raw = os.getenv("BENCHMARK_REDIS_SOCKET_TIMEOUT", "0.2")
+        else:
+            connect_raw = os.getenv("REDIS_CONNECT_TIMEOUT", "5")
+            op_raw = os.getenv("REDIS_SOCKET_TIMEOUT", "5")
+
+        try:
+            connect_timeout = max(0.05, float(connect_raw))
+        except ValueError:
+            connect_timeout = 5.0
+        try:
+            socket_timeout = max(0.05, float(op_raw))
+        except ValueError:
+            socket_timeout = 5.0
+        return connect_timeout, socket_timeout
+
+    @classmethod
+    async def _create_instance(cls) -> redis.Redis:
+        """Create a fresh Redis client and verify connectivity."""
+        password = settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None
+        socket_connect_timeout, socket_timeout = cls._socket_timeouts()
+
+        cls._pool = redis.ConnectionPool(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=password,
+            db=settings.REDIS_DB,
+            decode_responses=True,
+            max_connections=10,
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=socket_connect_timeout,
+            health_check_interval=30,
+        )
+        cls._instance = redis.Redis(connection_pool=cls._pool)
+        await cls._instance.ping()
+        logger.info("Connected to Redis: %s:%s", settings.REDIS_HOST, settings.REDIS_PORT)
+        return cls._instance
+
+    @classmethod
+    async def _reset(cls) -> None:
+        """Drop existing client/pool so next attempt builds clean connections."""
+        if cls._instance:
+            try:
+                await cls._instance.close()
+            except Exception:
+                pass
+            cls._instance = None
+        if cls._pool:
+            try:
+                await cls._pool.disconnect()
+            except Exception:
+                pass
+            cls._pool = None
+
+    @classmethod
+    async def reconnect(cls) -> redis.Redis:
+        """Reconnect to Redis with capped retries.
+
+        Raises RuntimeError after retry budget is exhausted.
+        """
+        last_exc: Optional[Exception] = None
+        max_retries = cls._effective_max_retries()
+        for attempt in range(1, max_retries + 1):
+            try:
+                await cls._reset()
+                return await cls._create_instance()
+            except Exception as exc:
+                last_exc = exc
+                logger.warning(
+                    "Redis reconnect attempt %s/%s failed: %s",
+                    attempt,
+                    max_retries,
+                    exc,
+                )
+                if attempt < max_retries:
+                    await asyncio.sleep(min(0.2 * attempt, 2.0))
+
+        raise RuntimeError(
+            f"Redis reconnect failed after {max_retries} attempts"
+        ) from last_exc
     
     @classmethod
     async def get_instance(cls) -> redis.Redis:
-        """Get or create Redis instance."""
+        """Get Redis instance; auto-reconnect up to retry budget when unhealthy."""
         if cls._instance is None:
-            # Use None for password if it's empty string
-            password = settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None
-            
-            cls._pool = redis.ConnectionPool(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT,
-                password=password,
-                db=settings.REDIS_DB,
-                decode_responses=True,
-                max_connections=10,
-                socket_timeout=5,
-                socket_connect_timeout=5
-            )
-            cls._instance = redis.Redis(connection_pool=cls._pool)
-            
-            # Test connection
+            return await cls.reconnect()
+
+        try:
+            await cls._instance.ping()
+            return cls._instance
+        except Exception:
+            return await cls.reconnect()
+
+    @classmethod
+    async def execute_with_reconnect(
+        cls,
+        operation: Callable[[redis.Redis], Awaitable[T]],
+    ) -> T:
+        """Execute a Redis operation with auto-reconnect retry policy.
+
+        Retries connection/timeouts up to 10 times, then raises RuntimeError.
+        """
+        last_exc: Optional[Exception] = None
+        max_retries = cls._effective_max_retries()
+        for attempt in range(1, max_retries + 1):
             try:
-                await cls._instance.ping()
-                print(f"Connected to Redis: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
-            except Exception as e:
-                print(f"Redis connection failed: {e}")
-                # Don't fail, use graceful degradation
-        
-        return cls._instance
+                client = await cls.get_instance()
+                return await operation(client)
+            except (RedisConnectionError, RedisTimeoutError) as exc:
+                last_exc = exc
+                logger.warning(
+                    "Redis operation failed (attempt %s/%s), reconnecting: %s",
+                    attempt,
+                    max_retries,
+                    exc,
+                )
+                if attempt < max_retries:
+                    await cls.reconnect()
+                    await asyncio.sleep(min(0.2 * attempt, 2.0))
+
+        raise RuntimeError(
+            f"Redis operation failed after {max_retries} reconnect attempts"
+        ) from last_exc
     
     @classmethod
     async def close(cls):
         """Close Redis connection."""
-        if cls._instance:
-            await cls._instance.close()
-            cls._instance = None
-        if cls._pool:
-            await cls._pool.disconnect()
-            cls._pool = None
+        await cls._reset()
 
 
 class LearnerProfileCache:
@@ -73,43 +191,48 @@ class LearnerProfileCache:
     
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
-        self.ttl = timedelta(days=30)
+        self.ttl = timedelta(days=7)  # 7 days is sufficient; 30 days wastes memory
+
+    async def _exec(self, operation: Callable[[redis.Redis], Awaitable[T]]) -> T:
+        result = await RedisClient.execute_with_reconnect(operation)
+        self.redis = await RedisClient.get_instance()
+        return result
     
     async def get_level(self, user_id: str) -> Optional[str]:
         """Get learner's English level."""
         key = f"learner:{user_id}:level"
-        return await self.redis.get(key)
+        return await self._exec(lambda r: r.get(key))
     
     async def set_level(self, user_id: str, level: str):
         """Set learner's English level."""
         key = f"learner:{user_id}:level"
-        await self.redis.set(key, level, ex=self.ttl)
+        await self._exec(lambda r: r.set(key, level, ex=self.ttl))
     
     async def get_common_errors(self, user_id: str) -> List[str]:
         """Get learner's common error types."""
         key = f"learner:{user_id}:errors"
-        errors = await self.redis.lrange(key, 0, -1)
+        errors = await self._exec(lambda r: r.lrange(key, 0, -1))
         return errors if errors else []
     
     async def add_error(self, user_id: str, error_type: str):
         """Add error type to learner's common errors."""
         key = f"learner:{user_id}:errors"
-        await self.redis.lpush(key, error_type)
-        await self.redis.ltrim(key, 0, 19)  # Keep last 20 errors
-        await self.redis.expire(key, self.ttl)
+        await self._exec(lambda r: r.lpush(key, error_type))
+        await self._exec(lambda r: r.ltrim(key, 0, 19))  # Keep last 20 errors
+        await self._exec(lambda r: r.expire(key, self.ttl))
     
     async def get_sessions(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get learner's recent session summaries."""
         key = f"learner:{user_id}:sessions"
-        sessions = await self.redis.lrange(key, 0, limit - 1)
+        sessions = await self._exec(lambda r: r.lrange(key, 0, limit - 1))
         return [json.loads(s) for s in sessions] if sessions else []
     
     async def add_session(self, user_id: str, session_summary: Dict[str, Any]):
         """Add session summary to learner's history."""
         key = f"learner:{user_id}:sessions"
-        await self.redis.lpush(key, json.dumps(session_summary))
-        await self.redis.ltrim(key, 0, 9)  # Keep last 10 sessions
-        await self.redis.expire(key, self.ttl)
+        await self._exec(lambda r: r.lpush(key, json.dumps(session_summary)))
+        await self._exec(lambda r: r.ltrim(key, 0, 9))  # Keep last 10 sessions
+        await self._exec(lambda r: r.expire(key, self.ttl))
     
     async def get_profile(self, user_id: str) -> Dict[str, Any]:
         """Get complete learner profile."""
@@ -135,12 +258,17 @@ class ResponseCache:
     
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
-        self.ttl = timedelta(hours=24)
+        self.ttl = timedelta(hours=2)  # 2 hours; 24h caused unbounded accumulation
+
+    async def _exec(self, operation: Callable[[redis.Redis], Awaitable[T]]) -> T:
+        result = await RedisClient.execute_with_reconnect(operation)
+        self.redis = await RedisClient.get_instance()
+        return result
     
     async def get(self, key: str) -> Optional[Dict[str, Any]]:
         """Get cached response."""
         cache_key = f"response:{key}"
-        cached = await self.redis.get(cache_key)
+        cached = await self._exec(lambda r: r.get(cache_key))
         if cached:
             return json.loads(cached)
         return None
@@ -148,16 +276,18 @@ class ResponseCache:
     async def set(self, key: str, response: Dict[str, Any]):
         """Cache response."""
         cache_key = f"response:{key}"
-        await self.redis.set(
-            cache_key,
-            json.dumps(response),
-            ex=self.ttl
+        await self._exec(
+            lambda r: r.set(
+                cache_key,
+                json.dumps(response),
+                ex=self.ttl,
+            )
         )
     
     async def invalidate(self, key: str):
         """Invalidate cached response."""
         cache_key = f"response:{key}"
-        await self.redis.delete(cache_key)
+        await self._exec(lambda r: r.delete(cache_key))
 
 
 class ConversationCache:
@@ -172,6 +302,11 @@ class ConversationCache:
         self.redis = redis_client
         self.ttl = timedelta(hours=2)
         self.max_turns = 5
+
+    async def _exec(self, operation: Callable[[redis.Redis], Awaitable[T]]) -> T:
+        result = await RedisClient.execute_with_reconnect(operation)
+        self.redis = await RedisClient.get_instance()
+        return result
     
     async def add_turn(
         self,
@@ -188,21 +323,21 @@ class ConversationCache:
             "ai": ai_response,
             "metadata": metadata or {}
         }
-        
-        await self.redis.lpush(key, json.dumps(turn))
-        await self.redis.ltrim(key, 0, self.max_turns - 1)  # Keep last 5 turns
-        await self.redis.expire(key, self.ttl)
+
+        await self._exec(lambda r: r.lpush(key, json.dumps(turn)))
+        await self._exec(lambda r: r.ltrim(key, 0, self.max_turns - 1))  # Keep last 5 turns
+        await self._exec(lambda r: r.expire(key, self.ttl))
     
     async def get_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Get conversation history."""
         key = f"conversation:{session_id}:history"
-        history = await self.redis.lrange(key, 0, -1)
+        history = await self._exec(lambda r: r.lrange(key, 0, -1))
         return [json.loads(turn) for turn in reversed(history)] if history else []
     
     async def clear(self, session_id: str):
         """Clear conversation history."""
         key = f"conversation:{session_id}:history"
-        await self.redis.delete(key)
+        await self._exec(lambda r: r.delete(key))
 
 
 async def get_redis() -> redis.Redis:

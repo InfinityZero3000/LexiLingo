@@ -23,7 +23,7 @@ class BookCard extends StatelessWidget {
         width: 140,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C2B3A) : Colors.white,
+          color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -62,8 +62,8 @@ class BookCard extends StatelessWidget {
                     ),
                     child: Text(
                       book.cefrLevel,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -135,7 +135,7 @@ class BookCard extends StatelessWidget {
         child: Icon(
           Icons.menu_book_rounded,
           size: 48,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: AppColors.surfaceLight,
         ),
       ),
     );
@@ -144,17 +144,17 @@ class BookCard extends StatelessWidget {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }

@@ -46,7 +46,7 @@ ai-service/api/services/
 ├── gateway_setup.py        # Setup và registration
 └── handlers/
     ├── __init__.py
-    ├── qwen_handler.py     # Chat/Grammar
+    ├── ollama_qwen_handler.py  # Chat/Grammar via Ollama
     ├── whisper_handler.py  # Speech-to-Text
     ├── piper_handler.py    # Text-to-Speech
     ├── hubert_handler.py   # Pronunciation
@@ -57,7 +57,7 @@ ai-service/api/services/
 
 | Model | Task | RAM | Priority | Idle Timeout |
 |-------|------|-----|----------|--------------|
-| Qwen3-1.7B | Chat, Grammar | ~3.5GB | CRITICAL | 10 phút |
+| Qwen via Ollama | Chat, Grammar | ~200MB client | CRITICAL | 10 phút |
 | Whisper-base | STT | ~500MB | NORMAL | 5 phút |
 | Piper | TTS | ~100MB | NORMAL | 5 phút |
 | HuBERT-large | Pronunciation | ~2GB | LOW | 3 phút |
@@ -165,9 +165,13 @@ print(f"Memory used: {status['gateway']['used_memory_mb']}MB")
 # Memory
 MAX_MEMORY_MB=8000
 
-# Qwen
-QWEN_MODEL_PATH=models/qwen3-1.7b
-QWEN_MODEL_ID=Qwen/Qwen2.5-1.5B-Instruct
+# Qwen via Ollama (no local HF model loading)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=lexilingo-qwen3-1.7b
+OLLAMA_TIMEOUT=120
+OLLAMA_CONTEXT_LENGTH=2048
+OLLAMA_NUM_THREADS=8
+OLLAMA_KEEP_ALIVE=24h
 
 # Whisper
 WHISPER_MODEL_SIZE=base

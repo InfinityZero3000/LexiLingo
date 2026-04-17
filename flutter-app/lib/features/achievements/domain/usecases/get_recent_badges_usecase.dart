@@ -3,6 +3,7 @@
 /// Following agent-skills/language-learning-patterns:
 /// - gamification-achievement-badges: Display recent badges for engagement (25-40% boost)
 /// - Users respond well to seeing their recent accomplishments prominently displayed
+library;
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/domain/repositories/achievement_repository.dart';

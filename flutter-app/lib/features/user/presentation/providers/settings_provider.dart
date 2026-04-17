@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
 /// Provider for managing user settings
 class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
+  final NotificationService _notificationService;
 
   Settings? _settings;
   bool _isLoading = false;
   String? _error;
 
-  SettingsProvider({required SettingsRepository repository})
-    : _repository = repository;
+  SettingsProvider({
+    required SettingsRepository repository,
+    required NotificationService notificationService,
+  }) : _repository = repository,
+       _notificationService = notificationService;
 
   Settings? get settings => _settings;
   bool get isLoading => _isLoading;
@@ -89,20 +95,27 @@ class SettingsProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
     } finally {
+      if (_settings != null && _error == null) {
+        await _syncReminderWithSettings(_settings!);
+      }
       _isLoading = false;
       notifyListeners();
     }
   }
 
   /// Update language preference
-  Future<void> updateLanguage(String languageCode) async {
+  /// This updates both the database and the app locale via EasyLocalization
+  Future<void> updateLanguage(String languageCode, BuildContext context) async {
     if (_settings == null) return;
 
     final oldLanguage = _settings!.language;
+    
+    // Update settings in memory first
     _settings = _settings!.copyWith(language: languageCode);
     notifyListeners();
 
     try {
+      // Update database
       final result = await _repository.updateSettings(_settings!);
       result.fold(
         (failure) {
@@ -111,8 +124,11 @@ class SettingsProvider extends ChangeNotifier {
           _error = failure.message;
           notifyListeners();
         },
-        (_) {
+        (_) async {
           _error = null;
+          // Update app locale via EasyLocalization and persist
+          await LocaleService.updateAppLocale(context, languageCode);
+          debugPrint('Language updated to: $languageCode');
         },
       );
     } catch (e) {
@@ -200,8 +216,9 @@ class SettingsProvider extends ChangeNotifier {
           _error = failure.message;
           notifyListeners();
         },
-        (_) {
+        (_) async {
           _error = null;
+          await _syncReminderWithSettings(_settings!);
         },
       );
     } catch (e) {
@@ -212,6 +229,29 @@ class SettingsProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
     }
+  }
+
+  Future<void> _syncReminderWithSettings(Settings settings) async {
+    await _notificationService.ensureInitialized();
+    final permissionGranted = await _notificationService.requestPermissions();
+
+    if (!permissionGranted || !settings.notificationEnabled) {
+      await _notificationService.cancelDailyReminder();
+      return;
+    }
+
+    final parts = settings.notificationTime.split(':');
+    final hour = int.tryParse(parts.first);
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) : null;
+
+    if (hour == null || minute == null) {
+      debugPrint('Invalid notification time: ${settings.notificationTime}');
+      return;
+    }
+
+    await _notificationService.scheduleDailyReminder(
+      TimeOfDay(hour: hour, minute: minute),
+    );
   }
 
   /// Update sound setting

@@ -80,10 +80,11 @@ void main() {
         };
 
         // Act
-        final envelope = PaginatedResponseEnvelope<Map<String, dynamic>>.fromJson(
-          json,
-          (item) => item,
-        );
+        final envelope =
+            PaginatedResponseEnvelope<Map<String, dynamic>>.fromJson(
+              json,
+              (item) => item,
+            );
 
         // Assert
         expect(envelope.data.length, 2);

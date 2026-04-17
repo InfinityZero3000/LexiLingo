@@ -344,7 +344,7 @@ class TestSearchBooks:
             MockCache.return_value = mock_cache
             response = await no_db_client.get(f"{BASE}/search?q=alice&level=XX")
         assert response.status_code == 400
-        assert "CEFR" in response.json()["detail"]
+        assert "CEFR" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_returns_books_from_cache(self, no_db_client: AsyncClient):

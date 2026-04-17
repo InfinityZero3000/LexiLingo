@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -213,7 +214,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
           builder: (context, provider, _) {
             if (provider.isLoading || !_gameLoaded) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: Center(child: LottieLoadingWidget.medium()),
               );
             }
             final game = provider.wordScramble!;
@@ -221,7 +222,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
             return Scaffold(
               backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
                   'Word ${_currentWordIndex + 1} of ${game.words.length}',
@@ -285,7 +286,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                     color: _slotCorrect[i]
                                         ? AppColors.greenSuccess
                                         : _slotWrong[i]
-                                        ? const Color(0xFFC62828)
+                                        ? AppColors.errorDark
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
@@ -405,12 +406,12 @@ class _TimerDisplay extends StatelessWidget {
     final color = ratio > 0.5
         ? AppColors.greenSuccess
         : ratio > 0.25
-        ? Colors.orange
-        : Colors.red;
+        ? AppColors.orange
+        : AppColors.errorBright;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),
@@ -440,7 +441,7 @@ class _HintCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.accentYellow.withOpacity(0.2),
+                color: AppColors.accentYellow.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.accentYellow),
               ),
@@ -483,8 +484,8 @@ class _XpPopup extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.surface,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),

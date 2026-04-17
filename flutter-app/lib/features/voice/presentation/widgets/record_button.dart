@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Record Button Widget
 /// Animated button for recording audio
@@ -72,7 +73,7 @@ class _RecordButtonState extends State<RecordButton>
             child: Text(
               _formatDuration(widget.recordingDuration),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.red,
+                color: AppColors.errorBright,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -91,12 +92,12 @@ class _RecordButtonState extends State<RecordButton>
                     shape: BoxShape.circle,
                     color: widget.isProcessing
                         ? Colors.grey
-                        : (widget.isRecording ? Colors.red : AppColors.primary),
+                        : (widget.isRecording ? AppColors.errorBright : AppColors.primary),
                     boxShadow: [
                       BoxShadow(
                         color:
                             (widget.isRecording
-                                    ? Colors.red
+                                    ? AppColors.errorBright
                                     : AppColors.primary)
                                 .withValues(alpha: 0.3),
                         blurRadius: 12,
@@ -105,19 +106,16 @@ class _RecordButtonState extends State<RecordButton>
                     ],
                   ),
                   child: widget.isProcessing
-                      ? const Center(
+                      ? Center(
                           child: SizedBox(
                             width: 32,
                             height: 32,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
-                            ),
+                            child: LottieLoadingWidget.tiny(),
                           ),
                         )
                       : Icon(
                           widget.isRecording ? Icons.stop : Icons.mic,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           size: 36,
                         ),
                 ),

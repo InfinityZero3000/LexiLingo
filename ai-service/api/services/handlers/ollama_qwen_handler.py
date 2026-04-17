@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class OllamaQwenConfig:
     """Configuration for Ollama Qwen model."""
     base_url: str = "http://localhost:11434"
-    model: str = "qwen2.5:1.5b"  # Model name in Ollama
+    model: str = "lexilingo-qwen3-1.7b"  # Model name in Ollama
     timeout: float = 120.0
     temperature: float = 0.7
     top_p: float = 0.9

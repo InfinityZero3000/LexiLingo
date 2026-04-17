@@ -27,11 +27,22 @@ class Settings(BaseSettings):
     # ============================================================
     # MongoDB Configuration
     # ============================================================
+    MONGODB_ATLAS_URI: str = os.getenv("MONGODB_ATLAS_URI", "").strip()
     MONGODB_URI: str = os.getenv(
         "MONGODB_URI",
-        "mongodb://admin:lexilingo2026@localhost:27017/"
+        ""
+    ).strip() or MONGODB_ATLAS_URI or (
+        "mongodb://localhost:10255/?"
+        "ssl=true&replicaSet=globaldb&retrywrites=false"
+        "&maxIdleTimeMS=120000&tlsAllowInvalidCertificates=true"
     )
     MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
+    MONGODB_TLS_ALLOW_INVALID_CERTIFICATES: bool = (
+        os.getenv("MONGODB_TLS_ALLOW_INVALID_CERTIFICATES", "true").lower() == "true"
+    )
+    MONGODB_SERVER_SELECTION_TIMEOUT_MS: int = int(
+        os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "10000")
+    )
     MONGODB_MIN_POOL_SIZE: int = 2
     MONGODB_MAX_POOL_SIZE: int = 50 if ENVIRONMENT == "production" else 10
     
@@ -40,12 +51,12 @@ class Settings(BaseSettings):
     # ============================================================
     REDIS_URL: str = os.getenv(
         "REDIS_URL",
-        "redis://:lexilingo2026@localhost:6379/0"
+        "redis://localhost:6379/1"
     )
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "lexilingo2026")
-    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+    REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "")
+    REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
     REDIS_MAX_CONNECTIONS: int = 50
     
     # ============================================================
@@ -115,7 +126,7 @@ class Settings(BaseSettings):
     # ============================================================
     # Model Names (default = use base model on server)
     # ============================================================
-    # Qwen2.5-1.5B - English NLP (grammar, fluency, vocabulary, tutor response)
+    # Qwen3-1.7B - English NLP (grammar, fluency, vocabulary, tutor response)
     QWEN_MODEL_NAME: str = os.getenv("QWEN_MODEL_NAME", "")
     
     # LLaMA3-8B-VI - Vietnamese explanations (lazy load)

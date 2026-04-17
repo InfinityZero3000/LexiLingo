@@ -5,9 +5,11 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: lexilingo-postgres
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       POSTGRES_USER: lexilingo
-      POSTGRES_PASSWORD: lexilingo_pass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: lexilingo
     ports:
       - "5432:5432"
@@ -27,10 +29,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: lexilingo-backend-service
+    mem_limit: 1g
+    memswap_limit: 1g
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@postgres:5432/lexilingo
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       DEBUG: ${DEBUG:-True}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}

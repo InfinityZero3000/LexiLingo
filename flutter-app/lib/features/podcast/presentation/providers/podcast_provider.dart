@@ -110,6 +110,10 @@ class PodcastProvider extends ChangeNotifier {
         feedUrl: podcast.feedUrl,
       );
     } catch (e) {
+      debugPrint(
+        '[PodcastProvider] loadEpisodes failed for "${podcast.title}" '
+        '(feed: ${podcast.feedUrl}): $e',
+      );
       _error = e.toString();
     } finally {
       _isLoading = false;

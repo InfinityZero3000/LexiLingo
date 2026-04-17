@@ -1,5 +1,6 @@
 /// Social Feature Barrel File
 /// Exports all social-related components
+library;
 // DI
 export 'di/social_di.dart';
 // Entities

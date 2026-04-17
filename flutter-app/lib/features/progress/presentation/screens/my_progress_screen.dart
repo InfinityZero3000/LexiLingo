@@ -191,11 +191,11 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
     IconData icon,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
           ),

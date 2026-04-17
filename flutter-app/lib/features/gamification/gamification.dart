@@ -1,5 +1,6 @@
 /// Gamification Feature Barrel File
 /// Exports all gamification-related components
+library;
 
 // DI
 export 'di/gamification_di.dart';

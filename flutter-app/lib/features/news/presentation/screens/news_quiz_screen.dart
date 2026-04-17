@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -71,7 +72,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
         child: Consumer<NewsProvider>(
           builder: (context, provider, _) {
             if (provider.isLoadingQuiz) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: LottieLoadingWidget.medium());
             }
 
             if (provider.currentQuiz == null) {
@@ -82,13 +83,13 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     Icon(
                       Icons.quiz_outlined,
                       size: 64,
-                      color: Colors.grey.shade400,
+                      color: AppColors.grey400,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Quiz not available',
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: AppColors.grey500,
                         fontSize: 16,
                       ),
                     ),
@@ -278,14 +279,14 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         ? cefrColor.withValues(alpha: 0.08)
                         : (isDark
                               ? Colors.white.withValues(alpha: 0.03)
-                              : Colors.grey.shade50),
+                              : AppColors.grey50),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
                           ? cefrColor
                           : (isDark
                                 ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.grey.shade200),
+                                : AppColors.grey200),
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -300,7 +301,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                               ? cefrColor
                               : (isDark
                                     ? Colors.white.withValues(alpha: 0.06)
-                                    : Colors.grey.shade100),
+                                    : AppColors.grey100),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -311,7 +312,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                                   ? Colors.white
                                   : (isDark
                                         ? Colors.white54
-                                        : Colors.grey.shade600),
+                                        : AppColors.grey600),
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -477,7 +478,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         isCorrect
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
-                        color: isCorrect ? Colors.green : Colors.red,
+                        color: isCorrect ? AppColors.greenSuccessBright : AppColors.errorBright,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -497,7 +498,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     Text(
                       'Correct: ${q.options[q.correctIndex]}',
                       style: const TextStyle(
-                        color: Colors.green,
+                        color: AppColors.greenSuccessBright,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -575,17 +576,17 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return const Color(0xFF4CAF50);
+        return AppColors.greenSuccessBright;
       case 'A2':
-        return const Color(0xFF8BC34A);
+        return AppColors.greenSuccessSoft;
       case 'B1':
-        return const Color(0xFFFFC107);
+        return AppColors.warning;
       case 'B2':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       case 'C1':
-        return const Color(0xFFFF5722);
+        return AppColors.deepOrange;
       case 'C2':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       default:
         return AppColors.primary;
     }
@@ -594,11 +595,11 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   Color _questionTypeColor(String type) {
     switch (type) {
       case 'comprehension':
-        return const Color(0xFF137FEC);
+        return AppColors.primary;
       case 'vocabulary':
-        return const Color(0xFF9C27B0);
+        return AppColors.purple;
       case 'grammar':
-        return const Color(0xFFFF9800);
+        return AppColors.orange;
       default:
         return AppColors.primary;
     }
@@ -612,12 +613,15 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   }
 
   String _resultSubMessage(int percentage) {
-    if (percentage >= 80)
+    if (percentage >= 80) {
       return 'You have a great understanding of this article.';
-    if (percentage >= 60)
+    }
+    if (percentage >= 60) {
       return 'You\'re on the right track. Review the highlighted words.';
-    if (percentage >= 40)
+    }
+    if (percentage >= 40) {
       return 'Try re-reading the article and focusing on key details.';
+    }
     return 'Re-read the article carefully before trying again.';
   }
 }

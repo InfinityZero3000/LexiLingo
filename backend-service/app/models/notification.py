@@ -5,11 +5,11 @@ Maps to existing 'notifications' table in the database.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, ForeignKey, Text, JSON, Index
+from sqlalchemy import String, Boolean, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import GUID, TZDateTime
+from app.core.db_types import GUID, TZDateTime, PortableJSON
 
 
 class Notification(Base):
@@ -38,7 +38,7 @@ class Notification(Base):
     type: Mapped[str] = mapped_column(
         String(50), nullable=False
     )  # achievement, social, system, challenge, streak, level_up
-    data: Mapped[dict] = mapped_column(JSON, nullable=True)  # Extra payload (achievement_id, etc.)
+    data: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # Extra payload (achievement_id, etc.)
 
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     read_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)

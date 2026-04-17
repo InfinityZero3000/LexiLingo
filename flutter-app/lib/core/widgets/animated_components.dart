@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Star Rating
 /// Beautiful animated star rating component
@@ -16,7 +17,7 @@ class AnimatedStarRating extends StatefulWidget {
     required this.rating,
     this.starCount = 5,
     this.size = 24,
-    this.filledColor = Colors.amber,
+    this.filledColor = AppColors.warning,
     this.unfilledColor = Colors.grey,
     this.animationDuration = const Duration(milliseconds: 500),
   });
@@ -345,7 +346,7 @@ class _BouncingDotsLoaderState extends State<BouncingDotsLoader>
                   width: widget.dotSize,
                   height: widget.dotSize,
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.6 + bounce * 0.4),
+                    color: widget.color.withValues(alpha: 0.6 + bounce * 0.4),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -368,7 +369,7 @@ class HeartbeatAnimation extends StatefulWidget {
   const HeartbeatAnimation({
     super.key,
     this.size = 32,
-    this.color = Colors.red,
+    this.color = AppColors.errorBright,
     this.isActive = true,
   });
 
@@ -627,7 +628,7 @@ class SuccessBurst extends StatefulWidget {
   const SuccessBurst({
     super.key,
     this.size = 100,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.particleCount = 12,
     this.onComplete,
   });
@@ -702,7 +703,7 @@ class _SuccessBurstPainter extends CustomPainter {
       final y = center.dy + distance * math.sin(angle);
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity)
+        ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), particleSize, paint);
@@ -712,7 +713,7 @@ class _SuccessBurstPainter extends CustomPainter {
     if (progress < 0.5) {
       final glowProgress = progress * 2;
       final glowPaint = Paint()
-        ..color = color.withOpacity((1 - glowProgress) * 0.5)
+        ..color = color.withValues(alpha: (1 - glowProgress) * 0.5)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(
         center,

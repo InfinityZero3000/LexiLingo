@@ -1,0 +1,92 @@
+services:
+  kong:
+    image: kong:3.7
+    container_name: lexilingo-kong-hybrid
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.hybrid.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_TRACING_INSTRUMENTATIONS: request
+      KONG_PLUGINS: bundled
+      KONG_NGINX_WORKER_PROCESSES: "auto"
+      KONG_REAL_IP_HEADER: X-Forwarded-For
+      KONG_TRUSTED_IPS: 0.0.0.0/0,::/0
+    ports:
+      - "8008:8000"
+      - "8009:8001"
+    volumes:
+      - ./kong/kong.hybrid.yml:/etc/kong/kong.hybrid.yml:ro
+    depends_on:
+      - otel-collector
+    networks:
+      - gateway-network
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: lexilingo-prometheus-hybrid
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.hybrid.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - gateway-network
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: lexilingo-grafana-hybrid
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - gateway-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    container_name: lexilingo-otel-collector-hybrid
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - jaeger
+    networks:
+      - gateway-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: lexilingo-jaeger-hybrid
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+      - "14268:14268"
+    networks:
+      - gateway-network
+
+networks:
+  gateway-network:
+    driver: bridge
+
+volumes:
+  grafana_data:

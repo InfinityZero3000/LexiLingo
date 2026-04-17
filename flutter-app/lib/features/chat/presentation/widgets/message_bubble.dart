@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
@@ -113,13 +114,13 @@ class _MessageBubbleState extends State<MessageBubble>
       case 'thumb_up':
         return Colors.blue;
       case 'favorite':
-        return Colors.red;
+        return AppColors.errorBright;
       case 'lightbulb':
-        return Colors.amber;
+        return AppColors.warning;
       case 'target':
-        return Colors.green;
+        return AppColors.greenSuccessBright;
       case 'help':
-        return Colors.purple;
+        return AppColors.purple;
       default:
         return Colors.grey;
     }
@@ -200,7 +201,7 @@ class _MessageBubbleState extends State<MessageBubble>
                           Text(
                             widget.message.content,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.white),
+                                ?.copyWith(color: Theme.of(context).colorScheme.surface),
                           )
                         else
                           MarkdownMessageContent(
@@ -235,12 +236,7 @@ class _MessageBubbleState extends State<MessageBubble>
                                   SizedBox(
                                     width: 12,
                                     height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: isUser
-                                          ? Colors.white
-                                          : AppColors.primary,
-                                    ),
+                                    child: LottieLoadingWidget.tiny(),
                                   )
                                 else if (widget.message.hasError)
                                   Icon(
@@ -248,13 +244,13 @@ class _MessageBubbleState extends State<MessageBubble>
                                     size: 14,
                                     color: isUser
                                         ? Colors.red[200]
-                                        : Colors.red,
+                                        : AppColors.errorBright,
                                   )
                                 else if (isUser)
                                   Icon(
                                     Icons.check,
                                     size: 14,
-                                    color: Colors.white.withValues(alpha: 0.7),
+                                    color: AppColors.surfaceLight,
                                   ),
                               ],
                             ),
