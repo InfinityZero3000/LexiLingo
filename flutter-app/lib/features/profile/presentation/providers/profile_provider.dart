@@ -104,7 +104,9 @@ class ProfileProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final badges = await getRecentBadgesUseCase!.call(limit: _recentBadgesLimit);
+      final badges = await getRecentBadgesUseCase!.call(
+        limit: _recentBadgesLimit,
+      );
       _recentBadges = badges.take(_recentBadgesLimit).toList();
       _isLoadingBadges = false;
       notifyListeners();

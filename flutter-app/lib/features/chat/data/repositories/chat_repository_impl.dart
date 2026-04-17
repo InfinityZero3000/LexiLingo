@@ -181,7 +181,9 @@ class ChatRepositoryImpl implements ChatRepository {
       if (apiDataSource != null && await networkInfo.isConnected) {
         if (cursor == null || cursor.isEmpty) {
           try {
-            final metadata = await apiDataSource!.getMessagesMetadata(sessionId);
+            final metadata = await apiDataSource!.getMessagesMetadata(
+              sessionId,
+            );
             if (!metadata.hasMessages || metadata.totalCount == 0) {
               return const Right(
                 ChatMessagesPage(
@@ -197,7 +199,10 @@ class ChatRepositoryImpl implements ChatRepository {
               rethrow;
             }
             // Metadata endpoint is an optimization layer only.
-            logWarn(_tag, 'getMessagesMetadata failed, continue paged fetch: $e');
+            logWarn(
+              _tag,
+              'getMessagesMetadata failed, continue paged fetch: $e',
+            );
           }
         }
 
@@ -221,7 +226,9 @@ class ChatRepositoryImpl implements ChatRepository {
       final all = localMessages.map((m) => m.toEntity()).toList();
       final safeLimit = limit < 1 ? 1 : limit;
       final endIndex = all.length;
-      final startIndex = (endIndex - safeLimit) < 0 ? 0 : (endIndex - safeLimit);
+      final startIndex = (endIndex - safeLimit) < 0
+          ? 0
+          : (endIndex - safeLimit);
       final page = all.sublist(startIndex, endIndex);
 
       return Right(

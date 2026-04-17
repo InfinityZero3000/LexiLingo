@@ -335,7 +335,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
-                                final isValid = _formKey.currentState?.validate() ?? false;
+                                final isValid =
+                                    _formKey.currentState?.validate() ?? false;
                                 if (!isValid) {
                                   return;
                                 }
@@ -440,7 +441,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             : () async {
                                 await authProvider.signInWithFacebook();
                               },
-                        icon: Icon(Icons.facebook, color: AppColors.surfaceLight),
+                        icon: Icon(
+                          Icons.facebook,
+                          color: AppColors.surfaceLight,
+                        ),
                         label: Text(
                           'Continue with Facebook',
                           style: TextStyle(
@@ -505,7 +509,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.error_outline, color: AppColors.errorBright),
+                            const Icon(
+                              Icons.error_outline,
+                              color: AppColors.errorBright,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: SelectableText(

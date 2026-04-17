@@ -201,7 +201,9 @@ class _MessageBubbleState extends State<MessageBubble>
                           Text(
                             widget.message.content,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Theme.of(context).colorScheme.surface),
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.surface,
+                                ),
                           )
                         else
                           MarkdownMessageContent(

@@ -329,11 +329,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               color: colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.volume_up,
-              color: colorScheme.primary,
-              size: 20,
-            ),
+            child: Icon(Icons.volume_up, color: colorScheme.primary, size: 20),
           ),
         ],
       ),

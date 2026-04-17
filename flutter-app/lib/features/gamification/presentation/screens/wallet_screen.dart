@@ -61,7 +61,9 @@ class _WalletScreenState extends State<WalletScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surface.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -132,7 +134,9 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.greenSuccessBright.withValues(alpha: 0.2),
+                      color: AppColors.greenSuccessBright.withValues(
+                        alpha: 0.2,
+                      ),
                     ),
                   ),
                   child: Column(
@@ -294,7 +298,11 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 16),
+          const Icon(
+            Icons.check_circle,
+            color: AppColors.greenSuccessBright,
+            size: 16,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

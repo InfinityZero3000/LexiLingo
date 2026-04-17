@@ -372,7 +372,9 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             streak.streakLevel,
-            style: theme.textTheme.titleMedium?.copyWith(color: AppColors.orange),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColors.orange,
+            ),
           ),
 
           const SizedBox(height: 32),
@@ -467,7 +469,9 @@ class StreakDetailsSheet extends StatelessWidget {
                               final accent = AppColorRoles.primary(isDark);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Streak freeze activated!'),
+                                  content: const Text(
+                                    'Streak freeze activated!',
+                                  ),
                                   backgroundColor: accent,
                                 ),
                               );

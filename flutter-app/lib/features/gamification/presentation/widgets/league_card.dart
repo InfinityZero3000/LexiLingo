@@ -54,7 +54,11 @@ class LeagueCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(leagueData.icon, color: Theme.of(context).colorScheme.surface, size: 28),
+              child: Icon(
+                leagueData.icon,
+                color: Theme.of(context).colorScheme.surface,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
 
@@ -232,18 +236,18 @@ class LeagueBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(data.$3, color: Theme.of(context).colorScheme.surface, size: size * 0.5),
+      child: Icon(
+        data.$3,
+        color: Theme.of(context).colorScheme.surface,
+        size: size * 0.5,
+      ),
     );
   }
 
   (Color, Color, IconData) _getLeagueColor(String league) {
     switch (league.toLowerCase()) {
       case 'bronze':
-        return (
-          AppColors.bronze,
-          AppColors.goldDark,
-          Icons.shield_outlined,
-        );
+        return (AppColors.bronze, AppColors.goldDark, Icons.shield_outlined);
       case 'silver':
         return (AppColors.silver, AppColors.grey500, Icons.shield);
       case 'gold':
@@ -265,11 +269,7 @@ class LeagueBadge extends StatelessWidget {
           Icons.diamond,
         );
       default:
-        return (
-          AppColors.bronze,
-          AppColors.goldDark,
-          Icons.shield_outlined,
-        );
+        return (AppColors.bronze, AppColors.goldDark, Icons.shield_outlined);
     }
   }
 }

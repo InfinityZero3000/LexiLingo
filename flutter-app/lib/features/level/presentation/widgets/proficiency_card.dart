@@ -60,7 +60,7 @@ class ProficiencyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-              ? accent.withValues(alpha: 0.22)
+                  ? accent.withValues(alpha: 0.22)
                   : AppColors.slate200,
             ),
           ),
@@ -100,7 +100,7 @@ class ProficiencyCard extends StatelessWidget {
                               },
                         size: 240,
                         fillColor: isDark
-                          ? accent.withValues(alpha: 0.25)
+                            ? accent.withValues(alpha: 0.25)
                             : AppColors.primary.withValues(alpha: 0.15),
                         strokeColor: accent,
                         gridColor: isDark
@@ -115,7 +115,9 @@ class ProficiencyCard extends StatelessWidget {
                           height: 56,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? AppColors.surfaceDarkMuted.withValues(alpha: 0.9)
+                                ? AppColors.surfaceDarkMuted.withValues(
+                                    alpha: 0.9,
+                                  )
                                 : Colors.white.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -266,7 +268,7 @@ class ProficiencyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-              ? accent.withValues(alpha: 0.22)
+                  ? accent.withValues(alpha: 0.22)
                   : AppColors.slate200,
             ),
           ),

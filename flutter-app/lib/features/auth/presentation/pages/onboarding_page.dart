@@ -106,7 +106,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   backgroundColor: isDark
                       ? AppColors.slate800
                       : AppColors.slate200,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.accentMint),
+                  valueColor: const AlwaysStoppedAnimation(
+                    AppColors.accentMint,
+                  ),
                 ),
               ),
               const SizedBox(height: 18),
@@ -121,7 +123,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     _buildGoalGridStep(
                       context: context,
                       title: 'What is your goal?',
-                      subtitle: 'We\'ll tailor your learning experience based on your choice.',
+                      subtitle:
+                          'We\'ll tailor your learning experience based on your choice.',
                       value: _selectedGoal,
                       onSelected: (value) {
                         setState(() => _selectedGoal = value);
@@ -134,11 +137,31 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           'This helps us set content difficulty from the start.',
                       value: _selectedLevel,
                       options: const [
-                        _OnboardingOption('A1', 'A1 - Beginner', Icons.child_care_rounded),
-                        _OnboardingOption('A2', 'A2 - Elementary', Icons.directions_walk_rounded),
-                        _OnboardingOption('B1', 'B1 - Intermediate', Icons.directions_run_rounded),
-                        _OnboardingOption('B2', 'B2 - Upper Intermediate', Icons.directions_bike_rounded),
-                        _OnboardingOption('C1', 'C1 - Advanced', Icons.workspace_premium_rounded),
+                        _OnboardingOption(
+                          'A1',
+                          'A1 - Beginner',
+                          Icons.child_care_rounded,
+                        ),
+                        _OnboardingOption(
+                          'A2',
+                          'A2 - Elementary',
+                          Icons.directions_walk_rounded,
+                        ),
+                        _OnboardingOption(
+                          'B1',
+                          'B1 - Intermediate',
+                          Icons.directions_run_rounded,
+                        ),
+                        _OnboardingOption(
+                          'B2',
+                          'B2 - Upper Intermediate',
+                          Icons.directions_bike_rounded,
+                        ),
+                        _OnboardingOption(
+                          'C1',
+                          'C1 - Advanced',
+                          Icons.workspace_premium_rounded,
+                        ),
                       ],
                       onSelected: (value) {
                         setState(() => _selectedLevel = value);
@@ -154,18 +177,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         _OnboardingOption(
                           'daily-life',
                           'Daily life & social topics',
-                          Icons.coffee_rounded
+                          Icons.coffee_rounded,
                         ),
                         _OnboardingOption(
                           'technology',
                           'Technology & innovation',
-                          Icons.computer_rounded
+                          Icons.computer_rounded,
                         ),
-                        _OnboardingOption('culture', 'Culture & entertainment', Icons.palette_rounded),
+                        _OnboardingOption(
+                          'culture',
+                          'Culture & entertainment',
+                          Icons.palette_rounded,
+                        ),
                         _OnboardingOption(
                           'career',
                           'Career growth & interviews',
-                          Icons.business_center_rounded
+                          Icons.business_center_rounded,
                         ),
                       ],
                       onSelected: (value) {
@@ -206,7 +233,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
     );
   }
-
 
   Widget _buildGoalGridStep({
     required BuildContext context,
@@ -301,10 +327,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.accentMint.withValues(alpha: 0.3),
+                              color: AppColors.accentMint.withValues(
+                                alpha: 0.3,
+                              ),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
-                            )
+                            ),
                           ]
                         : null,
                   ),
@@ -319,7 +347,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
-                              color: isDark ? AppColors.slate800 : AppColors.slate200,
+                              color: isDark
+                                  ? AppColors.slate800
+                                  : AppColors.slate200,
                             );
                           },
                         ),
@@ -375,7 +405,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-
   Widget _buildChoiceStep({
     required BuildContext context,
     required String title,
@@ -421,13 +450,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 onTap: () => onSelected(option.value),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: selected
                         ? AppColors.accentMint.withValues(alpha: 0.1)
                         : (isDark
-                              ? AppColors.surfaceDarkInput.withValues(alpha: 0.55)
+                              ? AppColors.surfaceDarkInput.withValues(
+                                  alpha: 0.55,
+                                )
                               : Colors.white),
                     border: Border.all(
                       color: selected
@@ -440,17 +474,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     boxShadow: selected
                         ? [
                             BoxShadow(
-                              color: AppColors.accentMint.withValues(alpha: 0.2),
+                              color: AppColors.accentMint.withValues(
+                                alpha: 0.2,
+                              ),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
-                            )
+                            ),
                           ]
                         : [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.2 : 0.02,
+                              ),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
-                            )
+                            ),
                           ],
                   ),
                   child: Row(
@@ -458,7 +496,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       if (option.icon != null) ...[
                         Icon(
                           option.icon,
-                          color: selected ? AppColors.accentMint : (isDark ? Colors.white54 : AppColors.textGrey),
+                          color: selected
+                              ? AppColors.accentMint
+                              : (isDark ? Colors.white54 : AppColors.textGrey),
                           size: 26,
                         ),
                         const SizedBox(width: 16),
@@ -470,9 +510,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             fontWeight: selected
                                 ? FontWeight.bold
                                 : FontWeight.w500,
-                            color: selected 
+                            color: selected
                                 ? (isDark ? Colors.white : AppColors.textDark)
-                                : (isDark ? Colors.white70 : AppColors.textSlate),
+                                : (isDark
+                                      ? Colors.white70
+                                      : AppColors.textSlate),
                             fontSize: 17,
                           ),
                         ),
@@ -487,7 +529,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: selected ? AppColors.accentMint : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
+                              color: selected
+                                  ? AppColors.accentMint
+                                  : (isDark
+                                        ? Colors.white24
+                                        : const Color(0xFFCBD5E1)),
                               width: selected ? 6 : 2,
                             ),
                           ),

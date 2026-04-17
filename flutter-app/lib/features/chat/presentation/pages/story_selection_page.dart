@@ -141,7 +141,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.35 : 0.10),
+            color: AppColors.backgroundDark.withValues(
+              alpha: isDark ? 0.35 : 0.10,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -151,15 +153,11 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         controller: _searchController,
         onChanged: (val) => setState(() => _searchQuery = val),
         textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(
-          color: AppColorRoles.textPrimary(isDark),
-        ),
+        style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
         decoration: InputDecoration(
           isDense: true,
           hintText: 'Search topics...',
-          hintStyle: TextStyle(
-            color: AppColorRoles.textMuted(isDark),
-          ),
+          hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
           prefixIcon: Icon(
             Icons.search,
             color: isDark ? accent : theme.primaryColor,
@@ -169,11 +167,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             minHeight: 44,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(
-            top: 0,
-            bottom: 0,
-            right: 16,
-          ),
+          contentPadding: const EdgeInsets.only(top: 0, bottom: 0, right: 16),
         ),
       ),
     );
@@ -252,14 +246,16 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           border: isSelected
               ? null
               : Border.all(
-                  color: (isDark ? accent : theme.primaryColor)
-                      .withValues(alpha: 0.2),
+                  color: (isDark ? accent : theme.primaryColor).withValues(
+                    alpha: 0.2,
+                  ),
                 ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: (isDark ? accent : theme.primaryColor)
-                        .withValues(alpha: 0.3),
+                    color: (isDark ? accent : theme.primaryColor).withValues(
+                      alpha: 0.3,
+                    ),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -396,14 +392,15 @@ class _TopicListItem extends StatelessWidget {
             color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: (isDark
-                      ? AppColorRoles.primary(isDark)
-                      : theme.primaryColor)
-                  .withValues(alpha: isDark ? 0.20 : 0.05),
+              color:
+                  (isDark ? AppColorRoles.primary(isDark) : theme.primaryColor)
+                      .withValues(alpha: isDark ? 0.20 : 0.05),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.backgroundDark.withValues(alpha: isDark ? 0.25 : 0.08),
+                color: AppColors.backgroundDark.withValues(
+                  alpha: isDark ? 0.25 : 0.08,
+                ),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -416,10 +413,11 @@ class _TopicListItem extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: (isDark
-                          ? AppColorRoles.primary(isDark)
-                          : theme.primaryColor)
-                      .withValues(alpha: 0.15),
+                  color:
+                      (isDark
+                              ? AppColorRoles.primary(isDark)
+                              : theme.primaryColor)
+                          .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

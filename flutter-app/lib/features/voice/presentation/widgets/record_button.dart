@@ -92,7 +92,9 @@ class _RecordButtonState extends State<RecordButton>
                     shape: BoxShape.circle,
                     color: widget.isProcessing
                         ? Colors.grey
-                        : (widget.isRecording ? AppColors.errorBright : AppColors.primary),
+                        : (widget.isRecording
+                              ? AppColors.errorBright
+                              : AppColors.primary),
                     boxShadow: [
                       BoxShadow(
                         color:

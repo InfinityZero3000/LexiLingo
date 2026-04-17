@@ -94,18 +94,10 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     try {
-      final response = await _sendRaw(
-        'GET',
-        uri,
-        headers: headers,
-      );
+      final response = await _sendRaw('GET', uri, headers: headers);
       return await _parseResponseEnvelope<T>(response, fromJson);
     } on TokenRefreshedException {
-      final retryResponse = await _sendRaw(
-        'GET',
-        uri,
-        headers: headers,
-      );
+      final retryResponse = await _sendRaw('GET', uri, headers: headers);
       return await _parseResponseEnvelope<T>(retryResponse, fromJson);
     }
   }
@@ -146,12 +138,7 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     try {
-      final response = await _sendRaw(
-        'PUT',
-        uri,
-        headers: headers,
-        body: body,
-      );
+      final response = await _sendRaw('PUT', uri, headers: headers, body: body);
       return await _parseResponseEnvelope<T>(response, fromJson);
     } on TokenRefreshedException {
       final retryResponse = await _sendRaw(
@@ -172,18 +159,10 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     try {
-      final response = await _sendRaw(
-        'GET',
-        uri,
-        headers: headers,
-      );
+      final response = await _sendRaw('GET', uri, headers: headers);
       return await _parsePaginatedResponse<T>(response, fromJson);
     } on TokenRefreshedException {
-      final retryResponse = await _sendRaw(
-        'GET',
-        uri,
-        headers: headers,
-      );
+      final retryResponse = await _sendRaw('GET', uri, headers: headers);
       return await _parsePaginatedResponse<T>(retryResponse, fromJson);
     }
   }

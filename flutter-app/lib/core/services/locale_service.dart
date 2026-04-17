@@ -35,10 +35,10 @@ class LocaleService {
     try {
       // Update EasyLocalization first
       await context.setLocale(Locale(languageCode));
-      
+
       // Persist to SharedPreferences for consistency
       await saveLocale(languageCode);
-      
+
       debugPrint('Locale updated to: $languageCode');
     } catch (e) {
       debugPrint('Failed to update locale: $e');
@@ -52,7 +52,7 @@ class LocaleService {
       final savedLocale = await getSavedLocale();
       if (!context.mounted) return;
       final currentLocale = context.locale.languageCode;
-      
+
       if (savedLocale != currentLocale) {
         debugPrint('Syncing locale: $currentLocale -> $savedLocale');
         await context.setLocale(Locale(savedLocale));

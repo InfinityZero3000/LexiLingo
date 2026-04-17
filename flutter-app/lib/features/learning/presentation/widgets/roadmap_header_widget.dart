@@ -41,7 +41,10 @@ class RoadmapHeaderWidget extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.surface),
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
                     onPressed: onBack,
                   ),
                   Expanded(
@@ -215,10 +218,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.surfaceLight,
-          ),
+          style: TextStyle(fontSize: 12, color: AppColors.surfaceLight),
         ),
       ],
     );

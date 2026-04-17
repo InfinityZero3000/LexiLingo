@@ -92,7 +92,11 @@ class RankBadge extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(data.icon, size: size * 0.5, color: Theme.of(context).colorScheme.surface),
+        child: Icon(
+          data.icon,
+          size: size * 0.5,
+          color: Theme.of(context).colorScheme.surface,
+        ),
       ),
     );
   }
@@ -190,7 +194,11 @@ class RankCard extends StatelessWidget {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(data.icon, size: 28, color: Theme.of(context).colorScheme.surface),
+              child: Icon(
+                data.icon,
+                size: 28,
+                color: Theme.of(context).colorScheme.surface,
+              ),
             ),
             const SizedBox(width: 16),
             // Info

@@ -55,10 +55,7 @@ class LevelBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              tierColor,
-              tierColor.withValues(alpha: 0.8),
-            ],
+            colors: [tierColor, tierColor.withValues(alpha: 0.8)],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
@@ -98,11 +95,7 @@ class LevelProgressCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool compact;
 
-  const LevelProgressCard({
-    super.key,
-    this.onTap,
-    this.compact = false,
-  });
+  const LevelProgressCard({super.key, this.onTap, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -264,12 +257,11 @@ class LevelProgressCard extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         '${(progress * 100).toInt()}% complete',
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(
-                              color: accent,
-                              fontWeight: FontWeight.w600,
-                              fontSize: compact ? 10.5 : null,
-                            ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: accent,
+                          fontWeight: FontWeight.w600,
+                          fontSize: compact ? 10.5 : null,
+                        ),
                       ),
                     ),
                     SizedBox(height: progressGap),
@@ -278,9 +270,7 @@ class LevelProgressCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         backgroundColor: AppColors.grey200,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          accent,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
                         minHeight: progressHeight,
                       ),
                     ),
@@ -454,11 +444,7 @@ class LevelDetailsSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            _getTierIcon(tier.iconIdentifier),
-            size: 20,
-            color: tierColor,
-          ),
+          Icon(_getTierIcon(tier.iconIdentifier), size: 20, color: tierColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -483,7 +469,11 @@ class LevelDetailsSheet extends StatelessWidget {
           ),
           if (isCurrent) ...[
             const SizedBox(width: 8),
-            const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 20),
+            const Icon(
+              Icons.check_circle,
+              color: AppColors.greenSuccessBright,
+              size: 20,
+            ),
           ],
         ],
       ),

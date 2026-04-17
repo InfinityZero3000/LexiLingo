@@ -138,7 +138,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       child: Icon(
                         categoryIcon,
                         size: 80,
-                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surface.withValues(alpha: 0.3),
                       ),
                     ),
                   ),

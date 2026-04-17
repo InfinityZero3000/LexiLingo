@@ -110,10 +110,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
-        path:
-            kIsWeb
-                ? 'recording_${DateTime.now().millisecondsSinceEpoch}.wav'
-                : recordingPath!,
+        path: kIsWeb
+            ? 'recording_${DateTime.now().millisecondsSinceEpoch}.wav'
+            : recordingPath!,
       );
 
       if (!mounted) return;

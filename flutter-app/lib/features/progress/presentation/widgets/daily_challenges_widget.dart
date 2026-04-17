@@ -140,7 +140,9 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       value: provider.progress,
                       backgroundColor: AppColors.grey200,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        provider.allCompleted ? AppColors.greenSuccessBright : AppColors.purple,
+                        provider.allCompleted
+                            ? AppColors.greenSuccessBright
+                            : AppColors.purple,
                       ),
                       minHeight: 8,
                     ),
@@ -336,7 +338,9 @@ class DailyChallengesSheet extends StatelessWidget {
                     value: provider.progress,
                     backgroundColor: AppColors.grey200,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      provider.allCompleted ? AppColors.greenSuccessBright : AppColors.purple,
+                      provider.allCompleted
+                          ? AppColors.greenSuccessBright
+                          : AppColors.purple,
                     ),
                     minHeight: 12,
                   ),
@@ -409,7 +413,11 @@ class DailyChallengesSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 32),
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.greenSuccessBright,
+                    size: 32,
+                  ),
                 ],
               ),
             ),
@@ -570,7 +578,11 @@ class _ChallengeCard extends StatelessWidget {
               const SizedBox(height: 8),
               if (challenge.isCompleted)
                 if (isClaimed)
-                  const Icon(Icons.check_circle, color: AppColors.greenSuccessBright, size: 28)
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.greenSuccessBright,
+                    size: 28,
+                  )
                 else
                   SizedBox(
                     height: 28,

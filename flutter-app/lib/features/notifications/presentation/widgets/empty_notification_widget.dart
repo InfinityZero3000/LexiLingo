@@ -106,7 +106,9 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
             child: Icon(
               Icons.notifications_outlined,
               size: 52,
-              color: (isDark ? accent : AppColors.primary).withValues(alpha: 0.6),
+              color: (isDark ? accent : AppColors.primary).withValues(
+                alpha: 0.6,
+              ),
             ),
           ),
         ),

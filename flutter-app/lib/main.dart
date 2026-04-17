@@ -308,7 +308,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               final savedLocale = await LocaleService.getSavedLocale();
               if (!safeContext.mounted) return;
               final settingsLanguage = settings.language;
-              
+
               // If settings has a different language than saved locale, update it
               if (savedLocale != settingsLanguage) {
                 await LocaleService.saveLocale(settingsLanguage);
@@ -318,7 +318,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               }
             }
           });
-          
+
           return MaterialApp(
             title: 'LexiLingo',
             debugShowCheckedModeBanner: false,

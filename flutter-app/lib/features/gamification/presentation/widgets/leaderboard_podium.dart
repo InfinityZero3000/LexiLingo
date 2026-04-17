@@ -183,7 +183,10 @@ class LeaderboardPodium extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: medalColor,
-                  border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surface,
+                    width: 2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.2),

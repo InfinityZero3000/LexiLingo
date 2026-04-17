@@ -32,9 +32,8 @@ class UserModel extends UserEntity {
       avatarUrl: json['avatar_url'] as String?,
       provider: json['provider'] as String? ?? 'local',
       isVerified: json['is_verified'] as bool? ?? false,
-        isOnboardingCompleted:
-          json['is_onboarding_completed'] as bool? ?? false,
-          cefrLevel: json['cefr_level'] as String? ?? 'A1',
+      isOnboardingCompleted: json['is_onboarding_completed'] as bool? ?? false,
+      cefrLevel: json['cefr_level'] as String? ?? 'A1',
       totalXp: json['total_xp'] as int? ?? 0,
       numericLevel: json['numeric_level'] as int? ?? 1,
       currentStreak: json['current_streak'] as int? ?? 0,

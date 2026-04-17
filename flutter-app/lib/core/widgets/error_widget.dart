@@ -243,7 +243,11 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.wifi_off, color: Theme.of(context).colorScheme.surface, size: 18),
+          Icon(
+            Icons.wifi_off,
+            color: Theme.of(context).colorScheme.surface,
+            size: 18,
+          ),
           SizedBox(width: 8),
           Text(
             'You are offline',

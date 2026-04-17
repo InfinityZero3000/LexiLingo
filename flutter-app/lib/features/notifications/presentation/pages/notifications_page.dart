@@ -293,7 +293,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.surface, size: 24),
+            Icon(
+              Icons.delete_outline_rounded,
+              color: Theme.of(context).colorScheme.surface,
+              size: 24,
+            ),
             SizedBox(height: 4),
             Text(
               'Delete',

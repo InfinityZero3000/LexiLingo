@@ -109,7 +109,7 @@ class SettingsProvider extends ChangeNotifier {
     if (_settings == null) return;
 
     final oldLanguage = _settings!.language;
-    
+
     // Update settings in memory first
     _settings = _settings!.copyWith(language: languageCode);
     notifyListeners();

@@ -7,7 +7,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key, String? initialEmail})
-      : _initialEmail = initialEmail;
+    : _initialEmail = initialEmail;
 
   final String? _initialEmail;
 
@@ -39,7 +39,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Forgot Password'),
         centerTitle: true,
@@ -68,7 +70,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -76,7 +80,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       'Enter your account email. We will send instructions to reset your password.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -87,7 +93,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         hintText: 'name@example.com',
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -112,9 +120,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 if (!_formKey.currentState!.validate()) return;
                                 final messenger = ScaffoldMessenger.of(context);
 
-                                final success = await authProvider.requestPasswordReset(
-                                  _emailController.text.trim(),
-                                );
+                                final success = await authProvider
+                                    .requestPasswordReset(
+                                      _emailController.text.trim(),
+                                    );
                                 if (!mounted) return;
 
                                 if (success) {
@@ -162,7 +171,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.check_circle_outline, color: Colors.green.shade700),
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: Colors.green.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -185,7 +197,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red.shade700),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

@@ -74,7 +74,11 @@ class DailyChallengeCard extends StatelessWidget {
                       color: AppColors.greenSuccess,
                       size: 28,
                     )
-                  : Icon(icon, color: Theme.of(context).colorScheme.surface, size: 26),
+                  : Icon(
+                      icon,
+                      color: Theme.of(context).colorScheme.surface,
+                      size: 26,
+                    ),
             ),
             const SizedBox(width: 14),
 

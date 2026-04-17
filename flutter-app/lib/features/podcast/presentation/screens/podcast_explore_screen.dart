@@ -211,11 +211,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.podcasts_rounded,
-                size: 64,
-                color: AppColors.grey300,
-              ),
+              Icon(Icons.podcasts_rounded, size: 64, color: AppColors.grey300),
               const SizedBox(height: 12),
               Text(
                 'No podcasts found',

@@ -51,16 +51,16 @@ class _NodeLayout {
     if (lesson.isCurrent) {
       return _ensureRoadmapContrast(_mixWithWhite(baseColor, 0.40));
     }
-    return _ensureRoadmapContrast(_mixWithWhite(baseColor, 0.30)).withValues(
-      alpha: 0.92,
-    );
+    return _ensureRoadmapContrast(
+      _mixWithWhite(baseColor, 0.30),
+    ).withValues(alpha: 0.92);
   }
 
   Color get pathColor {
     if (lesson.isCompleted) return const Color(0xFF66BB6A);
-    return _ensureRoadmapContrast(baseColor).withValues(
-      alpha: lesson.isLocked ? 0.30 : 0.62,
-    );
+    return _ensureRoadmapContrast(
+      baseColor,
+    ).withValues(alpha: lesson.isLocked ? 0.30 : 0.62);
   }
 }
 
@@ -160,7 +160,9 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/background-roadmap/background-roadmap.png'),
+            image: AssetImage(
+              'assets/background-roadmap/background-roadmap.png',
+            ),
             fit: BoxFit.fitHeight,
             alignment: Alignment.center,
           ),
@@ -450,7 +452,11 @@ class _LessonNodeState extends State<_LessonNode>
         color: AppColors.surfaceLight,
       );
     }
-    return Icon(_lessonTypeIcon(lesson.title), size: 28, color: AppColors.surfaceLight);
+    return Icon(
+      _lessonTypeIcon(lesson.title),
+      size: 28,
+      color: AppColors.surfaceLight,
+    );
   }
 
   IconData _lessonTypeIcon(String title) {
@@ -500,7 +506,11 @@ class _StarsBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: 9, color: Theme.of(context).colorScheme.surface),
+          Icon(
+            Icons.star_rounded,
+            size: 9,
+            color: Theme.of(context).colorScheme.surface,
+          ),
           Text(
             '$stars',
             style: TextStyle(
@@ -665,7 +675,9 @@ class _UnitBanner extends StatelessWidget {
                           unit.description!,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.8),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -705,7 +717,9 @@ class _UnitProgressRing extends StatelessWidget {
             builder: (_, v, __) => CircularProgressIndicator(
               value: v,
               strokeWidth: 5,
-              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.25),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.25),
               valueColor: const AlwaysStoppedAnimation(Colors.white),
               strokeCap: StrokeCap.round,
             ),

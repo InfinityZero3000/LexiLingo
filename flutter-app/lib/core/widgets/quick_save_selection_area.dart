@@ -93,7 +93,9 @@ class _QuickSaveSelectionAreaState extends State<QuickSaveSelectionArea> {
       return null;
     }
 
-    final candidate = requireSingleWord ? collapsed : collapsed.split(' ').first;
+    final candidate = requireSingleWord
+        ? collapsed
+        : collapsed.split(' ').first;
     final cleaned = candidate
         .replaceAll(RegExp(r"^[^A-Za-z0-9']+"), '')
         .replaceAll(RegExp(r"[^A-Za-z0-9']+$"), '')

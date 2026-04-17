@@ -699,8 +699,8 @@ class _BreathingGlowState extends State<BreathingGlow>
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withValues(alpha: 
-                  0.3 + 0.3 * _controller.value,
+                color: widget.glowColor.withValues(
+                  alpha: 0.3 + 0.3 * _controller.value,
                 ),
                 blurRadius: blur,
                 spreadRadius: blur / 4,
@@ -830,7 +830,12 @@ class AnimatedGradientBorder extends StatefulWidget {
     required this.child,
     this.borderWidth = 2,
     this.borderRadius = 12,
-    this.colors = const [Colors.blue, AppColors.purple, Colors.pink, Colors.blue],
+    this.colors = const [
+      Colors.blue,
+      AppColors.purple,
+      Colors.pink,
+      Colors.blue,
+    ],
     this.duration = const Duration(seconds: 3),
   });
 

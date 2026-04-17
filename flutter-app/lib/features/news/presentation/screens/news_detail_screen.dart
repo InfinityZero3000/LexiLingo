@@ -98,10 +98,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _buildDictionarySheet(
-        cleanWord,
-        contextSentence: contextSentence,
-      ),
+      builder: (_) =>
+          _buildDictionarySheet(cleanWord, contextSentence: contextSentence),
     );
   }
 
@@ -465,10 +463,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
                 child: GestureDetector(
-                  onTap: () => _onWordTap(
-                    word,
-                    contextSentence: paragraph,
-                  ),
+                  onTap: () => _onWordTap(word, contextSentence: paragraph),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 2,

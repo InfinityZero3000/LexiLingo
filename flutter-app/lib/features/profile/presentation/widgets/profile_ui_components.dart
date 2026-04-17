@@ -155,14 +155,14 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark
-      ? widget.color.withValues(alpha: 0.12)
-      : widget.color.withValues(alpha: 0.08);
+        ? widget.color.withValues(alpha: 0.12)
+        : widget.color.withValues(alpha: 0.08);
     final borderColor = isDark
-      ? widget.color.withValues(alpha: 0.36)
-      : widget.color.withValues(alpha: 0.28);
+        ? widget.color.withValues(alpha: 0.36)
+        : widget.color.withValues(alpha: 0.28);
     final iconBgColor = isDark
-      ? widget.color.withValues(alpha: 0.22)
-      : widget.color.withValues(alpha: 0.16);
+        ? widget.color.withValues(alpha: 0.22)
+        : widget.color.withValues(alpha: 0.16);
     final titleColor = isDark
         ? AppColors.textInverted.withValues(alpha: 0.7)
         : AppColors.textGrey;
@@ -171,11 +171,11 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
         ? AppColors.textInverted.withValues(alpha: 0.6)
         : AppColors.textSlate;
     final valueCircleBg = isDark
-      ? widget.color.withValues(alpha: 0.22)
-      : widget.color.withValues(alpha: 0.14);
+        ? widget.color.withValues(alpha: 0.22)
+        : widget.color.withValues(alpha: 0.14);
     final valueCircleBorder = isDark
-      ? widget.color.withValues(alpha: 0.45)
-      : widget.color.withValues(alpha: 0.30);
+        ? widget.color.withValues(alpha: 0.45)
+        : widget.color.withValues(alpha: 0.30);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -191,10 +191,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 color: surfaceColor,
-                border: Border.all(
-                  color: borderColor,
-                  width: 1.2,
-                ),
+                border: Border.all(color: borderColor, width: 1.2),
                 boxShadow: [
                   BoxShadow(
                     color: widget.color.withValues(alpha: isDark ? 0.08 : 0.14),
@@ -274,7 +271,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                   child: Text(
                                     widget.subtitle!,
                                     style: TextStyle(
-                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      color: widget.isAction
+                                          ? widget.color
+                                          : subtitleColor,
                                       fontSize: widget.subtitleFontSize,
                                       fontWeight: widget.isAction
                                           ? FontWeight.w700
@@ -346,7 +345,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                   child: Text(
                                     widget.subtitle!,
                                     style: TextStyle(
-                                      color: widget.isAction ? widget.color : subtitleColor,
+                                      color: widget.isAction
+                                          ? widget.color
+                                          : subtitleColor,
                                       fontSize: widget.subtitleFontSize,
                                       fontWeight: widget.isAction
                                           ? FontWeight.w700
@@ -457,7 +458,9 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
               Container(
                 height: widget.height,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
+                  color: isDark
+                      ? AppColors.surfaceDarkMuted
+                      : AppColors.slate200,
                 ),
               ),
               // Progress
@@ -486,7 +489,9 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                             ).createShader(bounds);
                           },
                           blendMode: BlendMode.srcATop,
-                          child: Container(color: Theme.of(context).colorScheme.surface),
+                          child: Container(
+                            color: Theme.of(context).colorScheme.surface,
+                          ),
                         )
                       : null,
                 ),
@@ -682,13 +687,19 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(widget.icon, size: 16, color: Theme.of(context).colorScheme.surface),
+                      Icon(
+                        widget.icon,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         widget.text,

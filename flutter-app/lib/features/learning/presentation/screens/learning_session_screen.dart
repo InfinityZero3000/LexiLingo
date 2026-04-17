@@ -127,7 +127,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 LinearProgressIndicator(
                   value: provider.progress,
                   backgroundColor: Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.greenSuccessBright),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.greenSuccessBright,
+                  ),
                 ),
 
                 // Content
@@ -276,13 +278,18 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: (percentage >= 80 ? AppColors.warning : AppColors.greenSuccessBright)
-                            .withValues(alpha: 0.2),
+                        color:
+                            (percentage >= 80
+                                    ? AppColors.warning
+                                    : AppColors.greenSuccessBright)
+                                .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color:
-                                (percentage >= 80 ? AppColors.warning : AppColors.greenSuccessBright)
+                                (percentage >= 80
+                                        ? AppColors.warning
+                                        : AppColors.greenSuccessBright)
                                     .withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
@@ -298,7 +305,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         repeat: false,
                       )
                     else
-                      AnimatedCheckmark(color: AppColors.greenSuccessBright, size: 80),
+                      AnimatedCheckmark(
+                        color: AppColors.greenSuccessBright,
+                        size: 80,
+                      ),
                   ],
                 ),
               ),
@@ -394,7 +404,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.stars, color: AppColors.surfaceLight, size: 28),
+                        Icon(
+                          Icons.stars,
+                          color: AppColors.surfaceLight,
+                          size: 28,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           '+${provider.xpEarned} XP',
