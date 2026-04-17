@@ -284,6 +284,7 @@ services:
         condition: service_healthy
     volumes:
       - ./ai-service/api:/app/api
+      - ./ai-service/data:/app/data
       - ./ai-service/models:/app/models
     command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
