@@ -1,0 +1,106 @@
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+limit_req_zone $binary_remote_addr zone=api_default_per_ip:10m rate=20r/s;
+limit_req_zone $binary_remote_addr zone=ai_general_per_ip:10m rate=8r/s;
+limit_req_zone $binary_remote_addr zone=ai_chat_per_ip:10m rate=4r/s;
+limit_req_zone $binary_remote_addr zone=ai_stt_per_ip:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=ai_tts_per_ip:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=ws_per_ip:10m rate=2r/s;
+
+limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${GATEWAY_SERVER_NAME};
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log warn;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location /health {
+        access_log off;
+        return 200 "ok";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${GATEWAY_SERVER_NAME};
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log warn;
+
+    ssl_certificate ${GATEWAY_SSL_CERT_PATH};
+    ssl_certificate_key ${GATEWAY_SSL_KEY_PATH};
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 10m;
+    limit_conn conn_per_ip 30;
+
+    location /api/v1/ai/ {
+        limit_req zone=ai_general_per_ip burst=20 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /api/v1/topics/ {
+        limit_req zone=ai_general_per_ip burst=20 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /api/v1/chat/ {
+        limit_req zone=ai_chat_per_ip burst=12 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /api/v1/stt/ {
+        limit_req zone=ai_stt_per_ip burst=4 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /api/v1/tts/ {
+        limit_req zone=ai_tts_per_ip burst=4 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /ws/ {
+        limit_req zone=ws_per_ip burst=8 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001;
+    }
+
+    location /ai-health {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai-service:8001/health;
+    }
+
+    location / {
+        limit_req zone=api_default_per_ip burst=40 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://backend-service:8000;
+    }
+}

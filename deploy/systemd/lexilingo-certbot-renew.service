@@ -1,0 +1,9 @@
+[Unit]
+Description=Renew Let's Encrypt certificates for LexiLingo and reload gateway
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/lexilingo
+ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "/opt/lexilingo/scripts/ssl/reload-gateway-after-renew.sh"

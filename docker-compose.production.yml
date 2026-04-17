@@ -1,0 +1,182 @@
+services:
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: lexilingo-gateway
+    restart: unless-stopped
+    depends_on:
+      backend-service:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      GATEWAY_SERVER_NAME: ${GATEWAY_SERVER_NAME:-api.lexilingo.com}
+      GATEWAY_SSL_CERT_PATH: ${GATEWAY_SSL_CERT_PATH:-/etc/letsencrypt/live/api.lexilingo.com/fullchain.pem}
+      GATEWAY_SSL_KEY_PATH: ${GATEWAY_SSL_KEY_PATH:-/etc/letsencrypt/live/api.lexilingo.com/privkey.pem}
+    command: >
+      /bin/sh -c "envsubst '$$GATEWAY_SERVER_NAME $$GATEWAY_SSL_CERT_PATH $$GATEWAY_SSL_KEY_PATH'
+      < /etc/nginx/templates/default.conf.template
+      > /etc/nginx/conf.d/default.conf
+      && nginx -g 'daemon off;'"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./gateway/nginx/templates:/etc/nginx/templates:ro
+      - ./gateway/nginx/snippets:/etc/nginx/snippets:ro
+      - ./gateway/nginx/acme-challenge:/var/www/certbot
+      - ./gateway/nginx/logs:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - lexilingo-prod
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lexilingo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-lexilingo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-lexilingo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-prod
+
+  mongodb:
+    image: mongo:7.0
+    container_name: lexilingo-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - lexilingo-prod
+
+  redis:
+    image: redis:7-alpine
+    container_name: lexilingo-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-prod
+
+  backend-service:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile.prod
+    container_name: lexilingo-backend-service
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      REDIS_URL: redis://redis:6379/0
+      AI_SERVICE_URL: http://ai-service:8001/api/v1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    volumes:
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - lexilingo-prod
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile.prod
+    container_name: lexilingo-ai-service
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      ENVIRONMENT: production
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
+      REDIS_URL: redis://redis:6379/1
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      AI_MODEL_API_URL: http://ai-service:8001
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ai_models:/app/models
+      - ./ai-service/data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - lexilingo-prod
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  mongodb_config:
+  redis_data:
+  ai_models:
+
+networks:
+  lexilingo-prod:
+    driver: bridge

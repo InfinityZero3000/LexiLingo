@@ -1,0 +1,31 @@
+[DEFAULT]
+banaction = ufw
+findtime = 600
+bantime = 3600
+maxretry = 8
+
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+backend = systemd
+maxretry = 5
+findtime = 600
+bantime = 3600
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+logpath = /opt/lexilingo/gateway/nginx/logs/error.log
+maxretry = 5
+findtime = 600
+bantime = 3600
+
+[nginx-429-abuse]
+enabled = true
+port = http,https
+filter = nginx-429-abuse
+logpath = /opt/lexilingo/gateway/nginx/logs/access.log
+maxretry = 30
+findtime = 300
+bantime = 1800
