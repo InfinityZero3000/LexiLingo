@@ -552,7 +552,7 @@ class LessonProgressIndicator extends StatelessWidget {
   const LessonProgressIndicator({
     super.key,
     required this.progress,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.size = 48,
     this.strokeWidth = 4,
   });

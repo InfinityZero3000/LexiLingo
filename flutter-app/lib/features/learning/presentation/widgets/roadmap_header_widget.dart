@@ -17,6 +17,8 @@ class RoadmapHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
 
     return Container(
       decoration: BoxDecoration(
@@ -53,7 +55,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _buildLevelBadge(roadmap.level),
+                  _buildLevelBadge(roadmap.level, isDark: isDark),
                 ],
               ),
             ),
@@ -88,7 +90,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     value:
                         '${roadmap.completionPercentage.toStringAsFixed(0)}%',
                     label: 'Progress',
-                    iconColor: Colors.blue,
+                    iconColor: primaryAccent,
                   ),
                 ],
               ),
@@ -139,7 +141,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
             Container(
               height: 24,
               decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
+                color: Colors.transparent,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -152,7 +154,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelBadge(String level) {
+  Widget _buildLevelBadge(String level, {required bool isDark}) {
     Color badgeColor;
     switch (level.toLowerCase()) {
       case 'beginner':
@@ -165,7 +167,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
         badgeColor = AppColors.errorBright;
         break;
       default:
-        badgeColor = Colors.blue;
+        badgeColor = AppColorRoles.primary(isDark);
     }
 
     return Container(

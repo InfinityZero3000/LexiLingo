@@ -104,7 +104,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   value: (_currentPage + 1) / 3,
                   minHeight: 8,
                   backgroundColor: isDark
-                      ? const Color(0xFF1F2937)
+                      ? AppColors.slate800
                       : AppColors.slate200,
                   valueColor: const AlwaysStoppedAnimation(AppColors.accentMint),
                 ),
@@ -319,7 +319,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
-                              color: isDark ? const Color(0xFF1F2937) : AppColors.slate200,
+                              color: isDark ? AppColors.slate800 : AppColors.slate200,
                             );
                           },
                         ),
@@ -433,7 +433,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       color: selected
                           ? AppColors.accentMint
                           : (isDark
-                                ? const Color(0xFF334155).withValues(alpha: 0.5)
+                                ? AppColors.textSlate.withValues(alpha: 0.5)
                                 : AppColors.slate200),
                       width: selected ? 2 : 1.5,
                     ),

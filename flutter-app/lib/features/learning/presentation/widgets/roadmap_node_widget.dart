@@ -19,6 +19,7 @@ class RoadmapNodeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _getStatusColor(context);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -29,7 +30,7 @@ class RoadmapNodeWidget extends StatelessWidget {
             isCompleted: lesson.isCompleted,
             isCurrent: lesson.isCurrent,
             isLast: isLastInUnit,
-            color: _getStatusColor(),
+            color: statusColor,
           ),
           const SizedBox(width: 16),
           // Glassmorphic lesson card
@@ -43,7 +44,7 @@ class RoadmapNodeWidget extends StatelessWidget {
               starsEarned: lesson.starsEarned,
               bestScore: lesson.bestScore,
               attemptsCount: lesson.attemptsCount,
-              statusColor: _getStatusColor(),
+              statusColor: statusColor,
               onTap: onTap,
             ),
           ),
@@ -52,7 +53,8 @@ class RoadmapNodeWidget extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor() {
+  Color _getStatusColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (lesson.isLocked) {
       return Colors.grey;
     }
@@ -60,7 +62,7 @@ class RoadmapNodeWidget extends StatelessWidget {
       return AppColors.greenSuccessBright;
     }
     if (lesson.isCurrent) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     return Colors.grey[400]!;
   }

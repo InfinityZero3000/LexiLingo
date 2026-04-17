@@ -12,6 +12,7 @@ class LearningStreakStatsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _StatsPageScaffold(
       title: 'Streak Details',
       builder: (context, profileProvider, progressProvider) {
@@ -31,7 +32,7 @@ class LearningStreakStatsPage extends StatelessWidget {
               currentStreak > 0
                   ? 'Keep learning daily to maintain your streak.'
                   : 'Start one lesson today to build your streak.',
-              style: const TextStyle(color: AppColors.textGrey),
+              style: TextStyle(color: AppColorRoles.textMuted(isDark)),
             ),
           ],
         );
@@ -78,6 +79,7 @@ class LearningCoursesStatsPage extends StatelessWidget {
     return _StatsPageScaffold(
       title: 'Courses Details',
       builder: (context, profileProvider, progressProvider) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final stats = profileProvider.stats;
         final summary = progressProvider.summary;
         final coursesCompleted =
@@ -97,10 +99,10 @@ class LearningCoursesStatsPage extends StatelessWidget {
             if (courseProgressList.isEmpty)
               _singleCard(
                 context,
-                children: const [
+                children: [
                   Text(
                     'No enrolled courses yet.',
-                    style: TextStyle(color: AppColors.textGrey),
+                    style: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   ),
                 ],
               )
@@ -118,6 +120,8 @@ class LearningCoursesStatsPage extends StatelessWidget {
   }
 
   Widget _courseProgressCard(BuildContext context, CourseProgressDetail course) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     final progress = course.progressPercentage;
 
     return InkWell(
@@ -134,9 +138,11 @@ class LearningCoursesStatsPage extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.grey300),
+          border: Border.all(
+            color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,7 +160,11 @@ class LearningCoursesStatsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textGrey),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColorRoles.textMuted(isDark),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -163,12 +173,15 @@ class LearningCoursesStatsPage extends StatelessWidget {
               minHeight: 7,
               borderRadius: BorderRadius.circular(8),
               backgroundColor: AppColors.grey300,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
             ),
             const SizedBox(height: 6),
             Text(
               '${progress.toStringAsFixed(0)}% • ${course.lessonsCompleted}/${course.totalLessons} lessons',
-              style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+              style: TextStyle(
+                color: AppColorRoles.textMuted(isDark),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -302,13 +315,16 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
 }
 
 Widget _singleCard(BuildContext context, {required List<Widget> children}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return Container(
     width: double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.grey300),
+      border: Border.all(
+        color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+      ),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,9 +337,17 @@ Widget _detailRow(String label, String value) {
   return Row(
     children: [
       Expanded(
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+        child: Builder(
+          builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColorRoles.textMuted(isDark),
+              ),
+            );
+          },
         ),
       ),
       Text(

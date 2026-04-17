@@ -55,6 +55,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       body: Consumer<GamificationProvider>(
         builder: (context, provider, child) {
@@ -75,6 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                           colors: [
                             _getLeagueColor(
                               provider.selectedLeague,
+                              isDark,
                             ).withValues(alpha: 0.3),
                             Theme.of(context).scaffoldBackgroundColor,
                           ],
@@ -112,9 +115,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,
-                    labelColor: AppColors.primary,
+                    labelColor: primaryColor,
                     unselectedLabelColor: AppColors.textGrey,
-                    indicatorColor: AppColors.primary,
+                    indicatorColor: primaryColor,
                     tabs: _leagues.map((league) {
                       return Tab(
                         child: Row(
@@ -146,7 +149,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return '${league[0].toUpperCase()}${league.substring(1)}';
   }
 
-  Color _getLeagueColor(String league) {
+  Color _getLeagueColor(String league, bool isDark) {
     switch (league.toLowerCase()) {
       case 'bronze':
         return AppColors.orange;
@@ -157,7 +160,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       case 'platinum':
         return AppColors.purple;
       case 'diamond':
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
       default:
         return AppColors.orange;
     }
@@ -172,6 +175,8 @@ class _LeaderboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Consumer<GamificationProvider>(
       builder: (context, provider, child) {
         // Only show content for the selected league
@@ -192,7 +197,7 @@ class _LeaderboardTab extends StatelessWidget {
 
         final leaderboard = provider.leaderboard;
         if (leaderboard == null || leaderboard.entries.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
         final topThree = leaderboard.topThree;
@@ -214,7 +219,7 @@ class _LeaderboardTab extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -222,16 +227,16 @@ class _LeaderboardTab extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today,
                             size: 18,
-                            color: AppColors.primary,
+                            color: primaryColor,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Week ends ${_formatDate(leaderboard.weekEnd)}',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: primaryColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -239,7 +244,10 @@ class _LeaderboardTab extends StatelessWidget {
                       ),
                       Text(
                         '${leaderboard.totalParticipants} participants',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(
+                          color: AppColorRoles.textMuted(isDark),
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -289,25 +297,26 @@ class _LeaderboardTab extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey[400]),
+          Icon(Icons.emoji_events_outlined, size: 64, color: AppColors.grey400),
           const SizedBox(height: 16),
           Text(
             'No rankings yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+              color: AppColorRoles.textSecondary(isDark),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Be the first to compete this week!',
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
         ],
       ),
@@ -336,7 +345,8 @@ class _LeagueBadgeSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _getLeagueColor(league);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getLeagueColor(league, isDark);
 
     return Container(
       width: 20,
@@ -356,7 +366,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
     );
   }
 
-  Color _getLeagueColor(String league) {
+  Color _getLeagueColor(String league, bool isDark) {
     switch (league.toLowerCase()) {
       case 'bronze':
         return AppColors.orange;
@@ -367,7 +377,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
       case 'platinum':
         return AppColors.purple;
       case 'diamond':
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
       default:
         return AppColors.orange;
     }

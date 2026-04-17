@@ -95,45 +95,19 @@ class _WelcomePageState extends State<WelcomePage>
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                     child: Column(
                       children: [
-                        Container(
+                        SizedBox(
                           width: double.infinity,
-                          constraints: const BoxConstraints(maxHeight: 360),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.accentMint.withValues(alpha: 0.18),
-                                AppColors.accentMint.withValues(alpha: 0.04),
-                              ],
-                            ),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Positioned.fill(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: RadialGradient(
-                                      center: Alignment.center,
-                                      radius: 0.85,
-                                      colors: [
-                                        const Color(
-                                          0xFF30E8E8,
-                                        ).withValues(alpha: 0.35),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Image.network(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: Image.network(
                                 'https://lh3.googleusercontent.com/aida-public/AB6AXuAc_TfHt87FYCBniWnGN3kl94DydU2vFtKzeOxV_6Ez_Tw0GYGw3a0ysilRFZpcKAMGx5hnBZRLpgVuMraqepi7LHYSzidFKfdbY1T0_DaMkXd3mhDMqg91zRb-kAIYymk344jIEdsKDKuWk2eIlNjqJnxqDvzl-nOE6GtcUx6YQ5944ntfVUXySAPcjcAU1F2c4y7LL5dXZWYXvELyv11z0CPqYkWgPKVkc6KqRsAXRQI0TRj2UULR93RCsVECPwvJ-7xUQo-ma38',
-                                fit: BoxFit.contain,
+                                fit: BoxFit.cover,
                                 errorBuilder: (context, _, __) =>
                                     const Icon(Icons.school_rounded, size: 92),
                               ),
-                            ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),

@@ -8,21 +8,34 @@ class AppColors {
 
   // ── Backgrounds ───────────────────────────────────────────────────────────
   static const Color backgroundLight = Color(0xFFF6F7F8);
-  static const Color backgroundDark = Color(0xFF101922);
+  static const Color backgroundDark = Color(0xFF151C26);
 
   // ── Surfaces (cards, sheets, dialogs) ─────────────────────────────────────
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF1C2A38);
+  static const Color surfaceDark = Color(0xFF243241);
 
   /// Chat / lexi chat input bar, slightly darker than surfaceDark
-  static const Color surfaceDarkMuted = Color(0xFF1C2632);
-  static const Color surfaceDarkElevated = Color(0xFF1C2B3A);
+  static const Color surfaceDarkMuted = Color(0xFF202B37);
+  static const Color surfaceDarkElevated = Color(0xFF2A3746);
 
   /// lexi-chat bubble / input field background (dark) — maps to 0xFF2A3A4A
-  static const Color surfaceDarkChat = Color(0xFF2A3A4A);
+  static const Color surfaceDarkChat = Color(0xFF324253);
 
   /// Input fields, text field fill in dark mode
-  static const Color surfaceDarkInput = Color(0xFF0F172A);
+  static const Color surfaceDarkInput = Color(0xFF1A2431);
+
+  /// Deeper chat/overlay surface used for chips and input wells in dark mode
+  static const Color surfaceDarkInk = Color(0xFF0A1628);
+
+  /// Dark card tone used by Lexi correction and hint containers
+  static const Color surfaceDarkCard = Color(0xFF1A2E3F);
+
+  /// Subtle dark border for elevated dark cards
+  static const Color borderDarkSoft = Color(0xFF3A4A5A);
+
+  /// Warm light surfaces used for correction and hint cards
+  static const Color surfaceWarm = Color(0xFFFFFBF5);
+  static const Color surfaceWarmSoft = Color(0xFFFFF8F0);
 
   // ── Text ──────────────────────────────────────────────────────────────────
   static const Color textDark = Color(0xFF111418);
@@ -118,6 +131,25 @@ class AppColors {
   static const Color textOnDarkPrimary = Color(0xFFEFFDFF);
   static const Color textOnDarkSecondary = Color(0xFFB8D7DF);
   static const Color textOnDarkMuted = Color(0xFF88A6B0);
+
+  // ── Home Quick Actions (dark mode) ────────────────────────────────────────
+  static const List<Color> quickActionDarkPalette = [
+    Color(0xFFFF3131),
+    Color(0xFFFC1AD3),
+    Color(0xFFFFA319),
+    Color(0xFF35FF0D),
+    Color(0xFFFF8717),
+    Color(0xFF8052FF),
+    Color(0xFFFF369E),
+  ];
+
+  // ── Roadmap accents in dark mode ──────────────────────────────────────────
+  static const List<Color> roadmapEarlyStepDarkPalette = [
+    Color(0xFF5ED8FF),
+    Color(0xFF5BEEB6),
+    Color(0xFFFFC46E),
+  ];
+  static const Color roadmapNodeFallbackDark = Color(0xFF66CFF5);
   
   // ── Slate / Ink ───────────────────────────────────────────────────────────
   static const Color slate900 = Color(0xFF0F172A);
@@ -303,7 +335,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF1C2A38), // Darker shade for nav bar
+        backgroundColor: AppColors.surfaceDarkMuted,
         selectedItemColor: AppColors.primaryDarkMode,
         unselectedItemColor: AppColors.textOnDarkMuted,
         showSelectedLabels: true,

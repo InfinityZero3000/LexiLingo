@@ -61,6 +61,7 @@ class PodcastCard extends StatelessWidget {
                             width: 160,
                             height: 140,
                             fit: BoxFit.cover,
+                          webHtmlElementStrategy: WebHtmlElementStrategy.never,
                             errorBuilder: (_, __, ___) =>
                                 _buildArtworkFallback(cefrColor),
                           )

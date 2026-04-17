@@ -28,7 +28,7 @@ class ShopItemCard extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _getCategoryColor(item.category).withValues(alpha: 0.2),
+          color: _getCategoryColor(context, item.category).withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
@@ -49,8 +49,8 @@ class ShopItemCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _getCategoryColor(item.category).withValues(alpha: 0.15),
-                    _getCategoryColor(item.category).withValues(alpha: 0.05),
+                    _getCategoryColor(context, item.category).withValues(alpha: 0.15),
+                    _getCategoryColor(context, item.category).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -62,7 +62,7 @@ class ShopItemCard extends StatelessWidget {
               child: Stack(
                 children: [
                   // Item Icon
-                  Center(child: _buildItemIcon()),
+                  Center(child: _buildItemIcon(context)),
 
                   // Limited stock badge
                   if (item.isLimitedStock)
@@ -104,7 +104,9 @@ class ShopItemCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.9),
+                          color: AppColorRoles.primary(
+                            Theme.of(context).brightness == Brightness.dark,
+                          ).withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -241,7 +243,7 @@ class ShopItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildItemIcon() {
+  Widget _buildItemIcon(BuildContext context) {
     IconData icon;
     switch (item.effectType) {
       case ShopItemEntity.effectStreakFreeze:
@@ -266,8 +268,8 @@ class ShopItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _getCategoryColor(item.category),
-            _getCategoryColor(item.category).withValues(alpha: 0.7),
+            _getCategoryColor(context, item.category),
+            _getCategoryColor(context, item.category).withValues(alpha: 0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -275,7 +277,7 @@ class ShopItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _getCategoryColor(item.category).withValues(alpha: 0.4),
+            color: _getCategoryColor(context, item.category).withValues(alpha: 0.4),
             blurRadius: 12,
             offset: Offset(0, 6),
           ),
@@ -285,10 +287,11 @@ class ShopItemCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(BuildContext context, String category) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (category) {
       case ShopItemEntity.categoryPowerUps:
-        return AppColors.primary; // Blue
+        return AppColorRoles.primary(isDark);
       case ShopItemEntity.categoryCosmetics:
         return const Color(0xFFEC4899); // Pink
       case ShopItemEntity.categoryBoosts:

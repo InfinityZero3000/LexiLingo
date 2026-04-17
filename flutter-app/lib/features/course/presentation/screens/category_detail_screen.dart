@@ -348,14 +348,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Color _parseCategoryColor(String? colorHex) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (colorHex == null || colorHex.isEmpty) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     try {
       final hex = colorHex.replaceAll('#', '');
       return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
     } catch (e) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 }
@@ -369,6 +370,7 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -436,15 +438,15 @@ class _CourseCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(
-                          course.level,
-                        ).withValues(alpha: 0.1),
+                        color: _getLevelColor(course.level, isDark).withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level),
+                          color: _getLevelColor(course.level, isDark),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -469,7 +471,7 @@ class _CourseCard extends StatelessWidget {
     );
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, bool isDark) {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'a1':
@@ -484,7 +486,7 @@ class _CourseCard extends StatelessWidget {
       case 'c2':
         return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 }
@@ -498,6 +500,7 @@ class _CourseGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -552,15 +555,15 @@ class _CourseGridCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(
-                          course.level,
-                        ).withValues(alpha: 0.1),
+                        color: _getLevelColor(course.level, isDark).withValues(
+                          alpha: 0.1,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         course.level,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level),
+                          color: _getLevelColor(course.level, isDark),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -582,7 +585,7 @@ class _CourseGridCard extends StatelessWidget {
     );
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, bool isDark) {
     switch (level.toLowerCase()) {
       case 'beginner':
       case 'a1':
@@ -597,7 +600,7 @@ class _CourseGridCard extends StatelessWidget {
       case 'c2':
         return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 }

@@ -18,11 +18,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _flagsReady = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSettings();
+      _preloadFlagGlyphs(context);
     });
   }
 
@@ -32,6 +35,24 @@ class _SettingsPageState extends State<SettingsPage> {
       await context.read<SettingsProvider>().loadSettings(
         authProvider.currentUser!.id,
       );
+    }
+  }
+
+  void _preloadFlagGlyphs(BuildContext context) {
+    final textDirection = Directionality.of(context);
+    for (final lang in SettingsProvider.availableLanguages) {
+      final flag = lang['flag'];
+      if (flag == null || flag.isEmpty) continue;
+
+      final painter = TextPainter(
+        text: TextSpan(text: flag, style: const TextStyle(fontSize: 24)),
+        textDirection: textDirection,
+      );
+      painter.layout();
+    }
+
+    if (mounted) {
+      setState(() => _flagsReady = true);
     }
   }
 
@@ -168,6 +189,8 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Row(
@@ -175,10 +198,10 @@ class _SettingsPageState extends State<SettingsPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 24),
+            child: Icon(icon, color: primaryColor, size: 24),
           ),
           const SizedBox(width: 12),
           Column(
@@ -194,7 +217,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                ).textTheme.bodySmall?.copyWith(
+                  color: AppColorRoles.textMuted(isDark),
+                ),
               ),
             ],
           ),
@@ -207,6 +232,8 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -220,8 +247,8 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary,
-                    AppColors.primary.withValues(alpha: 0.7),
+                    primaryColor,
+                    primaryColor.withValues(alpha: 0.7),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -273,12 +300,16 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.grey.withValues(alpha: 0.05),
+                          ? primaryColor.withValues(alpha: 0.1)
+                            : (isDark
+                                  ? AppColors.surfaceDarkMuted.withValues(
+                                      alpha: 0.5,
+                                    )
+                                  : AppColors.grey100),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.primary
+                              ? primaryColor
                               : AppColors.grey300,
                           width: isSelected ? 2 : 1,
                         ),
@@ -289,8 +320,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             goal['icon'] as IconData,
                             size: 24,
                             color: isSelected
-                                ? AppColors.primary
-                                : Colors.grey[600],
+                                ? primaryColor
+                              : AppColorRoles.textMuted(isDark),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -302,7 +333,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: isSelected
-                                        ? AppColors.primary
+                                      ? primaryColor
                                         : null,
                                   ),
                                 ),
@@ -310,7 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   goal['description'] as String,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: AppColorRoles.textMuted(isDark),
                                   ),
                                 ),
                               ],
@@ -321,15 +352,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.grey[700],
+                                  ? primaryColor
+                                  : AppColorRoles.textSecondary(isDark),
                             ),
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 8),
-                            const Icon(
+                            Icon(
                               Icons.check_circle,
-                              color: AppColors.primary,
+                              color: primaryColor,
                             ),
                           ],
                         ],
@@ -349,6 +380,8 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -376,17 +409,17 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.1)
-                          : Colors.transparent,
+                          ? primaryColor.withValues(alpha: 0.1)
+                          : AppColors.surfaceLight.withValues(alpha: 0),
                       borderRadius: BorderRadius.circular(10),
                       border: isSelected
-                          ? Border.all(color: AppColors.primary, width: 2)
+                          ? Border.all(color: primaryColor, width: 2)
                           : null,
                     ),
                     child: Row(
                       children: [
                         Text(
-                          lang['flag']!,
+                          _flagsReady ? lang['flag']! : '🏳️',
                           style: const TextStyle(fontSize: 24),
                         ),
                         const SizedBox(width: 12),
@@ -396,14 +429,14 @@ class _SettingsPageState extends State<SettingsPage> {
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
-                            color: isSelected ? AppColors.primary : null,
+                            color: isSelected ? primaryColor : null,
                           ),
                         ),
                         const Spacer(),
                         if (isSelected)
-                          const Icon(
+                          Icon(
                             Icons.check_circle,
-                            color: AppColors.primary,
+                            color: primaryColor,
                           ),
                       ],
                     ),
@@ -421,6 +454,8 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -437,10 +472,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: settings.notificationEnabled,
                   onChanged: (value) =>
                       settings.updateNotificationSettings(enabled: value),
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                  activeTrackColor: primaryColor.withValues(alpha: 0.5),
                   thumbColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
-                      return AppColors.primary;
+                      return primaryColor;
                     }
                     return null;
                   }),
@@ -477,13 +512,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         children: [
                           Text(
                             settings.notificationTime,
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: primaryColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.grey500,
+                          ),
                         ],
                       ),
                     ],
@@ -498,6 +536,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSoundSettings(BuildContext context, SettingsProvider settings) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -510,10 +550,10 @@ class _SettingsPageState extends State<SettingsPage> {
             Switch(
               value: settings.soundEnabled,
               onChanged: settings.updateSoundEnabled,
-              activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+              activeTrackColor: primaryColor.withValues(alpha: 0.5),
               thumbColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return AppColors.primary;
+                  return primaryColor;
                 }
                 return null;
               }),
@@ -525,6 +565,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     final themes = [
       {
         'code': 'light',
@@ -575,18 +617,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary.withValues(alpha: 0.1)
+                    ? primaryColor.withValues(alpha: 0.1)
                       : null,
                   borderRadius: BorderRadius.circular(12),
                   border: isSelected
-                      ? Border.all(color: AppColors.primary, width: 2)
+                    ? Border.all(color: primaryColor, width: 2)
                       : null,
                 ),
                 child: Column(
                   children: [
                     Icon(
                       theme['icon'] as IconData,
-                      color: isSelected ? AppColors.primary : Colors.grey,
+                      color: isSelected
+                          ? primaryColor
+                          : AppColorRoles.textMuted(isDark),
                       size: 28,
                     ),
                     const SizedBox(height: 4),
@@ -596,7 +640,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
-                        color: isSelected ? AppColors.primary : null,
+                        color: isSelected ? primaryColor : null,
                         fontSize: 12,
                       ),
                     ),
@@ -616,6 +660,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAccountSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
 
@@ -625,7 +671,7 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.textDark.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -641,7 +687,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    backgroundColor: primaryColor.withValues(alpha: 0.15),
                     child: ClipOval(
                       child: NetworkAvatarImage(
                         imageUrl: user.avatarUrl,
@@ -655,7 +701,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     : user.email[0])
                                 .toUpperCase(),
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: primaryColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -683,7 +729,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           user.email,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.grey600,
+                            color: AppColorRoles.textMuted(isDark),
                           ),
                         ),
                       ],
@@ -708,12 +754,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: AppColors.errorBg,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.logout,
-                      color: Colors.red.shade600,
+                      color: AppColors.errorDark,
                       size: 20,
                     ),
                   ),
@@ -723,7 +769,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: Colors.red.shade600,
+                      color: AppColors.errorDark,
                     ),
                   ),
                   const Spacer(),
@@ -755,8 +801,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.errorDark,
+              foregroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

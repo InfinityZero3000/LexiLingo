@@ -71,6 +71,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
           final isFollowed = provider.followedPodcasts.any(
             (f) => f.feedUrl == widget.podcast.feedUrl,
           );
+          final episodeCount = provider.currentEpisodes.isNotEmpty
+              ? provider.currentEpisodes.length
+              : widget.podcast.episodeCount;
 
           return CustomScrollView(
             slivers: [
@@ -140,7 +143,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${widget.podcast.episodeCount} Episodes',
+                        '$episodeCount Episodes',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -260,6 +263,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                         width: 160,
                         height: 160,
                         fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
                         errorBuilder: (_, __, ___) =>
                             _buildArtworkFallback(cefrColor),
                       )

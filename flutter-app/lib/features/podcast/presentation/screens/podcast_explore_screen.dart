@@ -437,6 +437,7 @@ class _SearchResultTile extends StatelessWidget {
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
                       errorBuilder: (_, __, ___) => Container(
                         width: 60,
                         height: 60,

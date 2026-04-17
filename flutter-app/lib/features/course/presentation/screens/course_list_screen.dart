@@ -48,7 +48,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = Navigator.of(context).canPop();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
 
     return Scaffold(
       body: Consumer<CourseProvider>(
@@ -63,23 +64,10 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 pinned: true,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 automaticallyImplyLeading: false,
-                leading: canPop
-                    ? IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.of(context).pop(),
-                        tooltip: 'Back',
-                      )
-                    : null,
-                leadingWidth: canPop ? 56 : 0,
                 flexibleSpace: FlexibleSpaceBar(
                   background: SafeArea(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        canPop ? 72 : 20,
-                        12,
-                        20,
-                        0,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +77,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                               Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary,
+                                    color: primaryAccent,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
@@ -125,13 +113,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
                               const Spacer(),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                                  color: primaryAccent.withValues(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.tune_rounded,
-                                    color: AppColors.primary,
+                                    color: primaryAccent,
                                   ),
                                   onPressed: () => _showFilterSheet(context),
                                   tooltip: 'Filter',
@@ -184,6 +172,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
   }
 
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = provider.categories;
     final shouldUseCategories = categories.isNotEmpty;
     final sections = shouldUseCategories
@@ -223,7 +212,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             description:
                 '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
             icon: _parseCategoryIcon(category.icon ?? 'book'),
-            color: _parseCategoryColor(category.color),
+            color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
             onCourseTap: (courseId) =>
                 _navigateToCourseDetail(context, courseId),
@@ -240,7 +229,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             description:
                 '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
             icon: _getLevelIcon(levelKey),
-            color: _getLevelColor(levelKey),
+            color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
             onCourseTap: (courseId) =>
                 _navigateToCourseDetail(context, courseId),
@@ -295,9 +284,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
     }
   }
 
-  Color _parseCategoryColor(String? colorHex) {
+  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
     if (colorHex == null || colorHex.isEmpty) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     try {
       // Remove # if present
@@ -305,7 +294,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       // Parse hex color (supports both RGB and ARGB)
       return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
     } catch (e) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 
@@ -322,7 +311,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
     }
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, {bool isDark = false}) {
     switch (level.toLowerCase()) {
       case 'beginner':
         return AppColors.greenSuccess;
@@ -331,7 +320,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       case 'advanced':
         return AppColors.purple; // violet — premium feel
       default:
-        return AppColors.primary;
+        return AppColorRoles.primary(isDark);
     }
   }
 
@@ -537,6 +526,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _getLevelColor(
                                 course.level,
+                                isDark: isDark,
                               ).withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
@@ -739,7 +729,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                           _buildStatChip(
                             icon: Icons.book_outlined,
                             value: '${course.totalLessons}',
-                            color: Colors.blue,
+                            color: AppColorRoles.primary(isDark),
                           ),
                           const SizedBox(width: 8),
                           if (course.isEnrolled == true)
@@ -764,7 +754,10 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 : Colors.grey[200],
                             minHeight: 4,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              _getProgressColor(course.userProgress ?? 0),
+                              _getProgressColor(
+                                course.userProgress ?? 0,
+                                isDark: isDark,
+                              ),
                             ),
                           ),
                         ),
@@ -904,7 +897,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     }
   }
 
-  Color _getLevelColor(String level) {
+  Color _getLevelColor(String level, {bool isDark = false}) {
     switch (level.toLowerCase()) {
       case 'beginner':
         return AppColors.greenSuccessBright;
@@ -917,14 +910,14 @@ class _HorizontalCourseCard extends StatelessWidget {
       case 'advanced':
         return AppColors.errorBright;
       default:
-        return Colors.blue;
+        return AppColorRoles.primary(isDark);
     }
   }
 
-  Color _getProgressColor(double progress) {
+  Color _getProgressColor(double progress, {bool isDark = false}) {
     if (progress >= 80) return AppColors.greenSuccessBright;
     if (progress >= 50) return AppColors.orange;
-    return Colors.blue;
+    return AppColorRoles.primary(isDark);
   }
 
   Widget _buildStatChip({
@@ -960,20 +953,33 @@ class _HorizontalCourseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: _getProgressColor(progress).withValues(alpha: 0.1),
+        color: _getProgressColor(
+          progress,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        ).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.trending_up, size: 12, color: _getProgressColor(progress)),
+          Icon(
+            Icons.trending_up,
+            size: 12,
+            color: _getProgressColor(
+              progress,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
+          ),
           const SizedBox(width: 4),
           Text(
             '${progress.toStringAsFixed(0)}%',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: _getProgressColor(progress),
+              color: _getProgressColor(
+                progress,
+                isDark: Theme.of(context).brightness == Brightness.dark,
+              ),
             ),
           ),
         ],
@@ -989,6 +995,8 @@ class _FilterSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CourseProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryAccent = AppColorRoles.primary(isDark);
 
     return Container(
       decoration: BoxDecoration(
@@ -1019,7 +1027,7 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: primaryAccent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -1055,10 +1063,10 @@ class _FilterSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
+                  color: primaryAccent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.language, size: 16, color: Colors.blue),
+                child: Icon(Icons.language, size: 16, color: primaryAccent),
               ),
               const SizedBox(width: 8),
               const Text(
@@ -1086,10 +1094,10 @@ class _FilterSheet extends StatelessWidget {
                 context: context,
                 label: 'English',
                 isSelected: provider.selectedLanguage == 'English',
-                color: Colors.blue,
+                color: primaryAccent,
                 iconWidget: _buildLanguageIcon(
                   'EN',
-                  Colors.blue,
+                  primaryAccent,
                   provider.selectedLanguage == 'English',
                 ),
                 onTap: () {

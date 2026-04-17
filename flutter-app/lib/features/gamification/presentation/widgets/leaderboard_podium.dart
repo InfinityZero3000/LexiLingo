@@ -119,6 +119,8 @@ class LeaderboardPodium extends StatelessWidget {
     required Color medalColor,
     bool showCrown = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -144,7 +146,7 @@ class LeaderboardPodium extends StatelessWidget {
                 border: Border.all(color: color, width: 3),
                 color: entry != null
                     ? (entry.isCurrentUser
-                          ? AppColors.primary.withValues(alpha: 0.18)
+                      ? primaryColor.withValues(alpha: 0.18)
                           : Colors.grey[200])
                     : Colors.grey[200],
                 boxShadow: [
@@ -162,10 +164,10 @@ class LeaderboardPodium extends StatelessWidget {
                               entry.avatarUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) =>
-                                  _buildInitialAvatar(entry),
+                                  _buildInitialAvatar(context, entry),
                             ),
                           )
-                        : _buildInitialAvatar(entry))
+                        : _buildInitialAvatar(context, entry))
                   : Icon(
                       Icons.person_outline,
                       color: Colors.grey[400],
@@ -214,7 +216,7 @@ class LeaderboardPodium extends StatelessWidget {
                 ? FontWeight.bold
                 : FontWeight.w500,
             color: entry?.isCurrentUser == true
-                ? AppColors.primary
+              ? primaryColor
                 : AppColors.textDark,
           ),
           maxLines: 1,
@@ -269,7 +271,8 @@ class LeaderboardPodium extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialAvatar(LeaderboardEntryEntity entry) {
+  Widget _buildInitialAvatar(BuildContext context, LeaderboardEntryEntity entry) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         entry.displayName.isNotEmpty
@@ -278,7 +281,7 @@ class LeaderboardPodium extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? AppColors.primary : Colors.grey[600],
+          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
         ),
       ),
     );
@@ -308,6 +311,7 @@ class LeaderboardEntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
 
     return GestureDetector(
       onTap: onTap,
@@ -317,11 +321,11 @@ class LeaderboardEntryRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: entry.isCurrentUser
-              ? AppColors.primary.withValues(alpha: 0.08)
+              ? primaryColor.withValues(alpha: 0.08)
               : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
           border: Border.all(
             color: entry.isCurrentUser
-                ? AppColors.primary.withValues(alpha: 0.5)
+                ? primaryColor.withValues(alpha: 0.5)
                 : Colors.grey.withValues(alpha: 0.12),
           ),
         ),
@@ -355,10 +359,10 @@ class LeaderboardEntryRow extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 color: entry.isCurrentUser
-                    ? AppColors.primary.withValues(alpha: 0.2)
+                  ? primaryColor.withValues(alpha: 0.2)
                     : Colors.grey[200],
                 border: entry.isCurrentUser
-                    ? Border.all(color: AppColors.primary, width: 2)
+                  ? Border.all(color: primaryColor, width: 2)
                     : null,
               ),
               child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
@@ -367,10 +371,10 @@ class LeaderboardEntryRow extends StatelessWidget {
                       child: Image.network(
                         entry.avatarUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildInitial(),
+                        errorBuilder: (_, __, ___) => _buildInitial(context),
                       ),
                     )
-                  : _buildInitial(),
+                  : _buildInitial(context),
             ),
             const SizedBox(width: 12),
 
@@ -389,7 +393,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: entry.isCurrentUser
-                                ? AppColors.primary
+                              ? primaryColor
                                 : (isDark
                                       ? AppColors.textInverted
                                       : AppColors.textDark),
@@ -406,7 +410,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: primaryColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -452,7 +456,8 @@ class LeaderboardEntryRow extends StatelessWidget {
     );
   }
 
-  Widget _buildInitial() {
+  Widget _buildInitial(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
         entry.displayName.isNotEmpty
@@ -461,7 +466,7 @@ class LeaderboardEntryRow extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? AppColors.primary : Colors.grey[600],
+          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
         ),
       ),
     );

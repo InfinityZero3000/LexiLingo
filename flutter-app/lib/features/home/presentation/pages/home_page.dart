@@ -1167,54 +1167,72 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget _buildQuickActionsHorizontal(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AppColorRoles.primary(isDark);
+    // Keep all dark-mode quick actions in a consistent neon range.
+    const neonDarkActionColors = <Color>[
+      Color(0xFFFF3131), // YouTube
+      Color(0xFFFC1AD3), // News
+      Color(0xFFFFA319), // Games
+      Color(0xFF35FF0D), // Podcast
+      Color(0xFF8B5CFF), // Books (neon purple)
+      Color(0xFFFF369E), // Vocabulary
+    ];
+
     final quickActions = [
       {
         'icon': Icons.smart_display,
         'label': 'YouTube',
-        'color': AppColors.dangerGradient[0],
-        'bgColor': AppColors.dangerGradient[0].withValues(alpha: 0.1),
+        'color': isDark
+          ? neonDarkActionColors[0]
+            : AppColors.dangerGradient[0],
+        'bgColor': (isDark
+            ? neonDarkActionColors[0]
+                : AppColors.dangerGradient[0])
+            .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/youtube',
       },
       {
         'icon': Icons.article,
         'label': 'News',
-        'color': AppColors.teal,
-        'bgColor': AppColors.teal.withValues(alpha: 0.1),
+        'color': isDark ? neonDarkActionColors[1] : AppColors.teal,
+        'bgColor': (isDark ? neonDarkActionColors[1] : AppColors.teal)
+            .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/news',
       },
       {
         'icon': Icons.sports_esports,
         'label': 'Games',
-        'color': AppColors.purple,
-        'bgColor': AppColors.purple.withValues(alpha: 0.1),
+        'color': isDark ? neonDarkActionColors[2] : AppColors.purple,
+        'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.purple)
+            .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/games',
       },
       {
         'icon': Icons.podcasts,
         'label': 'Podcast',
-        'color': accent,
-        'bgColor': accent.withValues(alpha: 0.12),
+        'color': isDark ? neonDarkActionColors[3] : accent,
+        'bgColor': (isDark ? neonDarkActionColors[3] : accent).withValues(
+          alpha: isDark ? 0.16 : 0.12,
+        ),
         'route': '/podcast',
       },
       {
         'icon': Icons.menu_book_rounded,
         'label': 'Books',
-        'color': AppColors.greenSuccessBright,
-        'bgColor': AppColors.greenSuccessSoft.withValues(alpha: 0.1),
+        'color': isDark
+            ? neonDarkActionColors[4]
+            : AppColors.purpleLight,
+        'bgColor': (isDark
+                ? neonDarkActionColors[4]
+                : AppColors.purple)
+            .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/books',
-      },
-      {
-        'icon': Icons.pets,
-        'label': 'Lexi Chat',
-        'color': AppColors.greenSuccessBright,
-        'bgColor': AppColors.greenSuccess.withValues(alpha: 0.1),
-        'route': '/lexi',
       },
       {
         'icon': Icons.style,
         'label': 'Vocabulary',
-        'color': AppColors.orange,
-        'bgColor': AppColors.warning.withValues(alpha: 0.1),
+        'color': isDark ? neonDarkActionColors[5] : AppColors.orange,
+        'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.warning)
+            .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/vocab',
       },
     ];
@@ -1259,6 +1277,7 @@ class _HomePageNewState extends State<HomePageNew> {
     required Color bgColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1267,7 +1286,9 @@ class _HomePageNewState extends State<HomePageNew> {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: color.withValues(alpha: isDark ? 0.42 : 0.3),
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1280,8 +1301,8 @@ class _HomePageNewState extends State<HomePageNew> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.3),
-                    blurRadius: 8,
+                    color: color.withValues(alpha: isDark ? 0.46 : 0.3),
+                    blurRadius: isDark ? 11 : 8,
                     offset: Offset(0, 2),
                   ),
                 ],

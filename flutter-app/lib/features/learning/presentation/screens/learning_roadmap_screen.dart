@@ -31,21 +31,36 @@ class _NodeLayout {
   final Offset center;
   final LessonProgressModel lesson;
   final UnitRoadmapModel unit;
+  final int globalIndex;
 
-  _NodeLayout({required this.center, required this.lesson, required this.unit});
+  _NodeLayout({
+    required this.center,
+    required this.lesson,
+    required this.unit,
+    required this.globalIndex,
+  });
 
   Color get baseColor => _parseHex(unit.backgroundColor);
 
   Color get nodeColor {
     if (lesson.isLocked) return AppColors.grey400;
     if (lesson.isCompleted) return AppColors.greenSuccessBright;
-    if (lesson.isCurrent) return _mixWithWhite(baseColor, 0.22);
-    return _mixWithWhite(baseColor, 0.14).withValues(alpha: 0.75);
+    if (globalIndex <= 3) {
+      return AppColors.roadmapEarlyStepDarkPalette[globalIndex - 1];
+    }
+    if (lesson.isCurrent) {
+      return _ensureRoadmapContrast(_mixWithWhite(baseColor, 0.40));
+    }
+    return _ensureRoadmapContrast(_mixWithWhite(baseColor, 0.30)).withValues(
+      alpha: 0.92,
+    );
   }
 
   Color get pathColor {
     if (lesson.isCompleted) return const Color(0xFF66BB6A);
-    return baseColor.withValues(alpha: lesson.isLocked ? 0.25 : 0.55);
+    return _ensureRoadmapContrast(baseColor).withValues(
+      alpha: lesson.isLocked ? 0.30 : 0.62,
+    );
   }
 }
 
@@ -122,7 +137,12 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
         );
         final cy = y + _kNodeRadius;
         nodes.add(
-          _NodeLayout(center: Offset(cx, cy), lesson: lesson, unit: unit),
+          _NodeLayout(
+            center: Offset(cx, cy),
+            lesson: lesson,
+            unit: unit,
+            globalIndex: gi + 1,
+          ),
         );
         y += _kRowH;
         gi++;
@@ -141,7 +161,8 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/background-roadmap/background-roadmap.png'),
-            fit: BoxFit.cover,
+            fit: BoxFit.fitHeight,
+            alignment: Alignment.center,
           ),
         ),
         child: Consumer<LearningProvider>(
@@ -570,7 +591,11 @@ class _UnitBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _mixWithWhite(_parseHex(unit.backgroundColor), 0.14);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _mixWithWhite(
+      _parseHex(unit.backgroundColor),
+      isDark ? 0.30 : 0.14,
+    );
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -719,7 +744,7 @@ class _LessonDetailSheet extends StatelessWidget {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
@@ -1043,4 +1068,13 @@ Color _parseHex(String hex) {
 Color _mixWithWhite(Color color, double amount) {
   final t = amount.clamp(0.0, 1.0);
   return Color.lerp(color, AppColors.surfaceLight, t) ?? color;
+}
+
+Color _ensureRoadmapContrast(Color color) {
+  final luminance = color.computeLuminance();
+  if (luminance >= 0.34) {
+    return color;
+  }
+  final boosted = Color.lerp(color, AppColors.roadmapNodeFallbackDark, 0.42);
+  return boosted ?? color;
 }

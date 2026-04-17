@@ -15,7 +15,7 @@ class GamesProvider extends ChangeNotifier {
   // ── Common State ──────────────────────────────────────────────────────────
   bool _isLoading = false;
   String? _error;
-  String _selectedLevel = 'B1';
+  String _selectedLevel = 'A1';
   GameType? _currentGame;
   DateTime? _gameStartTime;
 

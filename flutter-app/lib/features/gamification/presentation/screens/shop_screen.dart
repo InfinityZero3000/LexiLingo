@@ -90,6 +90,7 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   Future<bool> _showPurchaseConfirmation(ShopItemEntity item) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -157,7 +158,7 @@ class _ShopScreenState extends State<ShopScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Are you sure you want to purchase this item?',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -171,7 +172,7 @@ class _ShopScreenState extends State<ShopScreen>
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.greenSuccessBright,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.surfaceLight,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -185,6 +186,8 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   void _showPurchaseSuccess(ShopItemEntity item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -213,7 +216,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 8),
             Text(
               '${item.name} has been added to your inventory.',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -223,8 +226,8 @@ class _ShopScreenState extends State<ShopScreen>
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: primaryColor,
+                foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -238,6 +241,8 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   void _showNotEnoughGemsDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -266,7 +271,7 @@ class _ShopScreenState extends State<ShopScreen>
             const SizedBox(height: 8),
             Text(
               'Complete lessons and challenges to earn more gems!',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -276,8 +281,8 @@ class _ShopScreenState extends State<ShopScreen>
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: primaryColor,
+                foregroundColor: AppColors.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -292,6 +297,8 @@ class _ShopScreenState extends State<ShopScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shop'),
@@ -320,9 +327,9 @@ class _ShopScreenState extends State<ShopScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          labelColor: AppColors.primary,
+          labelColor: primaryColor,
           unselectedLabelColor: AppColors.textGrey,
-          indicatorColor: AppColors.primary,
+          indicatorColor: primaryColor,
           tabs: _categories.map((cat) {
             return Tab(
               child: Row(
@@ -359,12 +366,15 @@ class _ShopScreenState extends State<ShopScreen>
                   Icon(
                     Icons.shopping_bag_outlined,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppColors.grey400,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No items in this category',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColorRoles.textMuted(isDark),
+                    ),
                   ),
                 ],
               ),

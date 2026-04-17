@@ -66,33 +66,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           return CustomScrollView(
             slivers: [
-              // App Bar with Course Header and Hero animation
+              // Compact App Bar with smaller title
               SliverAppBar(
-                expandedHeight: 250,
                 pinned: true,
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    course.title,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontWeight: FontWeight.w600,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 1),
-                          blurRadius: 6,
-                          color: Colors.black87,
-                        ),
-                      ],
-                    ),
+                elevation: 0,
+                titleSpacing: 0,
+                title: Text(
+                  course.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.surface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
                   ),
-                  background: widget.heroTag != null
-                      ? Hero(
-                          tag: widget.heroTag!,
-                          child: _buildCourseBackground(context, course),
-                        )
-                      : _buildCourseBackground(context, course),
                 ),
               ),
 
@@ -103,6 +92,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildCourseHeroCard(context, course),
+                      const SizedBox(height: 16),
+
                       // Description
                       if (course.description != null) ...[
                         Text(
@@ -264,6 +256,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     CourseProvider provider,
   ) async {
     if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
     provider.clearEnrollmentMessages();
 
     final success = await provider.enrollInCourse(widget.courseId);
@@ -271,20 +264,46 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(provider.enrollmentSuccess ?? 'Successfully enrolled!'),
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(provider.enrollmentError ?? 'Failed to enroll'),
           backgroundColor: AppColors.errorBright,
         ),
       );
     }
+  }
+
+  Widget _buildCourseHeroCard(BuildContext context, CourseDetailEntity course) {
+    final heroImage = ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: _buildCourseBackground(context, course),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: widget.heroTag != null
+          ? Hero(tag: widget.heroTag!, child: heroImage)
+          : heroImage,
+    );
   }
 
   Widget _buildCourseBackground(
@@ -354,11 +373,12 @@ class _UnitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ExpansionTile(
         leading: CircleAvatar(
-          backgroundColor: _parseColor(unit.backgroundColor),
+          backgroundColor: _parseColor(unit.backgroundColor, isDark),
           child: Text(
             '$unitNumber',
             style: TextStyle(
@@ -385,14 +405,14 @@ class _UnitCard extends StatelessWidget {
     );
   }
 
-  Color _parseColor(String? colorString) {
+  Color _parseColor(String? colorString, bool isDark) {
     if (colorString == null || colorString.isEmpty) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
     try {
       return Color(int.parse(colorString.replaceFirst('#', '0xFF')));
     } catch (e) {
-      return Colors.blue;
+      return AppColorRoles.primary(isDark);
     }
   }
 }
@@ -408,9 +428,15 @@ class _LessonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLocked = lesson.isLocked ?? false;
     final isCompleted = lesson.isCompleted ?? false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListTile(
-      leading: _getLessonIcon(lesson.lessonType, isLocked, isCompleted),
+      leading: _getLessonIcon(
+        lesson.lessonType,
+        isLocked,
+        isCompleted,
+        isDark,
+      ),
       title: Text(
         lesson.title,
         style: TextStyle(
@@ -435,7 +461,10 @@ class _LessonTile extends StatelessWidget {
           else if (isLocked)
             const Icon(Icons.lock, color: Colors.grey)
           else
-            const Icon(Icons.play_circle_outline, color: Colors.blue),
+            Icon(
+              Icons.play_circle_outline,
+              color: AppColorRoles.primary(isDark),
+            ),
         ],
       ),
       onTap: isLocked
@@ -454,7 +483,12 @@ class _LessonTile extends StatelessWidget {
     );
   }
 
-  Widget _getLessonIcon(String lessonType, bool isLocked, bool isCompleted) {
+  Widget _getLessonIcon(
+    String lessonType,
+    bool isLocked,
+    bool isCompleted,
+    bool isDark,
+  ) {
     IconData iconData;
     Color color;
 
@@ -468,7 +502,7 @@ class _LessonTile extends StatelessWidget {
       switch (lessonType.toLowerCase()) {
         case 'vocabulary':
           iconData = Icons.school;
-          color = Colors.blue;
+          color = AppColorRoles.primary(isDark);
           break;
         case 'grammar':
           iconData = Icons.menu_book;

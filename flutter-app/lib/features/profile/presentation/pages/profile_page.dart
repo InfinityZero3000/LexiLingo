@@ -844,6 +844,8 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildLearningStats(BuildContext context, dynamic user) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final primaryColor = AppColorRoles.primary(isDark);
         // Use stats from ProfileProvider (backend API)
         final stats = profileProvider.stats;
         final lessonsCompleted = stats?.totalLessonsCompleted ?? 0;
@@ -866,7 +868,7 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   Icon(
                     Icons.insights_rounded,
-                    color: AppColors.primary,
+                    color: primaryColor,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -888,7 +890,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.abc,
-                          color: AppColors.primary,
+                          color: primaryColor,
                           title: 'Lessons',
                           value: '$lessonsCompleted',
                           subtitle: 'completed',
@@ -913,7 +915,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.school,
-                          color: AppColors.primary,
+                          color: primaryColor,
                           title: 'Courses',
                           value: '$coursesCompleted',
                           subtitle: 'finished',
@@ -942,7 +944,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.auto_stories,
-                          color: AppColors.primary,
+                          color: primaryColor,
                           title: 'Vocabulary',
                           value: '$vocabularyMastered',
                           subtitle: 'mastered',
@@ -967,7 +969,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(
                         child: GlassmorphicStatCard(
                           icon: Icons.quiz,
-                          color: AppColors.primary,
+                          color: primaryColor,
                           title: 'Tests',
                           value: '$testsPassed',
                           subtitle: avgScore > 0
@@ -1002,6 +1004,7 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildLoadingStats(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1026,7 +1029,7 @@ class _ProfilePageState extends State<ProfilePage>
             4,
             (index) => Container(
               decoration: BoxDecoration(
-                color: AppColors.slate200,
+                color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
@@ -1042,6 +1045,7 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildWeeklyActivity(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final activities = profileProvider.weeklyActivity;
         final isLoading = profileProvider.isLoadingActivity;
 
@@ -1115,7 +1119,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   label: dayLabel,
                                   value: normalizedValue,
                                   xpValue: activity.xpEarned,
-                                  color: AppColors.primary,
+                                  color: AppColorRoles.primary(isDark),
                                   delay: Duration(milliseconds: index * 100),
                                 ),
                               );
@@ -1137,7 +1141,7 @@ class _ProfilePageState extends State<ProfilePage>
                               'Lessons',
                               '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
                               Icons.menu_book,
-                              AppColors.primary,
+                              AppColorRoles.primary(isDark),
                             ),
                             _buildActivityStat(
                               'Words',
@@ -1328,11 +1332,11 @@ class _ProfilePageState extends State<ProfilePage>
                               begin: Alignment(position - 0.45, -1.0),
                               end: Alignment(position + 0.45, 1.0),
                               colors: [
-                                Colors.transparent,
+                                AppColors.surfaceLight.withValues(alpha: 0),
                                 AppColors.surfaceLight.withValues(alpha: 0.06),
                                 AppColors.surfaceLight.withValues(alpha: 0.56),
                                 AppColors.surfaceLight.withValues(alpha: 0.06),
-                                Colors.transparent,
+                                AppColors.surfaceLight.withValues(alpha: 0),
                               ],
                               stops: const [0.0, 0.42, 0.5, 0.58, 1.0],
                             ).createShader(bounds);

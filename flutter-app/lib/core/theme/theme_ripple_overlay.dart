@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
@@ -27,7 +26,7 @@ class _ThemeRippleOverlayState extends State<ThemeRippleOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 560),
     );
 
     ThemeRippleBus.instance.notifier.addListener(_handleRippleEvent);
@@ -63,7 +62,7 @@ class _ThemeRippleOverlayState extends State<ThemeRippleOverlay>
           fit: StackFit.expand,
           children: [
             child!,
-            if (_controller.isAnimating || _controller.value > 0)
+            if (_controller.isAnimating)
               IgnorePointer(
                 child: RepaintBoundary(
                   child: CustomPaint(
@@ -96,41 +95,25 @@ class _ThemeRipplePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (progress <= 0) return;
+    if (progress <= 0 || progress >= 1) return;
 
-    final maxRadius = _farthestDistance(origin, size) * 1.1;
-    final baseRadius = ui.lerpDouble(0, maxRadius, progress) ?? 0;
+    // Use an approximation based on diagonal to keep per-frame cost low.
+    final maxRadius = (size.longestSide * math.sqrt2) * 0.95;
+    final baseRadius = maxRadius * progress;
 
     final fillPaint = Paint()
-      ..color = color.withValues(alpha: (0.24 - (progress * 0.16)).clamp(0.0, 0.24))
+      ..color = color.withValues(alpha: (0.20 - (progress * 0.20)).clamp(0.0, 0.20))
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(origin, baseRadius, fillPaint);
 
-    final ring1 = Paint()
-      ..color = color.withValues(alpha: (0.35 - (progress * 0.30)).clamp(0.0, 0.35))
+    // Keep only one thin ring for the wave feel while reducing draw load.
+    final ring = Paint()
+      ..color = color.withValues(alpha: (0.18 - (progress * 0.18)).clamp(0.0, 0.18))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = ui.lerpDouble(16, 2, progress) ?? 4;
-    final ring2 = Paint()
-      ..color = color.withValues(alpha: (0.24 - (progress * 0.20)).clamp(0.0, 0.24))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = ui.lerpDouble(10, 1.5, progress) ?? 3;
+      ..strokeWidth = 8 - (6 * progress);
 
-    canvas.drawCircle(origin, baseRadius * 0.78, ring1);
-    canvas.drawCircle(origin, baseRadius * 0.52, ring2);
-  }
-
-  double _farthestDistance(Offset origin, Size size) {
-    final corners = <Offset>[
-      const Offset(0, 0),
-      Offset(size.width, 0),
-      Offset(0, size.height),
-      Offset(size.width, size.height),
-    ];
-
-    return corners
-        .map((corner) => (corner - origin).distance)
-        .fold<double>(0, math.max);
+    canvas.drawCircle(origin, baseRadius * 0.74, ring);
   }
 
   @override

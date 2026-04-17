@@ -574,11 +574,11 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 onPressed: widget.onTap,
                 style: TextButton.styleFrom(
                   foregroundColor: isDark
-                      ? const Color(0xFF8AF1E5)
-                      : const Color(0xFF0D9B8E),
+                      ? AppColors.primaryDarkModeSoft
+                      : AppColors.teal,
                   backgroundColor: isDark
-                      ? const Color(0xFF123934).withValues(alpha: 0.45)
-                      : const Color(0xFFDDFBF5),
+                      ? AppColors.accentMintDark.withValues(alpha: 0.45)
+                      : AppColors.accentMint.withValues(alpha: 0.16),
                   textStyle: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -590,8 +590,8 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     borderRadius: BorderRadius.circular(999),
                     side: BorderSide(
                       color: isDark
-                          ? const Color(0xFF5DD8CA).withValues(alpha: 0.55)
-                          : const Color(0xFF9DE9DD),
+                          ? AppColors.accentMint.withValues(alpha: 0.55)
+                          : AppColors.accentMint.withValues(alpha: 0.35),
                     ),
                   ),
                 ),

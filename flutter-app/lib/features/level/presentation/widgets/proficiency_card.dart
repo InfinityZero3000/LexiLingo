@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
@@ -120,9 +120,7 @@ class ProficiencyCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isDark
-                                  ? const Color(
-                                      0xFF6366F1,
-                                    ).withValues(alpha: 0.3)
+                                  ? accent.withValues(alpha: 0.3)
                                   : AppColors.slate200,
                               width: 1.5,
                             ),
@@ -131,10 +129,8 @@ class ProficiencyCard extends StatelessWidget {
                             Icons.hourglass_bottom_rounded,
                             size: 28,
                             color: isDark
-                            ? accent.withValues(alpha: 0.6)
-                                : const Color(
-                                    0xFF6366F1,
-                                  ).withValues(alpha: 0.4),
+                                ? accent.withValues(alpha: 0.6)
+                                : accent.withValues(alpha: 0.4),
                           ),
                         ),
                     ],
@@ -209,10 +205,10 @@ class ProficiencyCard extends StatelessWidget {
                     flex: 3,
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const CourseListScreen(),
+                            builder: (_) => const MainScreen(initialIndex: 1),
                           ),
                         );
                       },

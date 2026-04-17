@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Leaderboard Entry Entity
 class LeaderboardEntryEntity extends Equatable {
   final int rank;
-  final String odUserId;
+  final String userId;
   final String username;
   final String displayName;
   final String? avatarUrl;
@@ -13,7 +13,7 @@ class LeaderboardEntryEntity extends Equatable {
 
   const LeaderboardEntryEntity({
     required this.rank,
-    required this.odUserId,
+    required this.userId,
     required this.username,
     required this.displayName,
     this.avatarUrl,
@@ -25,9 +25,9 @@ class LeaderboardEntryEntity extends Equatable {
   factory LeaderboardEntryEntity.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntryEntity(
       rank: json['rank'] ?? 0,
-      odUserId: json['user_id'] ?? json['userId'] ?? '',
+      userId: (json['user_id'] ?? json['userId'] ?? '').toString(),
       username: json['username'] ?? '',
-      displayName: json['display_name'] ?? json['displayName'] ?? '',
+      displayName: (json['display_name'] ?? json['displayName'] ?? json['username'] ?? '').toString(),
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
       lessonsCompleted:
@@ -37,7 +37,7 @@ class LeaderboardEntryEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props => [rank, odUserId, xpEarned];
+  List<Object?> get props => [rank, userId, xpEarned];
 }
 
 /// League Status Entity
@@ -126,10 +126,21 @@ class LeaderboardEntity extends Equatable {
   List<LeaderboardEntryEntity> get topThree => entries.take(3).toList();
 
   factory LeaderboardEntity.fromJson(Map<String, dynamic> json) {
+    DateTime safeParseDate(dynamic raw, DateTime fallback) {
+      if (raw is String && raw.isNotEmpty) {
+        return DateTime.tryParse(raw) ?? fallback;
+      }
+      return fallback;
+    }
+
+    final now = DateTime.now();
     return LeaderboardEntity(
       league: json['league'] ?? 'bronze',
-      weekStart: DateTime.parse(json['week_start'] ?? json['weekStart']),
-      weekEnd: DateTime.parse(json['week_end'] ?? json['weekEnd']),
+      weekStart: safeParseDate(json['week_start'] ?? json['weekStart'], now),
+      weekEnd: safeParseDate(
+        json['week_end'] ?? json['weekEnd'],
+        now.add(const Duration(days: 7)),
+      ),
       entries: (json['entries'] as List? ?? [])
           .map((e) => LeaderboardEntryEntity.fromJson(e))
           .toList(),

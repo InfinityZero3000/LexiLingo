@@ -65,6 +65,8 @@ class _QuizWidgetState extends State<QuizWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -125,15 +127,15 @@ class _QuizWidgetState extends State<QuizWidget>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lightbulb_outline,
                             size: 20,
-                            color: Colors.blue,
+                            color: accentColor,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -143,9 +145,9 @@ class _QuizWidgetState extends State<QuizWidget>
                               contextSentence: widget.exercise.hint!,
                               child: Text(
                                 widget.exercise.hint!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.blue,
+                                  color: accentColor,
                                 ),
                               ),
                             ),
