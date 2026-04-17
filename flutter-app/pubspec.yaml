@@ -99,6 +99,7 @@ dependencies:
   easy_localization: ^3.0.7
   flutter_facebook_auth: ^7.1.5
   flutter_facebook_auth_web: ^6.1.2
+  encrypt: ^5.0.3
 
 # Override to fix record_linux 0.7.2 missing startStream implementation
 # record 5.x caps record_linux at <1.0.0 but record_platform_interface
