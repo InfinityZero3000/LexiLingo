@@ -107,6 +107,7 @@ class Settings(BaseSettings):
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
+    AI_AUDIT_INGEST_SECRET: str = ""
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str | None = None
