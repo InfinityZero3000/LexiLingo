@@ -17,6 +17,9 @@ const _tag = 'GoogleSignInService';
 /// server-client-id / id_token exchange works correctly.
 class GoogleSignInService {
   final GoogleSignIn _googleSignIn;
+  String? _lastError;
+
+  String? get lastError => _lastError;
 
   GoogleSignInService({GoogleSignIn? googleSignIn})
     : _googleSignIn =
@@ -33,6 +36,7 @@ class GoogleSignInService {
   /// Returns null if sign-in was cancelled or failed.
   Future<String?> signIn() async {
     try {
+      _lastError = null;
       logInfo(_tag, 'Starting Google Sign In...');
 
       if (kIsWeb) {
@@ -42,6 +46,7 @@ class GoogleSignInService {
       }
     } catch (e) {
       logError(_tag, 'Google Sign In error: $e');
+      _lastError = e.toString();
       return null;
     }
   }
@@ -82,6 +87,7 @@ class GoogleSignInService {
     final GoogleSignInAccount? account = await _googleSignIn.signIn();
     if (account == null) {
       logWarn(_tag, 'Google Sign In cancelled by user');
+      _lastError = 'cancelled';
       return null;
     }
 
@@ -90,6 +96,8 @@ class GoogleSignInService {
     final GoogleSignInAuthentication auth = await account.authentication;
     if (auth.idToken == null) {
       logError(_tag, 'Failed to get ID token from Google (mobile)');
+      _lastError =
+          'Unable to get Google ID token. Check GOOGLE_SERVER_CLIENT_ID configuration.';
       return null;
     }
 
