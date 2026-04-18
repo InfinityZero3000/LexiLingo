@@ -91,7 +91,7 @@ model-development/*
 .env.*
 **/.env.firebase.local
 !.env.example
-!.env.production
+.env.production
 !.env.production.example
 .env.production.secrets
 .env.production.secrets.*
