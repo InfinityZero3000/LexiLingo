@@ -91,6 +91,10 @@ model-development/*
 .env.*
 **/.env.firebase.local
 !.env.example
+!.env.production
+!.env.production.example
+.env.production.secrets
+.env.production.secrets.*
 
 # AI Models (too large for git)
 **/models/whisper/*.pt
@@ -120,3 +124,12 @@ agent-skills
 system-testing/
 
 graphcag*
+
+# deployment artifacts
+dist/
+build/
+.deploy/
+backups/
+
+# gateway runtime security logs
+gateway/nginx/logs/*.log

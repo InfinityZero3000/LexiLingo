@@ -62,6 +62,113 @@ Kiểm tra trạng thái của tất cả services.
 - Services đã dừng
 - 🗄️ Trạng thái PostgreSQL database
 
+### 5. `smoke-prod.sh` - Smoke test sau deploy
+Kiểm tra nhanh end-to-end qua gateway cho các nhóm API chính: news, auth, ai, chat.
+
+```bash
+./scripts/smoke-prod.sh
+# hoặc custom domain
+./scripts/smoke-prod.sh https://api.lexilingo.me
+```
+
+**Kiểm tra bao gồm:**
+- Gateway health (`/health`, `/ai-health`)
+- Backend public API (`/api/v1/news/categories`)
+- Backend auth guard (`/api/v1/auth/me` kỳ vọng `401` khi chưa có token)
+- AI API (`/api/v1/ai/graph-cag/health`)
+- Chat API (`/api/v1/chat/sessions/test/messages?limit=1`)
+
+### 6. `deploy-one-shot.sh` - Deploy one-shot có rollback signal
+Pipeline deploy production một lệnh: `git pull` → `docker compose up --remove-orphans` → `smoke test`.
+Nếu fail ở bất kỳ bước nào, script tạo tín hiệu rollback trong thư mục `.deploy/`.
+
+```bash
+./scripts/deploy-one-shot.sh
+
+# tuỳ chọn
+./scripts/deploy-one-shot.sh --dry-run
+./scripts/deploy-one-shot.sh --skip-image-pull
+./scripts/deploy-one-shot.sh --skip-smoke
+```
+
+**Artifacts sau deploy:**
+- Success marker: `.deploy/LAST_SUCCESS`
+- Rollback signal: `.deploy/ROLLBACK_REQUIRED` và `.deploy/ROLLBACK_REQUIRED_<timestamp>.txt`
+
+### 7. `gateway-security-alerts.sh` - Cảnh báo security burst từ Nginx log
+Script kiểm tra nhanh security log của gateway để phát hiện spike `4xx`, `5xx` và burst `429` trên auth endpoints.
+
+```bash
+# chạy mặc định
+bash ./scripts/gateway-security-alerts.sh
+
+# custom log path
+bash ./scripts/gateway-security-alerts.sh gateway/nginx/logs/security.log
+```
+
+**Ngưỡng mặc định (có thể override qua env):**
+- `MAX_4XX=150`
+- `MAX_5XX=40`
+- `MAX_AUTH_429=30`
+
+Ví dụ chạy với ngưỡng custom:
+
+```bash
+MAX_4XX=200 MAX_5XX=60 MAX_AUTH_429=50 bash ./scripts/gateway-security-alerts.sh
+```
+
+## 🔐 Production secrets split
+
+Secrets production không còn đặt trong file tracked `.env.production`.
+
+1. Copy template:
+
+```bash
+cp .env.production.secrets.example .env.production.secrets
+```
+
+2. Điền giá trị thật trong `.env.production.secrets`.
+3. Deploy script sẽ tự đọc cả `.env.production` và `.env.production.secrets`.
+
+### 8. `backup-prod.sh` - Backup định kỳ PostgreSQL + MongoDB
+
+```bash
+# backup ngay lập tức
+bash ./scripts/backup-prod.sh
+
+# custom retention / backup dir
+RETENTION_DAYS=21 BACKUP_DIR=/opt/lexilingo/backups bash ./scripts/backup-prod.sh
+```
+
+Output:
+- `postgres_<timestamp>.sql.gz`
+- `mongodb_<timestamp>.archive.gz`
+- `manifest_<timestamp>.txt`
+
+### 9. `restore-prod.sh` - Restore dữ liệu production
+
+```bash
+# restore PostgreSQL
+bash ./scripts/restore-prod.sh --postgres-backup /opt/lexilingo/backups/postgres_<timestamp>.sql.gz
+
+# restore MongoDB
+bash ./scripts/restore-prod.sh --mongo-backup /opt/lexilingo/backups/mongodb_<timestamp>.archive.gz
+```
+
+Lưu ý: script yêu cầu nhập xác nhận `RESTORE NOW` vì thao tác có tính phá huỷ dữ liệu.
+
+### 10. `security/setup-ufw-fail2ban.sh` - Nối UFW + Fail2Ban với gateway log
+
+```bash
+sudo PROJECT_ROOT=/opt/lexilingo bash ./scripts/security/setup-ufw-fail2ban.sh
+```
+
+Script sẽ:
+- Cài `ufw` và `fail2ban`
+- Áp baseline firewall 22/80/443
+- Cài jail/filter từ `deploy/fail2ban/`
+- Bật `nginx-429-abuse` để auto ban IP từ `gateway/nginx/logs/security.log`
+
 ## 🚀 Quick Start
 
 ### Lần đầu sử dụng:
