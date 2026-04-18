@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -69,7 +72,21 @@ class AuthProvider extends ChangeNotifier {
       _isCheckingAuth = true;
       notifyListeners();
 
-      final result = await getCurrentUserUseCase(NoParams());
+      // Fast-path: if there are no local tokens, skip network call completely.
+      final hasStoredSession = await authRepository.isAuthenticated();
+      if (!hasStoredSession) {
+        _user = null;
+        _errorMessage = null;
+        UserScopeService.clearActiveUserId();
+        return;
+      }
+
+      final result = await getCurrentUserUseCase(
+        NoParams(),
+      ).timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => Left(AuthFailure('Auth check timed out')),
+      );
       result.fold(
         (failure) {
           // Don't show error for AuthFailure (401) - user just not logged in
