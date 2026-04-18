@@ -827,6 +827,10 @@ class _HomePageNewState extends State<HomePageNew> {
       );
     }
 
+    if (provider.featuredCourses.isEmpty) {
+      return _buildFeaturedCoursesEmptyState(context, provider);
+    }
+
     return SizedBox(
       height: 220,
       child: ListView.builder(
@@ -844,6 +848,73 @@ class _HomePageNewState extends State<HomePageNew> {
             child: _buildCourseCard(context, course, provider),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCoursesEmptyState(
+    BuildContext context,
+    HomeProvider provider,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = AppColorRoles.primary(isDark);
+
+    return SizedBox(
+      height: 220,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: primary.withValues(alpha: isDark ? 0.22 : 0.16),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.auto_stories_rounded, color: primary, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Chua co khoa hoc noi bat',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Noi dung se xuat hien tai day sau khi he thong cap nhat khoa hoc moi.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColorRoles.textMuted(isDark),
+                height: 1.35,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                FilledButton.icon(
+                  onPressed: () => provider.loadFeaturedCourses(),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Tai lai'),
+                ),
+                const SizedBox(width: 10),
+                TextButton(
+                  onPressed: () => provider.refreshData(),
+                  child: const Text('Lam moi du lieu'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -9,7 +9,6 @@ import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
@@ -331,11 +330,6 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             locale: context.locale,
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
-            builder: (context, child) {
-              return ThemeRippleOverlay(
-                child: child ?? const SizedBox.shrink(),
-              );
-            },
             home: const AuthWrapper(),
             routes: {
               '/youtube': (context) => const YouTubeExploreScreen(),

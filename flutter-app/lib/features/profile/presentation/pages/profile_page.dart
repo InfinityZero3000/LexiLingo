@@ -1072,6 +1072,7 @@ class _ProfilePageState extends State<ProfilePage>
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final activities = profileProvider.weeklyActivity;
         final isLoading = profileProvider.isLoadingActivity;
+        final activityError = profileProvider.activityError;
 
         return Column(
           children: [
@@ -1111,8 +1112,11 @@ class _ProfilePageState extends State<ProfilePage>
                       child: Padding(
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
-                          'No activity data yet',
+                          activityError == null || activityError.isEmpty
+                              ? 'No activity data yet'
+                              : activityError,
                           style: const TextStyle(color: AppColors.grey600),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     )
@@ -1133,10 +1137,18 @@ class _ProfilePageState extends State<ProfilePage>
                               final normalizedValue = maxXP > 0
                                   ? activity.xpEarned / maxXP
                                   : 0.0;
-                              final date = DateTime.parse(activity.date);
-                              final dayLabel = DateFormat(
-                                'E',
-                              ).format(date).substring(0, 1);
+                              String dayLabel;
+                              final parsedDate = DateTime.tryParse(activity.date);
+                              if (parsedDate != null) {
+                                dayLabel = DateFormat(
+                                  'E',
+                                ).format(parsedDate).substring(0, 1);
+                              } else {
+                                final raw = activity.date.trim();
+                                dayLabel = raw.isEmpty
+                                    ? '-'
+                                    : raw.substring(0, 1).toUpperCase();
+                              }
 
                               return Expanded(
                                 child: AnimatedActivityBar(
