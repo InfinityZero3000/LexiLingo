@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show MissingPluginException;
@@ -20,21 +22,32 @@ Future<void> registerPodcastModule() async {
   );
 
   // Background audio handler — mobile/desktop only.
-  // AudioService does not support web; skipping prevents startup hang.
+  // Keep initialization non-blocking so app can render first frame immediately.
   if (!kIsWeb) {
-    try {
-      final audioHandler = await AudioService.init<PodcastAudioHandler>(
-        builder: () => PodcastAudioHandler(),
-        config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.lexilingo.podcast.channel',
-          androidNotificationChannelName: 'LexiLingo Podcast',
-          androidNotificationOngoing: true,
-          androidShowNotificationBadge: true,
-        ),
-      );
+    unawaited(_registerPodcastAudioHandler());
+  }
+}
+
+Future<void> _registerPodcastAudioHandler() async {
+  try {
+    final audioHandler = await AudioService.init<PodcastAudioHandler>(
+      builder: () => PodcastAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.lexilingo.podcast.channel',
+        androidNotificationChannelName: 'LexiLingo Podcast',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+      ),
+    ).timeout(const Duration(seconds: 8));
+
+    if (!sl.isRegistered<PodcastAudioHandler>()) {
       sl.registerSingleton<PodcastAudioHandler>(audioHandler);
-    } on MissingPluginException {
-      // Native audio plugins unavailable (e.g. unit test environment) — skip.
     }
+  } on MissingPluginException {
+    // Native audio plugins unavailable (e.g. unit test environment) — skip.
+  } on TimeoutException {
+    // Prevent startup deadlock if native audio service is slow/unavailable.
+  } catch (_) {
+    // Keep podcast audio optional during app bootstrap.
   }
 }

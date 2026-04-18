@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
@@ -112,7 +114,7 @@ void main() async {
   // Initialize local notifications early so Settings sync can schedule reliably.
   await di.sl<NotificationService>().ensureInitialized();
 
-  // Run startup tasks (health check, seeding). Non-blocking for web.
+  // Run startup tasks (health check, seeding). Keep non-blocking for first frame.
   if (!kIsWeb) {
     final coordinator = StartupCoordinator(
       tasks: [
@@ -127,10 +129,12 @@ void main() async {
       ],
     );
 
-    await coordinator.run(
-      onProgress: (result) => logDebug(
-        'Startup',
-        '${result.id}: ${result.status.name} ${result.message ?? ''}',
+    unawaited(
+      coordinator.run(
+        onProgress: (result) => logDebug(
+          'Startup',
+          '${result.id}: ${result.status.name} ${result.message ?? ''}',
+        ),
       ),
     );
   }
