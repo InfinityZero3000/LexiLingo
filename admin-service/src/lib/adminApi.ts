@@ -202,14 +202,13 @@ export const deleteAchievement = async (id: string) =>
 export const uploadBadgeImage = async (file: File): Promise<AdminResponse<{ url: string; filename: string }>> => {
   const formData = new FormData();
   formData.append("file", file);
-  const token = localStorage.getItem("auth_token");
-  const res = await fetch(`${ENV.backendUrl}/admin/upload/badge`, {
-    method: "POST",
-    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: formData,
-  });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-  return res.json();
+  return apiFetch<AdminResponse<{ url: string; filename: string }>>(
+    `${ENV.backendUrl}/admin/upload/badge`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
 };
 
 // ============================================================================

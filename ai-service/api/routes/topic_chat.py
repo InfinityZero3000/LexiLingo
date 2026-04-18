@@ -21,7 +21,7 @@ from api.core.database import get_database
 from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
-from api.core.quota_guard import enforce_user_quota
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.story_schemas import (
     StartTopicSessionRequest,
     StartTopicSessionResponse,
@@ -299,7 +299,12 @@ async def start_topic_session(
         auth_user_id = enforce_user_scope(current_user, request.user_id)
         request = request.model_copy(update={"user_id": auth_user_id})
 
-        quota = await enforce_user_quota(current_user.user_id, "topic.start_session")
+        quota = await enforce_user_quota(
+            current_user.user_id,
+            "topic.start_session",
+            token_cost=default_token_cost_for_endpoint("topic.start_session"),
+            fail_closed=True,
+        )
 
         import json
         
@@ -387,6 +392,10 @@ async def start_topic_session(
                     "rpm_limit": quota.rpm_limit,
                     "rpd_used": quota.rpd_used,
                     "rpd_limit": quota.rpd_limit,
+                    "tpm_used": quota.tpm_used,
+                    "tpm_limit": quota.tpm_limit,
+                    "tpd_used": quota.tpd_used,
+                    "tpd_limit": quota.tpd_limit,
                 },
             }
         )
@@ -434,7 +443,12 @@ async def send_topic_message(
         auth_user_id = enforce_user_scope(current_user, request.user_id)
         request = request.model_copy(update={"user_id": auth_user_id})
 
-        quota = await enforce_user_quota(current_user.user_id, "topic.send_message")
+        quota = await enforce_user_quota(
+            current_user.user_id,
+            "topic.send_message",
+            token_cost=default_token_cost_for_endpoint("topic.send_message", text=request.message),
+            fail_closed=True,
+        )
         
         # Get session
         session = await _ensure_topic_session_owner(session_id, current_user, db)
@@ -596,6 +610,10 @@ async def send_topic_message(
                     "rpm_limit": quota.rpm_limit,
                     "rpd_used": quota.rpd_used,
                     "rpd_limit": quota.rpd_limit,
+                    "tpm_used": quota.tpm_used,
+                    "tpm_limit": quota.tpm_limit,
+                    "tpd_used": quota.tpd_used,
+                    "tpd_limit": quota.tpd_limit,
                 },
             }
         )

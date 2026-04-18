@@ -16,44 +16,44 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
-from app.core.database import get_async_engine, get_async_session_maker
+from app.core.database import engine, AsyncSessionLocal
 from app.models.course_category import CourseCategory
 import uuid
 
 
 async def create_course_categories_table():
     """Create course_categories table."""
-    engine = get_async_engine()
-    
-    create_table_sql = """
-    CREATE TABLE IF NOT EXISTS course_categories (
-        id UUID PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE,
-        slug VARCHAR(100) NOT NULL UNIQUE,
-        description TEXT,
-        icon VARCHAR(50),
-        color VARCHAR(20),
-        order_index INTEGER DEFAULT 0,
-        is_active BOOLEAN DEFAULT TRUE,
-        course_count INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_category_slug ON course_categories(slug);
-    CREATE INDEX IF NOT EXISTS idx_category_active ON course_categories(is_active);
-    CREATE INDEX IF NOT EXISTS idx_category_active_order ON course_categories(is_active, order_index);
-    """
+
+    statements = [
+        """
+        CREATE TABLE IF NOT EXISTS course_categories (
+            id UUID PRIMARY KEY,
+            name VARCHAR(100) NOT NULL UNIQUE,
+            slug VARCHAR(100) NOT NULL UNIQUE,
+            description TEXT,
+            icon VARCHAR(50),
+            color VARCHAR(20),
+            order_index INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT TRUE,
+            course_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_category_slug ON course_categories(slug)",
+        "CREATE INDEX IF NOT EXISTS idx_category_active ON course_categories(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_category_active_order ON course_categories(is_active, order_index)",
+    ]
     
     async with engine.begin() as conn:
-        await conn.execute(text(create_table_sql))
+        for sql in statements:
+            await conn.execute(text(sql))
         print(" Created course_categories table")
 
 
 async def add_category_id_to_courses():
     """Add category_id column to courses table."""
-    engine = get_async_engine()
-    
+
     alter_table_sql = """
     -- Add category_id column if it doesn't exist
     DO $$
@@ -77,7 +77,7 @@ async def add_category_id_to_courses():
 
 async def seed_initial_categories():
     """Seed initial course categories."""
-    SessionLocal = get_async_session_maker()
+    SessionLocal = AsyncSessionLocal
     
     categories = [
         {
@@ -169,8 +169,8 @@ async def seed_initial_categories():
             await session.execute(
                 text("""
                     INSERT INTO course_categories 
-                    (id, name, slug, description, icon, color, order_index, is_active, course_count)
-                    VALUES (:id, :name, :slug, :description, :icon, :color, :order_index, TRUE, 0)
+                    (id, name, slug, description, icon, color, order_index, is_active, course_count, created_at, updated_at)
+                    VALUES (:id, :name, :slug, :description, :icon, :color, :order_index, TRUE, 0, NOW(), NOW())
                 """),
                 cat_data
             )
