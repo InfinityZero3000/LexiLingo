@@ -143,13 +143,15 @@ class AchievementBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveUseCdnFirst = useCdnFirst && !kIsWeb;
+
     if (preferImageAsset) {
       // Prefer slug (stable ID) over id (UUID) for badge asset lookup
       final lookupKey = (achievement.slug ?? achievement.id).trim();
       final badgeIcon = achievement.badgeIcon?.trim();
 
       final mappedAssetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-      if (useCdnFirst) {
+      if (effectiveUseCdnFirst) {
         // In production, try network first and fall back to local assets on error.
         if (badgeIcon != null &&
             badgeIcon.isNotEmpty &&
@@ -176,10 +178,11 @@ class AchievementBadge extends StatelessWidget {
       }
 
       // If CDN-first is disabled, still allow explicit network URL from backend.
-      if (!useCdnFirst &&
+      if (!effectiveUseCdnFirst &&
           badgeIcon != null &&
           badgeIcon.isNotEmpty &&
-          _isNetworkUrl(badgeIcon)) {
+          _isNetworkUrl(badgeIcon) &&
+          !kIsWeb) {
         return _buildNetworkBadge(badgeIcon);
       }
     }
