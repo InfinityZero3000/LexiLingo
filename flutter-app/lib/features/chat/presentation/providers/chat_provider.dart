@@ -142,24 +142,18 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
 
     final pagedResult = await getPagedChatHistoryUseCase(
-      GetPagedChatHistoryParams(
-        sessionId: sessionId,
-        limit: _messagesPageSize,
-      ),
+      GetPagedChatHistoryParams(sessionId: sessionId, limit: _messagesPageSize),
     );
 
-    pagedResult.fold(
-      (_) {},
-      (page) {
-        _messages = page.messages;
-        _hasMoreMessages = page.hasMore;
-        _nextMessageCursor = page.nextCursor;
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    pagedResult.fold((_) {}, (page) {
+      _messages = page.messages;
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
+      _isLoading = false;
+      notifyListeners();
+    });
 
-    if (! _isLoading) {
+    if (!_isLoading) {
       return;
     }
 
@@ -185,7 +179,9 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoreMessages() async {
-    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) {
+    if (_currentSession == null ||
+        _isLoadingMoreMessages ||
+        !_hasMoreMessages) {
       return;
     }
 
@@ -200,19 +196,16 @@ class ChatProvider extends ChangeNotifier {
       ),
     );
 
-    final pagedSuccess = pagedResult.fold(
-      (_) => false,
-      (page) {
-        if (page.messages.isNotEmpty) {
-          _messages.insertAll(0, page.messages);
-        }
-        _hasMoreMessages = page.hasMore;
-        _nextMessageCursor = page.nextCursor;
-        _isLoadingMoreMessages = false;
-        notifyListeners();
-        return true;
-      },
-    );
+    final pagedSuccess = pagedResult.fold((_) => false, (page) {
+      if (page.messages.isNotEmpty) {
+        _messages.insertAll(0, page.messages);
+      }
+      _hasMoreMessages = page.hasMore;
+      _nextMessageCursor = page.nextCursor;
+      _isLoadingMoreMessages = false;
+      notifyListeners();
+      return true;
+    });
 
     if (pagedSuccess) {
       return;

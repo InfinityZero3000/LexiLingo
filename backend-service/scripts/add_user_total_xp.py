@@ -62,9 +62,9 @@ async def add_total_xp_column():
     
     async with engine.begin() as conn:
         await conn.execute(text(alter_table_sql))
-        print("✓ Added total_xp column to users table")
-        print("✓ Initialized existing users' XP from lesson attempts")
-        print("✓ Updated users' levels based on XP")
+        print(" Added total_xp column to users table")
+        print(" Initialized existing users' XP from lesson attempts")
+        print(" Updated users' levels based on XP")
 
 
 async def verify_migration():
@@ -120,10 +120,10 @@ async def main():
         print("\nStep 2: Verifying migration...")
         await verify_migration()
         
-        print("\n✅ Migration completed successfully!")
+        print("\n Migration completed successfully!")
         
     except Exception as e:
-        print(f"\n❌ Migration failed: {e}")
+        print(f"\n Migration failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

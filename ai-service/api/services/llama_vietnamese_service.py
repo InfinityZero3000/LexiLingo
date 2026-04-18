@@ -198,7 +198,7 @@ class LLaMAVietnameseService:
             
             self.is_loaded = True
             load_time = time.time() - start_time
-            logger.info(f"✅ LLaMA model loaded in {load_time:.2f}s")
+            logger.info(f" LLaMA model loaded in {load_time:.2f}s")
             
         except ImportError:
             logger.warning(

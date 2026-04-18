@@ -232,7 +232,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                               color: AppColors.primary,
                             ),
                           ),
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           side: const BorderSide(color: AppColors.primary),
                         ),
                         const Spacer(),
@@ -453,7 +455,9 @@ class _HintButton extends StatelessWidget {
               used ? 'Used' : detail,
               style: TextStyle(
                 fontSize: 10,
-                color: active ? color.withValues(alpha: 0.7) : AppColors.textGrey,
+                color: active
+                    ? color.withValues(alpha: 0.7)
+                    : AppColors.textGrey,
               ),
             ),
           ],

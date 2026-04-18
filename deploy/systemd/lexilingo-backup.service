@@ -1,0 +1,12 @@
+[Unit]
+Description=LexiLingo production backup job
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/lexilingo
+Environment=BACKUP_DIR=/opt/lexilingo/backups
+Environment=RETENTION_DAYS=14
+ExecStart=/usr/bin/bash /opt/lexilingo/scripts/backup-prod.sh

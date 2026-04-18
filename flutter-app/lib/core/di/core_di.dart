@@ -117,6 +117,5 @@ class AiApiClient extends ApiClient {
     super.interceptors,
     super.authHeaderProvider,
     super.onUnauthorized,
-  })
-    : super(baseUrl: ApiConfig.aiServiceUrl);
+  }) : super(baseUrl: ApiConfig.aiServiceUrl);
 }

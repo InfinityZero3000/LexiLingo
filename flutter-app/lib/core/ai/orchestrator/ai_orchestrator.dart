@@ -78,9 +78,9 @@ class AIOrchestrator {
     try {
       await init();
       _loadedModels.add(name);
-      logDebug('[Orchestrator] ✓ $name service ready');
+      logDebug('[Orchestrator]  $name service ready');
     } catch (e) {
-      logDebug('[Orchestrator] ✗ $name service failed: $e');
+      logDebug('[Orchestrator]  $name service failed: $e');
     }
   }
 

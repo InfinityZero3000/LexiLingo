@@ -49,7 +49,7 @@ async def setup_gateway(
     # Start background tasks
     await gateway.start()
     
-    logger.info("✓ ModelGateway setup complete")
+    logger.info(" ModelGateway setup complete")
     return gateway
 
 

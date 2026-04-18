@@ -94,7 +94,7 @@ class HuBERTHandler:
                 self._device = device
                 
                 self._loaded = True
-                logger.info(f"[HuBERTHandler] ✓ HuBERT loaded on {device}")
+                logger.info(f"[HuBERTHandler]  HuBERT loaded on {device}")
                 return True
                 
             except Exception as e:

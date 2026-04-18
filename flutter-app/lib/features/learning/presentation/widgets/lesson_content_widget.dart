@@ -156,9 +156,10 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   : 'Fill in the blank...',
               filled: true,
               fillColor: widget.isAnswered
-                  ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright).withValues(
-                      alpha: 0.1,
-                    )
+                  ? (widget.isCorrect!
+                            ? AppColors.greenSuccessBright
+                            : AppColors.errorBright)
+                        .withValues(alpha: 0.1)
                   : Colors.grey[50],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -179,7 +180,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
                   color: widget.isAnswered
-                      ? (widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright)
+                      ? (widget.isCorrect!
+                            ? AppColors.greenSuccessBright
+                            : AppColors.errorBright)
                       : Colors.grey[300]!,
                   width: 2,
                 ),
@@ -187,7 +190,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               suffixIcon: widget.isAnswered
                   ? Icon(
                       widget.isCorrect! ? Icons.check_circle : Icons.cancel,
-                      color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.errorBright,
+                      color: widget.isCorrect!
+                          ? AppColors.greenSuccessBright
+                          : AppColors.errorBright,
                     )
                   : null,
             ),
@@ -234,7 +239,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: widget.isCorrect! ? AppColors.greenSuccessBright : AppColors.orange,
+                  color: widget.isCorrect!
+                      ? AppColors.greenSuccessBright
+                      : AppColors.orange,
                   width: 1,
                 ),
               ),

@@ -31,17 +31,15 @@ class FacebookSignInService {
       ..addScope('email')
       ..addScope('public_profile');
 
-    await FirebaseAuth.instance.signInWithPopup(
-      provider,
-    );
-    
+    await FirebaseAuth.instance.signInWithPopup(provider);
+
     // With Firebase Auth, get the Firebase ID Token to send to our backend
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       logError(_tag, 'Failed to get Firebase User after popup');
       return null;
     }
-    
+
     final idToken = await user.getIdToken();
     if (idToken == null) {
       logError(_tag, 'Failed to get Firebase ID token from User');
@@ -59,24 +57,31 @@ class FacebookSignInService {
   Future<String?> _signInMobile() async {
     // Check if the user is already logged in with Facebook
     final LoginResult result = await FacebookAuth.instance.login(
-      permissions: ['email', 'public_profile']
+      permissions: ['email', 'public_profile'],
     );
 
     if (result.status != LoginStatus.success) {
-      logWarn(_tag, 'Facebook Sign In failed or cancelled. Status: ${result.status}');
+      logWarn(
+        _tag,
+        'Facebook Sign In failed or cancelled. Status: ${result.status}',
+      );
       return null;
     }
 
-    final facebookAuthCredential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
-    
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+    final facebookAuthCredential = FacebookAuthProvider.credential(
+      result.accessToken!.tokenString,
+    );
+
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(
+      facebookAuthCredential,
+    );
     final user = userCredential.user;
-    
+
     if (user == null) {
       logError(_tag, 'Firebase signInWithCredential returned null user');
       return null;
     }
-    
+
     final idToken = await user.getIdToken();
     if (idToken == null) {
       logError(_tag, 'Failed to get Firebase ID token');

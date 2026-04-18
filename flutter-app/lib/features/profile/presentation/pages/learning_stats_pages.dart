@@ -18,7 +18,8 @@ class LearningStreakStatsPage extends StatelessWidget {
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final summary = progressProvider.summary;
-        final currentStreak = stats?.currentStreak ?? summary?.currentStreak ?? 0;
+        final currentStreak =
+            stats?.currentStreak ?? summary?.currentStreak ?? 0;
         final longestStreak = summary?.longestStreak ?? 0;
 
         return _singleCard(
@@ -119,7 +120,10 @@ class LearningCoursesStatsPage extends StatelessWidget {
     );
   }
 
-  Widget _courseProgressCard(BuildContext context, CourseProgressDetail course) {
+  Widget _courseProgressCard(
+    BuildContext context,
+    CourseProgressDetail course,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final progress = course.progressPercentage;
@@ -237,7 +241,9 @@ class LearningTestsStatsPage extends StatelessWidget {
             const Divider(height: 20),
             _detailRow(
               'Average score',
-              averageScore > 0 ? '${averageScore.toStringAsFixed(1)}%' : 'No score yet',
+              averageScore > 0
+                  ? '${averageScore.toStringAsFixed(1)}%'
+                  : 'No score yet',
             ),
           ],
         );
@@ -252,12 +258,10 @@ class _StatsPageScaffold extends StatefulWidget {
     BuildContext context,
     ProfileProvider profileProvider,
     ProgressProvider progressProvider,
-  ) builder;
+  )
+  builder;
 
-  const _StatsPageScaffold({
-    required this.title,
-    required this.builder,
-  });
+  const _StatsPageScaffold({required this.title, required this.builder});
 
   @override
   State<_StatsPageScaffold> createState() => _StatsPageScaffoldState();

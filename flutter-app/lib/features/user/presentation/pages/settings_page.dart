@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
@@ -20,12 +22,26 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _flagsReady = false;
 
+  static const Map<String, String> _flagImageByLanguage = {
+    'vi': 'https://flagcdn.com/w80/vn.png',
+    'en': 'https://flagcdn.com/w80/us.png',
+    'ja': 'https://flagcdn.com/w80/jp.png',
+    'ko': 'https://flagcdn.com/w80/kr.png',
+  };
+
+  static const Map<String, String> _flagLabelByLanguage = {
+    'vi': 'VN',
+    'en': 'US',
+    'ja': 'JP',
+    'ko': 'KR',
+  };
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSettings();
-      _preloadFlagGlyphs(context);
+      _precacheFlagImages(context);
     });
   }
 
@@ -38,43 +54,92 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _preloadFlagGlyphs(BuildContext context) {
-    final textDirection = Directionality.of(context);
-    for (final lang in SettingsProvider.availableLanguages) {
-      final flag = lang['flag'];
-      if (flag == null || flag.isEmpty) continue;
-
-      final painter = TextPainter(
-        text: TextSpan(text: flag, style: const TextStyle(fontSize: 24)),
-        textDirection: textDirection,
-      );
-      painter.layout();
+  Future<void> _precacheFlagImages(BuildContext context) async {
+    for (final imageUrl in _flagImageByLanguage.values) {
+      try {
+        await precacheImage(CachedNetworkImageProvider(imageUrl), context);
+      } catch (_) {
+        // Ignore preload failures; each row has its own fallback.
+      }
     }
 
-    if (mounted) {
-      setState(() => _flagsReady = true);
+    if (!mounted) return;
+    setState(() => _flagsReady = true);
+  }
+
+  Widget _buildFlagWidget(BuildContext context, String languageCode) {
+    final imageUrl = _flagImageByLanguage[languageCode];
+    if (imageUrl == null) {
+      return _buildFlagFallback(context, languageCode);
     }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SizedBox(
+        width: 28,
+        height: 20,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          fadeInDuration: const Duration(milliseconds: 120),
+          placeholder: (context, url) => _buildFlagSkeleton(context),
+          errorWidget: (context, url, error) =>
+              _buildFlagFallback(context, languageCode),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlagSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: isDark ? AppColors.grey700 : AppColors.grey300,
+    );
+  }
+
+  Widget _buildFlagFallback(BuildContext context, String languageCode) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final label = _flagLabelByLanguage[languageCode] ?? languageCode.toUpperCase();
+
+    return Container(
+      width: 28,
+      height: 20,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: isDark ? AppColors.grey800 : AppColors.grey200,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('settings.title'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
+    return ThemeRippleOverlay(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('settings.title'.tr()),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          if (settings.isLoading) {
-            return const Center(child: LottieLoadingWidget.medium());
-          }
+        body: Consumer<SettingsProvider>(
+          builder: (context, settings, child) {
+            if (settings.isLoading) {
+              return const Center(child: LottieLoadingWidget.medium());
+            }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
               // Daily Goal Section
               AnimatedListItem(
                 index: 0,
@@ -175,10 +240,11 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 12),
               _buildAccountSection(context),
 
-              const SizedBox(height: 40),
-            ],
-          );
-        },
+                const SizedBox(height: 40),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -256,7 +322,11 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(settings.currentGoalIcon, size: 32, color: Theme.of(context).colorScheme.surface),
+                  Icon(
+                    settings.currentGoalIcon,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     children: [
@@ -271,7 +341,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         settings.currentGoalLabel,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -418,10 +490,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        Text(
-                          _flagsReady ? lang['flag']! : '🏳️',
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                        _flagsReady
+                            ? _buildFlagWidget(context, lang['code'] ?? 'en')
+                            : _buildFlagSkeleton(context),
                         const SizedBox(width: 12),
                         Text(
                           lang['name']!,
@@ -773,11 +844,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.grey400,
-                    size: 20,
-                  ),
+                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
                 ],
               ),
             ),

@@ -50,7 +50,9 @@ class ChatApiDataSource {
 
   bool _isSessionNotFoundError(Object error) {
     final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+    return msg.contains('status 404') ||
+        msg.contains('404') ||
+        msg.contains('not found');
   }
 
   Future<ChatSessionModel> createSession({
@@ -85,7 +87,9 @@ class ChatApiDataSource {
       logWarn(_tag, 'getMessages called with empty sessionId');
       return [];
     }
-    final json = await apiClient.get('/chat/sessions/$sessionId/messages?limit=0');
+    final json = await apiClient.get(
+      '/chat/sessions/$sessionId/messages?limit=0',
+    );
     final messages = (json['data'] ?? json['messages'] ?? json) as dynamic;
     if (messages is List) {
       return messages
@@ -140,14 +144,21 @@ class ChatApiDataSource {
         messages: parsedMessages,
         hasMore: pagination['has_more'] == true,
         nextCursor: pagination['next_cursor']?.toString(),
-        returned: (pagination['returned'] as num?)?.toInt() ?? parsedMessages.length,
+        returned:
+            (pagination['returned'] as num?)?.toInt() ?? parsedMessages.length,
       );
     } catch (e) {
       if (_isSessionNotFoundError(e)) {
-        logWarn(_tag, 'Paged endpoint session not found, skip legacy fallback: $e');
+        logWarn(
+          _tag,
+          'Paged endpoint session not found, skip legacy fallback: $e',
+        );
         rethrow;
       }
-      logWarn(_tag, 'Paged endpoint failed, fallback to legacy getMessages: $e');
+      logWarn(
+        _tag,
+        'Paged endpoint failed, fallback to legacy getMessages: $e',
+      );
       final allMessages = await getMessages(sessionId);
       return _fallbackPageFromAll(
         allMessages: allMessages,
@@ -171,7 +182,9 @@ class ChatApiDataSource {
       );
     }
 
-    final json = await apiClient.get('/chat/sessions/$sessionId/messages/metadata');
+    final json = await apiClient.get(
+      '/chat/sessions/$sessionId/messages/metadata',
+    );
     final data = json['data'] ?? json;
     final metadata = Map<String, dynamic>.from(
       (data['metadata'] ?? const <String, dynamic>{}) as Map,

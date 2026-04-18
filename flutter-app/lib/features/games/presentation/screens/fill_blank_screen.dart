@@ -270,7 +270,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               Color text = AppColors.textDark;
                               if (_answered) {
                                 if (q.options[i] == q.correctAnswer) {
-                                  bg = AppColors.greenSuccess.withValues(alpha: 0.1);
+                                  bg = AppColors.greenSuccess.withValues(
+                                    alpha: 0.1,
+                                  );
                                   border = AppColors.greenSuccess;
                                   text = AppColors.greenSuccess;
                                 } else if (i == _selectedIndex) {
@@ -325,7 +327,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                         _selectedIndex != null &&
                                         q.options[_selectedIndex!] ==
                                             q.correctAnswer
-                                    ? AppColors.greenSuccess.withValues(alpha: 0.1)
+                                    ? AppColors.greenSuccess.withValues(
+                                        alpha: 0.1,
+                                      )
                                     : Colors.red.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(

@@ -57,7 +57,6 @@ class QuotaManager:
         "openlibrary": 1000,    # actual: unlimited
         "gutenberg": 200,       # actual: unlimited
         "dictionary": 2000,     # actual: unlimited
-        "wordsapi": 2000,       # actual: 2,500 req/day
         "rss_feed": 500,        # RSS feeds are free — self-imposed limit
     }
     
@@ -156,17 +155,17 @@ class QuotaManager:
         # Log threshold crossings
         if ratio >= 1.0:
             logger.warning(
-                f"🚫 BLOCKED: {api_name} at {ratio*100:.0f}% "
+                f" BLOCKED: {api_name} at {ratio*100:.0f}% "
                 f"({new_count}/{budget}). No more requests until reset."
             )
         elif ratio >= cls.CRITICAL_THRESHOLD:
             logger.warning(
-                f"🔴 CRITICAL: {api_name} at {ratio*100:.0f}% "
+                f" CRITICAL: {api_name} at {ratio*100:.0f}% "
                 f"({new_count}/{budget}). Only HIGH priority allowed."
             )
         elif ratio >= cls.WARNING_THRESHOLD:
             logger.info(
-                f"⚠️ WARNING: {api_name} at {ratio*100:.0f}% "
+                f"️ WARNING: {api_name} at {ratio*100:.0f}% "
                 f"({new_count}/{budget}). LOW priority blocked."
             )
         
@@ -222,5 +221,5 @@ class QuotaManager:
         
         key = cls._redis_key(api_name)
         await redis.delete(key)
-        logger.info(f"🔄 Manual quota reset for {api_name}")
+        logger.info(f" Manual quota reset for {api_name}")
         return True

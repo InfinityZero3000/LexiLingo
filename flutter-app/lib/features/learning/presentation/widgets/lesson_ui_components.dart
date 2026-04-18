@@ -363,7 +363,11 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.play_arrow_rounded, color: AppColors.surfaceLight, size: 22),
+          Icon(
+            Icons.play_arrow_rounded,
+            color: AppColors.surfaceLight,
+            size: 22,
+          ),
           SizedBox(width: 8),
           Text(
             'Continue',

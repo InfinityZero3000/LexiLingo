@@ -225,11 +225,7 @@ class VoiceRecordingIndicator extends StatelessWidget {
             ),
           ] else if (isProcessing) ...[
             // Processing spinner
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: LottieLoadingWidget.tiny(),
-            ),
+            SizedBox(width: 20, height: 20, child: LottieLoadingWidget.tiny()),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

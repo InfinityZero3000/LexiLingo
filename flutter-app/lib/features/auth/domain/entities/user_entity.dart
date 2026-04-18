@@ -63,7 +63,7 @@ class UserEntity {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       provider: provider ?? this.provider,
       isVerified: isVerified ?? this.isVerified,
-        isOnboardingCompleted:
+      isOnboardingCompleted:
           isOnboardingCompleted ?? this.isOnboardingCompleted,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       totalXp: totalXp ?? this.totalXp,

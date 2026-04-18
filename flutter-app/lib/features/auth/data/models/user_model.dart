@@ -22,29 +22,59 @@ class UserModel extends UserEntity {
     super.updatedAt,
   });
 
+  static String _requiredString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+    if (value != null) {
+      final normalized = value.toString();
+      if (normalized.isNotEmpty && normalized != 'null') {
+        return normalized;
+      }
+    }
+    throw FormatException('Missing or invalid "$key" in user response');
+  }
+
+  static String? _optionalString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List && value.isNotEmpty) {
+      return value.first.toString();
+    }
+    final normalized = value.toString();
+    return normalized == 'null' ? null : normalized;
+  }
+
   /// Convert from backend API JSON response
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final parsedCreatedAt = _optionalString(json['created_at']);
+    final parsedUpdatedAt = _optionalString(json['updated_at']);
+    final parsedLastLogin = _optionalString(json['last_login']);
+
     return UserModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      username: json['username'] as String,
-      displayName: json['display_name'] as String,
-      avatarUrl: json['avatar_url'] as String?,
-      provider: json['provider'] as String? ?? 'local',
+      id: _requiredString(json, 'id'),
+      email: _requiredString(json, 'email'),
+      username: _requiredString(json, 'username'),
+      displayName: _optionalString(json['display_name']) ??
+          _requiredString(json, 'username'),
+      avatarUrl: _optionalString(json['avatar_url']),
+      provider: _optionalString(json['provider']) ?? 'local',
       isVerified: json['is_verified'] as bool? ?? false,
-        isOnboardingCompleted:
-          json['is_onboarding_completed'] as bool? ?? false,
-          cefrLevel: json['cefr_level'] as String? ?? 'A1',
+      isOnboardingCompleted: json['is_onboarding_completed'] as bool? ?? false,
+      cefrLevel: _optionalString(json['cefr_level']) ?? 'A1',
       totalXp: json['total_xp'] as int? ?? 0,
       numericLevel: json['numeric_level'] as int? ?? 1,
       currentStreak: json['current_streak'] as int? ?? 0,
-      lastLogin: json['last_login'] != null
-          ? DateTime.parse(json['last_login'] as String)
+      lastLogin: parsedLastLogin != null
+          ? DateTime.tryParse(parsedLastLogin)
           : null,
-      lastLoginIp: json['last_login_ip'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
+      lastLoginIp: _optionalString(json['last_login_ip']),
+      createdAt: parsedCreatedAt != null
+          ? DateTime.tryParse(parsedCreatedAt) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: parsedUpdatedAt != null
+          ? DateTime.tryParse(parsedUpdatedAt)
           : null,
     );
   }

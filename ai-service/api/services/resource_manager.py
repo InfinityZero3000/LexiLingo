@@ -117,7 +117,7 @@ class ResourceManager:
         self.loaded_models.add(model_name)
         
         logger.info(
-            f"✓ Allocated {size_gb}GB for {model_name}. "
+            f" Allocated {size_gb}GB for {model_name}. "
             f"Total usage: {self.current_usage_gb:.2f}GB / {self.max_memory_gb}GB "
             f"({self.get_usage_percent():.1f}%)"
         )
@@ -141,7 +141,7 @@ class ResourceManager:
         self.loaded_models.discard(model_name)
         
         logger.info(
-            f"✓ Released {size_gb}GB from {model_name}. "
+            f" Released {size_gb}GB from {model_name}. "
             f"Total usage: {self.current_usage_gb:.2f}GB / {self.max_memory_gb}GB"
         )
     
@@ -191,9 +191,9 @@ class ResourceManager:
         # Check if we freed enough
         success = freed >= needed
         if success:
-            logger.info(f"✓ Freed {freed:.2f}GB by unloading {int(freed/2)} models")
+            logger.info(f" Freed {freed:.2f}GB by unloading {int(freed/2)} models")
         else:
-            logger.warning(f"✗ Only freed {freed:.2f}GB, need {needed:.2f}GB")
+            logger.warning(f" Only freed {freed:.2f}GB, need {needed:.2f}GB")
         
         return success
     

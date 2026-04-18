@@ -126,7 +126,7 @@ class QwenHandler:
                 self.model = model
                 
                 self._loaded = True
-                logger.info(f"[QwenHandler] ✓ Qwen model loaded on {device}")
+                logger.info(f"[QwenHandler]  Qwen model loaded on {device}")
                 return True
                 
             except Exception as e:

@@ -136,7 +136,7 @@ class QwenEngine:
             
             self.is_loaded = True
             load_time = time.time() - start_time
-            logger.info(f"✅ Qwen model loaded successfully in {load_time:.2f}s")
+            logger.info(f" Qwen model loaded successfully in {load_time:.2f}s")
             
         except Exception as e:
             logger.error(f"Failed to load Qwen model: {e}", exc_info=True)

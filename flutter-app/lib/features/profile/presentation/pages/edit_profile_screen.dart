@@ -334,10 +334,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.surfaceLight,
-                    width: 3,
-                  ),
+                  border: Border.all(color: AppColors.surfaceLight, width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: primaryColor.withValues(alpha: 0.3),
@@ -371,7 +368,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         colors: [primaryColor, primaryDeepColor],
                       ),
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surfaceLight, width: 2),
+                      border: Border.all(
+                        color: AppColors.surfaceLight,
+                        width: 2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: primaryColor.withValues(alpha: 0.4),
@@ -632,11 +632,15 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         fillColor: isDark ? AppColors.grey900 : AppColors.grey50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.grey400.withValues(alpha: 0.6)),
+          borderSide: BorderSide(
+            color: AppColors.grey400.withValues(alpha: 0.6),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.grey400.withValues(alpha: 0.6)),
+          borderSide: BorderSide(
+            color: AppColors.grey400.withValues(alpha: 0.6),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

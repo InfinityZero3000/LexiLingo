@@ -38,7 +38,11 @@ class EducationalHintsCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.thumb_up, size: 14, color: AppColors.greenSuccessBright),
+                  const Icon(
+                    Icons.thumb_up,
+                    size: 14,
+                    color: AppColors.greenSuccessBright,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
@@ -290,10 +294,7 @@ class VocabularyHintCard extends StatelessWidget {
               // Pronunciation
               if (hint.pronunciation != null)
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),

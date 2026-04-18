@@ -110,7 +110,7 @@ class PiperHandler:
                         self._model_path = self.config.model_path
                 
                 self._loaded = True
-                logger.info(f"[PiperHandler] ✓ Piper initialized")
+                logger.info(f"[PiperHandler]  Piper initialized")
                 return True
                 
             except Exception as e:

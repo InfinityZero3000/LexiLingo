@@ -146,7 +146,7 @@ async def lifespan(app: FastAPI):
     try:
         await mongodb_manager.connect()
         await _ensure_mongo_indexes()
-        logger.info("✓ MongoDB connected")
+        logger.info(" MongoDB connected")
     except Exception as e:
         logger.warning(f"MongoDB connection failed: {e}")
     
@@ -159,7 +159,7 @@ async def lifespan(app: FastAPI):
             tpm_limit=12000,
             rpd_limit=14400
         )
-        logger.info("✓ Redis & Rate Limiter initialized")
+        logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
         logger.warning(f"Redis initialization failed: {e}")
 
@@ -174,7 +174,7 @@ async def lifespan(app: FastAPI):
                 use_gemini_fallback=bool(GEMINI_API_KEY),
             )
             _gateway_initialized = True
-            logger.info("✓ ModelGateway initialized")
+            logger.info(" ModelGateway initialized")
         except Exception as e:
             logger.warning(f"Failed to initialize gateway: {e}")
     

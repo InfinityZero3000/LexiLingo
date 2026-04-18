@@ -317,7 +317,9 @@ class _StreakFlameState extends State<StreakFlame>
               boxShadow: widget.isActive
                   ? [
                       BoxShadow(
-                        color: AppColors.orange.withValues(alpha: _glowAnimation.value),
+                        color: AppColors.orange.withValues(
+                          alpha: _glowAnimation.value,
+                        ),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -414,8 +416,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor =
-        widget.baseColor ??
-        (isDark ? AppColors.grey800 : AppColors.grey300);
+        widget.baseColor ?? (isDark ? AppColors.grey800 : AppColors.grey300);
     final highlightColor =
         widget.highlightColor ??
         (isDark ? AppColors.grey700 : AppColors.grey100);
@@ -491,7 +492,11 @@ class GradientStatCard extends StatelessWidget {
                 gradient: LinearGradient(colors: gradientColors),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Theme.of(context).colorScheme.surface, size: 20),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.surface,
+                size: 20,
+              ),
             ),
             const SizedBox(height: 12),
             Text(

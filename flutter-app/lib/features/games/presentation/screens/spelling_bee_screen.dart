@@ -221,7 +221,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             boxShadow: _playsLeft > 0
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 16,
                                       offset: const Offset(0, 6),
                                     ),

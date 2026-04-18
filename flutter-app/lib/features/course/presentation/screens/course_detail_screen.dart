@@ -42,7 +42,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: AppColors.errorBright),
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: AppColors.errorBright,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     provider.detailError!,
@@ -341,7 +345,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
     return Container(
       color: Theme.of(context).primaryColor,
-      child: Icon(Icons.school, size: 64, color: Theme.of(context).colorScheme.surface),
+      child: Icon(
+        Icons.school,
+        size: 64,
+        color: Theme.of(context).colorScheme.surface,
+      ),
     );
   }
 }

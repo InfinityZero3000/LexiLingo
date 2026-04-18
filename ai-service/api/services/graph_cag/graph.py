@@ -81,7 +81,7 @@ class GraphCAGPipeline:
         """Initialize and compile the StateGraph."""
         self.graph = self._build_graph()
         self.compiled = self.graph.compile()
-        logger.info("✓ GraphCAG pipeline compiled")
+        logger.info(" GraphCAG pipeline compiled")
     
     def _build_graph(self) -> StateGraph:
         """

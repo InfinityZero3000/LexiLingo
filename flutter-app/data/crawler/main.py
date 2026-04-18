@@ -26,7 +26,7 @@ def crawl_bbc(limit: int = None) -> List[Dict]:
     crawler = BBCLearningEnglishCrawler()
     courses = crawler.crawl(limit=limit)
     
-    print(f"\n✓ Crawled {len(courses)} courses from BBC Learning English")
+    print(f"\n Crawled {len(courses)} courses from BBC Learning English")
     return courses
 
 
@@ -43,12 +43,12 @@ def process_and_export(courses: List[Dict], output_filename: str = None):
     
     print(f"\nProcessing Statistics:")
     print(f"   Total courses: {stats['total']}")
-    print(f"   ✓ Valid: {stats['valid']}")
-    print(f"   ✗ Invalid: {stats['invalid']}")
-    print(f"   ⚠ Duplicates: {stats['duplicates']}")
+    print(f"    Valid: {stats['valid']}")
+    print(f"    Invalid: {stats['invalid']}")
+    print(f"    Duplicates: {stats['duplicates']}")
     
     if stats['errors']:
-        print(f"\n⚠ Validation Errors:")
+        print(f"\n Validation Errors:")
         for error in stats['errors'][:5]:  # Show first 5 errors
             print(f"   - {error['title']}: {', '.join(error['errors'])}")
         if len(stats['errors']) > 5:
@@ -64,7 +64,7 @@ def process_and_export(courses: List[Dict], output_filename: str = None):
     
     processor.export_to_flutter_format(valid_courses, output_path)
     
-    print(f"\n✓ Exported {len(valid_courses)} courses to: {output_path}")
+    print(f"\n Exported {len(valid_courses)} courses to: {output_path}")
     
     return valid_courses, output_path
 
@@ -172,12 +172,12 @@ Examples:
         display_sample_courses(valid_courses, args.sample)
         
         print(f"\n{'='*60}")
-        print("✓ CRAWLING COMPLETE")
+        print(" CRAWLING COMPLETE")
         print("="*60)
         print(f"Total courses collected: {len(valid_courses)}")
         print(f"Output file: {output_path}")
     else:
-        print("\n⚠ Export skipped (--no-export flag set)")
+        print("\n Export skipped (--no-export flag set)")
         display_sample_courses(all_courses, args.sample)
     
     print(f"\nCompleted at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

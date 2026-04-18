@@ -80,7 +80,7 @@ class GeminiHandler:
                 self._client = genai.GenerativeModel(self.config.model)
                 
                 self._loaded = True
-                logger.info("[GeminiHandler] ✓ Gemini client initialized")
+                logger.info("[GeminiHandler]  Gemini client initialized")
                 return True
                 
             except Exception as e:

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run LexiLingo production backup daily
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=lexilingo-backup.service
+
+[Install]
+WantedBy=timers.target

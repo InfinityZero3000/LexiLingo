@@ -75,18 +75,16 @@ class _CourseListScreenState extends State<CourseListScreen> {
                           Row(
                             children: [
                               Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: primaryAccent,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.explore,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.surface,
-                                    size: 24,
-                                  ),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: primaryAccent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.explore,
+                                  color: Theme.of(context).colorScheme.surface,
+                                  size: 24,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Column(
@@ -97,15 +95,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Text(
                                     '${provider.courses.length} courses available',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(color: Colors.grey[600]),
                                   ),
                                 ],

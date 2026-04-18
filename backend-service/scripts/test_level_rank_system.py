@@ -97,10 +97,10 @@ async def test_health(client: httpx.AsyncClient):
     response = await client.get(f"{BASE_URL.replace('/api/v1', '')}/health")
     
     if response.status_code == 200:
-        console.print("✅ Backend is healthy", style="green")
+        console.print(" Backend is healthy", style="green")
         return True
     else:
-        console.print(f"❌ Backend health check failed: {response.status_code}", style="red")
+        console.print(f" Backend health check failed: {response.status_code}", style="red")
         return False
 
 
@@ -131,13 +131,13 @@ async def test_level_full_endpoint(client: httpx.AsyncClient, token: str):
             table.add_row("Rank Icon", level_data.get("rank_icon", "N/A"))
             
             console.print(table)
-            console.print("✅ Level-full endpoint working", style="green")
+            console.print(" Level-full endpoint working", style="green")
             return True
         else:
-            console.print(f"⚠️ Response format unexpected: {data}", style="yellow")
+            console.print(f"️ Response format unexpected: {data}", style="yellow")
             return False
     else:
-        console.print(f"❌ Failed: {response.status_code} - {response.text}", style="red")
+        console.print(f" Failed: {response.status_code} - {response.text}", style="red")
         return False
 
 
@@ -151,22 +151,22 @@ async def test_placement_test_get(client: httpx.AsyncClient, token: str):
     if response.status_code == 200:
         data = response.json()
         
-        console.print(f"📝 Title: {data.get('title', 'N/A')}")
-        console.print(f"📄 Description: {data.get('description', 'N/A')}")
-        console.print(f"❓ Total Questions: {data.get('total_questions', 0)}")
+        console.print(f" Title: {data.get('title', 'N/A')}")
+        console.print(f" Description: {data.get('description', 'N/A')}")
+        console.print(f" Total Questions: {data.get('total_questions', 0)}")
         console.print(f"⏱️ Time Limit: {data.get('time_limit_minutes', 0)} minutes")
         
         questions = data.get("questions", [])
         if questions:
-            console.print(f"\n📋 Sample Questions (first 3):")
+            console.print(f"\n Sample Questions (first 3):")
             for i, q in enumerate(questions[:3], 1):
                 console.print(f"  {i}. [{q.get('level')}] {q.get('question')}")
                 console.print(f"     Options: {q.get('options')}")
         
-        console.print("✅ Placement test GET endpoint working", style="green")
+        console.print(" Placement test GET endpoint working", style="green")
         return data
     else:
-        console.print(f"❌ Failed: {response.status_code} - {response.text}", style="red")
+        console.print(f" Failed: {response.status_code} - {response.text}", style="red")
         return None
 
 
@@ -209,10 +209,10 @@ async def test_placement_test_submit(client: httpx.AsyncClient, token: str, test
         table.add_row("New Rank", data.get("new_rank", "N/A"))
         
         console.print(table)
-        console.print("✅ Placement test submit endpoint working", style="green")
+        console.print(" Placement test submit endpoint working", style="green")
         return True
     else:
-        console.print(f"❌ Failed: {response.status_code} - {response.text}", style="red")
+        console.print(f" Failed: {response.status_code} - {response.text}", style="red")
         return False
 
 
@@ -230,26 +230,26 @@ async def test_daily_challenges(client: httpx.AsyncClient, token: str):
         else:
             challenges_data = data
         
-        console.print(f"📅 Date: {challenges_data.get('date', 'N/A')}")
-        console.print(f"✅ Completed: {challenges_data.get('total_completed', 0)}/{challenges_data.get('total_challenges', 0)}")
-        console.print(f"🎁 Claimed: {challenges_data.get('total_claimed', 0)}")
+        console.print(f" Date: {challenges_data.get('date', 'N/A')}")
+        console.print(f" Completed: {challenges_data.get('total_completed', 0)}/{challenges_data.get('total_challenges', 0)}")
+        console.print(f" Claimed: {challenges_data.get('total_claimed', 0)}")
         
         challenges = challenges_data.get("challenges", [])
         if challenges:
             table = create_table("Today's Challenges", ["Title", "Progress", "XP", "Status"])
             for c in challenges:
                 progress = f"{c.get('current', 0)}/{c.get('target', 0)}"
-                status = "✅ Completed" if c.get("is_completed") else "⏳ In Progress"
+                status = " Completed" if c.get("is_completed") else "⏳ In Progress"
                 if c.get("is_claimed"):
-                    status = "🎁 Claimed"
+                    status = " Claimed"
                 table.add_row(c.get("title", "N/A"), progress, str(c.get("xp_reward", 0)), status)
             
             console.print(table)
         
-        console.print("✅ Daily challenges endpoint working", style="green")
+        console.print(" Daily challenges endpoint working", style="green")
         return True
     else:
-        console.print(f"❌ Failed: {response.status_code} - {response.text}", style="red")
+        console.print(f" Failed: {response.status_code} - {response.text}", style="red")
         return False
 
 
@@ -276,10 +276,10 @@ async def test_user_profile(client: httpx.AsyncClient, token: str):
         table.add_row("Proficiency (level)", user.get("level", "N/A"))
         
         console.print(table)
-        console.print("✅ User profile endpoint working", style="green")
+        console.print(" User profile endpoint working", style="green")
         return True
     else:
-        console.print(f"❌ Failed: {response.status_code} - {response.text}", style="red")
+        console.print(f" Failed: {response.status_code} - {response.text}", style="red")
         return False
 
 
@@ -303,7 +303,7 @@ async def test_rank_calculation():
     all_passed = True
     for level, proficiency, expected_rank in test_cases:
         rank_info = calculate_rank(level, proficiency)
-        status = "✅" if rank_info.rank == expected_rank else "❌"
+        status = "" if rank_info.rank == expected_rank else ""
         if rank_info.rank != expected_rank:
             all_passed = False
         table.add_row(
@@ -317,9 +317,9 @@ async def test_rank_calculation():
     console.print(table)
     
     if all_passed:
-        console.print("✅ All rank calculations correct", style="green")
+        console.print(" All rank calculations correct", style="green")
     else:
-        console.print("❌ Some rank calculations failed", style="red")
+        console.print(" Some rank calculations failed", style="red")
     
     return all_passed
 
@@ -346,7 +346,7 @@ async def test_level_calculation():
     console.print(table)
     
     # Test formula
-    console.print("\n📊 XP Formula: XP needed = floor(100 * level^1.5)")
+    console.print("\n XP Formula: XP needed = floor(100 * level^1.5)")
     formula_table = create_table("XP Per Level", ["Level", "XP Needed", "Total XP"])
     
     total = 0
@@ -356,7 +356,7 @@ async def test_level_calculation():
         formula_table.add_row(str(level), str(xp_needed), str(total))
     
     console.print(formula_table)
-    console.print("✅ Level calculations verified", style="green")
+    console.print(" Level calculations verified", style="green")
     
     return True
 
@@ -365,8 +365,8 @@ async def main():
     """Run all tests."""
     console.print(Panel.fit(
         "[bold green]Level & Rank System Test Suite[/bold green]\n"
-        f"🕐 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        title="🧪 LexiLingo Tests"
+        f" Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        title=" LexiLingo Tests"
     ))
     
     results = {}
@@ -376,15 +376,15 @@ async def main():
         results["health"] = await test_health(client)
         
         if not results["health"]:
-            console.print("\n❌ Backend not running. Start it with:", style="red")
+            console.print("\n Backend not running. Start it with:", style="red")
             console.print("   cd backend-service && source venv/bin/activate && python -m uvicorn app.main:app --port 8000")
             return
         
         try:
             # Get auth token
-            console.print("\n🔐 Authenticating...")
+            console.print("\n Authenticating...")
             token = await get_auth_token(client)
-            console.print("✅ Authentication successful", style="green")
+            console.print(" Authentication successful", style="green")
             
             # Test 2: Level-full endpoint
             results["level_full"] = await test_level_full_endpoint(client, token)
@@ -405,7 +405,7 @@ async def main():
             results["user_profile"] = await test_user_profile(client, token)
             
         except Exception as e:
-            console.print(f"\n❌ Error during API tests: {e}", style="red")
+            console.print(f"\n Error during API tests: {e}", style="red")
             import traceback
             traceback.print_exc()
     
@@ -414,7 +414,7 @@ async def main():
         results["rank_calc"] = await test_rank_calculation()
         results["level_calc"] = await test_level_calculation()
     except Exception as e:
-        console.print(f"\n❌ Error during calculation tests: {e}", style="red")
+        console.print(f"\n Error during calculation tests: {e}", style="red")
         results["rank_calc"] = False
         results["level_calc"] = False
     
@@ -422,12 +422,12 @@ async def main():
     console.print("\n")
     console.print(Panel.fit(
         "[bold]Test Summary[/bold]",
-        title="📊 Results"
+        title=" Results"
     ))
     
     summary_table = create_table("Test Results", ["Test", "Status"])
     for test_name, passed in results.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = " PASS" if passed else " FAIL"
         summary_table.add_row(test_name.replace("_", " ").title(), status)
     
     console.print(summary_table)
@@ -437,9 +437,9 @@ async def main():
     console.print(f"\n[bold]Total: {passed}/{total} tests passed[/bold]")
     
     if passed == total:
-        console.print("\n🎉 All tests passed! Level & Rank system is working correctly.", style="bold green")
+        console.print("\n All tests passed! Level & Rank system is working correctly.", style="bold green")
     else:
-        console.print("\n⚠️ Some tests failed. Check the output above for details.", style="bold yellow")
+        console.print("\n️ Some tests failed. Check the output above for details.", style="bold yellow")
 
 
 if __name__ == "__main__":

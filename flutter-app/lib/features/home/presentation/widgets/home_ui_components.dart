@@ -195,12 +195,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
             shape: BoxShape.circle,
             gradient: SweepGradient(
               startAngle: _controller.value * 2 * math.pi,
-              colors: [
-                accent,
-                AppColors.purple,
-                AppColors.purple,
-                accent,
-              ],
+              colors: [accent, AppColors.purple, AppColors.purple, accent],
             ),
           ),
           padding: const EdgeInsets.all(3),
@@ -512,18 +507,12 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
             ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  AppColors.surfaceDark,
-                  const Color(0xFF1A1F26),
-                ],
+                colors: [AppColors.surfaceDark, const Color(0xFF1A1F26)],
               )
             : const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFFFF6F0),
-                  Color(0xFFFFEFE3),
-                ],
+                colors: [Color(0xFFFFF6F0), Color(0xFFFFEFE3)],
               ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
@@ -560,11 +549,15 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                       ),
                     ),
                     Text(
-                      widget.isActiveToday ? "You're on fire today!" : "Complete a lesson today!",
+                      widget.isActiveToday
+                          ? "You're on fire today!"
+                          : "Complete a lesson today!",
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : const Color(0xFF5F6573),
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF5F6573),
                       ),
                     ),
                   ],
@@ -583,7 +576,10 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
@@ -638,7 +634,9 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
       animation: _flameAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: hasStreak && widget.isActiveToday ? _flameAnimation.value : 1.0,
+          scale: hasStreak && widget.isActiveToday
+              ? _flameAnimation.value
+              : 1.0,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -776,7 +774,6 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
     );
   }
 }
-
 
 /// Skeleton loading widget with shimmer effect
 class SkeletonLoader extends StatefulWidget {

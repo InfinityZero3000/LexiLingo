@@ -14,17 +14,17 @@ def test_imports():
     print("1. Testing imports...")
     try:
         from api.services.kg_service_v3 import KnowledgeGraphServiceV3
-        print("   ✓ KnowledgeGraphServiceV3")
+        print("    KnowledgeGraphServiceV3")
         
         from api.services.graph_analytics import GraphAnalyticsService, get_graph_analytics
-        print("   ✓ GraphAnalyticsService")
+        print("    GraphAnalyticsService")
         
         from api.services.retrieval_service_v3 import RetrievalServiceV3, RetrievalConfig
-        print("   ✓ RetrievalServiceV3")
+        print("    RetrievalServiceV3")
         
         return True
     except Exception as e:
-        print(f"   ✗ Import error: {e}")
+        print(f"    Import error: {e}")
         return False
 
 
@@ -35,10 +35,10 @@ def test_kg_init():
         from api.services.kg_service_v3 import KnowledgeGraphServiceV3
         kg = KnowledgeGraphServiceV3()
         count = kg.get_concept_count()
-        print(f"   ✓ KG initialized with {count} concepts")
+        print(f"    KG initialized with {count} concepts")
         return kg
     except Exception as e:
-        print(f"   ✗ KG init error: {e}")
+        print(f"    KG init error: {e}")
         return None
 
 
@@ -51,7 +51,7 @@ def test_centrality(kg):
         analytics = get_graph_analytics(kg)
         importance = analytics.compute_centrality()
         
-        print(f"   ✓ Computed centrality for {len(importance)} concepts")
+        print(f"    Computed centrality for {len(importance)} concepts")
         
         # Top 5
         top_5 = sorted(importance.values(), key=lambda x: x.combined_score, reverse=True)[:5]
@@ -66,7 +66,7 @@ def test_centrality(kg):
         
         return analytics
     except Exception as e:
-        print(f"   ✗ Centrality error: {e}")
+        print(f"    Centrality error: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -77,7 +77,7 @@ def test_communities(analytics):
     print("\n4. Testing community detection...")
     try:
         communities = analytics.get_communities()
-        print(f"   ✓ Detected {len(communities)} communities")
+        print(f"    Detected {len(communities)} communities")
         
         for c in communities:
             print(f"\n   Community {c.community_id}: {c.name}")
@@ -87,7 +87,7 @@ def test_communities(analytics):
         
         return True
     except Exception as e:
-        print(f"   ✗ Community error: {e}")
+        print(f"    Community error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -117,7 +117,7 @@ def test_pruning(analytics):
         
         return True
     except Exception as e:
-        print(f"   ✗ Pruning error: {e}")
+        print(f"    Pruning error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -139,7 +139,7 @@ def test_retrieval(kg):
         retrieval = RetrievalServiceV3(kg, config)
         summary = retrieval.get_analytics_summary()
         
-        print(f"   ✓ Retrieval service initialized")
+        print(f"    Retrieval service initialized")
         print(f"   Total concepts: {summary['total_concepts']}")
         print(f"   Total communities: {summary['total_communities']}")
         
@@ -149,7 +149,7 @@ def test_retrieval(kg):
         
         return True
     except Exception as e:
-        print(f"   ✗ Retrieval error: {e}")
+        print(f"    Retrieval error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -162,33 +162,33 @@ def main():
     
     # Run tests
     if not test_imports():
-        print("\n❌ Import test failed!")
+        print("\n Import test failed!")
         return 1
     
     kg = test_kg_init()
     if not kg:
-        print("\n❌ KG init test failed!")
+        print("\n KG init test failed!")
         return 1
     
     analytics = test_centrality(kg)
     if not analytics:
-        print("\n❌ Centrality test failed!")
+        print("\n Centrality test failed!")
         return 1
     
     if not test_communities(analytics):
-        print("\n❌ Community test failed!")
+        print("\n Community test failed!")
         return 1
     
     if not test_pruning(analytics):
-        print("\n❌ Pruning test failed!")
+        print("\n Pruning test failed!")
         return 1
     
     if not test_retrieval(kg):
-        print("\n❌ Retrieval test failed!")
+        print("\n Retrieval test failed!")
         return 1
     
     print("\n" + "=" * 60)
-    print("✅ All tests passed!")
+    print(" All tests passed!")
     print("=" * 60)
     return 0
 

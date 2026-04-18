@@ -9,7 +9,6 @@ import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
@@ -50,18 +49,13 @@ import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_pr
 import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_explore_screen.dart';
 import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart';
 import 'package:lexilingo_app/features/youtube/domain/entities/youtube_entities.dart';
-
 import 'package:lexilingo_app/features/news/presentation/providers/news_provider.dart';
 import 'package:lexilingo_app/features/news/presentation/screens/news_list_screen.dart';
 import 'package:lexilingo_app/features/news/presentation/screens/news_detail_screen.dart';
 import 'package:lexilingo_app/features/news/presentation/screens/news_quiz_screen.dart';
 import 'package:lexilingo_app/features/news/domain/entities/news_entities.dart';
-
-// Phase 3: English Games + XP System
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/games_hub_screen.dart';
-
-// Phase 4: Podcast
 import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_provider.dart';
 import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_explore_screen.dart';
 import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_detail_screen.dart';
@@ -69,8 +63,6 @@ import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_play
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
-
-// Phase 6: Lexi Chat — Story Adventure
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
 
@@ -132,19 +124,6 @@ void main() async {
             if (!ok) throw Exception('Backend health check failed');
           },
         ),
-        // Commented out - CourseImportService uses old local database schema
-        // Courses are now fetched from backend API
-        // StartupTask(
-        //   id: 'seed_courses',
-        //   label: 'Seed courses if empty',
-        //   action: () async {
-        //     final courseImportService = di.sl<CourseImportService>();
-        //     final stats = await courseImportService.getCourseStats();
-        //     if (stats['total'] == 0) {
-        //       await courseImportService.seedRealCourses();
-        //     }
-        //   },
-        // ),
       ],
     );
 
@@ -308,7 +287,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               final savedLocale = await LocaleService.getSavedLocale();
               if (!safeContext.mounted) return;
               final settingsLanguage = settings.language;
-              
+
               // If settings has a different language than saved locale, update it
               if (savedLocale != settingsLanguage) {
                 await LocaleService.saveLocale(settingsLanguage);
@@ -318,7 +297,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               }
             }
           });
-          
+
           return MaterialApp(
             title: 'LexiLingo',
             debugShowCheckedModeBanner: false,
@@ -331,11 +310,6 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             locale: context.locale,
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
-            builder: (context, child) {
-              return ThemeRippleOverlay(
-                child: child ?? const SizedBox.shrink(),
-              );
-            },
             home: const AuthWrapper(),
             routes: {
               '/youtube': (context) => const YouTubeExploreScreen(),

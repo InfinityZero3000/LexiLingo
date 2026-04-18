@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
@@ -15,14 +16,24 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   static const int _maxFailedAttempts = 5;
+  static const String _rememberPasswordKey = 'remember_password';
+  static const String _savedEmailKey = 'saved_email';
+  static const String _savedPasswordKey = 'saved_password';
 
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _rememberPassword = false;
   int _failedAttempts = 0;
 
   bool get _isLockedAfterFailures => _failedAttempts >= _maxFailedAttempts;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
 
   @override
   void dispose() {
@@ -37,6 +48,40 @@ class _LoginPageState extends State<LoginPage> {
     return normalized.contains('incorrect email or password') ||
         normalized.contains('invalid email or password') ||
         normalized.contains('auth_invalid');
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final remember = prefs.getBool(_rememberPasswordKey) ?? false;
+    if (!remember) return;
+
+    final savedEmail = prefs.getString(_savedEmailKey) ?? '';
+    final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+
+    if (!mounted) return;
+    setState(() {
+      _rememberPassword = true;
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+    });
+  }
+
+  Future<void> _persistCredentialPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberPasswordKey, _rememberPassword);
+
+    if (_rememberPassword) {
+      await Future.wait([
+        prefs.setString(_savedEmailKey, _emailController.text.trim()),
+        prefs.setString(_savedPasswordKey, _passwordController.text),
+      ]);
+      return;
+    }
+
+    await Future.wait([
+      prefs.remove(_savedEmailKey),
+      prefs.remove(_savedPasswordKey),
+    ]);
   }
 
   Future<void> _openForgotPassword() async {
@@ -132,7 +177,9 @@ class _LoginPageState extends State<LoginPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -140,7 +187,9 @@ class _LoginPageState extends State<LoginPage> {
                       'Continue your English language journey',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? Colors.white70 : AppColors.textSlateLight,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSlateLight,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -149,7 +198,9 @@ class _LoginPageState extends State<LoginPage> {
                       'Email Address',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.surfaceDarkInput,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -158,9 +209,14 @@ class _LoginPageState extends State<LoginPage> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: 'name@example.com',
-                        prefixIcon: const Icon(Icons.mail_outline),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: isDark ? Colors.white70 : AppColors.textSlate,
+                        ),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -184,7 +240,9 @@ class _LoginPageState extends State<LoginPage> {
                             'Password',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.surfaceDarkInput,
                             ),
                           ),
                         ),
@@ -213,7 +271,9 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         filled: true,
-                        fillColor: isDark ? AppColors.surfaceDarkInput : Colors.white,
+                        fillColor: isDark
+                            ? AppColors.surfaceDarkInput
+                            : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -229,15 +289,40 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
 
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberPassword,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberPassword = value ?? false;
+                            });
+                          },
+                        ),
+                        Text(
+                          'Lưu mật khẩu',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark
+                                ? Colors.white70
+                                : AppColors.surfaceDarkInput,
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 20),
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: authProvider.isLoading || _isLockedAfterFailures
+                        onPressed:
+                            authProvider.isLoading || _isLockedAfterFailures
                             ? null
                             : () async {
                                 if (_formKey.currentState!.validate()) {
-                                  final messenger = ScaffoldMessenger.of(context);
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
                                   await authProvider.signInWithEmailPassword(
                                     _emailController.text.trim(),
                                     _passwordController.text,
@@ -246,6 +331,7 @@ class _LoginPageState extends State<LoginPage> {
                                   if (!mounted) return;
 
                                   if (authProvider.isAuthenticated) {
+                                    await _persistCredentialPreference();
                                     setState(() => _failedAttempts = 0);
                                   } else if (_isInvalidCredentialMessage(
                                     authProvider.errorMessage,
@@ -312,7 +398,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.lock_outline, color: Colors.orange.shade700),
+                            Icon(
+                              Icons.lock_outline,
+                              color: Colors.orange.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -408,7 +497,9 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'Don\'t have an account?',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDark ? Colors.white70 : AppColors.textSlate,
+                            color: isDark
+                                ? Colors.white70
+                                : AppColors.textSlate,
                           ),
                         ),
                         TextButton(
@@ -438,7 +529,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red.shade700),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

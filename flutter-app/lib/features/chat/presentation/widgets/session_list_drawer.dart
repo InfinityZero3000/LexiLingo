@@ -96,7 +96,9 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                   '${widget.sessions.length} conversations',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -398,7 +400,9 @@ class _SessionListItemState extends State<SessionListItem> {
                 _showActions = false;
               });
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorBright),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorBright,
+            ),
             child: const Text('Delete'),
           ),
         ],

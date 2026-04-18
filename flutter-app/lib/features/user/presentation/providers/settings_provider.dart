@@ -10,6 +10,7 @@ class SettingsProvider extends ChangeNotifier {
   final NotificationService _notificationService;
 
   Settings? _settings;
+  String? _activeUserId;
   bool _isLoading = false;
   String? _error;
 
@@ -26,7 +27,7 @@ class SettingsProvider extends ChangeNotifier {
   // Default values
   String get language => _settings?.language ?? 'en';
   int get dailyGoalXP => _settings?.dailyGoalXP ?? 50;
-  String get theme => _settings?.theme ?? 'system';
+  String get theme => _normalizeTheme(_settings?.theme);
   bool get notificationEnabled => _settings?.notificationEnabled ?? true;
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
@@ -76,6 +77,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Load settings for user
   Future<void> loadSettings(String userId) async {
+    _activeUserId = userId;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -89,11 +91,13 @@ class SettingsProvider extends ChangeNotifier {
           _settings = Settings(id: 0, userId: userId);
         },
         (settings) {
-          _settings = settings;
+          _settings = settings.copyWith(theme: _normalizeTheme(settings.theme));
         },
       );
     } catch (e) {
       _error = e.toString();
+      // Keep settings usable even if cached payload is malformed.
+      _settings = Settings(id: 0, userId: userId);
     } finally {
       if (_settings != null && _error == null) {
         await _syncReminderWithSettings(_settings!);
@@ -109,7 +113,7 @@ class SettingsProvider extends ChangeNotifier {
     if (_settings == null) return;
 
     final oldLanguage = _settings!.language;
-    
+
     // Update settings in memory first
     _settings = _settings!.copyWith(language: languageCode);
     notifyListeners();
@@ -167,10 +171,14 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update theme preference
   Future<void> updateTheme(String theme) async {
+    final normalizedTheme = _normalizeTheme(theme);
+    if (_settings == null && _activeUserId != null) {
+      _settings = Settings(id: 0, userId: _activeUserId!);
+    }
     if (_settings == null) return;
 
     final oldTheme = _settings!.theme;
-    _settings = _settings!.copyWith(theme: theme);
+    _settings = _settings!.copyWith(theme: normalizedTheme);
     notifyListeners();
 
     try {
@@ -326,6 +334,19 @@ class SettingsProvider extends ChangeNotifier {
         return ThemeMode.dark;
       default:
         return ThemeMode.system;
+    }
+  }
+
+  String _normalizeTheme(String? rawTheme) {
+    switch ((rawTheme ?? '').trim().toLowerCase()) {
+      case 'light':
+        return 'light';
+      case 'dark':
+        return 'dark';
+      case 'system':
+        return 'system';
+      default:
+        return 'system';
     }
   }
 }

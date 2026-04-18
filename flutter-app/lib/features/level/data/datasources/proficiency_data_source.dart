@@ -6,6 +6,7 @@ import '../../domain/entities/proficiency_entity.dart';
 class ProficiencyDataSource {
   final ApiClient _apiClient;
   final LocalCacheService _cache;
+  static const String _profileCacheKey = 'proficiency:profile:v1';
 
   ProficiencyDataSource({required ApiClient apiClient})
     : _apiClient = apiClient,
@@ -14,7 +15,7 @@ class ProficiencyDataSource {
   /// Get user's proficiency profile
   Future<ProficiencyProfile> getProfile() async {
     final cached = await _cache.getOrFetch(
-      key: 'proficiency:profile:v1',
+      key: _profileCacheKey,
       type: 'game',
       fetchFn: () => _apiClient.get('/proficiency/profile'),
     );
@@ -30,6 +31,7 @@ class ProficiencyDataSource {
       '/proficiency/record-exercises',
       body: results,
     );
+    await _cache.invalidate(_profileCacheKey);
     return ExerciseRecordResult.fromJson(response);
   }
 

@@ -35,11 +35,11 @@ export const AiModelsPage = () => {
 
   useEffect(() => {
     setLoading(true);
-    const aiBase = ENV.aiUrl.replace("/api/v1", "");
+    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getMonitoringDashboard(),
-      fetch(`${aiBase}/health`).then((r) => r.json()),
+      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
     ])
       .then(([monRes, healthRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);

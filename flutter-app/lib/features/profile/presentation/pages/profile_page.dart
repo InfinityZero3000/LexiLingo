@@ -159,7 +159,11 @@ class _ProfilePageState extends State<ProfilePage>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.diamond, color: Theme.of(context).colorScheme.surface, size: 16),
+                      Icon(
+                        Icons.diamond,
+                        color: Theme.of(context).colorScheme.surface,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${gamification.wallet?.gems ?? 0}',
@@ -325,7 +329,11 @@ class _ProfilePageState extends State<ProfilePage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: Theme.of(context).colorScheme.surface, size: 24),
+              Icon(
+                icon,
+                color: Theme.of(context).colorScheme.surface,
+                size: 24,
+              ),
               const SizedBox(height: 4),
               Text(
                 label,
@@ -378,7 +386,9 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surface.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -412,15 +422,15 @@ class _ProfilePageState extends State<ProfilePage>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                                    color: Theme.of(context).colorScheme.surface
+                                        .withValues(alpha: 0.5),
                                     width: 3,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (isDark ? accent : AppColors.primary)
-                                          .withValues(
-                                        alpha: 0.3,
-                                      ),
+                                      color:
+                                          (isDark ? accent : AppColors.primary)
+                                              .withValues(alpha: 0.3),
                                       blurRadius: 20,
                                       spreadRadius: 5,
                                     ),
@@ -433,14 +443,15 @@ class _ProfilePageState extends State<ProfilePage>
                                     width: 120,
                                     height: 120,
                                     fallback: Container(
-                                      color: (isDark ? accent : AppColors.primary)
-                                          .withValues(
-                                        alpha: 0.2,
-                                      ),
+                                      color:
+                                          (isDark ? accent : AppColors.primary)
+                                              .withValues(alpha: 0.2),
                                       child: Icon(
                                         Icons.person,
                                         size: 60,
-                                        color: isDark ? accent : AppColors.primary,
+                                        color: isDark
+                                            ? accent
+                                            : AppColors.primary,
                                       ),
                                     ),
                                   ),
@@ -468,10 +479,11 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: (isDark ? accent : AppColors.primary)
-                                            .withValues(
-                                          alpha: 0.5,
-                                        ),
+                                        color:
+                                            (isDark
+                                                    ? accent
+                                                    : AppColors.primary)
+                                                .withValues(alpha: 0.5),
                                         blurRadius: 8,
                                       ),
                                     ],
@@ -529,10 +541,9 @@ class _ProfilePageState extends State<ProfilePage>
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (isDark ? accent : AppColors.primary)
-                                          .withValues(
-                                        alpha: 0.4,
-                                      ),
+                                      color:
+                                          (isDark ? accent : AppColors.primary)
+                                              .withValues(alpha: 0.4),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -657,9 +668,7 @@ class _ProfilePageState extends State<ProfilePage>
                               boxShadow: [
                                 BoxShadow(
                                   color: (isDark ? accent : AppColors.primary)
-                                      .withValues(
-                                    alpha: 0.3,
-                                  ),
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: Offset(0, 4),
                                 ),
@@ -668,7 +677,11 @@ class _ProfilePageState extends State<ProfilePage>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.edit, color: AppColors.surfaceLight, size: 14),
+                                Icon(
+                                  Icons.edit,
+                                  color: AppColors.surfaceLight,
+                                  size: 14,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Edit Profile',
@@ -908,7 +921,10 @@ class _ProfilePageState extends State<ProfilePage>
                           iconSize: 14,
                           titleFontSize: 13,
                           subtitleFontSize: 11,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -933,7 +949,10 @@ class _ProfilePageState extends State<ProfilePage>
                           iconSize: 14,
                           titleFontSize: 13,
                           subtitleFontSize: 11,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ],
@@ -955,14 +974,18 @@ class _ProfilePageState extends State<ProfilePage>
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const LearningVocabularyStatsPage(),
+                              builder: (_) =>
+                                  const LearningVocabularyStatsPage(),
                             ),
                           ),
                           iconBoxSize: 28,
                           iconSize: 14,
                           titleFontSize: 13,
                           subtitleFontSize: 11,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -989,7 +1012,10 @@ class _ProfilePageState extends State<ProfilePage>
                           iconSize: 14,
                           titleFontSize: 13,
                           subtitleFontSize: 11,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ],
@@ -1032,9 +1058,7 @@ class _ProfilePageState extends State<ProfilePage>
                 color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: LottieLoadingWidget.medium(),
-              ),
+              child: const Center(child: LottieLoadingWidget.medium()),
             ),
           ),
         ),
@@ -1048,6 +1072,7 @@ class _ProfilePageState extends State<ProfilePage>
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final activities = profileProvider.weeklyActivity;
         final isLoading = profileProvider.isLoadingActivity;
+        final activityError = profileProvider.activityError;
 
         return Column(
           children: [
@@ -1087,8 +1112,11 @@ class _ProfilePageState extends State<ProfilePage>
                       child: Padding(
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
-                          'No activity data yet',
+                          activityError == null || activityError.isEmpty
+                              ? 'No activity data yet'
+                              : activityError,
                           style: const TextStyle(color: AppColors.grey600),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     )
@@ -1109,10 +1137,18 @@ class _ProfilePageState extends State<ProfilePage>
                               final normalizedValue = maxXP > 0
                                   ? activity.xpEarned / maxXP
                                   : 0.0;
-                              final date = DateTime.parse(activity.date);
-                              final dayLabel = DateFormat(
-                                'E',
-                              ).format(date).substring(0, 1);
+                              String dayLabel;
+                              final parsedDate = DateTime.tryParse(activity.date);
+                              if (parsedDate != null) {
+                                dayLabel = DateFormat(
+                                  'E',
+                                ).format(parsedDate).substring(0, 1);
+                              } else {
+                                final raw = activity.date.trim();
+                                dayLabel = raw.isEmpty
+                                    ? '-'
+                                    : raw.substring(0, 1).toUpperCase();
+                              }
 
                               return Expanded(
                                 child: AnimatedActivityBar(
@@ -1248,12 +1284,13 @@ class _ProfilePageState extends State<ProfilePage>
 
     final networkBadge = achievement.badgeIcon?.trim();
     final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
-      ? Uri.tryParse(networkBadge)
-      : null;
+        ? Uri.tryParse(networkBadge)
+        : null;
     final hasValidNetworkBadge =
-      networkBadgeUri != null &&
-      (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
-      networkBadgeUri.host.isNotEmpty;
+        networkBadgeUri != null &&
+        (networkBadgeUri.scheme == 'http' ||
+            networkBadgeUri.scheme == 'https') &&
+        networkBadgeUri.host.isNotEmpty;
     if (hasValidNetworkBadge) {
       return true;
     }
@@ -1318,7 +1355,9 @@ class _ProfilePageState extends State<ProfilePage>
                         final progress = _badgeShineController.value;
                         final isSweeping = progress < sweepPortion;
                         final sweepT = isSweeping
-                            ? Curves.easeInOut.transform(progress / sweepPortion)
+                            ? Curves.easeInOut.transform(
+                                progress / sweepPortion,
+                              )
                             : 1.0;
                         final position = isSweeping
                             ? lerpDouble(-1.6, 1.6, sweepT)!
@@ -1371,7 +1410,8 @@ class _ProfilePageState extends State<ProfilePage>
         : null;
     final hasValidNetworkBadge =
         networkBadgeUri != null &&
-        (networkBadgeUri.scheme == 'http' || networkBadgeUri.scheme == 'https') &&
+        (networkBadgeUri.scheme == 'http' ||
+            networkBadgeUri.scheme == 'https') &&
         networkBadgeUri.host.isNotEmpty;
 
     if (hasValidNetworkBadge) {

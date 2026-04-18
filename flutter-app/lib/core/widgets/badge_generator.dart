@@ -338,9 +338,7 @@ class BadgePainter extends CustomPainter {
   void _drawMedal(Canvas canvas, Size size, Offset center, double radius) {
     // Draw ribbon
     final ribbonPaint = Paint()
-      ..color = config.isLocked
-          ? AppColors.grey400
-          : config.rarityGradient[1];
+      ..color = config.isLocked ? AppColors.grey400 : config.rarityGradient[1];
 
     final ribbonPath = Path();
     ribbonPath.moveTo(size.width * 0.35, 0);

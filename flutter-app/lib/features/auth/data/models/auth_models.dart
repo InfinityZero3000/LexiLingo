@@ -11,11 +11,32 @@ class AuthTokens {
     this.tokenType = 'bearer',
   });
 
+  static String _requiredString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+    if (value != null) {
+      final normalized = value.toString();
+      if (normalized.isNotEmpty && normalized != 'null') {
+        return normalized;
+      }
+    }
+    throw FormatException('Missing or invalid "$key" in auth response');
+  }
+
+  static String? _optionalString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    final normalized = value.toString();
+    return normalized == 'null' ? null : normalized;
+  }
+
   factory AuthTokens.fromJson(Map<String, dynamic> json) {
     return AuthTokens(
-      accessToken: json['access_token'] as String,
-      refreshToken: json['refresh_token'] as String,
-      tokenType: json['token_type'] as String? ?? 'bearer',
+      accessToken: _requiredString(json, 'access_token'),
+      refreshToken: _requiredString(json, 'refresh_token'),
+      tokenType: _optionalString(json['token_type']) ?? 'bearer',
     );
   }
 
@@ -46,16 +67,37 @@ class LoginResponse {
     required this.email,
   });
 
+  static String _requiredString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+    if (value != null) {
+      final normalized = value.toString();
+      if (normalized.isNotEmpty && normalized != 'null') {
+        return normalized;
+      }
+    }
+    throw FormatException('Missing or invalid "$key" in login response');
+  }
+
+  static String? _optionalString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    final normalized = value.toString();
+    return normalized == 'null' ? null : normalized;
+  }
+
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
       tokens: AuthTokens(
-        accessToken: json['access_token'] as String,
-        refreshToken: json['refresh_token'] as String,
-        tokenType: json['token_type'] as String? ?? 'bearer',
+        accessToken: _requiredString(json, 'access_token'),
+        refreshToken: _requiredString(json, 'refresh_token'),
+        tokenType: _optionalString(json['token_type']) ?? 'bearer',
       ),
-      userId: json['user_id'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
+      userId: _requiredString(json, 'user_id'),
+      username: _requiredString(json, 'username'),
+      email: _requiredString(json, 'email'),
     );
   }
 
@@ -92,12 +134,12 @@ class DeviceInfo {
 
   factory DeviceInfo.fromJson(Map<String, dynamic> json) {
     return DeviceInfo(
-      deviceId: json['device_id'] as String,
-      deviceType: json['device_type'] as String,
-      deviceName: json['device_name'] as String?,
-      fcmToken: json['fcm_token'] as String?,
-      appVersion: json['app_version'] as String?,
-      osVersion: json['os_version'] as String?,
+      deviceId: LoginResponse._requiredString(json, 'device_id'),
+      deviceType: LoginResponse._requiredString(json, 'device_type'),
+      deviceName: LoginResponse._optionalString(json['device_name']),
+      fcmToken: LoginResponse._optionalString(json['fcm_token']),
+      appVersion: LoginResponse._optionalString(json['app_version']),
+      osVersion: LoginResponse._optionalString(json['os_version']),
     );
   }
 

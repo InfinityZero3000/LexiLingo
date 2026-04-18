@@ -344,7 +344,7 @@ async def seed_stories():
     await collection.create_index([("difficulty_level", 1), ("is_published", 1)])
     await collection.create_index([("category", 1), ("is_published", 1)])
     await collection.create_index("tags")
-    logger.info("✓ Indexes created")
+    logger.info(" Indexes created")
     
     # Try to load from sample_stories.json first
     stories_to_seed = SAMPLE_STORIES  # fallback to inline data
@@ -377,13 +377,13 @@ async def seed_stories():
             upsert=True
         )
         if result.upserted_id:
-            logger.info(f"✓ Inserted: {story['title']['en']}")
+            logger.info(f" Inserted: {story['title']['en']}")
         else:
-            logger.info(f"✓ Updated: {story['title']['en']}")
+            logger.info(f" Updated: {story['title']['en']}")
     
     # Verify
     count = await collection.count_documents({"is_published": True})
-    logger.info(f"\n✅ Total published stories: {count}")
+    logger.info(f"\n Total published stories: {count}")
     
     client.close()
     logger.info("Done!")

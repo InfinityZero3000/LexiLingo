@@ -104,7 +104,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       _selectedIndex = index;
       _answered = true;
       _feedbackText = correct
-          ? q.grammarTip.isNotEmpty ? q.grammarTip : 'Correct!'
+          ? q.grammarTip.isNotEmpty
+                ? q.grammarTip
+                : 'Correct!'
           : '${q.explanation.isNotEmpty ? q.explanation : 'Incorrect.'}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
@@ -243,7 +245,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             side: const BorderSide(color: AppColors.primary),
                           ),
                           const SizedBox(height: 12),
@@ -290,7 +294,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                             IconData? icon;
                             if (_answered) {
                               if (i == q.correctIndex) {
-                                bg = AppColors.greenSuccess.withValues(alpha: 0.1);
+                                bg = AppColors.greenSuccess.withValues(
+                                  alpha: 0.1,
+                                );
                                 border = AppColors.greenSuccess;
                                 text = AppColors.greenSuccess;
                                 icon = Icons.check_circle_outline;
@@ -351,7 +357,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 color:
                                     _answered &&
                                         _selectedIndex == q.correctIndex
-                                    ? AppColors.greenSuccess.withValues(alpha: 0.08)
+                                    ? AppColors.greenSuccess.withValues(
+                                        alpha: 0.08,
+                                      )
                                     : Colors.red.withValues(alpha: 0.07),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(

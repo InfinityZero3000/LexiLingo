@@ -119,7 +119,8 @@ class AchievementBadge extends StatelessWidget {
     this.size = 80,
     this.useNewStyle = true, // Default to new style
     this.preferImageAsset = true, // Default to prefer image assets
-    this.useCdnFirst = kReleaseMode, // Use CDN in production, local-first in dev
+    this.useCdnFirst =
+        kReleaseMode, // Use CDN in production, local-first in dev
   });
 
   bool _isNetworkUrl(String value) {
@@ -142,15 +143,19 @@ class AchievementBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveUseCdnFirst = useCdnFirst && !kIsWeb;
+
     if (preferImageAsset) {
       // Prefer slug (stable ID) over id (UUID) for badge asset lookup
       final lookupKey = (achievement.slug ?? achievement.id).trim();
       final badgeIcon = achievement.badgeIcon?.trim();
 
       final mappedAssetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-      if (useCdnFirst) {
+      if (effectiveUseCdnFirst) {
         // In production, try network first and fall back to local assets on error.
-        if (badgeIcon != null && badgeIcon.isNotEmpty && _isNetworkUrl(badgeIcon)) {
+        if (badgeIcon != null &&
+            badgeIcon.isNotEmpty &&
+            _isNetworkUrl(badgeIcon)) {
           return _buildNetworkBadge(badgeIcon);
         }
 
@@ -166,12 +171,18 @@ class AchievementBadge extends StatelessWidget {
       }
 
       // Allow raw filenames in DB, e.g. "course-graduate.png".
-      if (badgeIcon != null && badgeIcon.isNotEmpty && _looksLikeImageFileName(badgeIcon)) {
+      if (badgeIcon != null &&
+          badgeIcon.isNotEmpty &&
+          _looksLikeImageFileName(badgeIcon)) {
         return _buildImageAssetBadge('assets/badges/$badgeIcon');
       }
 
       // If CDN-first is disabled, still allow explicit network URL from backend.
-      if (!useCdnFirst && badgeIcon != null && badgeIcon.isNotEmpty && _isNetworkUrl(badgeIcon)) {
+      if (!effectiveUseCdnFirst &&
+          badgeIcon != null &&
+          badgeIcon.isNotEmpty &&
+          _isNetworkUrl(badgeIcon) &&
+          !kIsWeb) {
         return _buildNetworkBadge(badgeIcon);
       }
     }
@@ -254,7 +265,11 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
+                child: Icon(
+                  Icons.lock,
+                  size: size * 0.4,
+                  color: AppColors.surfaceLight,
+                ),
               ),
           ],
         ),
@@ -306,7 +321,11 @@ class AchievementBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.black.withValues(alpha: 0.6),
                 ),
-                child: Icon(Icons.lock, size: size * 0.4, color: AppColors.surfaceLight),
+                child: Icon(
+                  Icons.lock,
+                  size: size * 0.4,
+                  color: AppColors.surfaceLight,
+                ),
               ),
           ],
         ),

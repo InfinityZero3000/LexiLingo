@@ -362,7 +362,9 @@ class StoryProvider extends ChangeNotifier {
   }
 
   Future<void> loadOlderMessages() async {
-    if (_currentSession == null || _isLoadingMoreMessages || !_hasMoreMessages) {
+    if (_currentSession == null ||
+        _isLoadingMoreMessages ||
+        !_hasMoreMessages) {
       return;
     }
 

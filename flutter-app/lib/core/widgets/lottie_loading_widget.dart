@@ -39,8 +39,10 @@ class LottieLoadingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final animation = LayoutBuilder(
       builder: (context, constraints) {
-        final boundedWidth = constraints.hasBoundedWidth && constraints.maxWidth > 0;
-        final boundedHeight = constraints.hasBoundedHeight && constraints.maxHeight > 0;
+        final boundedWidth =
+            constraints.hasBoundedWidth && constraints.maxWidth > 0;
+        final boundedHeight =
+            constraints.hasBoundedHeight && constraints.maxHeight > 0;
 
         double effectiveSize = size;
 
