@@ -7,7 +7,7 @@ import '../../features/auth/data/datasources/token_storage.dart';
 
 /// One-time local-state wipe for breaking cache/schema transitions.
 class LocalStateMigrationService {
-  static const int _wipeVersion = 1;
+  static const int _wipeVersion = 2;
   static const String _wipeVersionKey = 'local_state_wipe_version';
 
   Future<void> runIfNeeded() async {
@@ -23,8 +23,10 @@ class LocalStateMigrationService {
     // Drop legacy local SQLite state so new schema starts clean.
     if (!kIsWeb) {
       final dbPath = await getDatabasesPath();
-      final path = join(dbPath, 'lexilingo.db');
-      await deleteDatabase(path);
+      final appDbPath = join(dbPath, 'lexilingo.db');
+      final chatDbPath = join(dbPath, 'lexilingo_chat.db');
+      await deleteDatabase(appDbPath);
+      await deleteDatabase(chatDbPath);
     }
 
     // Clear old SharedPreferences cache keys from previous releases.
