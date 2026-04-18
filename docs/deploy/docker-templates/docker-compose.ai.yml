@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  ai:
+    build:
+      context: ../../../ai-service
+      dockerfile: Dockerfile
+    image: lexilingo/ai:latest
+    container_name: lexilingo-ai
+    restart: unless-stopped
+    env_file:
+      - ./.env.ai
+    ports:
+      - "8001:8001"
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --workers 1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

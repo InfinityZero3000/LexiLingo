@@ -2,15 +2,23 @@
 Health check routes
 """
 
-import asyncio
 import logging
-from fastapi import APIRouter, BackgroundTasks
 from datetime import datetime
 
+from fastapi import APIRouter, BackgroundTasks
+from pydantic import BaseModel
+
 from api.core.database import mongodb_manager
-from api.core.redis_client import RedisClient
 from api.core.config import settings
-from api.models.schemas import HealthCheck
+from api.core.redis_client import RedisClient
+
+
+class HealthCheck(BaseModel):
+    status: str
+    mongodb: str
+    redis: str
+    version: str
+    timestamp: datetime
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +55,6 @@ async def health_check():
             redis_ok = True
     except Exception:
         pass
-    
-    # AI Model API (DL-Model-Support)
-    ai_model_ok = False  # Will be checked when integrated
     
     return HealthCheck(
         status="healthy" if (mongodb_ok and redis_ok) else "degraded",
