@@ -19,6 +19,7 @@ Also included: policy templates for **Cloudflare** and **Azure API Management**.
 - OpenTelemetry collector config: `gateway/observability/otel-collector.yml`
 - Cloudflare policy template: `gateway/cloudflare/policy-template.md`
 - Azure APIM policy template: `gateway/apim/azure-apim-policy.xml`
+- Edge rollout runbook: `docs/gateway/WAF_EDGE_ROLLOUT_RUNBOOK.md`
 - Endpoint audit (current repo values): `docs/gateway/ENDPOINT_AUDIT_2026-03-19.md`
 
 ## 2. Policy model
@@ -129,6 +130,7 @@ Client policy:
 
 - Cloudflare template: `gateway/cloudflare/policy-template.md`
 - Azure APIM template: `gateway/apim/azure-apim-policy.xml`
+- Rollout checklist: `docs/gateway/WAF_EDGE_ROLLOUT_RUNBOOK.md`
 
 Recommended pattern:
 - Cloudflare or APIM at edge

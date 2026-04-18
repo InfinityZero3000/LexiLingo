@@ -45,3 +45,5 @@ ufw status verbose
 
 echo "=== Fail2ban status ==="
 fail2ban-client status
+echo "=== Fail2ban nginx-429-abuse ==="
+fail2ban-client status nginx-429-abuse || true

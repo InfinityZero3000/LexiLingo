@@ -45,13 +45,13 @@ services:
     container_name: lexilingo-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-lexilingo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lexilingo_pass}
       POSTGRES_DB: ${POSTGRES_DB:-lexilingo}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-lexilingo}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,11 +80,13 @@ services:
     image: redis:7-alpine
     container_name: lexilingo-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,9 +101,11 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+      - .env.production.secrets
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
     depends_on:
       postgres:
@@ -134,13 +138,15 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+      - .env.production.secrets
     environment:
       ENVIRONMENT: production
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
-      REDIS_URL: redis://redis:6379/1
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}

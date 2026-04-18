@@ -166,7 +166,7 @@ class Settings(BaseSettings):
     NEWSDATA_KEY: str | None = None              # NewsData.io (fallback)
     PODCASTINDEX_KEY: str | None = None          # PodcastIndex.org
     PODCASTINDEX_SECRET: str | None = None       # PodcastIndex.org secret
-    WORDSAPI_KEY: str | None = None              # WordsAPI (RapidAPI)
+    DICTIONARY_API_BASE_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en"
     
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),

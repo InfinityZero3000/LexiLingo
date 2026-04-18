@@ -57,7 +57,6 @@ class QuotaManager:
         "openlibrary": 1000,    # actual: unlimited
         "gutenberg": 200,       # actual: unlimited
         "dictionary": 2000,     # actual: unlimited
-        "wordsapi": 2000,       # actual: 2,500 req/day
         "rss_feed": 500,        # RSS feeds are free — self-imposed limit
     }
     

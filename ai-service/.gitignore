@@ -18,7 +18,7 @@ coverage/
 .env.*.local
 *.iml
 *.swp
-models/
+/models/
 checkpoints/
 outputs/
 logs/
