@@ -12,7 +12,7 @@ import logging
 
 from api.core.auth import AuthenticatedUser, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
-from api.core.quota_guard import enforce_user_quota
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.services.tts_service import get_tts_service
 
 router = APIRouter()
@@ -33,7 +33,12 @@ async def synthesize_text(
     request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
 
     try:
-        quota = await enforce_user_quota(current_user.user_id, "tts.synthesize")
+        quota = await enforce_user_quota(
+            current_user.user_id,
+            "tts.synthesize",
+            token_cost=default_token_cost_for_endpoint("tts.synthesize", text=text),
+            fail_closed=True,
+        )
         tts = get_tts_service()
         # Run blocking synthesis in threadpool
         audio_bytes = await run_in_threadpool(tts.synthesize, text)
@@ -50,6 +55,10 @@ async def synthesize_text(
                     "rpm_limit": quota.rpm_limit,
                     "rpd_used": quota.rpd_used,
                     "rpd_limit": quota.rpd_limit,
+                        "tpm_used": quota.tpm_used,
+                        "tpm_limit": quota.tpm_limit,
+                        "tpd_used": quota.tpd_used,
+                        "tpd_limit": quota.tpd_limit,
                 },
             }
         )

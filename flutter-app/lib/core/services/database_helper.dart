@@ -102,7 +102,7 @@ class DatabaseHelper {
     await EncryptedLocalCacheService.createTable(db);
     await BackgroundSyncQueueService.createTable(db);
 
-    // Seed initial data
+    // Seed rich local learning data for mobile-first experience.
     await _seedInitialData(db);
   }
 
@@ -289,217 +289,221 @@ CREATE TABLE user_progress (
   }
 
   Future<void> _seedInitialData(Database db) async {
-    final timestamp = DateTime.now().toIso8601String();
-
-    // Create demo user
-    await db.insert('users', {
-      'id': 'demo_user_001',
-      'name': 'Demo User',
-      'email': 'demo@lexilingo.com',
-      'avatarUrl':
-          'https://ui-avatars.com/api/?name=Demo+User&background=6366f1&color=fff',
-      'joinDate': timestamp,
-      'lastLoginDate': timestamp,
-      'totalXP': 150,
-      'currentStreak': 3,
-      'longestStreak': 7,
-      'totalLessonsCompleted': 5,
-      'totalWordsLearned': 25,
-    });
-
-    // Create settings for demo user
-    await db.insert('settings', {
-      'userId': 'demo_user_001',
-      'notificationEnabled': 1,
-      'notificationTime': '09:00',
-      'theme': 'system',
-      'language': 'en',
-      'soundEnabled': 1,
-      'dailyGoalXP': 50,
-    });
-
-    // Create today's goal for demo user
-    final today = DateTime.now();
+    final now = DateTime.now();
+    final timestamp = now.toIso8601String();
     final todayStr =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    await db.insert('daily_goals', {
-      'userId': 'demo_user_001',
-      'date': todayStr,
-      'targetXP': 50,
-      'earnedXP': 30,
-      'lessonsCompleted': 2,
-      'wordsLearned': 10,
-      'minutesSpent': 15,
-    });
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    // Create streak records for last 3 days
-    for (int i = 0; i < 3; i++) {
-      final date = today.subtract(Duration(days: i));
+    const users = [
+      {
+        'id': 'demo_user_001',
+        'name': 'Alex Nguyen',
+        'email': 'alex.nguyen@lexilingo.app',
+        'avatarUrl': 'https://ui-avatars.com/api/?name=Alex+Nguyen&background=6366f1&color=fff',
+        'totalXP': 1240,
+        'currentStreak': 8,
+        'longestStreak': 21,
+        'totalLessonsCompleted': 42,
+        'totalWordsLearned': 320,
+      },
+      {
+        'id': 'demo_user_002',
+        'name': 'Minh Tran',
+        'email': 'minh.tran@lexilingo.app',
+        'avatarUrl': 'https://ui-avatars.com/api/?name=Minh+Tran&background=14b8a6&color=fff',
+        'totalXP': 860,
+        'currentStreak': 5,
+        'longestStreak': 13,
+        'totalLessonsCompleted': 28,
+        'totalWordsLearned': 210,
+      },
+      {
+        'id': 'demo_user_003',
+        'name': 'Linh Pham',
+        'email': 'linh.pham@lexilingo.app',
+        'avatarUrl': 'https://ui-avatars.com/api/?name=Linh+Pham&background=f97316&color=fff',
+        'totalXP': 430,
+        'currentStreak': 2,
+        'longestStreak': 7,
+        'totalLessonsCompleted': 14,
+        'totalWordsLearned': 98,
+      },
+    ];
+
+    for (final user in users) {
+      await db.insert('users', {
+        'id': user['id'],
+        'name': user['name'],
+        'email': user['email'],
+        'avatarUrl': user['avatarUrl'],
+        'joinDate': now.subtract(const Duration(days: 60)).toIso8601String(),
+        'lastLoginDate': timestamp,
+        'totalXP': user['totalXP'],
+        'currentStreak': user['currentStreak'],
+        'longestStreak': user['longestStreak'],
+        'totalLessonsCompleted': user['totalLessonsCompleted'],
+        'totalWordsLearned': user['totalWordsLearned'],
+      });
+
+      await db.insert('settings', {
+        'userId': user['id'],
+        'notificationEnabled': 1,
+        'notificationTime': '08:30',
+        'theme': 'system',
+        'language': 'en',
+        'soundEnabled': 1,
+        'dailyGoalXP': 80,
+      });
+
+      await db.insert('daily_goals', {
+        'userId': user['id'],
+        'date': todayStr,
+        'targetXP': 80,
+        'earnedXP': user['id'] == 'demo_user_001' ? 55 : 35,
+        'lessonsCompleted': user['id'] == 'demo_user_001' ? 3 : 2,
+        'wordsLearned': user['id'] == 'demo_user_001' ? 18 : 11,
+        'minutesSpent': user['id'] == 'demo_user_001' ? 42 : 27,
+      });
+    }
+
+    for (int i = 0; i < 14; i++) {
+      final date = now.subtract(Duration(days: i));
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       await db.insert('streaks', {
         'userId': 'demo_user_001',
         'date': dateStr,
-        'completed': 1,
+        'completed': i < 8 ? 1 : 0,
       });
     }
 
-    // Seed courses (without progress field)
-    final courses = [
-      {
-        'title': 'English for Beginners',
-        'description':
-            'Start your English learning journey with fundamental vocabulary and grammar.',
-        'level': 'A1',
-        'category': 'Language Basics',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400',
-        'duration': '4 weeks',
-        'lessonsCount': 12,
-        'isFeatured': 1,
-        'rating': 4.5,
-        'enrolledCount': 1250,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
-      {
-        'title': 'Conversational English',
-        'description':
-            'Learn practical English for everyday conversations and real-life situations.',
-        'level': 'B1',
-        'category': 'Speaking',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-        'duration': '6 weeks',
-        'lessonsCount': 18,
-        'isFeatured': 1,
-        'rating': 4.7,
-        'enrolledCount': 980,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
-      {
-        'title': 'Business English',
-        'description':
-            'Master professional English for workplace communication and presentations.',
-        'level': 'B2',
-        'category': 'Business',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400',
-        'duration': '8 weeks',
-        'lessonsCount': 24,
-        'isFeatured': 0,
-        'rating': 4.8,
-        'enrolledCount': 756,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
-      {
-        'title': 'IELTS Preparation',
-        'description':
-            'Comprehensive preparation for all sections of the IELTS examination.',
-        'level': 'B2-C1',
-        'category': 'Test Prep',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
-        'duration': '12 weeks',
-        'lessonsCount': 36,
-        'isFeatured': 1,
-        'rating': 4.9,
-        'enrolledCount': 2100,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
-      {
-        'title': 'English Grammar Mastery',
-        'description':
-            'Deep dive into English grammar rules with practical exercises.',
-        'level': 'A2-B1',
-        'category': 'Grammar',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400',
-        'duration': '5 weeks',
-        'lessonsCount': 15,
-        'isFeatured': 0,
-        'rating': 4.6,
-        'enrolledCount': 890,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
-      {
-        'title': 'Travel English',
-        'description':
-            'Essential English phrases and vocabulary for travelers.',
-        'level': 'A2',
-        'category': 'Travel',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400',
-        'duration': '3 weeks',
-        'lessonsCount': 9,
-        'isFeatured': 0,
-        'rating': 4.4,
-        'enrolledCount': 1450,
-        'createdAt': timestamp,
-        'updatedAt': timestamp,
-      },
+    final courseSeed = [
+      ['English Foundations A1', 'A1', 'Grammar', 14, 4.7, 2100],
+      ['Daily Conversation A1', 'A1', 'Conversation', 12, 4.6, 1980],
+      ['Grammar Booster A2', 'A2', 'Grammar', 18, 4.8, 1670],
+      ['Travel English A2', 'A2', 'Travel', 15, 4.5, 1440],
+      ['Listening Sprint A2', 'A2', 'Listening', 16, 4.4, 1210],
+      ['Speaking Lab B1', 'B1', 'Speaking', 20, 4.8, 1890],
+      ['Business Email B1', 'B1', 'Business', 17, 4.7, 1340],
+      ['Workplace English B1', 'B1', 'Business', 19, 4.6, 1120],
+      ['Academic Writing B2', 'B2', 'Writing', 22, 4.9, 980],
+      ['IELTS Skills B2', 'B2', 'Test Prep', 24, 4.8, 1760],
+      ['TOEIC Accelerator B2', 'B2', 'Test Prep', 21, 4.6, 1530],
+      ['Advanced Discussion C1', 'C1', 'Conversation', 20, 4.7, 820],
+      ['Pronunciation Mastery B2', 'B2', 'Pronunciation', 18, 4.8, 1320],
+      ['News Reading B2', 'B2', 'Reading', 16, 4.5, 1010],
+      ['Storytelling English B1', 'B1', 'Speaking', 14, 4.6, 970],
+      ['Grammar Precision C1', 'C1', 'Grammar', 23, 4.9, 760],
+      ['Vocabulary Builder A2', 'A2', 'Vocabulary', 18, 4.7, 1740],
+      ['Idioms in Context B2', 'B2', 'Vocabulary', 15, 4.6, 920],
+      ['Interview English B2', 'B2', 'Business', 13, 4.7, 1110],
+      ['Presentation Skills C1', 'C1', 'Business', 14, 4.8, 690],
     ];
 
-    for (var course in courses) {
-      await db.insert('courses', course);
+    final insertedCourseIds = <int>[];
+    for (int i = 0; i < courseSeed.length; i++) {
+      final item = courseSeed[i];
+      final id = await db.insert('courses', {
+        'title': item[0],
+        'description':
+            'A practical, structured course to improve ${item[2]} for ${item[1]} learners with speaking, listening, and review checkpoints.',
+        'level': item[1],
+        'category': item[2],
+        'imageUrl': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&auto=format&fit=crop&q=80',
+        'duration': '${4 + (i % 7)} weeks',
+        'lessonsCount': item[3],
+        'isEnrolled': i < 6 ? 1 : 0,
+        'progress': i == 0 ? 0.62 : (i < 6 ? 0.22 : 0.0),
+        'isFeatured': i % 4 == 0 ? 1 : 0,
+        'rating': item[4],
+        'enrolledCount': item[5],
+        'createdAt': timestamp,
+        'updatedAt': timestamp,
+      });
+      insertedCourseIds.add(id);
     }
 
-    // Enroll demo user in first two courses
-    await db.insert('course_enrollments', {
-      'userId': 'demo_user_001',
-      'courseId': 1, // English for Beginners
-      'enrolledAt': timestamp,
-      'lastAccessedAt': timestamp,
-      'currentProgress': 0.35,
-    });
+    for (final courseId in insertedCourseIds) {
+      final courseRow = await db.query(
+        'courses',
+        columns: ['lessonsCount'],
+        where: 'id = ?',
+        whereArgs: [courseId],
+        limit: 1,
+      );
+      final lessonsCount = (courseRow.first['lessonsCount'] as int?) ?? 12;
+      for (int order = 1; order <= lessonsCount; order++) {
+        await db.insert('lessons', {
+          'courseId': courseId,
+          'title': 'Lesson $order',
+          'description': 'Core practice for lesson $order',
+          'orderIndex': order,
+          'duration': '${8 + (order % 10)} min',
+          'status': order <= 3 ? 'completed' : (order <= 5 ? 'unlocked' : 'locked'),
+          'contentUrl': '/local/courses/$courseId/lessons/$order',
+        });
+      }
+    }
 
-    await db.insert('course_enrollments', {
-      'userId': 'demo_user_001',
-      'courseId': 2, // Conversational English
-      'enrolledAt': DateTime.now()
-          .subtract(const Duration(days: 2))
-          .toIso8601String(),
-      'lastAccessedAt': DateTime.now()
-          .subtract(const Duration(days: 1))
-          .toIso8601String(),
-      'currentProgress': 0.15,
-    });
+    for (int i = 0; i < 6 && i < insertedCourseIds.length; i++) {
+      final enrolledAt = now.subtract(Duration(days: 10 - i)).toIso8601String();
+      await db.insert('course_enrollments', {
+        'userId': 'demo_user_001',
+        'courseId': insertedCourseIds[i],
+        'enrolledAt': enrolledAt,
+        'lastAccessedAt': timestamp,
+        'currentProgress': i == 0 ? 0.62 : 0.18 + (i * 0.05),
+      });
+    }
 
-    // Seed some vocabulary for demo user
-    final vocabs = [
-      {
+    final seededLessons = await db.query(
+      'lessons',
+      columns: ['id', 'courseId', 'orderIndex'],
+      where: 'courseId IN (?, ?, ?)',
+      whereArgs: [insertedCourseIds[0], insertedCourseIds[1], insertedCourseIds[2]],
+      orderBy: 'courseId ASC, orderIndex ASC',
+    );
+    for (final lesson in seededLessons) {
+      final order = (lesson['orderIndex'] as int?) ?? 1;
+      await db.insert('user_progress', {
         'userId': 'demo_user_001',
-        'word': 'hello',
-        'definition':
-            'A greeting used to acknowledge someone\'s presence or to begin a conversation.',
-        'example': 'Hello! How are you today?',
-        'phonetic': '/həˈloʊ/',
-        'partOfSpeech': 'interjection',
-        'difficulty': 'beginner',
-        'isLearned': 1,
-        'isFavorite': 0,
-        'createdAt': timestamp,
-      },
-      {
-        'userId': 'demo_user_001',
-        'word': 'beautiful',
-        'definition': 'Pleasing the senses or mind aesthetically.',
-        'example': 'What a beautiful sunset!',
-        'phonetic': '/ˈbjuːtɪfʊl/',
-        'partOfSpeech': 'adjective',
-        'difficulty': 'beginner',
-        'isLearned': 0,
-        'isFavorite': 1,
-        'createdAt': timestamp,
-      },
+        'courseId': lesson['courseId'],
+        'lessonId': lesson['id'],
+        'progress': order <= 3 ? 1.0 : (order <= 5 ? 0.55 : 0.0),
+        'lastAccessedAt': timestamp,
+        'completedAt': order <= 3 ? now.subtract(Duration(days: 2)).toIso8601String() : null,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    final vocabSeed = [
+      ['analyze', 'to examine carefully and in detail', 'We analyze the text before writing.'],
+      ['collaborate', 'to work jointly with others', 'Students collaborate on the speaking task.'],
+      ['achievement', 'something accomplished successfully', 'Finishing the course is a big achievement.'],
+      ['improve', 'to become better', 'Daily practice helps improve fluency.'],
+      ['confident', 'feeling sure about your abilities', 'She feels confident speaking English now.'],
+      ['context', 'the situation that helps explain meaning', 'Use words in context to remember better.'],
+      ['pronunciation', 'the way words are spoken', 'Clear pronunciation improves communication.'],
+      ['strategy', 'a plan for achieving a goal', 'Use a strategy to learn vocabulary faster.'],
+      ['persist', 'to continue despite difficulty', 'Persist with study even on busy days.'],
+      ['insight', 'a deep understanding', 'The article gave me insight into grammar.'],
+      ['efficient', 'achieving maximum productivity', 'Spaced repetition is an efficient method.'],
+      ['practical', 'useful in real situations', 'This lesson gives practical phrases.'],
     ];
 
-    for (var vocab in vocabs) {
-      await db.insert('vocabulary', vocab);
+    for (int i = 0; i < vocabSeed.length; i++) {
+      final item = vocabSeed[i];
+      await db.insert('vocabulary', {
+        'userId': 'demo_user_001',
+        'word': item[0],
+        'definition': item[1],
+        'example': item[2],
+        'phonetic': '/${item[0]}/',
+        'partOfSpeech': i % 3 == 0 ? 'verb' : (i % 3 == 1 ? 'noun' : 'adjective'),
+        'difficulty': i < 4 ? 'beginner' : (i < 8 ? 'intermediate' : 'advanced'),
+        'isLearned': i < 7 ? 1 : 0,
+        'isFavorite': i % 4 == 0 ? 1 : 0,
+        'createdAt': timestamp,
+      });
     }
   }
 

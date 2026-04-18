@@ -14,7 +14,7 @@ from starlette.concurrency import run_in_threadpool
 
 from api.core.auth import AuthenticatedUser, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
-from api.core.quota_guard import enforce_user_quota
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.services.stt_service import get_stt_service
 
 router = APIRouter()
@@ -36,7 +36,12 @@ async def transcribe_audio(
     request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
 
     try:
-        quota = await enforce_user_quota(current_user.user_id, "stt.transcribe")
+        quota = await enforce_user_quota(
+            current_user.user_id,
+            "stt.transcribe",
+            token_cost=default_token_cost_for_endpoint("stt.transcribe"),
+            fail_closed=True,
+        )
         stt = get_stt_service()
 
         # Save to temp file
@@ -61,6 +66,10 @@ async def transcribe_audio(
                         "rpm_limit": quota.rpm_limit,
                         "rpd_used": quota.rpd_used,
                         "rpd_limit": quota.rpd_limit,
+                        "tpm_used": quota.tpm_used,
+                        "tpm_limit": quota.tpm_limit,
+                        "tpd_used": quota.tpd_used,
+                        "tpd_limit": quota.tpd_limit,
                     },
                 }
             )
