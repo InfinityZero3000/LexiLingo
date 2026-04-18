@@ -124,6 +124,7 @@ agent-skills
 system-testing/
 
 graphcag*
+<<<<<<< Updated upstream
 
 # deployment artifacts
 dist/
@@ -133,3 +134,6 @@ backups/
 
 # gateway runtime security logs
 gateway/nginx/logs/*.log
+=======
+docs/Report/
+>>>>>>> Stashed changes
