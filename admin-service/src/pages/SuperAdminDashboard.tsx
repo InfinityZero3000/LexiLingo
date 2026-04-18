@@ -19,14 +19,13 @@ export const SuperAdminDashboard = () => {
 
   useEffect(() => {
     setLoading(true);
-    const backendBase = ENV.backendUrl.replace("/api/v1", "");
-    const aiBase = ENV.aiUrl.replace("/api/v1", "");
+    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getMonitoringDashboard(),
       getSystemInfo(),
-      fetch(`${backendBase}/health`).then((r) => r.json()),
-      fetch(`${aiBase}/health`).then((r) => r.json()),
+      fetch(ENV.backendHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
+      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
     ])
       .then(([monRes, sysRes, beRes, aiRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);

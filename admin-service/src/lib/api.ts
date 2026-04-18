@@ -89,6 +89,7 @@ async function tryRefreshToken(): Promise<boolean> {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
         },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
@@ -133,6 +134,10 @@ export const apiFetch = async <T>(
 
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    if (ENV.apiKey) {
+      headers.set("X-Api-Key", ENV.apiKey);
     }
 
     return fetchWithFallback(url, { ...options, headers });

@@ -28,13 +28,12 @@ export const DatabasePage = () => {
 
   useEffect(() => {
     setLoading(true);
-    const backendBase = ENV.backendUrl.replace("/api/v1", "");
-    const aiBase = ENV.aiUrl.replace("/api/v1", "");
+    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getSystemInfo(),
-      fetch(`${backendBase}/health`).then((r) => r.json()),
-      fetch(`${aiBase}/health`).then((r) => r.json()),
+      fetch(ENV.backendHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
+      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
     ])
       .then(([sysRes, beRes, aiRes]) => {
         if (sysRes.status === "fulfilled") setInfo(sysRes.value.data || null);

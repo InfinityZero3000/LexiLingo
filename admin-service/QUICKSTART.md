@@ -1,5 +1,33 @@
 # LexiLingo Admin - Quick Start Guide
 
+## Production Profiles (Gateway/Direct)
+
+Use one of the following production env profiles:
+
+- Gateway mode (recommended): `admin-service/.env.production`
+  - `VITE_USE_GATEWAY=true`
+  - `VITE_BACKEND_URL=https://api.lexilingo.me/api/v1`
+  - `VITE_AI_URL=https://api.lexilingo.me/api/v1`
+  - `VITE_AI_ADMIN_URL=https://api.lexilingo.me/api/v1/ai-admin`
+  - `VITE_API_KEY=REPLACE_WITH_KONG_ADMIN_WEB_KEY`
+  - `VITE_AI_ADMIN_API_KEY=REPLACE_WITH_AI_ADMIN_API_KEY`
+
+- Direct service mode (fallback): `admin-service/.env.production.direct.example`
+  - `VITE_USE_GATEWAY=false`
+  - Keep direct Render/Cloudflare URLs
+  - Fill `VITE_AI_ADMIN_API_KEY` so AI settings page can call `/admin/config`
+
+## Build Without Local npm (Docker)
+
+If machine does not have Node/npm installed, build via Docker:
+
+```bash
+cd admin-service
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/app -w /app node:20-alpine sh -lc "npm ci && npm run build"
+```
+
+This validates the production frontend build end-to-end and creates `dist/`.
+
 ## 🚀 Running the Admin System
 
 ### Prerequisites
