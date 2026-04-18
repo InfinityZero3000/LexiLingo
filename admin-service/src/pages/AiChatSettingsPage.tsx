@@ -4,6 +4,7 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
+import { ENV } from "../lib/env";
 import { Bot, MessageSquare, Zap, Key, Database, Settings } from "lucide-react";
 
 interface AiChatConfig {
@@ -31,10 +32,17 @@ export const AiChatSettingsPage = () => {
     fetchConfig();
   }, []);
 
+  const buildAdminHeaders = (includeContentType = false): Record<string, string> => ({
+    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
+    ...(authStore.accessToken ? { Authorization: `Bearer ${authStore.accessToken}` } : {}),
+    ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
+    ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
+  });
+
   const fetchConfig = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_AI_URL}/admin/config`, {
-        headers: { Authorization: `Bearer ${authStore.accessToken}` },
+      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
+        headers: buildAdminHeaders(),
       });
       const data = await response.json();
       // Backend returns flat AiConfig object; remap model_name → gemini_model
@@ -74,12 +82,9 @@ export const AiChatSettingsPage = () => {
     try {
       // Remap gemini_model → model_name for backend compatibility
       const payload = { ...config, model_name: config.gemini_model };
-      const response = await fetch(`${import.meta.env.VITE_AI_URL}/admin/config`, {
+      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authStore.accessToken}`,
-        },
+        headers: buildAdminHeaders(true),
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
