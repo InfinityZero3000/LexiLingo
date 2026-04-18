@@ -36,7 +36,7 @@ async def setup_admin_oauth():
         super_admin_role = result.scalar_one_or_none()
 
         if not admin_role or not super_admin_role:
-            print("❌ Error: Roles not found. Please run seed_data.py first to create roles.")
+            print("❌ Error: Roles not found. Please run Alembic migrations first to create seeded roles.")
             return
 
         print(f"  Found roles: Admin (ID: {admin_role.id}), Super Admin (ID: {super_admin_role.id})")
