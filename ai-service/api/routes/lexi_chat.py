@@ -30,7 +30,7 @@ from pymongo.errors import OperationFailure
 from pydantic import BaseModel, Field
 from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
-from api.core.quota_guard import enforce_user_quota
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.core.database import get_database
 
 logger = logging.getLogger(__name__)
@@ -622,7 +622,12 @@ async def lexi_chat(
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
 
-    quota = await enforce_user_quota(current_user.user_id, "lexi.chat")
+    quota = await enforce_user_quota(
+        current_user.user_id,
+        "lexi.chat",
+        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
+        fail_closed=True,
+    )
     metadata: Dict[str, Any] = {"pipeline_steps": []}
     
     # ── 1. Session management ──
@@ -880,6 +885,10 @@ async def lexi_chat(
         "rpm_limit": quota.rpm_limit,
         "rpd_used": quota.rpd_used,
         "rpd_limit": quota.rpd_limit,
+        "tpm_used": quota.tpm_used,
+        "tpm_limit": quota.tpm_limit,
+        "tpd_used": quota.tpd_used,
+        "tpd_limit": quota.tpd_limit,
     }
     
     logger.info(
