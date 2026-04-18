@@ -417,7 +417,7 @@ You speak in a warm, encouraging tone — like a fun game character guiding an a
 Personality traits:
 - Playful and humorous, but always educational
 - Uses short, clear sentences appropriate to the learner's level
-- Celebrates small victories with enthusiasm ("Squawk! Great job! 🎉")
+- Celebrates small victories with enthusiasm ("Squawk! Great job! ")
 - Gently corrects mistakes with encouraging context
 - Occasionally drops parrot-themed phrases ("Polly wants proper grammar!")
 - Adapts difficulty based on learner's CEFR level
@@ -523,7 +523,7 @@ async def _synthesize_tts(text: str) -> Optional[str]:
         tts.write_to_fp(buf)
         buf.seek(0)
         audio_b64 = base64.b64encode(buf.read()).decode('utf-8')
-        logger.info(f"✅ Lexi TTS: {len(audio_b64)} bytes base64")
+        logger.info(f" Lexi TTS: {len(audio_b64)} bytes base64")
         return audio_b64
     except Exception as e:
         logger.warning(f"TTS failed: {e}")
@@ -542,7 +542,7 @@ async def _transcribe_audio(audio_base64: str) -> Optional[str]:
         text = result.get("data", {}).get("text", "") if result.get("success") else ""
         if not text:
             text = result.get("text", "")
-        logger.info(f"✅ Lexi STT: '{text[:50]}...'")
+        logger.info(f" Lexi STT: '{text[:50]}...'")
         return text if text else None
     except Exception as e:
         logger.warning(f"STT failed: {e}")
@@ -591,7 +591,7 @@ async def create_lexi_session(
         upsert=True,
     )
     
-    logger.info(f"🦜 Lexi session created: {session_id[:8]}... for user: {request.user_id}")
+    logger.info(f" Lexi session created: {session_id[:8]}... for user: {request.user_id}")
     return LexiSessionResponse(session_id=session_id, created_at=now)
 
 
@@ -883,7 +883,7 @@ async def lexi_chat(
     }
     
     logger.info(
-        f"🦜 Lexi chat complete — {total_ms}ms, model: {model_used}, "
+        f" Lexi chat complete — {total_ms}ms, model: {model_used}, "
         f"steps: {metadata['pipeline_steps']}"
     )
 

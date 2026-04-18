@@ -32,19 +32,19 @@ class ModelVerifier:
     def verify_whisper(self) -> Dict:
         """Verify Whisper large-v3 model"""
         print("\n" + "="*60)
-        print("🔍 Checking Whisper large-v3 (STT)")
+        print(" Checking Whisper large-v3 (STT)")
         print("="*60)
         
         whisper_dir = self.models_dir / "whisper" / "models--Systran--faster-whisper-large-v3"
         
         if not whisper_dir.exists():
-            print("❌ Whisper model directory not found")
+            print(" Whisper model directory not found")
             return {"status": "missing", "size_gb": 0, "files": []}
         
         # Check for snapshot directory
         snapshots = list(whisper_dir.glob("snapshots/*"))
         if not snapshots:
-            print("❌ No snapshot found")
+            print(" No snapshot found")
             return {"status": "incomplete", "size_gb": 0, "files": []}
         
         snapshot = snapshots[0]
@@ -62,10 +62,10 @@ class ModelVerifier:
             file_path = snapshot / filename
             ok, msg = self.check_file_exists(file_path, min_size)
             if ok:
-                print(f"  ✅ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_ok.append(filename)
             else:
-                print(f"  ❌ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_missing.append(filename)
         
         # Check for binary blobs
@@ -73,9 +73,9 @@ class ModelVerifier:
         if blobs_dir.exists():
             blob_count = len(list(blobs_dir.iterdir()))
             total_blob_size = sum(f.stat().st_size for f in blobs_dir.iterdir()) / (1024**3)
-            print(f"  ✅ Model weights: {blob_count} blobs ({total_blob_size:.2f}GB)")
+            print(f"   Model weights: {blob_count} blobs ({total_blob_size:.2f}GB)")
         else:
-            print(f"  ❌ Model weights: No blobs directory")
+            print(f"   Model weights: No blobs directory")
             files_missing.append("blobs")
         
         # Calculate total size
@@ -83,7 +83,7 @@ class ModelVerifier:
         
         status = "complete" if not files_missing else "incomplete"
         print(f"\nTotal size: {total_size:.2f}GB")
-        print(f"Status: {'✅ Complete' if status == 'complete' else '❌ Incomplete'}")
+        print(f"Status: {' Complete' if status == 'complete' else ' Incomplete'}")
         
         return {
             "status": status,
@@ -95,19 +95,19 @@ class ModelVerifier:
     def verify_embeddings(self) -> Dict:
         """Verify Sentence-Transformers embeddings"""
         print("\n" + "="*60)
-        print("🔍 Checking Sentence-Transformers (Embeddings)")
+        print(" Checking Sentence-Transformers (Embeddings)")
         print("="*60)
         
         emb_dir = self.models_dir / "embeddings" / "models--sentence-transformers--all-MiniLM-L6-v2"
         
         if not emb_dir.exists():
-            print("❌ Embeddings model directory not found")
+            print(" Embeddings model directory not found")
             return {"status": "missing", "size_mb": 0, "files": []}
         
         # Check for snapshot
         snapshots = list(emb_dir.glob("snapshots/*"))
         if not snapshots:
-            print("❌ No snapshot found")
+            print(" No snapshot found")
             return {"status": "incomplete", "size_mb": 0, "files": []}
         
         snapshot = snapshots[0]
@@ -125,10 +125,10 @@ class ModelVerifier:
             file_path = snapshot / filename
             ok, msg = self.check_file_exists(file_path, min_size)
             if ok:
-                print(f"  ✅ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_ok.append(filename)
             else:
-                print(f"  ❌ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_missing.append(filename)
         
         # Calculate total size
@@ -136,7 +136,7 @@ class ModelVerifier:
         
         status = "complete" if not files_missing else "incomplete"
         print(f"\nTotal size: {total_size:.2f}MB")
-        print(f"Status: {'✅ Complete' if status == 'complete' else '❌ Incomplete'}")
+        print(f"Status: {' Complete' if status == 'complete' else ' Incomplete'}")
         
         return {
             "status": status,
@@ -148,19 +148,19 @@ class ModelVerifier:
     def verify_hubert(self) -> Dict:
         """Verify HuBERT pronunciation model"""
         print("\n" + "="*60)
-        print("🔍 Checking HuBERT large-ls960-ft (Pronunciation)")
+        print(" Checking HuBERT large-ls960-ft (Pronunciation)")
         print("="*60)
         
         hubert_dir = self.models_dir / "hubert" / "models--facebook--hubert-large-ls960-ft"
         
         if not hubert_dir.exists():
-            print("❌ HuBERT model directory not found")
+            print(" HuBERT model directory not found")
             return {"status": "missing", "size_gb": 0, "files": []}
         
         # Check for snapshots
         snapshots = list(hubert_dir.glob("snapshots/*"))
         if not snapshots:
-            print("❌ No snapshot found")
+            print(" No snapshot found")
             return {"status": "incomplete", "size_gb": 0, "files": []}
         
         # Check all snapshots for safetensors (preferred) or pytorch_model.bin
@@ -173,38 +173,38 @@ class ModelVerifier:
             
             if safetensors.exists():
                 size_mb = safetensors.stat().st_size / (1024**2)
-                print(f"  ✅ model.safetensors: {size_mb:.2f}MB (SECURE)")
+                print(f"   model.safetensors: {size_mb:.2f}MB (SECURE)")
                 safetensors_found = True
             
             if pytorch.exists():
                 size_mb = pytorch.stat().st_size / (1024**2)
-                print(f"  ⚠️  pytorch_model.bin: {size_mb:.2f}MB (INSECURE - can delete)")
+                print(f"  ️  pytorch_model.bin: {size_mb:.2f}MB (INSECURE - can delete)")
                 pytorch_found = True
             
             # Check config files
             config = snapshot / "config.json"
             if config.exists():
-                print(f"  ✅ config.json: OK")
+                print(f"   config.json: OK")
             
             vocab = snapshot / "vocab.json"
             if vocab.exists():
-                print(f"  ✅ vocab.json: OK")
+                print(f"   vocab.json: OK")
         
         # Calculate total size
         total_size = sum(f.stat().st_size for f in hubert_dir.rglob('*') if f.is_file()) / (1024**3)
         
         if safetensors_found:
             status = "complete"
-            print(f"\n✅ Safetensors format available - READY TO USE")
+            print(f"\n Safetensors format available - READY TO USE")
         elif pytorch_found:
             status = "insecure"
-            print(f"\n⚠️  Only PyTorch format found - SECURITY RISK")
+            print(f"\n️  Only PyTorch format found - SECURITY RISK")
         else:
             status = "incomplete"
-            print(f"\n❌ No model weights found")
+            print(f"\n No model weights found")
         
         if pytorch_found and safetensors_found:
-            print(f"💡 Tip: Delete pytorch_model.bin to save ~1.2GB")
+            print(f" Tip: Delete pytorch_model.bin to save ~1.2GB")
         
         print(f"\nTotal size: {total_size:.2f}GB")
         
@@ -218,13 +218,13 @@ class ModelVerifier:
     def verify_piper(self) -> Dict:
         """Verify Piper TTS voice files"""
         print("\n" + "="*60)
-        print("🔍 Checking Piper TTS (Text-to-Speech)")
+        print(" Checking Piper TTS (Text-to-Speech)")
         print("="*60)
         
         piper_dir = self.models_dir / "piper"
         
         if not piper_dir.exists():
-            print("❌ Piper directory not found")
+            print(" Piper directory not found")
             return {"status": "missing", "size_mb": 0, "files": []}
         
         required_files = [
@@ -239,10 +239,10 @@ class ModelVerifier:
             file_path = piper_dir / filename
             ok, msg = self.check_file_exists(file_path, min_size)
             if ok:
-                print(f"  ✅ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_ok.append(filename)
             else:
-                print(f"  ❌ {filename}: {msg}")
+                print(f"   {filename}: {msg}")
                 files_missing.append(filename)
         
         # Calculate total size
@@ -253,7 +253,7 @@ class ModelVerifier:
         
         status = "complete" if not files_missing else "missing"
         print(f"\nTotal size: {total_size:.2f}MB")
-        print(f"Status: {'✅ Complete' if status == 'complete' else '❌ Missing/Incomplete'}")
+        print(f"Status: {' Complete' if status == 'complete' else ' Missing/Incomplete'}")
         
         return {
             "status": status,
@@ -265,9 +265,9 @@ class ModelVerifier:
     def run_verification(self):
         """Run complete verification"""
         print("\n" + "="*70)
-        print("🔍 LEXILINGO MODEL VERIFICATION SCRIPT")
+        print(" LEXILINGO MODEL VERIFICATION SCRIPT")
         print("="*70)
-        print(f"📂 Models directory: {self.models_dir.absolute()}")
+        print(f" Models directory: {self.models_dir.absolute()}")
         
         # Verify each model
         self.results['whisper'] = self.verify_whisper()
@@ -287,40 +287,40 @@ class ModelVerifier:
         # Whisper
         w = self.results['whisper']
         if w['status'] == 'complete':
-            print(f"✅ Whisper large-v3: {w['size_gb']:.2f}GB - READY")
+            print(f" Whisper large-v3: {w['size_gb']:.2f}GB - READY")
             complete_count += 1
         else:
-            print(f"❌ Whisper large-v3: {w['status'].upper()}")
+            print(f" Whisper large-v3: {w['status'].upper()}")
         total_size_gb += w.get('size_gb', 0)
         
         # Embeddings
         e = self.results['embeddings']
         if e['status'] == 'complete':
-            print(f"✅ Embeddings: {e['size_mb']:.2f}MB - READY")
+            print(f" Embeddings: {e['size_mb']:.2f}MB - READY")
             complete_count += 1
         else:
-            print(f"❌ Embeddings: {e['status'].upper()}")
+            print(f" Embeddings: {e['status'].upper()}")
         total_size_gb += e.get('size_mb', 0) / 1024
         
         # HuBERT
         h = self.results['hubert']
         if h['status'] == 'complete':
-            print(f"✅ HuBERT: {h['size_gb']:.2f}GB - READY")
+            print(f" HuBERT: {h['size_gb']:.2f}GB - READY")
             complete_count += 1
         elif h['status'] == 'insecure':
-            print(f"⚠️  HuBERT: {h['size_gb']:.2f}GB - INSECURE (use safetensors)")
+            print(f"️  HuBERT: {h['size_gb']:.2f}GB - INSECURE (use safetensors)")
             complete_count += 0.5
         else:
-            print(f"❌ HuBERT: {h['status'].upper()}")
+            print(f" HuBERT: {h['status'].upper()}")
         total_size_gb += h.get('size_gb', 0)
         
         # Piper
         p = self.results['piper']
         if p['status'] == 'complete':
-            print(f"✅ Piper TTS: {p['size_mb']:.2f}MB - READY")
+            print(f" Piper TTS: {p['size_mb']:.2f}MB - READY")
             complete_count += 1
         else:
-            print(f"❌ Piper TTS: {p['status'].upper()}")
+            print(f" Piper TTS: {p['status'].upper()}")
         total_size_gb += p.get('size_mb', 0) / 1024
         
         print("\n" + "-"*70)
@@ -329,24 +329,24 @@ class ModelVerifier:
         
         # Recommendations
         print("\n" + "="*70)
-        print("💡 RECOMMENDATIONS")
+        print(" RECOMMENDATIONS")
         print("="*70)
         
         if self.results['whisper']['status'] != 'complete':
-            print("❗ Run: ./download.sh  # To download Whisper large-v3")
+            print(" Run: ./download.sh  # To download Whisper large-v3")
         
         if self.results['embeddings']['status'] != 'complete':
-            print("❗ Run: ./download.sh  # To download embeddings")
+            print(" Run: ./download.sh  # To download embeddings")
         
         if self.results['hubert']['status'] == 'insecure':
-            print("💡 HuBERT pytorch_model.bin can be deleted (use safetensors)")
+            print(" HuBERT pytorch_model.bin can be deleted (use safetensors)")
             print("   rm -f models/hubert/*/snapshots/*/pytorch_model.bin")
         
         if self.results['piper']['status'] != 'complete':
-            print("❗ Run: ./download.sh  # To download Piper TTS")
+            print(" Run: ./download.sh  # To download Piper TTS")
         
         if complete_count == total_models:
-            print("\n🎉 All models are complete and ready to use!")
+            print("\n All models are complete and ready to use!")
         
         print("\n" + "="*70)
         

@@ -47,7 +47,7 @@ async def create_course_categories_table():
     
     async with engine.begin() as conn:
         await conn.execute(text(create_table_sql))
-        print("✓ Created course_categories table")
+        print(" Created course_categories table")
 
 
 async def add_category_id_to_courses():
@@ -72,7 +72,7 @@ async def add_category_id_to_courses():
     
     async with engine.begin() as conn:
         await conn.execute(text(alter_table_sql))
-        print("✓ Added category_id column to courses table")
+        print(" Added category_id column to courses table")
 
 
 async def seed_initial_categories():
@@ -85,7 +85,7 @@ async def seed_initial_categories():
             "name": "Grammar",
             "slug": "grammar",
             "description": "Master English grammar rules and structures",
-            "icon": "📚",
+            "icon": "",
             "color": "#4CAF50",
             "order_index": 1
         },
@@ -94,7 +94,7 @@ async def seed_initial_categories():
             "name": "Vocabulary",
             "slug": "vocabulary",
             "description": "Expand your English vocabulary",
-            "icon": "📖",
+            "icon": "",
             "color": "#2196F3",
             "order_index": 2
         },
@@ -103,7 +103,7 @@ async def seed_initial_categories():
             "name": "Business English",
             "slug": "business-english",
             "description": "Professional English for the workplace",
-            "icon": "💼",
+            "icon": "",
             "color": "#FF9800",
             "order_index": 3
         },
@@ -112,7 +112,7 @@ async def seed_initial_categories():
             "name": "Conversation",
             "slug": "conversation",
             "description": "Practice everyday English conversations",
-            "icon": "💬",
+            "icon": "",
             "color": "#9C27B0",
             "order_index": 4
         },
@@ -121,7 +121,7 @@ async def seed_initial_categories():
             "name": "Travel English",
             "slug": "travel-english",
             "description": "Essential English for travelers",
-            "icon": "✈️",
+            "icon": "️",
             "color": "#00BCD4",
             "order_index": 5
         },
@@ -130,7 +130,7 @@ async def seed_initial_categories():
             "name": "Pronunciation",
             "slug": "pronunciation",
             "description": "Improve your English pronunciation",
-            "icon": "🗣️",
+            "icon": "️",
             "color": "#F44336",
             "order_index": 6
         },
@@ -139,7 +139,7 @@ async def seed_initial_categories():
             "name": "Test Preparation",
             "slug": "test-preparation",
             "description": "Prepare for IELTS, TOEFL, and other exams",
-            "icon": "📝",
+            "icon": "",
             "color": "#673AB7",
             "order_index": 7
         },
@@ -148,7 +148,7 @@ async def seed_initial_categories():
             "name": "Cultural English",
             "slug": "cultural-english",
             "description": "Learn about English-speaking cultures",
-            "icon": "🌍",
+            "icon": "",
             "color": "#8BC34A",
             "order_index": 8
         }
@@ -178,7 +178,7 @@ async def seed_initial_categories():
         
         await session.commit()
     
-    print("✓ Seeded initial categories")
+    print(" Seeded initial categories")
 
 
 async def main():
@@ -195,13 +195,13 @@ async def main():
         print("\nStep 3: Seeding initial categories...")
         await seed_initial_categories()
         
-        print("\n✅ Migration completed successfully!")
+        print("\n Migration completed successfully!")
         print("\nNext steps:")
         print("1. Assign categories to existing courses via admin panel or API")
         print("2. Run: POST /api/v1/categories/update-counts to update course counts")
         
     except Exception as e:
-        print(f"\n❌ Migration failed: {e}")
+        print(f"\n Migration failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

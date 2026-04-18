@@ -85,7 +85,7 @@ class OllamaQwenHandler:
                 # Check if our model exists
                 model_found = any(self.config.model in name for name in model_names)
                 if model_found:
-                    logger.info(f"[OllamaQwenHandler] ✓ Model '{self.config.model}' available")
+                    logger.info(f"[OllamaQwenHandler]  Model '{self.config.model}' available")
                 else:
                     logger.warning(
                         f"[OllamaQwenHandler] Model '{self.config.model}' not found. "
@@ -93,7 +93,7 @@ class OllamaQwenHandler:
                     )
                 
                 self._loaded = True
-                logger.info(f"[OllamaQwenHandler] ✓ Connected to Ollama")
+                logger.info(f"[OllamaQwenHandler]  Connected to Ollama")
                 return True
             else:
                 logger.error(f"[OllamaQwenHandler] Ollama not responding: {response.status_code}")

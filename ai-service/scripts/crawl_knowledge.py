@@ -136,7 +136,7 @@ def merge_into_knowledge_base(new_kg: dict):
                 f.write("\n")
         f.write("  ]\n}\n")
         
-    print(f"✅ HOÀN TẤT! Đã bổ sung thành công {added_concepts} concepts và {added_edges} relationships.")
+    print(f" HOÀN TẤT! Đã bổ sung thành công {added_concepts} concepts và {added_edges} relationships.")
 
 async def main():
     # Điền URL bất kì bạn muốn crawl lấy từ vựng/ngữ pháp

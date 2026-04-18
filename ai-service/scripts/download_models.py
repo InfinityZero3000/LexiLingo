@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def download_whisper():
     """Download Faster-Whisper model"""
     print("\n" + "="*60)
-    print("📥 Downloading Faster-Whisper (large-v3)...")
+    print(" Downloading Faster-Whisper (large-v3)...")
     print("="*60)
     
     try:
@@ -32,17 +32,17 @@ def download_whisper():
             compute_type="int8",
             download_root="./models/whisper"
         )
-        print("✅ Faster-Whisper downloaded successfully!")
+        print(" Faster-Whisper downloaded successfully!")
         return True
     except Exception as e:
-        print(f"❌ Failed to download Faster-Whisper: {e}")
+        print(f" Failed to download Faster-Whisper: {e}")
         return False
 
 
 def download_sentence_transformers():
     """Download sentence-transformers embedding model"""
     print("\n" + "="*60)
-    print("📥 Downloading all-MiniLM-L6-v2 embeddings...")
+    print(" Downloading all-MiniLM-L6-v2 embeddings...")
     print("="*60)
     
     try:
@@ -52,18 +52,18 @@ def download_sentence_transformers():
             "sentence-transformers/all-MiniLM-L6-v2",
             cache_folder="./models/embeddings"
         )
-        print("✅ Sentence-Transformers downloaded successfully!")
+        print(" Sentence-Transformers downloaded successfully!")
         return True
     except Exception as e:
-        print(f"❌ Failed to download Sentence-Transformers: {e}")
+        print(f" Failed to download Sentence-Transformers: {e}")
         return False
 
 
 def download_hubert():
     """Download HuBERT model for pronunciation analysis"""
     print("\n" + "="*60)
-    print("📥 Downloading HuBERT (facebook/hubert-large-ls960-ft)...")
-    print("📝 Using safetensors format for security")
+    print(" Downloading HuBERT (facebook/hubert-large-ls960-ft)...")
+    print(" Using safetensors format for security")
     print("="*60)
     
     try:
@@ -79,24 +79,24 @@ def download_hubert():
         )
         
         # Download model with safetensors (bypass torch security issue)
-        print("  📥 Downloading model weights...")
+        print("   Downloading model weights...")
         model = HubertForCTC.from_pretrained(
             model_name,
             cache_dir=cache_dir,
             use_safetensors=True  # Use safetensors instead of pytorch_model.bin
         )
-        print("✅ HuBERT downloaded successfully!")
+        print(" HuBERT downloaded successfully!")
         return True
     except Exception as e:
-        print(f"❌ Failed to download HuBERT: {e}")
-        print("💡 Tip: HuBERT requires safetensors format or torch>=2.6")
+        print(f" Failed to download HuBERT: {e}")
+        print(" Tip: HuBERT requires safetensors format or torch>=2.6")
         return False
 
 
 def download_piper_voice():
     """Download Piper TTS voice"""
     print("\n" + "="*60)
-    print("📥 Downloading Piper TTS voice (en_US-lessac-medium)...")
+    print(" Downloading Piper TTS voice (en_US-lessac-medium)...")
     print("="*60)
     
     try:
@@ -118,11 +118,11 @@ def download_piper_voice():
         for file in files:
             file_path = tts_dir / file
             if file_path.exists():
-                print(f"  ✓ {file} already exists, skipping...")
+                print(f"   {file} already exists, skipping...")
                 continue
                 
             url = f"{base_url}/{file}"
-            print(f"  📥 Downloading {file}...")
+            print(f"   Downloading {file}...")
             
             response = requests.get(url, stream=True)
             response.raise_for_status()
@@ -131,21 +131,21 @@ def download_piper_voice():
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            print(f"  ✅ Downloaded {file}")
+            print(f"   Downloaded {file}")
         
-        print("✅ Piper TTS voice downloaded successfully!")
+        print(" Piper TTS voice downloaded successfully!")
         print(f"   Model path: {tts_dir / f'{voice_name}.onnx'}")
         return True
     except Exception as e:
-        print(f"❌ Failed to download Piper voice: {e}")
+        print(f" Failed to download Piper voice: {e}")
         return False
 
 
 def download_vietnamese_model():
     """Download Vietnamese LLaMA model (optional)"""
     print("\n" + "="*60)
-    print("📥 Downloading Vietnamese LLaMA (vilm/vinallama-7b-chat)...")
-    print("⚠️  WARNING: This is a large model (8GB+), skipping by default")
+    print(" Downloading Vietnamese LLaMA (vilm/vinallama-7b-chat)...")
+    print("️  WARNING: This is a large model (8GB+), skipping by default")
     print("   To download, set DOWNLOAD_VIETNAMESE=1 environment variable")
     print("="*60)
     
@@ -159,13 +159,13 @@ def download_vietnamese_model():
         model_name = "vilm/vinallama-7b-chat"
         cache_dir = "./models/llama"
         
-        print("  📥 Downloading tokenizer...")
+        print("   Downloading tokenizer...")
         tokenizer = AutoTokenizer.from_pretrained(
             model_name,
             cache_dir=cache_dir
         )
         
-        print("  📥 Downloading model (this will take a while)...")
+        print("   Downloading model (this will take a while)...")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             cache_dir=cache_dir,
@@ -173,23 +173,23 @@ def download_vietnamese_model():
             device_map="auto"
         )
         
-        print("✅ Vietnamese LLaMA downloaded successfully!")
+        print(" Vietnamese LLaMA downloaded successfully!")
         return True
     except Exception as e:
-        print(f"❌ Failed to download Vietnamese model: {e}")
+        print(f" Failed to download Vietnamese model: {e}")
         return False
 
 
 def create_env_file():
     """Create .env file with model configurations"""
     print("\n" + "="*60)
-    print("📝 Creating .env configuration file...")
+    print(" Creating .env configuration file...")
     print("="*60)
     
     env_path = Path(__file__).parent.parent / ".env"
     
     if env_path.exists():
-        print("⚠️  .env file already exists. Please update manually.")
+        print("️  .env file already exists. Please update manually.")
         return True
     
     env_content = """# LexiLingo Backend Configuration
@@ -267,7 +267,7 @@ ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:8080"]
     with open(env_path, 'w') as f:
         f.write(env_content)
     
-    print(f"✅ Created .env file at {env_path}")
+    print(f" Created .env file at {env_path}")
     return True
 
 
@@ -276,7 +276,7 @@ def main():
     print("""
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
-║           🚀 LexiLingo Model Download Script 🚀                ║
+║            LexiLingo Model Download Script                 ║
 ║                                                                ║
 ║  This script will download all required AI models:             ║
 ║  • Faster-Whisper large-v3 (STT) - 3.1GB                       ║
@@ -293,12 +293,12 @@ def main():
     # Change to backend directory
     backend_dir = Path(__file__).parent.parent
     os.chdir(backend_dir)
-    print(f"📂 Working directory: {backend_dir.absolute()}")
+    print(f" Working directory: {backend_dir.absolute()}")
     
     # Create models directory
     models_dir = Path("./models")
     models_dir.mkdir(exist_ok=True)
-    print(f"📁 Models directory: {models_dir.absolute()}")
+    print(f" Models directory: {models_dir.absolute()}")
     
     # Track results
     results = []
@@ -322,20 +322,20 @@ def main():
     total_count = len(results)
     
     for name, success in results:
-        status = "✅" if success else "❌"
+        status = "" if success else ""
         print(f"{status} {name}")
     
     print("="*60)
-    print(f"✅ {success_count}/{total_count} tasks completed successfully")
+    print(f" {success_count}/{total_count} tasks completed successfully")
     
     if success_count == total_count:
-        print("\n🎉 All models downloaded successfully!")
-        print("\n📝 Next steps:")
+        print("\n All models downloaded successfully!")
+        print("\n Next steps:")
         print("   1. Review and adjust .env file if needed")
         print("   2. Start the backend: python -m uvicorn api.main:app --reload")
         print("   3. Test endpoints: /api/v1/stt/transcribe, /api/v1/tts/synthesize")
     else:
-        print("\n⚠️  Some downloads failed. Check error messages above.")
+        print("\n️  Some downloads failed. Check error messages above.")
     
     print("\n" + "="*60)
 

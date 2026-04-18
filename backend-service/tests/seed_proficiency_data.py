@@ -143,15 +143,15 @@ async def seed(database_url: str | None = None):
             session.add(user)
             await session.commit()
             await session.refresh(user)
-            print(f"✅  Created test user: {TARGET_EMAIL}")
+            print(f"  Created test user: {TARGET_EMAIL}")
         else:
-            print(f"✅  Found user: {user.display_name or user.username} (id={user.id})")
+            print(f"  Found user: {user.display_name or user.username} (id={user.id})")
 
         user_id = user.id
 
         # 2. Clean any existing proficiency data for this user
         await _clean_user_proficiency(session, user_id)
-        print("🧹  Cleaned existing proficiency data.")
+        print("  Cleaned existing proficiency data.")
 
         # ── Simulation parameters ────────────────────────────────
         TOTAL_DAYS = 90
@@ -210,7 +210,7 @@ async def seed(database_url: str | None = None):
 
         session.add_all(all_attempts)
         await session.flush()
-        print(f"📝  Seeded {len(all_attempts)} exercise attempts over {TOTAL_DAYS} days.")
+        print(f"  Seeded {len(all_attempts)} exercise attempts over {TOTAL_DAYS} days.")
 
         # ── Create proficiency profile ───────────────────────────
         total_exercises = len(all_attempts)
@@ -234,7 +234,7 @@ async def seed(database_url: str | None = None):
         session.add(profile)
         await session.flush()
         await session.refresh(profile)
-        print(f"👤  Created proficiency profile (assessed_level=B1, overall_score={profile.overall_score})")
+        print(f"  Created proficiency profile (assessed_level=B1, overall_score={profile.overall_score})")
 
         # ── Create skill scores ──────────────────────────────────
         skill_score_rows = []
@@ -274,7 +274,7 @@ async def seed(database_url: str | None = None):
 
         session.add_all(skill_score_rows)
         await session.flush()
-        print("📊  Created 6 skill score records:")
+        print("  Created 6 skill score records:")
         for row in skill_score_rows:
             trend = "↑" if row.score > (row.score_7d_ago or 0) else "→"
             acc = row.correct_exercises / max(1, row.exercises_completed)
@@ -345,7 +345,7 @@ async def seed(database_url: str | None = None):
             session.add(history)
 
         await session.flush()
-        print(f"📜  Created {len(level_transitions)} level history records (A1→A2→B1 with a demotion episode).")
+        print(f"  Created {len(level_transitions)} level history records (A1→A2→B1 with a demotion episode).")
 
         # ── Create assessment tests ──────────────────────────────
         assessment_tests = [
@@ -405,7 +405,7 @@ async def seed(database_url: str | None = None):
             session.add(test)
 
         await session.flush()
-        print(f"📋  Created {len(assessment_tests)} assessment test records.")
+        print(f"  Created {len(assessment_tests)} assessment test records.")
 
         # ── Update user record ───────────────────────────────────
         user.level = "B1"
@@ -414,7 +414,7 @@ async def seed(database_url: str | None = None):
         user.rank = "silver"
 
         await session.commit()
-        print(f"\n🎉  Seed complete! User '{TARGET_EMAIL}' now has full proficiency data.")
+        print(f"\n  Seed complete! User '{TARGET_EMAIL}' now has full proficiency data.")
         print(f"    Level: B1 | XP: {profile.total_xp} | "
               f"Exercises: {total_exercises} | Accuracy: {overall_accuracy:.1%}")
 
@@ -443,7 +443,7 @@ async def clean(database_url: str | None = None):
         user.rank = "bronze"
 
         await session.commit()
-        print(f"🧹  Cleaned all proficiency data for '{TARGET_EMAIL}'.")
+        print(f"  Cleaned all proficiency data for '{TARGET_EMAIL}'.")
 
     await engine.dispose()
 

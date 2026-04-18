@@ -50,7 +50,7 @@ class FirebaseMessagingService {
       try {
         if (isSimulator) {
           debugPrint(
-            '📱 Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.',
+            ' Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.',
           );
           _fcmToken = 'simulator_dummy_token';
         } else {
@@ -58,12 +58,12 @@ class FirebaseMessagingService {
             const Duration(seconds: 5),
           );
           if (kDebugMode) {
-            debugPrint('📱 FCM Token: ${_maskToken(_fcmToken)}');
+            debugPrint(' FCM Token: ${_maskToken(_fcmToken)}');
           }
         }
       } catch (e) {
         debugPrint(
-          '⚠️ Could not get FCM token (expected if APNS/FCM not fully setup): $e',
+          '️ Could not get FCM token (expected if APNS/FCM not fully setup): $e',
         );
       }
 
@@ -71,7 +71,7 @@ class FirebaseMessagingService {
       _messaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
         if (kDebugMode) {
-          debugPrint('📱 FCM Token refreshed: ${_maskToken(newToken)}');
+          debugPrint(' FCM Token refreshed: ${_maskToken(newToken)}');
         }
         // Re-register the updated token with the backend (fire-and-forget).
         if (_apiClient != null) {
@@ -82,7 +82,7 @@ class FirebaseMessagingService {
       // Handle foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint(
-          '📩 Foreground message received: ${message.notification?.title}',
+          ' Foreground message received: ${message.notification?.title}',
         );
         _messageController.add(message);
         _handleMessage(message);
@@ -90,20 +90,20 @@ class FirebaseMessagingService {
 
       // Handle background/terminated message tap
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('📩 Message opened app: ${message.notification?.title}');
+        debugPrint(' Message opened app: ${message.notification?.title}');
         _handleMessageTap(message);
       });
 
       // Check if app was opened from a notification
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint('📩 Initial message: ${initialMessage.notification?.title}');
+        debugPrint(' Initial message: ${initialMessage.notification?.title}');
         _handleMessageTap(initialMessage);
       }
 
-      debugPrint('✅ FirebaseMessagingService initialized');
+      debugPrint(' FirebaseMessagingService initialized');
     } catch (e) {
-      debugPrint('❌ FirebaseMessagingService initialization failed: $e');
+      debugPrint(' FirebaseMessagingService initialization failed: $e');
     }
   }
 
@@ -119,7 +119,7 @@ class FirebaseMessagingService {
       sound: true,
     );
 
-    debugPrint('📱 Notification permission: ${settings.authorizationStatus}');
+    debugPrint(' Notification permission: ${settings.authorizationStatus}');
     return settings;
   }
 
@@ -130,7 +130,7 @@ class FirebaseMessagingService {
 
     // For foreground messages, you may want to show a local notification
     // This is handled by the NotificationService
-    debugPrint('📩 Message: ${notification.title} - ${notification.body}');
+    debugPrint(' Message: ${notification.title} - ${notification.body}');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ class FirebaseMessagingService {
       final prefs = await SharedPreferences.getInstance();
       final last = prefs.getString(_kRegisteredTokenKey);
       if (last == token) {
-        debugPrint('📱 FCM token already registered – skipping.');
+        debugPrint(' FCM token already registered – skipping.');
         return;
       }
     }
@@ -179,9 +179,9 @@ class FirebaseMessagingService {
       // Persist the successfully registered token to skip future duplicates.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kRegisteredTokenKey, token);
-      debugPrint('✅ FCM token registered with backend ($deviceType)');
+      debugPrint(' FCM token registered with backend ($deviceType)');
     } catch (e) {
-      debugPrint('⚠️ FCM token registration failed: $e');
+      debugPrint('️ FCM token registration failed: $e');
     }
   }
 
@@ -190,7 +190,7 @@ class FirebaseMessagingService {
   Future<void> clearRegisteredToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kRegisteredTokenKey);
-    debugPrint('📱 FCM registered-token cache cleared.');
+    debugPrint(' FCM registered-token cache cleared.');
   }
 
   /// Returns a stable unique identifier for this device.
@@ -271,7 +271,7 @@ class FirebaseMessagingService {
       return;
     }
     await _messaging.subscribeToTopic(topic);
-    debugPrint('📱 Subscribed to topic: $topic');
+    debugPrint(' Subscribed to topic: $topic');
   }
 
   /// Unsubscribe from a topic
@@ -281,7 +281,7 @@ class FirebaseMessagingService {
       return;
     }
     await _messaging.unsubscribeFromTopic(topic);
-    debugPrint('📱 Unsubscribed from topic: $topic');
+    debugPrint(' Unsubscribed from topic: $topic');
   }
 
   /// Get APNS token (iOS only)
@@ -307,6 +307,6 @@ class FirebaseMessagingService {
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('📩 Background message: ${message.notification?.title}');
+  debugPrint(' Background message: ${message.notification?.title}');
   // Handle background message here
 }

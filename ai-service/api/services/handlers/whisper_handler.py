@@ -97,7 +97,7 @@ class WhisperHandler:
                 )
                 
                 self._loaded = True
-                logger.info(f"[WhisperHandler] ✓ Whisper loaded on {device}")
+                logger.info(f"[WhisperHandler]  Whisper loaded on {device}")
                 return True
                 
             except Exception as e:

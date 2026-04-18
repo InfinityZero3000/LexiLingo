@@ -151,7 +151,7 @@ class HuBERTService:
             self.is_loaded = True
             
             load_time = time.time() - start_time
-            logger.info(f"✅ HuBERT model loaded in {load_time:.2f}s on {device}")
+            logger.info(f" HuBERT model loaded in {load_time:.2f}s on {device}")
             
         except Exception as e:
             logger.error(f"Failed to load HuBERT model: {e}", exc_info=True)

@@ -357,7 +357,7 @@ async def _patched_pipeline(
         default_resp = MagicMock()
         default_resp.status_code = 200
         default_resp.json.return_value = {
-            "choices": [{"message": {"content": "Great effort! 🦜 You should say 'went' instead of 'go' when talking about the past. Keep practicing!"}}]
+            "choices": [{"message": {"content": "Great effort!  You should say 'went' instead of 'go' when talking about the past. Keep practicing!"}}]
         }
         default_resp.raise_for_status = MagicMock()
         httpx_mock.post = AsyncMock(return_value=default_resp)
@@ -415,8 +415,8 @@ def print_trace(trace: PipelineTrace):
     # Node flow
     for i, node in enumerate(trace.nodes):
         status_icon = {
-            "ok": _green("✓"),
-            "error": _red("✗"),
+            "ok": _green(""),
+            "error": _red(""),
             "skipped": _yellow("⊘"),
             "pending": _dim("?"),
         }.get(node.status, "?")
@@ -466,21 +466,21 @@ def print_trace(trace: PipelineTrace):
     # Response
     response_text = trace.final_response.get("tutor_response", "")
     if response_text:
-        print(_box("Lexi's Response 🦜", _wrap(response_text, 68), colour_fn=_magenta, width=width))
+        print(_box("Lexi's Response ", _wrap(response_text, 68), colour_fn=_magenta, width=width))
     print()
 
     # Checks
     print(_bold("  Checks:"))
     for c in trace.passed_checks:
-        print(f"    {_green('✓')} {c}")
+        print(f"    {_green('')} {c}")
     for c in trace.failed_checks:
-        print(f"    {_red('✗')} {c}")
+        print(f"    {_red('')} {c}")
 
     print()
     if trace.ok:
-        print(f"  {_green(_bold('ALL CHECKS PASSED ✓'))}")
+        print(f"  {_green(_bold('ALL CHECKS PASSED '))}")
     else:
-        print(f"  {_red(_bold(f'{len(trace.failed_checks)} CHECK(S) FAILED ✗'))}")
+        print(f"  {_red(_bold(f'{len(trace.failed_checks)} CHECK(S) FAILED '))}")
     print("=" * width)
     print()
 
@@ -590,7 +590,7 @@ async def test_scenario_grammar_error_normal_path():
     )
 
     async with _patched_pipeline(
-        groq_response="Great effort! 🦜 You should use 'went' instead of 'go' when talking about the past. Yesterday requires past tense! Keep it up!",
+        groq_response="Great effort!  You should use 'went' instead of 'go' when talking about the past. Yesterday requires past tense! Keep it up!",
     ) as pipeline:
         result, nodes = await _run_traced(
             pipeline,
@@ -641,7 +641,7 @@ async def test_scenario_cache_hit_fast_path():
     )
 
     cached_data = json.dumps({
-        "tutor_response": "Hello there! 🦜 Ready for today's lesson?",
+        "tutor_response": "Hello there!  Ready for today's lesson?",
         "strategy": "praise",
         "diagnosis_errors": [],
         "overall_score": 0.95,
@@ -691,7 +691,7 @@ async def test_scenario_vietnamese_path_a1():
     )
 
     async with _patched_pipeline(
-        groq_response="Good try! 🦜 'Go' should be 'went' for the past. Keep going!",
+        groq_response="Good try!  'Go' should be 'went' for the past. Keep going!",
     ) as pipeline:
         result, nodes = await _run_traced(
             pipeline,
@@ -793,7 +793,7 @@ async def test_scenario_no_errors_praise():
 
     async with _patched_pipeline(
         gateway_mock=_make_gateway_mock(diagnosis_response=perfect_diag),
-        groq_response="Squawk! 🦜 Perfect sentence! Your grammar is spot on! 🎉",
+        groq_response="Squawk!  Perfect sentence! Your grammar is spot on! ",
     ) as pipeline:
         result, nodes = await _run_traced(
             pipeline,
@@ -827,7 +827,7 @@ async def test_scenario_response_contract():
     )
 
     async with _patched_pipeline(
-        groq_response="Squawk! 🦜 Small tip: use 'doesn't' instead of 'don't' with 'she'. She doesn't like apples!",
+        groq_response="Squawk!  Small tip: use 'doesn't' instead of 'don't' with 'she'. She doesn't like apples!",
     ) as pipeline:
         result, nodes = await _run_traced(
             pipeline,
@@ -903,7 +903,7 @@ async def test_edge_routing_decisions():
         ok = actual == expected
         if not ok:
             all_passed = False
-        icon = _green("✓") if ok else _red("✗")
+        icon = _green("") if ok else _red("")
         print(f"  {icon} {desc:<40} expected={expected:<20} actual={actual}")
 
     # Cache hit checks
@@ -913,7 +913,7 @@ async def test_edge_routing_decisions():
         ok = actual == expected
         if not ok:
             all_passed = False
-        icon = _green("✓") if ok else _red("✗")
+        icon = _green("") if ok else _red("")
         print(f"  {icon} cache_decision={val!s:<6} → {actual}")
 
     # TTS check (always returns "end")
@@ -921,14 +921,14 @@ async def test_edge_routing_decisions():
     ok = tts_result == "end"
     if not ok:
         all_passed = False
-    icon = _green("✓") if ok else _red("✗")
+    icon = _green("") if ok else _red("")
     print(f"  {icon} should_generate_tts → {tts_result}")
 
     print()
     if all_passed:
-        print(f"  {_green(_bold('ALL EDGE ROUTING CHECKS PASSED ✓'))}")
+        print(f"  {_green(_bold('ALL EDGE ROUTING CHECKS PASSED '))}")
     else:
-        print(f"  {_red(_bold('EDGE ROUTING CHECK(S) FAILED ✗'))}")
+        print(f"  {_red(_bold('EDGE ROUTING CHECK(S) FAILED '))}")
     print("=" * 74)
     print()
     assert all_passed
@@ -1116,14 +1116,14 @@ async def test_scenario_l1_invalidation_on_version_change():
 
     # Print check table manually (no full node trace to avoid noise)
     for c in trace.passed_checks:
-        print(f"    {_green('✓')} {c}")
+        print(f"    {_green('')} {c}")
     for c in trace.failed_checks:
-        print(f"    {_red('✗')} {c}")
+        print(f"    {_red('')} {c}")
     print()
     if trace.ok:
-        print(f"  {_green(_bold('ALL CHECKS PASSED ✓'))}")
+        print(f"  {_green(_bold('ALL CHECKS PASSED '))}")
     else:
-        print(f"  {_red(_bold(f'{len(trace.failed_checks)} CHECK(S) FAILED ✗'))}")
+        print(f"  {_red(_bold(f'{len(trace.failed_checks)} CHECK(S) FAILED '))}")
     print("=" * 74)
     print()
 

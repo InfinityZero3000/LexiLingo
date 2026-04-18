@@ -32,19 +32,19 @@ _STT_MODEL_PATH = "./models/whisper/models--Systran--faster-whisper-large-v3"
 def print_header():
     """Print application header"""
     print("\n" + "=" * 70)
-    print("  🎤 LexiLingo - TTS/STT Console Tool")
+    print("   LexiLingo - TTS/STT Console Tool")
     print("  Text-to-Speech & Speech-to-Text Testing Interface")
     print("=" * 70)
 
 
 def print_menu():
     """Print main menu"""
-    print("\n📋 MENU - Chọn chức năng:")
-    print("  1. 🔊 TTS - Text to Speech (Chuyển text thành giọng nói)")
-    print("  2. 🎙️  STT - Speech to Text (Chuyển giọng nói thành text)")
-    print("  3. 🔄 Round-trip Test (TTS → STT)")
+    print("\n MENU - Chọn chức năng:")
+    print("  1.  TTS - Text to Speech (Chuyển text thành giọng nói)")
+    print("  2. ️  STT - Speech to Text (Chuyển giọng nói thành text)")
+    print("  3.  Round-trip Test (TTS → STT)")
     print("  4. ℹ️  System Info (Thông tin hệ thống)")
-    print("  5. ❌ Exit (Thoát)")
+    print("  5.  Exit (Thoát)")
     print("-" * 70)
 
 
@@ -56,22 +56,22 @@ def load_tts_model():
         return tts_voice
     
     try:
-        print("🔄 Loading TTS model (Piper)...")
+        print(" Loading TTS model (Piper)...")
         from piper import PiperVoice
         
         model_path = "./models/piper/en_US-lessac-medium.onnx"
         config_path = "./models/piper/en_US-lessac-medium.onnx.json"
         
         if not os.path.exists(model_path):
-            print(f"❌ Error: TTS model not found at {model_path}")
+            print(f" Error: TTS model not found at {model_path}")
             return None
         
         tts_voice = PiperVoice.load(model_path, config_path=config_path)
-        print("✅ TTS model loaded successfully")
+        print(" TTS model loaded successfully")
         return tts_voice
         
     except Exception as e:
-        print(f"❌ Error loading TTS model: {e}")
+        print(f" Error loading TTS model: {e}")
         return None
 
 
@@ -107,7 +107,7 @@ def load_stt_model():
 
     # Background thread báo lỗi
     if _stt_load_error:
-        print(f"❌ Error loading STT model: {_stt_load_error}")
+        print(f" Error loading STT model: {_stt_load_error}")
         return None
 
     # Đang load ở background → chờ
@@ -119,22 +119,22 @@ def load_stt_model():
             time.sleep(1)
         print()
         if stt_model is not None:
-            print("✅ STT model ready!")
+            print(" STT model ready!")
             return stt_model
         if _stt_load_error:
-            print(f"❌ Error: {_stt_load_error}")
+            print(f" Error: {_stt_load_error}")
             return None
 
     # Chưa start load (nếu user bỏ qua preload) → load trực tiếp
     try:
-        print("🔄 Loading STT model (Faster-Whisper large-v3)...")
+        print(" Loading STT model (Faster-Whisper large-v3)...")
         from faster_whisper import WhisperModel
         model_path = _STT_MODEL_PATH
         if not os.path.exists(model_path):
-            print(f"⚠️  Local model not found, falling back to HuggingFace download...")
+            print(f"️  Local model not found, falling back to HuggingFace download...")
             model_path = "large-v3"
         else:
-            print(f"   📁 Using local model: {model_path}")
+            print(f"    Using local model: {model_path}")
         stt_model = WhisperModel(
             model_path,
             device="cpu",
@@ -142,17 +142,17 @@ def load_stt_model():
             cpu_threads=4,
             num_workers=1,
         )
-        print("✅ STT model loaded successfully")
+        print(" STT model loaded successfully")
         return stt_model
     except Exception as e:
-        print(f"❌ Error loading STT model: {e}")
+        print(f" Error loading STT model: {e}")
         return None
 
 
 def text_to_speech():
     """Convert text to speech"""
     print("\n" + "=" * 70)
-    print("  🔊 TEXT TO SPEECH (TTS)")
+    print("   TEXT TO SPEECH (TTS)")
     print("=" * 70)
     
     # Load model
@@ -161,7 +161,7 @@ def text_to_speech():
         return
     
     # Get input text
-    print("\n📝 Nhập text bạn muốn chuyển thành giọng nói:")
+    print("\n Nhập text bạn muốn chuyển thành giọng nói:")
     print("   (Nhấn Enter để dùng text mẫu)")
     text = input("   > ").strip()
     
@@ -174,7 +174,7 @@ def text_to_speech():
     output_file = f"./output_tts_{timestamp}.wav"
     
     try:
-        print(f"\n🔄 Synthesizing speech...")
+        print(f"\n Synthesizing speech...")
         
         # Collect audio chunks
         audio_data = b''
@@ -190,7 +190,7 @@ def text_to_speech():
                 sample_width = audio_chunk.sample_width
         
         if not audio_data:
-            print("❌ No audio data generated")
+            print(" No audio data generated")
             return
         
         # Save to WAV file
@@ -204,16 +204,16 @@ def text_to_speech():
         size_kb = len(audio_data) / 1024
         duration = len(audio_data) / (sample_rate * sample_channels * sample_width)
         
-        print("\n✅ SUCCESS - Audio generated!")
-        print(f"   📁 File: {output_file}")
-        print(f"   📊 Size: {size_kb:.2f} KB")
+        print("\n SUCCESS - Audio generated!")
+        print(f"    File: {output_file}")
+        print(f"    Size: {size_kb:.2f} KB")
         print(f"   ⏱️  Duration: {duration:.2f} seconds")
-        print(f"   🎵 Sample rate: {sample_rate} Hz")
-        print(f"   🔊 Channels: {sample_channels}")
-        print(f"\n   💡 Tip: Mở file {output_file} để nghe audio")
+        print(f"    Sample rate: {sample_rate} Hz")
+        print(f"    Channels: {sample_channels}")
+        print(f"\n    Tip: Mở file {output_file} để nghe audio")
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
 
@@ -221,7 +221,7 @@ def text_to_speech():
 def speech_to_text():
     """Convert speech to text"""
     print("\n" + "=" * 70)
-    print("  🎙️  SPEECH TO TEXT (STT)")
+    print("  ️  SPEECH TO TEXT (STT)")
     print("=" * 70)
     
     # Load model
@@ -230,7 +230,7 @@ def speech_to_text():
         return
     
     # Get input audio file
-    print("\n📁 Nhập đường dẫn file audio (WAV):")
+    print("\n Nhập đường dẫn file audio (WAV):")
     print("   (Nhấn Enter để dùng file TTS output gần nhất)")
     audio_file = input("   > ").strip()
     
@@ -241,15 +241,15 @@ def speech_to_text():
             audio_file = str(tts_files[0])
             print(f"   Using latest TTS output: {audio_file}")
         else:
-            print("❌ No TTS output files found. Please provide a file path.")
+            print(" No TTS output files found. Please provide a file path.")
             return
     
     if not os.path.exists(audio_file):
-        print(f"❌ File not found: {audio_file}")
+        print(f" File not found: {audio_file}")
         return
     
     try:
-        print(f"\n🔄 Transcribing audio...")
+        print(f"\n Transcribing audio...")
         
         # Transcribe
         segments, info = model.transcribe(
@@ -267,9 +267,9 @@ def speech_to_text():
         text = text.strip()
         
         # Display results
-        print("\n✅ SUCCESS - Transcription completed!")
-        print(f"   🌍 Detected language: {info.language}")
-        print(f"   📝 Transcribed text:")
+        print("\n SUCCESS - Transcription completed!")
+        print(f"    Detected language: {info.language}")
+        print(f"    Transcribed text:")
         print(f"\n   \"{text}\"")
         
         # Save to file
@@ -279,10 +279,10 @@ def speech_to_text():
             f.write(f"Language: {info.language}\n")
             f.write(f"Text: {text}\n")
         
-        print(f"\n   💾 Saved to: {output_file}")
+        print(f"\n    Saved to: {output_file}")
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
 
@@ -290,11 +290,11 @@ def speech_to_text():
 def round_trip_test():
     """Test TTS -> STT round trip"""
     print("\n" + "=" * 70)
-    print("  🔄 ROUND-TRIP TEST (TTS → STT)")
+    print("   ROUND-TRIP TEST (TTS → STT)")
     print("=" * 70)
     
     # Load models
-    print("\n🔄 Loading models...")
+    print("\n Loading models...")
     voice = load_tts_model()
     model = load_stt_model()
     
@@ -302,7 +302,7 @@ def round_trip_test():
         return
     
     # Get input text
-    print("\n📝 Nhập text để test round-trip:")
+    print("\n Nhập text để test round-trip:")
     print("   (Nhấn Enter để dùng text mẫu)")
     original_text = input("   > ").strip()
     
@@ -312,8 +312,8 @@ def round_trip_test():
     
     try:
         # Step 1: TTS
-        print(f"\n📝 Original text: \"{original_text}\"")
-        print("🔄 Step 1: Converting text to speech...")
+        print(f"\n Original text: \"{original_text}\"")
+        print(" Step 1: Converting text to speech...")
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_audio = f"./output_roundtrip_{timestamp}.wav"
@@ -338,10 +338,10 @@ def round_trip_test():
             wav_file.setframerate(sample_rate)
             wav_file.writeframes(audio_data)
         
-        print(f"   ✅ Audio generated: {temp_audio}")
+        print(f"    Audio generated: {temp_audio}")
         
         # Step 2: STT
-        print("🔄 Step 2: Converting speech back to text...")
+        print(" Step 2: Converting speech back to text...")
         
         segments, info = model.transcribe(
             temp_audio,
@@ -353,7 +353,7 @@ def round_trip_test():
         transcribed_text = "".join(segment.text for segment in segments).strip()
         
         # Compare
-        print(f"\n📊 RESULTS:")
+        print(f"\n RESULTS:")
         print(f"   Original:    \"{original_text}\"")
         print(f"   Transcribed: \"{transcribed_text}\"")
         
@@ -364,18 +364,18 @@ def round_trip_test():
         
         if len(original_words) > 0:
             accuracy = len(common_words) / len(original_words) * 100
-            print(f"\n   🎯 Accuracy: {accuracy:.1f}%")
-            print(f"   ✓ Matched words: {len(common_words)}/{len(original_words)}")
+            print(f"\n    Accuracy: {accuracy:.1f}%")
+            print(f"    Matched words: {len(common_words)}/{len(original_words)}")
             
             if accuracy >= 70:
-                print("   ✅ PASSED - Good accuracy!")
+                print("    PASSED - Good accuracy!")
             else:
-                print("   ⚠️  Low accuracy - consider checking audio quality")
+                print("   ️  Low accuracy - consider checking audio quality")
         
-        print(f"\n   💾 Audio saved: {temp_audio}")
+        print(f"\n    Audio saved: {temp_audio}")
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
 
@@ -387,7 +387,7 @@ def show_system_info():
     print("=" * 70)
     
     # Check models
-    print("\n📦 MODELS:")
+    print("\n MODELS:")
     
     # TTS
     tts_model = "./models/piper/en_US-lessac-medium.onnx"
@@ -395,35 +395,35 @@ def show_system_info():
     
     if os.path.exists(tts_model):
         size = os.path.getsize(tts_model) / (1024 * 1024)
-        print(f"   ✅ TTS (Piper): {size:.2f} MB")
+        print(f"    TTS (Piper): {size:.2f} MB")
     else:
-        print(f"   ❌ TTS (Piper): Not found")
+        print(f"    TTS (Piper): Not found")
     
     # STT
     stt_model_dir = "./models/whisper/models--Systran--faster-whisper-large-v3"
     if os.path.exists(stt_model_dir):
-        print(f"   ✅ STT (Whisper large-v3): Installed")
+        print(f"    STT (Whisper large-v3): Installed")
     else:
-        print(f"   ❌ STT (Whisper large-v3): Not found")
+        print(f"    STT (Whisper large-v3): Not found")
     
     # Dependencies
-    print("\n📚 DEPENDENCIES:")
+    print("\n DEPENDENCIES:")
     
     deps = ["piper", "faster_whisper", "numpy", "wave"]
     for dep in deps:
         try:
             if dep == "wave":
                 import wave
-                print(f"   ✅ {dep}: Built-in")
+                print(f"    {dep}: Built-in")
             else:
                 module = __import__(dep)
                 version = getattr(module, "__version__", "unknown")
-                print(f"   ✅ {dep}: v{version}")
+                print(f"    {dep}: v{version}")
         except ImportError:
-            print(f"   ❌ {dep}: Not installed")
+            print(f"    {dep}: Not installed")
     
     # Output files
-    print("\n📁 OUTPUT FILES:")
+    print("\n OUTPUT FILES:")
     tts_files = list(Path(".").glob("output_tts_*.wav"))
     stt_files = list(Path(".").glob("output_stt_*.txt"))
     roundtrip_files = list(Path(".").glob("output_roundtrip_*.wav"))
@@ -433,7 +433,7 @@ def show_system_info():
     print(f"   Round-trip outputs: {len(roundtrip_files)} files")
     
     if tts_files or stt_files or roundtrip_files:
-        print("\n   💡 Tip: Use 'rm output_*.wav output_*.txt' to clean up")
+        print("\n    Tip: Use 'rm output_*.wav output_*.txt' to clean up")
 
 
 def main():
@@ -447,7 +447,7 @@ def main():
         t = threading.Thread(target=_background_load_stt, daemon=True)
         t.start()
     else:
-        print(f"⚠️  Local STT model not found at {_STT_MODEL_PATH}")
+        print(f"️  Local STT model not found at {_STT_MODEL_PATH}")
 
     while True:
         print_menu()
@@ -467,13 +467,13 @@ def main():
                 print("\n Goodbye! Đã thoát chương trình.")
                 break
             else:
-                print("❌ Lựa chọn không hợp lệ. Vui lòng chọn 1-5.")
+                print(" Lựa chọn không hợp lệ. Vui lòng chọn 1-5.")
                 
         except KeyboardInterrupt:
             print("\n\n Goodbye! Đã thoát chương trình.")
             break
         except Exception as e:
-            print(f"\n❌ Unexpected error: {e}")
+            print(f"\n Unexpected error: {e}")
             import traceback
             traceback.print_exc()
 

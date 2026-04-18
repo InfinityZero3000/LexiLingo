@@ -20,7 +20,7 @@ async def create_tables():
         async with engine.begin() as conn:
             print("Creating tables...")
             await conn.run_sync(Base.metadata.create_all)
-        print("✅ All tables created and committed!")
+        print(" All tables created and committed!")
 
         # Verify — works on both PostgreSQL and SQLite
         async with engine.connect() as conn:
@@ -40,11 +40,11 @@ async def create_tables():
                 )
                 tables = [row[0] for row in result]
 
-            print(f"\n📋 Verified {len(tables)} tables:")
+            print(f"\n Verified {len(tables)} tables:")
             for table in tables:
                 print(f"   - {table}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         import traceback
         traceback.print_exc()
 

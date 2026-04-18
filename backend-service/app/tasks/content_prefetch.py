@@ -88,7 +88,7 @@ async def prefetch_news(db: AsyncSession) -> dict:
             logger.error(f"Prefetch news [{category}] failed: {e}")
             results["errors"] += 1
     
-    logger.info(f"📰 News prefetch complete: {results}")
+    logger.info(f" News prefetch complete: {results}")
     return results
 
 
@@ -125,7 +125,7 @@ async def prefetch_youtube(db: AsyncSession) -> dict:
             logger.error(f"Prefetch YouTube [{channel_name}] failed: {e}")
             results["errors"] += 1
     
-    logger.info(f"📺 YouTube prefetch complete: {results}")
+    logger.info(f" YouTube prefetch complete: {results}")
     return results
 
 
@@ -161,7 +161,7 @@ async def prefetch_podcasts(db: AsyncSession) -> dict:
             logger.error(f"Prefetch podcast [{podcast_name}] failed: {e}")
             results["errors"] += 1
     
-    logger.info(f"🎙️ Podcast prefetch complete: {results}")
+    logger.info(f"️ Podcast prefetch complete: {results}")
     return results
 
 

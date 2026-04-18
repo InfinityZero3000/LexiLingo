@@ -51,7 +51,7 @@ async def init_database():
             expireAfterSeconds=90 * 24 * 60 * 60  # 90 days
         )
         
-        logger.info("✓ ai_interactions collection indexed")
+        logger.info(" ai_interactions collection indexed")
         
         # ============================================================
         # User Feedback Collection
@@ -67,7 +67,7 @@ async def init_database():
             ("timestamp", -1)
         ])
         
-        logger.info("✓ user_feedback collection indexed")
+        logger.info(" user_feedback collection indexed")
         
         # ============================================================
         # Training Queue Collection
@@ -89,7 +89,7 @@ async def init_database():
             ("quality_score", -1)
         ])
         
-        logger.info("✓ training_queue collection indexed")
+        logger.info(" training_queue collection indexed")
         
         # ============================================================
         # User Progress Collection
@@ -104,7 +104,7 @@ async def init_database():
         ])
         await user_progress.create_index("level")
         
-        logger.info("✓ user_progress collection indexed")
+        logger.info(" user_progress collection indexed")
         
         # ============================================================
         # Error Patterns Collection
@@ -119,7 +119,7 @@ async def init_database():
             ("level", 1)
         ], unique=True)
         
-        logger.info("✓ error_patterns collection indexed")
+        logger.info(" error_patterns collection indexed")
         
         # ============================================================
         # Model Metrics Collection
@@ -134,7 +134,7 @@ async def init_database():
             ("timestamp", -1)
         ])
         
-        logger.info("✓ model_metrics collection indexed")
+        logger.info(" model_metrics collection indexed")
         
         # ============================================================
         # Chat Sessions Collection
@@ -149,7 +149,7 @@ async def init_database():
             ("last_activity", -1)
         ])
         
-        logger.info("✓ chat_sessions collection indexed")
+        logger.info(" chat_sessions collection indexed")
         
         # ============================================================
         # Chat Messages Collection
@@ -170,7 +170,7 @@ async def init_database():
             expireAfterSeconds=30 * 24 * 60 * 60
         )
         
-        logger.info("✓ chat_messages collection indexed")
+        logger.info(" chat_messages collection indexed")
         
         # ============================================================
         # Summary
@@ -246,7 +246,7 @@ async def create_sample_data():
         }
         
         await db["ai_interactions"].insert_one(sample_interaction)
-        logger.info("✓ Sample interaction created")
+        logger.info(" Sample interaction created")
         
         client.close()
         

@@ -26,7 +26,7 @@ from app.models.rbac import Role
 async def setup_admin_oauth():
     """Create or update admin users with Google OAuth support."""
     async with AsyncSessionLocal() as db:
-        print("🔧 Setting up admin users with Google OAuth...")
+        print(" Setting up admin users with Google OAuth...")
 
         # Get roles
         result = await db.execute(select(Role).where(Role.slug == "admin"))
@@ -36,7 +36,7 @@ async def setup_admin_oauth():
         super_admin_role = result.scalar_one_or_none()
 
         if not admin_role or not super_admin_role:
-            print("❌ Error: Roles not found. Please run seed_data.py first to create roles.")
+            print(" Error: Roles not found. Please run seed_data.py first to create roles.")
             return
 
         print(f"  Found roles: Admin (ID: {admin_role.id}), Super Admin (ID: {super_admin_role.id})")
@@ -85,7 +85,7 @@ async def setup_admin_oauth():
                 user.is_verified = True
                 user.is_active = True
 
-                print(f"\n  ✅ Updated user: {email}")
+                print(f"\n   Updated user: {email}")
                 print(f"     - Providers: {user.provider}")
                 print(f"     - Role: {user_data['role_name']}")
                 if old_role_id != user.role_id:
@@ -117,14 +117,14 @@ async def setup_admin_oauth():
                 )
                 db.add(user)
 
-                print(f"\n  ✅ Created user: {email}")
+                print(f"\n   Created user: {email}")
                 print(f"     - Username: {username}")
                 print(f"     - Provider: google")
                 print(f"     - Role: {user_data['role_name']}")
 
         await db.commit()
-        print("\n✅ Admin OAuth setup completed!")
-        print("\n📝 Next steps:")
+        print("\n Admin OAuth setup completed!")
+        print("\n Next steps:")
         print("   1. Make sure GOOGLE_CLIENT_ID and GOOGLE_ADMIN_CLIENT_ID are set in backend .env")
         print("   2. Test Google OAuth login at /auth/google endpoint with source='admin'")
 
