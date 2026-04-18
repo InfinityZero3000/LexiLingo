@@ -9,6 +9,7 @@ import sys
 from typing import AsyncGenerator
 from pathlib import Path
 from httpx import AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 from uuid import uuid4
@@ -42,6 +43,14 @@ def disable_rate_limiting(monkeypatch):
 TEST_DATABASE_URL = "postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test"
 
 
+async def _reset_public_schema(engine) -> None:
+    """Fully reset public schema to keep enum/table state deterministic between tests."""
+    async with engine.begin() as conn:
+        await conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+        await conn.run_sync(Base.metadata.create_all)
+
+
 @pytest.fixture
 async def db_engine():
     """Create test database engine"""
@@ -50,15 +59,12 @@ async def db_engine():
         poolclass=NullPool,
         echo=False
     )
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+
+    await _reset_public_schema(engine)
     
     yield engine
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+
+    await _reset_public_schema(engine)
     
     await engine.dispose()
 
@@ -85,7 +91,7 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
         yield db_session
     
     app.dependency_overrides[get_db] = override_get_db
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client

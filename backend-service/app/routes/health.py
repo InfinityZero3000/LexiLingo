@@ -26,7 +26,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         message=f"{settings.APP_NAME} is running",
-        version="1.0.0"
+        version="1.0.1"
     )
 
 
