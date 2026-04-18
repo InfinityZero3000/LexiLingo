@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/response_models.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
+import 'package:sqflite/sqflite.dart' show ConflictAlgorithm;
 import 'package:lexilingo_app/features/course/data/models/course_model.dart';
 import 'package:lexilingo_app/features/course/data/models/course_detail_model.dart';
 import 'package:lexilingo_app/features/course/data/models/course_category_model.dart';
