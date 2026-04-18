@@ -57,8 +57,10 @@ createdb lexilingo
 # Run migrations
 alembic upgrade head
 
-# Seed sample data
-python scripts/seed_data.py
+# Seed sample data (development only, requires running backend + admin auth)
+# POST /api/v1/admin/seed
+# Optional test seed for proficiency module:
+python -m tests.seed_proficiency_data
 ```
 
 ### 4. Run Server
