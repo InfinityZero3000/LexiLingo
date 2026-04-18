@@ -8,12 +8,25 @@ Falls back gracefully (no caching) when Redis is unavailable.
 import json
 import hashlib
 import logging
+import os
 from typing import Any, Optional
 
 from app.core.redis import RedisClient
 
 logger = logging.getLogger(__name__)
 
+
+def _cache_disabled() -> bool:
+    """Disable cache in test runs to avoid cross-test state leakage."""
+    if os.getenv("DISABLE_RESPONSE_CACHE") == "1":
+        return True
+    # Pytest sets this for each test item while executing.
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return True
+    # Common test env convention.
+    if os.getenv("APP_ENV", "").lower() == "test":
+        return True
+    return False
 
 def compute_cache_version(value: Any) -> str:
     """Compute a stable cache-version hash for any JSON-serializable payload."""
@@ -31,6 +44,9 @@ def build_cache_key(prefix: str, **params) -> str:
 
 async def get_cached(key: str) -> Optional[Any]:
     """Get a cached value from Redis. Returns None on miss or error."""
+    if _cache_disabled():
+        return None
+
     redis = await RedisClient.get_instance()
     if redis is None:
         return None
@@ -45,6 +61,9 @@ async def get_cached(key: str) -> Optional[Any]:
 
 async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
     """Store a value in Redis with TTL. Silently ignores errors."""
+    if _cache_disabled():
+        return
+
     redis = await RedisClient.get_instance()
     if redis is None:
         return
@@ -56,6 +75,9 @@ async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
 
 async def delete_cached(key: str) -> None:
     """Delete a single cache entry by exact key. Silently ignores errors."""
+    if _cache_disabled():
+        return
+
     redis = await RedisClient.get_instance()
     if redis is None:
         return

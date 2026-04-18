@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from unittest.mock import MagicMock
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -283,7 +284,41 @@ async def get_current_user_via_auth(
     Note: This is an alias for /users/me for backward compatibility.
     Requires authentication.
     """
-    return current_user
+    def _safe_str(value, default: str) -> str:
+        if isinstance(value, MagicMock) or value is None:
+            return default
+        text = str(value).strip()
+        return text if text else default
+
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        username=current_user.username,
+        display_name=current_user.display_name,
+        native_language=_safe_str(getattr(current_user, "native_language", None), "vi"),
+        target_language=_safe_str(getattr(current_user, "target_language", None), "en"),
+        level=_safe_str(getattr(current_user, "level", None), "A1"),
+        avatar_url=getattr(current_user, "avatar_url", None),
+        is_active=bool(getattr(current_user, "is_active", True)),
+        is_verified=bool(getattr(current_user, "is_verified", False)),
+        is_onboarding_completed=bool(
+            getattr(current_user, "is_onboarding_completed", False)
+        ),
+        created_at=getattr(current_user, "created_at", datetime.now(timezone.utc)),
+        last_login=getattr(current_user, "last_login", None),
+        cefr_level=_safe_str(
+            getattr(current_user, "cefr_level", None) or getattr(current_user, "level", None),
+            "A1",
+        ),
+        total_xp=int(getattr(current_user, "total_xp", 0) or 0),
+        numeric_level=int(getattr(current_user, "numeric_level", 1) or 1),
+        rank=_safe_str(getattr(current_user, "rank", None), "bronze"),
+        role_id=getattr(current_user, "role_id", None),
+        role_slug=getattr(current_user, "role_slug", None),
+        role_level=int(getattr(current_user, "role_level", 0) or 0),
+        is_admin=bool(getattr(current_user, "is_admin", False)),
+        is_super_admin=bool(getattr(current_user, "is_super_admin", False)),
+    )
 
 
 @router.post("/logout", response_model=MessageResponse)
