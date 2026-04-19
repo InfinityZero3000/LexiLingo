@@ -32,14 +32,14 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U lexilingo -d lexilingo_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
       PYTHONPATH: .
-      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test
+      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@127.0.0.1:5432/lexilingo_test
       SECRET_KEY: ci-secret-key-not-for-production
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -81,7 +81,7 @@ jobs:
             for attempt in range(1, 31):
               try:
                 conn = await asyncpg.connect(
-                  host='localhost',
+                  host='127.0.0.1',
                   port=5432,
                   user='lexilingo',
                   password='lexilingo_pass',
