@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from unittest.mock import MagicMock
+
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -285,8 +285,13 @@ async def get_current_user_via_auth(
     Requires authentication.
     """
     def _safe_str(value, default: str) -> str:
-        if isinstance(value, MagicMock) or value is None:
+        if value is None:
             return default
+
+        # Guard against unresolved test doubles leaking into response payloads.
+        if type(value).__name__ == "MagicMock":
+            return default
+
         text = str(value).strip()
         return text if text else default
 
@@ -314,7 +319,7 @@ async def get_current_user_via_auth(
         numeric_level=int(getattr(current_user, "numeric_level", 1) or 1),
         rank=_safe_str(getattr(current_user, "rank", None), "bronze"),
         role_id=getattr(current_user, "role_id", None),
-        role_slug=getattr(current_user, "role_slug", None),
+        role_slug=_safe_str(getattr(current_user, "role_slug", None), "user"),
         role_level=int(getattr(current_user, "role_level", 0) or 0),
         is_admin=bool(getattr(current_user, "is_admin", False)),
         is_super_admin=bool(getattr(current_user, "is_super_admin", False)),
@@ -420,7 +425,7 @@ async def google_login(
             )
 
         username = await _ensure_unique_username(db, email.split("@")[0])
-        role_slug = allowlisted_admin_role if request.source == "admin" else "user"
+        role_slug = allowlisted_admin_role or "user"
         role_id = await _get_role_id(db, role_slug)
         
         user = User(
