@@ -4,7 +4,7 @@ uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
 
 # MongoDB
-motor>=3.6.0,<3.7.0
+motor>=3.6.0,<3.8.0
 pymongo>=4.9.2,<4.10.0
 
 # Redis
