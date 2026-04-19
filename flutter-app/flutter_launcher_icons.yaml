@@ -1,10 +1,10 @@
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/logo/logo.png
+  image_path: assets/logo/logo_1.png
   remove_alpha_ios: true
   web:
     generate: true
-    image_path: assets/logo/logo.png
+    image_path: assets/logo/logo_1.png
     background_color: "#ffffff"
     theme_color: "#ffffff"
