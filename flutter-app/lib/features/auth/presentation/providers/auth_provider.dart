@@ -480,7 +480,14 @@ class AuthProvider extends ChangeNotifier {
       return 'Google Sign-In on Android is not configured correctly (SHA-1/SHA-256 or client ID). Please contact support.';
     }
 
-    if (error.contains('network')) {
+    if (normalized.contains('account-exists-with-different-credential')) {
+      return 'This email is already linked to another provider. Please sign in with the previous method first.';
+    }
+    if (normalized.contains('access-control-allow-origin') ||
+        normalized.contains('blocked by cors')) {
+      return 'Login is blocked by CORS configuration. Please try again in a moment.';
+    }
+    if (normalized.contains('network')) {
       return 'Network error. Please check your internet connection.';
     } else if (normalized.contains('cancelled') ||
         normalized.contains('canceled')) {

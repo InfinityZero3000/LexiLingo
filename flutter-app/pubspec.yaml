@@ -43,6 +43,7 @@ dependencies:
   sqflite_common_ffi_web: ^1.1.1
   path: ^1.9.1
   google_sign_in: ^6.2.1
+  sqflite_common_ffi_web: ^1.0.0
   flutter_local_notifications: ^19.5.0
   google_generative_ai: ^0.4.7
   intl: ^0.20.2

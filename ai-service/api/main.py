@@ -64,9 +64,13 @@ async def _ensure_mongo_indexes() -> None:
                 exc,
             )
 
-    async def _has_duplicate_string_values(collection: str, field: str) -> bool:
+    async def _has_duplicate_string_values(collection: str, field: str, include_empty: bool = True) -> bool:
+        match_filter = {field: {"$exists": True, "$type": "string"}}
+        if not include_empty:
+            match_filter = {field: {"$exists": True, "$type": "string", "$ne": ""}}
+
         pipeline = [
-            {"$match": {field: {"$exists": True, "$type": "string", "$ne": ""}}},
+            {"$match": match_filter},
             {"$group": {"_id": f"${field}", "count": {"$sum": 1}}},
             {"$match": {"count": {"$gt": 1}}},
             {"$limit": 1},
@@ -82,9 +86,12 @@ async def _ensure_mongo_indexes() -> None:
             name=f"{collection}_{field}_idx",
         )
 
-        if await _has_duplicate_string_values(collection, field):
-            logger.warning(
-                "Skip unique index %s on %s: duplicate %s values detected in migrated data",
+        # We keep the unique index scoped to string values. Since some Mongo-compatible
+        # providers reject $ne inside partialFilterExpression, include empty strings in
+        # duplicate checks and avoid using $ne in the index expression itself.
+        if await _has_duplicate_string_values(collection, field, include_empty=True):
+            logger.info(
+                "Skip unique index %s on %s: duplicate string %s values detected in migrated data",
                 name,
                 collection,
                 field,
@@ -97,12 +104,12 @@ async def _ensure_mongo_indexes() -> None:
                 unique=True,
                 name=name,
                 partialFilterExpression={
-                    field: {"$exists": True, "$type": "string", "$ne": ""}
+                    field: {"$exists": True, "$type": "string"}
                 },
             )
         except OperationFailure as exc:
             # Do not block startup when existing migrated data/index options conflict.
-            logger.warning("Skip unique index %s on %s: %s", name, collection, exc)
+            logger.info("Skip unique index %s on %s: %s", name, collection, exc)
 
     await _ensure_session_unique_index(
         collection="chat_sessions",
@@ -213,6 +220,7 @@ app.add_middleware(
         "https://lexilingo.vercel.app",
         "https://flutter-app-nine-pied.vercel.app",
     ],
+    allow_origin_regex=r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],

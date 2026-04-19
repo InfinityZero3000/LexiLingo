@@ -3,6 +3,7 @@ User Schemas
 """
 
 from typing import Optional
+from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, UUID4
 
@@ -56,7 +57,7 @@ class UserResponse(UserBase):
     is_super_admin: bool = False
     
     # RBAC
-    role_id: Optional[UUID4] = None
+    role_id: Optional[UUID] = None
     role_slug: Optional[str] = None  # Populated from role relationship
     
     class Config:

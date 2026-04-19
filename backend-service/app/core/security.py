@@ -5,6 +5,7 @@ JWT token creation/validation and password hashing
 """
 
 import asyncio
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
@@ -78,6 +79,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     to_encode.update({
         "exp": expire,
         "iat": datetime.now(timezone.utc),
+        "jti": uuid.uuid4().hex,
         "type": "access"  # Token type marker
     })
     
@@ -98,6 +100,7 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     to_encode.update({
         "exp": expire,
         "iat": datetime.now(timezone.utc),
+        "jti": uuid.uuid4().hex,
         "type": "refresh"  # Token type marker
     })
     

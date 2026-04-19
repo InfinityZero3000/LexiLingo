@@ -6,12 +6,16 @@ Using Pydantic settings for type-safe configuration
 
 from typing import List
 from pathlib import Path
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
-# Get project root directory and load .env explicitly
+# Get project root directory and load environment files explicitly.
+# Always load .env first, then override with .env.production in production mode.
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
+if os.getenv("APP_ENV", "").lower() == "production":
+    load_dotenv(PROJECT_ROOT / ".env.production", override=True)
 
 
 class Settings(BaseSettings):
