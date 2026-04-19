@@ -3,19 +3,6 @@
   "framework": null,
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "build/web",
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.lexilingo.me"
-        }
-      ],
-      "destination": "https://lexilingo.me/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/((?!.*\\.(?:js|css|png|jpg|jpeg|gif|svg|ico|wasm|json|ttf|woff|woff2|eot|map)$).*)",

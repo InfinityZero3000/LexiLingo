@@ -17,6 +17,7 @@ NC='\033[0m'
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FLUTTER_DIR="$PROJECT_ROOT/flutter-app"
 VERCEL_PROJECT_ID="${VERCEL_PROJECT_ID_FLUTTER:-${VERCEL_PROJECT_ID:-}}"
+VERCEL_CLI_ARGS=(--prod --yes)
 
 clear
 printf "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}\n"
@@ -41,25 +42,39 @@ printf "${GREEN}✓${NC} Node: %s\n" "$(node --version)"
 printf "${GREEN}✓${NC} npm: %s\n" "$(npm --version)"
 printf "${GREEN}✓${NC} Vercel CLI: %s\n\n" "$(vercel --version)"
 
-if [[ -z "${VERCEL_TOKEN:-}" ]]; then
-  printf "${RED}✗${NC} Missing VERCEL_TOKEN env var\n"
-  exit 1
-fi
-
-if [[ -z "${VERCEL_ORG_ID:-}" ]]; then
-  printf "${RED}✗${NC} Missing VERCEL_ORG_ID env var\n"
-  exit 1
-fi
-
-if [[ -z "$VERCEL_PROJECT_ID" ]]; then
-  printf "${RED}✗${NC} Missing VERCEL_PROJECT_ID_FLUTTER (or VERCEL_PROJECT_ID) env var\n"
-  exit 1
-fi
-
 if [[ -f ".vercel/project.json" ]]; then
   linked_project_id="$(grep -o '"projectId": "[^"]*"' .vercel/project.json | sed 's/.*"\([^"]*\)"/\1/' || true)"
   linked_org_id="$(grep -o '"orgId": "[^"]*"' .vercel/project.json | sed 's/.*"\([^"]*\)"/\1/' || true)"
 
+  if [[ -z "${VERCEL_ORG_ID:-}" && -n "$linked_org_id" ]]; then
+    VERCEL_ORG_ID="$linked_org_id"
+  fi
+
+  if [[ -z "$VERCEL_PROJECT_ID" && -n "$linked_project_id" ]]; then
+    VERCEL_PROJECT_ID="$linked_project_id"
+  fi
+fi
+
+if [[ -z "${VERCEL_ORG_ID:-}" ]]; then
+  printf "${RED}✗${NC} Missing VERCEL_ORG_ID and unable to infer from .vercel/project.json\n"
+  exit 1
+fi
+
+if [[ -z "$VERCEL_PROJECT_ID" ]]; then
+  printf "${RED}✗${NC} Missing VERCEL_PROJECT_ID_FLUTTER (or VERCEL_PROJECT_ID) and unable to infer from .vercel/project.json\n"
+  exit 1
+fi
+
+if [[ -n "${VERCEL_TOKEN:-}" ]]; then
+  VERCEL_CLI_ARGS+=(--token "$VERCEL_TOKEN")
+else
+  if ! vercel whoami >/dev/null 2>&1; then
+    printf "${RED}✗${NC} Not authenticated with Vercel CLI. Run: vercel login\n"
+    exit 1
+  fi
+fi
+
+if [[ -f ".vercel/project.json" ]]; then
   if [[ -n "$linked_project_id" && "$linked_project_id" != "$VERCEL_PROJECT_ID" ]]; then
     printf "${RED}✗${NC} Linked Vercel projectId mismatch\n"
     printf "  .vercel/project.json: %s\n" "$linked_project_id"
@@ -76,6 +91,10 @@ if [[ -f ".vercel/project.json" ]]; then
 fi
 
 export VERCEL_PROJECT_ID
+export VERCEL_ORG_ID
+
+printf "${GREEN}✓${NC} Vercel target org: %s\n" "$VERCEL_ORG_ID"
+printf "${GREEN}✓${NC} Vercel target project: %s\n\n" "$VERCEL_PROJECT_ID"
 
 printf "${BLUE}[2/7] Validating production env files...${NC}\n\n"
 
@@ -160,11 +179,11 @@ npm run vercel-build
 printf "${GREEN}✓${NC} Vercel build pre-check passed\n\n"
 
 printf "${BLUE}[6/7] Generating Vercel prebuilt output...${NC}\n\n"
-vercel build --prod --token "$VERCEL_TOKEN" --yes
+vercel build "${VERCEL_CLI_ARGS[@]}"
 printf "${GREEN}✓${NC} Vercel prebuilt output generated\n\n"
 
 printf "${BLUE}[7/7] Deploying to Vercel production (prebuilt)...${NC}\n\n"
-deploy_output="$(vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN" --yes 2>&1)"
+deploy_output="$(vercel deploy --prebuilt "${VERCEL_CLI_ARGS[@]}" 2>&1)"
 printf "%s\n" "$deploy_output"
 
 deploy_url="$(printf "%s\n" "$deploy_output" | grep -Eo 'https://[^ ]+\.vercel\.app' | tail -n 1 || true)"
