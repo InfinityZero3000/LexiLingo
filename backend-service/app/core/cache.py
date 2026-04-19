@@ -51,6 +51,11 @@ def _cache_disabled() -> bool:
         return True
     return False
 
+
+def _allow_key_when_cache_disabled(key: str) -> bool:
+    """Allow selected short-lived keys even when response cache is disabled in tests."""
+    return key.startswith("social_location:")
+
 def compute_cache_version(value: Any) -> str:
     """Compute a stable cache-version hash for any JSON-serializable payload."""
     raw = json.dumps(value, sort_keys=True, default=str, separators=(",", ":"))
@@ -67,7 +72,7 @@ def build_cache_key(prefix: str, **params) -> str:
 
 async def get_cached(key: str) -> Optional[Any]:
     """Get a cached value from Redis. Returns None on miss or error."""
-    if _cache_disabled():
+    if _cache_disabled() and not _allow_key_when_cache_disabled(key):
         return None
 
     redis = await RedisClient.get_instance()
@@ -85,7 +90,7 @@ async def get_cached(key: str) -> Optional[Any]:
 
 async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
     """Store a value in Redis with TTL. Silently ignores errors."""
-    if _cache_disabled():
+    if _cache_disabled() and not _allow_key_when_cache_disabled(key):
         return
 
     redis = await RedisClient.get_instance()
@@ -101,7 +106,7 @@ async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
 
 async def delete_cached(key: str) -> None:
     """Delete a single cache entry by exact key. Silently ignores errors."""
-    if _cache_disabled():
+    if _cache_disabled() and not _allow_key_when_cache_disabled(key):
         return
 
     redis = await RedisClient.get_instance()
