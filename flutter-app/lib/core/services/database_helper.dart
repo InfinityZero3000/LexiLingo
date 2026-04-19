@@ -299,7 +299,8 @@ CREATE TABLE user_progress (
         'id': 'demo_user_001',
         'name': 'Alex Nguyen',
         'email': 'alex.nguyen@lexilingo.app',
-        'avatarUrl': 'https://ui-avatars.com/api/?name=Alex+Nguyen&background=6366f1&color=fff',
+        'avatarUrl':
+            'https://ui-avatars.com/api/?name=Alex+Nguyen&background=6366f1&color=fff',
         'totalXP': 1240,
         'currentStreak': 8,
         'longestStreak': 21,
@@ -310,7 +311,8 @@ CREATE TABLE user_progress (
         'id': 'demo_user_002',
         'name': 'Minh Tran',
         'email': 'minh.tran@lexilingo.app',
-        'avatarUrl': 'https://ui-avatars.com/api/?name=Minh+Tran&background=14b8a6&color=fff',
+        'avatarUrl':
+            'https://ui-avatars.com/api/?name=Minh+Tran&background=14b8a6&color=fff',
         'totalXP': 860,
         'currentStreak': 5,
         'longestStreak': 13,
@@ -321,7 +323,8 @@ CREATE TABLE user_progress (
         'id': 'demo_user_003',
         'name': 'Linh Pham',
         'email': 'linh.pham@lexilingo.app',
-        'avatarUrl': 'https://ui-avatars.com/api/?name=Linh+Pham&background=f97316&color=fff',
+        'avatarUrl':
+            'https://ui-avatars.com/api/?name=Linh+Pham&background=f97316&color=fff',
         'totalXP': 430,
         'currentStreak': 2,
         'longestStreak': 7,
@@ -409,7 +412,8 @@ CREATE TABLE user_progress (
             'A practical, structured course to improve ${item[2]} for ${item[1]} learners with speaking, listening, and review checkpoints.',
         'level': item[1],
         'category': item[2],
-        'imageUrl': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&auto=format&fit=crop&q=80',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&auto=format&fit=crop&q=80',
         'duration': '${4 + (i % 7)} weeks',
         'lessonsCount': item[3],
         'isEnrolled': i < 6 ? 1 : 0,
@@ -439,7 +443,9 @@ CREATE TABLE user_progress (
           'description': 'Core practice for lesson $order',
           'orderIndex': order,
           'duration': '${8 + (order % 10)} min',
-          'status': order <= 3 ? 'completed' : (order <= 5 ? 'unlocked' : 'locked'),
+          'status': order <= 3
+              ? 'completed'
+              : (order <= 5 ? 'unlocked' : 'locked'),
           'contentUrl': '/local/courses/$courseId/lessons/$order',
         });
       }
@@ -460,7 +466,11 @@ CREATE TABLE user_progress (
       'lessons',
       columns: ['id', 'courseId', 'orderIndex'],
       where: 'courseId IN (?, ?, ?)',
-      whereArgs: [insertedCourseIds[0], insertedCourseIds[1], insertedCourseIds[2]],
+      whereArgs: [
+        insertedCourseIds[0],
+        insertedCourseIds[1],
+        insertedCourseIds[2],
+      ],
       orderBy: 'courseId ASC, orderIndex ASC',
     );
     for (final lesson in seededLessons) {
@@ -471,23 +481,69 @@ CREATE TABLE user_progress (
         'lessonId': lesson['id'],
         'progress': order <= 3 ? 1.0 : (order <= 5 ? 0.55 : 0.0),
         'lastAccessedAt': timestamp,
-        'completedAt': order <= 3 ? now.subtract(Duration(days: 2)).toIso8601String() : null,
+        'completedAt': order <= 3
+            ? now.subtract(Duration(days: 2)).toIso8601String()
+            : null,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     final vocabSeed = [
-      ['analyze', 'to examine carefully and in detail', 'We analyze the text before writing.'],
-      ['collaborate', 'to work jointly with others', 'Students collaborate on the speaking task.'],
-      ['achievement', 'something accomplished successfully', 'Finishing the course is a big achievement.'],
+      [
+        'analyze',
+        'to examine carefully and in detail',
+        'We analyze the text before writing.',
+      ],
+      [
+        'collaborate',
+        'to work jointly with others',
+        'Students collaborate on the speaking task.',
+      ],
+      [
+        'achievement',
+        'something accomplished successfully',
+        'Finishing the course is a big achievement.',
+      ],
       ['improve', 'to become better', 'Daily practice helps improve fluency.'],
-      ['confident', 'feeling sure about your abilities', 'She feels confident speaking English now.'],
-      ['context', 'the situation that helps explain meaning', 'Use words in context to remember better.'],
-      ['pronunciation', 'the way words are spoken', 'Clear pronunciation improves communication.'],
-      ['strategy', 'a plan for achieving a goal', 'Use a strategy to learn vocabulary faster.'],
-      ['persist', 'to continue despite difficulty', 'Persist with study even on busy days.'],
-      ['insight', 'a deep understanding', 'The article gave me insight into grammar.'],
-      ['efficient', 'achieving maximum productivity', 'Spaced repetition is an efficient method.'],
-      ['practical', 'useful in real situations', 'This lesson gives practical phrases.'],
+      [
+        'confident',
+        'feeling sure about your abilities',
+        'She feels confident speaking English now.',
+      ],
+      [
+        'context',
+        'the situation that helps explain meaning',
+        'Use words in context to remember better.',
+      ],
+      [
+        'pronunciation',
+        'the way words are spoken',
+        'Clear pronunciation improves communication.',
+      ],
+      [
+        'strategy',
+        'a plan for achieving a goal',
+        'Use a strategy to learn vocabulary faster.',
+      ],
+      [
+        'persist',
+        'to continue despite difficulty',
+        'Persist with study even on busy days.',
+      ],
+      [
+        'insight',
+        'a deep understanding',
+        'The article gave me insight into grammar.',
+      ],
+      [
+        'efficient',
+        'achieving maximum productivity',
+        'Spaced repetition is an efficient method.',
+      ],
+      [
+        'practical',
+        'useful in real situations',
+        'This lesson gives practical phrases.',
+      ],
     ];
 
     for (int i = 0; i < vocabSeed.length; i++) {
@@ -498,8 +554,12 @@ CREATE TABLE user_progress (
         'definition': item[1],
         'example': item[2],
         'phonetic': '/${item[0]}/',
-        'partOfSpeech': i % 3 == 0 ? 'verb' : (i % 3 == 1 ? 'noun' : 'adjective'),
-        'difficulty': i < 4 ? 'beginner' : (i < 8 ? 'intermediate' : 'advanced'),
+        'partOfSpeech': i % 3 == 0
+            ? 'verb'
+            : (i % 3 == 1 ? 'noun' : 'adjective'),
+        'difficulty': i < 4
+            ? 'beginner'
+            : (i < 8 ? 'intermediate' : 'advanced'),
         'isLearned': i < 7 ? 1 : 0,
         'isFavorite': i % 4 == 0 ? 1 : 0,
         'createdAt': timestamp,

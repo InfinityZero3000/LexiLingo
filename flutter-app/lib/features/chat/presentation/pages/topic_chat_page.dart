@@ -267,7 +267,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
               // 5. Input field
               if (!_taskBannerDismissedByUser) _buildTaskBanner(isDark),
-              _buildInputField(isEnabled: provider.hasActiveSession, isDark: isDark),
+              _buildInputField(
+                isEnabled: provider.hasActiveSession,
+                isDark: isDark,
+              ),
             ],
           );
         },
@@ -527,9 +530,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.surfaceDarkMuted
-            : AppColors.surfaceLight,
+        color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
@@ -543,28 +544,20 @@ class _TopicChatPageState extends State<TopicChatPage> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.surfaceDarkInk
-                    : AppColors.grey100,
+                color: isDark ? AppColors.surfaceDarkInk : AppColors.grey100,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark
-                      ? AppColors.borderDarkSoft
-                      : AppColors.grey200,
+                  color: isDark ? AppColors.borderDarkSoft : AppColors.grey200,
                 ),
               ),
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
                 enabled: isEnabled,
-                style: TextStyle(
-                  color: AppColorRoles.textPrimary(isDark),
-                ),
+                style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
                 decoration: InputDecoration(
                   hintText: 'Type in English...',
-                  hintStyle: TextStyle(
-                    color: AppColorRoles.textMuted(isDark),
-                  ),
+                  hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 20,
@@ -737,7 +730,9 @@ class _StoryContextHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.16),
+            backgroundColor: AppColorRoles.primary(
+              isDark,
+            ).withValues(alpha: 0.16),
             child: Text(
               session.rolePersona.name.isNotEmpty
                   ? session.rolePersona.name[0]
@@ -831,7 +826,9 @@ class _TopicMessageBubble extends StatelessWidget {
               if (!isUser) ...[
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.16),
+                  backgroundColor: AppColorRoles.primary(
+                    isDark,
+                  ).withValues(alpha: 0.16),
                   child: Icon(
                     Icons.smart_toy,
                     size: 16,
@@ -849,7 +846,9 @@ class _TopicMessageBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isUser
                         ? AppColorRoles.primary(isDark)
-                        : (isDark ? AppColors.surfaceDarkCard : AppColors.surfaceLight),
+                        : (isDark
+                              ? AppColors.surfaceDarkCard
+                              : AppColors.surfaceLight),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -859,11 +858,15 @@ class _TopicMessageBubble extends StatelessWidget {
                     border: Border.all(
                       color: isUser
                           ? AppColorRoles.primary(isDark).withValues(alpha: 0.3)
-                          : (isDark ? AppColors.borderDarkSoft : AppColors.grey200),
+                          : (isDark
+                                ? AppColors.borderDarkSoft
+                                : AppColors.grey200),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.05),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.14 : 0.05,
+                        ),
                         blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
@@ -941,10 +944,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(
-                  Icons.menu_book,
-                  color: AppColorRoles.primary(isDark),
-                ),
+                Icon(Icons.menu_book, color: AppColorRoles.primary(isDark)),
                 const SizedBox(width: 12),
                 const Text(
                   'Key Vocabulary',

@@ -15,7 +15,7 @@ class ApiConfig {
   // ── Environment ─────────────────────────────────────────────────────────────
 
   static String get environment =>
-  _readEnv('ENVIRONMENT')?.trim() ?? 'development';
+      _readEnv('ENVIRONMENT')?.trim() ?? 'development';
 
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';

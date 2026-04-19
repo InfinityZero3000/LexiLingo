@@ -74,8 +74,8 @@ class AuthProvider extends ChangeNotifier {
 
       // Web redirect flow: if we just came back from Google, finish backend
       // sign-in before checking stored session.
-      final pendingGoogleIdToken =
-          await googleSignInService.consumePendingWebRedirectIdToken();
+      final pendingGoogleIdToken = await googleSignInService
+          .consumePendingWebRedirectIdToken();
       if (pendingGoogleIdToken != null) {
         await _authenticateWithGoogleIdToken(pendingGoogleIdToken);
         return;
@@ -90,9 +90,7 @@ class AuthProvider extends ChangeNotifier {
         return;
       }
 
-      final result = await getCurrentUserUseCase(
-        NoParams(),
-      ).timeout(
+      final result = await getCurrentUserUseCase(NoParams()).timeout(
         const Duration(seconds: 8),
         onTimeout: () => Left(AuthFailure('Auth check timed out')),
       );
@@ -462,7 +460,8 @@ class AuthProvider extends ChangeNotifier {
   String _parseErrorMessage(String error) {
     final normalized = error.toLowerCase();
 
-    if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+    if (normalized.contains('timeoutexception') ||
+        normalized.contains('timed out')) {
       return 'Server is not responding in time. Please try again in a moment.';
     }
     if (normalized.contains('/users/me failed')) {
@@ -490,7 +489,8 @@ class AuthProvider extends ChangeNotifier {
     }
     if (normalized.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (normalized.contains('cancelled') || normalized.contains('canceled')) {
+    } else if (normalized.contains('cancelled') ||
+        normalized.contains('canceled')) {
       return 'Sign in was cancelled.';
     } else if (normalized.contains('email')) {
       return 'Invalid email address.';
@@ -517,7 +517,8 @@ class AuthProvider extends ChangeNotifier {
       return failure.message;
     } else if (failure is ServerFailure) {
       final normalized = failure.message.toLowerCase();
-      if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+      if (normalized.contains('timeoutexception') ||
+          normalized.contains('timed out')) {
         return 'Server timeout. Please check server status and try again.';
       }
       if (normalized.contains('/users/me failed')) {
