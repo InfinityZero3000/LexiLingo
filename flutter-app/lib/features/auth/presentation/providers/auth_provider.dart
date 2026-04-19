@@ -142,7 +142,12 @@ class AuthProvider extends ChangeNotifier {
       }
 
       if (idToken == null) {
-        _errorMessage = 'Google sign in was cancelled';
+        final signInError = googleSignInService.lastError?.toLowerCase();
+        if (signInError == null || signInError.contains('cancelled')) {
+          _errorMessage = 'Google sign in was cancelled';
+        } else {
+          _errorMessage = _parseErrorMessage(googleSignInService.lastError!);
+        }
         _isLoading = false;
         notifyListeners();
         return;
@@ -455,27 +460,41 @@ class AuthProvider extends ChangeNotifier {
 
   // Parse error messages to user-friendly format
   String _parseErrorMessage(String error) {
-    final normalizedError = error.toLowerCase();
+    final normalized = error.toLowerCase();
 
-    if (normalizedError.contains('account-exists-with-different-credential')) {
+    if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+      return 'Server is not responding in time. Please try again in a moment.';
+    }
+    if (normalized.contains('/users/me failed')) {
+      return 'Login succeeded but profile sync failed. Please try again.';
+    }
+    if (normalized.contains('internal server error')) {
+      return 'Server error occurred. Please try again later.';
+    }
+    if (normalized.contains('google_server_client_id')) {
+      return 'Google sign-in config is missing. Please contact support.';
+    }
+
+    if (normalized.contains('account-exists-with-different-credential')) {
       return 'This email is already linked to another provider. Please sign in with the previous method first.';
-    } else if (normalizedError.contains('access-control-allow-origin') ||
-        normalizedError.contains('blocked by cors')) {
+    }
+    if (normalized.contains('access-control-allow-origin') ||
+        normalized.contains('blocked by cors')) {
       return 'Login is blocked by CORS configuration. Please try again in a moment.';
-    } else if (normalizedError.contains('network')) {
+    }
+    if (normalized.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (normalizedError.contains('cancelled') ||
-        normalizedError.contains('canceled')) {
+    } else if (normalized.contains('cancelled') || normalized.contains('canceled')) {
       return 'Sign in was cancelled.';
-    } else if (normalizedError.contains('email')) {
+    } else if (normalized.contains('email')) {
       return 'Invalid email address.';
-    } else if (normalizedError.contains('password')) {
+    } else if (normalized.contains('password')) {
       return 'Invalid password.';
-    } else if (normalizedError.contains('user-not-found')) {
+    } else if (normalized.contains('user-not-found')) {
       return 'No account found with this email.';
-    } else if (normalizedError.contains('wrong-password')) {
+    } else if (normalized.contains('wrong-password')) {
       return 'Incorrect password.';
-    } else if (normalizedError.contains('too-many-requests')) {
+    } else if (normalized.contains('too-many-requests')) {
       return 'Too many attempts. Please try again later.';
     } else {
       return 'An error occurred. Please try again.';
@@ -487,6 +506,13 @@ class AuthProvider extends ChangeNotifier {
     if (failure is AuthFailure) {
       return failure.message;
     } else if (failure is ServerFailure) {
+      final normalized = failure.message.toLowerCase();
+      if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+        return 'Server timeout. Please check server status and try again.';
+      }
+      if (normalized.contains('/users/me failed')) {
+        return 'Signed in, but profile sync timed out. Please reopen the app.';
+      }
       return failure.message;
     } else if (failure is NetworkFailure) {
       return 'Network error. Please check your internet connection.';
