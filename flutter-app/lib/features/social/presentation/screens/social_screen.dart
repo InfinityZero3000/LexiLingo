@@ -148,7 +148,6 @@ class _SocialScreenState extends State<SocialScreen>
 
               final feedIndex = index - 2;
 
-
               if (feedIndex == provider.activityFeed.length &&
                   provider.isLoadingFeed) {
                 return const Center(
@@ -217,7 +216,7 @@ class _SocialScreenState extends State<SocialScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
-                
+
                 const SizedBox(height: 16),
                 const Text('No followers yet'),
               ],
@@ -267,8 +266,9 @@ class _SocialScreenState extends State<SocialScreen>
                   icon: const Icon(Icons.person_add),
                   label: const Text('Find Friends'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        AppColorRoles.primary(Theme.of(context).brightness == Brightness.dark),
+                    backgroundColor: AppColorRoles.primary(
+                      Theme.of(context).brightness == Brightness.dark,
+                    ),
                     foregroundColor: AppColors.surfaceLight,
                   ),
                 ),
@@ -344,9 +344,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.24),
-        ),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,7 +461,11 @@ class _NearbyLearnersSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.near_me, color: AppColors.greenSuccessBright, size: 18),
+              const Icon(
+                Icons.near_me,
+                color: AppColors.greenSuccessBright,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Nearby Learners',
@@ -481,7 +483,9 @@ class _NearbyLearnersSection extends StatelessWidget {
                   color: AppColorRoles.textMuted(isDark),
                 ),
               IconButton(
-                onPressed: isLoading ? null : () => onRefresh(limit: 10, radiusKm: 25),
+                onPressed: isLoading
+                    ? null
+                    : () => onRefresh(limit: 10, radiusKm: 25),
                 icon: const Icon(Icons.refresh, size: 18),
                 color: primaryColor,
                 tooltip: 'Refresh nearby',
@@ -526,7 +530,9 @@ class _NearbyLearnersSection extends StatelessWidget {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.greenSuccessBright.withValues(alpha: 0.12),
+                    backgroundColor: AppColors.greenSuccessBright.withValues(
+                      alpha: 0.12,
+                    ),
                     child: Text(
                       user.displayName.isNotEmpty
                           ? user.displayName[0].toUpperCase()
@@ -590,19 +596,17 @@ class _ActivityFeedCard extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: primaryColor.withValues(alpha: 0.1),
-              border: Border.all(
-                color: primaryColor.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
             ),
             child: activity.avatarUrl != null && activity.avatarUrl!.isNotEmpty
                 ? ClipOval(
                     child: Image.network(
                       activity.avatarUrl!,
                       fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildInitial(context),
+                      errorBuilder: (_, __, ___) => _buildInitial(context),
                     ),
-                )
-              : _buildInitial(context),
+                  )
+                : _buildInitial(context),
           ),
           const SizedBox(width: 12),
 
@@ -767,10 +771,10 @@ class _UserProfileCard extends StatelessWidget {
                     child: Image.network(
                       user.avatarUrl!,
                       fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildInitial(context),
+                      errorBuilder: (_, __, ___) => _buildInitial(context),
                     ),
-                )
-              : _buildInitial(context),
+                  )
+                : _buildInitial(context),
           ),
           const SizedBox(width: 12),
 
@@ -833,7 +837,7 @@ class _UserProfileCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: user.isFollowing
                     ? (isDark ? AppColors.surfaceDarkMuted : AppColors.grey200)
-                  : primaryColor,
+                    : primaryColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -931,8 +935,8 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: isDark
-                      ? AppColors.surfaceDarkMuted
-                      : AppColors.grey100,
+                        ? AppColors.surfaceDarkMuted
+                        : AppColors.grey100,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,

@@ -13,28 +13,28 @@
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.90.20",
     "antd": "^6.2.3",
-    "axios": "^1.13.4",
+    "axios": "^1.15.0",
     "dayjs": "^1.11.19",
-    "dotenv": "^17.2.4",
-    "gsap": "^3.14.2",
+    "dotenv": "^17.4.2",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.563.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-hook-form": "^7.71.1",
-    "react-router-dom": "^6.26.2",
-    "recharts": "^3.7.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.72.1",
+    "react-router-dom": "^7.14.1",
+    "recharts": "^3.8.1",
     "three": "^0.183.1",
     "vercel": "^51.7.0",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "@types/three": "^0.183.1",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "typescript": "^5.7.3",
-    "vite": "^5.4.11"
+    "vite": "^8.0.8"
   }
 }

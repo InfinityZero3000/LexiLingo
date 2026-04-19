@@ -104,7 +104,9 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
 
   bool _isSessionNotFoundError(Object error) {
     final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+    return msg.contains('status 404') ||
+        msg.contains('404') ||
+        msg.contains('not found');
   }
 
   @override

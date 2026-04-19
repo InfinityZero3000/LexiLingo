@@ -450,7 +450,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               child: Column(
                 children: [
@@ -458,7 +460,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+                      color: isDark
+                          ? AppColors.borderDarkSoft
+                          : AppColors.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -472,18 +476,21 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     child: GridView.builder(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.only(bottom: 8),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                       itemCount: _avatarOptions.length,
                       itemBuilder: (context, index) {
                         final url = _avatarOptions[index];
                         final isSelected = _selectedAvatarUrl == url;
                         return GestureDetector(
                           onTap: () {
-                            final normalized = AvatarUtils.normalizeAvatarUrl(url);
+                            final normalized = AvatarUtils.normalizeAvatarUrl(
+                              url,
+                            );
                             setState(() {
                               _selectedAvatarUrl = normalized;
                               _avatarUrlController.text = normalized ?? '';

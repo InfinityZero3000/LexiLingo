@@ -89,7 +89,8 @@ class BackgroundSyncQueueService {
             id: row['id'] as int,
             userScope: row['user_scope'] as String,
             queueType: row['queue_type'] as String,
-            payload: jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+            payload:
+                jsonDecode(row['payload'] as String) as Map<String, dynamic>,
             idempotencyKey: row['idempotency_key'] as String,
             retryCount: row['retry_count'] as int,
             nextRetryAt: DateTime.parse(row['next_retry_at'] as String),

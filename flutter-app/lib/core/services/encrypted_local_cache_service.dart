@@ -213,7 +213,8 @@ class EncryptedLocalCacheService {
     if (kIsWeb) {
       _memory.removeWhere(
         (k, v) =>
-            k.startsWith('$userScope::$namespace::') && v.namespace == namespace,
+            k.startsWith('$userScope::$namespace::') &&
+            v.namespace == namespace,
       );
       return;
     }
@@ -243,7 +244,11 @@ class EncryptedLocalCacheService {
     _memory.removeWhere((k, _) => k.startsWith('$userScope::'));
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.delete(tableName, where: 'user_scope = ?', whereArgs: [userScope]);
+      await db.delete(
+        tableName,
+        where: 'user_scope = ?',
+        whereArgs: [userScope],
+      );
     } catch (_) {
       // Memory fallback already handled.
     }
@@ -389,7 +394,10 @@ class EncryptedLocalCacheService {
     final encrypter = encrypt.Encrypter(
       encrypt.AES(encrypt.Key(Uint8List.fromList(keyBytes))),
     );
-    return encrypter.decrypt64(parts[1], iv: encrypt.IV(Uint8List.fromList(ivBytes)));
+    return encrypter.decrypt64(
+      parts[1],
+      iv: encrypt.IV(Uint8List.fromList(ivBytes)),
+    );
   }
 
   Future<List<int>> _getOrCreateKey(String userScope) async {

@@ -879,11 +879,7 @@ class _ProfilePageState extends State<ProfilePage>
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.insights_rounded,
-                    color: primaryColor,
-                    size: 20,
-                  ),
+                  Icon(Icons.insights_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Learning Stats',
@@ -1138,7 +1134,9 @@ class _ProfilePageState extends State<ProfilePage>
                                   ? activity.xpEarned / maxXP
                                   : 0.0;
                               String dayLabel;
-                              final parsedDate = DateTime.tryParse(activity.date);
+                              final parsedDate = DateTime.tryParse(
+                                activity.date,
+                              );
                               if (parsedDate != null) {
                                 dayLabel = DateFormat(
                                   'E',

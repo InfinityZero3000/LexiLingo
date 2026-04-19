@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
@@ -75,7 +77,8 @@ void main() async {
   await EasyLocalization.ensureInitialized();
 
   if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
+    // Avoid sqflite web worker boot failures when sqflite_sw.js is not deployed.
+    databaseFactory = databaseFactoryFfiWebNoWebWorker;
   }
 
   // Add error handler for Flutter and Dart errors

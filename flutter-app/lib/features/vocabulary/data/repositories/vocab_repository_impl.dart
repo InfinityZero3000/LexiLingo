@@ -47,7 +47,9 @@ class VocabRepositoryImpl implements VocabRepository {
         if (cached != null) {
           return Right(_fromJsonList(cached));
         }
-        return Left(CacheFailure('Failed to get vocabulary words: ${e.toString()}'));
+        return Left(
+          CacheFailure('Failed to get vocabulary words: ${e.toString()}'),
+        );
       }
     }
 
