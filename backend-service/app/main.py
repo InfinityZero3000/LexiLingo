@@ -142,7 +142,7 @@ app = FastAPI(
     * **Swagger UI**: `/docs` (you are here)
     * **ReDoc**: `/redoc`
     """,
-    version="1.0.0",
+    version="1.0.1",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -265,7 +265,7 @@ async def root():
     """Root endpoint. Supports HEAD for Render/load-balancer health probes."""
     return {
         "message": f"Welcome to {settings.APP_NAME}",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "docs": "/docs",
         "health": "/health"
     }

@@ -16,6 +16,9 @@ const _tag = 'GoogleSignInService';
 /// On Mobile: uses the standard [google_sign_in] package so that the
 /// server-client-id / id_token exchange works correctly.
 class GoogleSignInService {
+  static const String redirectInProgressMarker =
+      '__GOOGLE_REDIRECT_IN_PROGRESS__';
+
   final GoogleSignIn _googleSignIn;
   String? _lastError;
 
@@ -59,16 +62,64 @@ class GoogleSignInService {
       ..addScope('email')
       ..addScope('profile');
 
-    final userCredential = await FirebaseAuth.instance.signInWithPopup(
-      provider,
-    );
+    // If the app has just returned from signInWithRedirect(), consume the
+    // pending credential first.
+    final pendingRedirectToken = await consumePendingWebRedirectIdToken();
+    if (pendingRedirectToken != null) {
+      return pendingRedirectToken;
+    }
 
+    try {
+      final userCredential = await FirebaseAuth.instance.signInWithPopup(
+        provider,
+      );
+
+      return await _extractGoogleIdTokenAndSignOut(userCredential);
+    } on FirebaseAuthException catch (e) {
+      if (_shouldFallbackToRedirect(e.code, e.message)) {
+        logWarn(
+          _tag,
+          'Popup sign-in failed (${e.code}), falling back to redirect flow',
+        );
+        await FirebaseAuth.instance.signInWithRedirect(provider);
+        return redirectInProgressMarker;
+      }
+      rethrow;
+    } catch (e) {
+      final message = e.toString();
+      if (_shouldFallbackToRedirect('unknown', message)) {
+        logWarn(
+          _tag,
+          'Popup sign-in blocked by browser policy, using redirect flow',
+        );
+        await FirebaseAuth.instance.signInWithRedirect(provider);
+        return redirectInProgressMarker;
+      }
+      rethrow;
+    }
+  }
+
+  /// Consume pending Google credential after signInWithRedirect().
+  /// Returns Google id_token if present.
+  Future<String?> consumePendingWebRedirectIdToken() async {
+    if (!kIsWeb) return null;
+
+    try {
+      final redirectResult = await FirebaseAuth.instance.getRedirectResult();
+      return await _extractGoogleIdTokenAndSignOut(redirectResult);
+    } catch (e) {
+      logWarn(_tag, 'No pending redirect result or failed to consume: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _extractGoogleIdTokenAndSignOut(UserCredential userCredential) async {
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
     final googleIdToken = oauthCredential?.idToken;
 
     if (googleIdToken == null) {
-      logError(_tag, 'Failed to get Google ID token from Firebase popup (web)');
+      logError(_tag, 'Failed to get Google ID token from Firebase credential');
       return null;
     }
 
@@ -77,6 +128,23 @@ class GoogleSignInService {
 
     logInfo(_tag, 'Google Sign In successful (web)');
     return googleIdToken;
+  }
+
+  bool _shouldFallbackToRedirect(String code, String? message) {
+    const fallbackCodes = {
+      'popup-blocked',
+      'popup-closed-by-user',
+      'cancelled-popup-request',
+      'operation-not-supported-in-this-environment',
+      'web-storage-unsupported',
+    };
+
+    if (fallbackCodes.contains(code)) return true;
+
+    final normalized = (message ?? '').toLowerCase();
+    return normalized.contains('cross-origin-opener-policy') ||
+        normalized.contains('window.closed') ||
+        normalized.contains('popup');
   }
 
   /// Mobile: use google_sign_in package to get the Google id_token.

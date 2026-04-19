@@ -169,6 +169,18 @@ Script sẽ:
 - Cài jail/filter từ `deploy/fail2ban/`
 - Bật `nginx-429-abuse` để auto ban IP từ `gateway/nginx/logs/security.log`
 
+### 11. `deploy-flutter-vercel.sh` - Deploy Flutter Web lên Vercel bằng prebuilt output
+
+```bash
+bash ./scripts/deploy-flutter-vercel.sh
+```
+
+Script sẽ:
+- Validate đầy đủ file production (`flutter-app/.env.production`, `web/index.html`, `firebase_options.dart`, `vercel.json`)
+- Kiểm tra `GOOGLE_SERVER_CLIENT_ID` và `google-signin-client_id` đồng bộ
+- Build release Flutter Web (bundle `.env.production`)
+- Chạy `vercel build --prod` và `vercel deploy --prebuilt --prod`
+
 ## 🚀 Quick Start
 
 ### Lần đầu sử dụng:

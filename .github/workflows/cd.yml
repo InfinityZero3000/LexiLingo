@@ -42,13 +42,14 @@ jobs:
             -e 's/YOUR_MEASUREMENT_ID/G-M8B2FXYJ42/' \
             lib/firebase_options.dart.example > lib/firebase_options.dart
 
-      - name: Create .env for build
+      - name: Create env files for build
         run: |
           printf 'ENVIRONMENT=production\nAPI_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
             "${{ secrets.API_BASE_URL || 'https://lexilingo-4gu6.onrender.com/api/v1' }}" \
             "${{ secrets.AI_SERVICE_URL || '' }}" \
             "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" \
             > .env
+          cp .env .env.production
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub

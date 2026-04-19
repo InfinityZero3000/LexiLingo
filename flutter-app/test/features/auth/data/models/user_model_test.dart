@@ -12,8 +12,9 @@ void main() {
       'avatar_url': 'https://example.com/avatar.jpg',
       'provider': 'local',
       'is_verified': true,
-      'level': 'B1',
-      'xp': 500,
+      'cefr_level': 'B1',
+      'total_xp': 500,
+      'numeric_level': 3,
       'current_streak': 7,
       'last_login': '2026-01-24T10:00:00Z',
       'last_login_ip': '192.168.1.1',
@@ -33,8 +34,9 @@ void main() {
       expect(user.avatarUrl, 'https://example.com/avatar.jpg');
       expect(user.provider, 'local');
       expect(user.isVerified, true);
-      expect(user.level, 'B1');
-      expect(user.xp, 500);
+      expect(user.cefrLevel, 'B1');
+      expect(user.totalXp, 500);
+      expect(user.numericLevel, 3);
       expect(user.currentStreak, 7);
       expect(user.lastLoginIp, '192.168.1.1');
     });
@@ -48,8 +50,9 @@ void main() {
         displayName: 'Test User',
         provider: 'local',
         isVerified: false,
-        level: 'A1',
-        xp: 0,
+        cefrLevel: 'A1',
+        totalXp: 0,
+        numericLevel: 1,
         currentStreak: 0,
         createdAt: DateTime.parse('2026-01-24T10:00:00Z'),
       );
@@ -65,7 +68,8 @@ void main() {
       expect(json['provider'], 'local');
       expect(json['is_verified'], false);
       expect(json['level'], 'A1');
-      expect(json['xp'], 0);
+      expect(json['total_xp'], 0);
+      expect(json['numeric_level'], 1);
     });
 
     test('should handle null optional fields', () {
@@ -78,8 +82,9 @@ void main() {
         'avatar_url': null,
         'provider': 'local',
         'is_verified': false,
-        'level': 'A1',
-        'xp': 0,
+        'cefr_level': 'A1',
+        'total_xp': 0,
+        'numeric_level': 1,
         'current_streak': 0,
         'last_login': null,
         'last_login_ip': null,
@@ -106,8 +111,9 @@ void main() {
         displayName: 'Test User',
         provider: 'google',
         isVerified: true,
-        level: 'B2',
-        xp: 1000,
+        cefrLevel: 'B2',
+        totalXp: 1000,
+        numericLevel: 4,
         currentStreak: 10,
         createdAt: DateTime.parse('2026-01-24T10:00:00Z'),
       );
@@ -120,8 +126,9 @@ void main() {
       expect(model.email, entity.email);
       expect(model.username, entity.username);
       expect(model.provider, 'google');
-      expect(model.level, 'B2');
-      expect(model.xp, 1000);
+      expect(model.cefrLevel, 'B2');
+      expect(model.totalXp, 1000);
+      expect(model.numericLevel, 4);
     });
 
     test('should use default values for missing optional fields', () {
@@ -140,8 +147,9 @@ void main() {
       // Assert
       expect(user.provider, 'local'); // Default
       expect(user.isVerified, false); // Default
-      expect(user.level, 'A1'); // Default
-      expect(user.xp, 0); // Default
+      expect(user.cefrLevel, 'A1'); // Default
+      expect(user.totalXp, 0); // Default
+      expect(user.numericLevel, 1); // Default
       expect(user.currentStreak, 0); // Default
     });
   });

@@ -26,8 +26,9 @@ void main() {
     displayName: 'Test User',
     provider: 'local',
     isVerified: false,
-    level: 'A1',
-    xp: 0,
+    cefrLevel: 'A1',
+    totalXp: 0,
+    numericLevel: 1,
     currentStreak: 0,
     createdAt: DateTime.parse('2026-01-24T10:00:00Z'),
   );

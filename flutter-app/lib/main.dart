@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
@@ -77,12 +79,10 @@ void main() async {
   };
 
   try {
-    // On web, rely on safe defaults/dart-defines to avoid hidden-file asset issues.
-    if (!kIsWeb) {
-      // Load .env.production for release builds, .env for dev
-      final envFile = kReleaseMode ? '.env.production' : '.env';
-      await dotenv.load(fileName: envFile);
-    }
+    // Load .env.production for release builds, .env for dev on all platforms
+    // so Web and mobile use the same production config source.
+    final envFile = kReleaseMode ? '.env.production' : '.env';
+    await dotenv.load(fileName: envFile);
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }
@@ -112,7 +112,7 @@ void main() async {
   // Initialize local notifications early so Settings sync can schedule reliably.
   await di.sl<NotificationService>().ensureInitialized();
 
-  // Run startup tasks (health check, seeding). Non-blocking for web.
+  // Run startup tasks (health check, seeding). Keep non-blocking for first frame.
   if (!kIsWeb) {
     final coordinator = StartupCoordinator(
       tasks: [
@@ -127,10 +127,12 @@ void main() async {
       ],
     );
 
-    await coordinator.run(
-      onProgress: (result) => logDebug(
-        'Startup',
-        '${result.id}: ${result.status.name} ${result.message ?? ''}',
+    unawaited(
+      coordinator.run(
+        onProgress: (result) => logDebug(
+          'Startup',
+          '${result.id}: ${result.status.name} ${result.message ?? ''}',
+        ),
       ),
     );
   }
