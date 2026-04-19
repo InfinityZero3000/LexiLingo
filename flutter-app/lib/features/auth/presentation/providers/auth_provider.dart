@@ -455,19 +455,27 @@ class AuthProvider extends ChangeNotifier {
 
   // Parse error messages to user-friendly format
   String _parseErrorMessage(String error) {
-    if (error.contains('network')) {
+    final normalizedError = error.toLowerCase();
+
+    if (normalizedError.contains('account-exists-with-different-credential')) {
+      return 'This email is already linked to another provider. Please sign in with the previous method first.';
+    } else if (normalizedError.contains('access-control-allow-origin') ||
+        normalizedError.contains('blocked by cors')) {
+      return 'Login is blocked by CORS configuration. Please try again in a moment.';
+    } else if (normalizedError.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (error.contains('cancelled') || error.contains('canceled')) {
+    } else if (normalizedError.contains('cancelled') ||
+        normalizedError.contains('canceled')) {
       return 'Sign in was cancelled.';
-    } else if (error.contains('email')) {
+    } else if (normalizedError.contains('email')) {
       return 'Invalid email address.';
-    } else if (error.contains('password')) {
+    } else if (normalizedError.contains('password')) {
       return 'Invalid password.';
-    } else if (error.contains('user-not-found')) {
+    } else if (normalizedError.contains('user-not-found')) {
       return 'No account found with this email.';
-    } else if (error.contains('wrong-password')) {
+    } else if (normalizedError.contains('wrong-password')) {
       return 'Incorrect password.';
-    } else if (error.contains('too-many-requests')) {
+    } else if (normalizedError.contains('too-many-requests')) {
       return 'Too many attempts. Please try again later.';
     } else {
       return 'An error occurred. Please try again.';
