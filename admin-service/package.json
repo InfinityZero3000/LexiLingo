@@ -22,7 +22,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.71.1",
     "react-router-dom": "^6.26.2",
-    "recharts": "^3.7.0",
+    "recharts": "^3.8.1",
     "three": "^0.183.1",
     "vercel": "^51.7.0",
     "zod": "^4.3.6",
