@@ -125,14 +125,14 @@ jobs:
 
       - name: Upload test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-pytest-output
           path: backend-service/pytest-output.txt
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-coverage
           path: backend-service/coverage.xml
@@ -185,7 +185,7 @@ jobs:
 
       - name: Upload analyze output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flutter-analyze-output
           path: flutter-app/analyze-output.txt
