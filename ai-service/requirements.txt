@@ -38,7 +38,7 @@ kuzu>=0.4.2
 # NOTE: sentence-transformers>=4.0.0 has LRScheduler compatibility issues with torch 2.2.x.
 # Pin to <4.0.0 for Intel Mac compatibility.
 sentence-transformers>=2.2.2,<4.0.0
-numpy>=1.23.0,<2.0.0
+numpy>=1.23.0,<3.0.0
 
 # STT / TTS
 faster-whisper>=1.1.0
