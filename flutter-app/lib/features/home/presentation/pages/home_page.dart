@@ -886,9 +886,9 @@ class _HomePageNewState extends State<HomePageNew> {
             const SizedBox(height: 12),
             Text(
               'Chua co khoa hoc noi bat',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1257,13 +1257,10 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.smart_display,
         'label': 'YouTube',
-        'color': isDark
-          ? neonDarkActionColors[0]
-            : AppColors.dangerGradient[0],
-        'bgColor': (isDark
-            ? neonDarkActionColors[0]
-                : AppColors.dangerGradient[0])
-            .withValues(alpha: isDark ? 0.16 : 0.1),
+        'color': isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
+        'bgColor':
+            (isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0])
+                .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/youtube',
       },
       {
@@ -1294,12 +1291,8 @@ class _HomePageNewState extends State<HomePageNew> {
       {
         'icon': Icons.menu_book_rounded,
         'label': 'Books',
-        'color': isDark
-            ? neonDarkActionColors[4]
-            : AppColors.purpleLight,
-        'bgColor': (isDark
-                ? neonDarkActionColors[4]
-                : AppColors.purple)
+        'color': isDark ? neonDarkActionColors[4] : AppColors.purpleLight,
+        'bgColor': (isDark ? neonDarkActionColors[4] : AppColors.purple)
             .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/books',
       },

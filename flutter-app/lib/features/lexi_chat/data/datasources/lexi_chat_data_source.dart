@@ -33,7 +33,9 @@ class LexiChatDataSource {
 
   bool _isSessionNotFoundError(Object error) {
     final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+    return msg.contains('status 404') ||
+        msg.contains('404') ||
+        msg.contains('not found');
   }
 
   String _normalizeMarkdownBoldMarkers(String text) {
@@ -331,7 +333,10 @@ class LexiChatDataSource {
       );
     } catch (e) {
       if (_isSessionNotFoundError(e)) {
-        logWarn(_tag, 'getMessagesPaged session not found, skip legacy fallback: $e');
+        logWarn(
+          _tag,
+          'getMessagesPaged session not found, skip legacy fallback: $e',
+        );
         rethrow;
       }
       logWarn(_tag, 'getMessagesPaged fallback to full history: $e');

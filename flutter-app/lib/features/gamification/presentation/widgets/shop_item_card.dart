@@ -28,7 +28,10 @@ class ShopItemCard extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _getCategoryColor(context, item.category).withValues(alpha: 0.2),
+          color: _getCategoryColor(
+            context,
+            item.category,
+          ).withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
@@ -49,8 +52,14 @@ class ShopItemCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _getCategoryColor(context, item.category).withValues(alpha: 0.15),
-                    _getCategoryColor(context, item.category).withValues(alpha: 0.05),
+                    _getCategoryColor(
+                      context,
+                      item.category,
+                    ).withValues(alpha: 0.15),
+                    _getCategoryColor(
+                      context,
+                      item.category,
+                    ).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -277,7 +286,10 @@ class ShopItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _getCategoryColor(context, item.category).withValues(alpha: 0.4),
+            color: _getCategoryColor(
+              context,
+              item.category,
+            ).withValues(alpha: 0.4),
             blurRadius: 12,
             offset: Offset(0, 6),
           ),

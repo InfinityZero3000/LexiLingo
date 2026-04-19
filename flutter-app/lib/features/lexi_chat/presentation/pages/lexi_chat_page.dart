@@ -423,9 +423,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                                 provider.session?.sessionId == s.sessionId;
                             return ListTile(
                               selected: selected,
-                              selectedTileColor: AppColorRoles.primary(isDark).withValues(
-                                alpha: 0.08,
-                              ),
+                              selectedTileColor: AppColorRoles.primary(
+                                isDark,
+                              ).withValues(alpha: 0.08),
                               title: Text(
                                 s.title,
                                 maxLines: 1,
@@ -700,7 +700,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColorRoles.primary(isDark).withValues(alpha: 0.25),
+                          color: AppColorRoles.primary(
+                            isDark,
+                          ).withValues(alpha: 0.25),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -711,7 +713,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                         provider.isSending
                             ? Icons.hourglass_empty_rounded
                             : Icons.send_rounded,
-                        color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
+                        color: isDark
+                            ? AppColors.slate900
+                            : AppColors.surfaceLight,
                         size: 20,
                       ),
                       onPressed: provider.isSending ? null : _sendMessage,
