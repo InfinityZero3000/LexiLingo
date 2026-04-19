@@ -10,6 +10,7 @@ Usage:
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from uuid import uuid4
 
 from app.models.user import User
@@ -26,24 +27,57 @@ from app.core.security import create_access_token, get_password_hash
 @pytest.fixture
 async def roles(db_session: AsyncSession):
     """Create the 3 system roles: user, admin, super_admin."""
-    user_role = Role(
-        name="User", slug="user", level=0,
-        description="Regular user", is_system=True, is_active=True
+    existing_roles = await db_session.execute(
+        select(Role).where(Role.name.in_(["User", "Admin", "Super Admin"]))
     )
-    admin_role = Role(
-        name="Admin", slug="admin", level=1,
-        description="Admin user", is_system=True, is_active=True
-    )
-    super_admin_role = Role(
-        name="Super Admin", slug="super_admin", level=2,
-        description="Super admin user", is_system=True, is_active=True
-    )
-    db_session.add_all([user_role, admin_role, super_admin_role])
+    by_name = {r.name: r for r in existing_roles.scalars().all()}
+
+    if "User" not in by_name:
+        db_session.add(
+            Role(
+                name="User", slug="user", level=0,
+                description="Regular user", is_system=True, is_active=True
+            )
+        )
+    else:
+        by_name["User"].slug = "user"
+        by_name["User"].level = 0
+        by_name["User"].is_active = True
+
+    if "Admin" not in by_name:
+        db_session.add(
+            Role(
+                name="Admin", slug="admin", level=1,
+                description="Admin user", is_system=True, is_active=True
+            )
+        )
+    else:
+        by_name["Admin"].slug = "admin"
+        by_name["Admin"].level = 1
+        by_name["Admin"].is_active = True
+
+    if "Super Admin" not in by_name:
+        db_session.add(
+            Role(
+                name="Super Admin", slug="super_admin", level=2,
+                description="Super admin user", is_system=True, is_active=True
+            )
+        )
+    else:
+        by_name["Super Admin"].slug = "super_admin"
+        by_name["Super Admin"].level = 2
+        by_name["Super Admin"].is_active = True
+
     await db_session.commit()
-    await db_session.refresh(user_role)
-    await db_session.refresh(admin_role)
-    await db_session.refresh(super_admin_role)
-    return {"user": user_role, "admin": admin_role, "super_admin": super_admin_role}
+    persisted_roles = await db_session.execute(
+        select(Role).where(Role.name.in_(["User", "Admin", "Super Admin"]))
+    )
+    persisted_by_name = {r.name: r for r in persisted_roles.scalars().all()}
+    return {
+        "user": persisted_by_name["User"],
+        "admin": persisted_by_name["Admin"],
+        "super_admin": persisted_by_name["Super Admin"],
+    }
 
 
 # ============================================================================
@@ -53,72 +87,112 @@ async def roles(db_session: AsyncSession):
 @pytest.fixture
 async def regular_user(db_session: AsyncSession, roles):
     """Create a regular user (level 0)."""
-    user = User(
-        email="regular@test.com",
-        username="regular_user",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
-        display_name="Regular User",
-        is_active=True,
-        is_verified=True,
-        role_id=roles["user"].id,
-    )
-    db_session.add(user)
+    existing = await db_session.execute(select(User).where(User.email == "regular@test.com"))
+    user = existing.scalar_one_or_none()
+    if user is None:
+        user = User(
+            id=uuid4(),
+            email="regular@test.com",
+            username="regular_user",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            display_name="Regular User",
+            is_active=True,
+            is_verified=True,
+            role_id=roles["user"].id,
+        )
+        db_session.add(user)
+    else:
+        user.username = "regular_user"
+        user.display_name = "Regular User"
+        user.hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu"
+        user.is_active = True
+        user.is_verified = True
+        user.role_id = roles["user"].id
     await db_session.commit()
-    await db_session.refresh(user)
     return user
 
 
 @pytest.fixture
 async def admin_user(db_session: AsyncSession, roles):
     """Create an admin user (level 1)."""
-    user = User(
-        email="admin@test.com",
-        username="admin_user",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
-        display_name="Admin User",
-        is_active=True,
-        is_verified=True,
-        role_id=roles["admin"].id,
-    )
-    db_session.add(user)
+    existing = await db_session.execute(select(User).where(User.email == "admin@test.com"))
+    user = existing.scalar_one_or_none()
+    if user is None:
+        user = User(
+            id=uuid4(),
+            email="admin@test.com",
+            username="admin_user",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            display_name="Admin User",
+            is_active=True,
+            is_verified=True,
+            role_id=roles["admin"].id,
+        )
+        db_session.add(user)
+    else:
+        user.username = "admin_user"
+        user.display_name = "Admin User"
+        user.hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu"
+        user.is_active = True
+        user.is_verified = True
+        user.role_id = roles["admin"].id
     await db_session.commit()
-    await db_session.refresh(user)
     return user
 
 
 @pytest.fixture
 async def super_admin_user(db_session: AsyncSession, roles):
     """Create a super_admin user (level 2)."""
-    user = User(
-        email="superadmin@test.com",
-        username="super_admin_user",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
-        display_name="Super Admin User",
-        is_active=True,
-        is_verified=True,
-        role_id=roles["super_admin"].id,
-    )
-    db_session.add(user)
+    existing = await db_session.execute(select(User).where(User.email == "superadmin@test.com"))
+    user = existing.scalar_one_or_none()
+    if user is None:
+        user = User(
+            id=uuid4(),
+            email="superadmin@test.com",
+            username="super_admin_user",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            display_name="Super Admin User",
+            is_active=True,
+            is_verified=True,
+            role_id=roles["super_admin"].id,
+        )
+        db_session.add(user)
+    else:
+        user.username = "super_admin_user"
+        user.display_name = "Super Admin User"
+        user.hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu"
+        user.is_active = True
+        user.is_verified = True
+        user.role_id = roles["super_admin"].id
     await db_session.commit()
-    await db_session.refresh(user)
     return user
 
 
 @pytest.fixture
 async def another_admin_user(db_session: AsyncSession, roles):
     """Create a second admin user for cross-admin tests."""
-    user = User(
-        email="admin2@test.com",
-        username="admin_user_2",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
-        display_name="Admin User 2",
-        is_active=True,
-        is_verified=True,
-        role_id=roles["admin"].id,
-    )
-    db_session.add(user)
+    existing = await db_session.execute(select(User).where(User.email == "admin2@test.com"))
+    user = existing.scalar_one_or_none()
+    if user is None:
+        user = User(
+            id=uuid4(),
+            email="admin2@test.com",
+            username="admin_user_2",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            display_name="Admin User 2",
+            is_active=True,
+            is_verified=True,
+            role_id=roles["admin"].id,
+        )
+        db_session.add(user)
+    else:
+        user.username = "admin_user_2"
+        user.display_name = "Admin User 2"
+        user.hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu"
+        user.is_active = True
+        user.is_verified = True
+        user.role_id = roles["admin"].id
     await db_session.commit()
-    await db_session.refresh(user)
     return user
 
 

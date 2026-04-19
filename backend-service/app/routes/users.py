@@ -30,6 +30,55 @@ from app.services.rank_service import calculate_rank as calc_rank
 router = APIRouter()
 
 
+def _safe_str(value, default: str) -> str:
+    if value is None:
+        return default
+    text = str(value).strip()
+    return text if text else default
+
+
+def _safe_int(value, default: int) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _serialize_user_response(user: User) -> UserResponse:
+    normalized_level = _safe_str(getattr(user, "level", None), "A1").upper()
+    role_slug = _safe_str(getattr(user, "role_slug", None), "user")
+    role_level = _safe_int(getattr(user, "role_level", None), 0)
+
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        display_name=getattr(user, "display_name", None),
+        native_language=_safe_str(getattr(user, "native_language", None), "vi"),
+        target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        level=normalized_level,
+        avatar_url=getattr(user, "avatar_url", None),
+        is_active=bool(getattr(user, "is_active", True)),
+        is_verified=bool(getattr(user, "is_verified", False)),
+        is_onboarding_completed=bool(
+            getattr(user, "is_onboarding_completed", False),
+        ),
+        created_at=getattr(user, "created_at"),
+        last_login=getattr(user, "last_login", None),
+        cefr_level=_safe_str(getattr(user, "cefr_level", None), normalized_level),
+        total_xp=_safe_int(getattr(user, "total_xp", None), 0),
+        numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
+        rank=_safe_str(getattr(user, "rank", None), "bronze"),
+        role_id=getattr(user, "role_id", None),
+        role_slug=role_slug,
+        role_level=role_level,
+        is_admin=role_level >= 50,
+        is_super_admin=role_level >= 100,
+    )
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user)
@@ -39,7 +88,7 @@ async def get_current_user_profile(
     
     Requires authentication.
     """
-    return current_user
+    return _serialize_user_response(current_user)
 
 
 @router.put("/me", response_model=UserResponse)
@@ -62,7 +111,7 @@ async def update_current_user_profile(
     await db.commit()
     await db.refresh(current_user)
     
-    return current_user
+    return _serialize_user_response(current_user)
 
 
 @router.delete("/me", response_model=MessageResponse)
@@ -108,7 +157,7 @@ async def get_user_by_id(
             detail="User not found"
         )
     
-    return user
+    return _serialize_user_response(user)
 
 
 # =====================

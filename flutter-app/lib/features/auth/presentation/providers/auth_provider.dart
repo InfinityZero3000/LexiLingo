@@ -72,6 +72,15 @@ class AuthProvider extends ChangeNotifier {
       _isCheckingAuth = true;
       notifyListeners();
 
+      // Web redirect flow: if we just came back from Google, finish backend
+      // sign-in before checking stored session.
+      final pendingGoogleIdToken =
+          await googleSignInService.consumePendingWebRedirectIdToken();
+      if (pendingGoogleIdToken != null) {
+        await _authenticateWithGoogleIdToken(pendingGoogleIdToken);
+        return;
+      }
+
       // Fast-path: if there are no local tokens, skip network call completely.
       final hasStoredSession = await authRepository.isAuthenticated();
       if (!hasStoredSession) {
@@ -124,35 +133,27 @@ class AuthProvider extends ChangeNotifier {
 
       // Get real ID token from Google Sign-In
       final idToken = await googleSignInService.signIn();
-      if (idToken == null) {
-        _errorMessage = 'Google sign in was cancelled';
+      if (idToken == GoogleSignInService.redirectInProgressMarker) {
+        // Redirect flow has started, browser will navigate away.
+        _errorMessage = null;
         _isLoading = false;
         notifyListeners();
         return;
       }
 
-      debugPrint('Google ID token obtained (length: ${idToken.length})');
+      if (idToken == null) {
+        final signInError = googleSignInService.lastError?.toLowerCase();
+        if (signInError == null || signInError.contains('cancelled')) {
+          _errorMessage = 'Google sign in was cancelled';
+        } else {
+          _errorMessage = _parseErrorMessage(googleSignInService.lastError!);
+        }
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
 
-      final result = await signInWithGoogleUseCase(
-        SignInWithGoogleParams(idToken: idToken),
-      );
-
-      result.fold(
-        (failure) {
-          _errorMessage = _getFailureMessage(failure);
-          _user = null;
-          _isJustLoggedIn = false;
-        },
-        (user) {
-          _user = user;
-          _errorMessage = null;
-          _isJustLoggedIn = true; // Set flag for welcome screen
-          // Register FCM token with backend after successful Google sign-in
-          FirebaseMessagingService.instance.registerTokenWithBackend(
-            sl<ApiClient>(),
-          );
-        },
-      );
+      await _authenticateWithGoogleIdToken(idToken);
     } catch (e) {
       debugPrint("Google sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -162,6 +163,30 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _authenticateWithGoogleIdToken(String idToken) async {
+    debugPrint('Google ID token obtained (length: ${idToken.length})');
+
+    final result = await signInWithGoogleUseCase(
+      SignInWithGoogleParams(idToken: idToken),
+    );
+
+    result.fold(
+      (failure) {
+        _errorMessage = _getFailureMessage(failure);
+        _user = null;
+        _isJustLoggedIn = false;
+      },
+      (user) {
+        _user = user;
+        _errorMessage = null;
+        _isJustLoggedIn = true;
+        FirebaseMessagingService.instance.registerTokenWithBackend(
+          sl<ApiClient>(),
+        );
+      },
+    );
   }
 
   // Sign in with Facebook
@@ -435,19 +460,34 @@ class AuthProvider extends ChangeNotifier {
 
   // Parse error messages to user-friendly format
   String _parseErrorMessage(String error) {
+    final normalized = error.toLowerCase();
+
+    if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+      return 'Server is not responding in time. Please try again in a moment.';
+    }
+    if (normalized.contains('/users/me failed')) {
+      return 'Login succeeded but profile sync failed. Please try again.';
+    }
+    if (normalized.contains('internal server error')) {
+      return 'Server error occurred. Please try again later.';
+    }
+    if (normalized.contains('google_server_client_id')) {
+      return 'Google sign-in config is missing. Please contact support.';
+    }
+
     if (error.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (error.contains('cancelled') || error.contains('canceled')) {
+    } else if (normalized.contains('cancelled') || normalized.contains('canceled')) {
       return 'Sign in was cancelled.';
-    } else if (error.contains('email')) {
+    } else if (normalized.contains('email')) {
       return 'Invalid email address.';
-    } else if (error.contains('password')) {
+    } else if (normalized.contains('password')) {
       return 'Invalid password.';
-    } else if (error.contains('user-not-found')) {
+    } else if (normalized.contains('user-not-found')) {
       return 'No account found with this email.';
-    } else if (error.contains('wrong-password')) {
+    } else if (normalized.contains('wrong-password')) {
       return 'Incorrect password.';
-    } else if (error.contains('too-many-requests')) {
+    } else if (normalized.contains('too-many-requests')) {
       return 'Too many attempts. Please try again later.';
     } else {
       return 'An error occurred. Please try again.';
@@ -459,6 +499,13 @@ class AuthProvider extends ChangeNotifier {
     if (failure is AuthFailure) {
       return failure.message;
     } else if (failure is ServerFailure) {
+      final normalized = failure.message.toLowerCase();
+      if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+        return 'Server timeout. Please check server status and try again.';
+      }
+      if (normalized.contains('/users/me failed')) {
+        return 'Signed in, but profile sync timed out. Please reopen the app.';
+      }
       return failure.message;
     } else if (failure is NetworkFailure) {
       return 'Network error. Please check your internet connection.';

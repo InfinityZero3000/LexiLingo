@@ -5,6 +5,7 @@ import '../../../../core/network/response_models.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_backend_datasource.dart';
+import '../models/auth_models.dart';
 
 /// Auth repository implementation using backend API
 class AuthRepositoryImpl implements AuthRepository {
@@ -43,9 +44,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       // Login and save tokens (done in datasource)
-      await backendDataSource.login(email: email, password: password);
+      final loginResponse = await backendDataSource.login(
+        email: email,
+        password: password,
+      );
       // Fetch full user profile after login
-      final user = await backendDataSource.getCurrentUser();
+      UserEntity user;
+      try {
+        user = await backendDataSource.getCurrentUser();
+      } on ServerException {
+        // Backend profile endpoint can timeout while auth succeeds.
+        user = _buildFallbackUser(loginResponse);
+      }
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
@@ -64,9 +74,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> loginWithGoogle(String idToken) async {
     try {
       // Login and save tokens (done in datasource)
-      await backendDataSource.loginWithGoogle(idToken);
+      final loginResponse = await backendDataSource.loginWithGoogle(idToken);
       // Fetch full user profile after login
-      final user = await backendDataSource.getCurrentUser();
+      UserEntity user;
+      try {
+        user = await backendDataSource.getCurrentUser();
+      } on ServerException {
+        user = _buildFallbackUser(loginResponse, provider: 'google');
+      }
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
@@ -83,9 +98,16 @@ class AuthRepositoryImpl implements AuthRepository {
   ) async {
     try {
       // Login and save tokens
-      await backendDataSource.loginWithFacebook(firebaseIdToken);
+      final loginResponse = await backendDataSource.loginWithFacebook(
+        firebaseIdToken,
+      );
       // Fetch full user profile after login
-      final user = await backendDataSource.getCurrentUser();
+      UserEntity user;
+      try {
+        user = await backendDataSource.getCurrentUser();
+      } on ServerException {
+        user = _buildFallbackUser(loginResponse, provider: 'facebook');
+      }
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
@@ -245,5 +267,21 @@ class AuthRepositoryImpl implements AuthRepository {
       default:
         return ServerFailure(e.message);
     }
+  }
+
+  UserEntity _buildFallbackUser(
+    LoginResponse response, {
+    String provider = 'local',
+  }) {
+    final now = DateTime.now();
+    return UserEntity(
+      id: response.userId,
+      email: response.email,
+      username: response.username,
+      displayName: response.username,
+      provider: provider,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 }
