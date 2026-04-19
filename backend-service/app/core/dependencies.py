@@ -58,7 +58,14 @@ async def get_current_user(
         try:
             user = await get_or_create_user_from_claims(db, claims)
             if user and user.is_active:
-                return user
+                # Ensure role relationship is eagerly loaded to avoid async lazy-load
+                # errors when response serializers access role_slug/role_level.
+                result = await db.execute(
+                    select(User)
+                    .where(User.id == user.id)
+                    .options(selectinload(User.role))
+                )
+                return result.scalar_one_or_none() or user
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -111,7 +118,13 @@ async def get_current_user_optional(
         try:
             user = await get_or_create_user_from_claims(db, claims)
             if user and user.is_active:
-                return user
+                # Keep behavior consistent with required auth dependency.
+                result = await db.execute(
+                    select(User)
+                    .where(User.id == user.id)
+                    .options(selectinload(User.role))
+                )
+                return result.scalar_one_or_none() or user
         except ValueError:
             pass  # Invalid token, return None
     
