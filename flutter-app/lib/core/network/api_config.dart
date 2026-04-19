@@ -26,6 +26,11 @@ class ApiConfig {
   static String get baseUrl {
     final envUrl = _normalizedEnvUrl('API_BASE_URL');
     if (envUrl != null) {
+      if (_mustUseProductionBackend && _isTransientFallbackUrl(envUrl)) {
+        // In production hosts, never allow fallback infra URLs to become
+        // primary API endpoints due to env drift.
+        return AppConstants.apiBaseUrl;
+      }
       if (!_mustUseProductionBackend || !_isLoopbackUrl(envUrl)) {
         return envUrl;
       }
@@ -51,6 +56,9 @@ class ApiConfig {
   static String get aiServiceUrl {
     final envUrl = _normalizedEnvUrl('AI_SERVICE_URL');
     if (envUrl != null) {
+      if (_mustUseProductionBackend && _isTransientFallbackUrl(envUrl)) {
+        return AppConstants.aiServiceUrl;
+      }
       if (!_mustUseProductionBackend || !_isLoopbackUrl(envUrl)) {
         return envUrl;
       }
@@ -111,6 +119,16 @@ class ApiConfig {
         host == '127.0.0.1' ||
         host == '0.0.0.0' ||
         host == '::1';
+  }
+
+  static bool _isTransientFallbackUrl(String value) {
+    try {
+      final host = Uri.parse(value).host.toLowerCase();
+      return host.endsWith('.onrender.com') ||
+          host.endsWith('.trycloudflare.com');
+    } catch (_) {
+      return false;
+    }
   }
 
   static String? _readEnv(String key) {

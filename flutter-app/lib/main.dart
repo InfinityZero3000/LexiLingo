@@ -79,12 +79,10 @@ void main() async {
   };
 
   try {
-    // On web, rely on safe defaults/dart-defines to avoid hidden-file asset issues.
-    if (!kIsWeb) {
-      // Load .env.production for release builds, .env for dev
-      final envFile = kReleaseMode ? '.env.production' : '.env';
-      await dotenv.load(fileName: envFile);
-    }
+    // Load .env.production for release builds, .env for dev on all platforms
+    // so Web and mobile use the same production config source.
+    final envFile = kReleaseMode ? '.env.production' : '.env';
+    await dotenv.load(fileName: envFile);
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
   }

@@ -72,6 +72,15 @@ class AuthProvider extends ChangeNotifier {
       _isCheckingAuth = true;
       notifyListeners();
 
+      // Web redirect flow: if we just came back from Google, finish backend
+      // sign-in before checking stored session.
+      final pendingGoogleIdToken =
+          await googleSignInService.consumePendingWebRedirectIdToken();
+      if (pendingGoogleIdToken != null) {
+        await _authenticateWithGoogleIdToken(pendingGoogleIdToken);
+        return;
+      }
+
       // Fast-path: if there are no local tokens, skip network call completely.
       final hasStoredSession = await authRepository.isAuthenticated();
       if (!hasStoredSession) {
@@ -124,6 +133,14 @@ class AuthProvider extends ChangeNotifier {
 
       // Get real ID token from Google Sign-In
       final idToken = await googleSignInService.signIn();
+      if (idToken == GoogleSignInService.redirectInProgressMarker) {
+        // Redirect flow has started, browser will navigate away.
+        _errorMessage = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
       if (idToken == null) {
         _errorMessage = 'Google sign in was cancelled';
         _isLoading = false;
@@ -131,28 +148,7 @@ class AuthProvider extends ChangeNotifier {
         return;
       }
 
-      debugPrint('Google ID token obtained (length: ${idToken.length})');
-
-      final result = await signInWithGoogleUseCase(
-        SignInWithGoogleParams(idToken: idToken),
-      );
-
-      result.fold(
-        (failure) {
-          _errorMessage = _getFailureMessage(failure);
-          _user = null;
-          _isJustLoggedIn = false;
-        },
-        (user) {
-          _user = user;
-          _errorMessage = null;
-          _isJustLoggedIn = true; // Set flag for welcome screen
-          // Register FCM token with backend after successful Google sign-in
-          FirebaseMessagingService.instance.registerTokenWithBackend(
-            sl<ApiClient>(),
-          );
-        },
-      );
+      await _authenticateWithGoogleIdToken(idToken);
     } catch (e) {
       debugPrint("Google sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -162,6 +158,30 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _authenticateWithGoogleIdToken(String idToken) async {
+    debugPrint('Google ID token obtained (length: ${idToken.length})');
+
+    final result = await signInWithGoogleUseCase(
+      SignInWithGoogleParams(idToken: idToken),
+    );
+
+    result.fold(
+      (failure) {
+        _errorMessage = _getFailureMessage(failure);
+        _user = null;
+        _isJustLoggedIn = false;
+      },
+      (user) {
+        _user = user;
+        _errorMessage = null;
+        _isJustLoggedIn = true;
+        FirebaseMessagingService.instance.registerTokenWithBackend(
+          sl<ApiClient>(),
+        );
+      },
+    );
   }
 
   // Sign in with Facebook

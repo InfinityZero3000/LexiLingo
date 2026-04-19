@@ -118,6 +118,24 @@ The app connects to:
 - **Backend Service** (port 8000) — User, courses, progress
 - **AI Service** (port 8001) — Chat, analytics
 
+## Vercel Production Deploy Checklist
+
+Use this checklist to prevent Google OAuth and env drift in production/preview deploys.
+
+1. `flutter-app/.env.production` is the single source of production config.
+2. `flutter-app/web/index.html` `google-signin-client_id` matches `GOOGLE_SERVER_CLIENT_ID` in `.env.production`.
+3. `flutter-app/lib/firebase_options.dart` points to the same Firebase project used by production OAuth credentials.
+4. Firebase Console -> Authentication -> Settings -> Authorized domains contains:
+    - production domain (for example your custom domain)
+    - Vercel preview domain pattern being used for testing
+5. Deploy with the Flutter Vercel script (prebuilt flow):
+
+```bash
+bash scripts/deploy-flutter-vercel.sh
+```
+
+This script enforces `.env.production` usage for release build, validates Google client ID sync, and deploys using `vercel deploy --prebuilt --prod`.
+
 ---
 
 ## Platforms

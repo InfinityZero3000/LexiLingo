@@ -16,6 +16,16 @@ map "$status|$request_uri" $log_security {
     ~^429\|/api/v1/auth/ 1;
 }
 
+map $http_origin $cors_allow_origin {
+    default "";
+    ~^https?://localhost(:\d+)?$ $http_origin;
+    ~^https?://127\.0\.0\.1(:\d+)?$ $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$ $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?$ $http_origin;
+    ~^https?://.*\.devtunnels\.ms(:\d+)?$ $http_origin;
+}
+
 log_format main_json escape=json
     '{"time":"$time_iso8601","remote_addr":"$remote_addr","host":"$host","method":"$request_method","uri":"$request_uri","status":$status,"request_time":$request_time,"upstream_time":"$upstream_response_time","bytes_sent":$body_bytes_sent,"referer":"$http_referer","user_agent":"$http_user_agent","request_id":"$request_id"}';
 
@@ -93,12 +103,23 @@ server {
     add_header X-Content-Type-Options nosniff always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Access-Control-Allow-Origin $cors_allow_origin always;
+    add_header Access-Control-Allow-Credentials "true" always;
+    add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Request-Id" always;
+    add_header Access-Control-Expose-Headers "X-Request-Id,X-RateLimit-Remaining-Minute,X-RateLimit-Remaining-Day" always;
+    add_header Access-Control-Max-Age 3600 always;
+    add_header Vary "Origin" always;
 
     client_max_body_size 10m;
     limit_req_status 429;
     limit_conn conn_per_ip 30;
 
     error_page 429 = @rate_limited;
+
+    if ($request_method = OPTIONS) {
+        return 204;
+    }
 
     location @rate_limited {
         default_type application/json;
