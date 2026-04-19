@@ -114,7 +114,9 @@ class GoogleSignInService {
     }
   }
 
-  Future<String?> _extractGoogleIdTokenAndSignOut(UserCredential userCredential) async {
+  Future<String?> _extractGoogleIdTokenAndSignOut(
+    UserCredential userCredential,
+  ) async {
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
     final googleIdToken = oauthCredential?.idToken;
@@ -175,7 +177,10 @@ class GoogleSignInService {
       return auth.idToken;
     } on PlatformException catch (e) {
       _lastError = _mapMobileGoogleError(e);
-      logError(_tag, 'Google mobile sign-in PlatformException: ${e.code} ${e.message}');
+      logError(
+        _tag,
+        'Google mobile sign-in PlatformException: ${e.code} ${e.message}',
+      );
       return null;
     }
   }

@@ -146,7 +146,7 @@ class LeaderboardPodium extends StatelessWidget {
                 border: Border.all(color: color, width: 3),
                 color: entry != null
                     ? (entry.isCurrentUser
-                      ? primaryColor.withValues(alpha: 0.18)
+                          ? primaryColor.withValues(alpha: 0.18)
                           : Colors.grey[200])
                     : Colors.grey[200],
                 boxShadow: [
@@ -219,7 +219,7 @@ class LeaderboardPodium extends StatelessWidget {
                 ? FontWeight.bold
                 : FontWeight.w500,
             color: entry?.isCurrentUser == true
-              ? primaryColor
+                ? primaryColor
                 : AppColors.textDark,
           ),
           maxLines: 1,
@@ -274,7 +274,10 @@ class LeaderboardPodium extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialAvatar(BuildContext context, LeaderboardEntryEntity entry) {
+  Widget _buildInitialAvatar(
+    BuildContext context,
+    LeaderboardEntryEntity entry,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Text(
@@ -284,7 +287,9 @@ class LeaderboardPodium extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
+          color: entry.isCurrentUser
+              ? AppColorRoles.primary(isDark)
+              : Colors.grey[600],
         ),
       ),
     );
@@ -362,10 +367,10 @@ class LeaderboardEntryRow extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 color: entry.isCurrentUser
-                  ? primaryColor.withValues(alpha: 0.2)
+                    ? primaryColor.withValues(alpha: 0.2)
                     : Colors.grey[200],
                 border: entry.isCurrentUser
-                  ? Border.all(color: primaryColor, width: 2)
+                    ? Border.all(color: primaryColor, width: 2)
                     : null,
               ),
               child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
@@ -396,7 +401,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: entry.isCurrentUser
-                              ? primaryColor
+                                ? primaryColor
                                 : (isDark
                                       ? AppColors.textInverted
                                       : AppColors.textDark),
@@ -469,7 +474,9 @@ class LeaderboardEntryRow extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser ? AppColorRoles.primary(isDark) : Colors.grey[600],
+          color: entry.isCurrentUser
+              ? AppColorRoles.primary(isDark)
+              : Colors.grey[600],
         ),
       ),
     );

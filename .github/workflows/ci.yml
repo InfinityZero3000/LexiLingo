@@ -83,7 +83,6 @@ jobs:
               echo "PostgreSQL not ready after retries (last status: $status)" >&2
               exit 1
             fi
-
             sleep 1
           done
 

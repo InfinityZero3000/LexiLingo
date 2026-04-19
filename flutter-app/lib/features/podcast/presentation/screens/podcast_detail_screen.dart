@@ -263,7 +263,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                         width: 160,
                         height: 160,
                         fit: BoxFit.cover,
-                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
+                        webHtmlElementStrategy: WebHtmlElementStrategy.never,
                         errorBuilder: (_, __, ___) =>
                             _buildArtworkFallback(cefrColor),
                       )
