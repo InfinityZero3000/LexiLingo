@@ -132,4 +132,5 @@ printf "${GREEN}╚════════════════════�
 printf "${BLUE}Post-deploy quick checks:${NC}\n"
 printf "  1. Open login page and test Google sign-in popup/redirect\n"
 printf "  2. Confirm API base URL in browser console is production\n"
-printf "  3. Verify Firebase authorized domains include your Vercel domain\n\n"
+printf "  3. Verify Firebase authorized domains include lexilingo.me and www.lexilingo.me\n"
+printf "  4. Verify Vercel project has custom domains lexilingo.me and www.lexilingo.me\n\n"
