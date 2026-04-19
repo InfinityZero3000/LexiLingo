@@ -25,6 +25,45 @@ from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorRe
 
 router = APIRouter()
 
+
+def _safe_str(value, default: str) -> str:
+    if isinstance(value, MagicMock) or value is None:
+        return default
+    text = str(value).strip()
+    return text if text else default
+
+
+def _build_user_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        display_name=user.display_name,
+        native_language=_safe_str(getattr(user, "native_language", None), "vi"),
+        target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        level=_safe_str(getattr(user, "level", None), "A1"),
+        avatar_url=getattr(user, "avatar_url", None),
+        is_active=bool(getattr(user, "is_active", True)),
+        is_verified=bool(getattr(user, "is_verified", False)),
+        is_onboarding_completed=bool(
+            getattr(user, "is_onboarding_completed", False)
+        ),
+        created_at=getattr(user, "created_at", datetime.now(timezone.utc)),
+        last_login=getattr(user, "last_login", None),
+        cefr_level=_safe_str(
+            getattr(user, "cefr_level", None) or getattr(user, "level", None),
+            "A1",
+        ),
+        total_xp=int(getattr(user, "total_xp", 0) or 0),
+        numeric_level=int(getattr(user, "numeric_level", 1) or 1),
+        rank=_safe_str(getattr(user, "rank", None), "bronze"),
+        role_id=getattr(user, "role_id", None),
+        role_slug=getattr(user, "role_slug", None),
+        role_level=int(getattr(user, "role_level", 0) or 0),
+        is_admin=bool(getattr(user, "is_admin", False)),
+        is_super_admin=bool(getattr(user, "is_super_admin", False)),
+    )
+
 # Pre-computed bcrypt hash used when a login email is not found.
 # Always running bcrypt ensures the response time is the same whether the email
 # exists or not, preventing user enumeration via timing side-channels.
@@ -118,8 +157,9 @@ async def register(
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    
-    return user
+
+    # Return normalized payload to avoid ResponseValidationError on optional/computed fields.
+    return _build_user_response(user)
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -284,41 +324,7 @@ async def get_current_user_via_auth(
     Note: This is an alias for /users/me for backward compatibility.
     Requires authentication.
     """
-    def _safe_str(value, default: str) -> str:
-        if isinstance(value, MagicMock) or value is None:
-            return default
-        text = str(value).strip()
-        return text if text else default
-
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        username=current_user.username,
-        display_name=current_user.display_name,
-        native_language=_safe_str(getattr(current_user, "native_language", None), "vi"),
-        target_language=_safe_str(getattr(current_user, "target_language", None), "en"),
-        level=_safe_str(getattr(current_user, "level", None), "A1"),
-        avatar_url=getattr(current_user, "avatar_url", None),
-        is_active=bool(getattr(current_user, "is_active", True)),
-        is_verified=bool(getattr(current_user, "is_verified", False)),
-        is_onboarding_completed=bool(
-            getattr(current_user, "is_onboarding_completed", False)
-        ),
-        created_at=getattr(current_user, "created_at", datetime.now(timezone.utc)),
-        last_login=getattr(current_user, "last_login", None),
-        cefr_level=_safe_str(
-            getattr(current_user, "cefr_level", None) or getattr(current_user, "level", None),
-            "A1",
-        ),
-        total_xp=int(getattr(current_user, "total_xp", 0) or 0),
-        numeric_level=int(getattr(current_user, "numeric_level", 1) or 1),
-        rank=_safe_str(getattr(current_user, "rank", None), "bronze"),
-        role_id=getattr(current_user, "role_id", None),
-        role_slug=getattr(current_user, "role_slug", None),
-        role_level=int(getattr(current_user, "role_level", 0) or 0),
-        is_admin=bool(getattr(current_user, "is_admin", False)),
-        is_super_admin=bool(getattr(current_user, "is_super_admin", False)),
-    )
+    return _build_user_response(current_user)
 
 
 @router.post("/logout", response_model=MessageResponse)
