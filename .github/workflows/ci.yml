@@ -180,3 +180,87 @@ jobs:
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib/
+
+  # ──────────────────────────────────────────────
+  # Flutter Android — release build validation
+  # ──────────────────────────────────────────────
+  flutter-android-release:
+    name: Flutter Android Release Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: flutter-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create firebase_options.dart from example
+        run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+
+      - name: Create .env asset placeholder
+        run: touch .env
+
+      - name: Create .env.production asset placeholder
+        run: touch .env.production
+
+      - name: Prepare Android signing and Firebase files
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ANDROID_UPLOAD_KEYSTORE_BASE64:-}" ] || \
+             [ -z "${ANDROID_KEYSTORE_PASSWORD:-}" ] || \
+             [ -z "${ANDROID_KEY_ALIAS:-}" ] || \
+             [ -z "${ANDROID_KEY_PASSWORD:-}" ] || \
+             [ -z "${ANDROID_GOOGLE_SERVICES_JSON:-}" ]; then
+            echo "Missing required Android release secrets." >&2
+            exit 1
+          fi
+
+          mkdir -p android/app
+          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+
+          cat > android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
+
+          printf '%s' "$ANDROID_GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK (release)
+        run: flutter build apk --release --no-pub
+
+      - name: Build App Bundle (release)
+        run: flutter build appbundle --release --no-pub
+
+      - name: Upload Android artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: |
+            flutter-app/build/app/outputs/flutter-apk/*.apk
+            flutter-app/build/app/outputs/bundle/release/*.aab
