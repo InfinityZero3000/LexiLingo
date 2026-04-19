@@ -62,14 +62,14 @@ SERVICES = {
 URL_SUMMARY = {
     "development": {
         "backend_primary":  "http://localhost:8000/api/v1",
-        "backend_fallback": "https://lexilingo-4gu6.onrender.com/api/v1",
+        "backend_fallback": "https://api.lexilingo.me/api/v1",
         "ai_primary":       "http://localhost:8001/api/v1",
-        "ai_fallback":      "https://enable-tell-memphis-wing.trycloudflare.com/api/v1",
+        "ai_fallback":      "https://api.lexilingo.me/api/v1",
     },
     "production": {
-        "backend_primary":  "https://lexilingo-4gu6.onrender.com/api/v1",
+        "backend_primary":  "https://api.lexilingo.me/api/v1",
         "backend_fallback": "(none — prod only)",
-        "ai_primary":       "https://enable-tell-memphis-wing.trycloudflare.com/api/v1",
+        "ai_primary":       "https://api.lexilingo.me/api/v1",
         "ai_fallback":      "(none — prod only)",
     },
 }
@@ -160,6 +160,20 @@ def switch_env(service_name: str, env_type: str) -> bool:
         shutil.copy2(target, backup)
 
     shutil.copy2(template, target)
+
+    # Optional: overlay secrets file into active .env (gitignored)
+    secrets_template = service_path / f".env.{env_type}.secrets"
+    if secrets_template.exists():
+        base_content = target.read_text()
+        secrets_content = secrets_template.read_text()
+        merged = (
+            base_content.rstrip()
+            + "\n\n# ===== Loaded from .env.{env}.secrets =====\n".replace("{env}", env_type)
+            + secrets_content.strip()
+            + "\n"
+        )
+        target.write_text(merged)
+
     return True
 
 
@@ -205,13 +219,18 @@ def cmd_check():
     print(f"{bold('Templates:')}\n")
     for name, svc in SERVICES.items():
         path = svc["path"]
-        dev_ok  = "✓" if (path / ".env.development").exists() else "✗"
-        prod_ok = "✓" if (path / ".env.production").exists()  else "✗"
-        dev_c   = GREEN if dev_ok == "✓" else RED
-        prod_c  = GREEN if prod_ok == "✓" else RED
-        print(f"  {svc['label']:35s}  "
-              f".env.development {colored(dev_ok, dev_c)}   "
-              f".env.production {colored(prod_ok, prod_c)}")
+        dev_ok = "✓" if (path / ".env.development").exists() else "✗"
+        prod_ok = "✓" if (path / ".env.production").exists() else "✗"
+        prod_secret_ok = "✓" if (path / ".env.production.secrets").exists() else "✗"
+        dev_c = GREEN if dev_ok == "✓" else RED
+        prod_c = GREEN if prod_ok == "✓" else RED
+        prod_secret_c = GREEN if prod_secret_ok == "✓" else DIM
+        print(
+            f"  {svc['label']:35s}  "
+            f".env.development {colored(dev_ok, dev_c)}   "
+            f".env.production {colored(prod_ok, prod_c)}   "
+            f".env.production.secrets {colored(prod_secret_ok, prod_secret_c)}"
+        )
     print()
 
 

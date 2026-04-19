@@ -124,5 +124,8 @@ firebase-debug.log
 .env*.local
 *plist
 
+# Keep tracked Firebase options wrapper (contains public config, not private keys)
+!lib/firebase_options.dart
+
 # coverage
 coverage/
