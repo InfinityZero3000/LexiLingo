@@ -124,9 +124,7 @@ class GamificationProvider extends ChangeNotifier {
       final response = await _apiClient.get('/gamification/shop');
       final data = _extractData(response);
       if (_isSuccessResponse(response) && data is List) {
-        _shopItems = data
-            .map((e) => ShopItemEntity.fromJson(e))
-            .toList();
+        _shopItems = data.map((e) => ShopItemEntity.fromJson(e)).toList();
       }
     } catch (e) {
       _shopError = e.toString();

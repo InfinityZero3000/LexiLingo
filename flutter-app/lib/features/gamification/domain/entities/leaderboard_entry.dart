@@ -27,7 +27,12 @@ class LeaderboardEntryEntity extends Equatable {
       rank: json['rank'] ?? 0,
       userId: (json['user_id'] ?? json['userId'] ?? '').toString(),
       username: json['username'] ?? '',
-      displayName: (json['display_name'] ?? json['displayName'] ?? json['username'] ?? '').toString(),
+      displayName:
+          (json['display_name'] ??
+                  json['displayName'] ??
+                  json['username'] ??
+                  '')
+              .toString(),
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
       lessonsCompleted:

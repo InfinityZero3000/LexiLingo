@@ -51,7 +51,6 @@ def _cache_disabled() -> bool:
         return True
     return False
 
-
 def _allow_cache_when_disabled(key: str) -> bool:
     """Allow select stateful keys in tests even when response-cache is disabled."""
     # Social location sharing relies on cache as source-of-truth for nearby users.

@@ -15,10 +15,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 class MainScreen extends StatefulWidget {
   final int initialIndex;
 
-  const MainScreen({
-    super.key,
-    this.initialIndex = 0,
-  });
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();

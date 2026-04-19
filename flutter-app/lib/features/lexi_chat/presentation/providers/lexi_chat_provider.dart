@@ -651,7 +651,9 @@ class LexiChatProvider extends ChangeNotifier {
   String _chatFirstPageCacheKey(String sessionId) =>
       'chat:session:$sessionId:page:first';
 
-  Future<_CachedChatPage?> _getCachedFirstPage(LexiSessionSummary summary) async {
+  Future<_CachedChatPage?> _getCachedFirstPage(
+    LexiSessionSummary summary,
+  ) async {
     final raw = await _encryptedCache.getMap(
       userScope: summary.userId,
       namespace: _chatNamespace,
@@ -757,7 +759,8 @@ class _CachedChatPage {
         role: m['role']?.toString() ?? 'assistant',
         content: m['content']?.toString() ?? '',
         timestamp:
-            DateTime.tryParse(m['timestamp']?.toString() ?? '') ?? DateTime.now(),
+            DateTime.tryParse(m['timestamp']?.toString() ?? '') ??
+            DateTime.now(),
         audioBase64: m['audio_base64']?.toString(),
         corrections: corrections,
         linkedConcepts: (m['linked_concepts'] as List<dynamic>? ?? const [])
@@ -765,8 +768,8 @@ class _CachedChatPage {
             .toList(),
         vietnameseHint: m['vietnamese_hint']?.toString(),
         scores: m['scores'] is Map
-          ? Map<String, dynamic>.from(m['scores'] as Map)
-          : null,
+            ? Map<String, dynamic>.from(m['scores'] as Map)
+            : null,
         syncStatus: m['sync_status']?.toString() ?? 'synced',
         clientRequestId: m['client_request_id']?.toString(),
       );

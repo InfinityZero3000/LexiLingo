@@ -98,7 +98,9 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColorRoles.primary(isDark).withValues(alpha: 0.7)
+                            ? AppColorRoles.primary(
+                                isDark,
+                              ).withValues(alpha: 0.7)
                             : AppColors.primary,
                         shape: BoxShape.circle,
                       ),

@@ -95,7 +95,11 @@ class StreakModel extends StreakEntity {
       totalDaysActive: totalDaysActive,
       lastActivityDate: json['last_activity_date'],
       freezeCount: freezeCount,
-      isActiveToday: readBool(['is_active_today', 'isActiveToday', 'active_today']),
+      isActiveToday: readBool([
+        'is_active_today',
+        'isActiveToday',
+        'active_today',
+      ]),
       streakAtRisk: readBool(['streak_at_risk', 'streakAtRisk']),
       weeklyActivity: weeklyActivity,
     );

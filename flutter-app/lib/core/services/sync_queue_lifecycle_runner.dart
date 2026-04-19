@@ -107,7 +107,9 @@ class SyncQueueLifecycleRunner {
               return;
             default:
               // Unknown item type: leave queued for later processor support.
-              throw UnsupportedError('Unsupported queue type: ${item.queueType}');
+              throw UnsupportedError(
+                'Unsupported queue type: ${item.queueType}',
+              );
           }
         },
       );

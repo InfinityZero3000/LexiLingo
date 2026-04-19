@@ -86,18 +86,17 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
       whereArgs.add('demo_user_001');
     }
 
-    final countResult = await db.rawQuery(
-      '''
+    final countResult = await db.rawQuery('''
       SELECT COUNT(DISTINCT c.id) as total
       FROM courses c
       LEFT JOIN course_enrollments e ON c.id = e.courseId
       $whereClause
-      ''',
-      whereArgs,
-    );
+      ''', whereArgs);
 
     final total = (countResult.first['total'] as int?) ?? 0;
-    final totalPages = total == 0 ? 0 : ((total + safePageSize - 1) ~/ safePageSize);
+    final totalPages = total == 0
+        ? 0
+        : ((total + safePageSize - 1) ~/ safePageSize);
 
     final rows = await db.rawQuery(
       '''
@@ -134,14 +133,20 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         description: row['description']?.toString(),
         language: 'en',
         level: (row['level'] ?? 'A1').toString(),
-        tags: row['category'] == null ? [] : [row['category'].toString().toLowerCase()],
+        tags: row['category'] == null
+            ? []
+            : [row['category'].toString().toLowerCase()],
         thumbnailUrl: row['imageUrl']?.toString(),
         totalXp: lessonsCount * 50,
         estimatedDuration: lessonsCount * 10,
         totalLessons: lessonsCount,
         isPublished: true,
-        createdAt: DateTime.tryParse(row['createdAt']?.toString() ?? '') ?? DateTime.now(),
-        updatedAt: DateTime.tryParse(row['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+        createdAt:
+            DateTime.tryParse(row['createdAt']?.toString() ?? '') ??
+            DateTime.now(),
+        updatedAt:
+            DateTime.tryParse(row['updatedAt']?.toString() ?? '') ??
+            DateTime.now(),
         isEnrolled: (row['isEnrolled'] as int? ?? 0) == 1,
         userProgress: (row['userProgress'] as num?)?.toDouble(),
       );
@@ -205,14 +210,20 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
       description: course['description']?.toString(),
       language: 'en',
       level: (course['level'] ?? 'A1').toString(),
-      tags: course['category'] == null ? [] : [course['category'].toString().toLowerCase()],
+      tags: course['category'] == null
+          ? []
+          : [course['category'].toString().toLowerCase()],
       thumbnailUrl: course['imageUrl']?.toString(),
       totalXp: ((course['lessonsCount'] as int?) ?? 0) * 50,
       estimatedDuration: ((course['lessonsCount'] as int?) ?? 0) * 10,
       totalLessons: (course['lessonsCount'] as int?) ?? 0,
       isPublished: true,
-      createdAt: DateTime.tryParse(course['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(course['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(course['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(course['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
       isEnrolled: (course['isEnrolled'] as int? ?? 0) == 1,
       userProgress: (course['progress'] as num?)?.toDouble(),
       units: [
@@ -234,7 +245,8 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     );
   }
 
-  Future<ApiResponseEnvelope<List<CourseCategoryModel>>> _localCategories() async {
+  Future<ApiResponseEnvelope<List<CourseCategoryModel>>>
+  _localCategories() async {
     final db = await _dbHelper.database;
     final rows = await db.rawQuery('''
       SELECT category, COUNT(*) as course_count
@@ -356,7 +368,9 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     bool activeOnly = true,
   }) async {
     try {
-      final queryParams = <String, String>{'active_only': activeOnly.toString()};
+      final queryParams = <String, String>{
+        'active_only': activeOnly.toString(),
+      };
       final uri = Uri(path: '/categories', queryParameters: queryParams);
       final response = await _apiClient.get(uri.toString());
       final parsed = ApiResponseEnvelope<List<CourseCategoryModel>>.fromJson(

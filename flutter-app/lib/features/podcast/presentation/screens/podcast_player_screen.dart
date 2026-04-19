@@ -227,7 +227,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
-                      webHtmlElementStrategy: WebHtmlElementStrategy.never,
+                        webHtmlElementStrategy: WebHtmlElementStrategy.never,
                         errorBuilder: (_, __, ___) =>
                             _buildArtworkFallback(cefrColor),
                       )
