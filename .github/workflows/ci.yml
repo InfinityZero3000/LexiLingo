@@ -32,14 +32,14 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U lexilingo -d lexilingo_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
       PYTHONPATH: .
-      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test
+      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@127.0.0.1:5432/lexilingo_test
       SECRET_KEY: ci-secret-key-not-for-production
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -73,30 +73,19 @@ jobs:
 
       - name: Wait for PostgreSQL
         run: |
-          python - <<'PY'
-          import asyncio
-          import asyncpg
+          for attempt in $(seq 1 30); do
+            status="$(docker inspect --format='{{.State.Health.Status}}' ${{ job.services.postgres.id }})"
+            if [ "$status" = "healthy" ]; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "PostgreSQL not ready after retries (last status: $status)" >&2
+              exit 1
+            fi
 
-          async def wait_for_db():
-            for attempt in range(1, 31):
-              try:
-                conn = await asyncpg.connect(
-                  host='localhost',
-                  port=5432,
-                  user='lexilingo',
-                  password='lexilingo_pass',
-                  database='lexilingo_test',
-                )
-                await conn.close()
-                print('PostgreSQL is ready')
-                return
-              except Exception as exc:
-                if attempt == 30:
-                  raise RuntimeError(f'PostgreSQL not ready after retries: {exc}')
-                await asyncio.sleep(1)
-
-          asyncio.run(wait_for_db())
-          PY
+            sleep 1
+          done
 
       - name: Create all DB tables
         run: python create_tables.py

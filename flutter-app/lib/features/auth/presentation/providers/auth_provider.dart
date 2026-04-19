@@ -474,8 +474,21 @@ class AuthProvider extends ChangeNotifier {
     if (normalized.contains('google_server_client_id')) {
       return 'Google sign-in config is missing. Please contact support.';
     }
+    if (normalized.contains('google sign-in android config mismatch') ||
+        normalized.contains('developer_error') ||
+        normalized.contains('sha-1') ||
+        normalized.contains('sha/client id')) {
+      return 'Google Sign-In on Android is not configured correctly (SHA-1/SHA-256 or client ID). Please contact support.';
+    }
 
-    if (error.contains('network')) {
+    if (normalized.contains('account-exists-with-different-credential')) {
+      return 'This email is already linked to another provider. Please sign in with the previous method first.';
+    }
+    if (normalized.contains('access-control-allow-origin') ||
+        normalized.contains('blocked by cors')) {
+      return 'Login is blocked by CORS configuration. Please try again in a moment.';
+    }
+    if (normalized.contains('network')) {
       return 'Network error. Please check your internet connection.';
     } else if (normalized.contains('cancelled') || normalized.contains('canceled')) {
       return 'Sign in was cancelled.';
@@ -497,6 +510,10 @@ class AuthProvider extends ChangeNotifier {
   // Convert Failure to user-friendly message
   String _getFailureMessage(Failure failure) {
     if (failure is AuthFailure) {
+      final normalized = failure.message.toLowerCase();
+      if (normalized.contains('invalid google id token')) {
+        return 'Google Sign-In token is invalid. Please update Android SHA and Google OAuth config.';
+      }
       return failure.message;
     } else if (failure is ServerFailure) {
       final normalized = failure.message.toLowerCase();

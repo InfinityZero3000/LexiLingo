@@ -19,9 +19,26 @@ class FacebookSignInService {
       } else {
         return await _signInMobile();
       }
+    } on FirebaseAuthException catch (e) {
+      logError(_tag, 'Facebook Sign In Firebase error: ${e.code} ${e.message}');
+
+      // Treat user-driven popup cancellation as non-fatal.
+      if (e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request') {
+        return null;
+      }
+
+      // Let provider map this to a user-friendly message.
+      throw Exception(e.code);
     } catch (e) {
       logError(_tag, 'Facebook Sign In error: $e');
-      return null;
+
+      final message = e.toString().toLowerCase();
+      if (message.contains('cancel') || message.contains('closed by user')) {
+        return null;
+      }
+
+      rethrow;
     }
   }
 

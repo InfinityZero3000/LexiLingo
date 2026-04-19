@@ -29,6 +29,11 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -44,24 +49,44 @@ jobs:
 
       - name: Create env files for build
         run: |
-          printf 'ENVIRONMENT=production\nAPI_BASE_URL=%s\nAI_SERVICE_URL=%s\nENABLE_VOICE_FEATURE=true\nENABLE_GAMIFICATION=true\nDEBUG_MODE=false\nGOOGLE_SERVER_CLIENT_ID=%s\n' \
-            "${{ secrets.API_BASE_URL || 'https://lexilingo-4gu6.onrender.com/api/v1' }}" \
-            "${{ secrets.AI_SERVICE_URL || '' }}" \
-            "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" \
-            > .env
+          cat > .env <<'EOF'
+          ENVIRONMENT=production
+          API_BASE_URL=https://api.lexilingo.me/api/v1
+          API_BASE_URL_FALLBACK=https://lexilingo-4gu6.onrender.com/api/v1
+          AI_SERVICE_URL=https://api.lexilingo.me/api/v1
+          AI_SERVICE_URL_FALLBACK=https://enable-tell-memphis-wing.trycloudflare.com/api/v1
+          ENABLE_VOICE_FEATURE=true
+          ENABLE_GAMIFICATION=true
+          DEBUG_MODE=false
+          GOOGLE_SERVER_CLIENT_ID=432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com
+          EOF
           cp .env .env.production
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-          working-directory: flutter-app
-          vercel-args: "--prod"
+      - name: Install JS deps for Vercel hooks
+        run: npm ci
+
+      - name: Verify Vercel build prerequisites
+        run: npm run vercel-build
+
+      - name: Install latest Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Build Vercel prebuilt output
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
+        run: vercel build --prod --token "$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel (prebuilt)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
+        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
 
   # ──────────────────────────────────────────────
   # Backend Docker → GitHub Container Registry

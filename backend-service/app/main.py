@@ -85,20 +85,9 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
     else:
-        # Production migration check
-        try:
-            from alembic import command
-            from alembic.config import Config
-            import os
-            
-            # Find alembic.ini relative to this file
-            ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alembic.ini")
-            if os.path.exists(ini_path):
-                alembic_cfg = Config(ini_path)
-                command.upgrade(alembic_cfg, "head")
-                logger.info("Alembic migrations applied (upgrade head)")
-        except Exception as e:
-            logger.warning(f"Alembic check failed: {e}")
+        # Production migrations are handled by scripts/entrypoint.sh before Uvicorn starts.
+        # Running Alembic from inside an active event loop can emit noisy coroutine warnings.
+        logger.info("Skipping runtime Alembic check; migrations are managed by entrypoint")
     
     # Initialize Redis (rate limiting, token blacklist, caching)
     try:
@@ -197,10 +186,17 @@ app.add_middleware(
 )
 
 # 5. CORS - Must be OUTSIDE RateLimit so error responses get CORS headers
+_cors_origin_regex = settings.CORS_ALLOW_ORIGIN_REGEX or ""
+_lexilingo_origin_regex = r"https?://(www\.)?lexilingo\.me(:\d+)?"
+if _cors_origin_regex:
+    _cors_origin_regex = f"{_cors_origin_regex}|{_lexilingo_origin_regex}"
+else:
+    _cors_origin_regex = _lexilingo_origin_regex
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX or None,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
