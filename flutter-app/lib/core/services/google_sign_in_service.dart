@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -149,28 +150,57 @@ class GoogleSignInService {
 
   /// Mobile: use google_sign_in package to get the Google id_token.
   Future<String?> _signInMobile() async {
-    // Sign out first to ensure account picker is shown
-    await _googleSignIn.signOut();
+    try {
+      // Sign out first to ensure account picker is shown
+      await _googleSignIn.signOut();
 
-    final GoogleSignInAccount? account = await _googleSignIn.signIn();
-    if (account == null) {
-      logWarn(_tag, 'Google Sign In cancelled by user');
-      _lastError = 'cancelled';
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) {
+        logWarn(_tag, 'Google Sign In cancelled by user');
+        _lastError = 'cancelled';
+        return null;
+      }
+
+      logDebug(_tag, 'Google account obtained: ${account.email}');
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      if (auth.idToken == null) {
+        logError(_tag, 'Failed to get ID token from Google (mobile)');
+        _lastError =
+            'Unable to get Google ID token. Check GOOGLE_SERVER_CLIENT_ID and Android SHA-1/SHA-256 config.';
+        return null;
+      }
+
+      logInfo(_tag, 'Google Sign In successful (mobile)');
+      return auth.idToken;
+    } on PlatformException catch (e) {
+      _lastError = _mapMobileGoogleError(e);
+      logError(_tag, 'Google mobile sign-in PlatformException: ${e.code} ${e.message}');
       return null;
     }
+  }
 
-    logDebug(_tag, 'Google account obtained: ${account.email}');
+  String _mapMobileGoogleError(PlatformException e) {
+    final code = e.code.toLowerCase();
+    final message = (e.message ?? '').toLowerCase();
+    final details = (e.details ?? '').toString().toLowerCase();
+    final combined = '$code $message $details';
 
-    final GoogleSignInAuthentication auth = await account.authentication;
-    if (auth.idToken == null) {
-      logError(_tag, 'Failed to get ID token from Google (mobile)');
-      _lastError =
-          'Unable to get Google ID token. Check GOOGLE_SERVER_CLIENT_ID configuration.';
-      return null;
+    if (combined.contains('10') ||
+        combined.contains('developer_error') ||
+        combined.contains('12500')) {
+      return 'Google Sign-In Android config mismatch (SHA/client ID). Update SHA-1/SHA-256 in Firebase and refresh google-services.json.';
     }
 
-    logInfo(_tag, 'Google Sign In successful (mobile)');
-    return auth.idToken;
+    if (combined.contains('network')) {
+      return 'Network error during Google Sign-In. Please check your connection.';
+    }
+
+    if (combined.contains('cancel')) {
+      return 'cancelled';
+    }
+
+    return e.message ?? 'Google Sign-In failed on mobile.';
   }
 
   /// Sign out from Google
