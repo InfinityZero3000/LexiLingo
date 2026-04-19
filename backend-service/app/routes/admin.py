@@ -15,6 +15,7 @@ from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.course import Course, Unit, Lesson
+from app.models.course_category import CourseCategory
 from app.models.vocabulary import VocabularyItem
 from app.models.gamification import Achievement, ShopItem
 from app.models.content import GrammarItem, QuestionItem, TestExam
@@ -1269,10 +1270,17 @@ async def seed_sample_data(
     """
     Seed sample data for development/testing.
     
-    Creates sample achievements and shop items.
+    Creates sample achievements, shop items, course categories, and courses.
     Admin only endpoint.
     """
-    created = {"achievements": 0, "shop_items": 0}
+    created = {
+        "achievements": 0,
+        "shop_items": 0,
+        "course_categories": 0,
+        "courses": 0,
+        "units": 0,
+        "lessons": 0,
+    }
     
     # Sample Achievements
     sample_achievements = [
@@ -1321,12 +1329,175 @@ async def seed_sample_data(
             item = ShopItem(**item_data)
             db.add(item)
             created["shop_items"] += 1
+
+    # Sample Course Categories
+    sample_categories = [
+        {
+            "name": "Grammar",
+            "slug": "grammar",
+            "description": "Master English grammar rules and structures",
+            "icon": "📚",
+            "color": "#4CAF50",
+            "order_index": 1,
+        },
+        {
+            "name": "Vocabulary",
+            "slug": "vocabulary",
+            "description": "Build practical English vocabulary for daily use",
+            "icon": "🧠",
+            "color": "#2196F3",
+            "order_index": 2,
+        },
+    ]
+
+    category_ids: dict[str, UUID] = {}
+    for category_data in sample_categories:
+        result = await db.execute(
+            select(CourseCategory).where(CourseCategory.slug == category_data["slug"])
+        )
+        category = result.scalar_one_or_none()
+        if not category:
+            category = CourseCategory(**category_data)
+            db.add(category)
+            await db.flush()
+            created["course_categories"] += 1
+        category_ids[category_data["slug"]] = category.id
+
+    # Sample published courses with basic roadmap content
+    sample_courses = [
+        {
+            "title": "English Grammar Foundations",
+            "description": "Start with core grammar patterns for everyday communication.",
+            "language": "en",
+            "level": "A1",
+            "category_slug": "grammar",
+            "tags": ["grammar", "beginner", "fundamentals"],
+            "total_xp": 120,
+            "estimated_duration": 90,
+            "thumbnail_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8",
+            "units": [
+                {
+                    "title": "Present Simple Basics",
+                    "description": "Build confidence with daily routine sentences.",
+                    "order_index": 1,
+                    "background_color": "#1E3A8A",
+                    "lessons": [
+                        {
+                            "title": "I/You/We/They + Verb",
+                            "description": "Form positive present simple sentences.",
+                            "order_index": 1,
+                            "estimated_minutes": 12,
+                            "xp_reward": 20,
+                            "total_exercises": 8,
+                        },
+                        {
+                            "title": "He/She/It + Verb-s",
+                            "description": "Use third-person singular correctly.",
+                            "order_index": 2,
+                            "estimated_minutes": 12,
+                            "xp_reward": 20,
+                            "total_exercises": 8,
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            "title": "Daily Vocabulary Starter",
+            "description": "Learn essential words and phrases for daily life.",
+            "language": "en",
+            "level": "A1",
+            "category_slug": "vocabulary",
+            "tags": ["vocabulary", "daily-life", "beginner"],
+            "total_xp": 120,
+            "estimated_duration": 80,
+            "thumbnail_url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
+            "units": [
+                {
+                    "title": "Home and Family",
+                    "description": "Words you use every day at home.",
+                    "order_index": 1,
+                    "background_color": "#0F766E",
+                    "lessons": [
+                        {
+                            "title": "Family Members",
+                            "description": "Describe people in your family.",
+                            "order_index": 1,
+                            "estimated_minutes": 10,
+                            "xp_reward": 20,
+                            "total_exercises": 7,
+                        },
+                        {
+                            "title": "Rooms and Objects",
+                            "description": "Talk about places and things at home.",
+                            "order_index": 2,
+                            "estimated_minutes": 10,
+                            "xp_reward": 20,
+                            "total_exercises": 7,
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+
+    for course_data in sample_courses:
+        result = await db.execute(
+            select(Course).where(Course.title == course_data["title"])
+        )
+        existing_course = result.scalar_one_or_none()
+        if existing_course:
+            continue
+
+        unit_seed = course_data.pop("units")
+        category_slug = course_data.pop("category_slug")
+
+        course = Course(
+            **course_data,
+            category_id=category_ids.get(category_slug),
+            total_lessons=sum(len(unit["lessons"]) for unit in unit_seed),
+            is_published=True,
+        )
+        db.add(course)
+        await db.flush()
+        created["courses"] += 1
+
+        for unit_data in unit_seed:
+            lesson_seed = unit_data.pop("lessons")
+            unit = Unit(
+                **unit_data,
+                course_id=course.id,
+                total_lessons=len(lesson_seed),
+            )
+            db.add(unit)
+            await db.flush()
+            created["units"] += 1
+
+            for lesson_data in lesson_seed:
+                lesson = Lesson(
+                    **lesson_data,
+                    course_id=course.id,
+                    unit_id=unit.id,
+                    content={"type": "seed", "version": 1},
+                    pass_threshold=70,
+                    lesson_type="lesson",
+                )
+                db.add(lesson)
+                created["lessons"] += 1
     
     await db.commit()
     
     return ApiResponse(
         success=True,
-        message=f"Seed data created: {created['achievements']} achievements, {created['shop_items']} shop items",
+        message=(
+            "Seed data created: "
+            f"{created['achievements']} achievements, "
+            f"{created['shop_items']} shop items, "
+            f"{created['course_categories']} categories, "
+            f"{created['courses']} courses, "
+            f"{created['units']} units, "
+            f"{created['lessons']} lessons"
+        ),
         data=created
     )
 

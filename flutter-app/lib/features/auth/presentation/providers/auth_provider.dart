@@ -474,6 +474,12 @@ class AuthProvider extends ChangeNotifier {
     if (normalized.contains('google_server_client_id')) {
       return 'Google sign-in config is missing. Please contact support.';
     }
+    if (normalized.contains('google sign-in android config mismatch') ||
+        normalized.contains('developer_error') ||
+        normalized.contains('sha-1') ||
+        normalized.contains('sha/client id')) {
+      return 'Google Sign-In on Android is not configured correctly (SHA-1/SHA-256 or client ID). Please contact support.';
+    }
 
     if (normalized.contains('account-exists-with-different-credential')) {
       return 'This email is already linked to another provider. Please sign in with the previous method first.';
@@ -504,6 +510,10 @@ class AuthProvider extends ChangeNotifier {
   // Convert Failure to user-friendly message
   String _getFailureMessage(Failure failure) {
     if (failure is AuthFailure) {
+      final normalized = failure.message.toLowerCase();
+      if (normalized.contains('invalid google id token')) {
+        return 'Google Sign-In token is invalid. Please update Android SHA and Google OAuth config.';
+      }
       return failure.message;
     } else if (failure is ServerFailure) {
       final normalized = failure.message.toLowerCase();
