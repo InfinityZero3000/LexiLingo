@@ -55,7 +55,11 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
-      provider.restoreLatestSession(_userId);
+      unawaited(
+        provider.restoreLatestSession(_userId).catchError((Object error) {
+          debugPrint('restoreLatestSession failed: $error');
+        }),
+      );
     });
 
     _scrollController.addListener(_handleTopReached);
@@ -415,10 +419,13 @@ class _LexiChatPageState extends State<LexiChatPage>
                             ),
                           ),
                         )
-                      : ListView.builder(
-                          itemCount: provider.sessions.length,
+                      : Builder(
+                          builder: (_) {
+                            final sessions = provider.sessions;
+                            return ListView.builder(
+                          itemCount: sessions.length,
                           itemBuilder: (context, index) {
-                            final s = provider.sessions[index];
+                            final s = sessions[index];
                             final selected =
                                 provider.session?.sessionId == s.sessionId;
                             return ListTile(
@@ -493,6 +500,8 @@ class _LexiChatPageState extends State<LexiChatPage>
                                 ],
                               ),
                             );
+                          },
+                        );
                           },
                         ),
                 ),

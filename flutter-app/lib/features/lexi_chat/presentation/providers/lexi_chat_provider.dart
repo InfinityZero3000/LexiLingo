@@ -81,6 +81,14 @@ class LexiChatProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
+
+  bool _isUnauthorizedError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('unauthorized') ||
+        normalized.contains('status 401') ||
+        normalized.contains('401');
+  }
+
   String get learnerLevel => _learnerLevel;
 
   // ── Session ────────────────────────────────────────────────────────────────
@@ -124,6 +132,9 @@ class LexiChatProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = 'Failed to start session: $e';
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+      }
       _isLoading = false;
       logError(_tag, _error!);
       notifyListeners();
@@ -150,6 +161,11 @@ class LexiChatProvider extends ChangeNotifier {
       } else {
         await startSession(userId);
       }
+    } catch (e) {
+      _error = 'Failed to restore session: $e';
+      _isLoading = false;
+      logWarn(_tag, _error!);
+      notifyListeners();
     } finally {
       _isRestoringSession = false;
     }
@@ -250,6 +266,9 @@ class LexiChatProvider extends ChangeNotifier {
       }
 
       _error = 'Failed to load session: $e';
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+      }
       _isLoading = false;
       notifyListeners();
     }
@@ -361,6 +380,12 @@ class LexiChatProvider extends ChangeNotifier {
     } catch (e) {
       await _endLexiResponseState();
       _isSending = false;
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+        logError(_tag, _error!);
+        notifyListeners();
+        return;
+      }
       _error = 'You are offline. Message queued for sync.';
       logError(_tag, _error!);
 
@@ -455,6 +480,12 @@ class LexiChatProvider extends ChangeNotifier {
     } catch (e) {
       await _endLexiResponseState();
       _isSending = false;
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+        logError(_tag, _error!);
+        notifyListeners();
+        return;
+      }
       _error = 'Voice processing failed: $e';
       logError(_tag, _error!);
       notifyListeners();

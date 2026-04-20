@@ -1133,24 +1133,10 @@ class _ProfilePageState extends State<ProfilePage>
                               final normalizedValue = maxXP > 0
                                   ? activity.xpEarned / maxXP
                                   : 0.0;
-                              String dayLabel;
-                              final parsedDate = DateTime.tryParse(
-                                activity.date,
-                              );
-                              if (parsedDate != null) {
-                                dayLabel = DateFormat(
-                                  'E',
-                                ).format(parsedDate).substring(0, 1);
-                              } else {
-                                final raw = activity.date.trim();
-                                dayLabel = raw.isEmpty
-                                    ? '-'
-                                    : raw.substring(0, 1).toUpperCase();
-                              }
 
                               return Expanded(
                                 child: AnimatedActivityBar(
-                                  label: dayLabel,
+                                  label: '',
                                   value: normalizedValue,
                                   xpValue: activity.xpEarned,
                                   color: AppColorRoles.primary(isDark),
@@ -1159,6 +1145,38 @@ class _ProfilePageState extends State<ProfilePage>
                               );
                             }).toList(),
                           ),
+                        ),
+                        // Day labels row — separate from bars to ensure alignment
+                        const SizedBox(height: 6),
+                        Row(
+                          children: activities.map((activity) {
+                            String dayLabel;
+                            final parsedDate = DateTime.tryParse(activity.date);
+                            if (parsedDate != null) {
+                              dayLabel = DateFormat(
+                                'E',
+                              ).format(parsedDate).substring(0, 1);
+                            } else {
+                              final raw = activity.date.trim();
+                              dayLabel = raw.isEmpty
+                                  ? '-'
+                                  : raw.substring(0, 1).toUpperCase();
+                            }
+                            return Expanded(
+                              child: Center(
+                                child: Text(
+                                  dayLabel,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? AppColors.grey500
+                                        : AppColors.grey600,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 16),
                         // Summary stats

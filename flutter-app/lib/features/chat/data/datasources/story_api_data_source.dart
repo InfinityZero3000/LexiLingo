@@ -32,10 +32,22 @@ class TopicMessagesMetadataResult {
 class StoryApiDataSource {
   final String baseUrl;
   final http.Client _client;
+  final Future<Map<String, String>> Function()? _authHeaderProvider;
 
-  StoryApiDataSource({String? baseUrl, http.Client? client})
-    : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
-      _client = client ?? http.Client();
+  StoryApiDataSource({
+    String? baseUrl,
+    http.Client? client,
+    Future<Map<String, String>> Function()? authHeaderProvider,
+  }) : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
+       _client = client ?? http.Client(),
+       _authHeaderProvider = authHeaderProvider;
+
+  Future<Map<String, String>> _authHeaders() async {
+    final base = {'Content-Type': 'application/json'};
+    if (_authHeaderProvider == null) return base;
+    final auth = await _authHeaderProvider();
+    return {...base, ...auth};
+  }
 
   /// Get all available stories
   Future<List<StoryListItem>> getStories({
@@ -203,7 +215,7 @@ class StoryApiDataSource {
 
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(body),
       );
 
@@ -241,7 +253,7 @@ class StoryApiDataSource {
 
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(body),
       );
 
