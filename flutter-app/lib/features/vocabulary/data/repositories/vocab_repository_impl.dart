@@ -149,7 +149,7 @@ class VocabRepositoryImpl implements VocabRepository {
     if (userScope == 'anonymous') return;
 
     final idempotencyKey =
-        'vocab-${userScope}-${word.word.toLowerCase()}-${DateTime.now().millisecondsSinceEpoch}';
+      'vocab-$userScope-${word.word.toLowerCase()}-${DateTime.now().millisecondsSinceEpoch}';
     await _syncQueue.enqueue(
       userScope: userScope,
       queueType: 'vocab.add_word.v1',

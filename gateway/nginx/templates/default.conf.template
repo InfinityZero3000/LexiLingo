@@ -160,6 +160,12 @@ server {
         proxy_pass http://ai_upstream;
     }
 
+    location = /api/v1/warmup {
+        limit_req zone=ai_general_per_ip burst=20 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
     location /api/v1/topics/ {
         limit_req zone=ai_general_per_ip burst=20 nodelay;
         include /etc/nginx/snippets/proxy-common.conf;

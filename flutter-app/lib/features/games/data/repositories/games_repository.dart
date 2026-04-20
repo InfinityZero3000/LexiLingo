@@ -11,7 +11,7 @@ import '../../domain/entities/game_entities.dart';
 ///   • Session methods  — return game container objects (WordScrambleGame,
 ///     MatchingGame, etc.) which include timer/XP config from the backend.
 ///   • Word-list methods — return plain lists of entity objects
-///     (List<ScrambleWord>, MatchingGameData, etc.) for use when only the
+///     (List{ScrambleWord}, MatchingGameData, etc.) for use when only the
 ///     word data is needed.
 ///
 /// XP methods always bypass the cache (mutate server state).

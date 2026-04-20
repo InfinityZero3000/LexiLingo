@@ -1,10 +1,12 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../../../../core/services/ai_service.dart';
+import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// Google Gemini AI Service implementation
 /// Primary AI service for the application
 class GeminiService implements AIService {
+  static const _tag = 'GeminiService';
   final String apiKey;
   late final GenerativeModel _model;
 
@@ -98,7 +100,7 @@ class GeminiService implements AIService {
       final response = await _model.generateContent([Content.text('Hello')]);
       return response.text != null && response.text!.isNotEmpty;
     } catch (e) {
-      print('Gemini connection test failed: $e');
+      logWarn(_tag, 'Gemini connection test failed: $e');
       return false;
     }
   }

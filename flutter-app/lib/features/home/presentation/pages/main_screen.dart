@@ -145,11 +145,21 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _warmupAiModels() async {
-    try {
-      final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
-      await http.post(url);
-    } catch (_) {
-      // Ignore error
+    final endpoints = ['/warmup', '/ai/warmup'];
+
+    for (final endpoint in endpoints) {
+      try {
+        final url = Uri.parse('${ApiConfig.aiServiceUrl}$endpoint');
+        final response = await http
+            .post(url)
+            .timeout(const Duration(seconds: 8));
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return;
+        }
+      } catch (_) {
+        // Try next endpoint.
+      }
     }
   }
 }

@@ -207,6 +207,11 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) {
+                        if (authProvider.errorMessage != null) {
+                          authProvider.clearError();
+                        }
+                      },
                       decoration: InputDecoration(
                         hintText: 'name@example.com',
                         prefixIcon: Icon(
@@ -255,6 +260,11 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
+                      onChanged: (_) {
+                        if (authProvider.errorMessage != null) {
+                          authProvider.clearError();
+                        }
+                      },
                       decoration: InputDecoration(
                         hintText: 'Enter your password',
                         prefixIcon: const Icon(Icons.lock_outline),

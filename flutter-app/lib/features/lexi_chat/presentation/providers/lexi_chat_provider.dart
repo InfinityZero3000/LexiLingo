@@ -211,11 +211,10 @@ class LexiChatProvider extends ChangeNotifier {
         nextCursor: _nextMessageCursor,
       );
 
-      if (loaded.isEmpty && summary.messageCount > 0) {
-        throw Exception('Session history is unavailable right now.');
-      }
-
       if (loaded.isEmpty) {
+        if (summary.messageCount > 0) {
+          _error = 'Session history is temporarily unavailable. You can continue chatting.';
+        }
         _messages.add(
           LexiMessage(
             id: 'greeting',

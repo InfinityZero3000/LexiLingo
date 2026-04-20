@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
+    # None => auto mode (disabled in production, enabled otherwise).
+    # Set explicit true/false to override auto mode.
+    ENABLE_APP_CORS: bool | None = None
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5176"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
@@ -187,6 +190,13 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.APP_ENV == "production"
+
+    @property
+    def enable_app_cors(self) -> bool:
+        """Whether backend should emit CORS headers directly."""
+        if self.ENABLE_APP_CORS is not None:
+            return self.ENABLE_APP_CORS
+        return not self.is_production
 
     @property
     def effective_password_reset_url_base(self) -> str:

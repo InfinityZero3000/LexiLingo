@@ -144,7 +144,7 @@ class SyncQueueLifecycleRunner {
     var changed = false;
     final updatedMessages = rawMessages.map((entry) {
       if (entry is! Map) return entry;
-      final msg = Map<String, dynamic>.from(entry as Map<dynamic, dynamic>);
+      final msg = Map<String, dynamic>.from(entry);
       if (msg['client_request_id']?.toString() == idempotencyKey &&
           msg['sync_status']?.toString() == 'pending_sync') {
         changed = true;

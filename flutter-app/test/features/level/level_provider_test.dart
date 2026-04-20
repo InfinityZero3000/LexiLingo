@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';

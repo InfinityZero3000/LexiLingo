@@ -186,22 +186,26 @@ app.add_middleware(
 )
 
 # 5. CORS - Must be OUTSIDE RateLimit so error responses get CORS headers
-_cors_origin_regex = settings.CORS_ALLOW_ORIGIN_REGEX or ""
-_lexilingo_origin_regex = r"https?://(www\.)?lexilingo\.me(:\d+)?"
-if _cors_origin_regex:
-    _cors_origin_regex = f"{_cors_origin_regex}|{_lexilingo_origin_regex}"
-else:
-    _cors_origin_regex = _lexilingo_origin_regex
+if settings.enable_app_cors:
+    _cors_origin_regex = settings.CORS_ALLOW_ORIGIN_REGEX or ""
+    _lexilingo_origin_regex = r"https?://(www\.)?lexilingo\.me(:\d+)?"
+    if _cors_origin_regex:
+        _cors_origin_regex = f"{_cors_origin_regex}|{_lexilingo_origin_regex}"
+    else:
+        _cors_origin_regex = _lexilingo_origin_regex
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_origin_regex=_cors_origin_regex,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_private_network=True,
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_origin_regex=_cors_origin_regex,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_private_network=True,
+    )
+    logger.info("App-level CORS middleware enabled")
+else:
+    logger.info("App-level CORS middleware disabled (edge handles CORS)")
 
 # 6. Private Network Access - Chrome CORS-RFC1918 (outermost)
 app.add_middleware(PrivateNetworkAccessMiddleware)

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/response_models.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
@@ -50,6 +51,8 @@ abstract class CourseBackendDataSource {
 class CourseBackendDataSourceImpl implements CourseBackendDataSource {
   final ApiClient _apiClient;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  bool get _useLocalFallback => !kIsWeb;
 
   CourseBackendDataSourceImpl({required ApiClient apiClient})
     : _apiClient = apiClient;
@@ -298,10 +301,13 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         response,
         (json) => CourseModel.fromJson(json),
       );
-      if (parsed.data.isNotEmpty) {
+      if (parsed.data.isNotEmpty || !_useLocalFallback) {
         return parsed;
       }
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       // Fall through to local SQLite fallback.
     }
 
@@ -319,6 +325,9 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         (data) => CourseDetailModel.fromJson(data as Map<String, dynamic>),
       );
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       final local = await _localCourseDetail(courseId);
       if (local != null) {
         return local;
@@ -338,6 +347,9 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         (data) => data as Map<String, dynamic>,
       );
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       final localCourseId = int.tryParse(courseId);
       if (localCourseId == null) rethrow;
 
@@ -385,10 +397,13 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
               .toList();
         },
       );
-      if (parsed.data.isNotEmpty) {
+      if (parsed.data.isNotEmpty || !_useLocalFallback) {
         return parsed;
       }
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       // Fall through to local SQLite fallback.
     }
 
@@ -415,10 +430,13 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         response,
         (json) => CourseModel.fromJson(json),
       );
-      if (parsed.data.isNotEmpty) {
+      if (parsed.data.isNotEmpty || !_useLocalFallback) {
         return parsed;
       }
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       // Fall through to local SQLite fallback.
     }
 
@@ -452,10 +470,13 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
         response,
         (json) => CourseModel.fromJson(json),
       );
-      if (parsed.data.isNotEmpty) {
+      if (parsed.data.isNotEmpty || !_useLocalFallback) {
         return parsed;
       }
     } catch (_) {
+      if (!_useLocalFallback) {
+        rethrow;
+      }
       // Fall through to local SQLite fallback.
     }
 

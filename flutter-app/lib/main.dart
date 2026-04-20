@@ -9,8 +9,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
@@ -182,29 +180,31 @@ class LexiLingoApp extends StatefulWidget {
 
 class _LexiLingoAppState extends State<LexiLingoApp>
     with WidgetsBindingObserver {
-  late final SyncQueueLifecycleRunner _syncQueueRunner;
+  SyncQueueLifecycleRunner? _syncQueueRunner;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncQueueRunner.start();
-    });
+    if (!kIsWeb) {
+      _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncQueueRunner?.start();
+      });
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _syncQueueRunner.stop();
+    _syncQueueRunner?.stop();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _syncQueueRunner.onAppResumed();
+      _syncQueueRunner?.onAppResumed();
     }
   }
 
