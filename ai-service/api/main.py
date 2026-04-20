@@ -23,10 +23,18 @@ from pymongo.errors import OperationFailure
 from api.core.database import mongodb_manager, get_database
 from api.core.redis_client import RedisClient, get_redis
 from api.core.rate_limiter import RedisRateLimiter
+from api.core.config import get_settings
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load .env file
+from dotenv import load_dotenv
+load_dotenv()
+
+# Settings (loaded after dotenv so env vars are available)
+settings = get_settings()
 
 # Load .env file
 from dotenv import load_dotenv
@@ -208,22 +216,11 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8080",
-        "http://localhost:5173",
-        "https://lexilingo.me",
-        "https://www.lexilingo.me",
-        "https://api.lexilingo.me",
-        "https://lexilingo.vercel.app",
-        "https://flutter-app-nine-pied.vercel.app",
-    ],
-    allow_origin_regex=r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?",
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX or None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],
+    allow_headers=["Authorization", "Content-Type", "X-Admin-Key", "X-Request-Id", "X-Api-Key"],
     allow_private_network=True,
 )
 
