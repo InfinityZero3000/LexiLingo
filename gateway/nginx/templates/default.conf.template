@@ -173,7 +173,11 @@ server {
     }
 
     location /api/v1/lexi/ {
+<<<<<<< HEAD
         limit_req zone=ai_general_per_ip burst=20 nodelay;
+=======
+        limit_req zone=ai_chat_per_ip burst=12 nodelay;
+>>>>>>> 4ea76e8585622df2ace4683fd14bf68ea5260cab
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_pass http://ai_upstream;
     }
