@@ -44,15 +44,32 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   bool _transcriptLoading = false;
   String? _transcript;
   bool _transcriptExpanded = false;
+  bool _handlerInitializing = false;
 
   final List<StreamSubscription<dynamic>> _subs = [];
 
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb && sl.isRegistered<PodcastAudioHandler>()) {
+    if (!kIsWeb) {
+      _tryInitHandler();
+    }
+  }
+
+  void _tryInitHandler({int attempt = 0}) {
+    if (!mounted) return;
+    if (sl.isRegistered<PodcastAudioHandler>()) {
       _handler = sl<PodcastAudioHandler>();
+      if (_handlerInitializing) {
+        setState(() => _handlerInitializing = false);
+      }
       _setupPlayer();
+    } else if (attempt < 20) {
+      // Handler still initializing in background — retry after 500 ms
+      if (!_handlerInitializing) setState(() => _handlerInitializing = true);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _tryInitHandler(attempt: attempt + 1);
+      });
     }
   }
 
@@ -146,7 +163,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cefrColor = _cefrColor(widget.episode.cefrLevel ?? 'B1');
 
-    // Web fallback: audio_service not supported on web
+    // Handler not yet available
     if (_handler == null) {
       return Scaffold(
         backgroundColor: isDark
@@ -163,25 +180,29 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.headphones_rounded,
-                  size: 64,
-                  color: isDark ? Colors.white38 : Colors.grey,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Podcast playback is available on mobile only.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDark ? Colors.white60 : Colors.grey[700],
-                  ),
-                ),
-              ],
-            ),
+            child: kIsWeb
+                // Web: audio_service not supported
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.headphones_rounded,
+                        size: 64,
+                        color: isDark ? Colors.white38 : Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Podcast playback is available on mobile only.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? Colors.white60 : Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  )
+                // Mobile: handler still initializing
+                : const LottieLoadingWidget.medium(),
           ),
         ),
       );
