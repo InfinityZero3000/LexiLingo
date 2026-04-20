@@ -89,7 +89,7 @@ class LeagueCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
-                            '⬆ PROMOTION',
+                            'PROMOTION',
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
