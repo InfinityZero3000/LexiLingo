@@ -167,7 +167,23 @@ class _CourseListScreenState extends State<CourseListScreen> {
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = provider.categories;
-    final shouldUseCategories = categories.isNotEmpty;
+    final categoryCoursesMap = <String, List<CourseEntity>>{};
+    for (final category in categories) {
+      final categoryCourses = provider.courses
+          .where(
+            (c) =>
+                c.tags.contains(category.slug) ||
+                c.tags.contains(category.name.toLowerCase()) ||
+                // fallback: if course has no tags, don't show it here unless category is general
+                (c.tags.isEmpty && category.slug == 'general'),
+          )
+          .toList();
+      categoryCoursesMap[category.id] = categoryCourses;
+    }
+
+    final shouldUseCategories =
+        categories.isNotEmpty && categoryCoursesMap.values.any((v) => v.isNotEmpty);
+
     final sections = shouldUseCategories
         ? categories
         : provider.coursesByCategory.keys.toList();
@@ -185,15 +201,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
         if (shouldUseCategories) {
           final category = categories[index];
-          final categoryCourses = provider.courses
-              .where(
-                (c) =>
-                    c.tags.contains(category.slug) ||
-                    c.tags.contains(category.name.toLowerCase()) ||
-                    // fallback: if course has no tags, don't show it here unless category is general
-                    (c.tags.isEmpty && category.slug == 'general'),
-              )
-              .toList();
+          final categoryCourses = categoryCoursesMap[category.id] ?? const [];
 
           if (categoryCourses.isEmpty) {
             return const SizedBox.shrink();

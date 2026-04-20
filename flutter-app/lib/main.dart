@@ -180,29 +180,31 @@ class LexiLingoApp extends StatefulWidget {
 
 class _LexiLingoAppState extends State<LexiLingoApp>
     with WidgetsBindingObserver {
-  late final SyncQueueLifecycleRunner _syncQueueRunner;
+  SyncQueueLifecycleRunner? _syncQueueRunner;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncQueueRunner.start();
-    });
+    if (!kIsWeb) {
+      _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncQueueRunner?.start();
+      });
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _syncQueueRunner.stop();
+    _syncQueueRunner?.stop();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _syncQueueRunner.onAppResumed();
+      _syncQueueRunner?.onAppResumed();
     }
   }
 
