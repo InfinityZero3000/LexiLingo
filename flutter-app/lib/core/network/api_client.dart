@@ -196,7 +196,15 @@ class ApiClient {
     }
   }
 
-  /// Internal method: sends request and returns raw ApiResponse
+  // Maximum number of additional attempts after the first one.
+  static const int _maxRetries = 2;
+
+  /// Internal method: sends request and returns raw ApiResponse.
+  ///
+  /// Automatically retries up to [_maxRetries] times on 5xx responses and
+  /// transient network/timeout errors using exponential back-off (1 s, 2 s).
+  /// 4xx client errors (except 401, which is handled by TokenRefreshInterceptor)
+  /// are NOT retried.
   Future<ApiResponse> _sendRaw(
     String method,
     Uri uri, {
@@ -219,28 +227,63 @@ class ApiClient {
 
     await _notifyRequest(req);
 
-    try {
-      final response = await _dispatch(
-        method,
-        uri,
-        req.headers,
-        body,
-      ).timeout(timeout ?? ApiConfig.receiveTimeout);
-      final apiResponse = ApiResponse(
-        statusCode: response.statusCode,
-        uri: uri,
-        body: response.body,
-      );
-      await _notifyResponse(apiResponse);
-      return apiResponse;
-    } catch (e) {
-      await _notifyError(
-        ApiError(method: method, uri: uri, cause: e, message: e.toString()),
-      );
-      if (e is ServerException) rethrow;
-      if (e is ApiErrorException) rethrow;
-      throw ServerException('$method ${uri.path} failed: $e');
+    for (int attempt = 0; attempt <= _maxRetries; attempt++) {
+      if (attempt > 0) {
+        // Exponential back-off: 1 s on first retry, 2 s on second.
+        await Future.delayed(Duration(seconds: attempt));
+      }
+
+      try {
+        final response = await _dispatch(
+          method,
+          uri,
+          req.headers,
+          body,
+        ).timeout(timeout ?? ApiConfig.receiveTimeout);
+
+        final apiResponse = ApiResponse(
+          statusCode: response.statusCode,
+          uri: uri,
+          body: response.body,
+        );
+
+        // Retry on 5xx server errors (except 501 Not Implemented) while
+        // attempts remain. On the final attempt, return the response as-is
+        // so that _handleResponse can produce the right exception upstream.
+        if (response.statusCode >= 500 &&
+            response.statusCode != 501 &&
+            attempt < _maxRetries) {
+          continue;
+        }
+
+        await _notifyResponse(apiResponse);
+        return apiResponse;
+      } catch (e) {
+        // Non-retriable exceptions — propagate immediately without retry.
+        if (e is ApiErrorException ||
+            e is UnauthorizedException ||
+            e is TokenRefreshedException) {
+          await _notifyError(
+            ApiError(method: method, uri: uri, cause: e, message: e.toString()),
+          );
+          rethrow;
+        }
+
+        // Retriable error (timeout, network failure, etc.) — try again if
+        // attempts remain.
+        if (attempt < _maxRetries) continue;
+
+        // Final attempt: notify observers and propagate the error.
+        await _notifyError(
+          ApiError(method: method, uri: uri, cause: e, message: e.toString()),
+        );
+        if (e is ServerException) rethrow;
+        throw ServerException('$method ${uri.path} failed: $e');
+      }
     }
+
+    // Unreachable — the loop always returns or throws on the last iteration.
+    throw AssertionError('_sendRaw: unexpected exit from retry loop');
   }
 
   Future<http.Response> _dispatch(
@@ -403,5 +446,44 @@ class ApiClient {
 
   void close() {
     _client.close();
+  }
+
+  /// POST request returning a raw byte stream (for SSE / chunked responses).
+  ///
+  /// The caller is responsible for parsing the stream.  No retry logic is
+  /// applied — SSE connections are long-lived and retrying mid-stream is not
+  /// meaningful.
+  Stream<List<int>> postStream(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async* {
+    if (!await _networkInfo.isConnected) {
+      throw ServerException('No network connection');
+    }
+
+    final uri = _resolve(path);
+    final resolvedHeaders = await _buildHeaders(headers);
+    // Tell the server we accept SSE
+    resolvedHeaders['Accept'] = 'text/event-stream';
+
+    final request = http.Request('POST', uri);
+    request.headers.addAll(resolvedHeaders);
+    if (body != null) {
+      request.body = jsonEncode(body);
+    }
+
+    final streamedResponse = await _client.send(request);
+
+    if (streamedResponse.statusCode < 200 ||
+        streamedResponse.statusCode >= 300) {
+      final rawBody = await streamedResponse.stream.bytesToString();
+      throw ServerException(
+        'POST stream ${uri.path} failed with status '
+        '${streamedResponse.statusCode}: $rawBody',
+      );
+    }
+
+    yield* streamedResponse.stream;
   }
 }

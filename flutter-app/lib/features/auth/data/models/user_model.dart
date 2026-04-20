@@ -56,7 +56,8 @@ class UserModel extends UserEntity {
       id: _requiredString(json, 'id'),
       email: _requiredString(json, 'email'),
       username: _requiredString(json, 'username'),
-      displayName: _optionalString(json['display_name']) ??
+      displayName:
+          _optionalString(json['display_name']) ??
           _requiredString(json, 'username'),
       avatarUrl: _optionalString(json['avatar_url']),
       provider: _optionalString(json['provider']) ?? 'local',

@@ -365,6 +365,7 @@ async def google_login(
     - Returns JWT tokens
     """
     from app.core.security import verify_google_token
+    from app.core.firebase_auth import verify_firebase_token
     from app.core.config import settings
     
     # Select the correct Client ID based on source
@@ -394,6 +395,20 @@ async def google_login(
     if not google_info and request.source != "admin" and not audience:
         logger.info("Retrying token verification without audience restriction (GOOGLE_CLIENT_ID not configured)")
         google_info = await verify_google_token(request.id_token, audience=None)
+
+    # Flutter web can return a Firebase ID token instead of Google OAuth id_token.
+    # Accept only Firebase tokens issued for Google sign-in to keep auth strict.
+    if not google_info:
+        firebase_claims = verify_firebase_token(request.id_token)
+        provider = (firebase_claims or {}).get("firebase", {}).get("sign_in_provider")
+        if firebase_claims and provider == "google.com":
+            logger.info("Accepted Firebase token for Google login flow")
+            google_info = {
+                "email": firebase_claims.get("email"),
+                "email_verified": firebase_claims.get("email_verified", False),
+                "name": firebase_claims.get("name"),
+                "picture": firebase_claims.get("picture"),
+            }
 
     if not google_info:
         logger.error(f"Google token verification returned None for source={request.source}")

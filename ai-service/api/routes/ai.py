@@ -4,7 +4,7 @@ AI interaction routes
 Endpoints for logging AI interactions and analytics
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
@@ -133,6 +133,33 @@ async def graph_cag_health():
             status_code=503,
             detail=f"GraphCAG unhealthy: {str(e)}"
         )
+
+
+@router.post(
+    "/warmup",
+    summary="Trigger AI model warmup",
+    description="Warm up chat/STT/TTS models in the background.",
+)
+@router.get(
+    "/warmup",
+    summary="Trigger AI model warmup",
+    description="Warm up chat/STT/TTS models in the background.",
+)
+async def warmup_models(background_tasks: BackgroundTasks):
+    """Gateway-compatible warmup endpoint under /api/v1/ai/warmup."""
+
+    async def _do_warmup() -> None:
+        try:
+            from api.services.model_gateway import get_model_gateway
+
+            gateway = get_model_gateway()
+            await gateway.preload_models()
+        except Exception:
+            # Warmup failures are non-fatal and should not break user requests.
+            return
+
+    background_tasks.add_task(_do_warmup)
+    return {"status": "warming_up", "message": "Model preload started in background"}
 
 
 @router.get(

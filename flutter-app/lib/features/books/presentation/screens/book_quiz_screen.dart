@@ -131,9 +131,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                     backgroundColor: isDark
                         ? Colors.white12
                         : AppColors.grey200,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      accentColor,
-                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                   ),
                 ),
               ),
@@ -185,9 +183,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: accentColor.withValues(alpha: 0.2),
-                ),
+                border: Border.all(color: accentColor.withValues(alpha: 0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +260,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         ? AppColors.warning
         : pct >= 0.6
         ? AppColors.greenSuccessBright
-      : AppColorRoles.primary(isDark);
+        : AppColorRoles.primary(isDark);
     final msg = pct >= 0.8
         ? 'Excellent!'
         : pct >= 0.6
@@ -310,9 +306,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: accentColor.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -426,7 +420,7 @@ class _OptionTile extends StatelessWidget {
                     : showRed
                     ? AppColors.errorBright
                     : selected
-                  ? accentColor
+                    ? accentColor
                     : (isDark ? Colors.white12 : AppColors.grey200),
                 shape: BoxShape.circle,
               ),

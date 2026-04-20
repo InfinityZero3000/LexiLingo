@@ -39,6 +39,9 @@ class SettingsProvider extends ChangeNotifier {
     {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
     {'code': 'ja', 'name': '日本語', 'flag': '🇯🇵'},
     {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
+    {'code': 'zh', 'name': '中文', 'flag': '🇨🇳'},
+    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
+    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
   ];
 
   /// Daily goal presets with IconData
@@ -99,11 +102,12 @@ class SettingsProvider extends ChangeNotifier {
       // Keep settings usable even if cached payload is malformed.
       _settings = Settings(id: 0, userId: userId);
     } finally {
-      if (_settings != null && _error == null) {
-        await _syncReminderWithSettings(_settings!);
-      }
       _isLoading = false;
       notifyListeners();
+      // Sync reminder asynchronously — must not block isLoading flag.
+      if (_settings != null && _error == null) {
+        _syncReminderWithSettings(_settings!).catchError((_) {});
+      }
     }
   }
 

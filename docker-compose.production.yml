@@ -97,6 +97,10 @@ services:
     build:
       context: ./backend-service
       dockerfile: Dockerfile.prod
+    # TIP: To run multiple replicas for load balancing, remove `container_name`
+    # and run: docker-compose up --scale backend-service=2
+    # Nginx's `least_conn` upstream will automatically distribute traffic
+    # across all replicas via Docker's internal DNS round-robin.
     container_name: lexilingo-backend-service
     restart: unless-stopped
     env_file:

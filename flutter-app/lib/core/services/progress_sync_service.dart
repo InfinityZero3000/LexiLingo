@@ -4,9 +4,11 @@ import '../../features/user/data/datasources/user_firestore_data_source.dart';
 import '../../features/user/data/models/user_model.dart';
 import 'progress_firestore_data_source.dart';
 import 'firestore_service.dart';
+import '../utils/app_logger.dart';
 
 /// Service for syncing local SQLite data to Firestore
 class ProgressSyncService {
+  static const _tag = 'ProgressSyncService';
   final UserLocalDataSource userLocalDataSource;
   final UserFirestoreDataSource userFirestoreDataSource;
   final ProgressFirestoreDataSource progressFirestoreDataSource;
@@ -45,7 +47,7 @@ class ProgressSyncService {
       }
     } catch (e) {
       // Log error but don't throw
-      print('Failed to sync user profile: $e');
+      logWarn(_tag, 'Failed to sync user profile: $e');
     }
   }
 
@@ -67,7 +69,7 @@ class ProgressSyncService {
         );
       }
     } catch (e) {
-      print('Failed to sync user stats: $e');
+      logWarn(_tag, 'Failed to sync user stats: $e');
     }
   }
 
@@ -122,7 +124,7 @@ class ProgressSyncService {
         }
       }
     } catch (e) {
-      print('Failed to pull user data: $e');
+      logWarn(_tag, 'Failed to pull user data: $e');
     }
   }
 
@@ -139,7 +141,7 @@ class ProgressSyncService {
       await syncUserProfile();
       await syncUserStats();
     } catch (e) {
-      print('Failed to perform full sync: $e');
+      logWarn(_tag, 'Failed to perform full sync: $e');
     }
   }
 

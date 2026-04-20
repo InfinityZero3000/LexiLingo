@@ -51,6 +51,8 @@ services:
         sync: false
       
       # CORS Origins
+      - key: ENABLE_APP_CORS
+        value: "false"
       - key: ALLOWED_ORIGINS
         value: https://your-app.vercel.app,https://your-admin.netlify.app
         # UPDATE sau khi deploy frontend!
@@ -62,7 +64,7 @@ services:
         value: production
 
       - key: DEBUG
-        value: false
+        value: "false"
 
       - key: LOG_LEVEL
         value: INFO

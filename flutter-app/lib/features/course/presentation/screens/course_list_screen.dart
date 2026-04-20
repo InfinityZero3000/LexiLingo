@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -7,6 +6,7 @@ import 'package:lexilingo_app/features/course/presentation/providers/course_prov
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
 
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
@@ -168,9 +168,43 @@ class _CourseListScreenState extends State<CourseListScreen> {
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = provider.categories;
-    final shouldUseCategories = categories.isNotEmpty;
+    final nonEmptyCategorySections =
+        <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
+    final mappedCourseIds = <String>{};
+
+    for (final category in categories) {
+      final categoryCourses = provider.courses
+          .where(
+            (c) =>
+                c.tags.contains(category.slug) ||
+                c.tags.contains(category.name.toLowerCase()) ||
+                // fallback: if course has no tags, don't show it here unless category is general
+                (c.tags.isEmpty && category.slug == 'general'),
+          )
+          .toList();
+
+      if (categoryCourses.isNotEmpty) {
+        nonEmptyCategorySections.add(MapEntry(category, categoryCourses));
+        for (final course in categoryCourses) {
+          mappedCourseIds.add(course.id);
+        }
+      }
+    }
+
+    final totalCourses = provider.courses.length;
+    final mappingCoverage = totalCourses == 0
+        ? 0.0
+        : mappedCourseIds.length / totalCourses;
+
+    // Only switch to category mode when enough courses actually map to those categories.
+    // This avoids list flicker/disappear while loading additional pages.
+    final shouldUseCategories =
+        categories.isNotEmpty &&
+        nonEmptyCategorySections.isNotEmpty &&
+        mappingCoverage >= 0.6;
+
     final sections = shouldUseCategories
-        ? categories
+        ? nonEmptyCategorySections
         : provider.coursesByCategory.keys.toList();
 
     return SliverList(
@@ -185,20 +219,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
         }
 
         if (shouldUseCategories) {
-          final category = categories[index];
-          final categoryCourses = provider.courses
-              .where(
-                (c) =>
-                    c.tags.contains(category.slug) ||
-                    c.tags.contains(category.name.toLowerCase()) ||
-                    // fallback: if course has no tags, don't show it here unless category is general
-                    (c.tags.isEmpty && category.slug == 'general'),
-              )
-              .toList();
-
-          if (categoryCourses.isEmpty) {
-            return const SizedBox.shrink();
-          }
+          final section =
+              sections[index]
+                  as MapEntry<CourseCategoryEntity, List<CourseEntity>>;
+          final category = section.key;
+          final categoryCourses = section.value;
 
           return _CategorySection(
             categoryId: category.id,

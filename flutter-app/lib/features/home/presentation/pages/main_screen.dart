@@ -15,10 +15,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 class MainScreen extends StatefulWidget {
   final int initialIndex;
 
-  const MainScreen({
-    super.key,
-    this.initialIndex = 0,
-  });
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -28,10 +25,36 @@ class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
 
+  // Pages are built lazily — only when the tab is first visited.
+  static const int _pageCount = 5;
+  final Map<int, Widget> _pageCache = {};
+
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePageNew();
+      case 1:
+        return const CourseListScreen();
+      case 2:
+        return const LexiChatPage();
+      case 3:
+        return const StorySelectionPage();
+      case 4:
+        return const ProfilePage();
+      default:
+        throw StateError('Unknown page index: $index');
+    }
+  }
+
+  Widget _getPage(int index) =>
+      _pageCache.putIfAbsent(index, () => _buildPage(index));
+
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _pages.length - 1);
+    _currentIndex = widget.initialIndex.clamp(0, _pageCount - 1);
+    // Only build the initial page; all other pages are deferred.
+    _getPage(_currentIndex);
     if (_currentIndex == 2) {
       _lexiWarmedUp = true;
       _warmupAiModels();
@@ -53,19 +76,19 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  final List<Widget> _pages = [
-    const HomePageNew(),
-    const CourseListScreen(),
-    const LexiChatPage(),
-    const StorySelectionPage(),
-    const ProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: List.generate(_pageCount, (i) {
+          // Use a lightweight placeholder until the tab is first visited.
+          return _pageCache.containsKey(i)
+              ? _pageCache[i]!
+              : const SizedBox.shrink();
+        }),
+      ),
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -100,7 +123,10 @@ class _MainScreenState extends State<MainScreen> {
                     _lexiWarmedUp = true;
                     _warmupAiModels();
                   }
-                  setState(() => _currentIndex = index);
+                  setState(() {
+                    _getPage(index); // build page lazily on first visit
+                    _currentIndex = index;
+                  });
                 },
                 items: [
                   BottomNavigationBarItem(
@@ -148,11 +174,21 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _warmupAiModels() async {
-    try {
-      final url = Uri.parse('${ApiConfig.aiServiceUrl}/warmup');
-      await http.post(url);
-    } catch (_) {
-      // Ignore error
+    final endpoints = ['/warmup', '/ai/warmup'];
+
+    for (final endpoint in endpoints) {
+      try {
+        final url = Uri.parse('${ApiConfig.aiServiceUrl}$endpoint');
+        final response = await http
+            .post(url)
+            .timeout(const Duration(seconds: 8));
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return;
+        }
+      } catch (_) {
+        // Try next endpoint.
+      }
     }
   }
 }

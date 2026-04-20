@@ -440,9 +440,10 @@ class _CourseCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(course.level, isDark).withValues(
-                          alpha: 0.1,
-                        ),
+                        color: _getLevelColor(
+                          course.level,
+                          isDark,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -557,9 +558,10 @@ class _CourseGridCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _getLevelColor(course.level, isDark).withValues(
-                          alpha: 0.1,
-                        ),
+                        color: _getLevelColor(
+                          course.level,
+                          isDark,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

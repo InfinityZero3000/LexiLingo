@@ -439,12 +439,7 @@ class _LessonTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListTile(
-      leading: _getLessonIcon(
-        lesson.lessonType,
-        isLocked,
-        isCompleted,
-        isDark,
-      ),
+      leading: _getLessonIcon(lesson.lessonType, isLocked, isCompleted, isDark),
       title: Text(
         lesson.title,
         style: TextStyle(

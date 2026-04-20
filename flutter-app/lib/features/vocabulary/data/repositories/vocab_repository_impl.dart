@@ -47,7 +47,9 @@ class VocabRepositoryImpl implements VocabRepository {
         if (cached != null) {
           return Right(_fromJsonList(cached));
         }
-        return Left(CacheFailure('Failed to get vocabulary words: ${e.toString()}'));
+        return Left(
+          CacheFailure('Failed to get vocabulary words: ${e.toString()}'),
+        );
       }
     }
 
@@ -147,7 +149,7 @@ class VocabRepositoryImpl implements VocabRepository {
     if (userScope == 'anonymous') return;
 
     final idempotencyKey =
-        'vocab-${userScope}-${word.word.toLowerCase()}-${DateTime.now().millisecondsSinceEpoch}';
+      'vocab-$userScope-${word.word.toLowerCase()}-${DateTime.now().millisecondsSinceEpoch}';
     await _syncQueue.enqueue(
       userScope: userScope,
       queueType: 'vocab.add_word.v1',

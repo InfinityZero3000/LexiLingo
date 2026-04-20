@@ -74,8 +74,8 @@ class AuthProvider extends ChangeNotifier {
 
       // Web redirect flow: if we just came back from Google, finish backend
       // sign-in before checking stored session.
-      final pendingGoogleIdToken =
-          await googleSignInService.consumePendingWebRedirectIdToken();
+      final pendingGoogleIdToken = await googleSignInService
+          .consumePendingWebRedirectIdToken();
       if (pendingGoogleIdToken != null) {
         await _authenticateWithGoogleIdToken(pendingGoogleIdToken);
         return;
@@ -90,9 +90,7 @@ class AuthProvider extends ChangeNotifier {
         return;
       }
 
-      final result = await getCurrentUserUseCase(
-        NoParams(),
-      ).timeout(
+      final result = await getCurrentUserUseCase(NoParams()).timeout(
         const Duration(seconds: 8),
         onTimeout: () => Left(AuthFailure('Auth check timed out')),
       );
@@ -432,12 +430,20 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Submit onboarding payload once at the end of onboarding flow.
-  Future<void> submitOnboarding(Map<String, dynamic> payload) async {
+  ///
+  /// [displayName] and [nativeLanguage] are optional overrides from the
+  /// pre-auth questions page. If not provided, sensible defaults are used.
+  Future<void> submitOnboarding(
+    Map<String, dynamic> payload, {
+    String? displayName,
+    String? nativeLanguage,
+  }) async {
     final selectedLevel = (payload['level'] as String?)?.toUpperCase();
 
     final result = await authRepository.updateProfile(
+      displayName: displayName,
       level: selectedLevel,
-      nativeLanguage: 'vi',
+      nativeLanguage: nativeLanguage ?? 'vi',
       targetLanguage: 'en',
       isOnboardingCompleted: true,
     );
@@ -462,11 +468,12 @@ class AuthProvider extends ChangeNotifier {
   String _parseErrorMessage(String error) {
     final normalized = error.toLowerCase();
 
-    if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+    if (normalized.contains('timeoutexception') ||
+        normalized.contains('timed out')) {
       return 'Server is not responding in time. Please try again in a moment.';
     }
     if (normalized.contains('/users/me failed')) {
-      return 'Login succeeded but profile sync failed. Please try again.';
+      return 'Sign in succeeded, but we could not load your profile. Please try again.';
     }
     if (normalized.contains('internal server error')) {
       return 'Server error occurred. Please try again later.';
@@ -490,7 +497,8 @@ class AuthProvider extends ChangeNotifier {
     }
     if (normalized.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (normalized.contains('cancelled') || normalized.contains('canceled')) {
+    } else if (normalized.contains('cancelled') ||
+        normalized.contains('canceled')) {
       return 'Sign in was cancelled.';
     } else if (normalized.contains('email')) {
       return 'Invalid email address.';
@@ -517,11 +525,12 @@ class AuthProvider extends ChangeNotifier {
       return failure.message;
     } else if (failure is ServerFailure) {
       final normalized = failure.message.toLowerCase();
-      if (normalized.contains('timeoutexception') || normalized.contains('timed out')) {
+      if (normalized.contains('timeoutexception') ||
+          normalized.contains('timed out')) {
         return 'Server timeout. Please check server status and try again.';
       }
       if (normalized.contains('/users/me failed')) {
-        return 'Signed in, but profile sync timed out. Please reopen the app.';
+        return 'Sign in succeeded, but we could not load your profile. Please try again.';
       }
       return failure.message;
     } else if (failure is NetworkFailure) {

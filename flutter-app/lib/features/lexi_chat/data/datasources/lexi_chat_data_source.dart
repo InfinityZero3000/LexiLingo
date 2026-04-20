@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
@@ -33,7 +35,16 @@ class LexiChatDataSource {
 
   bool _isSessionNotFoundError(Object error) {
     final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+    return msg.contains('status 404') ||
+        msg.contains('404') ||
+        msg.contains('not found');
+  }
+
+  bool _isUnauthorizedError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('unauthorized') ||
+        msg.contains('status 401') ||
+        msg.contains('401');
   }
 
   String _normalizeMarkdownBoldMarkers(String text) {
@@ -156,6 +167,10 @@ class LexiChatDataSource {
             DateTime.tryParse(data['created_at'] ?? '') ?? DateTime.now(),
       );
     } catch (e) {
+      if (_isUnauthorizedError(e)) {
+        // Let provider surface a re-login message instead of creating stale local sessions.
+        rethrow;
+      }
       logError(_tag, 'createSession failed: $e');
       // Return a local session ID as fallback
       return LexiSession(
@@ -272,8 +287,8 @@ class LexiChatDataSource {
         );
       }).toList();
     } catch (e) {
-      logWarn(_tag, 'getMessages failed: $e');
-      rethrow;
+      logWarn(_tag, 'getMessages failed, return empty history: $e');
+      return [];
     }
   }
 
@@ -331,8 +346,16 @@ class LexiChatDataSource {
       );
     } catch (e) {
       if (_isSessionNotFoundError(e)) {
-        logWarn(_tag, 'getMessagesPaged session not found, skip legacy fallback: $e');
-        rethrow;
+        logWarn(
+          _tag,
+          'getMessagesPaged session not found, return empty page: $e',
+        );
+        return const LexiMessagesPage(
+          messages: [],
+          hasMore: false,
+          nextCursor: null,
+          returned: 0,
+        );
       }
       logWarn(_tag, 'getMessagesPaged fallback to full history: $e');
       final all = await getMessages(sessionId: sessionId);
@@ -362,23 +385,35 @@ class LexiChatDataSource {
       );
     }
 
-    final json = await apiClient.get(
-      '/lexi/sessions/$sessionId/messages/metadata',
-    );
-    final data = json['data'] ?? json;
-    final metadata = Map<String, dynamic>.from(
-      (data['metadata'] ?? const <String, dynamic>{}) as Map,
-    );
-    final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
+    try {
+      final json = await apiClient.get(
+        '/lexi/sessions/$sessionId/messages/metadata',
+      );
+      final data = json['data'] ?? json;
+      final metadata = Map<String, dynamic>.from(
+        (data['metadata'] ?? const <String, dynamic>{}) as Map,
+      );
+      final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
 
-    return LexiMessagesMetadata(
-      totalCount: totalCount,
-      hasMessages: metadata['has_messages'] == true,
-      latestCursor: metadata['latest_cursor']?.toString(),
-      oldestCursor: metadata['oldest_cursor']?.toString(),
-      latestTs: metadata['latest_ts']?.toString(),
-      oldestTs: metadata['oldest_ts']?.toString(),
-    );
+      return LexiMessagesMetadata(
+        totalCount: totalCount,
+        hasMessages: metadata['has_messages'] == true,
+        latestCursor: metadata['latest_cursor']?.toString(),
+        oldestCursor: metadata['oldest_cursor']?.toString(),
+        latestTs: metadata['latest_ts']?.toString(),
+        oldestTs: metadata['oldest_ts']?.toString(),
+      );
+    } catch (e) {
+      logWarn(_tag, 'getMessagesMetadata failed, return empty metadata: $e');
+      return const LexiMessagesMetadata(
+        totalCount: 0,
+        hasMessages: false,
+        latestCursor: null,
+        oldestCursor: null,
+        latestTs: null,
+        oldestTs: null,
+      );
+    }
   }
 
   Future<List<LexiSession>> getSessions({required String userId}) async {
@@ -416,4 +451,187 @@ class LexiChatDataSource {
   Future<void> deleteSession({required String sessionId}) async {
     await apiClient.post('/lexi/sessions/$sessionId/delete', body: {});
   }
+
+  /// Send a message to Lexi and receive an SSE stream of events.
+  ///
+  /// Yields [LexiStreamEvent] values in order:
+  ///   1. [LexiStreamThinking]   — pipeline started
+  ///   2. [LexiStreamChunk]      — one word at a time (typewriter effect)
+  ///   3. [LexiStreamDone]       — full message with metadata
+  ///   4. [LexiStreamError]      — on pipeline failure (may not follow thinking)
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  }) async* {
+    final payload = {
+      'user_id': userId,
+      'session_id': sessionId,
+      'message': message,
+      'input_type': inputType,
+      if (audioBase64 != null) 'audio_base64': audioBase64,
+      'enable_tts': enableTts,
+      'learner_level': learnerLevel,
+      if (storyContext != null) 'story_context': storyContext,
+    };
+
+    final rawStream = apiClient.postStream('/lexi/stream', body: payload);
+
+    // SSE parsing state
+    String? currentEvent;
+    final buffer = StringBuffer();
+
+    await for (final chunk in rawStream.transform(utf8.decoder)) {
+      buffer.write(chunk);
+      // Process all complete lines in the buffer
+      while (true) {
+        final content = buffer.toString();
+        final newlineIdx = content.indexOf('\n');
+        if (newlineIdx == -1) break;
+
+        final line = content.substring(0, newlineIdx).trimRight();
+        buffer.clear();
+        if (newlineIdx + 1 < content.length) {
+          buffer.write(content.substring(newlineIdx + 1));
+        }
+
+        if (line.isEmpty) {
+          // Empty line = end of SSE event block; reset event name
+          currentEvent = null;
+          continue;
+        }
+
+        if (line.startsWith('event:')) {
+          currentEvent = line.substring(6).trim();
+          continue;
+        }
+
+        if (line.startsWith('data:')) {
+          final dataStr = line.substring(5).trim();
+          final event = currentEvent;
+
+          switch (event) {
+            case 'thinking':
+              yield const LexiStreamThinking();
+              break;
+            case 'chunk':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                final text = json['text'] as String? ?? '';
+                if (text.isNotEmpty) yield LexiStreamChunk(text);
+              } catch (_) {}
+              break;
+            case 'done':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                final corrections = <LexiCorrection>[];
+                final rawCorrections = json['corrections'] as List?;
+                if (rawCorrections != null) {
+                  for (final c in rawCorrections) {
+                    corrections.add(LexiCorrection(
+                      errorSpan: c['error_span'] ?? '',
+                      correction: c['correction'] ?? '',
+                      errorType: c['error_type'] ?? '',
+                      explanation: c['explanation'] ?? '',
+                    ));
+                  }
+                }
+                final linkedConcepts = <String>[];
+                final rawConcepts = json['linked_concepts'] as List?;
+                if (rawConcepts != null) {
+                  linkedConcepts.addAll(rawConcepts.cast<String>());
+                }
+                Map<String, dynamic>? scores;
+                if (json['scores'] != null) {
+                  scores = Map<String, dynamic>.from(
+                    json['scores'] as Map,
+                  );
+                }
+                yield LexiStreamDone(
+                  messageId: json['message_id'] as String? ?? '',
+                  sessionId: json['session_id'] as String? ?? sessionId,
+                  corrections: corrections,
+                  linkedConcepts: linkedConcepts,
+                  vietnameseHint: json['vietnamese_hint'] as String?,
+                  scores: scores,
+                  audioBase64: json['audio_base64'] as String?,
+                  storyContext: json['story_context'] as String?,
+                  metadata: json['metadata'] != null
+                      ? Map<String, dynamic>.from(json['metadata'] as Map)
+                      : const {},
+                );
+              } catch (e) {
+                logError(_tag, 'sendMessageStream: failed to parse done event: $e');
+              }
+              break;
+            case 'error':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                yield LexiStreamError(
+                  json['error'] as String? ?? 'Unknown error',
+                );
+              } catch (_) {
+                yield const LexiStreamError('Stream error');
+              }
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ─── SSE event types ─────────────────────────────────────────────────────────
+
+sealed class LexiStreamEvent {
+  const LexiStreamEvent();
+}
+
+/// Sent immediately: the AI pipeline has started processing.
+class LexiStreamThinking extends LexiStreamEvent {
+  const LexiStreamThinking();
+}
+
+/// One word (or token) from the AI response — shows typewriter effect.
+class LexiStreamChunk extends LexiStreamEvent {
+  final String text;
+  const LexiStreamChunk(this.text);
+}
+
+/// Final event: full message with corrections, audio, etc.
+class LexiStreamDone extends LexiStreamEvent {
+  final String messageId;
+  final String sessionId;
+  final List<LexiCorrection> corrections;
+  final List<String> linkedConcepts;
+  final String? vietnameseHint;
+  final Map<String, dynamic>? scores;
+  final String? audioBase64;
+  final String? storyContext;
+  final Map<String, dynamic> metadata;
+
+  const LexiStreamDone({
+    required this.messageId,
+    required this.sessionId,
+    required this.corrections,
+    required this.linkedConcepts,
+    this.vietnameseHint,
+    this.scores,
+    this.audioBase64,
+    this.storyContext,
+    required this.metadata,
+  });
+}
+
+/// Sent if the pipeline fails unrecoverably.
+class LexiStreamError extends LexiStreamEvent {
+  final String error;
+  const LexiStreamError(this.error);
 }

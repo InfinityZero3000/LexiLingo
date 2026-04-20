@@ -22,6 +22,7 @@ import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice
 import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
+import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -136,6 +137,11 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         automaticallyImplyLeading: false,
         actions: [
+          // Language switcher
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: Center(child: LanguageSwitcherButton()),
+          ),
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
@@ -879,11 +885,7 @@ class _ProfilePageState extends State<ProfilePage>
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.insights_rounded,
-                    color: primaryColor,
-                    size: 20,
-                  ),
+                  Icon(Icons.insights_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Learning Stats',
@@ -1137,22 +1139,10 @@ class _ProfilePageState extends State<ProfilePage>
                               final normalizedValue = maxXP > 0
                                   ? activity.xpEarned / maxXP
                                   : 0.0;
-                              String dayLabel;
-                              final parsedDate = DateTime.tryParse(activity.date);
-                              if (parsedDate != null) {
-                                dayLabel = DateFormat(
-                                  'E',
-                                ).format(parsedDate).substring(0, 1);
-                              } else {
-                                final raw = activity.date.trim();
-                                dayLabel = raw.isEmpty
-                                    ? '-'
-                                    : raw.substring(0, 1).toUpperCase();
-                              }
 
                               return Expanded(
                                 child: AnimatedActivityBar(
-                                  label: dayLabel,
+                                  label: '',
                                   value: normalizedValue,
                                   xpValue: activity.xpEarned,
                                   color: AppColorRoles.primary(isDark),
@@ -1161,6 +1151,38 @@ class _ProfilePageState extends State<ProfilePage>
                               );
                             }).toList(),
                           ),
+                        ),
+                        // Day labels row — separate from bars to ensure alignment
+                        const SizedBox(height: 6),
+                        Row(
+                          children: activities.map((activity) {
+                            String dayLabel;
+                            final parsedDate = DateTime.tryParse(activity.date);
+                            if (parsedDate != null) {
+                              dayLabel = DateFormat(
+                                'E',
+                              ).format(parsedDate).substring(0, 1);
+                            } else {
+                              final raw = activity.date.trim();
+                              dayLabel = raw.isEmpty
+                                  ? '-'
+                                  : raw.substring(0, 1).toUpperCase();
+                            }
+                            return Expanded(
+                              child: Center(
+                                child: Text(
+                                  dayLabel,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? AppColors.grey500
+                                        : AppColors.grey600,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 16),
                         // Summary stats

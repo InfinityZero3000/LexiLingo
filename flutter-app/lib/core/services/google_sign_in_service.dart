@@ -114,10 +114,16 @@ class GoogleSignInService {
     }
   }
 
-  Future<String?> _extractGoogleIdTokenAndSignOut(UserCredential userCredential) async {
+  Future<String?> _extractGoogleIdTokenAndSignOut(
+    UserCredential userCredential,
+  ) async {
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
-    final googleIdToken = oauthCredential?.idToken;
+    String? googleIdToken = oauthCredential?.idToken;
+
+    // Web fallback: some browsers/policies return a credential without idToken.
+    // In that case we use Firebase ID token and let backend verify it.
+    googleIdToken ??= await userCredential.user?.getIdToken(true);
 
     if (googleIdToken == null) {
       logError(_tag, 'Failed to get Google ID token from Firebase credential');
@@ -175,7 +181,10 @@ class GoogleSignInService {
       return auth.idToken;
     } on PlatformException catch (e) {
       _lastError = _mapMobileGoogleError(e);
-      logError(_tag, 'Google mobile sign-in PlatformException: ${e.code} ${e.message}');
+      logError(
+        _tag,
+        'Google mobile sign-in PlatformException: ${e.code} ${e.message}',
+      );
       return null;
     }
   }

@@ -104,7 +104,9 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
 
   bool _isSessionNotFoundError(Object error) {
     final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') || msg.contains('404') || msg.contains('not found');
+    return msg.contains('status 404') ||
+        msg.contains('404') ||
+        msg.contains('not found');
   }
 
   @override
@@ -123,5 +125,28 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
   @override
   Future<void> deleteSession({required String sessionId}) {
     return dataSource.deleteSession(sessionId: sessionId);
+  }
+
+  @override
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  }) {
+    return dataSource.sendMessageStream(
+      userId: userId,
+      sessionId: sessionId,
+      message: message,
+      inputType: inputType,
+      audioBase64: audioBase64,
+      enableTts: enableTts,
+      learnerLevel: learnerLevel,
+      storyContext: storyContext,
+    );
   }
 }

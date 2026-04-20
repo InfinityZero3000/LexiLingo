@@ -1,9 +1,11 @@
 import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
+import '../utils/app_logger.dart';
 
 /// Service to manage user streaks and daily activity
 /// Implements real streak logic (not hardcoded)
 class StreakService {
+  static const _tag = 'StreakService';
   final DatabaseHelper _dbHelper;
 
   StreakService({DatabaseHelper? dbHelper})
@@ -168,7 +170,7 @@ class StreakService {
 
     if (results.isEmpty) {
       // User missed yesterday, streak is broken but data remains
-      print('User missed yesterday, streak continues from 0');
+      logInfo(_tag, 'User missed yesterday, streak continues from 0');
     }
   }
 

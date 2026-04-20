@@ -19,6 +19,9 @@ class AppLocales {
     Locale('en'),
     Locale('ja'),
     Locale('ko'),
+    Locale('zh'),
+    Locale('fr'),
+    Locale('es'),
   ];
 
   static const Locale fallback = Locale('vi');
@@ -28,6 +31,9 @@ class AppLocales {
     'en': {'flag': '🇺🇸', 'name': 'English', 'nameEn': 'English'},
     'ja': {'flag': '🇯🇵', 'name': '日本語', 'nameEn': 'Japanese'},
     'ko': {'flag': '🇰🇷', 'name': '한국어', 'nameEn': 'Korean'},
+    'zh': {'flag': '🇨🇳', 'name': '中文', 'nameEn': 'Chinese'},
+    'fr': {'flag': '🇫🇷', 'name': 'Français', 'nameEn': 'French'},
+    'es': {'flag': '🇪🇸', 'name': 'Español', 'nameEn': 'Spanish'},
   };
 
   static String flagOf(String code) => metadata[code]?['flag'] ?? '🌐';

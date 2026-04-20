@@ -781,8 +781,6 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -790,24 +788,31 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
           opacity: _opacityAnimation.value,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              if (widget.xpValue > 0)
-                AnimatedOpacity(
-                  opacity: _heightAnimation.value > 0.5 ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    '${widget.xpValue}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: widget.color,
-                    ),
-                  ),
-                ),
+              // XP value label — always same height to avoid pushing bar down
+              SizedBox(
+                height: 16,
+                child: widget.xpValue > 0
+                    ? AnimatedOpacity(
+                        opacity: _heightAnimation.value > 0.5 ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          '${widget.xpValue}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: widget.color,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
               const SizedBox(height: 4),
               Container(
                 width: 32,
-                height: 80 * _heightAnimation.value + 4, // Min height of 4
+                height: 80 * _heightAnimation.value.clamp(0.0, 1.0) + 4,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -822,15 +827,6 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                       offset: const Offset(0, 2),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.grey500 : AppColors.grey600,
                 ),
               ),
             ],

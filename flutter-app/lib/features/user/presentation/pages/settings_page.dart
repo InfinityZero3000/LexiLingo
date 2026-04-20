@@ -92,14 +92,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildFlagSkeleton(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      color: isDark ? AppColors.grey700 : AppColors.grey300,
-    );
+    return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final label = _flagLabelByLanguage[languageCode] ?? languageCode.toUpperCase();
+    final label =
+        _flagLabelByLanguage[languageCode] ?? languageCode.toUpperCase();
 
     return Container(
       width: 28,
@@ -140,105 +139,105 @@ class _SettingsPageState extends State<SettingsPage> {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-              // Daily Goal Section
-              AnimatedListItem(
-                index: 0,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.flag,
-                  title: 'settings.daily_goal'.tr(),
-                  subtitle: 'settings.daily_goal_subtitle'.tr(),
+                // Daily Goal Section
+                AnimatedListItem(
+                  index: 0,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.flag,
+                    title: 'settings.daily_goal'.tr(),
+                    subtitle: 'settings.daily_goal_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildDailyGoalSelector(context, settings),
+                const SizedBox(height: 12),
+                _buildDailyGoalSelector(context, settings),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Language Section
-              AnimatedListItem(
-                index: 1,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.language,
-                  title: 'settings.language'.tr(),
-                  subtitle: 'settings.language_subtitle'.tr(),
+                // Language Section
+                AnimatedListItem(
+                  index: 1,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.language,
+                    title: 'settings.language'.tr(),
+                    subtitle: 'settings.language_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildLanguageSelector(context, settings),
+                const SizedBox(height: 12),
+                _buildLanguageSelector(context, settings),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Notifications Section
-              AnimatedListItem(
-                index: 2,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.notifications,
-                  title: 'settings.notifications'.tr(),
-                  subtitle: 'settings.notifications_subtitle'.tr(),
+                // Notifications Section
+                AnimatedListItem(
+                  index: 2,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.notifications,
+                    title: 'settings.notifications'.tr(),
+                    subtitle: 'settings.notifications_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildNotificationSettings(context, settings),
+                const SizedBox(height: 12),
+                _buildNotificationSettings(context, settings),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Sound Section
-              AnimatedListItem(
-                index: 3,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.volume_up,
-                  title: 'settings.sound'.tr(),
-                  subtitle: 'settings.sound_subtitle'.tr(),
+                // Sound Section
+                AnimatedListItem(
+                  index: 3,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.volume_up,
+                    title: 'settings.sound'.tr(),
+                    subtitle: 'settings.sound_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildSoundSettings(context, settings),
+                const SizedBox(height: 12),
+                _buildSoundSettings(context, settings),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Theme Section
-              AnimatedListItem(
-                index: 4,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.palette,
-                  title: 'settings.theme'.tr(),
-                  subtitle: 'settings.theme_subtitle'.tr(),
+                // Theme Section
+                AnimatedListItem(
+                  index: 4,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.palette,
+                    title: 'settings.theme'.tr(),
+                    subtitle: 'settings.theme_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildThemeSelector(context, settings),
+                const SizedBox(height: 12),
+                _buildThemeSelector(context, settings),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Account Section
-              AnimatedListItem(
-                index: 5,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 50),
-                child: _buildSectionHeader(
-                  context,
-                  icon: Icons.manage_accounts,
-                  title: 'settings.account'.tr(),
-                  subtitle: 'settings.account_subtitle'.tr(),
+                // Account Section
+                AnimatedListItem(
+                  index: 5,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.manage_accounts,
+                    title: 'settings.account'.tr(),
+                    subtitle: 'settings.account_subtitle'.tr(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildAccountSection(context),
+                const SizedBox(height: 12),
+                _buildAccountSection(context),
 
                 const SizedBox(height: 40),
               ],
@@ -281,9 +280,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               Text(
                 subtitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColorRoles.textMuted(isDark),
                 ),
               ),
@@ -312,10 +309,7 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    primaryColor,
-                    primaryColor.withValues(alpha: 0.7),
-                  ],
+                  colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -372,7 +366,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                          ? primaryColor.withValues(alpha: 0.1)
+                            ? primaryColor.withValues(alpha: 0.1)
                             : (isDark
                                   ? AppColors.surfaceDarkMuted.withValues(
                                       alpha: 0.5,
@@ -380,9 +374,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   : AppColors.grey100),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected
-                              ? primaryColor
-                              : AppColors.grey300,
+                          color: isSelected ? primaryColor : AppColors.grey300,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -393,7 +385,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             size: 24,
                             color: isSelected
                                 ? primaryColor
-                              : AppColorRoles.textMuted(isDark),
+                                : AppColorRoles.textMuted(isDark),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -404,9 +396,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   goal['label'] as String,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: isSelected
-                                      ? primaryColor
-                                        : null,
+                                    color: isSelected ? primaryColor : null,
                                   ),
                                 ),
                                 Text(
@@ -430,10 +420,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 8),
-                            Icon(
-                              Icons.check_circle,
-                              color: primaryColor,
-                            ),
+                            Icon(Icons.check_circle, color: primaryColor),
                           ],
                         ],
                       ),
@@ -505,10 +492,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         const Spacer(),
                         if (isSelected)
-                          Icon(
-                            Icons.check_circle,
-                            color: primaryColor,
-                          ),
+                          Icon(Icons.check_circle, color: primaryColor),
                       ],
                     ),
                   ),
@@ -688,11 +672,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                    ? primaryColor.withValues(alpha: 0.1)
+                      ? primaryColor.withValues(alpha: 0.1)
                       : null,
                   borderRadius: BorderRadius.circular(12),
                   border: isSelected
-                    ? Border.all(color: primaryColor, width: 2)
+                      ? Border.all(color: primaryColor, width: 2)
                       : null,
                 ),
                 child: Column(

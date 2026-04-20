@@ -55,7 +55,11 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
-      provider.restoreLatestSession(_userId);
+      unawaited(
+        provider.restoreLatestSession(_userId).catchError((Object error) {
+          debugPrint('restoreLatestSession failed: $error');
+        }),
+      );
     });
 
     _scrollController.addListener(_handleTopReached);
@@ -109,7 +113,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
-    final pending = provider.sendMessage(text, userId: _userId);
+    final pending = provider.sendMessageStreaming(text, userId: _userId);
     _scrollToBottom();
     await pending;
     _scrollToBottom();
@@ -415,17 +419,20 @@ class _LexiChatPageState extends State<LexiChatPage>
                             ),
                           ),
                         )
-                      : ListView.builder(
-                          itemCount: provider.sessions.length,
+                      : Builder(
+                          builder: (_) {
+                            final sessions = provider.sessions;
+                            return ListView.builder(
+                          itemCount: sessions.length,
                           itemBuilder: (context, index) {
-                            final s = provider.sessions[index];
+                            final s = sessions[index];
                             final selected =
                                 provider.session?.sessionId == s.sessionId;
                             return ListTile(
                               selected: selected,
-                              selectedTileColor: AppColorRoles.primary(isDark).withValues(
-                                alpha: 0.08,
-                              ),
+                              selectedTileColor: AppColorRoles.primary(
+                                isDark,
+                              ).withValues(alpha: 0.08),
                               title: Text(
                                 s.title,
                                 maxLines: 1,
@@ -493,6 +500,8 @@ class _LexiChatPageState extends State<LexiChatPage>
                                 ],
                               ),
                             );
+                          },
+                        );
                           },
                         ),
                 ),
@@ -700,7 +709,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColorRoles.primary(isDark).withValues(alpha: 0.25),
+                          color: AppColorRoles.primary(
+                            isDark,
+                          ).withValues(alpha: 0.25),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -711,7 +722,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                         provider.isSending
                             ? Icons.hourglass_empty_rounded
                             : Icons.send_rounded,
-                        color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
+                        color: isDark
+                            ? AppColors.slate900
+                            : AppColors.surfaceLight,
                         size: 20,
                       ),
                       onPressed: provider.isSending ? null : _sendMessage,

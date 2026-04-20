@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../../core/services/ai_service.dart';
+import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// HuggingFace Inference API Service
 /// Provides access to free AI models via HuggingFace API
 class HuggingFaceService implements AIService {
+  static const _tag = 'HuggingFaceService';
   final http.Client httpClient;
   final String apiKey;
   final String modelId;
@@ -139,7 +141,7 @@ class HuggingFaceService implements AIService {
       );
       return response.isNotEmpty;
     } catch (e) {
-      print('HuggingFace connection test failed: $e');
+      logWarn(_tag, 'HuggingFace connection test failed: $e');
       return false;
     }
   }

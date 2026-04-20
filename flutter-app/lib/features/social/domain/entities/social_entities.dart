@@ -34,24 +34,24 @@ class UserSocialProfileEntity extends Equatable {
     return UserSocialProfileEntity(
       userId: json['user_id'] ?? json['userId'] ?? '',
       username: json['username'] ?? '',
-        displayName:
+      displayName:
           json['display_name'] ?? json['displayName'] ?? json['username'] ?? '',
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
       isFollowing: json['is_following'] ?? json['isFollowing'] ?? false,
-        xp: (json['xp'] ?? json['total_xp'] ?? json['totalXp'] ?? 0) as int,
+      xp: (json['xp'] ?? json['total_xp'] ?? json['totalXp'] ?? 0) as int,
       league: json['league'],
       currentStreak: json['current_streak'] ?? json['currentStreak'] ?? 0,
-        mutualConnections:
+      mutualConnections:
           json['mutual_connections'] ?? json['mutualConnections'] ?? 0,
-        suggestionReasons:
+      suggestionReasons:
           (json['suggestion_reasons'] as List?)?.map((e) => '$e').toList() ??
           (json['suggestionReasons'] as List?)?.map((e) => '$e').toList() ??
           const [],
-        similarityScore:
+      similarityScore:
           (json['similarity_score'] ?? json['similarityScore']) is num
           ? (json['similarity_score'] ?? json['similarityScore']).toDouble()
           : null,
-        distanceKm: (json['distance_km'] ?? json['distanceKm']) is num
+      distanceKm: (json['distance_km'] ?? json['distanceKm']) is num
           ? (json['distance_km'] ?? json['distanceKm']).toDouble()
           : null,
     );

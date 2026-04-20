@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/services/encrypted_local_cache_service.dart';
 import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
+import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
@@ -81,6 +82,14 @@ class LexiChatProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
+
+  bool _isUnauthorizedError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('unauthorized') ||
+        normalized.contains('status 401') ||
+        normalized.contains('401');
+  }
+
   String get learnerLevel => _learnerLevel;
 
   // ── Session ────────────────────────────────────────────────────────────────
@@ -124,6 +133,9 @@ class LexiChatProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = 'Failed to start session: $e';
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+      }
       _isLoading = false;
       logError(_tag, _error!);
       notifyListeners();
@@ -150,6 +162,11 @@ class LexiChatProvider extends ChangeNotifier {
       } else {
         await startSession(userId);
       }
+    } catch (e) {
+      _error = 'Failed to restore session: $e';
+      _isLoading = false;
+      logWarn(_tag, _error!);
+      notifyListeners();
     } finally {
       _isRestoringSession = false;
     }
@@ -211,11 +228,10 @@ class LexiChatProvider extends ChangeNotifier {
         nextCursor: _nextMessageCursor,
       );
 
-      if (loaded.isEmpty && summary.messageCount > 0) {
-        throw Exception('Session history is unavailable right now.');
-      }
-
       if (loaded.isEmpty) {
+        if (summary.messageCount > 0) {
+          _error = 'Session history is temporarily unavailable. You can continue chatting.';
+        }
         _messages.add(
           LexiMessage(
             id: 'greeting',
@@ -251,6 +267,9 @@ class LexiChatProvider extends ChangeNotifier {
       }
 
       _error = 'Failed to load session: $e';
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+      }
       _isLoading = false;
       notifyListeners();
     }
@@ -362,6 +381,12 @@ class LexiChatProvider extends ChangeNotifier {
     } catch (e) {
       await _endLexiResponseState();
       _isSending = false;
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+        logError(_tag, _error!);
+        notifyListeners();
+        return;
+      }
       _error = 'You are offline. Message queued for sync.';
       logError(_tag, _error!);
 
@@ -376,8 +401,7 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _enqueuePendingLexiMessage({
-    required String userId,
+  Future<void> _enqueuePendingLexiMessage({    required String userId,
     required String sessionId,
     required String message,
     required String idempotencyKey,
@@ -407,7 +431,152 @@ class LexiChatProvider extends ChangeNotifier {
     return 'lexi-$userId-$sessionId-${DateTime.now().millisecondsSinceEpoch}-$rand';
   }
 
-  // ── Voice Input ────────────────────────────────────────────────────────────
+  // ── Send Message (streaming / typewriter effect) ───────────────────────────
+
+  /// Sends a message and shows the AI response word-by-word (typewriter effect).
+  ///
+  /// Works by:
+  ///   1. Adding an optimistic user message.
+  ///   2. Inserting a placeholder assistant message with [syncStatus] = 'streaming'.
+  ///   3. Appending each [LexiStreamChunk] word to the placeholder's content.
+  ///   4. Replacing the placeholder with the final [LexiMessage] on [LexiStreamDone].
+  ///   5. Falling back to the regular [sendMessage] on streaming errors.
+  Future<void> sendMessageStreaming(String text, {String? userId}) async {
+    if (text.trim().isEmpty || _isSending) return;
+
+    final uid = userId ?? 'demo_user';
+    if (_session == null) {
+      await startSession(uid);
+    }
+    final sessionId = _session?.sessionId ?? '';
+    final requestId = _buildRequestId(uid, sessionId);
+    final placeholderId = 'stream_$requestId';
+
+    // Optimistic: user message
+    final userMsg = LexiMessage(
+      id: requestId,
+      role: 'user',
+      content: text.trim(),
+      timestamp: DateTime.now(),
+      syncStatus: 'pending_sync',
+      clientRequestId: requestId,
+    );
+    _messages.add(userMsg);
+
+    // Streaming placeholder for the assistant response
+    _messages.add(LexiMessage(
+      id: placeholderId,
+      role: 'assistant',
+      content: '',
+      timestamp: DateTime.now(),
+      syncStatus: 'streaming',
+    ));
+
+    _isSending = true;
+    _isLexiThinking = true;
+    _isLexiTyping = false;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await for (final event in repository.sendMessageStream(
+        userId: uid,
+        sessionId: sessionId,
+        message: text.trim(),
+        enableTts: _ttsEnabled,
+        learnerLevel: _learnerLevel,
+      )) {
+        switch (event) {
+          case LexiStreamThinking():
+            _isLexiThinking = true;
+            _isLexiTyping = false;
+            notifyListeners();
+
+          case LexiStreamChunk(:final text):
+            _isLexiThinking = false;
+            _isLexiTyping = true;
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              _messages[idx] = _messages[idx].copyWith(
+                content: _messages[idx].content + text,
+              );
+              notifyListeners();
+            }
+
+          case LexiStreamDone(
+              :final messageId,
+              :final corrections,
+              :final linkedConcepts,
+              :final vietnameseHint,
+              :final scores,
+              :final audioBase64,
+              :final storyContext,
+            ):
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              final finalContent = _messages[idx].content;
+              _messages[idx] = LexiMessage(
+                id: messageId.isNotEmpty ? messageId : placeholderId,
+                role: 'assistant',
+                content: finalContent,
+                timestamp: DateTime.now(),
+                audioBase64: audioBase64,
+                corrections: corrections,
+                linkedConcepts: linkedConcepts,
+                vietnameseHint: vietnameseHint,
+                scores: scores,
+                syncStatus: 'synced',
+              );
+            }
+
+            // Mark user message as synced
+            final userIdx = _messages.indexWhere((m) => m.id == requestId);
+            if (userIdx != -1) {
+              _messages[userIdx] = _messages[userIdx].copyWith(
+                syncStatus: 'synced',
+              );
+            }
+
+            await _cacheCurrentMessages();
+            _touchSession(sessionId, messageDelta: 2);
+            _isLexiThinking = false;
+            _isLexiTyping = false;
+            _isSending = false;
+            notifyListeners();
+
+            if (_ttsEnabled &&
+                audioBase64 != null &&
+                audioBase64.isNotEmpty) {
+              await _playTtsAudio(audioBase64);
+            }
+            // storyContext is returned by the server for context continuity; no local storage needed.
+          case LexiStreamError(:final error):
+            logError(_tag, 'sendMessageStreaming error event: $error');
+            // Remove placeholder and fall back to sendMessage
+            _messages.removeWhere((m) => m.id == placeholderId);
+            _messages.removeWhere((m) => m.id == requestId);
+            _isLexiThinking = false;
+            _isLexiTyping = false;
+            _isSending = false;
+            notifyListeners();
+            await sendMessage(text, userId: uid);
+            return;
+        }
+      }
+    } catch (e) {
+      logError(_tag, 'sendMessageStreaming exception: $e');
+      _messages.removeWhere((m) => m.id == placeholderId);
+      _messages.removeWhere((m) => m.id == requestId);
+      _isLexiThinking = false;
+      _isLexiTyping = false;
+      _isSending = false;
+      notifyListeners();
+      // Fall back to regular (non-streaming) endpoint
+      await sendMessage(text, userId: uid);
+    }
+  }
+
+
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {
     if (_isSending) return;
 
@@ -456,6 +625,12 @@ class LexiChatProvider extends ChangeNotifier {
     } catch (e) {
       await _endLexiResponseState();
       _isSending = false;
+      if (_isUnauthorizedError(e)) {
+        _error = 'Your login session expired. Please sign in again.';
+        logError(_tag, _error!);
+        notifyListeners();
+        return;
+      }
       _error = 'Voice processing failed: $e';
       logError(_tag, _error!);
       notifyListeners();
@@ -651,7 +826,9 @@ class LexiChatProvider extends ChangeNotifier {
   String _chatFirstPageCacheKey(String sessionId) =>
       'chat:session:$sessionId:page:first';
 
-  Future<_CachedChatPage?> _getCachedFirstPage(LexiSessionSummary summary) async {
+  Future<_CachedChatPage?> _getCachedFirstPage(
+    LexiSessionSummary summary,
+  ) async {
     final raw = await _encryptedCache.getMap(
       userScope: summary.userId,
       namespace: _chatNamespace,
@@ -757,7 +934,8 @@ class _CachedChatPage {
         role: m['role']?.toString() ?? 'assistant',
         content: m['content']?.toString() ?? '',
         timestamp:
-            DateTime.tryParse(m['timestamp']?.toString() ?? '') ?? DateTime.now(),
+            DateTime.tryParse(m['timestamp']?.toString() ?? '') ??
+            DateTime.now(),
         audioBase64: m['audio_base64']?.toString(),
         corrections: corrections,
         linkedConcepts: (m['linked_concepts'] as List<dynamic>? ?? const [])
@@ -765,8 +943,8 @@ class _CachedChatPage {
             .toList(),
         vietnameseHint: m['vietnamese_hint']?.toString(),
         scores: m['scores'] is Map
-          ? Map<String, dynamic>.from(m['scores'] as Map)
-          : null,
+            ? Map<String, dynamic>.from(m['scores'] as Map)
+            : null,
         syncStatus: m['sync_status']?.toString() ?? 'synced',
         clientRequestId: m['client_request_id']?.toString(),
       );

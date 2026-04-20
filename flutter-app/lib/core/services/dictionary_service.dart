@@ -31,7 +31,7 @@ class MeaningEntry {
 
 /// Fetches word definitions from the Free Dictionary API.
 ///
-/// Endpoint: https://api.dictionaryapi.dev/api/v2/entries/en/<word>
+/// Endpoint: https://api.dictionaryapi.dev/api/v2/entries/en/{word}
 class DictionaryService {
   static const _baseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
   final http.Client _client;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -42,7 +41,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   void _onTabChanged() {
-    if (_tabController.indexIsChanging) return;
     final league = _leagues[_tabController.index];
     context.read<GamificationProvider>().setLeague(league);
   }
@@ -62,6 +60,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         builder: (context, provider, child) {
           return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
+              final showLeagueCard = provider.leagueStatus != null &&
+                  provider.selectedLeague == provider.leagueStatus!.league;
               return [
                 // App Bar
                 SliverAppBar(
@@ -69,9 +69,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   centerTitle: true,
                   pinned: true,
                   floating: true,
-                  expandedHeight: provider.leagueStatus != null ? 200 : 120,
+                  expandedHeight: showLeagueCard ? 200 : 120,
                   flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
+                    background: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -89,7 +90,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         child: Column(
                           children: [
                             const SizedBox(height: 56), // AppBar height
-                            if (provider.leagueStatus != null)
+                            if (showLeagueCard)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
