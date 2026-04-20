@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
 /// Get Started page for first-time visitors before authentication.
 class WelcomePage extends StatefulWidget {
@@ -86,7 +87,7 @@ class _WelcomePageState extends State<WelcomePage>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 40),
+                      const LanguageSwitcherButton(),
                     ],
                   ),
                 ),

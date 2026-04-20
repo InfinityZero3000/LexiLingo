@@ -22,6 +22,7 @@ import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice
 import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
+import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -136,6 +137,11 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         automaticallyImplyLeading: false,
         actions: [
+          // Language switcher
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: Center(child: LanguageSwitcherButton()),
+          ),
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {

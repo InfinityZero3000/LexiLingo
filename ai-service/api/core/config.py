@@ -69,7 +69,14 @@ class Settings(BaseSettings):
         "https://lexilingo.vercel.app",  # Production Flutter web
         # Add your custom domains here
     ]
-    
+    CORS_ALLOW_ORIGIN_REGEX: str = (
+        r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
+        r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
+        r"|https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
+        r"|https?://.*\.devtunnels\.ms(:\d+)?"
+        r"|https?://.*\.github\.dev(:\d+)?"
+    )
+
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
     def parse_allowed_origins(cls, v):
