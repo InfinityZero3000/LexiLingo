@@ -465,7 +465,7 @@ class AuthProvider extends ChangeNotifier {
       return 'Server is not responding in time. Please try again in a moment.';
     }
     if (normalized.contains('/users/me failed')) {
-      return 'Login succeeded but profile sync failed. Please try again.';
+      return 'Sign in succeeded, but we could not load your profile. Please try again.';
     }
     if (normalized.contains('internal server error')) {
       return 'Server error occurred. Please try again later.';
@@ -522,7 +522,7 @@ class AuthProvider extends ChangeNotifier {
         return 'Server timeout. Please check server status and try again.';
       }
       if (normalized.contains('/users/me failed')) {
-        return 'Signed in, but profile sync timed out. Please reopen the app.';
+        return 'Sign in succeeded, but we could not load your profile. Please try again.';
       }
       return failure.message;
     } else if (failure is NetworkFailure) {

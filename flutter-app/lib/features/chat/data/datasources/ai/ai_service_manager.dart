@@ -1,9 +1,11 @@
 import '../../../../../core/services/ai_service.dart';
+import '../../../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/chat_repository.dart';
 
 /// Manages multiple AI services and provides fallback logic
 /// Uses Strategy Pattern to switch between different AI models
 class AIServiceManager {
+  static const _tag = 'AIServiceManager';
   final List<AIService> _services;
   AIService? _currentService;
 
@@ -67,7 +69,7 @@ class AIServiceManager {
           );
         } catch (e) {
           // Log error but continue to fallback
-          print('Preferred model $preferredModel failed: $e');
+          logWarn(_tag, 'Preferred model $preferredModel failed: $e');
         }
       }
     }
@@ -82,7 +84,7 @@ class AIServiceManager {
           temperature: temperature,
         );
       } catch (e) {
-        print('Current service ${_currentService!.modelName} failed: $e');
+        logWarn(_tag, 'Current service ${_currentService!.modelName} failed: $e');
       }
     }
 
@@ -103,7 +105,7 @@ class AIServiceManager {
         _currentService = service;
         return response;
       } catch (e) {
-        print('Fallback service ${service.modelName} failed: $e');
+        logWarn(_tag, 'Fallback service ${service.modelName} failed: $e');
         continue;
       }
     }

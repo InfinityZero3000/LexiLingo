@@ -119,7 +119,11 @@ class GoogleSignInService {
   ) async {
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
-    final googleIdToken = oauthCredential?.idToken;
+    String? googleIdToken = oauthCredential?.idToken;
+
+    // Web fallback: some browsers/policies return a credential without idToken.
+    // In that case we use Firebase ID token and let backend verify it.
+    googleIdToken ??= await userCredential.user?.getIdToken(true);
 
     if (googleIdToken == null) {
       logError(_tag, 'Failed to get Google ID token from Firebase credential');

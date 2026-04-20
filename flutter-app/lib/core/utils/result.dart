@@ -4,7 +4,7 @@
 import '../error/failures.dart';
 
 /// A generic Result class to handle Success and Failure cases.
-/// This works similar to Either<Failure, T> from dartz.
+/// This works similar to Either{Failure, T} from dartz.
 class Result<T> {
   final T? _data;
   final Failure? _failure;

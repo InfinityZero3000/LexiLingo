@@ -40,10 +40,14 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         final shouldExit = await _showExitDialog(context);
-        return shouldExit ?? false;
+        if (shouldExit == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -52,8 +56,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             icon: const Icon(Icons.close),
             onPressed: () async {
               final shouldExit = await _showExitDialog(context);
-              if (shouldExit == true && mounted) {
-                Navigator.pop(context);
+              if (shouldExit == true && context.mounted) {
+                Navigator.of(context).pop();
               }
             },
           ),

@@ -239,6 +239,8 @@ class ApiClient {
       );
       if (e is ServerException) rethrow;
       if (e is ApiErrorException) rethrow;
+      if (e is UnauthorizedException) rethrow;
+      if (e is TokenRefreshedException) rethrow;
       throw ServerException('$method ${uri.path} failed: $e');
     }
   }
