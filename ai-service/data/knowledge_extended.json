@@ -1,241 +1,396 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Extended knowledge base for LexiLingo English Tutor",
   "concepts": [
     {
       "id": "concept:vocab.travel",
       "title": "Travel Vocabulary",
+      "level": "A2",
       "keywords": "travel trip journey vacation holiday flight airport hotel booking passport visa luggage baggage destination tourism tourist sightseeing"
     },
     {
       "id": "concept:vocab.technology",
       "title": "Technology Vocabulary",
+      "level": "B1",
       "keywords": "technology computer software hardware internet digital app application website browser download upload stream device smartphone tablet laptop screen keyboard mouse"
     },
     {
       "id": "concept:vocab.health",
       "title": "Health & Medicine Vocabulary",
+      "level": "A2",
       "keywords": "health medicine doctor hospital sick illness disease symptom treatment cure prescription pharmacy appointment checkup fever headache pain"
     },
     {
       "id": "concept:vocab.environment",
       "title": "Environment & Nature Vocabulary",
+      "level": "B1",
       "keywords": "environment nature climate change pollution recycling sustainable green energy renewable forest ocean wildlife ecosystem carbon footprint"
     },
     {
       "id": "concept:vocab.food",
       "title": "Food & Cooking Vocabulary",
+      "level": "A1",
       "keywords": "food cook cooking recipe ingredient meal breakfast lunch dinner restaurant menu order chef kitchen bake fry boil grill taste delicious"
     },
     {
       "id": "concept:vocab.shopping",
       "title": "Shopping Vocabulary",
+      "level": "A2",
       "keywords": "shopping shop store mall buy purchase price discount sale bargain expensive cheap receipt payment cash credit card checkout"
     },
     {
       "id": "concept:vocab.education",
       "title": "Education Vocabulary",
+      "level": "A2",
       "keywords": "education school university college student teacher professor class lesson lecture exam test homework assignment grade degree diploma certificate"
     },
     {
       "id": "concept:vocab.sports",
       "title": "Sports Vocabulary",
+      "level": "A2",
       "keywords": "sport sports game play player team match competition win lose score goal football soccer basketball tennis swimming running exercise"
     },
     {
       "id": "concept:vocab.entertainment",
       "title": "Entertainment Vocabulary",
+      "level": "A2",
       "keywords": "entertainment movie film cinema theater concert music song singer actor actress show series episode watch listen performance"
     },
     {
       "id": "concept:vocab.weather",
       "title": "Weather Vocabulary",
+      "level": "A1",
       "keywords": "weather forecast rain sunny cloudy storm wind temperature hot cold warm cool humid dry snow ice fog"
     },
     {
       "id": "concept:idiom.break_the_ice",
       "title": "Break the Ice",
+      "level": "B1",
       "keywords": "break ice idiom conversation starter social awkward introduce meeting first time"
     },
     {
       "id": "concept:idiom.piece_of_cake",
       "title": "Piece of Cake",
+      "level": "B1",
       "keywords": "piece cake idiom easy simple effortless no problem straightforward"
     },
     {
       "id": "concept:idiom.hit_the_nail",
       "title": "Hit the Nail on the Head",
+      "level": "B2",
       "keywords": "hit nail head idiom exactly right correct accurate precise"
     },
     {
       "id": "concept:idiom.under_weather",
       "title": "Under the Weather",
+      "level": "B1",
       "keywords": "under weather idiom sick ill unwell not feeling good tired exhausted"
     },
     {
       "id": "concept:idiom.cost_arm_leg",
       "title": "Cost an Arm and a Leg",
-      "keywords": "cost arm leg idiom expensive expensive very costly pricey"
+      "level": "B1",
+      "keywords": "cost arm leg idiom expensive very costly pricey"
     },
     {
       "id": "concept:idiom.spill_beans",
       "title": "Spill the Beans",
+      "level": "B1",
       "keywords": "spill beans idiom reveal secret tell disclose leak share"
     },
     {
       "id": "concept:idiom.once_blue_moon",
       "title": "Once in a Blue Moon",
+      "level": "B1",
       "keywords": "once blue moon idiom rarely seldom infrequently uncommon occasional"
     },
     {
       "id": "concept:idiom.raining_cats_dogs",
       "title": "Raining Cats and Dogs",
+      "level": "B1",
       "keywords": "raining cats dogs idiom heavy rain pour downpour storm"
+    },
+    {
+      "id": "concept:idiom.bite_the_bullet",
+      "title": "Bite the Bullet",
+      "level": "B2",
+      "keywords": "bite bullet idiom endure tolerate do something difficult unpleasant brave"
+    },
+    {
+      "id": "concept:idiom.on_the_same_page",
+      "title": "On the Same Page",
+      "level": "B1",
+      "keywords": "on same page idiom agree understand agreement mutual understand aligned"
+    },
+    {
+      "id": "concept:idiom.hit_the_books",
+      "title": "Hit the Books",
+      "level": "A2",
+      "keywords": "hit books idiom study hard prepare read revise exam"
+    },
+    {
+      "id": "concept:idiom.burning_midnight_oil",
+      "title": "Burn the Midnight Oil",
+      "level": "B1",
+      "keywords": "burn midnight oil idiom work late night study overtime"
+    },
+    {
+      "id": "concept:idiom.actions_speak_louder",
+      "title": "Actions Speak Louder than Words",
+      "level": "B2",
+      "keywords": "actions speak louder words idiom prove show demonstrate behavior"
+    },
+    {
+      "id": "concept:idiom.kill_two_birds",
+      "title": "Kill Two Birds with One Stone",
+      "level": "B2",
+      "keywords": "kill two birds one stone idiom efficient multitask accomplish two goals"
     },
     {
       "id": "concept:phrasal.look_up",
       "title": "Look Up (Phrasal Verb)",
+      "level": "A2",
       "keywords": "look up phrasal verb search find dictionary reference check information"
     },
     {
       "id": "concept:phrasal.give_up",
       "title": "Give Up (Phrasal Verb)",
+      "level": "A2",
       "keywords": "give up phrasal verb quit stop surrender abandon discontinue"
     },
     {
       "id": "concept:phrasal.turn_on_off",
       "title": "Turn On/Off (Phrasal Verb)",
+      "level": "A2",
       "keywords": "turn on off phrasal verb switch activate deactivate start stop power"
     },
     {
       "id": "concept:phrasal.pick_up",
       "title": "Pick Up (Phrasal Verb)",
+      "level": "A2",
       "keywords": "pick up phrasal verb collect lift learn acquire improve get"
     },
     {
       "id": "concept:phrasal.put_off",
       "title": "Put Off (Phrasal Verb)",
+      "level": "B1",
       "keywords": "put off phrasal verb postpone delay defer reschedule procrastinate"
     },
     {
       "id": "concept:phrasal.come_across",
       "title": "Come Across (Phrasal Verb)",
+      "level": "B1",
       "keywords": "come across phrasal verb find encounter discover stumble upon meet"
     },
     {
       "id": "concept:phrasal.figure_out",
       "title": "Figure Out (Phrasal Verb)",
+      "level": "B1",
       "keywords": "figure out phrasal verb understand solve realize discover learn comprehend"
     },
     {
       "id": "concept:phrasal.run_out",
       "title": "Run Out (Phrasal Verb)",
+      "level": "A2",
       "keywords": "run out phrasal verb exhaust deplete finish use up empty shortage"
+    },
+    {
+      "id": "concept:phrasal.set_up",
+      "title": "Set Up (Phrasal Verb)",
+      "level": "B1",
+      "keywords": "set up phrasal verb establish create arrange organize prepare start"
+    },
+    {
+      "id": "concept:phrasal.get_along",
+      "title": "Get Along (Phrasal Verb)",
+      "level": "B1",
+      "keywords": "get along phrasal verb have good relationship friendly compatible agree"
+    },
+    {
+      "id": "concept:phrasal.take_off",
+      "title": "Take Off (Phrasal Verb)",
+      "level": "A2",
+      "keywords": "take off phrasal verb remove leave ground succeed become popular flight"
+    },
+    {
+      "id": "concept:phrasal.bring_up",
+      "title": "Bring Up (Phrasal Verb)",
+      "level": "B1",
+      "keywords": "bring up phrasal verb mention raise topic educate child"
+    },
+    {
+      "id": "concept:phrasal.carry_on",
+      "title": "Carry On (Phrasal Verb)",
+      "level": "A2",
+      "keywords": "carry on phrasal verb continue proceed persist keep going"
+    },
+    {
+      "id": "concept:phrasal.show_up",
+      "title": "Show Up (Phrasal Verb)",
+      "level": "A2",
+      "keywords": "show up phrasal verb arrive appear attend come"
     },
     {
       "id": "concept:conversation.greeting",
       "title": "Greetings & Introductions",
+      "level": "A1",
       "keywords": "greeting hello hi hey good morning afternoon evening introduce introduction nice meet name"
     },
     {
       "id": "concept:conversation.asking_directions",
       "title": "Asking for Directions",
+      "level": "A2",
       "keywords": "direction directions where how get to location place go turn left right straight near far"
     },
     {
       "id": "concept:conversation.ordering_food",
       "title": "Ordering Food",
+      "level": "A2",
       "keywords": "order food restaurant menu waiter waitress like have want please bill check tip"
     },
     {
       "id": "concept:conversation.making_appointments",
       "title": "Making Appointments",
+      "level": "A2",
       "keywords": "appointment book schedule meeting available time date when free reschedule cancel confirm"
     },
     {
       "id": "concept:conversation.expressing_opinions",
       "title": "Expressing Opinions",
+      "level": "B1",
       "keywords": "opinion think believe feel view perspective agree disagree suggest recommend"
     },
     {
       "id": "concept:conversation.small_talk",
       "title": "Small Talk",
+      "level": "A2",
       "keywords": "small talk casual conversation weather weekend plans work how are you doing"
+    },
+    {
+      "id": "concept:conversation.asking_clarification",
+      "title": "Asking for Clarification",
+      "level": "B1",
+      "keywords": "clarify clarification sorry could you repeat mean pardon what did you say explain"
+    },
+    {
+      "id": "concept:conversation.disagreeing_politely",
+      "title": "Disagreeing Politely",
+      "level": "B1",
+      "keywords": "disagree polite actually I see your point however on the other hand with all due respect"
+    },
+    {
+      "id": "concept:conversation.giving_advice",
+      "title": "Giving Advice",
+      "level": "B1",
+      "keywords": "advice suggest recommend should ought to if I were you why don't you have you tried"
     },
     {
       "id": "concept:grammar.gerund_infinitive",
       "title": "Gerund vs Infinitive",
+      "level": "B1",
       "keywords": "gerund infinitive verb ing to do doing enjoy like want need prefer remember forget stop"
     },
     {
       "id": "concept:grammar.prepositions_time",
       "title": "Prepositions of Time",
+      "level": "A2",
       "keywords": "preposition time at on in morning afternoon evening night monday january 2024"
     },
     {
       "id": "concept:grammar.prepositions_place",
       "title": "Prepositions of Place",
+      "level": "A2",
       "keywords": "preposition place at on in under above below beside next between behind front"
     },
     {
       "id": "concept:grammar.quantifiers",
       "title": "Quantifiers",
+      "level": "A2",
       "keywords": "quantifier much many some any few little lot enough plenty several"
     },
     {
       "id": "concept:grammar.tag_questions",
       "title": "Tag Questions",
+      "level": "B1",
       "keywords": "tag question isn't aren't haven't don't didn't won't right confirmation"
     },
     {
       "id": "concept:grammar.conjunctions",
       "title": "Conjunctions",
+      "level": "A2",
       "keywords": "conjunction and but or so because although however therefore moreover furthermore"
     },
     {
       "id": "concept:grammar.word_order",
       "title": "Word Order",
+      "level": "B1",
       "keywords": "word order sentence structure subject verb object adjective adverb position"
     },
     {
       "id": "concept:pronunciation.vowel_sounds",
       "title": "Vowel Sounds",
+      "level": "A1",
       "keywords": "pronunciation vowel sound short long a e i o u phonics"
     },
     {
       "id": "concept:pronunciation.consonant_clusters",
       "title": "Consonant Clusters",
+      "level": "A2",
       "keywords": "pronunciation consonant cluster blend str bl cr dr fl gr pl pr sc sk sl sm sn sp st sw tr tw"
     },
     {
       "id": "concept:pronunciation.silent_letters",
       "title": "Silent Letters",
+      "level": "A2",
       "keywords": "pronunciation silent letter know knife write wrong hour honest"
     },
     {
       "id": "concept:pronunciation.word_stress",
       "title": "Word Stress",
+      "level": "B1",
       "keywords": "pronunciation stress syllable emphasis accent intonation pattern"
+    },
+    {
+      "id": "concept:pronunciation.sentence_stress",
+      "title": "Sentence Stress & Rhythm",
+      "level": "B1",
+      "keywords": "sentence stress rhythm content words function words weak forms reduction"
+    },
+    {
+      "id": "concept:pronunciation.connected_speech",
+      "title": "Connected Speech",
+      "level": "B2",
+      "keywords": "connected speech linking sound elision assimilation fast speech reduction gonna wanna"
     },
     {
       "id": "concept:error.double_negative",
       "title": "Double Negative Error",
+      "level": "A2",
       "keywords": "double negative error don't have no nobody nothing nowhere neither"
     },
     {
       "id": "concept:error.run_on_sentence",
       "title": "Run-on Sentence Error",
+      "level": "B1",
       "keywords": "run on sentence error comma splice period conjunction"
     },
     {
       "id": "concept:error.wrong_word_form",
       "title": "Wrong Word Form Error",
+      "level": "B1",
       "keywords": "word form error noun adjective adverb verb suffix prefix"
     },
     {
       "id": "concept:error.misplaced_modifier",
       "title": "Misplaced Modifier Error",
+      "level": "B2",
       "keywords": "misplaced modifier error dangling adjective adverb position"
+    },
+    {
+      "id": "concept:error.false_friends_vn",
+      "title": "False Friends (Vietnamese-English)",
+      "level": "A2",
+      "keywords": "false friends similar words different meaning eventually actually maybe nervous embarrassed Vietnamese"
     }
   ],
   "edges": [
@@ -266,6 +421,19 @@
     {"from": "concept:error.double_negative", "to": "concept:grammar.quantifiers", "relation": "related_to"},
     {"from": "concept:error.wrong_word_form", "to": "concept:grammar.gerund_infinitive", "relation": "related_to"},
     {"from": "concept:pronunciation.vowel_sounds", "to": "concept:pronunciation.word_stress", "relation": "related_to"},
-    {"from": "concept:pronunciation.consonant_clusters", "to": "concept:pronunciation.silent_letters", "relation": "related_to"}
+    {"from": "concept:pronunciation.consonant_clusters", "to": "concept:pronunciation.silent_letters", "relation": "related_to"},
+    {"from": "concept:pronunciation.word_stress", "to": "concept:pronunciation.sentence_stress", "relation": "related_to"},
+    {"from": "concept:pronunciation.sentence_stress", "to": "concept:pronunciation.connected_speech", "relation": "prerequisite_of"},
+    {"from": "concept:grammar.phrasal_verbs_common", "to": "concept:phrasal.give_up", "relation": "example_of"},
+    {"from": "concept:grammar.phrasal_verbs_common", "to": "concept:phrasal.look_up", "relation": "example_of"},
+    {"from": "concept:grammar.phrasal_verbs_common", "to": "concept:phrasal.figure_out", "relation": "example_of"},
+    {"from": "concept:idiom.break_the_ice", "to": "concept:conversation.small_talk", "relation": "related_to"},
+    {"from": "concept:idiom.piece_of_cake", "to": "concept:vocab.daily_life", "relation": "related_to"},
+    {"from": "concept:idiom.under_weather", "to": "concept:vocab.health", "relation": "related_to"},
+    {"from": "concept:conversation.asking_clarification", "to": "concept:conversation.expressing_opinions", "relation": "related_to"},
+    {"from": "concept:conversation.disagreeing_politely", "to": "concept:conversation.expressing_opinions", "relation": "related_to"},
+    {"from": "concept:conversation.giving_advice", "to": "concept:grammar.modal_must_should", "relation": "related_to"},
+    {"from": "concept:error.false_friends_vn", "to": "concept:vocab.daily_life", "relation": "related_to"},
+    {"from": "concept:vocab.education", "to": "concept:conversation.giving_advice", "relation": "related_to"}
   ]
 }

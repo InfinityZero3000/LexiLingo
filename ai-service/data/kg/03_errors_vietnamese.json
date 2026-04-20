@@ -1,0 +1,151 @@
+{
+  "version": "1.0.0",
+  "description": "Vietnamese-learner-specific error taxonomy. Covers structural interference from Vietnamese (topic-prominence, aspect system, gender-neutral pronouns, final consonant deletion, etc.) plus high-frequency collocational and pragmatic errors.",
+  "concepts": [
+    {
+      "id": "concept:error.gender_pronoun",
+      "title": "He/She Gender Pronoun Confusion",
+      "level": "A1",
+      "keywords": "gender pronoun he she confusion Vietnamese anh ấy cô ấy mix up swap wrong gender third person singular"
+    },
+    {
+      "id": "concept:error.missing_copula",
+      "title": "Missing Copula (to be)",
+      "level": "A1",
+      "keywords": "missing to be copula she teacher he student I happy they ready Vietnamese drop am is are"
+    },
+    {
+      "id": "concept:error.question_no_inversion",
+      "title": "Question Without Inversion",
+      "level": "A1",
+      "keywords": "question inversion where you go you like what what you think how you feel why he do that no auxiliary inversion"
+    },
+    {
+      "id": "concept:error.topic_comment_structure",
+      "title": "Topic-Comment Structure",
+      "level": "A2",
+      "keywords": "topic comment Vietnamese structure that movie I like very much this food it is delicious my friend she is clever topic fronting"
+    },
+    {
+      "id": "concept:error.aspect_vs_tense",
+      "title": "Aspect Confusion (No Tense Marking)",
+      "level": "A2",
+      "keywords": "aspect tense no marking yesterday I go I eat already finished I go last week present instead of past Vietnamese no verb conjugation"
+    },
+    {
+      "id": "concept:error.double_negation",
+      "title": "Double Negation",
+      "level": "A2",
+      "keywords": "double negation I don't know nothing I can't do nothing nobody don't Vietnamese không không redundant negative"
+    },
+    {
+      "id": "concept:error.adjective_adverb",
+      "title": "Adjective / Adverb Confusion",
+      "level": "B1",
+      "keywords": "adjective adverb confusion she speaks slow he runs quick I feel badly I did it good fast quickly slowly adverb -ly missing"
+    },
+    {
+      "id": "concept:error.stative_verb_continuous",
+      "title": "Stative Verb Used in Continuous",
+      "level": "B1",
+      "keywords": "stative verb continuous I am knowing I am understanding I am believing I am seeming I am loving something wrong form"
+    },
+    {
+      "id": "concept:error.numeral_plural",
+      "title": "Numeral + Plural Agreement",
+      "level": "A2",
+      "keywords": "numeral plural two book three people no s Vietnamese classifier no plural marker two books three cars five informations"
+    },
+    {
+      "id": "concept:error.direct_translation_collocation",
+      "title": "Direct-Translation Collocations",
+      "level": "B1",
+      "keywords": "direct translation collocation I am very exciting Vietnamese influenced do a photo make friends eat medicine drink medicine eat rice have rice take medicine"
+    },
+    {
+      "id": "concept:error.missing_there_is",
+      "title": "Missing 'There is/are' Structure",
+      "level": "B1",
+      "keywords": "missing there is are in the table have a book on the wall have a picture in my bag have something existential Vietnamese có"
+    },
+    {
+      "id": "concept:error.passive_be_omission",
+      "title": "Passive Voice — Missing 'be'",
+      "level": "B1",
+      "keywords": "passive be omission the book written by the house built by he known as passive structure missing is was were being been"
+    },
+    {
+      "id": "concept:error.article_the_generic",
+      "title": "Overuse of 'the' with Generic Nouns",
+      "level": "B2",
+      "keywords": "article the generic overuse the music the life the nature the love I love the cats generic plural no the uncountable"
+    },
+    {
+      "id": "concept:error.relative_clause_order",
+      "title": "Relative Clause — Wrong Position",
+      "level": "B1",
+      "keywords": "relative clause order wrong position Vietnamese pre-noun modifier the tall man book the woman who I saw confused noun phrase"
+    },
+    {
+      "id": "concept:error.false_friends_vietnamese",
+      "title": "False Friends & L1 Transfer Vocabulary",
+      "level": "B1",
+      "keywords": "false friends L1 transfer sympathetic sympathy actually nervous excited confusion embarrass ashamed borrow lend bring take"
+    },
+    {
+      "id": "concept:error.subject_omission",
+      "title": "Subject Pronoun Omission",
+      "level": "A2",
+      "keywords": "subject omission drop pronoun Vietnamese pro-drop is very difficult am going to study like watching movies missing I he she they"
+    },
+    {
+      "id": "concept:error.question_tag",
+      "title": "Question Tags",
+      "level": "B1",
+      "keywords": "question tag isn't it doesn't he haven't they will you right yes no Vietnamese phải không wrong form not it right"
+    },
+    {
+      "id": "concept:error.preposition_time",
+      "title": "Preposition with Time Expressions",
+      "level": "A2",
+      "keywords": "preposition time at on in confused at 5 o'clock on Monday in January in the morning at night on the weekend at weekend"
+    },
+    {
+      "id": "concept:error.object_pronoun",
+      "title": "Object vs Subject Pronoun",
+      "level": "A2",
+      "keywords": "object pronoun me him her us them confused with subject I he she we they me and my friend between you and I"
+    },
+    {
+      "id": "concept:error.wrong_collocation",
+      "title": "Wrong Collocations (high-frequency)",
+      "level": "B2",
+      "keywords": "collocation wrong strong tea heavy rain fast food high speed loud noise big mistake great deal strong opinion commit crime make decision do research"
+    }
+  ],
+  "edges": [
+    { "from": "concept:error.gender_pronoun", "to": "concept:grammar.subject_verb_agreement", "relation": "related_to" },
+    { "from": "concept:error.missing_copula", "to": "concept:grammar.to_be", "relation": "corrects" },
+    { "from": "concept:error.question_no_inversion", "to": "concept:grammar.questions_yes_no", "relation": "corrects" },
+    { "from": "concept:error.question_no_inversion", "to": "concept:error.missing_auxiliary", "relation": "related_to" },
+    { "from": "concept:error.topic_comment_structure", "to": "concept:error.word_order_svo", "relation": "related_to" },
+    { "from": "concept:error.aspect_vs_tense", "to": "concept:error.tense_confusion", "relation": "part_of" },
+    { "from": "concept:error.aspect_vs_tense", "to": "concept:grammar.past_simple", "relation": "corrects" },
+    { "from": "concept:error.adjective_adverb", "to": "concept:grammar.adverbs_frequency", "relation": "related_to" },
+    { "from": "concept:error.stative_verb_continuous", "to": "concept:grammar.stative_verbs", "relation": "corrects" },
+    { "from": "concept:error.numeral_plural", "to": "concept:grammar.countable_uncountable", "relation": "corrects" },
+    { "from": "concept:error.numeral_plural", "to": "concept:grammar.plural_nouns", "relation": "corrects" },
+    { "from": "concept:error.direct_translation_collocation", "to": "concept:error.make_do_confusion", "relation": "related_to" },
+    { "from": "concept:error.direct_translation_collocation", "to": "concept:error.wrong_collocation", "relation": "part_of" },
+    { "from": "concept:error.missing_there_is", "to": "concept:grammar.there_is_are", "relation": "corrects" },
+    { "from": "concept:error.passive_be_omission", "to": "concept:grammar.passive_voice", "relation": "corrects" },
+    { "from": "concept:error.article_the_generic", "to": "concept:grammar.article_the_specific", "relation": "contrasts_with" },
+    { "from": "concept:error.article_the_generic", "to": "concept:error.article_omission", "relation": "related_to" },
+    { "from": "concept:error.relative_clause_order", "to": "concept:grammar.relative_clauses", "relation": "corrects" },
+    { "from": "concept:error.false_friends_vietnamese", "to": "concept:error.direct_translation_collocation", "relation": "related_to" },
+    { "from": "concept:error.subject_omission", "to": "concept:error.subject_pronoun_drop", "relation": "part_of" },
+    { "from": "concept:error.question_tag", "to": "concept:grammar.questions_yes_no", "relation": "related_to" },
+    { "from": "concept:error.preposition_time", "to": "concept:error.preposition_confusion", "relation": "part_of" },
+    { "from": "concept:error.object_pronoun", "to": "concept:grammar.subject_verb_agreement", "relation": "related_to" }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "version": "1.0.0",
+  "description": "Grammar concepts missing from the seed graph — covers past continuous, gerund/infinitive, quantifiers, modals of deduction, future forms, adverbial/participle clauses, nominalisation, and more.",
+  "concepts": [
+    {
+      "id": "concept:grammar.infinitive_purpose",
+      "title": "Infinitive of Purpose (to + verb)",
+      "level": "A2",
+      "keywords": "infinitive purpose to go to buy to learn in order to so as to reason why"
+    },
+    {
+      "id": "concept:grammar.past_continuous",
+      "title": "Past Continuous",
+      "level": "B1",
+      "keywords": "past continuous was were doing happening background interrupted while when at that time"
+    },
+    {
+      "id": "concept:grammar.stative_verbs",
+      "title": "Stative vs Dynamic Verbs",
+      "level": "B1",
+      "keywords": "stative verb dynamic know love believe understand own seem appear think feel hear see not continuous"
+    },
+    {
+      "id": "concept:grammar.gerund_subject",
+      "title": "Gerund as Subject / Object",
+      "level": "B1",
+      "keywords": "gerund subject swimming is fun enjoy finish avoid mind suggest like love hate admit deny consider"
+    },
+    {
+      "id": "concept:grammar.gerund_infinitive",
+      "title": "Gerund vs Infinitive Choice",
+      "level": "B1",
+      "keywords": "gerund infinitive stop try remember forget regret prefer mean go on need want hope decide agree refuse manage"
+    },
+    {
+      "id": "concept:grammar.quantifiers",
+      "title": "Quantifiers",
+      "level": "B1",
+      "keywords": "quantifier some any much many few little a lot of plenty of enough too much too many hardly any both neither all none"
+    },
+    {
+      "id": "concept:grammar.article_the_specific",
+      "title": "Definite Article the (specific reference)",
+      "level": "A2",
+      "keywords": "definite article the specific unique only second mention the sun the moon the internet the sky the world"
+    },
+    {
+      "id": "concept:grammar.modals_deduction",
+      "title": "Modals of Deduction & Probability",
+      "level": "B2",
+      "keywords": "modal deduction must might could may can't probability certain possible certain past must have might have can't have could have"
+    },
+    {
+      "id": "concept:grammar.future_continuous",
+      "title": "Future Continuous",
+      "level": "B2",
+      "keywords": "future continuous will be doing this time tomorrow in progress arranged future event interrupt"
+    },
+    {
+      "id": "concept:grammar.future_perfect",
+      "title": "Future Perfect",
+      "level": "B2",
+      "keywords": "future perfect will have done by then by the time completed before future point deadline"
+    },
+    {
+      "id": "concept:grammar.adverbial_clauses",
+      "title": "Adverbial Clauses",
+      "level": "B2",
+      "keywords": "adverbial clause time when while before after since until as soon as reason because since as although though even though concession purpose so that in case"
+    },
+    {
+      "id": "concept:grammar.causative_have_get",
+      "title": "Causative have/get",
+      "level": "B2",
+      "keywords": "causative have get something done arranged service hair cut cleaned fixed repaired had my car serviced got it fixed"
+    },
+    {
+      "id": "concept:grammar.indirect_questions",
+      "title": "Indirect Questions",
+      "level": "B2",
+      "keywords": "indirect question embedded I wonder could you tell me do you know whether if word order change polite"
+    },
+    {
+      "id": "concept:grammar.intensifiers",
+      "title": "Intensifiers & Mitigators",
+      "level": "B2",
+      "keywords": "intensifier mitigator absolutely totally completely utterly fairly quite rather slightly somewhat a bit a little extremely incredibly"
+    },
+    {
+      "id": "concept:grammar.participle_clauses",
+      "title": "Participle Clauses",
+      "level": "C1",
+      "keywords": "participle clause present past having done being written reduced relative clause formal written"
+    },
+    {
+      "id": "concept:grammar.nominalisation",
+      "title": "Nominalisation",
+      "level": "C1",
+      "keywords": "nominalisation noun form abstract the destruction of the arrival of the development improvement investigation formal academic"
+    },
+    {
+      "id": "concept:grammar.fronting",
+      "title": "Fronting & Topicalisation",
+      "level": "C1",
+      "keywords": "fronting topic moved front emphasise what I like is this book money he has plenty of contrast cohesion"
+    },
+    {
+      "id": "concept:grammar.past_perfect_continuous",
+      "title": "Past Perfect Continuous",
+      "level": "C1",
+      "keywords": "past perfect continuous had been doing duration before past result evidence tired wet had been waiting studying running"
+    }
+  ],
+  "edges": [
+    { "from": "concept:grammar.past_continuous", "to": "concept:grammar.past_simple", "relation": "builds_on" },
+    { "from": "concept:grammar.past_perfect_continuous", "to": "concept:grammar.past_continuous", "relation": "builds_on" },
+    { "from": "concept:grammar.past_perfect_continuous", "to": "concept:grammar.present_perfect_continuous", "relation": "related_to" },
+    { "from": "concept:grammar.stative_verbs", "to": "concept:grammar.present_continuous", "relation": "contrasts_with" },
+    { "from": "concept:grammar.gerund_subject", "to": "concept:grammar.gerund_infinitive", "relation": "part_of" },
+    { "from": "concept:grammar.gerund_infinitive", "to": "concept:grammar.gerund_subject", "relation": "related_to" },
+    { "from": "concept:grammar.gerund_infinitive", "to": "concept:error.gerund_after_preposition", "relation": "related_to" },
+    { "from": "concept:grammar.article_the_specific", "to": "concept:grammar.articles_a_an", "relation": "builds_on" },
+    { "from": "concept:grammar.quantifiers", "to": "concept:grammar.countable_uncountable", "relation": "builds_on" },
+    { "from": "concept:grammar.modals_deduction", "to": "concept:grammar.modal_can_could", "relation": "builds_on" },
+    { "from": "concept:grammar.modals_deduction", "to": "concept:grammar.modal_must_should", "relation": "builds_on" },
+    { "from": "concept:grammar.future_perfect", "to": "concept:grammar.future_will", "relation": "builds_on" },
+    { "from": "concept:grammar.future_continuous", "to": "concept:grammar.future_will", "relation": "builds_on" },
+    { "from": "concept:grammar.causative_have_get", "to": "concept:grammar.passive_voice", "relation": "related_to" },
+    { "from": "concept:grammar.indirect_questions", "to": "concept:grammar.question_words", "relation": "builds_on" },
+    { "from": "concept:grammar.indirect_questions", "to": "concept:grammar.reported_speech", "relation": "related_to" },
+    { "from": "concept:grammar.adverbial_clauses", "to": "concept:grammar.conditionals_first", "relation": "related_to" },
+    { "from": "concept:grammar.participle_clauses", "to": "concept:grammar.relative_clauses", "relation": "builds_on" },
+    { "from": "concept:grammar.nominalisation", "to": "concept:vocab.formal_register", "relation": "related_to" },
+    { "from": "concept:grammar.fronting", "to": "concept:grammar.inversion", "relation": "related_to" },
+    { "from": "concept:grammar.intensifiers", "to": "concept:error.overuse_very", "relation": "corrects" },
+    { "from": "concept:grammar.infinitive_purpose", "to": "concept:grammar.gerund_infinitive", "relation": "prerequisite_of" }
+  ]
+}
