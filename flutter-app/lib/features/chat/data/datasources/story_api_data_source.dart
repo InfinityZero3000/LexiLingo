@@ -45,7 +45,7 @@ class StoryApiDataSource {
   Future<Map<String, String>> _authHeaders() async {
     final base = {'Content-Type': 'application/json'};
     if (_authHeaderProvider == null) return base;
-    final auth = await _authHeaderProvider!();
+    final auth = await _authHeaderProvider();
     return {...base, ...auth};
   }
 
