@@ -201,8 +201,23 @@ async def send_message(
             ).limit(10).to_list(length=10)
         history_docs.reverse()
         conversation_history = _build_conversation_history(history_docs)
-        
-        # 1. Save user message
+
+        # Resolve real learner level from Redis profile (don't hardcode B1).
+        learner_profile: Dict[str, Any] = {"level": "B1"}
+        if msg_req.user_id:
+            try:
+                import asyncio as _asyncio
+                from api.core.redis_client import LearnerProfileCache, RedisClient
+                _redis = await _asyncio.wait_for(RedisClient.get_instance(), timeout=1.5)
+                _cached = await _asyncio.wait_for(
+                    LearnerProfileCache(_redis).get_profile(msg_req.user_id), timeout=1.5
+                )
+                if _cached:
+                    learner_profile = {**learner_profile, **_cached}
+            except Exception as _lp_err:
+                logger.debug("Learner profile Redis lookup skipped: %s", _lp_err)
+
+        # 1. Save user message (fire-and-forget — don't block the AI call)
         user_message = {
             "message_id": str(uuid.uuid4()),
             "session_id": msg_req.session_id,
@@ -211,8 +226,11 @@ async def send_message(
             "role": MessageRole.USER.value,
             "timestamp": datetime.utcnow()
         }
-        await db["chat_messages"].insert_one(user_message)
-        
+        import asyncio as _asyncio
+        _save_user_msg_task = _asyncio.ensure_future(
+            db["chat_messages"].insert_one(user_message)
+        )
+
         # 2. GraphCAG-first response
         graph_metadata: Dict[str, Any] = {}
         model_used = "graphcag"
@@ -224,7 +242,7 @@ async def send_message(
                 user_input=msg_req.message,
                 session_id=msg_req.session_id,
                 user_id=msg_req.user_id,
-                learner_profile={"level": "B1"},
+                learner_profile=learner_profile,
                 conversation_history=conversation_history,
             )
             ai_response = str(graph_result.get("tutor_response") or "").strip()
@@ -243,7 +261,7 @@ async def send_message(
                     user_input=msg_req.message,
                     session_id=msg_req.session_id,
                     user_id=msg_req.user_id,
-                    learner_profile={"level": "B1"},
+                    learner_profile=learner_profile,
                     conversation_history=[],
                     cache_policy="off",
                     retrieval_policy="rapid",
@@ -273,7 +291,7 @@ async def send_message(
                     "retry_error": str(retry_err),
                 }
         
-        # 3. Save AI message
+        # 3. Save AI message + 4. Update session — run in parallel, also await user msg
         ai_message = {
             "message_id": str(uuid.uuid4()),
             "session_id": msg_req.session_id,
@@ -282,15 +300,18 @@ async def send_message(
             "timestamp": datetime.utcnow(),
             "model": model_used
         }
-        await db["chat_messages"].insert_one(ai_message)
-        
-        # 4. Update session
-        await db["chat_sessions"].update_one(
-            {"session_id": msg_req.session_id},
-            {
-                "$set": {"last_activity": datetime.utcnow()},
-                "$inc": {"message_count": 2}
-            }
+        _now = datetime.utcnow()
+        await _asyncio.gather(
+            _save_user_msg_task,
+            db["chat_messages"].insert_one(ai_message),
+            db["chat_sessions"].update_one(
+                {"session_id": msg_req.session_id},
+                {
+                    "$set": {"last_activity": _now},
+                    "$inc": {"message_count": 2}
+                }
+            ),
+            return_exceptions=True,
         )
         
         processing_time = int((time.time() - start_time) * 1000)

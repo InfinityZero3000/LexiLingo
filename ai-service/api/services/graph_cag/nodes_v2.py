@@ -1210,22 +1210,38 @@ async def input_node(state: GraphCAGState) -> Dict[str, Any]:
         conversation_history = []
         
         try:
+            import asyncio as _asyncio
             redis_client = await RedisClient.get_instance()
-            
-            # Get learner profile
+
             user_id = state.get("user_id")
-            if user_id:
-                profile_cache = LearnerProfileCache(redis_client)
-                cached_profile = await profile_cache.get_profile(user_id)
-                if cached_profile:
-                    learner_profile = {**cached_profile, **learner_profile}
-            
-            # Get conversation history
             session_id = state.get("session_id", "")
-            if session_id:
-                conv_cache = ConversationCache(redis_client)
-                conversation_history = await conv_cache.get_history(session_id)
-            
+
+            # Fetch profile and history concurrently.
+            async def _get_profile():
+                if user_id:
+                    try:
+                        profile_cache = LearnerProfileCache(redis_client)
+                        return await profile_cache.get_profile(user_id)
+                    except Exception:
+                        return None
+                return None
+
+            async def _get_history():
+                if session_id:
+                    try:
+                        conv_cache = ConversationCache(redis_client)
+                        return await conv_cache.get_history(session_id)
+                    except Exception:
+                        return []
+                return []
+
+            cached_profile, fetched_history = await _asyncio.gather(
+                _get_profile(), _get_history()
+            )
+            if cached_profile:
+                learner_profile = {**cached_profile, **learner_profile}
+            conversation_history = fetched_history or []
+
         except Exception as e:
             logger.warning(f"Redis unavailable: {e}")
     
@@ -1399,9 +1415,15 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
         })
     candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
     best_candidate: tuple[str, CacheEntry, float, float] | None = None
-    for candidate_key in candidate_keys:
-        candidate_entry = await _get_cache_entry(candidate_key, level, now)
-        if not candidate_entry:
+
+    # Fetch all L1 candidates concurrently.
+    import asyncio as _asyncio
+    candidate_entries = await _asyncio.gather(
+        *[_get_cache_entry(k, level, now) for k in candidate_keys],
+        return_exceptions=True,
+    )
+    for candidate_key, candidate_entry in zip(candidate_keys, candidate_entries):
+        if not isinstance(candidate_entry, CacheEntry) or not candidate_entry:
             continue
         if not _cache_entry_quality_ok_for_benchmark(candidate_entry, benchmark_task):
             continue
@@ -1484,25 +1506,97 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
         kg = get_kg_service()
         learner_level = state.get("learner_profile", {}).get("level", "B1")
 
-        # ── Phase 1: Seed concept matching ───────────────────────────
+        # ── Phase 1: Seed concept matching (fast O(words) lookup) ──────
         user_text = state.get("user_input", "").lower()
-        all_concepts = kg.get_concepts()
 
-        seed_concepts = []
-        for concept_id, meta in all_concepts.items():
-            keywords = meta.get("keywords", "").lower()
-            for kw in keywords.split():
-                if kw in user_text or user_text in kw:
-                    seed_concepts.append(concept_id)
-                    break
+        # Phase 1a: Exact keyword lookup via inverted index (O(words_in_text))
+        seed_exact = kg.get_seed_concepts_fast(user_text)
+        # Phase 1a-semantic: TF-IDF cosine similarity (catches indirect references)
+        seed_semantic = kg.semantic_seed_concepts(user_text, top_k=5)
+        # Merge: exact first (higher confidence), then semantic fills gaps
+        seed_concepts = list(dict.fromkeys(seed_exact + seed_semantic))
 
         # Grammar error patterns (Phase 1b)
         grammar_patterns = {
+            # ── Subject-verb agreement ────────────────────────────────
             r"\bi goes\b": "concept:grammar.subject_verb_agreement",
-            r"\bhe go\b": "concept:grammar.third_person_s",
-            r"\byesterday\b.*\b(go|want|need)\b": "concept:grammar.past_time_markers",
-            r"\bhave went\b": "concept:grammar.present_perfect",
-            r"\bmore better\b": "concept:grammar.comparatives",
+            r"\b(you|we|they)\s+goes\b": "concept:grammar.subject_verb_agreement",
+            r"\bhe go\b|\bshe go\b|\bit go\b": "concept:grammar.third_person_s",
+            r"\bhe don't\b|\bshe don't\b|\bit don't\b": "concept:grammar.third_person_s",
+
+            # ── Past tense errors ─────────────────────────────────────
+            r"\byesterday\b.*\b(go|want|need|come|eat|buy|see)\b": "concept:grammar.past_time_markers",
+            r"\blast (week|night|month|year).*\b(go|have|is|are)\b": "concept:grammar.past_simple",
+            r"\bhave went\b|\bhas went\b|\bhave came\b|\bhas came\b": "concept:grammar.present_perfect",
+            r"\bdid.*\b(went|came|saw|ate|ran|made|took)\b": "concept:grammar.past_simple",
+
+            # ── Comparatives / superlatives ───────────────────────────
+            r"\bmore better\b|\bmore worse\b|\bmore faster\b": "concept:grammar.comparatives",
+            r"\bthe most best\b|\bthe most biggest\b|\bmore than more\b": "concept:grammar.superlatives",
+
+            # ── Article errors (Vietnamese learner patterns) ──────────
+            r"\ba apple\b|\ba elephant\b|\ba hour\b|\ba umbrella\b": "concept:grammar.articles_a_an",
+            r"\bgo to school\b|\bgo to hospital\b|\bgo to market\b": "concept:error.article_omission",
+
+            # ── Preposition errors ────────────────────────────────────
+            r"\bgo to home\b|\barrived to\b|\bmarried with\b|\blisten\s+music\b": "concept:error.preposition_confusion",
+            r"\bdepend of\b|\binterested of\b|\bat monday\b|\bin the night\b|\bon the morning\b": "concept:error.preposition_confusion",
+
+            # ── Word order errors (Vietnamese SVO influence) ──────────
+            r"\bI very (like|love|enjoy|want|hate)\b": "concept:error.word_order_svo",
+            r"\balways I\b|\bnever I\b|\busually I\b|\bsometimes I (go|eat|like)\b": "concept:grammar.adverbs_frequency",
+
+            # ── Modal errors ──────────────────────────────────────────
+            r"\bcan to\b|\bshould to\b|\bmust to\b|\bwill to\b|\bwould to\b": "concept:grammar.modal_can_could",
+            r"\bcan could\b|\bshould must\b": "concept:grammar.modal_must_should",
+
+            # ── Continuous tense errors ───────────────────────────────
+            r"\bI am go\b|\bhe is eat\b|\bshe is sleep\b|\bwe are go\b": "concept:grammar.present_continuous",
+            r"\b(am|is|are)\s+\w+(?<!ing)\s+(now|currently|at the moment)\b": "concept:grammar.present_continuous",
+
+            # ── Perfect continuous ────────────────────────────────────
+            r"\bhave been (working|studying|living|waiting|doing|learning)\b": "concept:grammar.present_perfect_continuous",
+
+            # ── Gerund / infinitive confusion ─────────────────────────
+            r"\benjoy to\b|\bfinish to\b|\bavoid to\b|\bkeep to\b|\bconsider to\b": "concept:grammar.gerund_infinitive",
+            r"\bwant (going|eating|sleeping|coming)\b|\bneed (going|coming)\b": "concept:grammar.gerund_infinitive",
+
+            # ── Missing auxiliary (questions) ─────────────────────────
+            r"\byou like\?\s*$|\bhe like\?\s*$|\bshe like\?\s*$|\byou know\?\s*$": "concept:error.missing_auxiliary",
+
+            # ── Conditional errors ────────────────────────────────────
+            r"\bif.*\bwill come\b|\bif.*\bwill be\b|\bif.*\bwill go\b": "concept:grammar.conditionals_first",
+            r"\bif (I|he|she) would\b": "concept:grammar.conditionals_second",
+            r"\bif (I|he|she) had\b.*\bwould have\b": "concept:grammar.conditionals_third",
+
+            # ── Wish / regret ─────────────────────────────────────────
+            r"\bi wish (I|he|she|we|they)\b|\bif only\b|\bi'd rather\b|\bwould rather\b": "concept:grammar.wish_regret",
+            r"\bshould have\b|\bcould have\b|\bwould have\b": "concept:grammar.wish_regret",
+
+            # ── Reported speech ───────────────────────────────────────
+            r"\bsaid that\b|\btold (me|him|her|us|them) that\b": "concept:grammar.reported_speech",
+            r"\btell to me\b|\bsay to me\b|\bhe say\b|\bshe say\b": "concept:error.tell_say_confusion",
+
+            # ── Make vs do confusion ──────────────────────────────────
+            r"\bmake homework\b|\bmake exercise\b|\bdo friends\b|\bdo a photo\b": "concept:error.make_do_confusion",
+
+            # ── Demonstratives & question words ──────────────────────
+            r"\b(what|where|when|who|why|how)\s+(do|does|is|are|was|were|did|have|has)\b": "concept:grammar.question_words",
+            r"\b(this|that|these|those)\s+\w+\b": "concept:grammar.demonstratives",
+            r"\bthere\s+(is|are|was|were)\b": "concept:grammar.there_is_are",
+
+            # ── Possessives ───────────────────────────────────────────
+            r"\b\w+'s\s+\w+\b": "concept:grammar.possessive_s",
+
+            # ── Phrasal verbs ─────────────────────────────────────────
+            r"\b(give up|look up|pick up|put off|run out|figure out|turn on|turn off|break down|come across)\b": "concept:grammar.phrasal_verbs_common",
+
+            # ── Topic detection — vocabulary domains ──────────────────
+            r"\b(social media|instagram|tiktok|facebook|twitter|post|hashtag|viral|trending)\b": "concept:vocab.social_media",
+            r"\b(bus|train|metro|subway|taxi|flight|commute|station|platform)\b": "concept:vocab.transport",
+            r"\b(happy|sad|angry|excited|nervous|scared|worried|proud|embarrassed|lonely)\b": "concept:vocab.emotions_feelings",
+            r"\b(job interview|cv|resume|cover letter|salary|hired|applicant)\b": "concept:conversation.job_interview",
+            r"\b(culture|tradition|custom|festival|etiquette|ceremony|heritage)\b": "concept:vocab.culture_customs",
         }
 
         for pattern, concept in grammar_patterns.items():
@@ -1655,7 +1749,7 @@ Be encouraging and focus on the most important errors first."""
             {
                 "message": diagnosis_prompt,
                 "system": "You are an English grammar analyzer. Return only valid JSON.",
-                "max_tokens": 500,
+                "max_tokens": 150,
             },
         )
         
@@ -1684,7 +1778,7 @@ Be encouraging and focus on the most important errors first."""
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 500, "temperature": 0.0},
+                        payload={"model": groq_model, "messages": messages, "max_tokens": 150, "temperature": 0.0},
                         httpx_module=httpx,
                         timeout=20.0,
                     )
@@ -2838,7 +2932,9 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
                 # Bổ sung ngữ cảnh để search Tavily tốt hơn
                 search_query = f"latest information about {user_input}"
                 
-            external_hits = await doc_service.query_l2(search_query)
+            external_hits = await asyncio.wait_for(
+                doc_service.query_l2(search_query), timeout=5.0
+            )
             for hit in external_hits:
                 # Tránh trùng lặp nếu đã có trong evidence_items
                 if any(e.get("chunk_id") == hit["id"] for e in evidence_items):
@@ -3167,10 +3263,17 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         messages.append({"role": "user", "content": user_input})
         
         if not response:
-            # 1. Try Groq
+            # Race Groq and Gemini concurrently; first successful response wins.
+            # Ollama is kept as last-resort with a tighter 15s timeout.
+            import asyncio as _asyncio
+
             groq_key = os.getenv("GROQ_API_KEY", "")
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-            if groq_key:
+            gemini_key = os.getenv("GEMINI_API_KEY", "")
+
+            async def _try_groq():
+                if not groq_key:
+                    return None, None
                 try:
                     resp = await _throttled_post_json(
                         provider="groq",
@@ -3178,41 +3281,70 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
                         payload={"model": groq_model, "messages": messages, "max_tokens": 512, "temperature": 0.7},
                         httpx_module=httpx,
-                        timeout=30.0,
+                        timeout=20.0,
                     )
                     if resp.status_code == 200:
-                        response = resp.json()["choices"][0]["message"]["content"]
-                        model_used = f"groq/{groq_model}"
+                        return resp.json()["choices"][0]["message"]["content"], f"groq/{groq_model}"
                 except Exception as e:
                     logger.warning(f"[generate_node] Groq failed: {e}")
+                return None, None
 
-            # 2. Try Gemini
-            if not response:
-                gemini_key = os.getenv("GEMINI_API_KEY", "")
-                if gemini_key:
-                    try:
-                        gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
-                        request_body = {
-                            "contents": gemini_contents,
-                            "systemInstruction": {"parts": [{"text": system_prompt}]},
-                        }
-                        resp = await _throttled_post_json(
-                            provider="gemini",
-                            url=url,
-                            payload=request_body,
-                            httpx_module=httpx,
-                            timeout=30.0,
-                        )
-                        if resp.status_code == 200:
-                            candidates = resp.json().get("candidates", [])
-                            if candidates:
-                                response = candidates[0]["content"]["parts"][0]["text"]
-                                model_used = "gemini-2.0-flash"
-                    except Exception as e:
-                        logger.warning(f"[generate_node] Gemini failed: {e}")
+            async def _try_gemini():
+                if not gemini_key:
+                    return None, None
+                try:
+                    gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                    request_body = {
+                        "contents": gemini_contents,
+                        "systemInstruction": {"parts": [{"text": system_prompt}]},
+                    }
+                    resp = await _throttled_post_json(
+                        provider="gemini",
+                        url=url,
+                        payload=request_body,
+                        httpx_module=httpx,
+                        timeout=20.0,
+                    )
+                    if resp.status_code == 200:
+                        candidates = resp.json().get("candidates", [])
+                        if candidates:
+                            return candidates[0]["content"]["parts"][0]["text"], "gemini-2.0-flash"
+                except Exception as e:
+                    logger.warning(f"[generate_node] Gemini failed: {e}")
+                return None, None
 
-            # 3. Try Ollama
+            # Launch both concurrently; pick first non-None result.
+            tasks = [_asyncio.ensure_future(_try_groq()), _asyncio.ensure_future(_try_gemini())]
+            done, pending = await _asyncio.wait(tasks, return_when=_asyncio.FIRST_COMPLETED)
+            for task in done:
+                try:
+                    _text, _model = task.result()
+                    if _text:
+                        response = _text
+                        model_used = _model
+                        break
+                except Exception:
+                    pass
+            # If winner found, cancel the loser immediately.
+            if response:
+                for p in pending:
+                    p.cancel()
+            else:
+                # Wait for the second one too before falling back to Ollama.
+                if pending:
+                    done2, _ = await _asyncio.wait(pending, timeout=15.0)
+                    for task in done2:
+                        try:
+                            _text, _model = task.result()
+                            if _text:
+                                response = _text
+                                model_used = _model
+                                break
+                        except Exception:
+                            pass
+
+            # Ollama — last resort, tight 15s timeout.
             if not response:
                 ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
                 ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
@@ -3227,7 +3359,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
                             "options": {"num_predict": 256, "temperature": 0.7},
                         },
                         httpx_module=httpx,
-                        timeout=60.0,
+                        timeout=15.0,
                         max_retries=1,
                     )
                     if resp.status_code == 200:

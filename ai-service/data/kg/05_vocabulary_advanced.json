@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "description": "Advanced vocabulary domains, word formation, and collocation patterns. Covers IELTS topic areas not yet in the graph, word families (prefixes/suffixes), and high-frequency collocations for B1-C1 learners.",
+  "concepts": [
+    {
+      "id": "concept:vocab.relationships",
+      "title": "Relationships & Family",
+      "level": "A2",
+      "keywords": "relationship family friend colleague partner husband wife sibling parent grandparent close friend best friend romantic platonic acquaintance neighbour colleague"
+    },
+    {
+      "id": "concept:vocab.clothes_fashion",
+      "title": "Clothes & Fashion",
+      "level": "A2",
+      "keywords": "clothes fashion wear outfit shirt trousers skirt dress jacket coat shoes boots hat accessories style trend brand designer smart casual formal"
+    },
+    {
+      "id": "concept:vocab.money_finance",
+      "title": "Money & Finance",
+      "level": "B1",
+      "keywords": "money finance bank account savings loan debt interest mortgage investment budget spend afford expensive cheap earn income salary tax bill"
+    },
+    {
+      "id": "concept:vocab.animals_nature",
+      "title": "Animals & Nature",
+      "level": "A1",
+      "keywords": "animal nature cat dog bird fish horse cow sheep elephant lion tiger bear whale dolphin insect butterfly flower tree forest mountain river sea"
+    },
+    {
+      "id": "concept:vocab.time_dates",
+      "title": "Time & Dates",
+      "level": "A1",
+      "keywords": "time date day week month year hour minute second morning afternoon evening midnight noon today yesterday tomorrow calendar century decade"
+    },
+    {
+      "id": "concept:vocab.colours_descriptions",
+      "title": "Colours & Physical Descriptions",
+      "level": "A1",
+      "keywords": "colour color red blue green yellow orange purple pink black white grey light dark tall short thin fat slim beautiful handsome pretty ugly old young"
+    },
+    {
+      "id": "concept:vocab.law_crime",
+      "title": "Law & Crime",
+      "level": "B2",
+      "keywords": "law crime legal illegal court judge lawyer police arrest charge trial verdict guilty innocent prison sentence fine penalty criminal victim witness"
+    },
+    {
+      "id": "concept:vocab.politics_society",
+      "title": "Politics & Society",
+      "level": "B2",
+      "keywords": "politics government democracy election vote party policy parliament president prime minister rights freedom equality society citizen protest campaign reform"
+    },
+    {
+      "id": "concept:vocab.economics_business",
+      "title": "Economics & Business Language",
+      "level": "B2",
+      "keywords": "economics GDP growth recession inflation employment unemployment trade export import market supply demand profit loss revenue company stock investment"
+    },
+    {
+      "id": "concept:vocab.media_journalism",
+      "title": "Media & Journalism",
+      "level": "B2",
+      "keywords": "media journalism newspaper journalist article headline report broadcast television radio online news fake news opinion editorial bias source credibility"
+    },
+    {
+      "id": "concept:vocab.science_research",
+      "title": "Science & Research",
+      "level": "B1",
+      "keywords": "science research experiment hypothesis theory evidence data results conclusion laboratory scientist discover invent test study analysis experiment"
+    },
+    {
+      "id": "concept:vocab.academic_ielts",
+      "title": "Academic IELTS Vocabulary",
+      "level": "C1",
+      "keywords": "academic IELTS band score vocabulary analyse evaluate demonstrate significant notable considerable majority substantial proportion extent conclude"
+    },
+    {
+      "id": "concept:wordform.suffixes_noun",
+      "title": "Noun Suffixes",
+      "level": "B1",
+      "keywords": "suffix noun -tion -sion -ment -ness -ity -ance -ence -er -or -ist -ism education development happiness possibility performance solution teacher actor"
+    },
+    {
+      "id": "concept:wordform.suffixes_adj",
+      "title": "Adjective Suffixes",
+      "level": "B1",
+      "keywords": "adjective suffix -ful -less -ive -able -ible -al -ic -ous -ary helpful useless creative comfortable logical scientific dangerous traditional"
+    },
+    {
+      "id": "concept:wordform.prefixes",
+      "title": "Prefixes (un-, re-, pre-, dis-, over-, mis-)",
+      "level": "B1",
+      "keywords": "prefix un- re- pre- dis- over- under- mis- non- anti- inter- unhappy redo predict disagree overwork misunderstand unbelievable rebuild"
+    },
+    {
+      "id": "concept:wordform.word_families",
+      "title": "Word Families",
+      "level": "B2",
+      "keywords": "word family derive govern government governmental decision decide decisive analysis analyse analytical education educate educational medical medicine"
+    },
+    {
+      "id": "concept:collocation.verb_noun",
+      "title": "Verb-Noun Collocations",
+      "level": "B1",
+      "keywords": "collocation verb noun make a decision take a risk give advice do research reach a goal commit a crime tell a lie break a record pay attention"
+    },
+    {
+      "id": "concept:collocation.adj_noun",
+      "title": "Adjective-Noun Collocations",
+      "level": "B1",
+      "keywords": "collocation adjective noun strong coffee heavy traffic deep sleep light rain hard work high speed loud noise thick fog big mistake close friend"
+    },
+    {
+      "id": "concept:collocation.adverb_adj",
+      "title": "Adverb-Adjective Collocations",
+      "level": "B2",
+      "keywords": "adverb adjective collocation deeply concerned highly recommended totally wrong fully aware bitterly disappointed heavily involved widely known"
+    },
+    {
+      "id": "concept:collocation.academic_verbs",
+      "title": "Academic Verb Collocations",
+      "level": "C1",
+      "keywords": "academic verb analyse evaluate demonstrate explore investigate examine highlight identify indicate suggest argue conclude propose challenge support claim"
+    }
+  ],
+  "edges": [
+    { "from": "concept:vocab.relationships", "to": "concept:vocab.emotions_feelings", "relation": "related_to" },
+    { "from": "concept:vocab.money_finance", "to": "concept:vocab.economics_business", "relation": "part_of" },
+    { "from": "concept:vocab.law_crime", "to": "concept:vocab.politics_society", "relation": "related_to" },
+    { "from": "concept:vocab.media_journalism", "to": "concept:vocab.politics_society", "relation": "related_to" },
+    { "from": "concept:vocab.science_research", "to": "concept:vocab.academic_ielts", "relation": "related_to" },
+    { "from": "concept:vocab.academic_ielts", "to": "concept:skill.ielts_task2", "relation": "related_to" },
+    { "from": "concept:vocab.academic_ielts", "to": "concept:vocab.formal_register", "relation": "related_to" },
+    { "from": "concept:wordform.suffixes_noun", "to": "concept:wordform.word_families", "relation": "part_of" },
+    { "from": "concept:wordform.suffixes_adj", "to": "concept:wordform.word_families", "relation": "part_of" },
+    { "from": "concept:wordform.prefixes", "to": "concept:wordform.word_families", "relation": "part_of" },
+    { "from": "concept:wordform.word_families", "to": "concept:vocab.academic_ielts", "relation": "related_to" },
+    { "from": "concept:collocation.verb_noun", "to": "concept:error.make_do_confusion", "relation": "corrects" },
+    { "from": "concept:collocation.verb_noun", "to": "concept:error.wrong_collocation", "relation": "corrects" },
+    { "from": "concept:collocation.adj_noun", "to": "concept:error.wrong_collocation", "relation": "corrects" },
+    { "from": "concept:collocation.adverb_adj", "to": "concept:grammar.intensifiers", "relation": "related_to" },
+    { "from": "concept:collocation.academic_verbs", "to": "concept:function.academic_argument", "relation": "related_to" },
+    { "from": "concept:collocation.academic_verbs", "to": "concept:vocab.academic_ielts", "relation": "part_of" },
+    { "from": "concept:vocab.science_research", "to": "concept:vocab.technology", "relation": "related_to" },
+    { "from": "concept:vocab.economics_business", "to": "concept:vocab.work_business", "relation": "builds_on" },
+    { "from": "concept:wordform.suffixes_noun", "to": "concept:skill.formal_writing", "relation": "related_to" }
+  ]
+}
