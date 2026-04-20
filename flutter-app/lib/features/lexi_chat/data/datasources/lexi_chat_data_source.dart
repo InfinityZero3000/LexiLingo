@@ -274,8 +274,8 @@ class LexiChatDataSource {
         );
       }).toList();
     } catch (e) {
-      logWarn(_tag, 'getMessages failed: $e');
-      rethrow;
+      logWarn(_tag, 'getMessages failed, return empty history: $e');
+      return [];
     }
   }
 
@@ -335,9 +335,14 @@ class LexiChatDataSource {
       if (_isSessionNotFoundError(e)) {
         logWarn(
           _tag,
-          'getMessagesPaged session not found, skip legacy fallback: $e',
+          'getMessagesPaged session not found, return empty page: $e',
         );
-        rethrow;
+        return const LexiMessagesPage(
+          messages: [],
+          hasMore: false,
+          nextCursor: null,
+          returned: 0,
+        );
       }
       logWarn(_tag, 'getMessagesPaged fallback to full history: $e');
       final all = await getMessages(sessionId: sessionId);
@@ -367,23 +372,35 @@ class LexiChatDataSource {
       );
     }
 
-    final json = await apiClient.get(
-      '/lexi/sessions/$sessionId/messages/metadata',
-    );
-    final data = json['data'] ?? json;
-    final metadata = Map<String, dynamic>.from(
-      (data['metadata'] ?? const <String, dynamic>{}) as Map,
-    );
-    final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
+    try {
+      final json = await apiClient.get(
+        '/lexi/sessions/$sessionId/messages/metadata',
+      );
+      final data = json['data'] ?? json;
+      final metadata = Map<String, dynamic>.from(
+        (data['metadata'] ?? const <String, dynamic>{}) as Map,
+      );
+      final totalCount = (metadata['total_count'] as num?)?.toInt() ?? 0;
 
-    return LexiMessagesMetadata(
-      totalCount: totalCount,
-      hasMessages: metadata['has_messages'] == true,
-      latestCursor: metadata['latest_cursor']?.toString(),
-      oldestCursor: metadata['oldest_cursor']?.toString(),
-      latestTs: metadata['latest_ts']?.toString(),
-      oldestTs: metadata['oldest_ts']?.toString(),
-    );
+      return LexiMessagesMetadata(
+        totalCount: totalCount,
+        hasMessages: metadata['has_messages'] == true,
+        latestCursor: metadata['latest_cursor']?.toString(),
+        oldestCursor: metadata['oldest_cursor']?.toString(),
+        latestTs: metadata['latest_ts']?.toString(),
+        oldestTs: metadata['oldest_ts']?.toString(),
+      );
+    } catch (e) {
+      logWarn(_tag, 'getMessagesMetadata failed, return empty metadata: $e');
+      return const LexiMessagesMetadata(
+        totalCount: 0,
+        hasMessages: false,
+        latestCursor: null,
+        oldestCursor: null,
+        latestTs: null,
+        oldestTs: null,
+      );
+    }
   }
 
   Future<List<LexiSession>> getSessions({required String userId}) async {
