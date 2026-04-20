@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
@@ -449,4 +451,187 @@ class LexiChatDataSource {
   Future<void> deleteSession({required String sessionId}) async {
     await apiClient.post('/lexi/sessions/$sessionId/delete', body: {});
   }
+
+  /// Send a message to Lexi and receive an SSE stream of events.
+  ///
+  /// Yields [LexiStreamEvent] values in order:
+  ///   1. [LexiStreamThinking]   — pipeline started
+  ///   2. [LexiStreamChunk]      — one word at a time (typewriter effect)
+  ///   3. [LexiStreamDone]       — full message with metadata
+  ///   4. [LexiStreamError]      — on pipeline failure (may not follow thinking)
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  }) async* {
+    final payload = {
+      'user_id': userId,
+      'session_id': sessionId,
+      'message': message,
+      'input_type': inputType,
+      if (audioBase64 != null) 'audio_base64': audioBase64,
+      'enable_tts': enableTts,
+      'learner_level': learnerLevel,
+      if (storyContext != null) 'story_context': storyContext,
+    };
+
+    final rawStream = apiClient.postStream('/lexi/stream', body: payload);
+
+    // SSE parsing state
+    String? currentEvent;
+    final buffer = StringBuffer();
+
+    await for (final chunk in rawStream.transform(utf8.decoder)) {
+      buffer.write(chunk);
+      // Process all complete lines in the buffer
+      while (true) {
+        final content = buffer.toString();
+        final newlineIdx = content.indexOf('\n');
+        if (newlineIdx == -1) break;
+
+        final line = content.substring(0, newlineIdx).trimRight();
+        buffer.clear();
+        if (newlineIdx + 1 < content.length) {
+          buffer.write(content.substring(newlineIdx + 1));
+        }
+
+        if (line.isEmpty) {
+          // Empty line = end of SSE event block; reset event name
+          currentEvent = null;
+          continue;
+        }
+
+        if (line.startsWith('event:')) {
+          currentEvent = line.substring(6).trim();
+          continue;
+        }
+
+        if (line.startsWith('data:')) {
+          final dataStr = line.substring(5).trim();
+          final event = currentEvent;
+
+          switch (event) {
+            case 'thinking':
+              yield const LexiStreamThinking();
+              break;
+            case 'chunk':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                final text = json['text'] as String? ?? '';
+                if (text.isNotEmpty) yield LexiStreamChunk(text);
+              } catch (_) {}
+              break;
+            case 'done':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                final corrections = <LexiCorrection>[];
+                final rawCorrections = json['corrections'] as List?;
+                if (rawCorrections != null) {
+                  for (final c in rawCorrections) {
+                    corrections.add(LexiCorrection(
+                      errorSpan: c['error_span'] ?? '',
+                      correction: c['correction'] ?? '',
+                      errorType: c['error_type'] ?? '',
+                      explanation: c['explanation'] ?? '',
+                    ));
+                  }
+                }
+                final linkedConcepts = <String>[];
+                final rawConcepts = json['linked_concepts'] as List?;
+                if (rawConcepts != null) {
+                  linkedConcepts.addAll(rawConcepts.cast<String>());
+                }
+                Map<String, dynamic>? scores;
+                if (json['scores'] != null) {
+                  scores = Map<String, dynamic>.from(
+                    json['scores'] as Map,
+                  );
+                }
+                yield LexiStreamDone(
+                  messageId: json['message_id'] as String? ?? '',
+                  sessionId: json['session_id'] as String? ?? sessionId,
+                  corrections: corrections,
+                  linkedConcepts: linkedConcepts,
+                  vietnameseHint: json['vietnamese_hint'] as String?,
+                  scores: scores,
+                  audioBase64: json['audio_base64'] as String?,
+                  storyContext: json['story_context'] as String?,
+                  metadata: json['metadata'] != null
+                      ? Map<String, dynamic>.from(json['metadata'] as Map)
+                      : const {},
+                );
+              } catch (e) {
+                logError(_tag, 'sendMessageStream: failed to parse done event: $e');
+              }
+              break;
+            case 'error':
+              try {
+                final json = jsonDecode(dataStr) as Map<String, dynamic>;
+                yield LexiStreamError(
+                  json['error'] as String? ?? 'Unknown error',
+                );
+              } catch (_) {
+                yield const LexiStreamError('Stream error');
+              }
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ─── SSE event types ─────────────────────────────────────────────────────────
+
+sealed class LexiStreamEvent {
+  const LexiStreamEvent();
+}
+
+/// Sent immediately: the AI pipeline has started processing.
+class LexiStreamThinking extends LexiStreamEvent {
+  const LexiStreamThinking();
+}
+
+/// One word (or token) from the AI response — shows typewriter effect.
+class LexiStreamChunk extends LexiStreamEvent {
+  final String text;
+  const LexiStreamChunk(this.text);
+}
+
+/// Final event: full message with corrections, audio, etc.
+class LexiStreamDone extends LexiStreamEvent {
+  final String messageId;
+  final String sessionId;
+  final List<LexiCorrection> corrections;
+  final List<String> linkedConcepts;
+  final String? vietnameseHint;
+  final Map<String, dynamic>? scores;
+  final String? audioBase64;
+  final String? storyContext;
+  final Map<String, dynamic> metadata;
+
+  const LexiStreamDone({
+    required this.messageId,
+    required this.sessionId,
+    required this.corrections,
+    required this.linkedConcepts,
+    this.vietnameseHint,
+    this.scores,
+    this.audioBase64,
+    this.storyContext,
+    required this.metadata,
+  });
+}
+
+/// Sent if the pipeline fails unrecoverably.
+class LexiStreamError extends LexiStreamEvent {
+  final String error;
+  const LexiStreamError(this.error);
 }

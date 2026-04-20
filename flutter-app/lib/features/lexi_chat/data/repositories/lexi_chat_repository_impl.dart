@@ -126,4 +126,27 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
   Future<void> deleteSession({required String sessionId}) {
     return dataSource.deleteSession(sessionId: sessionId);
   }
+
+  @override
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  }) {
+    return dataSource.sendMessageStream(
+      userId: userId,
+      sessionId: sessionId,
+      message: message,
+      inputType: inputType,
+      audioBase64: audioBase64,
+      enableTts: enableTts,
+      learnerLevel: learnerLevel,
+      storyContext: storyContext,
+    );
+  }
 }

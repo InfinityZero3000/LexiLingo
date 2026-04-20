@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
@@ -41,4 +42,16 @@ abstract class LexiChatRepository {
 
   /// Delete a session and its messages.
   Future<void> deleteSession({required String sessionId});
+
+  /// Send a message to Lexi and receive an SSE stream of typed events.
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  });
 }

@@ -113,7 +113,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
-    final pending = provider.sendMessage(text, userId: _userId);
+    final pending = provider.sendMessageStreaming(text, userId: _userId);
     _scrollToBottom();
     await pending;
     _scrollToBottom();
