@@ -38,6 +38,13 @@ class LexiChatDataSource {
         msg.contains('not found');
   }
 
+  bool _isUnauthorizedError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('unauthorized') ||
+        msg.contains('status 401') ||
+        msg.contains('401');
+  }
+
   String _normalizeMarkdownBoldMarkers(String text) {
     if (!text.contains('**')) return text;
 
@@ -158,6 +165,10 @@ class LexiChatDataSource {
             DateTime.tryParse(data['created_at'] ?? '') ?? DateTime.now(),
       );
     } catch (e) {
+      if (_isUnauthorizedError(e)) {
+        // Let provider surface a re-login message instead of creating stale local sessions.
+        rethrow;
+      }
       logError(_tag, 'createSession failed: $e');
       // Return a local session ID as fallback
       return LexiSession(
