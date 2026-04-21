@@ -1,0 +1,23 @@
+# KG crawl pipeline — install separately from main ai-service requirements
+# pip install -r scripts/kg_pipeline/requirements_pipeline.txt
+
+# Core crawling
+crawl4ai>=0.4.0
+aiohttp>=3.9.0
+
+# NLTK for WordNet (local, no HTTP)
+nltk>=3.8.0
+
+# HTML parsing (used by Crawl4AI internally, listed for clarity)
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Rate limiting
+aiolimiter>=1.1.0
+
+# CSV / progress
+tqdm>=4.66.0
+
+# Already in ai-service requirements, but listed here for standalone use
+kuzu>=0.4.2
+requests>=2.31.0

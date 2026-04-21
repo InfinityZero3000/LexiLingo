@@ -25,8 +25,18 @@ logs/
 temp/
 
 # KuzuDB and data files (generated at runtime)
+data/kuzu_db
 data/kuzu_db/
+data/kuzu_db.wal
 api/data/
 data/backups/
+
+# KG raw data — large generated/downloaded files (NOT for git)
+data/kg_raw/nodes.csv
+data/kg_raw/edges.csv
+data/kg_raw/nodes_final.csv
+data/kg_raw/edges_final.csv
+data/kg_raw/*.gz
+data/kg_raw/*.jsonl
 
 graphcag*
