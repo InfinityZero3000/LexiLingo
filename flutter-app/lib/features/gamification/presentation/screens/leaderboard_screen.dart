@@ -271,6 +271,10 @@ class _LeaderboardTab extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final entry = remaining[index];

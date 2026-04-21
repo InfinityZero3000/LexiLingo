@@ -22,6 +22,7 @@ import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialo
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -297,20 +298,28 @@ class _HomePageNewState extends State<HomePageNew> {
     final badgeIconSize = compact ? 16.0 : 18.0;
     final ringValueFontSize = compact ? 12.0 : 14.0;
 
-    return Container(
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16),
-      padding: EdgeInsets.all(cardPadding),
-      decoration: BoxDecoration(
-        color: compact ? compactBg : surfaceBg,
-        borderRadius: BorderRadius.circular(compact ? 16 : 20),
-        border: Border.all(
-          color: isCompleted
-              ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
-              : accent.withValues(alpha: 0.35),
-        ),
-      ),
-      child: compact
-          ? Column(
+    final borderRadius = BorderRadius.circular(compact ? 16 : 20);
+
+    return Material(
+      color: Colors.transparent,
+      child: Padding(
+        padding: margin ?? const EdgeInsets.symmetric(horizontal: 16),
+        child: InkWell(
+          onTap: () => _showDailyGoalSheet(context, provider),
+          borderRadius: borderRadius,
+          child: Ink(
+            padding: EdgeInsets.all(cardPadding),
+            decoration: BoxDecoration(
+              color: compact ? compactBg : surfaceBg,
+              borderRadius: borderRadius,
+              border: Border.all(
+                color: isCompleted
+                    ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
+                    : accent.withValues(alpha: 0.35),
+              ),
+            ),
+            child: compact
+              ? Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -403,7 +412,7 @@ class _HomePageNewState extends State<HomePageNew> {
                 ),
               ],
             )
-          : Row(
+              : Row(
               children: [
                 // Animated Progress Ring
                 Container(
@@ -539,6 +548,244 @@ class _HomePageNewState extends State<HomePageNew> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDailyGoalSheet(
+    BuildContext context,
+    HomeProvider homeProvider,
+  ) async {
+    final settings = context.read<SettingsProvider>();
+    final settingsState = settings.settings;
+
+    if (settingsState == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Daily goal settings are not ready yet.')),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final colorScheme = Theme.of(sheetContext).colorScheme;
+        final primaryColor = AppColorRoles.primary(isDark);
+
+        return Consumer<SettingsProvider>(
+          builder: (sheetContext, settingsProvider, _) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: colorScheme.outlineVariant,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Daily goal',
+                          style: Theme.of(sheetContext)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Choose how much XP you want to reach each day.',
+                          style: Theme.of(sheetContext).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColorRoles.textMuted(isDark),
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                primaryColor,
+                                primaryColor.withValues(alpha: 0.72),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${homeProvider.dailyXP}/${settingsProvider.dailyGoalXP} XP',
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      color: colorScheme.onPrimary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Current progress ${(homeProvider.dailyProgressPercentage * 100).toInt()}%',
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: colorScheme.onPrimary
+                                          .withValues(alpha: 0.88),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...SettingsProvider.dailyGoalPresets.map((goal) {
+                          final xp = goal['xp'] as int;
+                          final isSelected = settingsProvider.dailyGoalXP == xp;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () async {
+                                await settingsProvider.updateDailyGoal(xp);
+                                if (!sheetContext.mounted) return;
+
+                                if (settingsProvider.error == null) {
+                                  homeProvider.updateDailyGoalTarget(xp);
+                                  Navigator.of(sheetContext).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Daily goal updated to $xp XP.'),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                    SnackBar(
+                                      content: Text(settingsProvider.error!),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? primaryColor.withValues(alpha: 0.12)
+                                      : colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? primaryColor
+                                        : colorScheme.outlineVariant,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? primaryColor
+                                            : primaryColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        goal['icon'] as IconData,
+                                        color: isSelected
+                                            ? colorScheme.onPrimary
+                                            : primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${goal['label']} • $xp XP',
+                                            style: Theme.of(sheetContext)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            goal['description'] as String,
+                                            style: Theme.of(sheetContext)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: AppColorRoles.textMuted(
+                                                    isDark,
+                                                  ),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: primaryColor,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

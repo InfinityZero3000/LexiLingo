@@ -163,6 +163,22 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update only the target XP for today's goal while preserving progress.
+  void updateDailyGoalTarget(int targetXP) {
+    final now = DateTime.now();
+    final currentGoal = _todayGoal;
+
+    _todayGoal = currentGoal?.copyWith(targetXP: targetXP) ??
+        DailyGoal(
+          id: 1,
+          userId: _currentUser?.id ?? 'guest',
+          date: now,
+          targetXP: targetXP,
+          earnedXP: 0,
+        );
+    notifyListeners();
+  }
+
   /// Load dashboard data (user stats, goals, etc.)
   Future<void> loadDashboard(User user) async {
     _isLoadingDashboard = true;

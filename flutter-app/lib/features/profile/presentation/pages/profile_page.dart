@@ -806,11 +806,16 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
               const SizedBox(height: 12),
-              AnimatedProgressBar(
-                progress: progress,
-                primaryColor: AppColorRoles.primaryGradient(isDark)[0],
-                secondaryColor: AppColorRoles.primaryGradient(isDark)[1],
-                height: 12,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.18),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColorRoles.primary(isDark),
+                  ),
+                  minHeight: 12,
+                ),
               ),
               const SizedBox(height: 12),
               Row(

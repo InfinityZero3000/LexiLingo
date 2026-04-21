@@ -155,7 +155,7 @@ class _MainScreenState extends State<MainScreen> {
                     activeIcon: Icon(
                       PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Chat',
+                    label: 'Topic',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.userCircle()),
