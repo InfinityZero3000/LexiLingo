@@ -153,7 +153,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                   vocabulary.pronunciation!,
                   style: TextStyle(
                     fontSize: 18,
-                    color: AppColors.textGrey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -174,7 +174,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             vocabulary.partOfSpeech,
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textGrey,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -188,13 +188,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               Icon(
                 Icons.touch_app,
                 size: 20,
-                color: AppColors.textGrey.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 8),
               Text(
                 'Tap to reveal',
                 style: TextStyle(
-                  color: AppColors.textGrey.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -295,7 +295,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                               example,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textGrey,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -304,7 +304,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                           SpeakIconButton(
                             text: example,
                             size: 18,
-                            color: AppColors.textGrey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -319,7 +319,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               child: Text(
                 'How well did you know this word?',
                 style: TextStyle(
-                  color: AppColors.textGrey.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -342,7 +342,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       case 'C2':
         return AppColors.errorBright;
       default:
-        return AppColors.textGrey;
+        return Colors.grey;
     }
   }
 }

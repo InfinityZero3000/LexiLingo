@@ -302,10 +302,20 @@ class _SocialScreenState extends State<SocialScreen>
   Future<void> _toggleFollow(UserSocialProfileEntity user) async {
     final provider = context.read<SocialProvider>();
 
+    final String? error;
     if (user.isFollowing) {
-      await provider.unfollowUser(user.userId);
+      error = await provider.unfollowUser(user.userId);
     } else {
-      await provider.followUser(user.userId);
+      error = await provider.followUser(user.userId);
+    }
+
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -405,7 +415,10 @@ class _SuggestedFriendsSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text(
-                    user.suggestionReasons.take(2).join(' • '),
+                    user.suggestionReasons
+                        .take(2)
+                        .map(_formatSuggestionReason)
+                        .join(' • '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -420,6 +433,18 @@ class _SuggestedFriendsSection extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSuggestionReason(String reason) {
+  const map = {
+    'same_cefr': 'Same level',
+    'similar_xp': 'Similar XP',
+    'same_target_language': 'Same target language',
+    'same_native_language': 'Same native language',
+    'mutual_friends': 'Mutual friends',
+    'nearby': 'Nearby',
+  };
+  return map[reason] ?? reason;
 }
 
 class _NearbyLearnersSection extends StatelessWidget {

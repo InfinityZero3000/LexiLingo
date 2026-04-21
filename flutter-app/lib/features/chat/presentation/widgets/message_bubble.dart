@@ -169,9 +169,9 @@ class _MessageBubbleState extends State<MessageBubble>
                     ),
                     child: Text(
                       isUser ? 'You' : 'AI Tutor',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -227,7 +227,7 @@ class _MessageBubbleState extends State<MessageBubble>
                                       fontSize: 10,
                                       color: isUser
                                           ? Colors.white.withValues(alpha: 0.7)
-                                          : AppColors.textGrey,
+                                          : Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(width: 8),

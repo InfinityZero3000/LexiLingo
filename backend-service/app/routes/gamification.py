@@ -770,11 +770,12 @@ async def get_activity_feed(
 @router.get("/users/suggestions", response_model=ApiResponse[FriendSuggestionsResponse])
 async def get_friend_suggestions(
     limit: int = Query(10, ge=1, le=30),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get friend suggestions for the current user based on profile similarity."""
-    suggestions = await SocialCRUD.get_friend_suggestions(db, current_user.id, limit)
+    suggestions = await SocialCRUD.get_friend_suggestions(db, current_user.id, limit, offset)
 
     users = [
         UserSocialProfile(

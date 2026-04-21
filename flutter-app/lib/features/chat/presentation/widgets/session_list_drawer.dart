@@ -267,7 +267,7 @@ class _SessionListItemState extends State<SessionListItem> {
                                   : FontWeight.w500,
                               color: widget.isActive
                                   ? AppColors.primary
-                                  : AppColors.textDark,
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

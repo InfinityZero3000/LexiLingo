@@ -88,7 +88,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'Blackout (0)',
                   style: TextStyle(
-                    color: AppColors.textGrey.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -100,7 +100,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'Perfect (5)',
                   style: TextStyle(
-                    color: AppColors.textGrey.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),

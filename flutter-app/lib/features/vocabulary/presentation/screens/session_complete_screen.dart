@@ -124,7 +124,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Motivational message
                   Text(
                     _getMotivationalMessage(accuracy),
-                    style: TextStyle(fontSize: 18, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
 
@@ -162,7 +162,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                             icon: Icons.timer,
                             label: 'Time Spent',
                             value: _formatDuration(duration),
-                            color: AppColors.textGrey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -284,7 +284,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -301,7 +301,7 @@ class _StatCard extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textGrey.withValues(alpha: 0.7),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

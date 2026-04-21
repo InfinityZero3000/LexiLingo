@@ -49,6 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   InputDecoration _inputDecoration({
+    required BuildContext context,
     required String hint,
     required IconData icon,
     Widget? suffixIcon,
@@ -58,7 +59,7 @@ class _RegisterPageState extends State<RegisterPage> {
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: Theme.of(context).colorScheme.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -82,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -153,6 +154,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _fullNameController,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
+                        context: context,
                         hint: 'Enter your name',
                         icon: Icons.person_outline,
                       ),
@@ -180,6 +182,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
+                        context: context,
                         hint: 'example@email.com',
                         icon: Icons.mail_outline,
                       ),
@@ -207,6 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: !_isPasswordVisible,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
+                        context: context,
                         hint: 'Create a password',
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
@@ -239,6 +243,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: !_isConfirmPasswordVisible,
                       textInputAction: TextInputAction.done,
                       decoration: _inputDecoration(
+                        context: context,
                         hint: 'Confirm your password',
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(

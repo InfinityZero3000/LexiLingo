@@ -806,11 +806,16 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
               const SizedBox(height: 12),
-              AnimatedProgressBar(
-                progress: progress,
-                primaryColor: AppColorRoles.primaryGradient(isDark)[0],
-                secondaryColor: AppColorRoles.primaryGradient(isDark)[1],
-                height: 12,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.18),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColorRoles.primary(isDark),
+                  ),
+                  minHeight: 12,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -818,8 +823,8 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   Text(
                     '${xpFor - xpIn} XP to Level ${level + 1}',
-                    style: const TextStyle(
-                      color: AppColors.textGrey,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -1085,15 +1090,15 @@ class _ProfilePageState extends State<ProfilePage>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Weekly Activity',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Last 7 Days',
                     style: TextStyle(
-                      color: AppColors.textGrey,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),

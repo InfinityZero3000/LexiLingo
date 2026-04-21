@@ -117,7 +117,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     controller: _tabController,
                     isScrollable: true,
                     labelColor: primaryColor,
-                    unselectedLabelColor: AppColors.textGrey,
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     indicatorColor: primaryColor,
                     tabs: _leagues.map((league) {
                       return Tab(
@@ -270,13 +270,11 @@ class _LeaderboardTab extends StatelessWidget {
                       'More Ranks',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
                 ),
-
-              // Rest of the leaderboard
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final entry = remaining[index];

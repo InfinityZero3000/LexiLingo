@@ -124,6 +124,10 @@ class VocabRepositoryImpl implements VocabRepository {
         'word': word.word,
         'definition': word.definition,
         'isLearned': word.isLearned,
+        if (word.pronunciation != null) 'pronunciation': word.pronunciation,
+        if (word.audioUrl != null) 'audioUrl': word.audioUrl,
+        if (word.example != null) 'example': word.example,
+        if (word.partOfSpeech != null) 'partOfSpeech': word.partOfSpeech,
       });
 
       await prefs.setString(_prefsKey, jsonEncode(list));
@@ -157,6 +161,9 @@ class VocabRepositoryImpl implements VocabRepository {
       payload: {
         'word': word.word,
         'definition': word.definition,
+        'pronunciation': word.pronunciation,
+        'example': word.example,
+        'partOfSpeech': word.partOfSpeech,
         'source_type': 'manual',
       },
     );
@@ -170,6 +177,10 @@ class VocabRepositoryImpl implements VocabRepository {
             'word': w.word,
             'definition': w.definition,
             'isLearned': w.isLearned,
+            if (w.pronunciation != null) 'pronunciation': w.pronunciation,
+            if (w.audioUrl != null) 'audioUrl': w.audioUrl,
+            if (w.example != null) 'example': w.example,
+            if (w.partOfSpeech != null) 'partOfSpeech': w.partOfSpeech,
           },
         )
         .toList();
@@ -183,6 +194,10 @@ class VocabRepositoryImpl implements VocabRepository {
         word: m['word'] as String? ?? '',
         definition: m['definition'] as String? ?? '',
         isLearned: m['isLearned'] as bool? ?? false,
+        pronunciation: m['pronunciation'] as String?,
+        audioUrl: m['audioUrl'] as String?,
+        example: m['example'] as String?,
+        partOfSpeech: m['partOfSpeech'] as String?,
       );
     }).toList();
   }

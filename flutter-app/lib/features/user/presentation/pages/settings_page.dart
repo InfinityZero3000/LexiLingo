@@ -113,7 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+          color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
         ),
       ),
     );
@@ -726,7 +726,7 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withValues(alpha: 0.05),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

@@ -167,13 +167,12 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
         final q = game.questions[_questionIndex];
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Question ${_questionIndex + 1}/${game.questions.length}',
-              style: const TextStyle(color: AppColors.textDark),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           body: Stack(
@@ -183,7 +182,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                   // Progress bar
                   LinearProgressIndicator(
                     value: (_questionIndex) / game.questions.length,
-                    backgroundColor: AppColors.grey200,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     color: AppColors.primary,
                     minHeight: 4,
                   ),
@@ -198,13 +197,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                         const Icon(
                           Icons.timer_outlined,
                           size: 16,
-                          color: AppColors.textGrey,
+                          color: AppColors.primary,
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: LinearProgressIndicator(
                             value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: AppColors.grey200,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                             color: _timeLeft > 5
                                 ? AppColors.primary
                                 : AppColors.errorBright,
@@ -218,7 +217,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             color: _timeLeft > 5
-                                ? AppColors.textGrey
+                                ? Theme.of(context).colorScheme.onSurfaceVariant
                                 : AppColors.errorBright,
                           ),
                         ),
@@ -236,21 +235,21 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                             width: double.infinity,
                             padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
+                                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
                                   blurRadius: 8,
                                 ),
                               ],
                             ),
                             child: Text(
                               q.sentence,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textDark,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 height: 1.5,
                               ),
                             ),
@@ -265,9 +264,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                             crossAxisSpacing: 12,
                             childAspectRatio: 2.4,
                             children: List.generate(q.options.length, (i) {
-                              Color bg = Colors.white;
-                              Color border = AppColors.grey300;
-                              Color text = AppColors.textDark;
+                              Color bg = Theme.of(context).colorScheme.surface;
+                              Color border = Theme.of(context).colorScheme.outlineVariant;
+                              Color text = Theme.of(context).colorScheme.onSurface;
                               if (_answered) {
                                 if (q.options[i] == q.correctAnswer) {
                                   bg = AppColors.greenSuccess.withValues(
@@ -344,9 +343,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               ),
                               child: Text(
                                 _feedbackTip!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textDark,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   height: 1.4,
                                 ),
                               ),
