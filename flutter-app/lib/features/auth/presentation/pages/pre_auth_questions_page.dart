@@ -362,7 +362,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
         ),
         const SizedBox(height: 8),
         Text(
-          'We'll use this to tailor hints and explanations for you.',
+          "We'll use this to tailor hints and explanations for you.",
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: isDark ? Colors.white60 : AppColors.textGrey,
@@ -391,7 +391,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                       color: isSelected
                           ? AppColors.accentMint
                           : isDark
-                              ? AppColors.slate700
+                              ? AppColors.slate800
                               : AppColors.slate200,
                       width: isSelected ? 2 : 1,
                     ),
