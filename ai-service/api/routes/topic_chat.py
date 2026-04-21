@@ -22,6 +22,7 @@ from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_use
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
+from api.services.subgraph_hot_cache import warm_subgraph, get_subgraph
 from api.models.story_schemas import (
     StartTopicSessionRequest,
     StartTopicSessionResponse,
@@ -353,6 +354,31 @@ async def start_topic_session(
         
         await db["chat_sessions"].insert_one(session)
         
+        # Warm KG subgraph for this topic in the background.
+        # Seeds are stored in MongoDB session doc for use in send_topic_message.
+        async def _warm_and_update_session():
+            try:
+                subgraph = await warm_subgraph(
+                    story_id=request.story_id,
+                    story_vocab=story.vocabulary_list,
+                    story_grammar=story.grammar_points,
+                    story_level=story.difficulty_level.value,
+                    redis_client=redis_client,
+                )
+                kg_seeds = subgraph.get("seed_concepts", [])
+                if kg_seeds:
+                    await db["chat_sessions"].update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "kg_seed_concepts": kg_seeds,
+                            "kg_topic_fingerprint": subgraph.get("topic_fingerprint", ""),
+                        }}
+                    )
+            except Exception as exc:
+                logger.warning("Background KG warm failed for session %s: %s", session_id, exc)
+
+        asyncio.create_task(_warm_and_update_session())
+        
         # Get opening message from story
         opening_message = story.conversation_flow.opening_prompt
         
@@ -412,7 +438,8 @@ async def start_topic_session(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start topic session: {e}")
+        import traceback
+        logger.error(f"Failed to start topic session: {e}\n{traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to start topic session: {str(e)}"
@@ -429,6 +456,7 @@ async def send_topic_message(
     session_id: str,
     request: TopicChatRequest,
     db: AsyncIOMotorDatabase = Depends(get_database),
+    redis_client = Depends(get_redis),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """
@@ -468,6 +496,17 @@ async def send_topic_message(
         
         preferred_llm = str(session.get("preferred_llm") or "graphcag").lower()
 
+        # Load KG seeds from session (populated by warm_subgraph in start_topic_session).
+        # Fall back to a quick in-process subgraph lookup if missing (cache miss race).
+        _kg_seeds: list = list(session.get("kg_seed_concepts") or [])
+        if not _kg_seeds:
+            try:
+                _sg = await get_subgraph(session.get("story_id", ""), redis_client)
+                if _sg:
+                    _kg_seeds = _sg.get("seed_concepts", [])
+            except Exception:
+                pass
+
         # Always run GraphCAG first for topic sessions.
         # preferred_llm is retained for backward compatibility/telemetry only.
         ai_response = None
@@ -494,6 +533,7 @@ async def send_topic_message(
                     retrieval_policy="rapid",
                     diagnosis_policy="rules",
                     generation_policy="auto",
+                    kg_seed_concepts=_kg_seeds or None,
                 ),
                 timeout=TOPIC_GRAPHCAG_TIMEOUT_SEC,
             )

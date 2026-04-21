@@ -194,6 +194,7 @@ class GraphCAGPipeline:
         benchmark_task: Optional[str] = None,
         benchmark_context: Optional[str] = None,
         benchmark_metadata: Optional[Dict[str, Any]] = None,
+        kg_seed_concepts: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Run the GraphCAG pipeline.
@@ -226,6 +227,10 @@ class GraphCAGPipeline:
             benchmark_context=benchmark_context,
             benchmark_metadata=benchmark_metadata,
         )
+
+        # Inject preloaded KG seed concepts (from SubgraphHotCache) to skip KG lookup
+        if kg_seed_concepts:
+            initial_state["kg_seed_concepts"] = list(kg_seed_concepts)
 
         # Override conversation_history if caller supplies it directly
         # (avoids a redundant Redis round-trip when lexi_chat already holds the store)

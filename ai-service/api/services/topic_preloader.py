@@ -84,14 +84,20 @@ class TopicContextPreloader:
             logger.info(f"Injected {len(dynamic_context)} chars of real-time data into prime prompt.")
             
         # 4. Build context bundle
+        # vocabulary_list and grammar_points are List[Dict] — already plain dicts
+        _context_desc = story.context_description
+        _objectives = (
+            _context_desc.get("objectives") if isinstance(_context_desc, dict)
+            else getattr(_context_desc, "objectives", [])
+        ) or []
         bundle = {
             "topic_id": topic_id,
             "title": story.title.en,
             "difficulty": story.difficulty_level.value,
-            "vocabulary": [v.model_dump() for v in story.vocabulary_list[:50]],
-            "grammar_rules": [g.model_dump() for g in story.grammar_points],
-            "user_weak_points": [], 
-            "suggested_focus": [obj for obj in story.context_description.objectives],
+            "vocabulary": list(story.vocabulary_list[:50]),
+            "grammar_rules": list(story.grammar_points),
+            "user_weak_points": [],
+            "suggested_focus": list(_objectives),
             "suggested_prompts": story.suggested_prompts or [],
             "prime_prompt": master_prompt,
             "has_dynamic_data": bool(dynamic_context)

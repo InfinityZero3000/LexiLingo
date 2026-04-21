@@ -18,7 +18,7 @@ consumers:
   - username: admin-web
     custom_id: admin-web
     keyauth_credentials:
-      - key: replace-admin-key
+      - key: oNwAUljT9L1JJ-QxknYKgFbOggRVPoy1lcDuGRtWejA
     acls:
       - group: admin-web
 

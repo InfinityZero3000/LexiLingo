@@ -79,7 +79,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
     final accent = AppColorRoles.primary(isDark);
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark
