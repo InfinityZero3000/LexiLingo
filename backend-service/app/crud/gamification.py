@@ -721,6 +721,7 @@ class SocialCRUD:
         db: AsyncSession,
         user_id: UUID,
         limit: int = 10,
+        offset: int = 0,
     ) -> List[Tuple[User, float, int, List[str]]]:
         """Suggest users based on CEFR level, XP proximity, language, and mutual follows."""
         current_user_result = await db.execute(
@@ -735,7 +736,7 @@ class SocialCRUD:
         )
         following_ids = {row[0] for row in following_result.all()}
 
-        candidate_limit = max(limit * 8, 80)
+        candidate_limit = max((offset + limit) * 8, 80)
         candidates_query = (
             select(User)
             .where(
@@ -815,4 +816,4 @@ class SocialCRUD:
             scored.append((candidate, round(final_score, 4), mutual_count, reasons))
 
         scored.sort(key=lambda row: (-row[1], -(row[2]), -(row[0].total_xp or 0)))
-        return scored[:limit]
+        return scored[offset : offset + limit]
