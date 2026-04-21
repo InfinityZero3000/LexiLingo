@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 
 /// Compact language-switcher pill for placement in app bars and page headers.
 ///
-/// Displays the current locale flag emoji + uppercase language code (e.g. `🇻🇳 VI`).
+/// Displays the current locale flag asset + uppercase language code (e.g. `VI`).
 /// Tapping opens a BottomSheet listing all supported locales.
 ///
 /// Works on both pre-auth and post-auth screens:
@@ -17,47 +18,7 @@ import 'package:provider/provider.dart';
 class LanguageSwitcherButton extends StatelessWidget {
   const LanguageSwitcherButton({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final code = context.locale.languageCode;
-    final flag = AppLocales.flagOf(code);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: () => _showLanguageSheet(context),
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.accentMint.withValues(alpha: 0.12)
-              : AppColors.accentMint.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: AppColors.accentMint.withValues(alpha: 0.4),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 4),
-            Text(
-              code.toUpperCase(),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.accentMint : AppColors.accentMintDark,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageSheet(BuildContext context) {
+  static void showLanguageSheet(BuildContext context) {
     final currentCode = context.locale.languageCode;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -74,7 +35,6 @@ class LanguageSwitcherButton extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Drag handle
                 Container(
                   width: 36,
                   height: 4,
@@ -85,7 +45,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Choose Language',
+                  'settings.language'.tr(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : AppColors.textDark,
@@ -94,7 +54,6 @@ class LanguageSwitcherButton extends StatelessWidget {
                 const SizedBox(height: 8),
                 ...AppLocales.supportedLocales.map((locale) {
                   final code = locale.languageCode;
-                  final flag = AppLocales.flagOf(code);
                   final name = AppLocales.nameOf(code);
                   final nameEn = AppLocales.nameEnOf(code);
                   final isSelected = code == currentCode;
@@ -124,10 +83,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          flag,
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                        child: _FlagImage(languageCode: code, width: 28, height: 20),
                       ),
                       title: Text(
                         name,
@@ -172,7 +128,46 @@ class LanguageSwitcherButton extends StatelessWidget {
     );
   }
 
-  Future<void> _applyLanguage(BuildContext context, String code) async {
+  @override
+  Widget build(BuildContext context) {
+    final code = context.locale.languageCode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => showLanguageSheet(context),
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.accentMint.withValues(alpha: 0.12)
+              : AppColors.accentMint.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: AppColors.accentMint.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FlagImage(languageCode: code, width: 20, height: 14),
+            const SizedBox(width: 4),
+            Text(
+              code.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.accentMint : AppColors.accentMintDark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Future<void> _applyLanguage(BuildContext context, String code) async {
     // Prefer SettingsProvider when the user is authenticated (it syncs to backend).
     SettingsProvider? settingsProvider;
     try {
@@ -189,5 +184,64 @@ class LanguageSwitcherButton extends StatelessWidget {
       if (!context.mounted) return;
       await LocaleService.updateAppLocale(context, code);
     }
+  }
+}
+
+class _FlagImage extends StatelessWidget {
+  const _FlagImage({
+    required this.languageCode,
+    required this.width,
+    required this.height,
+  });
+
+  final String languageCode;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final svgUrl = AppLocales.flagSvgUrlOf(languageCode);
+    final pngUrl = AppLocales.flagPngUrlOf(languageCode);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SvgPicture.network(
+        svgUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        placeholderBuilder: (context) => SizedBox(
+          width: width,
+          height: height,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.accentMint.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        errorBuilder: (context, error, stackTrace) {
+          return Image.network(
+            pngUrl,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            errorBuilder: (context, _, __) {
+              return Container(
+                width: width,
+                height: height,
+                color: AppColors.accentMint.withValues(alpha: 0.18),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.language_rounded,
+                  size: height,
+                  color: AppColors.accentMintDark,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 }

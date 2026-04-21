@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
@@ -32,16 +33,16 @@ class SettingsProvider extends ChangeNotifier {
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
 
-  /// Available languages with emoji flags
+  /// Available languages for settings selection.
   /// Must match supported locales in EasyLocalization (assets/i18n/*.json)
   static const List<Map<String, String>> availableLanguages = [
-    {'code': 'vi', 'name': 'Tiếng Việt', 'flag': '🇻🇳'},
-    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
-    {'code': 'ja', 'name': '日本語', 'flag': '🇯🇵'},
-    {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
-    {'code': 'zh', 'name': '中文', 'flag': '🇨🇳'},
-    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
-    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
+    {'code': 'vi', 'name': 'Tiếng Việt'},
+    {'code': 'en', 'name': 'English'},
+    {'code': 'ja', 'name': '日本語'},
+    {'code': 'ko', 'name': '한국어'},
+    {'code': 'zh', 'name': '中文'},
+    {'code': 'fr', 'name': 'Français'},
+    {'code': 'es', 'name': 'Español'},
   ];
 
   /// Daily goal presets with IconData
@@ -302,13 +303,9 @@ class SettingsProvider extends ChangeNotifier {
     return lang['name'] ?? 'English';
   }
 
-  /// Get current language flag (country code)
+  /// Get current language flag country code.
   String get currentLanguageFlag {
-    final lang = availableLanguages.firstWhere(
-      (l) => l['code'] == language,
-      orElse: () => availableLanguages.first,
-    );
-    return lang['flag'] ?? 'US';
+    return AppLocales.flagCodeOf(language).toUpperCase();
   }
 
   /// Get current goal label

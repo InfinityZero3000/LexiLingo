@@ -41,8 +41,14 @@ class _RegisterPageState extends State<RegisterPage> {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
 
+    // Append a short numeric suffix to avoid "Username already taken" collisions
+    // when multiple users share the same display name.
+    final suffix = (DateTime.now().millisecondsSinceEpoch % 10000)
+        .toString()
+        .padLeft(4, '0');
+
     if (normalized.isNotEmpty) {
-      return normalized;
+      return '${normalized}_$suffix';
     }
 
     return 'learner_${DateTime.now().millisecondsSinceEpoch}';
@@ -190,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!value.contains('@')) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
                           return 'Please enter a valid email';
                         }
                         return null;
@@ -232,6 +238,18 @@ class _RegisterPageState extends State<RegisterPage> {
                         }
                         if (value.length < 8) {
                           return 'Password must be at least 8 characters';
+                        }
+                        if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                          return 'Password must contain at least 1 uppercase letter';
+                        }
+                        if (!RegExp(r'[a-z]').hasMatch(value)) {
+                          return 'Password must contain at least 1 lowercase letter';
+                        }
+                        if (!RegExp(r'[0-9]').hasMatch(value)) {
+                          return 'Password must contain at least 1 number';
+                        }
+                        if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]').hasMatch(value)) {
+                          return 'Password must contain at least 1 special character';
                         }
                         return null;
                       },

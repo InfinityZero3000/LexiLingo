@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -174,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
                     Text(
-                      'Welcome Back',
+                      'auth.welcomeBack'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -185,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Continue your English language journey',
+                      'app.tagline'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
@@ -196,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 28),
 
                     Text(
-                      'Email Address',
+                      'auth.email'.tr(),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: isDark
@@ -243,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Password',
+                            'auth.password'.tr(),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: isDark
@@ -254,7 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         TextButton(
                           onPressed: _openForgotPassword,
-                          child: const Text('Forgot password?'),
+                          child: Text('auth.forgotPassword'.tr()),
                         ),
                       ],
                     ),

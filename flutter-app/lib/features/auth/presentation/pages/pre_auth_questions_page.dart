@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
@@ -231,7 +232,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                         ),
                       ),
                       child: Text(
-                        'I already have an account',
+                        'auth.alreadyHaveAccount'.tr(),
                         style: TextStyle(
                           color: isDark
                               ? Colors.white60

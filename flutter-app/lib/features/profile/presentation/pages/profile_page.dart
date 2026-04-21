@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'dart:ui';
-import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -20,9 +20,9 @@ import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
+import 'package:lexilingo_app/features/user/domain/entities/weekly_activity_entity.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
-import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Profile',
+                  'profile.title'.tr(),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -137,11 +137,6 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         automaticallyImplyLeading: false,
         actions: [
-          // Language switcher
-          const Padding(
-            padding: EdgeInsets.only(right: 4),
-            child: Center(child: LanguageSwitcherButton()),
-          ),
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
@@ -1073,6 +1068,18 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  void _showWeeklyActivityDetail(
+    BuildContext context,
+    List<WeeklyActivityEntity> activities,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _WeeklyActivityDetailSheet(activities: activities),
+    );
+  }
+
   Widget _buildWeeklyActivity(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
@@ -1095,12 +1102,30 @@ class _ProfilePageState extends State<ProfilePage>
                     'Weekly Activity',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  Text(
-                    'Last 7 Days',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                  GestureDetector(
+                    onTap: activities.isNotEmpty
+                        ? () => _showWeeklyActivityDetail(context, activities)
+                        : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Last 7 Days',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (activities.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -1468,5 +1493,385 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class _WeeklyActivityDetailSheet extends StatelessWidget {
+  final List<WeeklyActivityEntity> activities;
+
+  const _WeeklyActivityDetailSheet({required this.activities});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = AppColorRoles.primary(isDark);
+
+    final totalXP = activities.fold<int>(0, (s, a) => s + a.xpEarned);
+    final totalLessons = activities.fold<int>(0, (s, a) => s + a.lessonsCompleted);
+    final totalWords = activities.fold<int>(0, (s, a) => s + a.vocabularyLearned);
+    final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
+    final bestDay = activities.reduce((a, b) => a.xpEarned >= b.xpEarned ? a : b);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.grey400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Weekly Activity',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Last 7 Days — Detailed Breakdown',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.06),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Summary row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    _SummaryChip(
+                      icon: Icons.star,
+                      color: AppColors.warning,
+                      label: '$totalXP XP',
+                      sublabel: 'Total',
+                    ),
+                    const SizedBox(width: 8),
+                    _SummaryChip(
+                      icon: Icons.menu_book,
+                      color: primary,
+                      label: '$totalLessons',
+                      sublabel: 'Lessons',
+                    ),
+                    const SizedBox(width: 8),
+                    _SummaryChip(
+                      icon: Icons.abc,
+                      color: AppColors.greenSuccessBright,
+                      label: '$totalWords',
+                      sublabel: 'Words',
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Day list
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final a = activities[index];
+                    final isBest = a.xpEarned == maxXP && maxXP > 0;
+                    final barFraction = maxXP > 0 ? a.xpEarned / maxXP : 0.0;
+
+                    DateTime? parsedDate = DateTime.tryParse(a.date);
+                    final String dayName = parsedDate != null
+                        ? DateFormat('EEEE').format(parsedDate)
+                        : a.date;
+                    final String shortDate = parsedDate != null
+                        ? DateFormat('MMM d').format(parsedDate)
+                        : '';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isBest
+                            ? primary.withValues(alpha: isDark ? 0.15 : 0.08)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.black.withValues(alpha: 0.03)),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isBest
+                              ? primary.withValues(alpha: 0.4)
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      dayName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (shortDate.isNotEmpty) ...[  
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        shortDate,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (isBest)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.warning.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(
+                                        Icons.emoji_events,
+                                        size: 12,
+                                        color: AppColors.warning,
+                                      ),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'Best Day',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.warning,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // XP bar
+                          if (a.xpEarned > 0) ...[  
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: barFraction,
+                                      backgroundColor:
+                                          primary.withValues(alpha: 0.12),
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(primary),
+                                      minHeight: 6,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '${a.xpEarned} XP',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          // Stats chips
+                          Row(
+                            children: [
+                              if (a.xpEarned == 0)
+                                Text(
+                                  'No activity',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                )
+                              else ...[  
+                                _MiniStat(
+                                  icon: Icons.menu_book,
+                                  color: primary,
+                                  value: '${a.lessonsCompleted} lessons',
+                                ),
+                                const SizedBox(width: 12),
+                                _MiniStat(
+                                  icon: Icons.abc,
+                                  color: AppColors.greenSuccessBright,
+                                  value: '${a.vocabularyLearned} words',
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Bottom safe area
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String sublabel;
+
+  const _SummaryChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.sublabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  sublabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String value;
+
+  const _MiniStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
   }
 }
