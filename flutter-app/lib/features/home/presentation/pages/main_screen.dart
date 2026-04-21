@@ -174,7 +174,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _warmupAiModels() async {
-    final endpoints = ['/warmup', '/ai/warmup'];
+    final endpoints = ['/ai/warmup', '/warmup'];
 
     for (final endpoint in endpoints) {
       try {
