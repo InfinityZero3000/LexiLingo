@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
-import 'package:easy_localization/easy_localization.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +21,7 @@ import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
 import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
@@ -73,6 +73,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_pa
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  final initialLocaleCode = await LocaleService.getSavedLocale();
 
   if (kIsWeb) {
     // Avoid sqflite web worker boot failures when sqflite_sw.js is not deployed.
@@ -146,18 +147,10 @@ void main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [
-        Locale('vi'),
-        Locale('en'),
-        Locale('ja'),
-        Locale('ko'),
-        Locale('zh'),
-        Locale('fr'),
-        Locale('es'),
-      ],
+      supportedLocales: AppLocales.supportedLocales,
       path: 'assets/i18n',
-      fallbackLocale: const Locale('vi'),
-      startLocale: const Locale('vi'),
+      fallbackLocale: AppLocales.fallback,
+      startLocale: Locale(initialLocaleCode),
       child: const LexiLingoApp(),
     ),
   );
@@ -184,6 +177,8 @@ class LexiLingoApp extends StatefulWidget {
 class _LexiLingoAppState extends State<LexiLingoApp>
     with WidgetsBindingObserver {
   SyncQueueLifecycleRunner? _syncQueueRunner;
+  String? _queuedSettingsLocale;
+  bool _isSyncingSettingsLocale = false;
 
   @override
   void initState() {
@@ -293,24 +288,31 @@ class _LexiLingoAppState extends State<LexiLingoApp>
       ],
       child: Consumer2<SettingsProvider, AuthProvider>(
         builder: (context, settings, auth, child) {
-          final safeContext = context;
-          // Sync locale from settings on startup (after auth wrapper initializes)
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (auth.currentUser != null && settings.settings != null) {
-              // Sync app locale with saved settings
-              final savedLocale = await LocaleService.getSavedLocale();
-              if (!safeContext.mounted) return;
-              final settingsLanguage = settings.language;
+          final requestedSettingsLocale = auth.currentUser != null &&
+                  settings.settings != null
+              ? LocaleService.normalizeLanguageCode(settings.language)
+              : null;
 
-              // If settings has a different language than saved locale, update it
-              if (savedLocale != settingsLanguage) {
-                await LocaleService.saveLocale(settingsLanguage);
-                if (!safeContext.mounted) return;
-                await safeContext.setLocale(Locale(settingsLanguage));
-                debugPrint('Locale synced from settings: $settingsLanguage');
+          if (requestedSettingsLocale != null &&
+              requestedSettingsLocale != context.locale.languageCode &&
+              requestedSettingsLocale != _queuedSettingsLocale &&
+              !_isSyncingSettingsLocale) {
+            _queuedSettingsLocale = requestedSettingsLocale;
+            _isSyncingSettingsLocale = true;
+
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              if (!mounted || !context.mounted) {
+                _isSyncingSettingsLocale = false;
+                return;
               }
-            }
-          });
+
+              await LocaleService.updateAppLocale(
+                context,
+                requestedSettingsLocale,
+              );
+              _isSyncingSettingsLocale = false;
+            });
+          }
 
           return MaterialApp(
             title: 'LexiLingo',
@@ -318,8 +320,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
-            themeAnimationDuration: const Duration(milliseconds: 280),
-            themeAnimationCurve: Curves.easeInOutCubic,
+            themeAnimationDuration: Duration.zero,
             // Localization — easy_localization handles locale state
             locale: context.locale,
             supportedLocales: context.supportedLocales,
