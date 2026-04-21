@@ -356,10 +356,10 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             'AI Tutor',
             style: TextStyle(
-              color: AppColors.textDark,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -399,7 +399,7 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
               Text(
                 widget.isOnline ? _moodText : 'Offline',
                 style: TextStyle(
-                  color: AppColors.textDark.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.normal,
                 ),
@@ -408,7 +408,7 @@ class _AITutorMoodIndicatorState extends State<AITutorMoodIndicator>
                 Text(
                   ' | ',
                   style: TextStyle(
-                    color: AppColors.textDark.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
                   ),
                 ),

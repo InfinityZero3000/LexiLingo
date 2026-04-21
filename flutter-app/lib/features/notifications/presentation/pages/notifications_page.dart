@@ -232,7 +232,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       content: const Text('Notification removed'),
       duration: const Duration(seconds: 4),
       behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.textDark,
+      backgroundColor: Theme.of(context).colorScheme.inverseSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       action: SnackBarAction(
         label: 'Undo',
@@ -361,7 +361,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Text(
                       notification.body,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.3,
                       ),
                       maxLines: 2,
@@ -376,7 +376,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   notification.relativeTimeString,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 11,
-                    color: AppColors.textGrey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),

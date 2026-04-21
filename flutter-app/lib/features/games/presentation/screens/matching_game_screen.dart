@@ -186,13 +186,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
             .toList();
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Matching Game',
-              style: TextStyle(color: AppColors.textDark),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
               Padding(
@@ -218,8 +217,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Text(
                       '${_matchedIds.length}/${game.pairs.length} matched',
-                      style: const TextStyle(
-                        color: AppColors.textGrey,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -337,10 +336,10 @@ class _ColumnList extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 13,
-            color: AppColors.textGrey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 6),
@@ -351,8 +350,8 @@ class _ColumnList extends StatelessWidget {
               final item = items[i];
               final selected = selectedItem == item;
               final state = pairStates[item];
-              Color bg = Colors.white;
-              Color border = AppColors.grey300;
+              Color bg = Theme.of(context).colorScheme.surface;
+              Color border = Theme.of(context).colorScheme.outlineVariant;
               if (selected) {
                 bg = AppColors.primary.withValues(alpha: 0.1);
                 border = AppColors.primary;
@@ -381,9 +380,9 @@ class _ColumnList extends StatelessWidget {
                   ),
                   child: Text(
                     item,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

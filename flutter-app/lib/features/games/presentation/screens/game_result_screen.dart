@@ -90,12 +90,11 @@ class _GameResultScreenState extends State<GameResultScreen>
     final xpResult = widget.xpResult;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
           '${result.gameType.displayName} — Result',
-          style: TextStyle(color: AppColors.textDark),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
@@ -133,7 +132,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Icon(
               filled ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: filled ? AppColors.accentYellow : AppColors.grey300,
+              color: filled ? AppColors.accentYellow : Theme.of(context).colorScheme.outline,
               size: filled ? 52 : 44,
             ),
           );
@@ -151,7 +150,7 @@ class _GameResultScreenState extends State<GameResultScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -191,14 +190,14 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(color: AppColors.textGrey, fontSize: 14),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
           ),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: color ?? AppColors.textDark,
+              color: color ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],

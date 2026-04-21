@@ -179,13 +179,12 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
         final word = game.words[_wordIndex];
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
               'Word ${_wordIndex + 1}/${game.words.length}',
-              style: const TextStyle(color: AppColors.textDark),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           body: Column(
@@ -243,8 +242,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                       const SizedBox(height: 12),
                       Text(
                         'Plays left: $_playsLeft/${word.maxReplays}',
-                        style: const TextStyle(
-                          color: AppColors.textGrey,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -260,9 +259,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Type the word...',
-                          hintStyle: TextStyle(color: AppColors.textGrey),
+                          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           filled: true,
-                          fillColor: AppColors.surfaceLight,
+                          fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
@@ -333,10 +332,10 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   word.word,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textDark,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -345,9 +344,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   word.ipaPronunciation!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: AppColors.textGrey,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -356,9 +355,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   word.definition,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: AppColors.textDark,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     height: 1.4,
                                   ),
                                   textAlign: TextAlign.center,

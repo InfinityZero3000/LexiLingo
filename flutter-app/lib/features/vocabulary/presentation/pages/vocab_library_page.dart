@@ -80,15 +80,15 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 12, right: 8),
-                    child: Icon(Icons.search, color: AppColors.textGrey),
+                    child: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Search words...',
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: AppColors.textGrey),
+                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -124,7 +124,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: AppColors.textDark.withValues(alpha: 0.6),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -312,7 +312,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: AppColors.textGrey,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),

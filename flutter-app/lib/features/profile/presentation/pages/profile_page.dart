@@ -818,8 +818,8 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   Text(
                     '${xpFor - xpIn} XP to Level ${level + 1}',
-                    style: const TextStyle(
-                      color: AppColors.textGrey,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -1085,15 +1085,15 @@ class _ProfilePageState extends State<ProfilePage>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Weekly Activity',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Last 7 Days',
                     style: TextStyle(
-                      color: AppColors.textGrey,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),

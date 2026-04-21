@@ -188,13 +188,12 @@ class _HangmanScreenState extends State<HangmanScreen>
             final word = _wordLetters(game);
 
             return Scaffold(
-              backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
-                title: const Text(
+                title: Text(
                   'Hangman',
-                  style: TextStyle(color: AppColors.textDark),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 actions: [
                   Padding(
@@ -240,8 +239,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                         const Spacer(),
                         Text(
                           '${maxWrong - _wrongGuesses} lives left',
-                          style: const TextStyle(
-                            color: AppColors.textGrey,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
@@ -302,7 +301,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                               bottom: BorderSide(
                                 color: revealed
                                     ? AppColors.primary
-                                    : AppColors.textGrey,
+                                    : Theme.of(context).colorScheme.outlineVariant,
                                 width: 2,
                               ),
                             ),
@@ -311,10 +310,10 @@ class _HangmanScreenState extends State<HangmanScreen>
                           child: revealed
                               ? Text(
                                   letter,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
-                                    color: AppColors.textDark,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 )
                               : null,
@@ -433,10 +432,10 @@ class _HintButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withValues(alpha: 0.1) : AppColors.grey200,
+          color: active ? color.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: active ? color : AppColors.grey300,
+            color: active ? color : Theme.of(context).colorScheme.outlineVariant,
             width: 1.5,
           ),
         ),
@@ -448,7 +447,7 @@ class _HintButton extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: active ? color : AppColors.textGrey,
+                color: active ? color : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             Text(
@@ -457,7 +456,7 @@ class _HintButton extends StatelessWidget {
                 fontSize: 10,
                 color: active
                     ? color.withValues(alpha: 0.7)
-                    : AppColors.textGrey,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -496,17 +495,17 @@ class _Keyboard extends StatelessWidget {
             final guessed = guessedLetters.contains(letter);
             final correct = guessed && wordLetters.contains(letter);
             final wrong = guessed && !wordLetters.contains(letter);
-            Color bg = Colors.white;
-            Color text = AppColors.textDark;
-            Color border = AppColors.grey300;
+            Color bg = Theme.of(context).colorScheme.surface;
+            Color text = Theme.of(context).colorScheme.onSurface;
+            Color border = Theme.of(context).colorScheme.outlineVariant;
             if (correct) {
               bg = AppColors.greenSuccess;
               text = Colors.white;
               border = AppColors.greenSuccess;
             } else if (wrong) {
-              bg = AppColors.grey200;
-              text = AppColors.textGrey;
-              border = AppColors.grey300;
+              bg = Theme.of(context).colorScheme.surfaceContainerHighest;
+              text = Theme.of(context).colorScheme.onSurfaceVariant;
+              border = Theme.of(context).colorScheme.outlineVariant;
             }
             return GestureDetector(
               onTap: (!guessed && !gameOver) ? () => onTap(letter) : null,

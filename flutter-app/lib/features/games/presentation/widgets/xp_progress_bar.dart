@@ -89,7 +89,7 @@ class _XPProgressBarState extends State<XPProgressBar>
               const SizedBox(height: 2),
               Text(
                 '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-                style: const TextStyle(fontSize: 10, color: AppColors.textGrey),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -115,17 +115,17 @@ class _XPProgressBarState extends State<XPProgressBar>
                   children: [
                     Text(
                       'Level ${widget.numericLevel}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: AppColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       '${widget.totalXp} total XP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -134,9 +134,9 @@ class _XPProgressBarState extends State<XPProgressBar>
             ),
             Text(
               '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textGrey,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -150,7 +150,7 @@ class _XPProgressBarState extends State<XPProgressBar>
           children: [
             Text(
               '${widget.progressPercent.toStringAsFixed(0)}% to next level',
-              style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             Text(
               'Lv.${widget.numericLevel + 1}',
