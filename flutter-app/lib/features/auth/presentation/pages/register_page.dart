@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -119,7 +120,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         Expanded(
                           child: Text(
-                            'Create Account',
+                            'auth.createAccount'.tr(),
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
@@ -132,7 +133,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Start your English\njourney',
+                      'auth.startJourney'.tr(),
                       style: textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0B132B),
@@ -141,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Join thousands of learners today and master English with ease.',
+                      'auth.joinLearners'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF3E536B),
                         height: 1.35,
@@ -150,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 30),
 
                     Text(
-                      'Full Name',
+                      'auth.fullName'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -161,15 +162,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
                         context: context,
-                        hint: 'Enter your name',
+                        hint: 'auth.enterYourName'.tr(),
                         icon: Icons.person_outline,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your name';
+                          return 'auth.pleaseEnterName'.tr();
                         }
                         if (value.trim().length < 2) {
-                          return 'Name must be at least 2 characters';
+                          return 'auth.nameMinLength'.tr();
                         }
                         return null;
                       },
@@ -177,7 +178,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 20),
                     Text(
-                      'Email Address',
+                      'auth.email'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -189,15 +190,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
                         context: context,
-                        hint: 'example@email.com',
+                        hint: 'auth.emailHint'.tr(),
                         icon: Icons.mail_outline,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return 'auth.pleaseEnterEmail'.tr();
                         }
                         if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
-                          return 'Please enter a valid email';
+                          return 'auth.invalidEmail'.tr();
                         }
                         return null;
                       },
@@ -205,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 20),
                     Text(
-                      'Password',
+                      'auth.password'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -217,7 +218,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
                         context: context,
-                        hint: 'Create a password',
+                        hint: 'auth.createPassword'.tr(),
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -234,22 +235,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return 'auth.pleaseEnterPassword'.tr();
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return 'auth.passwordMinLength'.tr();
                         }
                         if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                          return 'Password must contain at least 1 uppercase letter';
+                          return 'auth.passwordNeedsUppercase'.tr();
                         }
                         if (!RegExp(r'[a-z]').hasMatch(value)) {
-                          return 'Password must contain at least 1 lowercase letter';
+                          return 'auth.passwordNeedsLowercase'.tr();
                         }
                         if (!RegExp(r'[0-9]').hasMatch(value)) {
-                          return 'Password must contain at least 1 number';
+                          return 'auth.passwordNeedsNumber'.tr();
                         }
                         if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]').hasMatch(value)) {
-                          return 'Password must contain at least 1 special character';
+                          return 'auth.passwordNeedsSpecial'.tr();
                         }
                         return null;
                       },
@@ -262,7 +263,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       textInputAction: TextInputAction.done,
                       decoration: _inputDecoration(
                         context: context,
-                        hint: 'Confirm your password',
+                        hint: 'auth.confirmYourPassword'.tr(),
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -280,10 +281,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
+                          return 'auth.pleaseConfirmPassword'.tr();
                         }
                         if (value != _passwordController.text) {
-                          return 'Passwords do not match';
+                          return 'auth.passwordMismatch'.tr();
                         }
                         return null;
                       },
@@ -316,18 +317,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: textTheme.bodyLarge?.copyWith(
                                   color: const Color(0xFF3E536B),
                                 ),
-                                children: const [
-                                  TextSpan(text: 'I agree to the '),
+                                children: [
+                                  TextSpan(text: 'auth.termsPrefix'.tr()),
                                   TextSpan(
-                                    text: 'Terms of Service',
+                                    text: 'auth.termsOfService'.tr(),
                                     style: TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  TextSpan(text: ' and '),
+                                  TextSpan(text: 'auth.termsAnd'.tr()),
                                   TextSpan(
-                                    text: 'Privacy Policy.',
+                                    text: 'auth.privacyPolicy'.tr(),
                                     style: TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
@@ -343,7 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     if (_showTermsError) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Please accept Terms of Service and Privacy Policy.',
+                        'auth.pleaseAcceptTerms'.tr(),
                         style: textTheme.bodyMedium?.copyWith(
                           color: Colors.red.shade700,
                           fontWeight: FontWeight.w600,
@@ -394,8 +395,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 20,
                                 child: LottieLoadingWidget.tiny(),
                               )
-                            : const Text(
-                                'Create Account',
+                            : Text(
+                                'auth.createAccount'.tr(),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -413,7 +414,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'OR CONTINUE WITH',
+                            'auth.orContinueWith'.tr(),
                             style: textTheme.labelLarge?.copyWith(
                               color: const Color(0xFF8C9AAF),
                               fontWeight: FontWeight.w700,
@@ -437,8 +438,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 await authProvider.signInWithGoogle();
                               },
                         icon: const Icon(Icons.g_mobiledata, size: 30),
-                        label: const Text(
-                          'Continue with Google',
+                        label: Text(
+                          'auth.continueWithGoogle'.tr(),
                           style: TextStyle(
                             color: Color(0xFF0B132B),
                             fontWeight: FontWeight.w700,
@@ -469,7 +470,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           color: AppColors.surfaceLight,
                         ),
                         label: Text(
-                          'Continue with Facebook',
+                          'auth.continueWithFacebook'.tr(),
                           style: TextStyle(
                             color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
@@ -491,7 +492,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Wrap(
                         children: [
                           Text(
-                            'Already have an account? ',
+                            '${'auth.alreadyHaveAccount'.tr()} ',
                             style: textTheme.titleMedium?.copyWith(
                               color: const Color(0xFF3E536B),
                             ),
@@ -509,7 +510,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               );
                             },
                             child: Text(
-                              'Log In',
+                              'auth.signIn'.tr(),
                               style: textTheme.titleMedium?.copyWith(
                                 color: AppColors.accentMint,
                                 fontWeight: FontWeight.w800,

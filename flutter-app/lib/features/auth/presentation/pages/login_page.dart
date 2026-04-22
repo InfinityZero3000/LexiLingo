@@ -215,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: 'name@example.com',
+                        hintText: 'auth.emailHint'.tr(),
                         prefixIcon: Icon(
                           Icons.email_outlined,
                           color: isDark ? Colors.white70 : AppColors.textSlate,
@@ -230,10 +230,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'auth.pleaseEnterEmail'.tr();
                         }
                         if (!value.contains('@')) {
-                          return 'Please enter a valid email';
+                          return 'auth.invalidEmail'.tr();
                         }
                         return null;
                       },
@@ -268,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: 'Enter your password',
+                        hintText: 'auth.enterYourPassword'.tr(),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -292,10 +292,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return 'auth.pleaseEnterYourPassword'.tr();
                         }
                         if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return 'auth.passwordTooShort'.tr();
                         }
                         return null;
                       },
@@ -313,7 +313,7 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         Text(
-                          'Lưu mật khẩu',
+                          'auth.rememberPassword'.tr(),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: isDark
                                 ? Colors.white70
@@ -352,9 +352,9 @@ class _LoginPageState extends State<LoginPage> {
 
                                     if (_isLockedAfterFailures) {
                                       messenger.showSnackBar(
-                                        const SnackBar(
+                                        SnackBar(
                                           content: Text(
-                                            'You entered the wrong password 5 times. Please reset your password.',
+                                            'auth.wrongPasswordFiveTimes'.tr(),
                                           ),
                                         ),
                                       );
@@ -377,8 +377,8 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 20,
                                 child: LottieLoadingWidget.tiny(),
                               )
-                            : const Text(
-                                'Sign In',
+                            : Text(
+                                'auth.signIn'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -390,7 +390,12 @@ class _LoginPageState extends State<LoginPage> {
                     if (!_isLockedAfterFailures && _failedAttempts > 0) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Wrong credentials $_failedAttempts/$_maxFailedAttempts times.',
+                        'auth.wrongCredentialsAttempts'.tr(
+                          namedArgs: {
+                            'count': '$_failedAttempts',
+                            'max': '$_maxFailedAttempts',
+                          },
+                        ),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.orange.shade700,
@@ -417,7 +422,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Login is temporarily disabled after 5 failed attempts. Please use Forgot password.',
+                                'auth.loginTemporarilyDisabled'.tr(),
                                 style: TextStyle(color: Colors.orange.shade800),
                               ),
                             ),
@@ -439,7 +444,7 @@ class _LoginPageState extends State<LoginPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'Or login with',
+                            'auth.orLoginWith'.tr(),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: isDark
                                   ? AppColors.textMuted
@@ -470,7 +475,7 @@ class _LoginPageState extends State<LoginPage> {
                                       await authProvider.signInWithGoogle();
                                     },
                               icon: const Icon(Icons.g_mobiledata, size: 26),
-                              label: const Text('Google'),
+                              label: Text('auth.loginWithGoogle'.tr()),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -490,7 +495,7 @@ class _LoginPageState extends State<LoginPage> {
                                       await authProvider.signInWithFacebook();
                                     },
                               icon: const Icon(Icons.facebook, size: 22),
-                              label: const Text('Facebook'),
+                              label: Text('auth.signInWithFacebook'.tr()),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -507,7 +512,7 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Don\'t have an account?',
+                          'auth.dontHaveAccount'.tr(),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: isDark
                                 ? Colors.white70
@@ -522,8 +527,8 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             );
                           },
-                          child: const Text(
-                            'Sign up for free',
+                          child: Text(
+                            'auth.signUpForFree'.tr(),
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),

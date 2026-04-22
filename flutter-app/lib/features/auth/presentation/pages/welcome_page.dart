@@ -180,9 +180,17 @@ class _WelcomePageState extends State<WelcomePage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildStatItem(context, 'Active Users', '50k+'),
+                            _buildStatItem(
+                              context,
+                              'onboarding.activeUsers'.tr(),
+                              '50k+',
+                            ),
                             const SizedBox(width: 20),
-                            _buildStatItem(context, 'Daily Lessons', '12k+'),
+                            _buildStatItem(
+                              context,
+                              'onboarding.dailyLessons'.tr(),
+                              '12k+',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
@@ -205,7 +213,7 @@ class _WelcomePageState extends State<WelcomePage>
                               ),
                             ),
                             Text(
-                              'Join a global community',
+                              'onboarding.globalCommunity'.tr(),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.textMuted

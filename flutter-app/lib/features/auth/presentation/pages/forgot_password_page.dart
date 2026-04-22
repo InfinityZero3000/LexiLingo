@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +44,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+      title: Text('auth.forgotPassword'.tr()),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -66,7 +67,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Reset your password',
+                      'auth.resetYourPassword'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -77,7 +78,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter your account email. We will send instructions to reset your password.',
+                      'auth.resetPasswordInstructions'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
@@ -90,7 +91,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'name@example.com',
+                        hintText: 'auth.emailHint'.tr(),
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
                         fillColor: isDark
@@ -102,10 +103,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'auth.pleaseEnterEmail'.tr();
                         }
                         if (!value.contains('@')) {
-                          return 'Please enter a valid email';
+                          return 'auth.invalidEmail'.tr();
                         }
                         return null;
                       },
@@ -129,10 +130,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 if (success) {
                                   setState(() => _requestSent = true);
                                   messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'If your email exists, reset instructions were sent.',
-                                      ),
+                                    SnackBar(
+                                      content: Text('auth.resetEmailSent'.tr()),
                                     ),
                                   );
                                 }
@@ -151,8 +150,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 width: 20,
                                 child: LottieLoadingWidget.tiny(),
                               )
-                            : const Text(
-                                'Send Reset Instructions',
+                            : Text(
+                                'auth.sendResetInstructions'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -178,7 +177,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Request recorded. Please check your inbox.',
+                                'auth.requestRecorded'.tr(),
                                 style: TextStyle(color: Colors.green.shade700),
                               ),
                             ),
@@ -215,7 +214,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Back to login'),
+                      child: Text('auth.backToLogin'.tr()),
                     ),
                   ],
                 ),
