@@ -68,9 +68,19 @@ class HomeProvider with ChangeNotifier {
   bool get isLoadingWeekly => _isLoadingWeekly;
 
   DailyGoal? get todayGoal => _todayGoal;
-  int get dailyXP => _todayGoal?.earnedXP ?? 0;
+
+  // If a DailyGoal has been loaded, use its earnedXP.
+  // Otherwise fall back to today's xpEarned from the weekly progress data
+  // (already loaded by loadWeeklyProgress), so the card shows real data.
+  int get dailyXP =>
+      _todayGoal?.earnedXP ?? _weeklyProgress.todayProgress?.xpEarned ?? 0;
   int get dailyGoalXP => _todayGoal?.targetXP ?? 50;
-  double get dailyProgressPercentage => _todayGoal?.progressPercentage ?? 0.0;
+  double get dailyProgressPercentage {
+    if (_todayGoal != null) return _todayGoal!.progressPercentage;
+    final earned = _weeklyProgress.todayProgress?.xpEarned ?? 0;
+    final goal = dailyGoalXP;
+    return goal > 0 ? (earned / goal).clamp(0.0, 1.0) : 0.0;
+  }
 
   bool get isLoadingDashboard => _isLoadingDashboard;
   String? get dashboardError => _dashboardError;

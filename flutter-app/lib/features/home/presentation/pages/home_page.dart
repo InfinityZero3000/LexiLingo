@@ -280,7 +280,11 @@ class _HomePageNewState extends State<HomePageNew> {
     EdgeInsetsGeometry? margin,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final percentage = provider.dailyProgressPercentage;
+    // Use user-configured daily goal from settings; fall back to HomeProvider.
+    final goalXP = context.read<SettingsProvider>().dailyGoalXP;
+    final earnedXP = provider.dailyXP;
+    final percentage =
+        goalXP > 0 ? (earnedXP / goalXP).clamp(0.0, 1.0) : 0.0;
     final isCompleted = percentage >= 1.0;
     final colorScheme = Theme.of(context).colorScheme;
     final accent = AppColorRoles.primary(isDark);
@@ -401,7 +405,7 @@ class _HomePageNewState extends State<HomePageNew> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${provider.dailyXP}/${provider.dailyGoalXP} XP',
+                  '$earnedXP/$goalXP XP',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -497,7 +501,7 @@ class _HomePageNewState extends State<HomePageNew> {
                       ),
                       SizedBox(height: compact ? 6 : 8),
                       Text(
-                        '${provider.dailyXP}/${provider.dailyGoalXP} XP',
+                        '$earnedXP/$goalXP XP',
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
