@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +43,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   const LottieLoadingWidget.small(),
                   const SizedBox(height: 12),
                   Text(
-                    'Loading challenges...',
+                    'home.loadingChallenges'.tr(),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -85,13 +86,14 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Daily Challenges',
+                              'home.dailyChallenges'.tr(),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              '${provider.completedCount}/${provider.totalChallenges} completed',
+                              'home.challengesCompleted'.tr(namedArgs: {'completed': '${provider.completedCount}', 'total': '${provider.totalChallenges}'}),
+
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.grey,
                               ),
@@ -164,7 +166,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                         onPressed: () =>
                             _showChallengesSheet(context, provider),
                         child: Text(
-                          'View all ${provider.challenges.length} challenges',
+                          'home.viewAllChallenges'.tr(namedArgs: {'count': '${provider.challenges.length}'}),
                           style: TextStyle(color: Colors.purple.shade600),
                         ),
                       ),
@@ -310,13 +312,14 @@ class DailyChallengesSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Daily Challenges',
+                      'home.dailyChallenges'.tr(),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'Complete all for bonus ${provider.bonusXp} XP!',
+                      'home.completeBonusXp'.tr(namedArgs: {'xp': '${provider.bonusXp}'}),
+
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.purple,
                       ),
@@ -398,13 +401,14 @@ class DailyChallengesSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'All Challenges Complete!',
+                          'home.allChallengesComplete'.tr(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          '+${provider.bonusXp} Bonus XP',
+                          'home.bonusXpEarned'.tr(namedArgs: {'xp': '${provider.bonusXp}'}),
+
                           style: TextStyle(
                             color: Colors.orange.shade800,
                             fontWeight: FontWeight.w600,
@@ -433,8 +437,8 @@ class DailyChallengesSheet extends StatelessWidget {
     final success = await provider.claimReward(challengeId);
     if (success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Reward claimed successfully!'),
+        SnackBar(
+          content: Text('home.rewardClaimed'.tr()),
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );
@@ -593,7 +597,7 @@ class _ChallengeCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         textStyle: const TextStyle(fontSize: 11),
                       ),
-                      child: const Text('Claim'),
+                      child: Text('home.claimReward'.tr()),
                     ),
                   ),
             ],

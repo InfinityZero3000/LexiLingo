@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -201,7 +202,7 @@ class LevelProgressCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Level $level',
+                              'profile.level'.tr(namedArgs: {'level': '$level'}),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
@@ -211,7 +212,8 @@ class LevelProgressCard extends StatelessWidget {
                                   ),
                             ),
                             Text(
-                              '$xpIn / $xpFor XP',
+                              'profile.xpProgress'.tr(namedArgs: {'current': '$xpIn', 'total': '$xpFor'}),
+
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall
@@ -248,7 +250,7 @@ class LevelProgressCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Level $level',
+                                'profile.level'.tr(namedArgs: {'level': '$level'}),
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.bold,
@@ -256,7 +258,8 @@ class LevelProgressCard extends StatelessWidget {
                                     ),
                               ),
                               Text(
-                                '$xpIn / $xpFor XP this level',
+                                'home.xpThisLevel'.tr(namedArgs: {'current': '$xpIn', 'total': '$xpFor'}),
+
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: AppColors.textGrey,
@@ -280,7 +283,7 @@ class LevelProgressCard extends StatelessWidget {
                                 ),
                           ),
                           Text(
-                            'Total XP',
+                            'profile.totalXp'.tr(),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.textGrey),
                           ),
@@ -296,7 +299,8 @@ class LevelProgressCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        '${(progress * 100).toInt()}% complete',
+                        'profile.percentComplete'.tr(namedArgs: {'percent': '${(progress * 100).toInt()}'}),
+
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: accent,
                           fontWeight: FontWeight.w600,
@@ -316,7 +320,8 @@ class LevelProgressCard extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 3 : 4),
                     Text(
-                      '${xpFor - xpIn} XP to Level ${level + 1}',
+                      'profile.xpToNextLevel'.tr(namedArgs: {'xp': '${xpFor - xpIn}', 'level': '${level + 1}'}),
+
                       maxLines: compact ? 1 : null,
                       overflow: compact ? TextOverflow.ellipsis : null,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -383,8 +388,8 @@ class LevelDetailsSheet extends StatelessWidget {
                 // ── Section 1: CEFR Proficiency ──
                 _SectionHeader(
                   icon: Icons.school_rounded,
-                  title: 'English Proficiency (CEFR)',
-                  subtitle: 'Determined by placement tests & assessments',
+                  title: 'home.englishProficiency'.tr(),
+                  subtitle: 'home.proficiencySubtitle'.tr(),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -448,8 +453,8 @@ class LevelDetailsSheet extends StatelessWidget {
                 // ── Section 2: Activity Level ──
                 _SectionHeader(
                   icon: Icons.workspace_premium_rounded,
-                  title: 'Activity Level',
-                  subtitle: 'Earned by completing lessons and tasks',
+                  title: 'home.activityLevel'.tr(),
+                  subtitle: 'home.activityLevelSubtitle'.tr(),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -468,14 +473,15 @@ class LevelDetailsSheet extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Level ${lp.displayLevel}',
+                            'profile.level'.tr(namedArgs: {'level': '${lp.displayLevel}'}),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${LevelCalculator.formatXP(lp.totalXp)} XP total',
+                            'home.xpTotal'.tr(namedArgs: {'xp': LevelCalculator.formatXP(lp.totalXp)}),
+
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -525,7 +531,10 @@ class LevelDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${lp.displayXpForNextLevel - lp.displayXpInLevel} XP to Level ${lp.displayLevel + 1}',
+                        'profile.xpToNextLevel'.tr(namedArgs: {
+                          'xp': '${lp.displayXpForNextLevel - lp.displayXpInLevel}',
+                          'level': '${lp.displayLevel + 1}',
+                        }),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme

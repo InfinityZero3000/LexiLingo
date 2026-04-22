@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -282,7 +283,7 @@ class StreakCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Best',
+                            'home.streakBestLabel'.tr(),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 10,
                               color: Colors.grey,
@@ -387,19 +388,19 @@ class StreakDetailsSheet extends StatelessWidget {
                 context,
                 Icons.emoji_events,
                 '${streak.longestStreak}',
-                'Best Streak',
+                'home.bestStreak'.tr(),
               ),
               _buildStatIcon(
                 context,
                 Icons.calendar_today,
                 '${streak.totalDaysActive}',
-                'Total Days',
+                'home.totalDays'.tr(),
               ),
               _buildStatIcon(
                 context,
                 Icons.ac_unit,
                 '${streak.freezeCount}',
-                'Freezes',
+                'home.freezes'.tr(),
               ),
             ],
           ),
@@ -435,10 +436,10 @@ class StreakDetailsSheet extends StatelessWidget {
                 Expanded(
                   child: Text(
                     streak.isActiveToday
-                        ? "Great job! You've practiced today."
+                        ? 'home.practicedToday'.tr()
                         : streak.streakAtRisk
-                        ? 'Practice now to save your streak!'
-                        : 'Keep learning to build your streak!',
+                        ? 'home.practiceToSaveStreak'.tr()
+                        : 'home.keepLearningStreak'.tr(),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -469,16 +470,14 @@ class StreakDetailsSheet extends StatelessWidget {
                               final accent = AppColorRoles.primary(isDark);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text(
-                                    'Streak freeze activated!',
-                                  ),
+                                  content: Text('home.streakFreezeActivated'.tr()),
                                   backgroundColor: accent,
                                 ),
                               );
                             }
                           },
                     icon: Icon(Icons.ac_unit, size: 18, color: Colors.cyan),
-                    label: const Text('Use Streak Freeze'),
+                    label: Text('home.useStreakFreeze'.tr()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColorRoles.primary(
                         Theme.of(context).brightness == Brightness.dark,
