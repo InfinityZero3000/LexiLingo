@@ -191,7 +191,7 @@ class TestRegister:
             json={
                 "email": "newuser@example.com",
                 "username": "newuser",
-                "password": "securepass123",
+                "password": "SecurePass123!",
             },
         )
         assert response.status_code == 201
@@ -203,7 +203,7 @@ class TestRegister:
             json={
                 "email": "another@example.com",
                 "username": "anotheruser",
-                "password": "securepass123",
+                "password": "SecurePass123!",
             },
         )
         assert response.status_code == 201
@@ -230,7 +230,7 @@ class TestRegister:
                 json={
                     "email": "test@example.com",
                     "username": "newuser",
-                    "password": "securepass123",
+                    "password": "SecurePass123!",
                 },
             )
         app.dependency_overrides.clear()
@@ -266,7 +266,7 @@ class TestRegister:
                 json={
                     "email": "unique@example.com",
                     "username": "testuser",
-                    "password": "securepass123",
+                    "password": "SecurePass123!",
                 },
             )
         app.dependency_overrides.clear()
@@ -281,7 +281,7 @@ class TestRegister:
             json={
                 "email": "not-a-valid-email",
                 "username": "validuser",
-                "password": "securepass123",
+                "password": "SecurePass123!",
             },
         )
         assert response.status_code == 422
@@ -302,7 +302,7 @@ class TestRegister:
         """Missing required email field triggers 422."""
         response = await client.post(
             f"{BASE}/register",
-            json={"username": "validuser", "password": "securepass123"},
+            json={"username": "validuser", "password": "SecurePass123!"},
         )
         assert response.status_code == 422
 
