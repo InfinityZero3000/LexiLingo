@@ -49,32 +49,32 @@ class SettingsProvider extends ChangeNotifier {
   static final List<Map<String, dynamic>> dailyGoalPresets = [
     {
       'xp': 10,
-      'label': 'Casual',
-      'description': '5 minutes/day',
+      'label': 'settings.goal_casual_label',
+      'description': 'settings.goal_casual_description',
       'icon': Icons.eco,
     },
     {
       'xp': 30,
-      'label': 'Regular',
-      'description': '10 minutes/day',
+      'label': 'settings.goal_regular_label',
+      'description': 'settings.goal_regular_description',
       'icon': Icons.menu_book,
     },
     {
       'xp': 50,
-      'label': 'Serious',
-      'description': '15 minutes/day',
+      'label': 'settings.goal_serious_label',
+      'description': 'settings.goal_serious_description',
       'icon': Icons.local_fire_department,
     },
     {
       'xp': 100,
-      'label': 'Intense',
-      'description': '30 minutes/day',
+      'label': 'settings.goal_intense_label',
+      'description': 'settings.goal_intense_description',
       'icon': Icons.fitness_center,
     },
     {
       'xp': 200,
-      'label': 'Insane',
-      'description': '1 hour/day',
+      'label': 'settings.goal_insane_label',
+      'description': 'settings.goal_insane_description',
       'icon': Icons.emoji_events,
     },
   ];

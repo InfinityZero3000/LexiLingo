@@ -84,9 +84,11 @@ class _ProfilePageState extends State<ProfilePage>
     await proficiencyProvider.loadProfile();
   }
 
-  String _formatMemberSince(DateTime? createdAt) {
-    if (createdAt == null) return 'Member';
-    return 'Member since ${DateFormat('MMM yyyy').format(createdAt)}';
+  String _formatMemberSince(BuildContext context, DateTime? createdAt) {
+    if (createdAt == null) return 'profile.member'.tr();
+    return 'profile.memberSince'.tr(
+      namedArgs: {'date': DateFormat('MMM yyyy').format(createdAt)},
+    );
   }
 
   @override
@@ -126,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 Text(
-                  _formatMemberSince(user?.createdAt),
+                  _formatMemberSince(context, user?.createdAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textSecondary(isDark),
                   ),
@@ -182,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           IconButton(
             icon: Icon(Icons.mic_rounded, color: accent),
-            tooltip: 'Voice Practice',
+            tooltip: 'voice.pronunciation'.tr(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -246,7 +248,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.store,
-            label: 'Shop',
+            label: 'profile.shop'.tr(),
             color: AppColors.orange,
             gradient: AppColors.warmGradient,
             onTap: () => Navigator.push(
@@ -258,7 +260,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.leaderboard,
-            label: 'Ranks',
+            label: 'profile.ranks'.tr(),
             color: AppColors.greenSuccess,
             gradient: AppColors.successGradient,
             onTap: () => Navigator.push(
@@ -270,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.people,
-            label: 'Friends',
+            label: 'profile.friends'.tr(),
             color: AppColorRoles.primary(
               Theme.of(context).brightness == Brightness.dark,
             ),
@@ -286,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.insights_rounded,
-            label: 'Progress',
+            label: 'profile.progress'.tr(),
             color: AppColors.purple,
             gradient: AppColors.purpleGradient,
             onTap: () => Navigator.push(
@@ -501,7 +503,7 @@ class _ProfilePageState extends State<ProfilePage>
                         const SizedBox(height: 20),
                         // User Name
                         Text(
-                          user?.displayName ?? 'Guest User',
+                          user?.displayName ?? 'profile.guestUser'.tr(),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
@@ -560,7 +562,11 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Level ${lp.displayLevel}',
+                                      'profile.level'.tr(
+                                        namedArgs: {
+                                          'level': '${lp.displayLevel}',
+                                        },
+                                      ),
                                       style: TextStyle(
                                         color: AppColors.surfaceLight,
                                         fontWeight: FontWeight.bold,
@@ -636,7 +642,7 @@ class _ProfilePageState extends State<ProfilePage>
                         const SizedBox(height: 8),
                         // Member Since
                         Text(
-                          _formatMemberSince(user?.createdAt),
+                          _formatMemberSince(context, user?.createdAt),
                           style: const TextStyle(
                             color: AppColors.grey600,
                             fontSize: 12,
@@ -685,7 +691,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Edit Profile',
+                                  'profile.editProfile'.tr(),
                                   style: TextStyle(
                                     color: AppColors.surfaceLight,
                                     fontWeight: FontWeight.bold,
@@ -722,7 +728,7 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             AnimatedSocialStat(
               value: '${stats?.totalVocabularyMastered ?? 0}',
-              label: 'Words',
+              label: 'profile.words'.tr(),
               icon: Icons.spellcheck_rounded,
               color: AppColors.greenSuccessBright,
             ),
@@ -733,7 +739,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             AnimatedSocialStat(
               value: '${stats?.totalLessonsCompleted ?? 0}',
-              label: 'Lessons',
+              label: 'profile.lessons'.tr(),
               icon: Icons.menu_book,
               color: AppColorRoles.primary(
                 Theme.of(context).brightness == Brightness.dark,
@@ -746,7 +752,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             AnimatedSocialStat(
               value: '${stats?.currentStreak ?? 0}',
-              label: 'Day Streak',
+              label: 'profile.dayStreak'.tr(),
               icon: Icons.local_fire_department,
               color: AppColors.dangerGradient[0],
             ),
@@ -791,11 +797,18 @@ class _ProfilePageState extends State<ProfilePage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Level $level  →  Level ${level + 1}',
+                    'profile.levelRange'.tr(
+                      namedArgs: {
+                        'level': '$level',
+                        'nextLevel': '${level + 1}',
+                      },
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '$xpIn / $xpFor XP',
+                    'profile.xpProgress'.tr(
+                      namedArgs: {'current': '$xpIn', 'total': '$xpFor'},
+                    ),
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -817,14 +830,23 @@ class _ProfilePageState extends State<ProfilePage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${xpFor - xpIn} XP to Level ${level + 1}',
+                    'profile.xpToNextLevel'.tr(
+                      namedArgs: {
+                        'xp': '${xpFor - xpIn}',
+                        'level': '${level + 1}',
+                      },
+                    ),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    '${(progress * 100).toStringAsFixed(0)}% complete',
+                    'profile.percentComplete'.tr(
+                      namedArgs: {
+                        'percent': (progress * 100).toStringAsFixed(0),
+                      },
+                    ),
                     style: TextStyle(
                       color: AppColorRoles.primary(isDark),
                       fontSize: 12,
@@ -888,7 +910,7 @@ class _ProfilePageState extends State<ProfilePage>
                   Icon(Icons.insights_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Learning Stats',
+                    'profile.learningStats'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -906,9 +928,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.abc,
                           color: primaryColor,
-                          title: 'Lessons',
+                          title: 'profile.lessons'.tr(),
                           value: '$lessonsCompleted',
-                          subtitle: 'completed',
+                          subtitle: 'profile.completed'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -934,9 +956,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.school,
                           color: primaryColor,
-                          title: 'Courses',
+                          title: 'profile.courses'.tr(),
                           value: '$coursesCompleted',
-                          subtitle: 'finished',
+                          subtitle: 'profile.finished'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -966,9 +988,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.auto_stories,
                           color: primaryColor,
-                          title: 'Vocabulary',
+                          title: 'profile.vocabulary'.tr(),
                           value: '$vocabularyMastered',
-                          subtitle: 'mastered',
+                          subtitle: 'profile.mastered'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -995,11 +1017,15 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.quiz,
                           color: primaryColor,
-                          title: 'Tests',
+                          title: 'profile.tests'.tr(),
                           value: '$testsPassed',
                           subtitle: avgScore > 0
-                              ? '${avgScore.toStringAsFixed(0)}% avg'
-                              : 'passed',
+                              ? 'profile.averagePercent'.tr(
+                                  namedArgs: {
+                                    'percent': avgScore.toStringAsFixed(0),
+                                  },
+                                )
+                              : 'profile.passed'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -1039,7 +1065,7 @@ class _ProfilePageState extends State<ProfilePage>
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'Learning Stats',
+            'profile.learningStats'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -1098,8 +1124,8 @@ class _ProfilePageState extends State<ProfilePage>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Weekly Activity',
+                  Text(
+                    'profile.weeklyActivity'.tr(),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
@@ -1110,7 +1136,7 @@ class _ProfilePageState extends State<ProfilePage>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Last 7 Days',
+                          'profile.last7Days'.tr(),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 12,
@@ -1145,7 +1171,7 @@ class _ProfilePageState extends State<ProfilePage>
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           activityError == null || activityError.isEmpty
-                              ? 'No activity data yet'
+                              ? 'profile.noActivityDataYet'.tr()
                               : activityError,
                           style: const TextStyle(color: AppColors.grey600),
                           textAlign: TextAlign.center,
@@ -1220,19 +1246,19 @@ class _ProfilePageState extends State<ProfilePage>
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildActivityStat(
-                              'Total XP',
+                              'profile.totalXp'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
                               Icons.star,
                               AppColors.warning,
                             ),
                             _buildActivityStat(
-                              'Lessons',
+                              'profile.lessons'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
                               Icons.menu_book,
                               AppColorRoles.primary(isDark),
                             ),
                             _buildActivityStat(
-                              'Words',
+                              'profile.words'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
                               Icons.abc,
                               AppColors.greenSuccessBright,
@@ -1285,7 +1311,7 @@ class _ProfilePageState extends State<ProfilePage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recent Badges',
+                    'profile.recentBadges'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -1299,7 +1325,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                       );
                     },
-                    child: const Text('View All'),
+                    child: Text('achievements.viewAll'.tr()),
                   ),
                 ],
               ),
@@ -1368,7 +1394,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete lessons to earn badges!',
+            'profile.completeLessonsToEarnBadges'.tr(),
             style: const TextStyle(color: AppColors.grey600, fontSize: 12),
           ),
         ],
@@ -1510,8 +1536,6 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
     final totalLessons = activities.fold<int>(0, (s, a) => s + a.lessonsCompleted);
     final totalWords = activities.fold<int>(0, (s, a) => s + a.vocabularyLearned);
     final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
-    final bestDay = activities.reduce((a, b) => a.xpEarned >= b.xpEarned ? a : b);
-
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
@@ -1551,15 +1575,15 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Weekly Activity',
+                        Text(
+                          'profile.weeklyActivity'.tr(),
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          'Last 7 Days — Detailed Breakdown',
+                          'profile.last7DaysDetailedBreakdown'.tr(),
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1591,22 +1615,22 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                     _SummaryChip(
                       icon: Icons.star,
                       color: AppColors.warning,
-                      label: '$totalXP XP',
-                      sublabel: 'Total',
+                      label: 'profile.xpValue'.tr(namedArgs: {'xp': '$totalXP'}),
+                      sublabel: 'profile.total'.tr(),
                     ),
                     const SizedBox(width: 8),
                     _SummaryChip(
                       icon: Icons.menu_book,
                       color: primary,
                       label: '$totalLessons',
-                      sublabel: 'Lessons',
+                      sublabel: 'profile.lessons'.tr(),
                     ),
                     const SizedBox(width: 8),
                     _SummaryChip(
                       icon: Icons.abc,
                       color: AppColors.greenSuccessBright,
                       label: '$totalWords',
-                      sublabel: 'Words',
+                      sublabel: 'profile.words'.tr(),
                     ),
                   ],
                 ),
@@ -1696,7 +1720,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
+                                    children: [
                                       Icon(
                                         Icons.emoji_events,
                                         size: 12,
@@ -1704,7 +1728,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                       ),
                                       SizedBox(width: 3),
                                       Text(
-                                        'Best Day',
+                                        'profile.bestDay'.tr(),
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: AppColors.warning,
@@ -1736,7 +1760,9 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  '${a.xpEarned} XP',
+                                  'profile.xpValue'.tr(
+                                    namedArgs: {'xp': '${a.xpEarned}'},
+                                  ),
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
@@ -1752,7 +1778,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                             children: [
                               if (a.xpEarned == 0)
                                 Text(
-                                  'No activity',
+                                  'profile.noActivity'.tr(),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(context)
@@ -1764,13 +1790,21 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                 _MiniStat(
                                   icon: Icons.menu_book,
                                   color: primary,
-                                  value: '${a.lessonsCompleted} lessons',
+                                  value: 'profile.lessonsCount'.tr(
+                                    namedArgs: {
+                                      'count': '${a.lessonsCompleted}',
+                                    },
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 _MiniStat(
                                   icon: Icons.abc,
                                   color: AppColors.greenSuccessBright,
-                                  value: '${a.vocabularyLearned} words',
+                                  value: 'profile.wordsCount'.tr(
+                                    namedArgs: {
+                                      'count': '${a.vocabularyLearned}',
+                                    },
+                                  ),
                                 ),
                               ],
                             ],

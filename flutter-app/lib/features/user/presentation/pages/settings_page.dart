@@ -328,7 +328,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       Text(
-                        settings.currentGoalLabel,
+                        settings.currentGoalLabel.tr(),
                         style: TextStyle(
                           color: Theme.of(
                             context,
@@ -388,14 +388,14 @@ class _SettingsPageState extends State<SettingsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  goal['label'] as String,
+                                  (goal['label'] as String).tr(),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: isSelected ? primaryColor : null,
                                   ),
                                 ),
                                 Text(
-                                  goal['description'] as String,
+                                  (goal['description'] as String).tr(),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColorRoles.textMuted(isDark),
