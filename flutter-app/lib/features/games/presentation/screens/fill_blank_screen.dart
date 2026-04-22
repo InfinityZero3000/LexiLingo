@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -82,7 +83,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     final q = game.questions[_questionIndex];
     setState(() {
       _answered = true;
-      _feedbackTip = q.explanation.isNotEmpty ? q.explanation : 'Time\'s up!';
+      _feedbackTip = q.explanation.isNotEmpty ? q.explanation : 'fillBlank.timeoutFeedback'.tr();
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -98,8 +99,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       _selectedIndex = index;
       _answered = true;
       _feedbackTip = correct
-          ? (q.grammarTip.isNotEmpty ? q.grammarTip : 'Correct!')
-          : (q.explanation.isNotEmpty ? q.explanation : 'Incorrect.');
+          ? (q.grammarTip.isNotEmpty ? q.grammarTip : 'fillBlank.correctFeedback'.tr())
+          : (q.explanation.isNotEmpty ? q.explanation : 'fillBlank.incorrectFeedback'.tr());
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -171,7 +172,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'Question ${_questionIndex + 1}/${game.questions.length}',
+              'fillBlank.questionProgress'.tr(namedArgs: {'current': '${_questionIndex + 1}', 'total': '${game.questions.length}'}),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
@@ -212,7 +213,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '${_timeLeft}s',
+                          'fillBlank.timerFormat'.tr(namedArgs: {'seconds': '$_timeLeft'}),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,

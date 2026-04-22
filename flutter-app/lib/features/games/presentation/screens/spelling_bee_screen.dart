@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:just_audio/just_audio.dart';
@@ -183,7 +184,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'Word ${_wordIndex + 1}/${game.words.length}',
+              'spellingBee.wordProgress'.tr(namedArgs: {'current': '${_wordIndex + 1}', 'total': '${game.words.length}'}),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
@@ -241,7 +242,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Plays left: $_playsLeft/${word.maxReplays}',
+                        'spellingBee.playsLeftLabel'.tr(namedArgs: {'plays': '$_playsLeft', 'max': '${word.maxReplays}'}),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 13,
@@ -258,7 +259,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Type the word...',
+                          hintText: 'spellingBee.inputHint'.tr(),
                           hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
@@ -292,8 +293,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Submit',
+                            child: Text(
+                              'spellingBee.submitButton'.tr(),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -320,7 +321,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           child: Column(
                             children: [
                               Text(
-                                _isCorrect ? 'Correct!' : 'The answer was:',
+                                _isCorrect ? 'spellingBee.correctFeedback'.tr() : 'spellingBee.answerRevealLabel'.tr(),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _isCorrect
@@ -381,8 +382,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             ),
                             child: Text(
                               _wordIndex + 1 < game.words.length
-                                  ? 'Next Word'
-                                  : 'See Results',
+                                  ? 'spellingBee.nextWordButton'.tr()
+                                  : 'spellingBee.seeResultsButton'.tr(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,

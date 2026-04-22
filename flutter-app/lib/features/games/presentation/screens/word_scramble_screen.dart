@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -224,7 +225,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
-                  'Word ${_currentWordIndex + 1} of ${game.words.length}',
+                  'wordScramble.wordProgress'.tr(namedArgs: {'current': '${_currentWordIndex + 1}', 'total': '${game.words.length}'}),
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 actions: [
@@ -264,7 +265,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           const SizedBox(height: 20),
                           // Answer slots
                           Text(
-                            'Your answer:',
+                            'wordScramble.yourAnswerLabel'.tr(),
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
@@ -312,7 +313,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           const SizedBox(height: 24),
                           // Letter pool
                           Text(
-                            'Available letters:',
+                            'wordScramble.availableLettersLabel'.tr(),
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
@@ -348,7 +349,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                   Icons.lightbulb_outline,
                                   size: 16,
                                 ),
-                                label: const Text('Hint'),
+                                label: Text('wordScramble.hintButton'.tr()),
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
                                     color: AppColors.primary,
@@ -359,8 +360,8 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                               const SizedBox(width: 12),
                               TextButton(
                                 onPressed: _wordAnswered ? null : _skipWord,
-                                child: const Text(
-                                  'Skip',
+                                child: Text(
+                                  'wordScramble.skipButton'.tr(),
                                   style: TextStyle(color: AppColors.primary),
                                 ),
                               ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -190,7 +191,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'Matching Game',
+              'matchingGame.title'.tr(),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
@@ -216,7 +217,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      '${_matchedIds.length}/${game.pairs.length} matched',
+                      'matchingGame.matchedProgress'.tr(namedArgs: {'matched': '${_matchedIds.length}', 'total': '${game.pairs.length}'}),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
@@ -251,7 +252,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                                 );
                                 _selectWord(p.wordId);
                               },
-                              label: 'Words',
+                              label: 'matchingGame.wordsColumnLabel'.tr(),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -278,8 +279,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                               pairStates: const {},
                               onTap: _selectMatchItem,
                               label: game.variation == 'definition'
-                                  ? 'Definitions'
-                                  : 'Matches',
+                                  ? 'matchingGame.definitionsLabel'.tr()
+                                  : 'matchingGame.matchesLabel'.tr(),
                             ),
                           ),
                         ],

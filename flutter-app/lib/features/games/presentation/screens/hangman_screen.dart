@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -192,7 +193,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
-                  'Hangman',
+                  'hangman.title'.tr(),
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 actions: [
@@ -225,7 +226,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                       children: [
                         Chip(
                           label: Text(
-                            game.category.isEmpty ? 'General' : game.category,
+                            game.category.isEmpty ? 'hangman.defaultCategory'.tr() : game.category,
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
@@ -238,7 +239,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                         const Spacer(),
                         Text(
-                          '${maxWrong - _wrongGuesses} lives left',
+                          'hangman.livesLeftLabel'.tr(namedArgs: {'lives': '${maxWrong - _wrongGuesses}'}),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 13,
@@ -326,7 +327,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        'The word was: ${game.word}',
+                        'hangman.wordRevealLabel'.tr(namedArgs: {'word': game.word}),
                         style: const TextStyle(
                           color: AppColors.errorBright,
                           fontWeight: FontWeight.bold,
@@ -345,8 +346,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _HintButton(
-                          label: 'Hint 1',
-                          detail: 'Free',
+                          label: 'hangman.hint1Label'.tr(),
+                          detail: 'hangman.hintFreeLabel'.tr(),
                           used: _hint1Used,
                           disabled: _gameOver,
                           onTap: () => _useHint1(game),
@@ -354,7 +355,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                         const SizedBox(width: 8),
                         _HintButton(
-                          label: 'Hint 2',
+                          label: 'hangman.hint2Label'.tr(),
                           detail: '-${game.hints.hint2XpCost}XP',
                           used: _hint2Used,
                           disabled: _gameOver,
@@ -363,7 +364,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                         const SizedBox(width: 8),
                         _HintButton(
-                          label: 'Hint 3',
+                          label: 'hangman.hint3Label'.tr(),
                           detail: '-${game.hints.hint3XpCost}XP',
                           used: _hint3Used,
                           disabled: _gameOver,
@@ -451,7 +452,7 @@ class _HintButton extends StatelessWidget {
               ),
             ),
             Text(
-              used ? 'Used' : detail,
+            used ? 'hangman.hintUsedLabel'.tr() : detail,
               style: TextStyle(
                 fontSize: 10,
                 color: active
