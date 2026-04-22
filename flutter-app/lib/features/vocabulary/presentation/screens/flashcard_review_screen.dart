@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -91,8 +92,8 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             _showExitDialog(context);
           },
         ),
-        title: const Text(
-          'Review Session',
+        title: Text(
+          'flashcard.reviewSessionTitle'.tr(),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
@@ -106,7 +107,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
         builder: (context, provider, child) {
           // Loading state
           if (provider.isLoading && !provider.hasSession) {
-            return const LoadingScreen(message: 'Loading vocabulary...');
+            return LoadingScreen(message: 'flashcard.loadingVocabulary'.tr());
           }
 
           // Error state
@@ -134,7 +135,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                         provider.clearError();
                         provider.startReviewSession();
                       },
-                      child: const Text('Try Again'),
+                      child: Text('flashcard.tryAgain'.tr()),
                     ),
                   ],
                 ),
@@ -144,14 +145,14 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
 
           // No session
           if (!provider.hasSession) {
-            return const Center(child: Text('No review session available'));
+            return Center(child: Text('flashcard.noReviewSessionAvailable'.tr()));
           }
 
           final session = provider.currentSession!;
           final currentCard = session.currentCard;
 
           if (currentCard == null) {
-            return const Center(child: Text('Session complete!'));
+            return Center(child: Text('flashcard.sessionComplete'.tr()));
           }
 
           return Column(
@@ -197,14 +198,14 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exit Review?'),
-        content: const Text(
-          'Your progress will be saved, but you can continue this session later.',
+        title: Text('flashcard.exitReviewTitle'.tr()),
+        content: Text(
+          'flashcard.exitReviewMessage'.tr(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             onPressed: () {
@@ -213,8 +214,8 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close screen
             },
-            child: const Text(
-              'Exit',
+            child: Text(
+              'lesson.exit'.tr(),
               style: TextStyle(color: AppColors.errorBright),
             ),
           ),

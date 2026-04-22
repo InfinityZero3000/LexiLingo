@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -116,7 +117,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   const SizedBox(height: 12),
                   _buildStreakCard(context, homeProvider),
                   const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'Quick Actions'),
+                  _buildSectionTitle(context, 'home.quickActions'.tr()),
                   const SizedBox(height: 8),
                   _buildQuickActionsHorizontal(context),
                   const SizedBox(height: 12),
@@ -132,11 +133,11 @@ class _HomePageNewState extends State<HomePageNew> {
                     child: DailyReviewCard(),
                   ),
                   const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'Continue Learning'),
+                  _buildSectionTitle(context, 'home.continueLearningSection'.tr()),
                   const SizedBox(height: 8),
                   _buildEnrolledCoursesSection(context, homeProvider),
                   const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'Featured Courses'),
+                  _buildSectionTitle(context, 'home.featuredCourses'.tr()),
                   const SizedBox(height: 8),
                   _buildFeaturedCourses(context, homeProvider),
                 ],
@@ -157,7 +158,7 @@ class _HomePageNewState extends State<HomePageNew> {
     final user = authProvider.currentUser;
     final displayName = user?.displayName.isNotEmpty == true
         ? user!.displayName
-        : user?.username ?? 'User';
+      : user?.username ?? 'profile.guestUser'.tr();
 
     return Consumer2<NotificationProvider, LevelProvider>(
       builder: (context, notificationProvider, levelProvider, child) {
@@ -347,7 +348,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'Daily Goal',
+                        'home.dailyGoal'.tr(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -484,7 +485,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Daily XP Goal',
+                              'home.dailyXpGoal'.tr(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
@@ -535,7 +536,9 @@ class _HomePageNewState extends State<HomePageNew> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              isCompleted ? 'Goal completed!' : 'Keep going!',
+                              isCompleted
+                                  ? 'home.goalCompleted'.tr()
+                                  : 'home.keepGoing'.tr(),
                               style: TextStyle(
                                 fontSize: chipFontSize,
                                 fontWeight: FontWeight.w600,
@@ -567,7 +570,7 @@ class _HomePageNewState extends State<HomePageNew> {
 
     if (settingsState == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Daily goal settings are not ready yet.')),
+        SnackBar(content: Text('home.dailyGoalSettingsPending'.tr())),
       );
       return;
     }
@@ -621,7 +624,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         const SizedBox(height: 18),
                         Text(
-                          'Daily goal',
+                          'home.dailyGoal'.tr(),
                           style: Theme.of(sheetContext)
                               .textTheme
                               .headlineSmall
@@ -629,7 +632,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Choose how much XP you want to reach each day.',
+                          'home.dailyGoalDescription'.tr(),
                           style: Theme.of(sheetContext).textTheme.bodyMedium
                               ?.copyWith(
                                 color: AppColorRoles.textMuted(isDark),
@@ -663,7 +666,11 @@ class _HomePageNewState extends State<HomePageNew> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Current progress ${(homeProvider.dailyProgressPercentage * 100).toInt()}%',
+                                'settings.goal_progress'.tr(
+                                  namedArgs: {
+                                    'percent': '${(homeProvider.dailyProgressPercentage * 100).toInt()}',
+                                  },
+                                ),
                                 style: Theme.of(sheetContext)
                                     .textTheme
                                     .bodyMedium
@@ -693,7 +700,11 @@ class _HomePageNewState extends State<HomePageNew> {
                                   Navigator.of(sheetContext).pop();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Daily goal updated to $xp XP.'),
+                                      content: Text(
+                                        'settings.goal_updated'.tr(
+                                          namedArgs: {'xp': '$xp'},
+                                        ),
+                                      ),
                                     ),
                                   );
                                 } else {
@@ -747,7 +758,7 @@ class _HomePageNewState extends State<HomePageNew> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${goal['label']} • $xp XP',
+                                            '${(goal['label'] as String).tr()} • $xp XP',
                                             style: Theme.of(sheetContext)
                                                 .textTheme
                                                 .titleMedium
@@ -757,7 +768,8 @@ class _HomePageNewState extends State<HomePageNew> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            goal['description'] as String,
+                                            (goal['description'] as String)
+                                                .tr(),
                                             style: Theme.of(sheetContext)
                                                 .textTheme
                                                 .bodySmall
@@ -841,7 +853,7 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
               const SizedBox(height: 12),
               Text(
-                'No enrolled courses yet',
+                'home.noEnrolledCoursesYet'.tr(),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.textInverted : AppColors.textDark,
@@ -849,7 +861,7 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Start your learning journey by enrolling in a course',
+                'home.enrollCoursePrompt'.tr(),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: isDark ? AppColors.textMuted : AppColors.textGrey,
                 ),
@@ -967,7 +979,7 @@ class _HomePageNewState extends State<HomePageNew> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            course.level,
+                            _localizedCourseLevel(course.level),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -977,7 +989,9 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${course.totalLessons} lessons',
+                          'profile.lessonsCount'.tr(
+                            namedArgs: {'count': '${course.totalLessons}'},
+                          ),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColorRoles.textSecondary(isDark),
@@ -1136,14 +1150,14 @@ class _HomePageNewState extends State<HomePageNew> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Chua co khoa hoc noi bat',
+              'home.noFeaturedCourses'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
-              'Noi dung se xuat hien tai day sau khi he thong cap nhat khoa hoc moi.',
+              'home.noFeaturedCoursesDescription'.tr(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
                 height: 1.35,
@@ -1155,12 +1169,12 @@ class _HomePageNewState extends State<HomePageNew> {
                 FilledButton.icon(
                   onPressed: () => provider.loadFeaturedCourses(),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Tai lai'),
+                  label: Text('home.reload'.tr()),
                 ),
                 const SizedBox(width: 10),
                 TextButton(
                   onPressed: () => provider.refreshData(),
-                  child: const Text('Lam moi du lieu'),
+                  child: Text('home.refreshData'.tr()),
                 ),
               ],
             ),
@@ -1290,7 +1304,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           ],
                         ),
                         child: Text(
-                          course.level,
+                          _localizedCourseLevel(course.level),
                           style: TextStyle(
                             color: AppColors.surfaceLight,
                             fontSize: 12,
@@ -1334,7 +1348,9 @@ class _HomePageNewState extends State<HomePageNew> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${course.totalXp} XP',
+                              'profile.xpValue'.tr(
+                                namedArgs: {'xp': '${course.totalXp}'},
+                              ),
                               style: TextStyle(
                                 color: AppColors.surfaceLight,
                                 fontSize: 11,
@@ -1389,7 +1405,9 @@ class _HomePageNewState extends State<HomePageNew> {
                       children: [
                         _buildInfoChip(
                           icon: Icons.menu_book_rounded,
-                          label: '${course.totalLessons} lessons',
+                          label: 'profile.lessonsCount'.tr(
+                            namedArgs: {'count': '${course.totalLessons}'},
+                          ),
                           color: AppColorRoles.primary(isDark),
                         ),
                         const SizedBox(width: 8),
@@ -1422,7 +1440,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Start Learning',
+                            'home.startLearning'.tr(),
                             style: TextStyle(
                               color: AppColors.surfaceLight,
                               fontSize: 14,
@@ -1490,6 +1508,23 @@ class _HomePageNewState extends State<HomePageNew> {
     }
   }
 
+  String _localizedCourseLevel(String level) {
+    switch (level.toLowerCase()) {
+      case 'beginner':
+        return 'course.difficulty.beginner'.tr();
+      case 'elementary':
+        return 'course.difficulty.elementary'.tr();
+      case 'intermediate':
+        return 'course.difficulty.intermediate'.tr();
+      case 'upper-intermediate':
+        return 'course.difficulty.upperIntermediate'.tr();
+      case 'advanced':
+        return 'course.difficulty.advanced'.tr();
+      default:
+        return level;
+    }
+  }
+
   /// Quick Actions - Horizontal scrollable section with circular buttons
   Widget _buildQuickActionsHorizontal(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1507,7 +1542,7 @@ class _HomePageNewState extends State<HomePageNew> {
     final quickActions = [
       {
         'icon': Icons.smart_display,
-        'label': 'YouTube',
+        'label': 'home.youtube',
         'color': isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
         'bgColor':
             (isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0])
@@ -1516,7 +1551,7 @@ class _HomePageNewState extends State<HomePageNew> {
       },
       {
         'icon': Icons.article,
-        'label': 'News',
+        'label': 'home.news',
         'color': isDark ? neonDarkActionColors[1] : AppColors.teal,
         'bgColor': (isDark ? neonDarkActionColors[1] : AppColors.teal)
             .withValues(alpha: isDark ? 0.16 : 0.1),
@@ -1524,7 +1559,7 @@ class _HomePageNewState extends State<HomePageNew> {
       },
       {
         'icon': Icons.sports_esports,
-        'label': 'Games',
+        'label': 'home.games',
         'color': isDark ? neonDarkActionColors[2] : AppColors.purple,
         'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.purple)
             .withValues(alpha: isDark ? 0.16 : 0.1),
@@ -1532,7 +1567,7 @@ class _HomePageNewState extends State<HomePageNew> {
       },
       {
         'icon': Icons.podcasts,
-        'label': 'Podcast',
+        'label': 'home.podcast',
         'color': isDark ? neonDarkActionColors[3] : accent,
         'bgColor': (isDark ? neonDarkActionColors[3] : accent).withValues(
           alpha: isDark ? 0.16 : 0.12,
@@ -1541,7 +1576,7 @@ class _HomePageNewState extends State<HomePageNew> {
       },
       {
         'icon': Icons.menu_book_rounded,
-        'label': 'Books',
+        'label': 'home.books',
         'color': isDark ? neonDarkActionColors[4] : AppColors.purpleLight,
         'bgColor': (isDark ? neonDarkActionColors[4] : AppColors.purple)
             .withValues(alpha: isDark ? 0.16 : 0.1),
@@ -1549,7 +1584,7 @@ class _HomePageNewState extends State<HomePageNew> {
       },
       {
         'icon': Icons.style,
-        'label': 'Vocabulary',
+        'label': 'home.vocabulary',
         'color': isDark ? neonDarkActionColors[5] : AppColors.orange,
         'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.warning)
             .withValues(alpha: isDark ? 0.16 : 0.1),
@@ -1569,7 +1604,7 @@ class _HomePageNewState extends State<HomePageNew> {
           return _buildQuickActionChip(
             context,
             icon: action['icon'] as IconData,
-            label: action['label'] as String,
+            label: (action['label'] as String).tr(),
             color: action['color'] as Color,
             bgColor: action['bgColor'] as Color,
             onTap: () {
@@ -1658,25 +1693,25 @@ class _HomePageNewState extends State<HomePageNew> {
     final stats = [
       _QuickStat(
         icon: Icons.article_rounded,
-        label: 'Articles',
+        label: 'home.articles'.tr(),
         value: '—',
         color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.sports_esports_rounded,
-        label: 'Games',
+        label: 'home.games'.tr(),
         value: '—',
         color: AppColors.purple,
       ),
       _QuickStat(
         icon: Icons.headphones_rounded,
-        label: 'Listened',
+        label: 'home.listened'.tr(),
         value: '—',
         color: AppColorRoles.primary(isDark),
       ),
       _QuickStat(
         icon: Icons.menu_book_rounded,
-        label: 'Reading',
+        label: 'home.reading'.tr(),
         value: '—',
         color: AppColors.greenSuccessBright,
       ),
@@ -1740,29 +1775,29 @@ class _HomePageNewState extends State<HomePageNew> {
         final items = <_ContinueItem>[
           _ContinueItem(
             icon: Icons.smart_display_rounded,
-            title: 'YouTube',
-            subtitle: 'Continue watching',
+            title: 'home.youtube'.tr(),
+            subtitle: 'home.continueWatching'.tr(),
             color: AppColors.dangerGradient[0],
             route: '/youtube',
           ),
           _ContinueItem(
             icon: Icons.article_rounded,
-            title: 'News',
-            subtitle: 'Continue reading',
+            title: 'home.news'.tr(),
+            subtitle: 'home.continueReading'.tr(),
             color: AppColorRoles.primary(isDark),
             route: '/news',
           ),
           _ContinueItem(
             icon: Icons.sports_esports_rounded,
-            title: 'Games',
-            subtitle: 'Earn more XP',
+            title: 'home.games'.tr(),
+            subtitle: 'home.earnMoreXp'.tr(),
             color: AppColors.purple,
             route: '/games',
           ),
           _ContinueItem(
             icon: Icons.podcasts_rounded,
-            title: 'Podcast',
-            subtitle: 'Continue listening',
+            title: 'home.podcast'.tr(),
+            subtitle: 'home.continueListening'.tr(),
             color: AppColorRoles.primary(isDark),
             route: '/podcast',
           ),
@@ -1773,16 +1808,20 @@ class _HomePageNewState extends State<HomePageNew> {
                   ? '${currentBook.title.substring(0, 18)}…'
                   : currentBook.title,
               subtitle: currentProgress != null
-                  ? '${(currentProgress.readingProgress * 100).toInt()}% read'
-                  : 'Continue reading',
+                  ? 'home.percentRead'.tr(
+                      namedArgs: {
+                        'percent': '${(currentProgress.readingProgress * 100).toInt()}',
+                      },
+                    )
+                  : 'home.continueReading'.tr(),
               color: AppColors.greenSuccessBright,
               route: '/books',
             )
           else
             _ContinueItem(
               icon: Icons.menu_book_rounded,
-              title: 'Books',
-              subtitle: 'Start reading',
+              title: 'home.books'.tr(),
+              subtitle: 'home.startReading'.tr(),
               color: AppColors.greenSuccessBright,
               route: '/books',
             ),

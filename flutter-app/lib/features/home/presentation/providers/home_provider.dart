@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
@@ -54,7 +55,8 @@ class HomeProvider with ChangeNotifier {
   String? get errorMessage => _coursesError ?? _dashboardError;
 
   User? get currentUser => _currentUser;
-  String get userName => _currentUser?.name ?? _currentUser?.email ?? 'User';
+  String get userName =>
+      _currentUser?.name ?? _currentUser?.email ?? 'profile.guestUser'.tr();
   int get totalXP => _currentUser?.totalXP ?? 0;
   int get streakDays => _weeklyProgress.currentStreak;
 
@@ -210,7 +212,9 @@ class HomeProvider with ChangeNotifier {
 
       _dashboardError = null;
     } catch (e) {
-      _dashboardError = 'Failed to load dashboard: ${e.toString()}';
+      _dashboardError = 'home.dashboardLoadFailed'.tr(
+        namedArgs: {'error': e.toString()},
+      );
     } finally {
       _isLoadingDashboard = false;
       notifyListeners();

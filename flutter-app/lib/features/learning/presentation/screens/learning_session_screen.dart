@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
@@ -51,7 +52,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Learning'),
+          title: Text('lesson.sessionTitle'.tr()),
           leading: IconButton(
             icon: const Icon(Icons.close),
             onPressed: () async {
@@ -88,7 +89,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         body: Consumer<LearningProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
-              return const LoadingScreen(message: 'Loading lesson...');
+              return LoadingScreen(message: 'lesson.loadingLesson'.tr());
             }
 
             if (provider.error != null) {
@@ -108,7 +109,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       onPressed: () {
                         provider.startLesson(widget.courseId, widget.lessonId);
                       },
-                      child: const Text('Retry'),
+                      child: Text('common.retry'.tr()),
                     ),
                   ],
                 ),
@@ -116,7 +117,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             }
 
             if (provider.currentLesson == null) {
-              return const Center(child: Text('No lesson data'));
+              return Center(child: Text('lesson.noLessonData'.tr()));
             }
 
             // Show completion screen
@@ -156,7 +157,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final exercise = provider.currentExercise;
 
     if (exercise == null) {
-      return const Center(child: Text('No exercise available'));
+      return Center(child: Text('lesson.noExerciseAvailable'.tr()));
     }
 
     switch (exercise.type) {
@@ -181,7 +182,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
       default:
         return Center(
-          child: Text('Exercise type "${exercise.type}" not implemented yet'),
+          child: Text(
+            'lesson.exerciseTypeNotImplemented'.tr(
+              namedArgs: {'type': exercise.type.name},
+            ),
+          ),
         );
     }
   }
@@ -205,7 +210,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           if (!provider.isCurrentAnswered)
             TextButton(
               onPressed: () => provider.skipExercise(),
-              child: const Text('Skip'),
+              child: Text('common.skip'.tr()),
             ),
 
           const Spacer(),
@@ -224,7 +229,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   : Colors.grey,
             ),
             child: Text(
-              provider.isCurrentAnswered ? 'Continue' : 'Check',
+              provider.isCurrentAnswered
+                  ? 'lesson.continueButton'.tr()
+                  : 'lesson.checkAnswer'.tr(),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
@@ -349,7 +356,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          percentage >= 80 ? 'Excellent!' : 'Well Done!',
+                          percentage >= 80
+                              ? 'lesson.excellent'.tr()
+                              : 'lesson.wellDone'.tr(),
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -367,7 +376,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'You scored $score/$total ($percentage%)',
+                      'lesson.scoreSummary'.tr(
+                        namedArgs: {
+                          'score': '$score',
+                          'total': '$total',
+                          'percentage': '$percentage',
+                        },
+                      ),
                       style: Theme.of(
                         context,
                       ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
@@ -442,8 +457,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
+                  child: Text(
+                    'lesson.continueButton'.tr(),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -464,8 +479,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Practice Again',
+                    child: Text(
+                      'lesson.practiceAgain'.tr(),
                       style: TextStyle(fontSize: 18),
                     ),
                   ),
@@ -481,19 +496,19 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exit Lesson?'),
-        content: const Text(
-          'Your progress will be saved, but you won\'t earn XP until you complete the lesson.',
+        title: Text('lesson.exitLessonTitle'.tr()),
+        content: Text(
+          'lesson.exitLessonMessage'.tr(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.errorBright),
-            child: const Text('Exit'),
+            child: Text('lesson.exit'.tr()),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -58,7 +59,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Comprehension Quiz'),
+        title: Text('newsQuiz.title'.tr()),
         leading: IconButton(
           onPressed: () {
             context.read<NewsProvider>().resetQuiz();
@@ -87,7 +88,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Quiz not available',
+                      'newsQuiz.quizNotAvailable'.tr(),
                       style: TextStyle(color: AppColors.grey500, fontSize: 16),
                     ),
                   ],
@@ -182,7 +183,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     }
                   : null,
               icon: const Icon(Icons.check_circle_rounded, size: 20),
-              label: const Text('Submit Answers'),
+              label: Text('newsQuiz.submitAnswers'.tr()),
               style: FilledButton.styleFrom(
                 backgroundColor: cefrColor,
                 disabledBackgroundColor: cefrColor.withValues(alpha: 0.3),
@@ -495,7 +496,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   if (!isCorrect) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Correct: ${q.options[q.correctIndex]}',
+                      'newsQuiz.correct'.tr(namedArgs: {'answer': q.options[q.correctIndex]}),
                       style: const TextStyle(
                         color: AppColors.greenSuccessBright,
                         fontSize: 12,
@@ -531,7 +532,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     provider.loadQuiz(widget.article.id);
                   },
                   icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Retry'),
+                  label: Text('newsQuiz.retry'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: cefrColor,
                     side: BorderSide(color: cefrColor),
@@ -550,7 +551,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.done_all_rounded, size: 18),
-                  label: const Text('Done'),
+                  label: Text('newsQuiz.done'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(
@@ -605,22 +606,22 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   }
 
   String _resultMessage(int percentage) {
-    if (percentage >= 80) return 'Excellent!';
-    if (percentage >= 60) return 'Good job!';
-    if (percentage >= 40) return 'Keep practicing!';
-    return 'Don\'t give up!';
+    if (percentage >= 80) return 'newsQuiz.excellentMessage'.tr();
+    if (percentage >= 60) return 'newsQuiz.goodJobMessage'.tr();
+    if (percentage >= 40) return 'newsQuiz.keepPracticingMessage'.tr();
+    return 'newsQuiz.dontGiveUpMessage'.tr();
   }
 
   String _resultSubMessage(int percentage) {
     if (percentage >= 80) {
-      return 'You have a great understanding of this article.';
+      return 'newsQuiz.excellentSub'.tr();
     }
     if (percentage >= 60) {
-      return 'You\'re on the right track. Review the highlighted words.';
+      return 'newsQuiz.goodJobSub'.tr();
     }
     if (percentage >= 40) {
-      return 'Try re-reading the article and focusing on key details.';
+      return 'newsQuiz.keepPracticingSub'.tr();
     }
-    return 'Re-read the article carefully before trying again.';
+    return 'newsQuiz.dontGiveUpSub'.tr();
   }
 }

@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
@@ -7,15 +9,15 @@ import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 String getTimeBasedGreeting() {
   final hour = DateTime.now().hour;
   if (hour < 5) {
-    return 'Good night';
+    return 'home.greetingNight'.tr();
   } else if (hour < 12) {
-    return 'Good morning';
+    return 'home.greetingMorning'.tr();
   } else if (hour < 17) {
-    return 'Good afternoon';
+    return 'home.greetingAfternoon'.tr();
   } else if (hour < 21) {
-    return 'Good evening';
+    return 'home.greetingEvening'.tr();
   } else {
-    return 'Good night';
+    return 'home.greetingNight'.tr();
   }
 }
 
@@ -540,7 +542,9 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${widget.streakDays} Day Streak',
+                      'home.dayStreakCount'.tr(
+                        namedArgs: {'count': '${widget.streakDays}'},
+                      ),
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -550,8 +554,8 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     ),
                     Text(
                       widget.isActiveToday
-                          ? "You're on fire today!"
-                          : "Complete a lesson today!",
+                          ? 'home.fireToday'.tr()
+                          : 'home.completeLessonToday'.tr(),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -592,7 +596,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   ),
                 ),
                 icon: const Icon(Icons.calendar_month_rounded, size: 14),
-                label: const Text('Calendar'),
+                label: Text('home.calendar'.tr()),
               ),
             ],
           ),
@@ -708,7 +712,15 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
 
   Widget _buildWeekCalendar() {
     final now = DateTime.now();
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final days = [
+      'home.weekdayMonShort'.tr(),
+      'home.weekdayTueShort'.tr(),
+      'home.weekdayWedShort'.tr(),
+      'home.weekdayThuShort'.tr(),
+      'home.weekdayFriShort'.tr(),
+      'home.weekdaySatShort'.tr(),
+      'home.weekdaySunShort'.tr(),
+    ];
     final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
