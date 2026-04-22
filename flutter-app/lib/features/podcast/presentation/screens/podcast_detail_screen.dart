@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -48,8 +49,8 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
         SnackBar(
           content: Text(
             isNowFollowed
-                ? 'Following "${widget.podcast.title}"'
-                : 'Unfollowed "${widget.podcast.title}"',
+                ? 'podcast.followingSnack'.tr(namedArgs: {'title': widget.podcast.title})
+                : 'podcast.unfollowedSnack'.tr(namedArgs: {'title': widget.podcast.title}),
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -109,7 +110,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                                   : Icons.add_rounded,
                               size: 18,
                             ),
-                            label: Text(isFollowed ? 'Following' : 'Follow'),
+                            label: Text(isFollowed ? 'podcast.following'.tr() : 'podcast.follow'.tr()),
                             style: TextButton.styleFrom(
                               foregroundColor: isFollowed
                                   ? AppColors.greenSuccess
@@ -184,13 +185,13 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Failed to load episodes',
+                            'podcast.failedToLoadEpisodes'.tr(),
                             style: TextStyle(color: AppColors.grey500),
                           ),
                           TextButton(
                             onPressed: () =>
                                 provider.loadEpisodes(widget.podcast),
-                            child: const Text('Retry'),
+                            child: Text('podcast.retry'.tr()),
                           ),
                         ],
                       ),
@@ -201,7 +202,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                 SliverFillRemaining(
                   child: Center(
                     child: Text(
-                      'No episodes available',
+                      'podcast.noEpisodes'.tr(),
                       style: TextStyle(
                         color: isDark ? Colors.white38 : AppColors.grey400,
                       ),
@@ -348,7 +349,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  _descriptionExpanded ? 'Show less' : 'Show more',
+                  _descriptionExpanded ? 'podcast.showLess'.tr() : 'podcast.showMore'.tr(),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,

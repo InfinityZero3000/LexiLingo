@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
@@ -193,7 +194,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Podcast playback is available on mobile only.',
+                        'podcast.mobileOnly'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -221,7 +222,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         leading: IconButton(
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
           onPressed: () => Navigator.pop(context),
-          tooltip: 'Back',
+          tooltip: 'notifications.tooltipBack'.tr(),
         ),
         title: Text(
           widget.episode.title,
@@ -370,7 +371,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
             child: Row(
               children: [
                 Text(
-                  'Transcript',
+                  'podcast.transcriptLabel'.tr(),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
