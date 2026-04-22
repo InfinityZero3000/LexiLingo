@@ -1,6 +1,0 @@
-{
-  "version": 2,
-  "installCommand": "npm --prefix admin-service install",
-  "buildCommand": "npm --prefix admin-service run build",
-  "outputDirectory": "admin-service/dist"
-}
