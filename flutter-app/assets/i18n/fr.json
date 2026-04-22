@@ -435,7 +435,11 @@
     "testsDetails": "Tests Details",
     "totalTestsPassed": "Total tests passed",
     "averageScore": "Average score",
-    "noScoreYet": "No score yet"
+    "noScoreYet": "No score yet",
+    "yourProficiency": "Your Proficiency",
+    "proficiencyUnlockHint": "Your scores will show after you do first few lessons. Start learning now!",
+    "proficiencyUnlockThreshold": "Your scores unlock after around {count} lessons",
+    "startLessons": "Start Lessons"
   },
   "progress": {
     "title": "Ma progression",

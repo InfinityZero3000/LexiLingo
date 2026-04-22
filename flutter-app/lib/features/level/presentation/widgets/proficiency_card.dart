@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -46,7 +47,7 @@ class ProficiencyCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Text(
-            'Your Proficiency',
+            'profile.yourProficiency'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -69,7 +70,7 @@ class ProficiencyCard extends StatelessWidget {
               // Description text
               if (!hasEnoughData) ...[
                 Text(
-                  'Your scores will show after you do first few lessons. Start learning now!',
+                  'profile.proficiencyUnlockHint'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -145,7 +146,7 @@ class ProficiencyCard extends StatelessWidget {
               // Unlock message
               if (!hasEnoughData) ...[
                 Text(
-                  'Your scores unlock after around $unlockThreshold lessons',
+                  'profile.proficiencyUnlockThreshold'.tr(namedArgs: {'count': '$unlockThreshold'}),
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[500],
                     fontSize: 12,
@@ -187,7 +188,7 @@ class ProficiencyCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Share',
+                              'social.share'.tr(),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
@@ -224,7 +225,7 @@ class ProficiencyCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Start Lessons',
+                              'profile.startLessons'.tr(),
                               style: TextStyle(
                                 color: AppColors.surfaceLight,
                                 fontWeight: FontWeight.bold,
@@ -254,7 +255,7 @@ class ProficiencyCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Text(
-            'Your Proficiency',
+            'profile.yourProficiency'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),

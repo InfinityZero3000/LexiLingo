@@ -434,7 +434,11 @@
     "testsDetails": "Chi tiết bài kiểm tra",
     "totalTestsPassed": "Tổng số bài kiểm tra đã đạt",
     "averageScore": "Điểm trung bình",
-    "noScoreYet": "Chưa có điểm"
+    "noScoreYet": "Chưa có điểm",
+    "yourProficiency": "Trình độ của bạn",
+    "proficiencyUnlockHint": "Điểm của bạn sẽ hiển thị sau khi hoàn thành vài bài học. Bắt đầu học ngay!",
+    "proficiencyUnlockThreshold": "Điểm của bạn sẽ được mở khóa sau khoảng {count} bài học",
+    "startLessons": "Bắt đầu học"
   },
   "progress": {
     "title": "Tiến độ của tôi",
