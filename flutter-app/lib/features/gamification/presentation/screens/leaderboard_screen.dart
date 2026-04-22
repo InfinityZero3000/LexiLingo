@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -65,7 +66,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               return [
                 // App Bar
                 SliverAppBar(
-                  title: const Text('Leaderboard'),
+                  title: Text('leaderboard.title'.tr()),
                   centerTitle: true,
                   pinned: true,
                   floating: true,
@@ -235,7 +236,7 @@ class _LeaderboardTab extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Week ends ${_formatDate(leaderboard.weekEnd)}',
+                            'leaderboard.weekEnds'.tr(namedArgs: {'date': _formatDate(leaderboard.weekEnd)}),
                             style: TextStyle(
                               color: primaryColor,
                               fontWeight: FontWeight.w500,
@@ -244,7 +245,7 @@ class _LeaderboardTab extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        '${leaderboard.totalParticipants} participants',
+                        'leaderboard.participants'.tr(namedArgs: {'count': leaderboard.totalParticipants.toString()}),
                         style: TextStyle(
                           color: AppColorRoles.textMuted(isDark),
                           fontSize: 12,
@@ -267,7 +268,7 @@ class _LeaderboardTab extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Text(
-                      'More Ranks',
+                      'leaderboard.moreRanks'.tr(),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -305,7 +306,7 @@ class _LeaderboardTab extends StatelessWidget {
           Icon(Icons.emoji_events_outlined, size: 64, color: AppColors.grey400),
           const SizedBox(height: 16),
           Text(
-            'No rankings yet',
+            'leaderboard.noRankingsYet'.tr(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -314,7 +315,7 @@ class _LeaderboardTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Be the first to compete this week!',
+            'leaderboard.firstToCompete'.tr(),
             style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
         ],
