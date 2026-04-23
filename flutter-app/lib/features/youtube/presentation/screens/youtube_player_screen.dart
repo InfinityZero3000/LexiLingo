@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:flutter/services.dart';
@@ -353,7 +354,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'No subtitles available for this video',
+                  'youtube.noSubtitles'.tr(),
                   style: TextStyle(
                     color: isDark ? Colors.white54 : AppColors.textGrey,
                     fontSize: 14,
@@ -376,7 +377,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Subtitles',
+                  'youtube.subtitles'.tr(),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -551,7 +552,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     });
                   },
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                  label: const Text('Save Word'),
+                  label: Text('youtube.saveWord'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
@@ -567,7 +568,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 child: FilledButton.icon(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, size: 18),
-                  label: const Text('Close'),
+                  label: Text('common.close'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
@@ -602,8 +603,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       final now = DateTime.now();
       final diff = now.difference(date);
 
-      if (diff.inDays == 0) return 'Today';
-      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays == 0) return 'datetime.today'.tr();
+      if (diff.inDays == 1) return 'datetime.yesterday'.tr();
       if (diff.inDays < 7) return '${diff.inDays}d ago';
       if (diff.inDays < 30) return '${diff.inDays ~/ 7}w ago';
       if (diff.inDays < 365) return '${diff.inDays ~/ 30}mo ago';

@@ -202,7 +202,15 @@
       "intermediate": "Intermedio",
       "upperIntermediate": "Intermedio alto",
       "advanced": "Avanzado"
-    }
+    },
+    "notFound": "Course not found",
+    "yourProgress": "Your Progress",
+    "viewFullRoadmap": "View Full Roadmap",
+    "enrolling": "Enrolling...",
+    "startLearning": "Start Learning",
+    "learningRoadmap": "Learning Roadmap",
+    "enrolledSuccess": "Successfully enrolled!",
+    "enrollFailed": "Failed to enroll"
   },
   "lesson": {
     "sessionTitle": "Aprendizaje",
@@ -875,6 +883,11 @@
     "quickReply1": "Hi Lexi, can we practice speaking?",
     "quickReply2": "Can you correct my sentence?",
     "quickReply3": "Give me a daily conversation challenge."
+  },
+  "youtube": {
+    "subtitles": "Subtitles",
+    "noSubtitles": "No subtitles available for this video",
+    "saveWord": "Save Word"
   },
   "podcast": {
     "pageTitle": "Podcasts",

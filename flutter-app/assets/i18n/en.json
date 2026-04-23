@@ -202,7 +202,15 @@
       "intermediate": "Intermediate",
       "upperIntermediate": "Upper Intermediate",
       "advanced": "Advanced"
-    }
+    },
+    "notFound": "Course not found",
+    "yourProgress": "Your Progress",
+    "viewFullRoadmap": "View Full Roadmap",
+    "enrolling": "Enrolling...",
+    "startLearning": "Start Learning",
+    "learningRoadmap": "Learning Roadmap",
+    "enrolledSuccess": "Successfully enrolled!",
+    "enrollFailed": "Failed to enroll"
   },
   "lesson": {
     "sessionTitle": "Learning",
@@ -881,6 +889,11 @@
     "undo": "Undo",
     "deleteAction": "Delete",
     "tooltipBack": "Back"
+  },
+  "youtube": {
+    "subtitles": "Subtitles",
+    "noSubtitles": "No subtitles available for this video",
+    "saveWord": "Save Word"
   },
   "podcast": {
     "pageTitle": "Podcasts",

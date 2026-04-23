@@ -553,7 +553,7 @@ class _NearbyLearnersSection extends StatelessWidget {
               children: users.take(5).map((user) {
                 final distance = user.distanceKm != null
                     ? '${user.distanceKm!.toStringAsFixed(1)} km'
-                    : 'Nearby';
+                    : 'social.nearbyReason'.tr();
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(

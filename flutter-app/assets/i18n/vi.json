@@ -202,7 +202,15 @@
       "intermediate": "Trung cấp",
       "upperIntermediate": "Trung cấp cao",
       "advanced": "Nâng cao"
-    }
+    },
+    "notFound": "Không tìm thấy khóa học",
+    "yourProgress": "Tiến độ của bạn",
+    "viewFullRoadmap": "Xem lộ trình đầy đủ",
+    "enrolling": "Đang đăng ký...",
+    "startLearning": "Bắt đầu học",
+    "learningRoadmap": "Lộ trình học tập",
+    "enrolledSuccess": "Đăng ký thành công!",
+    "enrollFailed": "Đăng ký thất bại"
   },
   "lesson": {
     "sessionTitle": "Học tập",
@@ -874,6 +882,11 @@
     "quickReply1": "Chào Lexi, chúng ta luyện nói nhé?",
     "quickReply2": "Bạn có thể sửa câu của mình không?",
     "quickReply3": "Hãy cho mình một thử thách hội thoại hàng ngày."
+  },
+  "youtube": {
+    "subtitles": "Phụ đề",
+    "noSubtitles": "Video này không có phụ đề",
+    "saveWord": "Lưu từ"
   },
   "podcast": {
     "pageTitle": "Podcast",

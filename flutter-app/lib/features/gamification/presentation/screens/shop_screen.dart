@@ -81,8 +81,8 @@ class _ShopScreenState extends State<ShopScreen>
       _showPurchaseSuccess(item);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Purchase failed. Please try again.'),
+        SnackBar(
+          content: Text('shop.purchaseFailed'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );
