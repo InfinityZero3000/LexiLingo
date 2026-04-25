@@ -184,7 +184,13 @@
     "englishProficiency": "Trình độ tiếng Anh (CEFR)",
     "proficiencySubtitle": "Được xác định bằng bài kiểm tra và đánh giá",
     "xpThisLevel": "{current} / {total} XP cấp này",
-    "xpTotal": "{xp} XP tổng cộng"
+    "xpTotal": "{xp} XP tổng cộng",
+    "activeDaysThisWeek": "{count}/7 ngày hoạt động tuần này",
+    "streakFreezesAvailable": "Bạn còn {count} lần đóng băng chuỗi",
+    "startStreakToday": "Bắt đầu chuỗi học của bạn ngay hôm nay!",
+    "streakAtRisk": "Nguy hiểm!",
+    "doneForToday": "Đã hoàn thành hôm nay!",
+    "practiceToKeepStreak": "Học ngay để giữ chuỗi của bạn!"
   },
   "course": {
     "title": "Khóa học",

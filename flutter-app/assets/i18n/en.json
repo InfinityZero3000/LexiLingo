@@ -184,7 +184,13 @@
     "englishProficiency": "English Proficiency (CEFR)",
     "proficiencySubtitle": "Determined by placement tests & assessments",
     "xpThisLevel": "{current} / {total} XP this level",
-    "xpTotal": "{xp} XP total"
+    "xpTotal": "{xp} XP total",
+    "activeDaysThisWeek": "{count}/7 active days this week",
+    "streakFreezesAvailable": "{count} Streak Freeze(s) available",
+    "startStreakToday": "Start your streak today!",
+    "streakAtRisk": "At Risk!",
+    "doneForToday": "Done for today!",
+    "practiceToKeepStreak": "Practice now to keep your streak!"
   },
   "course": {
     "title": "Courses",
@@ -501,11 +507,22 @@
     "goal_updated": "Daily goal updated to {xp} XP."
   },
   "notifications": {
-    "reminderTitle": "Don't forget to learn today!",
-    "reminderBody": "Maintain your {streak}-day streak",
-    "achievementTitle": "New achievement!",
-    "levelUpTitle": "Level up!",
-    "newContent": "New content available"
+    "pageTitle": "Notifications",
+    "unreadCount": "{count} unread message",
+    "unreadCountPlural": "{count} unread messages",
+    "allCaughtUp": "All caught up",
+    "markAllRead": "Mark all read",
+    "loading": "Loading notifications...",
+    "somethingWentWrong": "Something went wrong",
+    "failedToLoad": "Failed to load notifications",
+    "retry": "Retry",
+    "emptyTitle": "No Notifications Yet",
+    "emptyDescription": "You'll see notifications about your learning progress, achievements, and reminders here.",
+    "refresh": "Refresh",
+    "removed": "Notification removed",
+    "undo": "Undo",
+    "deleteAction": "Delete",
+    "tooltipBack": "Back"
   },
   "errors": {
     "networkError": "Network error",
@@ -872,24 +889,6 @@
     "quickReply2": "Can you correct my sentence?",
     "quickReply3": "Give me a daily conversation challenge."
   },
-  "notifications": {
-    "pageTitle": "Notifications",
-    "unreadCount": "{count} unread message",
-    "unreadCountPlural": "{count} unread messages",
-    "allCaughtUp": "All caught up",
-    "markAllRead": "Mark all read",
-    "loading": "Loading notifications...",
-    "somethingWentWrong": "Something went wrong",
-    "failedToLoad": "Failed to load notifications",
-    "retry": "Retry",
-    "emptyTitle": "No Notifications Yet",
-    "emptyDescription": "You'll see notifications about your learning progress, achievements, and reminders here.",
-    "refresh": "Refresh",
-    "removed": "Notification removed",
-    "undo": "Undo",
-    "deleteAction": "Delete",
-    "tooltipBack": "Back"
-  },
   "youtube": {
     "subtitles": "Subtitles",
     "noSubtitles": "No subtitles available for this video",
@@ -897,7 +896,7 @@
   },
   "podcast": {
     "pageTitle": "Podcasts",
-    "searchHint": "Search podcasts\u2026",
+    "searchHint": "Search podcasts…",
     "failedToLoad": "Failed to load podcasts",
     "retry": "Retry",
     "noResultsFound": "No podcasts found",

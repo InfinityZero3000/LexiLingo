@@ -158,7 +158,7 @@ class StreakCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.local_fire_department, color: Colors.grey),
                   const SizedBox(width: 12),
-                  const Text('Start your streak today!'),
+                  Text('home.startStreakToday'.tr()),
                   const Spacer(),
                   if (provider.isLoading)
                     const LottieAnimationWidget.pulse(width: 24, height: 24),
@@ -213,7 +213,7 @@ class StreakCard extends StatelessWidget {
                             Row(
                               children: [
                                 Text(
-                                  '${streak.currentStreak} Day Streak',
+                                  'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -230,7 +230,7 @@ class StreakCard extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      'At Risk!',
+                                      'home.streakAtRisk'.tr(),
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.orange.shade800,
@@ -254,8 +254,8 @@ class StreakCard extends StatelessWidget {
                                   const SizedBox(width: 4),
                                 Text(
                                   streak.isActiveToday
-                                      ? 'Done for today!'
-                                      : 'Practice now to keep your streak!',
+                                      ? 'home.doneForToday'.tr()
+                                      : 'home.practiceToKeepStreak'.tr(),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: streak.isActiveToday
                                         ? AppColors.greenSuccessBright
@@ -302,7 +302,7 @@ class StreakCard extends StatelessWidget {
                         Icon(Icons.ac_unit, size: 16, color: Colors.cyan),
                         const SizedBox(width: 8),
                         Text(
-                          '${streak.freezeCount} Streak Freeze${streak.freezeCount > 1 ? 's' : ''} available',
+                          'home.streakFreezesAvailable'.tr(namedArgs: {'count': '${streak.freezeCount}'}),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -365,7 +365,7 @@ class StreakDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${streak.currentStreak} Day Streak',
+            'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -537,7 +537,7 @@ class StreakBadge extends StatelessWidget {
         final streak = provider.streak!;
 
         return Tooltip(
-          message: '${streak.currentStreak} day streak',
+          message: 'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
