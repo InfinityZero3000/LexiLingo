@@ -63,7 +63,7 @@ langchain-community>=0.0.20
 llama-cpp-python>=0.2.50
 
 # Audio Processing (for HuBERT resampling)
-scipy>=1.11.0
+scipy>=1.17.1
 
 # HTTP Downloads
 requests>=2.31.0
