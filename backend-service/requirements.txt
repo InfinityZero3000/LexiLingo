@@ -40,7 +40,7 @@ httpx>=0.26.0
 feedparser>=6.0.0
 
 # News article full-text extraction
-trafilatura>=1.6.0
+trafilatura>=2.0.0
 
 # Redis (async client — used by quota manager and rate limiting)
 redis>=4.5.0
