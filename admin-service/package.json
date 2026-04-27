@@ -24,7 +24,7 @@
     "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1",
     "three": "^0.184.0",
-    "vercel": "^51.7.0",
+    "vercel": "^52.0.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
