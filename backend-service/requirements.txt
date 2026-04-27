@@ -4,7 +4,7 @@ uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
 
 # PostgreSQL (production)
-asyncpg>=0.29.0
+asyncpg>=0.31.0
 psycopg2-binary>=2.9.9
 
 # SQLite (dev/test only)
