@@ -37,7 +37,7 @@ loguru>=0.7.2
 httpx>=0.26.0
 
 # RSS Feed Parsing (podcast episodes)
-feedparser>=6.0.0
+feedparser>=6.0.12
 
 # News article full-text extraction
 trafilatura>=2.0.0
