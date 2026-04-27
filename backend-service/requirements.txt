@@ -16,7 +16,7 @@ alembic>=1.13.1
 
 # Data Validation
 pydantic>=2.5.0
-pydantic-settings>=2.1.0
+pydantic-settings>=2.14.0
 email-validator>=2.1.0
 
 # Security
