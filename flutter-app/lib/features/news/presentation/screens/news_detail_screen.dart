@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -234,7 +235,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                           children: [
                             if (widget.article.author.isNotEmpty)
                               Text(
-                                'By ${widget.article.author}',
+                                'news.byAuthor'.tr(namedArgs: {'author': widget.article.author}),
                                 style: TextStyle(
                                   color: isDark
                                       ? Colors.white54
@@ -292,7 +293,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Vocabulary to learn',
+                                    'news.vocabularyToLearn'.tr(),
                                     style: TextStyle(
                                       color: cefrColor,
                                       fontWeight: FontWeight.w700,
@@ -409,7 +410,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   Widget _buildArticleBody(String rawText, bool isDark) {
     if (rawText.isEmpty) {
       return Text(
-        'No content available.',
+        'news.noContent'.tr(),
         style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey),
       );
     }
@@ -541,7 +542,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           Navigator.pushNamed(context, '/news/quiz', arguments: widget.article);
         },
         icon: const Icon(Icons.quiz_rounded, size: 20),
-        label: const Text('Take Comprehension Quiz'),
+        label: Text('news.takeQuiz'.tr()),
         style: FilledButton.styleFrom(
           backgroundColor: cefrColor,
           foregroundColor: Colors.white,
@@ -593,7 +594,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Dictionary lookup will be available in Phase 6.',
+            'news.dictionaryComingSoon'.tr(),
             style: TextStyle(
               fontSize: 14,
               color: isDark ? Colors.white54 : AppColors.textGrey,
@@ -620,7 +621,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     });
                   },
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                  label: const Text('Save Word'),
+                  label: Text('news.saveWord'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: cefrColor,
                     side: BorderSide(color: cefrColor),
@@ -636,7 +637,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 child: FilledButton.icon(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, size: 18),
-                  label: const Text('Close'),
+                  label: Text('news.closeButton'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(

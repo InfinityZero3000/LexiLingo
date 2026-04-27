@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -114,7 +115,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Level ${widget.numericLevel}',
+                      'games.levelDisplay'.tr(namedArgs: {'level': '${widget.numericLevel}'}),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -153,7 +154,7 @@ class _XPProgressBarState extends State<XPProgressBar>
               style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             Text(
-              'Lv.${widget.numericLevel + 1}',
+              'games.levelNextShort'.tr(namedArgs: {'level': '${widget.numericLevel + 1}'}),
               style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.primary,

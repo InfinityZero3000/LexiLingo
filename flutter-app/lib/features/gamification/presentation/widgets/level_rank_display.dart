@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_badge.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -89,7 +90,7 @@ class LevelRankDisplay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Lv.$numericLevel',
+                    'gamification.levelShort'.tr(namedArgs: {'level': '$numericLevel'}),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
@@ -160,7 +161,7 @@ class LevelRankDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total: ${_formatNumber(totalXp)} XP',
+                  'gamification.totalXp'.tr(namedArgs: {'xp': '${_formatNumber(totalXp)}'}),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.5),

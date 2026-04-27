@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -108,9 +109,9 @@ class RoadmapHeaderWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Course Progress',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      Text(
+                        'learning.courseProgress'.tr(),
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                       Text(
                         '${roadmap.completionPercentage.toStringAsFixed(1)}%',

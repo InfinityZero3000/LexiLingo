@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:flutter/services.dart';
@@ -285,7 +286,7 @@ class _MessageBubbleState extends State<MessageBubble>
                               child: GestureDetector(
                                 onTap: widget.onRetry,
                                 child: Text(
-                                  'Retry',
+                                  'common.retry'.tr(),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: AppColors.primary,
@@ -388,7 +389,7 @@ class _MessageBubbleState extends State<MessageBubble>
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Message copied to clipboard'),
+                                  content: Text('chat.messageCopied'.tr()),
                                   duration: Duration(seconds: 1),
                                 ),
                               );

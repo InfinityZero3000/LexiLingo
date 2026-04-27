@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -44,7 +45,7 @@ class ReaderControls extends StatelessWidget {
           ),
 
           Text(
-            'Reader Settings',
+            'books.readerSettings'.tr(),
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,

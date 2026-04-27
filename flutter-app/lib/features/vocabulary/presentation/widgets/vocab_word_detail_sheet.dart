@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -298,7 +299,7 @@ class _CardFront extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Tap to reveal definition',
+                'vocabulary.tapToRevealDefinition'.tr(),
                 style: TextStyle(
                   color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                   fontSize: 13,
@@ -372,7 +373,7 @@ class _CardBack extends StatelessWidget {
           const Divider(height: 24),
 
           // Definition
-          _SectionLabel(label: 'Definition'),
+          _SectionLabel(label: 'vocabulary.definition'.tr()),
           const SizedBox(height: 8),
           Text(
             word.definition,

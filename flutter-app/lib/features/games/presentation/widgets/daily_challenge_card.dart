@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -88,7 +89,7 @@ class DailyChallengeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    completed ? 'Challenge completed!' : 'Daily Challenge',
+                    completed ? 'games.challengeCompleted'.tr() : 'games.dailyChallengeLabel'.tr(),
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
@@ -108,7 +109,7 @@ class DailyChallengeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Resets tomorrow',
+                    'games.resetsTomorrow'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       color: completed

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -91,7 +92,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Discover Courses',
+                                    'course.discoverCourses'.tr(),
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall
@@ -423,7 +424,7 @@ class _CategorySection extends StatelessWidget {
                 ),
               ),
               if (onSeeAll != null)
-                TextButton(onPressed: onSeeAll, child: const Text('See All')),
+                TextButton(onPressed: onSeeAll, child: Text('common.seeAll'.tr())),
             ],
           ),
         ),
@@ -1056,9 +1057,9 @@ class _FilterSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Filter Courses',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                'course.filterCourses'.tr(),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               if (provider.selectedLanguage != null ||
@@ -1069,7 +1070,7 @@ class _FilterSheet extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.clear_all, size: 18),
-                  label: const Text('Clear'),
+                  label: Text('common.clear'.tr()),
                   style: TextButton.styleFrom(foregroundColor: Colors.red[400]),
                 ),
             ],
@@ -1088,9 +1089,9 @@ class _FilterSheet extends StatelessWidget {
                 child: Icon(Icons.language, size: 16, color: primaryAccent),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Language',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              Text(
+                'common.language'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ],
           ),
@@ -1175,9 +1176,9 @@ class _FilterSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Level',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              Text(
+                'common.level'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ],
           ),

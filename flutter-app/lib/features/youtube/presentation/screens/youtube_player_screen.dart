@@ -202,7 +202,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Could not open YouTube. URL copied: $url'),
+              content: Text('youtube.couldNotOpen'.tr(namedArgs: {'url': url})),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -216,7 +216,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Video URL copied: $url'),
+            content: Text('youtube.urlCopied'.tr(namedArgs: {'url': url})),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -530,7 +530,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Dictionary lookup will be available in Phase 6.',
+            'youtube.dictionaryComingSoon'.tr(),
             style: TextStyle(fontSize: 14, color: AppColors.textGrey),
           ),
           const SizedBox(height: 16),

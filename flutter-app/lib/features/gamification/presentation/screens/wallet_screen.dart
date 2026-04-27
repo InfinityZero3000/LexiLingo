@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -87,7 +88,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Gems',
+                              'gamification.gems'.tr(),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.75),
@@ -113,7 +114,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         child: _buildStatCard(
                           icon: Icons.arrow_upward,
                           color: AppColors.greenSuccessBright,
-                          label: 'Earned',
+                          label: 'gamification.earned'.tr(),
                           value: '${provider.wallet?.totalEarned ?? 0}',
                         ),
                       ),
@@ -122,7 +123,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         child: _buildStatCard(
                           icon: Icons.arrow_downward,
                           color: AppColors.orange,
-                          label: 'Spent',
+                          label: 'gamification.spent'.tr(),
                           value: '${provider.wallet?.totalSpent ?? 0}',
                         ),
                       ),
@@ -168,9 +169,9 @@ class _WalletScreenState extends State<WalletScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
-                            'How to Earn Gems',
-                            style: TextStyle(
+                          Text(
+                            'gamification.howToEarnGems'.tr(),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -195,16 +196,16 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Transaction History',
-                        style: TextStyle(
+                      Text(
+                        'gamification.transactionHistory'.tr(),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       TextButton(
                         onPressed: () => provider.loadTransactions(limit: 100),
-                        child: const Text('See All'),
+                        child: Text('common.seeAll'.tr()),
                       ),
                     ],
                   ),
@@ -226,7 +227,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No transactions yet',
+                            'gamification.noTransactions'.tr(),
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],

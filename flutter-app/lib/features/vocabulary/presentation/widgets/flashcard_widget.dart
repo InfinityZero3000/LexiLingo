@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -192,7 +193,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               ),
               const SizedBox(width: 8),
               Text(
-                'Tap to reveal',
+                'vocabulary.tapToReveal'.tr(),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -231,9 +232,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Definition section
-            const Text(
-              'Definition',
-              style: TextStyle(
+            Text(
+              'vocabulary.definition'.tr(),
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primary,
@@ -248,9 +249,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             // Vietnamese translation
             if (vocabulary.vietnameseTranslation != null) ...[
               const SizedBox(height: 24),
-              const Text(
-                'Tiếng Việt',
-                style: TextStyle(
+              Text(
+                'vocabulary.vietnameseLabel'.tr(),
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
@@ -266,9 +267,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             // Examples
             if (examples.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
-                'Examples',
-                style: TextStyle(
+              Text(
+                'vocabulary.examples'.tr(),
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
@@ -317,7 +318,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             // Rate this word hint
             Center(
               child: Text(
-                'How well did you know this word?',
+                'vocabulary.ratingQuestion'.tr(),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,

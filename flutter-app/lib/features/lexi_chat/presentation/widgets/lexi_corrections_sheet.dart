@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 
@@ -80,7 +81,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Language Notes',
+                  'lexiChat.languageNotes'.tr(),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

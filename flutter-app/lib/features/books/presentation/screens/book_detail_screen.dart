@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -205,7 +206,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   // Description
                   if (book.description.isNotEmpty) ...[
                     Text(
-                      'About',
+                      'books.about'.tr(),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -238,7 +239,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Reading Progress',
+                                'books.readingProgress'.tr(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -273,7 +274,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Page ${progress.currentPage + 1} of ${progress.totalPages}',
+                            'books.pageProgress'.tr(namedArgs: {'current': '${progress.currentPage + 1}', 'total': '${progress.totalPages}'}),
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark
@@ -380,7 +381,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.quiz_rounded),
-                                label: const Text('Chapter Quiz'),
+                                label: Text('books.chapterQuiz'.tr()),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.purple,
                                   side: const BorderSide(

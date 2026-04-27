@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
@@ -30,7 +31,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vocabulary Library'),
+        title: Text('vocabulary.library'.tr()),
         centerTitle: true,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -476,7 +477,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
 
           // Title
           Text(
-            'Add New Word',
+            'vocabulary.addNewWord'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -531,7 +532,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             maxLines: 3,
             style: TextStyle(fontSize: 15, color: cs.onSurface),
             decoration: InputDecoration(
-              labelText: 'Definition',
+              labelText: 'vocabulary.definition'.tr(),
               hintText: 'What does this word mean?',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Padding(
@@ -567,7 +568,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text('common.cancel'.tr()),
                 ),
               ),
               const SizedBox(width: 12),
@@ -592,9 +593,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Save Word',
-                          style: TextStyle(
+                      : Text(
+                          'vocabulary.saveWord'.tr(),
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),

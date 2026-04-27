@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -935,10 +936,10 @@ class _CtaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = lesson.isCompleted
-        ? 'Practice Again'
+        ? 'learning.practiceAgain'.tr()
         : lesson.isCurrent
-        ? 'Continue'
-        : 'Start Lesson';
+        ? 'learning.continueButton'.tr()
+        : 'learning.startLesson'.tr();
     final icon = lesson.isCompleted
         ? Icons.replay_rounded
         : Icons.play_arrow_rounded;
@@ -1018,7 +1019,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load roadmap',
+              'learning.failedToLoadRoadmap'.tr(),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -1031,7 +1032,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text('common.retry'.tr()),
             ),
           ],
         ),
@@ -1052,12 +1053,12 @@ class _EmptyView extends StatelessWidget {
           Icon(Icons.school_outlined, size: 72, color: AppColors.grey400),
           const SizedBox(height: 20),
           Text(
-            'No lessons available',
+            'learning.noLessons'.tr(),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Check back later for new content',
+            'learning.checkBackLater'.tr(),
             style: TextStyle(color: AppColors.grey500),
           ),
         ],
