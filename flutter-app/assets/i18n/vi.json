@@ -18,7 +18,7 @@
     "done": "Hoàn thành",
     "yes": "Có",
     "no": "Không",
-    "ok": "OK",
+    "ok": "ĐƯỢC RỒI",
     "close": "Đóng",
     "search": "Tìm kiếm",
     "noData": "Không có dữ liệu",
@@ -37,8 +37,8 @@
     "logout": "Đăng xuất",
     "register": "Đăng ký",
     "fullName": "Họ và tên",
-    "email": "Email",
-    "emailHint": "name@example.com",
+    "email": "E-mail",
+    "emailHint": "tên@example.com",
     "password": "Mật khẩu",
     "confirmPassword": "Xác nhận mật khẩu",
     "forgotPassword": "Quên mật khẩu?",
@@ -564,7 +564,7 @@
     "noInternet": "Không có kết nối internet"
   },
   "gamification": {
-    "xpEarned": "+{xp} XP",
+    "xpEarned": "+{xp}XP",
     "levelUp": "Lên cấp {level}!",
     "streakBonus": "Thưởng chuỗi ngày!",
     "perfectScore": "Điểm tuyệt đối!",
@@ -840,7 +840,7 @@
   },
   "fillBlank": {
     "questionProgress": "Câu {current}/{total}",
-    "timerFormat": "{seconds}s",
+    "timerFormat": "{seconds}",
     "timeoutFeedback": "Hết giờ!",
     "correctFeedback": "Đúng!",
     "incorrectFeedback": "Sai."
