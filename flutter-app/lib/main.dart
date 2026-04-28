@@ -87,9 +87,13 @@ void main() async {
   };
 
   try {
-    // Load .env.production for release builds, .env for dev on all platforms
-    // so Web and mobile use the same production config source.
-    final envFile = kReleaseMode ? '.env.production' : '.env';
+    // Load env file based on mode:
+    //   release build          → .env.production
+    //   debug + FLUTTER_ENV=prod → .env.production (connect to prod APIs in debug)
+    //   debug (default)        → .env (local dev APIs)
+    const _flutterEnv = String.fromEnvironment('FLUTTER_ENV');
+    final envFile =
+        (kReleaseMode || _flutterEnv == 'prod') ? '.env.production' : '.env';
     await dotenv.load(fileName: envFile);
   } catch (e) {
     debugPrint('Warning: Could not load .env file: $e');
