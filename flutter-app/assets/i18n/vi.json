@@ -23,7 +23,14 @@
     "search": "Tìm kiếm",
     "noData": "Không có dữ liệu",
     "success": "Thành công",
-    "failed": "Thất bại"
+    "failed": "Thất bại",
+    "seeAll": "Xem tất cả",
+    "clear": "Xóa",
+    "language": "Ngôn ngữ",
+    "level": "Cấp độ",
+    "rename": "Đổi tên",
+    "play": "Chơi",
+    "awesome": "Tuyệt vời!"
   },
   "auth": {
     "login": "Đăng nhập",
@@ -216,7 +223,10 @@
     "startLearning": "Bắt đầu học",
     "learningRoadmap": "Lộ trình học tập",
     "enrolledSuccess": "Đăng ký thành công!",
-    "enrollFailed": "Đăng ký thất bại"
+    "enrollFailed": "Đăng ký thất bại",
+    "discoverCourses": "Khám phá khóa học",
+    "filterCourses": "Lọc khóa học",
+    "noCourses": "Chưa có khóa học trong danh mục này"
   },
   "lesson": {
     "sessionTitle": "Học tập",
@@ -326,7 +336,14 @@
     "fluency": "Độ trôi chảy",
     "completeness": "Độ đầy đủ",
     "wordBreakdown": "Phân tích từng từ",
-    "wordGood": "Tốt"
+    "wordGood": "Tốt",
+    "listening": "Đang lắng nghe...",
+    "tapToSpeak": "Chạm để nói",
+    "playbackSpeed": "Tốc độ phát",
+    "playbackSpeedDescription": "Điều chỉnh tốc độ phát âm thanh",
+    "selectPlaybackSpeed": "Chọn tốc độ phát",
+    "confidence": "Độ tin cậy: {percent}%",
+    "playError": "Không thể phát: {error}"
   },
   "chat": {
     "placeholder": "Nhập tin nhắn...",
@@ -336,7 +353,18 @@
     "history": "Lịch sử",
     "clearHistory": "Xóa lịch sử",
     "topics": "Chủ đề",
-    "suggestions": "Gợi ý"
+    "suggestions": "Gợi ý",
+    "sessionsTitle": "Phiên trò chuyện",
+    "newChat": "Cuộc trò chuyện mới",
+    "noConversations": "Chưa có cuộc trò chuyện",
+    "startNewChatPrompt": "Bắt đầu trò chuyện mới",
+    "renameSession": "Đổi tên phiên",
+    "deleteSession": "Xóa phiên",
+    "messageCopied": "Đã sao chép tin nhắn",
+    "preparing": "Đang chuẩn bị...",
+    "processingVoice": "Đang xử lý giọng nói...",
+    "grammarCorrection": "Sửa ngữ pháp",
+    "correctionRule": "Quy tắc: {rule}"
   },
   "achievements": {
     "title": "Thành tựu",
@@ -363,7 +391,8 @@
     "categorySkill": "Kỹ năng",
     "categorySocial": "Cộng đồng",
     "categoryMilestone": "Cột mốc thành tích",
-    "unlockedCount": "{unlocked} / {total} thành tích"
+    "unlockedCount": "{unlocked} / {total} thành tích",
+    "awesome": "Tuyệt vời!"
   },
   "profile": {
     "title": "Hồ sơ",
@@ -462,7 +491,8 @@
     "coursesEnrolledStat": "Khóa học đã tham gia",
     "coursesCompletedStat": "Khóa học đã hoàn thành",
     "lessonsCompletedStat": "Bài học đã hoàn thành",
-    "courseProgressTitle": "Tiến độ khóa học"
+    "courseProgressTitle": "Tiến độ khóa học",
+    "lastActivity": "Hoạt động cuối: {date}"
   },
   "settings": {
     "title": "Cài đặt",
@@ -540,7 +570,18 @@
     "perfectScore": "Điểm tuyệt đối!",
     "dailyChallenge": "Thử thách hàng ngày",
     "weeklyChallenge": "Thử thách hàng tuần",
-    "leaderboard": "Bảng xếp hạng"
+    "leaderboard": "Bảng xếp hạng",
+    "levelShort": "Cấp {level}",
+    "totalXp": "Tổng: {xp} XP",
+    "levelProficiency": "Cấp {level} · {proficiency}",
+    "score": "Điểm",
+    "gems": "Đá quý",
+    "howToEarnGems": "Cách kiếm đá quý",
+    "transactionHistory": "Lịch sử giao dịch",
+    "noTransactions": "Chưa có giao dịch",
+    "rankWeekly": "Hạng #{rank} · {xp} XP tuần này",
+    "earned": "Đã kiếm",
+    "spent": "Đã dùng"
   },
   "social": {
     "friends": "Bạn bè",
@@ -887,12 +928,22 @@
     "failedStopRecording": "Không thể dừng ghi âm: {error}",
     "quickReply1": "Chào Lexi, chúng ta luyện nói nhé?",
     "quickReply2": "Bạn có thể sửa câu của mình không?",
-    "quickReply3": "Hãy cho mình một thử thách hội thoại hàng ngày."
+    "quickReply3": "Hãy cho mình một thử thách hội thoại hàng ngày.",
+    "correctionLabel": "Sửa lỗi",
+    "pendingSync": "Đang đồng bộ",
+    "languageNotes": "Ghi chú ngôn ngữ"
   },
   "youtube": {
     "subtitles": "Phụ đề",
     "noSubtitles": "Video này không có phụ đề",
-    "saveWord": "Lưu từ"
+    "saveWord": "Lưu từ",
+    "exploreTitle": "Video tiếng Anh",
+    "channelsTitle": "Kênh học tiếng Anh",
+    "browseByCategory": "Duyệt theo danh mục",
+    "noVideos": "Không tìm thấy video",
+    "couldNotOpen": "Không thể mở YouTube. Đã sao chép URL: {url}",
+    "urlCopied": "Đã sao chép URL video: {url}",
+    "dictionaryComingSoon": "Tra từ điển sẽ có trong Giai đoạn 6."
   },
   "podcast": {
     "pageTitle": "Podcast",
@@ -911,6 +962,72 @@
     "failedToLoadEpisodes": "Không tải được tập phim",
     "noEpisodes": "Chưa có tập phim nào",
     "showLess": "Thu gọn",
-    "showMore": "Xem thêm"
+    "showMore": "Xem thêm",
+    "playbackSpeed": "Tốc độ phát",
+    "noTranscript": "Không có bản chép lời",
+    "generateTranscript": "Tạo bản chép lời"
+  },
+  "games": {
+    "levelUpTitle": "Lên cấp!",
+    "youReachedLevel": "Bạn đã đạt cấp {level}!",
+    "keepItUp": "Cố lên!",
+    "xpEarned": "+{xp} XP đã kiếm",
+    "awesome": "Tuyệt vời!",
+    "resetsTomorrow": "Đặt lại vào ngày mai",
+    "challengeCompleted": "Thử thách hoàn thành!",
+    "dailyChallengeLabel": "Thử thách hàng ngày",
+    "play": "Chơi",
+    "levelDisplay": "Cấp {level}",
+    "levelNextShort": "Cấp {level}"
+  },
+  "learning": {
+    "checkAnswer": "Kiểm tra đáp án",
+    "correctAnswer": "Đáp án đúng:",
+    "continueButton": "Tiếp tục",
+    "courseProgress": "Tiến độ khóa học",
+    "failedToLoadRoadmap": "Không thể tải lộ trình",
+    "noLessons": "Chưa có bài học",
+    "checkBackLater": "Quay lại sau để xem nội dung mới",
+    "practiceAgain": "Luyện lại",
+    "startLesson": "Bắt đầu bài học",
+    "correct": "Đúng rồi!",
+    "notQuite": "Chưa đúng"
+  },
+  "books": {
+    "library": "Thư viện sách",
+    "noBooksFound": "Không tìm thấy sách cho {query}",
+    "loadError": "Không thể tải sách.\nVui lòng thử lại.",
+    "about": "Giới thiệu",
+    "readingProgress": "Tiến độ đọc",
+    "chapterQuiz": "Bài kiểm tra chương",
+    "chapterQuizTitle": "Bài kiểm tra chương {chapter}",
+    "quizNotAvailable": "Bài kiểm tra không có sẵn.",
+    "backToBook": "Quay lại sách",
+    "readerSettings": "Cài đặt đọc",
+    "pageProgress": "Trang {current} / {total}"
+  },
+  "news": {
+    "title": "Tin tức tiếng Anh",
+    "loadError": "Không thể tải bài viết",
+    "noArticles": "Không tìm thấy bài viết",
+    "byAuthor": "Bởi {author}",
+    "vocabularyToLearn": "Từ vựng cần học",
+    "noContent": "Không có nội dung.",
+    "takeQuiz": "Làm bài kiểm tra hiểu bài",
+    "dictionaryComingSoon": "Tra từ điển sẽ có trong Giai đoạn 6.",
+    "saveWord": "Lưu từ",
+    "closeButton": "Đóng"
+  },
+  "vocabulary": {
+    "library": "Thư viện từ vựng",
+    "addNewWord": "Thêm từ mới",
+    "saveWord": "Lưu từ",
+    "tapToReveal": "Chạm để hiện",
+    "definition": "Định nghĩa",
+    "examples": "Ví dụ",
+    "ratingQuestion": "Bạn biết từ này đến đâu?",
+    "flashcard": "Thẻ ghi nhớ",
+    "tapToRevealDefinition": "Chạm để hiện định nghĩa",
+    "vietnameseLabel": "Tiếng Việt"
   }
 }

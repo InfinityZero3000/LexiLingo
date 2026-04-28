@@ -23,7 +23,14 @@
     "search": "搜索",
     "noData": "暂无数据",
     "success": "成功",
-    "failed": "失败"
+    "failed": "失败",
+    "seeAll": "See All",
+    "clear": "Clear",
+    "language": "Language",
+    "level": "Level",
+    "rename": "Rename",
+    "play": "Play",
+    "awesome": "Awesome!"
   },
   "auth": {
     "login": "登录",
@@ -210,7 +217,10 @@
     "startLearning": "Start Learning",
     "learningRoadmap": "Learning Roadmap",
     "enrolledSuccess": "Successfully enrolled!",
-    "enrollFailed": "Failed to enroll"
+    "enrollFailed": "Failed to enroll",
+    "discoverCourses": "Discover Courses",
+    "filterCourses": "Filter Courses",
+    "noCourses": "No courses in this category yet"
   },
   "lesson": {
     "sessionTitle": "学习",
@@ -320,7 +330,14 @@
     "fluency": "Fluency",
     "completeness": "Completeness",
     "wordBreakdown": "Word Breakdown",
-    "wordGood": "Good"
+    "wordGood": "Good",
+    "listening": "Listening...",
+    "tapToSpeak": "Tap to speak",
+    "playbackSpeed": "Playback Speed",
+    "playbackSpeedDescription": "Adjust the speed of text-to-speech audio playback",
+    "selectPlaybackSpeed": "Select Playback Speed",
+    "confidence": "Confidence: {percent}%",
+    "playError": "Failed to play: {error}"
   },
   "chat": {
     "title": "AI 对话",
@@ -331,7 +348,18 @@
     "history": "历史记录",
     "clearHistory": "清除历史",
     "topics": "话题",
-    "suggestions": "建议"
+    "suggestions": "建议",
+    "sessionsTitle": "Chat Sessions",
+    "newChat": "New Chat",
+    "noConversations": "No conversations yet",
+    "startNewChatPrompt": "Start a new chat to begin",
+    "renameSession": "Rename Session",
+    "deleteSession": "Delete Session",
+    "messageCopied": "Message copied to clipboard",
+    "preparing": "Preparing...",
+    "processingVoice": "Processing your voice...",
+    "grammarCorrection": "Grammar Correction",
+    "correctionRule": "Rule: {rule}"
   },
   "achievements": {
     "title": "成就",
@@ -358,7 +386,8 @@
     "categorySkill": "Skill Mastery",
     "categorySocial": "Social & Community",
     "categoryMilestone": "Achievement Milestones",
-    "unlockedCount": "{unlocked} / {total} Achievements"
+    "unlockedCount": "{unlocked} / {total} Achievements",
+    "awesome": "Awesome!"
   },
   "profile": {
     "title": "个人资料",
@@ -457,7 +486,8 @@
     "coursesEnrolledStat": "已报名课程",
     "coursesCompletedStat": "已完成课程",
     "lessonsCompletedStat": "已完成课程单元",
-    "courseProgressTitle": "课程进度"
+    "courseProgressTitle": "课程进度",
+    "lastActivity": "Last activity: {date}"
   },
   "settings": {
     "title": "设置",
@@ -535,7 +565,18 @@
     "perfectScore": "满分！",
     "dailyChallenge": "每日挑战",
     "weeklyChallenge": "每周挑战",
-    "leaderboard": "排行榜"
+    "leaderboard": "排行榜",
+    "levelShort": "Lv.{level}",
+    "totalXp": "Total: {xp} XP",
+    "levelProficiency": "Level {level} · {proficiency}",
+    "score": "Score",
+    "gems": "Gems",
+    "howToEarnGems": "How to Earn Gems",
+    "transactionHistory": "Transaction History",
+    "noTransactions": "No transactions yet",
+    "rankWeekly": "Rank #{rank} · {xp} XP this week",
+    "earned": "Earned",
+    "spent": "Spent"
   },
   "social": {
     "friends": "好友",
@@ -882,12 +923,22 @@
     "failedStopRecording": "Failed to stop recording: {error}",
     "quickReply1": "Hi Lexi, can we practice speaking?",
     "quickReply2": "Can you correct my sentence?",
-    "quickReply3": "Give me a daily conversation challenge."
+    "quickReply3": "Give me a daily conversation challenge.",
+    "correctionLabel": "Correction",
+    "pendingSync": "Pending sync",
+    "languageNotes": "Language Notes"
   },
   "youtube": {
     "subtitles": "Subtitles",
     "noSubtitles": "No subtitles available for this video",
-    "saveWord": "Save Word"
+    "saveWord": "Save Word",
+    "exploreTitle": "English Videos",
+    "channelsTitle": "English Learning Channels",
+    "browseByCategory": "Browse by Category",
+    "noVideos": "No videos found",
+    "couldNotOpen": "Could not open YouTube. URL copied: {url}",
+    "urlCopied": "Video URL copied: {url}",
+    "dictionaryComingSoon": "Dictionary lookup will be available in Phase 6."
   },
   "podcast": {
     "pageTitle": "Podcasts",
@@ -906,6 +957,72 @@
     "failedToLoadEpisodes": "Failed to load episodes",
     "noEpisodes": "No episodes available",
     "showLess": "Show less",
-    "showMore": "Show more"
+    "showMore": "Show more",
+    "playbackSpeed": "Playback Speed",
+    "noTranscript": "No transcript available",
+    "generateTranscript": "Generate Transcript"
+  },
+  "games": {
+    "levelUpTitle": "Level Up!",
+    "youReachedLevel": "You reached Level {level}!",
+    "keepItUp": "Keep it up!",
+    "xpEarned": "+{xp} XP earned",
+    "awesome": "Awesome!",
+    "resetsTomorrow": "Resets tomorrow",
+    "challengeCompleted": "Challenge completed!",
+    "dailyChallengeLabel": "Daily Challenge",
+    "play": "Play",
+    "levelDisplay": "Level {level}",
+    "levelNextShort": "Lv.{level}"
+  },
+  "learning": {
+    "checkAnswer": "Check Answer",
+    "correctAnswer": "Correct answer:",
+    "continueButton": "Continue",
+    "courseProgress": "Course Progress",
+    "failedToLoadRoadmap": "Failed to load roadmap",
+    "noLessons": "No lessons available",
+    "checkBackLater": "Check back later for new content",
+    "practiceAgain": "Practice Again",
+    "startLesson": "Start Lesson",
+    "correct": "Correct!",
+    "notQuite": "Not quite"
+  },
+  "books": {
+    "library": "Book Library",
+    "noBooksFound": "No books found for {query}",
+    "loadError": "Could not load books.\nPlease try again.",
+    "about": "About",
+    "readingProgress": "Reading Progress",
+    "chapterQuiz": "Chapter Quiz",
+    "chapterQuizTitle": "Chapter {chapter} Quiz",
+    "quizNotAvailable": "Quiz not available.",
+    "backToBook": "Back to Book",
+    "readerSettings": "Reader Settings",
+    "pageProgress": "Page {current} of {total}"
+  },
+  "news": {
+    "title": "English News",
+    "loadError": "Failed to load articles",
+    "noArticles": "No articles found",
+    "byAuthor": "By {author}",
+    "vocabularyToLearn": "Vocabulary to learn",
+    "noContent": "No content available.",
+    "takeQuiz": "Take Comprehension Quiz",
+    "dictionaryComingSoon": "Dictionary lookup will be available in Phase 6.",
+    "saveWord": "Save Word",
+    "closeButton": "Close"
+  },
+  "vocabulary": {
+    "library": "Vocabulary Library",
+    "addNewWord": "Add New Word",
+    "saveWord": "Save Word",
+    "tapToReveal": "Tap to reveal",
+    "definition": "Definition",
+    "examples": "Examples",
+    "ratingQuestion": "How well did you know this word?",
+    "flashcard": "Flashcard",
+    "tapToRevealDefinition": "Tap to reveal definition",
+    "vietnameseLabel": "越南语"
   }
 }
