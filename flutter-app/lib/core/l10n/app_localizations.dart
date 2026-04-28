@@ -24,7 +24,7 @@ class AppLocales {
     Locale('es'),
   ];
 
-  static const Locale fallback = Locale('vi');
+  static const Locale fallback = Locale('en');
 
   static const Map<String, Map<String, String>> metadata = {
     'vi': {

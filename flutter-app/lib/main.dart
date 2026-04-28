@@ -155,6 +155,7 @@ void main() async {
       path: 'assets/i18n',
       fallbackLocale: AppLocales.fallback,
       startLocale: Locale(initialLocaleCode),
+      useOnlyLangCode: true,
       child: const LexiLingoApp(),
     ),
   );

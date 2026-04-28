@@ -21,7 +21,7 @@ class LocaleService {
     if (_supportedLanguageCodes.contains(normalized)) {
       return normalized;
     }
-    return 'vi';
+    return 'en';
   }
 
   /// Save locale to SharedPreferences
