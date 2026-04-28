@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -52,7 +52,11 @@ class LanguageSwitcherButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...AppLocales.supportedLocales.map((locale) {
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: AppLocales.supportedLocales.map((locale) {
                   final code = locale.languageCode;
                   final name = AppLocales.nameOf(code);
                   final nameEn = AppLocales.nameEnOf(code);
@@ -119,7 +123,10 @@ class LanguageSwitcherButton extends StatelessWidget {
                       },
                     ),
                   );
-                }),
+                }).toList(),
+              ),
+            ),
+          ),
               ],
             ),
           ),
@@ -200,47 +207,42 @@ class _FlagImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final svgUrl = AppLocales.flagSvgUrlOf(languageCode);
     final pngUrl = AppLocales.flagPngUrlOf(languageCode);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
-      child: SvgPicture.network(
-        svgUrl,
+      child: SizedBox(
         width: width,
         height: height,
-        fit: BoxFit.cover,
-        placeholderBuilder: (context) => SizedBox(
-          width: width,
-          height: height,
-          child: DecoratedBox(
+        child: CachedNetworkImage(
+          imageUrl: pngUrl,
+          fadeInDuration: const Duration(milliseconds: 100),
+          placeholder: (context, _) => DecoratedBox(
             decoration: BoxDecoration(
               color: AppColors.accentMint.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-        ),
-        errorBuilder: (context, error, stackTrace) {
-          return Image.network(
-            pngUrl,
+          errorWidget: (context, _, __) {
+            return Container(
+              width: width,
+              height: height,
+              color: AppColors.accentMint.withValues(alpha: 0.18),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.language_rounded,
+                size: height,
+                color: AppColors.accentMintDark,
+              ),
+            );
+          },
+          imageBuilder: (context, imageProvider) => Image(
+            image: imageProvider,
             width: width,
             height: height,
             fit: BoxFit.cover,
-            errorBuilder: (context, _, __) {
-              return Container(
-                width: width,
-                height: height,
-                color: AppColors.accentMint.withValues(alpha: 0.18),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.language_rounded,
-                  size: height,
-                  color: AppColors.accentMintDark,
-                ),
-              );
-            },
-          );
-        },
+          ),
+        ),
       ),
     );
   }

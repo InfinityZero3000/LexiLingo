@@ -86,22 +86,37 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    // Read the locally-saved locale before touching settings so we can honour
+    // a language the user picked (e.g. on the welcome screen) even when the
+    // stored settings still carry the entity default ('en').
+    final savedLocale = await LocaleService.getSavedLocale();
+
     try {
       final result = await _repository.getSettings(userId);
       result.fold(
         (failure) {
           _error = failure.message;
-          // Create default settings if not found
-          _settings = Settings(id: 0, userId: userId);
+          // Create default settings seeded with the locally-chosen locale.
+          _settings = Settings(id: 0, userId: userId, language: savedLocale);
         },
         (settings) {
-          _settings = settings.copyWith(theme: _normalizeTheme(settings.theme));
+          // If the stored language is still the entity default ('en') but the
+          // user has explicitly selected a different locale locally, honour
+          // their local choice instead of overriding it.
+          final effectiveLang =
+              (settings.language == 'en' && savedLocale != 'en')
+                  ? savedLocale
+                  : settings.language;
+          _settings = settings.copyWith(
+            theme: _normalizeTheme(settings.theme),
+            language: effectiveLang,
+          );
         },
       );
     } catch (e) {
       _error = e.toString();
       // Keep settings usable even if cached payload is malformed.
-      _settings = Settings(id: 0, userId: userId);
+      _settings = Settings(id: 0, userId: userId, language: savedLocale);
     } finally {
       _isLoading = false;
       notifyListeners();
