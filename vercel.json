@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": null,
-  "ignoreCommand": "exit 1",
+  "ignoreCommand": "exit 0",
   "buildCommand": "cd flutter-app && npm run vercel-build",
   "outputDirectory": "flutter-app/build/web",
   "rewrites": [
