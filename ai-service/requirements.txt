@@ -41,7 +41,7 @@ sentence-transformers>=5.4.1,<6.0.0
 numpy>=1.23.0,<3.0.0
 
 # STT / TTS
-faster-whisper>=1.1.0
+faster-whisper>=1.2.1
 piper-tts>=1.4.2
 gTTS>=2.5.0
 
