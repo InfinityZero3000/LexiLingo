@@ -32,7 +32,7 @@ httpx>=0.28.1
 aiohttp>=3.13.5
 
 # Knowledge Graph (KuzuDB)
-kuzu>=0.4.2
+kuzu>=0.11.3
 
 # Embeddings
 # NOTE: sentence-transformers>=4.0.0 has LRScheduler compatibility issues with torch 2.2.x.
