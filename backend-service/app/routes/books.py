@@ -10,6 +10,7 @@ Phase 5: Book Reading Feature.
 """
 
 import logging
+import re
 from typing import Optional
 
 import httpx
@@ -41,131 +42,248 @@ CEFR_LEVELS = {
     "C2": {"label": "Proficiency", "color": "#9C27B0"},
 }
 
-# ── CEFR by Subject ──────────────────────────────────────────────
-_CEFR_BY_SUBJECT = {
-    "fairy tales": "A1",
-    "children": "A1",
-    "easy reader": "A1",
-    "short stories": "A2",
-    "adventure": "B1",
-    "romance": "B1",
-    "mystery": "B1",
-    "science fiction": "B1",
-    "historical fiction": "B2",
-    "literary fiction": "B2",
-    "philosophy": "C1",
-    "essay": "C1",
-    "classic": "B2",
-    "poetry": "C1",
-    "satire": "C1",
-    "drama": "B2",
-    "tragedy": "C1",
-    "comedy": "B2",
-}
+# ── CEFR by Subject (ordered list — more specific keywords checked first) ──
+_CEFR_BY_SUBJECT: list[tuple[str, str]] = [
+    # A1 — Beginner
+    ("easy reader", "A1"), ("fairy tale", "A1"), ("picture book", "A1"), ("nursery", "A1"),
+    # A2 — Elementary
+    ("children", "A2"), ("juvenile fiction", "A2"), ("fable", "A2"), ("folk tale", "A2"),
+    # B1 — Intermediate
+    ("short stories", "B1"), ("adventure", "B1"), ("romance", "B1"),
+    ("mystery", "B1"), ("detective", "B1"), ("science fiction", "B1"),
+    # B2 — Upper Intermediate
+    ("historical fiction", "B2"), ("historical", "B2"), ("literary fiction", "B2"),
+    ("classic", "B2"), ("drama", "B2"), ("comedy", "B2"), ("gothic", "B2"),
+    # C1 — Advanced
+    ("philosophy", "C1"), ("essay", "C1"), ("poetry", "C1"),
+    ("satire", "C1"), ("tragedy", "C1"), ("criticism", "C1"),
+    # C2 — Proficiency
+    ("epic poem", "C2"), ("metaphysics", "C2"), ("existentialism", "C2"),
+]
 
-# ── Curated English-Learning Books by CEFR Level ─────────────────
+# ── Curated English-Learning Books by CEFR Level (4 per level) ───
 CURATED_BOOKS = [
+    # ── A1 — Beginner ────────────────────────────────────────────
     {
-        "id": "gutenberg-2591",
-        "source": "gutenberg",
-        "title": "Grimms' Fairy Tales",
-        "author": "Brothers Grimm",
-        "description": (
-            "Classic fairy tales including Cinderella, Snow White, and Hansel "
-            "and Gretel — perfect for beginner English learners."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739153-L.jpg",
+        "id": "gutenberg-2591", "source": "gutenberg",
+        "title": "Grimms' Fairy Tales", "author": "Brothers Grimm",
+        "description": "Classic fairy tales including Cinderella, Snow White, and Hansel and Gretel — perfect for beginner English learners.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/2591/pg2591.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/2591/pg2591.txt",
-        "language": "en",
-        "cefr_level": "A1",
-        "subject": "Fairy Tales",
-        "chapter_count": 45,
-        "word_count": 55000,
+        "language": "en", "cefr_level": "A1", "subject": "Fairy Tales", "topic": "Fantasy",
+        "chapter_count": 45, "word_count": 55000,
     },
     {
-        "id": "gutenberg-11",
-        "source": "gutenberg",
-        "title": "Alice's Adventures in Wonderland",
-        "author": "Lewis Carroll",
-        "description": (
-            "A young girl named Alice falls into a rabbit hole and embarks on a "
-            "fantastical adventure in a world of nonsense and imagination."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739155-L.jpg",
+        "id": "gutenberg-11339", "source": "gutenberg",
+        "title": "Aesop's Fables", "author": "Aesop",
+        "description": "Short moral fables featuring animals — ideal for beginners learning through simple, repeated story patterns.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/11339/pg11339.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/11339/pg11339.txt",
+        "language": "en", "cefr_level": "A1", "subject": "Fables", "topic": "Children",
+        "chapter_count": 60, "word_count": 18000,
+    },
+    {
+        "id": "gutenberg-16", "source": "gutenberg",
+        "title": "Peter Pan", "author": "J. M. Barrie",
+        "description": "The classic tale of a boy who never grows up and takes three children on an adventure to Neverland.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/16/pg16.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/16/pg16.txt",
+        "language": "en", "cefr_level": "A1", "subject": "Fantasy", "topic": "Fantasy",
+        "chapter_count": 17, "word_count": 28000,
+    },
+    {
+        "id": "gutenberg-55", "source": "gutenberg",
+        "title": "The Wonderful Wizard of Oz", "author": "L. Frank Baum",
+        "description": "Dorothy is swept away to the magical land of Oz and follows the yellow brick road to find her way home.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/55/pg55.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/55/pg55.txt",
+        "language": "en", "cefr_level": "A1", "subject": "Fantasy", "topic": "Fantasy",
+        "chapter_count": 24, "word_count": 39000,
+    },
+    # ── A2 — Elementary ──────────────────────────────────────────
+    {
+        "id": "gutenberg-11", "source": "gutenberg",
+        "title": "Alice's Adventures in Wonderland", "author": "Lewis Carroll",
+        "description": "A young girl named Alice falls into a rabbit hole and embarks on a fantastical adventure in a world of nonsense.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/11/pg11.txt",
-        "language": "en",
-        "cefr_level": "A2",
-        "subject": "Fantasy",
-        "chapter_count": 12,
-        "word_count": 26500,
+        "language": "en", "cefr_level": "A2", "subject": "Fantasy", "topic": "Fantasy",
+        "chapter_count": 12, "word_count": 26500,
     },
     {
-        "id": "gutenberg-74",
-        "source": "gutenberg",
-        "title": "The Adventures of Tom Sawyer",
-        "author": "Mark Twain",
-        "description": (
-            "The story of a young boy growing up along the Mississippi River "
-            "in the mid-19th century, exploring caves and getting into mischief."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739160-L.jpg",
+        "id": "gutenberg-120", "source": "gutenberg",
+        "title": "Treasure Island", "author": "Robert Louis Stevenson",
+        "description": "Young Jim Hawkins discovers a treasure map and sets sail on a dangerous adventure with pirates.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/120/pg120.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/120/pg120.txt",
+        "language": "en", "cefr_level": "A2", "subject": "Adventure", "topic": "Adventure",
+        "chapter_count": 34, "word_count": 68000,
+    },
+    {
+        "id": "gutenberg-76", "source": "gutenberg",
+        "title": "Adventures of Huckleberry Finn", "author": "Mark Twain",
+        "description": "Huck Finn escapes his abusive father and rafts down the Mississippi River with the escaped slave Jim.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/76/pg76.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/76/pg76.txt",
+        "language": "en", "cefr_level": "A2", "subject": "Adventure", "topic": "Adventure",
+        "chapter_count": 43, "word_count": 109000,
+    },
+    {
+        "id": "gutenberg-161", "source": "gutenberg",
+        "title": "Sense and Sensibility", "author": "Jane Austen",
+        "description": "Two sisters navigate love and heartbreak in 19th-century England with clearer prose than Austen's later works.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/161/pg161.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/161/pg161.txt",
+        "language": "en", "cefr_level": "A2", "subject": "Romance", "topic": "Romance",
+        "chapter_count": 50, "word_count": 119000,
+    },
+    # ── B1 — Intermediate ────────────────────────────────────────
+    {
+        "id": "gutenberg-74", "source": "gutenberg",
+        "title": "The Adventures of Tom Sawyer", "author": "Mark Twain",
+        "description": "The story of a young boy growing up along the Mississippi River, exploring caves and getting into mischief.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/74/pg74.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/74/pg74.txt",
-        "language": "en",
-        "cefr_level": "B1",
-        "subject": "Adventure",
-        "chapter_count": 35,
-        "word_count": 70000,
+        "language": "en", "cefr_level": "B1", "subject": "Adventure", "topic": "Adventure",
+        "chapter_count": 35, "word_count": 70000,
     },
     {
-        "id": "gutenberg-1342",
-        "source": "gutenberg",
-        "title": "Pride and Prejudice",
-        "author": "Jane Austen",
-        "description": (
-            "A classic novel about manners, upbringing, morality, education, "
-            "and marriage in early 19th-century England."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739161-L.jpg",
+        "id": "gutenberg-1342", "source": "gutenberg",
+        "title": "Pride and Prejudice", "author": "Jane Austen",
+        "description": "A classic novel about manners, morality, and marriage in early 19th-century England.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt",
-        "language": "en",
-        "cefr_level": "B1",
-        "subject": "Romance",
-        "chapter_count": 61,
-        "word_count": 122000,
+        "language": "en", "cefr_level": "B1", "subject": "Romance", "topic": "Romance",
+        "chapter_count": 61, "word_count": 122000,
     },
     {
-        "id": "gutenberg-5200",
-        "source": "gutenberg",
-        "title": "Metamorphosis",
-        "author": "Franz Kafka",
-        "description": (
-            "Gregor Samsa wakes one morning to find he has transformed into a "
-            "monstrous insect. A profound short novel exploring alienation."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739154-L.jpg",
+        "id": "gutenberg-1661", "source": "gutenberg",
+        "title": "The Adventures of Sherlock Holmes", "author": "Arthur Conan Doyle",
+        "description": "Twelve gripping detective stories featuring the brilliant Sherlock Holmes and his faithful companion Dr. Watson.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/1661/pg1661.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/1661/pg1661.txt",
+        "language": "en", "cefr_level": "B1", "subject": "Mystery", "topic": "Mystery",
+        "chapter_count": 12, "word_count": 107000,
+    },
+    {
+        "id": "gutenberg-35", "source": "gutenberg",
+        "title": "The Time Machine", "author": "H. G. Wells",
+        "description": "A Victorian scientist builds a machine that carries him 800,000 years into the future.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/35/pg35.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/35/pg35.txt",
+        "language": "en", "cefr_level": "B1", "subject": "Science Fiction", "topic": "Science Fiction",
+        "chapter_count": 16, "word_count": 33000,
+    },
+    # ── B2 — Upper Intermediate ──────────────────────────────────
+    {
+        "id": "gutenberg-5200", "source": "gutenberg",
+        "title": "Metamorphosis", "author": "Franz Kafka",
+        "description": "Gregor Samsa wakes to find he has transformed into a monstrous insect — a profound exploration of alienation.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/5200/pg5200.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/5200/pg5200.txt",
-        "language": "en",
-        "cefr_level": "B2",
-        "subject": "Literary Fiction",
-        "chapter_count": 3,
-        "word_count": 22000,
+        "language": "en", "cefr_level": "B2", "subject": "Literary Fiction", "topic": "Fiction",
+        "chapter_count": 3, "word_count": 22000,
     },
     {
-        "id": "gutenberg-1080",
-        "source": "gutenberg",
-        "title": "A Modest Proposal",
-        "author": "Jonathan Swift",
-        "description": (
-            "A satirical essay suggesting the Irish eat their children as a "
-            "solution to economic problems — a masterclass in irony and argument."
-        ),
-        "cover_url": "https://covers.openlibrary.org/b/id/8739158-L.jpg",
+        "id": "gutenberg-98", "source": "gutenberg",
+        "title": "A Tale of Two Cities", "author": "Charles Dickens",
+        "description": "Set during the French Revolution, this novel follows characters whose lives are intertwined across London and Paris.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/98/pg98.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/98/pg98.txt",
+        "language": "en", "cefr_level": "B2", "subject": "Historical Fiction", "topic": "History",
+        "chapter_count": 45, "word_count": 135000,
+    },
+    {
+        "id": "gutenberg-174", "source": "gutenberg",
+        "title": "The Picture of Dorian Gray", "author": "Oscar Wilde",
+        "description": "A vain young man wishes his portrait would age instead of him — with devastating moral consequences.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/174/pg174.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/174/pg174.txt",
+        "language": "en", "cefr_level": "B2", "subject": "Gothic Fiction", "topic": "Fiction",
+        "chapter_count": 20, "word_count": 78000,
+    },
+    {
+        "id": "gutenberg-244", "source": "gutenberg",
+        "title": "A Study in Scarlet", "author": "Arthur Conan Doyle",
+        "description": "The first Sherlock Holmes novel — a murder mystery that introduces the famous detective and Dr. Watson.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/244/pg244.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/244/pg244.txt",
+        "language": "en", "cefr_level": "B2", "subject": "Mystery", "topic": "Mystery",
+        "chapter_count": 14, "word_count": 43000,
+    },
+    # ── C1 — Advanced ────────────────────────────────────────────
+    {
+        "id": "gutenberg-1080", "source": "gutenberg",
+        "title": "A Modest Proposal", "author": "Jonathan Swift",
+        "description": "A satirical essay suggesting the Irish eat their children — a masterclass in irony and persuasive argument.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/1080/pg1080.cover.medium.jpg",
         "download_url": "https://www.gutenberg.org/cache/epub/1080/pg1080.txt",
-        "language": "en",
-        "cefr_level": "C1",
-        "subject": "Essay",
-        "chapter_count": 1,
-        "word_count": 3700,
+        "language": "en", "cefr_level": "C1", "subject": "Essay", "topic": "Philosophy",
+        "chapter_count": 1, "word_count": 3700,
+    },
+    {
+        "id": "gutenberg-219", "source": "gutenberg",
+        "title": "Heart of Darkness", "author": "Joseph Conrad",
+        "description": "A sailor's voyage up the Congo River becomes a descent into colonial horror and moral ambiguity.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/219/pg219.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/219/pg219.txt",
+        "language": "en", "cefr_level": "C1", "subject": "Literary Fiction", "topic": "Fiction",
+        "chapter_count": 3, "word_count": 38000,
+    },
+    {
+        "id": "gutenberg-1399", "source": "gutenberg",
+        "title": "Anna Karenina", "author": "Leo Tolstoy",
+        "description": "A tragic portrait of Russian aristocracy — one of the greatest novels ever written about love and society.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/1399/pg1399.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/1399/pg1399.txt",
+        "language": "en", "cefr_level": "C1", "subject": "Literary Fiction", "topic": "Romance",
+        "chapter_count": 239, "word_count": 349000,
+    },
+    {
+        "id": "gutenberg-766", "source": "gutenberg",
+        "title": "David Copperfield", "author": "Charles Dickens",
+        "description": "Dickens' autobiographical masterpiece — the life of David Copperfield from childhood to maturity.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/766/pg766.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/766/pg766.txt",
+        "language": "en", "cefr_level": "C1", "subject": "Literary Fiction", "topic": "Fiction",
+        "chapter_count": 64, "word_count": 358000,
+    },
+    # ── C2 — Proficiency ─────────────────────────────────────────
+    {
+        "id": "gutenberg-2701", "source": "gutenberg",
+        "title": "Moby Dick", "author": "Herman Melville",
+        "description": "Captain Ahab's obsessive quest to hunt the great white whale — a monumental work of American literature.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/2701/pg2701.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/2701/pg2701.txt",
+        "language": "en", "cefr_level": "C2", "subject": "Literary Fiction", "topic": "Adventure",
+        "chapter_count": 135, "word_count": 206000,
+    },
+    {
+        "id": "gutenberg-2554", "source": "gutenberg",
+        "title": "Crime and Punishment", "author": "Fyodor Dostoevsky",
+        "description": "A student murders a pawnbroker and grapples with guilt, philosophy, and redemption in 19th-century St. Petersburg.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/2554/pg2554.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/2554/pg2554.txt",
+        "language": "en", "cefr_level": "C2", "subject": "Literary Fiction", "topic": "Fiction",
+        "chapter_count": 52, "word_count": 211000,
+    },
+    {
+        "id": "gutenberg-2600", "source": "gutenberg",
+        "title": "War and Peace", "author": "Leo Tolstoy",
+        "description": "An epic portrayal of Russian society during the Napoleonic Wars — one of the longest and most complex novels ever written.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/2600/pg2600.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/2600/pg2600.txt",
+        "language": "en", "cefr_level": "C2", "subject": "Historical Fiction", "topic": "History",
+        "chapter_count": 365, "word_count": 580000,
+    },
+    {
+        "id": "gutenberg-26", "source": "gutenberg",
+        "title": "Paradise Lost", "author": "John Milton",
+        "description": "An epic poem retelling the Biblical story of the Fall of Man — the pinnacle of English literary achievement.",
+        "cover_url": "https://www.gutenberg.org/cache/epub/26/pg26.cover.medium.jpg",
+        "download_url": "https://www.gutenberg.org/cache/epub/26/pg26.txt",
+        "language": "en", "cefr_level": "C2", "subject": "Poetry", "topic": "Poetry",
+        "chapter_count": 12, "word_count": 80000,
     },
 ]
 
@@ -173,43 +291,69 @@ CURATED_BOOKS = [
 # ── Helper Functions ──────────────────────────────────────────────
 
 def _estimate_cefr_from_description(text: str) -> str:
-    """Estimate CEFR level from text using word-length heuristics."""
+    """Estimate CEFR from sentence and word complexity (Flesch-Kincaid proxy)."""
     if not text:
         return "B1"
-
-    words = text.lower().split()
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
+    sentence_count = max(len(sentences), 1)
+    words = [w.strip(".,;:!?\"'()[]") for w in text.split()]
+    words = [w for w in words if w]
     word_count = len(words)
     if word_count == 0:
         return "B1"
-
-    avg_word_length = sum(len(w.strip(".,;!?\"'")) for w in words) / word_count
-    long_words = sum(1 for w in words if len(w.strip(".,;!?\"'")) > 8)
-    long_word_ratio = long_words / word_count
-
-    score = (avg_word_length - 3) * 12 + long_word_ratio * 60
-
-    if score < 8:
+    avg_word_len = sum(len(w) for w in words) / word_count
+    avg_sent_len = word_count / sentence_count
+    # Syllable proxy: words with 8+ chars ≈ 3+ syllables
+    complex_ratio = sum(1 for w in words if len(w) >= 8) / word_count
+    # Weighted score calibrated to CEFR ranges
+    score = avg_word_len * 4.8 + complex_ratio * 24.0 + avg_sent_len * 0.3
+    if score < 9:
         return "A1"
-    elif score < 18:
+    elif score < 15:
         return "A2"
-    elif score < 32:
+    elif score < 22:
         return "B1"
-    elif score < 50:
+    elif score < 31:
         return "B2"
-    elif score < 70:
+    elif score < 48:
         return "C1"
-    else:
-        return "C2"
+    return "C2"
 
 
 def _estimate_cefr_from_subjects(subjects: list) -> Optional[str]:
-    """Try to map book subjects/bookshelves to a CEFR level."""
+    """Try to map book subjects to a CEFR level (first specific match wins)."""
     for subject in subjects:
         normalized = subject.lower()
-        for keyword, level in _CEFR_BY_SUBJECT.items():
+        for keyword, level in _CEFR_BY_SUBJECT:
             if keyword in normalized:
                 return level
     return None
+
+
+# ── Topic / Genre normalization ────────────────────────────────────
+_TOPIC_MAP: list[tuple[str, str]] = [
+    ("children", "Children"), ("juvenile", "Children"),
+    ("fairy", "Fantasy"), ("fantasy", "Fantasy"), ("magic", "Fantasy"),
+    ("mystery", "Mystery"), ("detective", "Mystery"), ("crime", "Mystery"),
+    ("romance", "Romance"),
+    ("adventure", "Adventure"), ("travel", "Adventure"),
+    ("science fiction", "Science Fiction"), ("sci-fi", "Science Fiction"),
+    ("historical", "History"), ("history", "History"),
+    ("biography", "Biography"), ("autobiography", "Biography"), ("memoir", "Biography"),
+    ("philosophy", "Philosophy"), ("essay", "Philosophy"),
+    ("poetry", "Poetry"), ("poem", "Poetry"), ("verse", "Poetry"),
+    ("fiction", "Fiction"), ("novel", "Fiction"),
+]
+
+
+def _normalize_topic(subjects: list[str]) -> str:
+    """Map subjects list to a normalized genre label."""
+    for subject in subjects:
+        s = subject.lower()
+        for keyword, topic in _TOPIC_MAP:
+            if keyword in s:
+                return topic
+    return "Fiction"
 
 
 def _normalize_gutendex_book(book: dict) -> dict:
@@ -235,6 +379,7 @@ def _normalize_gutendex_book(book: dict) -> dict:
         download_url = f"https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt"
 
     cefr = _estimate_cefr_from_subjects(subjects) or _estimate_cefr_from_description(description)
+    topic = _normalize_topic(subjects)
 
     return {
         "id": f"gutenberg-{book.get('id', '')}",
@@ -248,6 +393,7 @@ def _normalize_gutendex_book(book: dict) -> dict:
         "cefr_level": cefr,
         "cefr_info": CEFR_LEVELS.get(cefr, {}),
         "subject": subjects[0] if subjects else "",
+        "topic": topic,
         "download_count": book.get("download_count", 0),
         "chapter_count": 0,
         "word_count": 0,
@@ -268,6 +414,7 @@ def _normalize_open_library_book(work: dict) -> dict:
     cefr = _estimate_cefr_from_subjects(subjects) or _estimate_cefr_from_description(
         description or work.get("title", "")
     )
+    topic = _normalize_topic(subjects)
 
     return {
         "id": f"ol-{ol_key}",
@@ -281,23 +428,26 @@ def _normalize_open_library_book(work: dict) -> dict:
         "cefr_level": cefr,
         "cefr_info": CEFR_LEVELS.get(cefr, {}),
         "subject": subjects[0] if subjects else "",
+        "topic": topic,
         "download_count": work.get("edition_count", 0),
         "chapter_count": work.get("number_of_pages_median", 0),
         "word_count": 0,
     }
 
 
-async def _fetch_books(q: str, page: int) -> dict:
+async def _fetch_books(q: str, page: int, topic: Optional[str] = None) -> dict:
     """Fetch books from Gutendex and Open Library, merge, deduplicate."""
     books: list[dict] = []
 
     async with httpx.AsyncClient(timeout=12.0) as client:
-        # Gutendex
+        # Gutendex — supports both ?search= and ?topic= natively
         try:
-            resp = await client.get(
-                GUTENDEX_BASE,
-                params={"search": q, "mime_type": "text%2F", "page": page},
-            )
+            gutendex_params: dict = {"mime_type": "text%2F", "page": page, "languages": "en"}
+            if q:
+                gutendex_params["search"] = q
+            if topic:
+                gutendex_params["topic"] = topic
+            resp = await client.get(GUTENDEX_BASE, params=gutendex_params)
             if resp.status_code == 200:
                 for book in resp.json().get("results", []):
                     if "en" in book.get("languages", []):
@@ -358,6 +508,7 @@ async def get_recommended_books(
 async def search_books(
     q: str = Query(..., min_length=2, description="Search query"),
     level: Optional[str] = Query(None, description="CEFR level filter"),
+    topic: Optional[str] = Query(None, description="Genre filter (Fiction/Fantasy/Mystery/etc.)"),
     page: int = Query(1, ge=1, description="Page number"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -373,14 +524,14 @@ async def search_books(
             detail=f"Invalid CEFR level. Valid: {list(CEFR_LEVELS.keys())}",
         )
 
-    cache_key = f"books:search:{q.lower().strip()}:p:{page}"
+    cache_key = f"books:search:{q.lower().strip()}:t:{topic or 'all'}:p:{page}"
     cache_service = APICacheService(db)
 
     try:
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
             api_name="gutendex",
-            fetch_fn=lambda: _fetch_books(q=q, page=page),
+            fetch_fn=lambda: _fetch_books(q=q, page=page, topic=topic),
             priority=Priority.MEDIUM,
             redis_ttl=86400,    # 24 hours
             db_ttl=604800,      # 7 days
@@ -391,6 +542,9 @@ async def search_books(
         # Filter by CEFR level if requested
         if level:
             books = [b for b in books if b.get("cefr_level") == level.upper()]
+        # Filter by genre/topic if requested
+        if topic:
+            books = [b for b in books if b.get("topic", "").lower() == topic.lower()]
 
         return {
             "books": books,
@@ -417,6 +571,73 @@ async def search_books(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Book search service temporarily unavailable.",
+        )
+
+
+# ── Browse defaults per CEFR level ───────────────────────────────
+LEVEL_DEFAULT_TOPICS = {
+    "A1": "children",
+    "A2": "adventure",
+    "B1": "fiction",
+    "B2": "historical",
+    "C1": "philosophy",
+    "C2": "classic",
+}
+
+
+@router.get("/browse", summary="Browse books by CEFR level with lazy pagination")
+async def browse_books(
+    level: str = Query(..., description="CEFR level: A1/A2/B1/B2/C1/C2"),
+    page: int = Query(1, ge=1, description="Page number"),
+    topic: Optional[str] = Query(None, description="Genre override"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Browse public-domain books by CEFR level with index-based pagination.
+
+    Used by the Flutter app to lazy-load additional books as the user
+    scrolls to the end of a level section. Cached 24h (Redis) + 7d (DB).
+    """
+    level = level.upper()
+    if level not in CEFR_LEVELS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid level. Valid: {list(CEFR_LEVELS.keys())}",
+        )
+
+    search_topic = topic or LEVEL_DEFAULT_TOPICS.get(level, "fiction")
+    cache_key = f"books:browse:{level.lower()}:t:{search_topic.lower()}:p:{page}"
+    cache_service = APICacheService(db)
+
+    try:
+        result = await cache_service.get_or_fetch(
+            cache_key=cache_key,
+            api_name="gutendex",
+            fetch_fn=lambda: _fetch_books(q="", page=page, topic=search_topic),
+            priority=Priority.LOW,
+            redis_ttl=86400,
+            db_ttl=604800,
+        )
+        books: list[dict] = result.data.get("books", [])
+        return {
+            "books": books,
+            "level": level,
+            "page": page,
+            "topic": search_topic,
+            "total": len(books),
+            "source": result.source,
+        }
+    except QuotaExhaustedError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e),
+            headers={"Retry-After": e.reset_time},
+        )
+    except Exception as e:
+        logger.error("Book browse error: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Book browse service temporarily unavailable.",
         )
 
 

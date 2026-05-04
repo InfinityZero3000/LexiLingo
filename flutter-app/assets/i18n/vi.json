@@ -226,7 +226,10 @@
     "enrollFailed": "Đăng ký thất bại",
     "discoverCourses": "Khám phá khóa học",
     "filterCourses": "Lọc khóa học",
-    "noCourses": "Chưa có khóa học trong danh mục này"
+    "noCourses": "Chưa có khóa học trong danh mục này",
+    "durationMin": "{count} phút",
+    "totalLessonsCount": "{count} bài học",
+    "userProgressPercent": "{percent}% Hoàn thành"
   },
   "lesson": {
     "sessionTitle": "Học tập",
@@ -581,7 +584,12 @@
     "noTransactions": "Chưa có giao dịch",
     "rankWeekly": "Hạng #{rank} · {xp} XP tuần này",
     "earned": "Đã kiếm",
-    "spent": "Đã dùng"
+    "spent": "Đã dùng",
+    "earnTipCompleteLessons": "Hoàn thành bài học",
+    "earnTipFinishCourse": "Hoàn thành khoá học",
+    "earnTipStreakBonus": "Thưởng chuỗi ngày liên tiếp",
+    "earnTipAchievements": "Mở khóa thành tích",
+    "earnTipChallenges": "Thử thách hàng tuần"
   },
   "social": {
     "friends": "Bạn bè",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "Bài kiểm tra không có sẵn.",
     "backToBook": "Quay lại sách",
     "readerSettings": "Cài đặt đọc",
-    "pageProgress": "Trang {current} / {total}"
+    "pageProgress": "Trang {current} / {total}",
+    "searchPlaceholder": "Tìm sách theo tên hoặc tác giả..."
   },
   "news": {
     "title": "Tin tức tiếng Anh",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "Bạn biết từ này đến đâu?",
     "flashcard": "Thẻ ghi nhớ",
     "tapToRevealDefinition": "Chạm để hiện định nghĩa",
-    "vietnameseLabel": "Tiếng Việt"
+    "vietnameseLabel": "Tiếng Việt",
+    "searchPlaceholder": "Tìm kiếm từ vựng...",
+    "filterAll": "Tất cả",
+    "filterTravel": "Du lịch",
+    "filterBusiness": "Kinh doanh",
+    "filterDaily": "Hàng ngày",
+    "recentWordsHeader": "TỪ VỰNG GẦN ĐÂY",
+    "wordLabel": "Từ vựng",
+    "wordInputHint": "vd: resilient",
+    "definitionHint": "Từ này có nghĩa là gì?",
+    "exampleSentenceLabel": "Câu ví dụ (tuỳ chọn)",
+    "exampleSentenceHint": "vd: Cô ấy rất kiên cường trước nghịch cảnh.",
+    "failedToSaveWord": "Không thể lưu từ vựng"
   }
 }

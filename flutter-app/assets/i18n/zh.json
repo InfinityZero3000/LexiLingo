@@ -226,7 +226,10 @@
     "enrollFailed": "报名失败",
     "discoverCourses": "探索课程",
     "filterCourses": "筛选课程",
-    "noCourses": "该类别还没有课程"
+    "noCourses": "该类别还没有课程",
+    "durationMin": "{count} 分钟",
+    "totalLessonsCount": "{count} 课程",
+    "userProgressPercent": "{percent}% 完成"
   },
   "lesson": {
     "sessionTitle": "学习",
@@ -581,7 +584,12 @@
     "noTransactions": "还没有交易",
     "rankWeekly": "本周排名 #{rank} · {xp} XP",
     "earned": "赢得",
-    "spent": "花费"
+    "spent": "花费",
+    "earnTipCompleteLessons": "完成课程",
+    "earnTipFinishCourse": "完成一门课程",
+    "earnTipStreakBonus": "每日连续奖励",
+    "earnTipAchievements": "解锁成就",
+    "earnTipChallenges": "每周挑战"
   },
   "social": {
     "friends": "好友",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "测验不可用。",
     "backToBook": "返回预订",
     "readerSettings": "读卡器设置",
-    "pageProgress": "{total} 的页面 {current}"
+    "pageProgress": "{total} 的页面 {current}",
+    "searchPlaceholder": "按标题或作者搜索..."
   },
   "news": {
     "title": "英文新闻",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "您对这个词的了解程度如何？",
     "flashcard": "抽认卡",
     "tapToRevealDefinition": "点击以显示定义",
-    "vietnameseLabel": "越南语"
+    "vietnameseLabel": "越南语",
+    "searchPlaceholder": "搜索词汇...",
+    "filterAll": "全部",
+    "filterTravel": "旅行",
+    "filterBusiness": "商务",
+    "filterDaily": "日常",
+    "recentWordsHeader": "最近单词",
+    "wordLabel": "词汇",
+    "wordInputHint": "例：resilient",
+    "definitionHint": "这个词是什么意思？",
+    "exampleSentenceLabel": "例句（可选）",
+    "exampleSentenceHint": "例：She was resilient in the face of adversity.",
+    "failedToSaveWord": "保存词汇失败"
   }
 }

@@ -21,7 +21,7 @@ class TtsSettingsProvider extends ChangeNotifier {
 
   /// Get speed label for display
   String get speedLabel {
-    if (_playbackSpeed == 1.0) return 'Normal';
+    if (_playbackSpeed == 1.0) return '1x';
     return '${_playbackSpeed}x';
   }
 

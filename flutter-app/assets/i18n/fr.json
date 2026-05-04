@@ -226,7 +226,10 @@
     "enrollFailed": "Échec de l'inscription",
     "discoverCourses": "Découvrez les cours",
     "filterCourses": "Filtrer les cours",
-    "noCourses": "Aucun cours dans cette catégorie pour l'instant"
+    "noCourses": "Aucun cours dans cette catégorie pour l'instant",
+    "durationMin": "{count} min",
+    "totalLessonsCount": "{count} leçons",
+    "userProgressPercent": "{percent}% Complété"
   },
   "lesson": {
     "sessionTitle": "Apprentissage",
@@ -581,7 +584,12 @@
     "noTransactions": "Aucune transaction pour l'instant",
     "rankWeekly": "Rang # {rank} · {xp} XP cette semaine",
     "earned": "Gagné",
-    "spent": "Dépensé"
+    "spent": "Dépensé",
+    "earnTipCompleteLessons": "Terminer les leçons",
+    "earnTipFinishCourse": "Terminer un cours",
+    "earnTipStreakBonus": "Bonus de série quotidienne",
+    "earnTipAchievements": "Débloquer des succès",
+    "earnTipChallenges": "Défis hebdomadaires"
   },
   "social": {
     "friends": "Amis",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "Quiz non disponible.",
     "backToBook": "Retour au livre",
     "readerSettings": "Paramètres du lecteur",
-    "pageProgress": "Page {current} de {total}"
+    "pageProgress": "Page {current} de {total}",
+    "searchPlaceholder": "Rechercher par titre ou auteur..."
   },
   "news": {
     "title": "Actualités en anglais",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "Dans quelle mesure connaissiez-vous ce mot ?",
     "flashcard": "Flashcard",
     "tapToRevealDefinition": "Appuyez pour révéler la définition",
-    "vietnameseLabel": "Vietnamien"
+    "vietnameseLabel": "Vietnamien",
+    "searchPlaceholder": "Rechercher des mots...",
+    "filterAll": "Tous",
+    "filterTravel": "Voyage",
+    "filterBusiness": "Affaires",
+    "filterDaily": "Quotidien",
+    "recentWordsHeader": "MOTS RÉCENTS",
+    "wordLabel": "Mot",
+    "wordInputHint": "ex. resilient",
+    "definitionHint": "Que signifie ce mot ?",
+    "exampleSentenceLabel": "Phrase d'exemple (optionnel)",
+    "exampleSentenceHint": "ex. She was resilient in the face of adversity.",
+    "failedToSaveWord": "Impossible d'enregistrer le mot"
   }
 }

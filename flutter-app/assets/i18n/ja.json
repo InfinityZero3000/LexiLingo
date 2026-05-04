@@ -226,7 +226,10 @@
     "enrollFailed": "登録に失敗しました",
     "discoverCourses": "コースを発見する",
     "filterCourses": "コースをフィルターする",
-    "noCourses": "このカテゴリにはまだコースがありません"
+    "noCourses": "このカテゴリにはまだコースがありません",
+    "durationMin": "{count} 分",
+    "totalLessonsCount": "{count} レッスン",
+    "userProgressPercent": "{percent}% 完了"
   },
   "lesson": {
     "sessionTitle": "学習",
@@ -581,7 +584,12 @@
     "noTransactions": "まだ取引はありません",
     "rankWeekly": "今週のランク #{rank} · {xp} XP",
     "earned": "獲得した",
-    "spent": "過ごした"
+    "spent": "過ごした",
+    "earnTipCompleteLessons": "レッスンを完了する",
+    "earnTipFinishCourse": "コースを完了する",
+    "earnTipStreakBonus": "デイリーストリークボーナス",
+    "earnTipAchievements": "実績を解除する",
+    "earnTipChallenges": "ウィークリーチャレンジ"
   },
   "social": {
     "friends": "友達",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "クイズは利用できません。",
     "backToBook": "本に戻る",
     "readerSettings": "リーダーの設定",
-    "pageProgress": "ページ {current}/{total}"
+    "pageProgress": "ページ {current}/{total}",
+    "searchPlaceholder": "タイトルまたは著者で検索..."
   },
   "news": {
     "title": "英語ニュース",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "あなたはこの言葉をどれくらい知っていましたか？",
     "flashcard": "フラッシュカード",
     "tapToRevealDefinition": "タップして定義を表示します",
-    "vietnameseLabel": "ベトナム語"
+    "vietnameseLabel": "ベトナム語",
+    "searchPlaceholder": "単語を検索...",
+    "filterAll": "すべて",
+    "filterTravel": "旅行",
+    "filterBusiness": "ビジネス",
+    "filterDaily": "日常",
+    "recentWordsHeader": "最近の単語",
+    "wordLabel": "単語",
+    "wordInputHint": "例：resilient",
+    "definitionHint": "この単語の意味は？",
+    "exampleSentenceLabel": "例文（任意）",
+    "exampleSentenceHint": "例：She was resilient in the face of adversity.",
+    "failedToSaveWord": "単語の保存に失敗しました"
   }
 }

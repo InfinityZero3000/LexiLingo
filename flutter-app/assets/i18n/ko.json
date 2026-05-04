@@ -226,7 +226,10 @@
     "enrollFailed": "등록하지 못했습니다.",
     "discoverCourses": "강좌 살펴보기",
     "filterCourses": "강좌 필터링",
-    "noCourses": "이 카테고리에는 아직 강좌가 없습니다."
+    "noCourses": "이 카테고리에는 아직 강좌가 없습니다.",
+    "durationMin": "{count} 분",
+    "totalLessonsCount": "{count} 레슨",
+    "userProgressPercent": "{percent}% 완료"
   },
   "lesson": {
     "sessionTitle": "학습",
@@ -581,7 +584,12 @@
     "noTransactions": "아직 거래가 없습니다.",
     "rankWeekly": "이번 주 순위 #{rank} · {xp} XP",
     "earned": "획득",
-    "spent": "지출"
+    "spent": "지출",
+    "earnTipCompleteLessons": "레슨 완료하기",
+    "earnTipFinishCourse": "강좌 완료하기",
+    "earnTipStreakBonus": "일일 연속 보너스",
+    "earnTipAchievements": "도전과제 달성하기",
+    "earnTipChallenges": "주간 챌린지"
   },
   "social": {
     "friends": "친구",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "퀴즈를 이용할 수 없습니다.",
     "backToBook": "예약으로 돌아가기",
     "readerSettings": "리더 설정",
-    "pageProgress": "{total} 중 {current} 페이지"
+    "pageProgress": "{total} 중 {current} 페이지",
+    "searchPlaceholder": "제목 또는 저자로 검색..."
   },
   "news": {
     "title": "영어 뉴스",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "이 단어를 얼마나 잘 알고 계셨나요?",
     "flashcard": "플래시카드",
     "tapToRevealDefinition": "정의를 보려면 탭하세요.",
-    "vietnameseLabel": "베트남어"
+    "vietnameseLabel": "베트남어",
+    "searchPlaceholder": "단어 검색...",
+    "filterAll": "전체",
+    "filterTravel": "여행",
+    "filterBusiness": "비즈니스",
+    "filterDaily": "일상",
+    "recentWordsHeader": "최근 단어",
+    "wordLabel": "단어",
+    "wordInputHint": "예: resilient",
+    "definitionHint": "이 단어의 뜻은?",
+    "exampleSentenceLabel": "예문 (선택 사항)",
+    "exampleSentenceHint": "예: She was resilient in the face of adversity.",
+    "failedToSaveWord": "단어 저장에 실패했습니다"
   }
 }
