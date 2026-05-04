@@ -18,7 +18,7 @@ pydantic-settings>=2.1.0
 google-generativeai>=0.3.0
 
 # CORS and Security
-python-jose[cryptography]>=3.3.0
+python-jose[cryptography]>=3.5.0
 passlib[bcrypt]>=1.7.4
 
 # Environment
