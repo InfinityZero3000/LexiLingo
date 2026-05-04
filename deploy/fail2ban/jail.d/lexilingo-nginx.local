@@ -1,31 +1,47 @@
 [DEFAULT]
 banaction = ufw
-findtime = 600
-bantime = 3600
-maxretry = 8
+findtime  = 600
+bantime   = 3600
+maxretry  = 8
 
 [sshd]
-enabled = true
-port = ssh
-logpath = /var/log/auth.log
-backend = systemd
+enabled  = true
+port     = ssh
+logpath  = /var/log/auth.log
+backend  = systemd
 maxretry = 5
-findtime = 600
-bantime = 3600
+findtime = 300
+bantime  = 86400
 
 [nginx-http-auth]
-enabled = true
-port = http,https
-logpath = /opt/lexilingo/gateway/nginx/logs/error.log
+enabled  = true
+port     = http,https
+logpath  = /opt/lexilingo/gateway/nginx/logs/error.log
 maxretry = 5
 findtime = 600
-bantime = 3600
+bantime  = 3600
 
+# ---------------------------------------------------------------------------
+# Block IPs that trigger repeated 429 rate-limit errors or probe scanner paths
+# ---------------------------------------------------------------------------
 [nginx-429-abuse]
-enabled = true
-port = http,https
-filter = nginx-429-abuse
-logpath = /opt/lexilingo/gateway/nginx/logs/security.log
-maxretry = 12
+enabled  = true
+port     = http,https
+filter   = nginx-429-abuse
+logpath  = /opt/lexilingo/gateway/nginx/logs/security.log
+maxretry = 8
 findtime = 300
-bantime = 3600
+bantime  = 86400
+
+# ---------------------------------------------------------------------------
+# Block IPs that flood 404 responses (directory/path scanners)
+# 30 × 404 within 5 minutes → banned for 24 h
+# ---------------------------------------------------------------------------
+[nginx-404-flood]
+enabled  = true
+port     = http,https
+filter   = nginx-404-flood
+logpath  = /opt/lexilingo/gateway/nginx/logs/security.log
+maxretry = 30
+findtime = 300
+bantime  = 86400

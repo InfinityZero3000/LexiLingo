@@ -6,7 +6,7 @@ Supports filtering, pagination, and user-specific data (enrollment, progress).
 """
 
 from typing import List, Optional
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, func, and_, or_, text
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
@@ -77,8 +77,11 @@ class CourseCRUD:
         total_result = await db.execute(count_query)
         total = total_result.scalar()
         
-        # Get paginated results
-        query = query.order_by(Course.created_at.desc()).offset(skip).limit(limit)
+        # Get paginated results — seed/curated courses first, then crawled
+        query = query.order_by(
+            text("CASE WHEN tags @> '[\"seed\"]'::jsonb THEN 0 ELSE 1 END"),
+            Course.created_at.asc()
+        ).offset(skip).limit(limit)
         result = await db.execute(query)
         courses = result.scalars().all()
         
