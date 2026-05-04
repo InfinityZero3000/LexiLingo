@@ -2,55 +2,72 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "02:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "github-actions"
 
   - package-ecosystem: "pip"
     directory: "/backend-service"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "02:30"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "backend"
 
   - package-ecosystem: "pip"
     directory: "/ai-service"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "03:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "ai-service"
 
   - package-ecosystem: "npm"
     directory: "/admin-service"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "03:30"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "admin-service"
 
   - package-ecosystem: "npm"
     directory: "/flutter-app"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "04:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "flutter-app"
