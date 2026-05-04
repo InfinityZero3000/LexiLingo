@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
@@ -32,48 +33,48 @@ class SettingsProvider extends ChangeNotifier {
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
 
-  /// Available languages with emoji flags
+  /// Available languages for settings selection.
   /// Must match supported locales in EasyLocalization (assets/i18n/*.json)
   static const List<Map<String, String>> availableLanguages = [
-    {'code': 'vi', 'name': 'Tiếng Việt', 'flag': '🇻🇳'},
-    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
-    {'code': 'ja', 'name': '日本語', 'flag': '🇯🇵'},
-    {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
-    {'code': 'zh', 'name': '中文', 'flag': '🇨🇳'},
-    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
-    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
+    {'code': 'vi', 'name': 'Tiếng Việt'},
+    {'code': 'en', 'name': 'English'},
+    {'code': 'ja', 'name': '日本語'},
+    {'code': 'ko', 'name': '한국어'},
+    {'code': 'zh', 'name': '中文'},
+    {'code': 'fr', 'name': 'Français'},
+    {'code': 'es', 'name': 'Español'},
   ];
 
   /// Daily goal presets with IconData
   static final List<Map<String, dynamic>> dailyGoalPresets = [
     {
       'xp': 10,
-      'label': 'Casual',
-      'description': '5 minutes/day',
+      'label': 'settings.goal_casual_label',
+      'description': 'settings.goal_casual_description',
       'icon': Icons.eco,
     },
     {
       'xp': 30,
-      'label': 'Regular',
-      'description': '10 minutes/day',
+      'label': 'settings.goal_regular_label',
+      'description': 'settings.goal_regular_description',
       'icon': Icons.menu_book,
     },
     {
       'xp': 50,
-      'label': 'Serious',
-      'description': '15 minutes/day',
+      'label': 'settings.goal_serious_label',
+      'description': 'settings.goal_serious_description',
       'icon': Icons.local_fire_department,
     },
     {
       'xp': 100,
-      'label': 'Intense',
-      'description': '30 minutes/day',
+      'label': 'settings.goal_intense_label',
+      'description': 'settings.goal_intense_description',
       'icon': Icons.fitness_center,
     },
     {
       'xp': 200,
-      'label': 'Insane',
-      'description': '1 hour/day',
+      'label': 'settings.goal_insane_label',
+      'description': 'settings.goal_insane_description',
       'icon': Icons.emoji_events,
     },
   ];
@@ -85,22 +86,37 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    // Read the locally-saved locale before touching settings so we can honour
+    // a language the user picked (e.g. on the welcome screen) even when the
+    // stored settings still carry the entity default ('en').
+    final savedLocale = await LocaleService.getSavedLocale();
+
     try {
       final result = await _repository.getSettings(userId);
       result.fold(
         (failure) {
           _error = failure.message;
-          // Create default settings if not found
-          _settings = Settings(id: 0, userId: userId);
+          // Create default settings seeded with the locally-chosen locale.
+          _settings = Settings(id: 0, userId: userId, language: savedLocale);
         },
         (settings) {
-          _settings = settings.copyWith(theme: _normalizeTheme(settings.theme));
+          // If the stored language is still the entity default ('en') but the
+          // user has explicitly selected a different locale locally, honour
+          // their local choice instead of overriding it.
+          final effectiveLang =
+              (settings.language == 'en' && savedLocale != 'en')
+                  ? savedLocale
+                  : settings.language;
+          _settings = settings.copyWith(
+            theme: _normalizeTheme(settings.theme),
+            language: effectiveLang,
+          );
         },
       );
     } catch (e) {
       _error = e.toString();
       // Keep settings usable even if cached payload is malformed.
-      _settings = Settings(id: 0, userId: userId);
+      _settings = Settings(id: 0, userId: userId, language: savedLocale);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -302,13 +318,9 @@ class SettingsProvider extends ChangeNotifier {
     return lang['name'] ?? 'English';
   }
 
-  /// Get current language flag (country code)
+  /// Get current language flag country code.
   String get currentLanguageFlag {
-    final lang = availableLanguages.firstWhere(
-      (l) => l['code'] == language,
-      orElse: () => availableLanguages.first,
-    );
-    return lang['flag'] ?? 'US';
+    return AppLocales.flagCodeOf(language).toUpperCase();
   }
 
   /// Get current goal label

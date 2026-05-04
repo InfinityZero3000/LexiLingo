@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -67,17 +68,17 @@ class _SocialScreenState extends State<SocialScreen>
     final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text('social.friends'.tr()),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           labelColor: primaryColor,
           unselectedLabelColor: AppColors.textGrey,
           indicatorColor: primaryColor,
-          tabs: const [
-            Tab(text: 'Feed'),
-            Tab(text: 'Followers'),
-            Tab(text: 'Following'),
+          tabs: [
+            Tab(text: 'social.feedTab'.tr()),
+            Tab(text: 'social.followersTab'.tr()),
+            Tab(text: 'social.followingTab'.tr()),
           ],
         ),
       ),
@@ -176,20 +177,20 @@ class _SocialScreenState extends State<SocialScreen>
         children: [
           Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
           const SizedBox(height: 16),
-          const Text(
-            'No activity yet',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            'social.noActivityYet'.tr(),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'Follow friends to see their activity!',
+            'social.followFriendsToSeeActivity'.tr(),
             style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _showSearchSheet,
             icon: const Icon(Icons.person_add),
-            label: const Text('Find Friends'),
+            label: Text('social.findFriends'.tr()),
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               foregroundColor: AppColors.surfaceLight,
@@ -218,7 +219,7 @@ class _SocialScreenState extends State<SocialScreen>
                 Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
 
                 const SizedBox(height: 16),
-                const Text('No followers yet'),
+                Text('social.noFollowersYet'.tr()),
               ],
             ),
           );
@@ -259,12 +260,12 @@ class _SocialScreenState extends State<SocialScreen>
               children: [
                 Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
                 const SizedBox(height: 16),
-                const Text('Not following anyone yet'),
+                Text('social.notFollowingAnyone'.tr()),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: _showSearchSheet,
                   icon: const Icon(Icons.person_add),
-                  label: const Text('Find Friends'),
+                  label: Text('social.findFriends'.tr()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColorRoles.primary(
                       Theme.of(context).brightness == Brightness.dark,
@@ -302,10 +303,20 @@ class _SocialScreenState extends State<SocialScreen>
   Future<void> _toggleFollow(UserSocialProfileEntity user) async {
     final provider = context.read<SocialProvider>();
 
+    final String? error;
     if (user.isFollowing) {
-      await provider.unfollowUser(user.userId);
+      error = await provider.unfollowUser(user.userId);
     } else {
-      await provider.followUser(user.userId);
+      error = await provider.followUser(user.userId);
+    }
+
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -354,7 +365,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
               Icon(Icons.auto_awesome, color: primaryColor, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Suggested Friends',
+                'social.suggestedFriends'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColorRoles.textPrimary(isDark),
@@ -365,7 +376,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
                 onPressed: isLoading ? null : () => onRefresh(limit: 10),
                 icon: const Icon(Icons.refresh, size: 18),
                 color: primaryColor,
-                tooltip: 'Refresh suggestions',
+                tooltip: 'social.refreshSuggestions'.tr(),
               ),
             ],
           ),
@@ -378,7 +389,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'No suggestions right now',
+                'social.noSuggestionsNow'.tr(),
                 style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               ),
             )
@@ -405,13 +416,16 @@ class _SuggestedFriendsSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text(
-                    user.suggestionReasons.take(2).join(' • '),
+                    user.suggestionReasons
+                        .take(2)
+                        .map(_formatSuggestionReason)
+                        .join(' • '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   trailing: TextButton(
                     onPressed: () => onFollowToggle(user),
-                    child: Text(user.isFollowing ? 'Following' : 'Follow'),
+                    child: Text(user.isFollowing ? 'social.following'.tr() : 'social.follow'.tr()),
                   ),
                 );
               }).toList(),
@@ -420,6 +434,19 @@ class _SuggestedFriendsSection extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSuggestionReason(String reason) {
+  const map = {
+    'same_cefr': 'social.sameLevel',
+    'similar_xp': 'social.similarXp',
+    'same_target_language': 'social.sameTargetLanguage',
+    'same_native_language': 'social.sameNativeLanguage',
+    'mutual_friends': 'social.mutualFriends',
+    'nearby': 'social.nearbyReason',
+  };
+  final key = map[reason];
+  return key != null ? key.tr() : reason;
 }
 
 class _NearbyLearnersSection extends StatelessWidget {
@@ -468,7 +495,7 @@ class _NearbyLearnersSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Nearby Learners',
+                'social.nearbyLearners'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColorRoles.textPrimary(isDark),
@@ -479,7 +506,7 @@ class _NearbyLearnersSection extends StatelessWidget {
                 IconButton(
                   onPressed: isLoading ? null : onDisable,
                   icon: const Icon(Icons.location_disabled, size: 18),
-                  tooltip: 'Disable nearby',
+                  tooltip: 'social.disableNearby'.tr(),
                   color: AppColorRoles.textMuted(isDark),
                 ),
               IconButton(
@@ -488,7 +515,7 @@ class _NearbyLearnersSection extends StatelessWidget {
                     : () => onRefresh(limit: 10, radiusKm: 25),
                 icon: const Icon(Icons.refresh, size: 18),
                 color: primaryColor,
-                tooltip: 'Refresh nearby',
+                tooltip: 'social.refreshNearby'.tr(),
               ),
             ],
           ),
@@ -509,7 +536,7 @@ class _NearbyLearnersSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'Enable location permission to discover learners nearby',
+                'social.enableLocationNearby'.tr(),
                 style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               ),
             )
@@ -517,7 +544,7 @@ class _NearbyLearnersSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'No nearby learners found in your area right now',
+                'social.noNearbyLearners'.tr(),
                 style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               ),
             )
@@ -526,7 +553,7 @@ class _NearbyLearnersSection extends StatelessWidget {
               children: users.take(5).map((user) {
                 final distance = user.distanceKm != null
                     ? '${user.distanceKm!.toStringAsFixed(1)} km'
-                    : 'Nearby';
+                    : 'social.nearbyReason'.tr();
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
@@ -555,7 +582,7 @@ class _NearbyLearnersSection extends StatelessWidget {
                   ),
                   trailing: TextButton(
                     onPressed: () => onFollowToggle(user),
-                    child: Text(user.isFollowing ? 'Following' : 'Follow'),
+                    child: Text(user.isFollowing ? 'social.following'.tr() : 'social.follow'.tr()),
                   ),
                 );
               }).toList(),
@@ -722,10 +749,10 @@ class _ActivityFeedCard extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return 'datetime.justNow'.tr();
+    if (diff.inHours < 1) return 'datetime.minutesAgo'.tr(namedArgs: {'minutes': diff.inMinutes.toString()});
+    if (diff.inDays < 1) return 'datetime.hoursAgo'.tr(namedArgs: {'hours': diff.inHours.toString()});
+    if (diff.inDays < 7) return 'datetime.daysAgo'.tr(namedArgs: {'days': diff.inDays.toString()});
     return DateFormat('MMM d').format(date);
   }
 }
@@ -842,8 +869,8 @@ class _UserProfileCard extends StatelessWidget {
               ),
               child: Text(
                 user.isFollowing
-                    ? (showUnfollow ? 'Unfollow' : 'Following')
-                    : 'Follow',
+                    ? (showUnfollow ? 'social.unfollow'.tr() : 'social.following'.tr())
+                    : 'social.follow'.tr(),
                 style: TextStyle(
                   color: user.isFollowing
                       ? AppColorRoles.textSecondary(isDark)
@@ -922,16 +949,16 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                const Text(
-                  'Find Friends',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  'social.findFriends'.tr(),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 // Search field
                 TextField(
                   controller: _controller,
                   decoration: InputDecoration(
-                    hintText: 'Search by username or name',
+                    hintText: 'social.searchByUsername'.tr(),
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: isDark
@@ -975,7 +1002,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                         Icon(Icons.search, size: 48, color: AppColors.grey400),
                         const SizedBox(height: 16),
                         Text(
-                          'Search for friends',
+                          'social.searchForFriends'.tr(),
                           style: TextStyle(
                             color: AppColorRoles.textMuted(isDark),
                           ),
@@ -997,7 +1024,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No users found',
+                          'social.noUsersFound'.tr(),
                           style: TextStyle(
                             color: AppColorRoles.textMuted(isDark),
                           ),

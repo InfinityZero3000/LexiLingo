@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -22,20 +23,6 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _flagsReady = false;
 
-  static const Map<String, String> _flagImageByLanguage = {
-    'vi': 'https://flagcdn.com/w80/vn.png',
-    'en': 'https://flagcdn.com/w80/us.png',
-    'ja': 'https://flagcdn.com/w80/jp.png',
-    'ko': 'https://flagcdn.com/w80/kr.png',
-  };
-
-  static const Map<String, String> _flagLabelByLanguage = {
-    'vi': 'VN',
-    'en': 'US',
-    'ja': 'JP',
-    'ko': 'KR',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -55,7 +42,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _precacheFlagImages(BuildContext context) async {
-    for (final imageUrl in _flagImageByLanguage.values) {
+    for (final locale in AppLocales.supportedLocales) {
+      final imageUrl = AppLocales.flagPngUrlOf(locale.languageCode);
       try {
         await precacheImage(CachedNetworkImageProvider(imageUrl), context);
       } catch (_) {
@@ -68,10 +56,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildFlagWidget(BuildContext context, String languageCode) {
-    final imageUrl = _flagImageByLanguage[languageCode];
-    if (imageUrl == null) {
-      return _buildFlagFallback(context, languageCode);
-    }
+    final imageUrl = AppLocales.flagPngUrlOf(languageCode);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
@@ -91,14 +76,19 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildFlagSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sp = context.read<SettingsProvider>();
+    final isDark = sp.theme == 'dark' ||
+        (sp.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final label =
-        _flagLabelByLanguage[languageCode] ?? languageCode.toUpperCase();
+    final sp = context.read<SettingsProvider>();
+    final isDark = sp.theme == 'dark' ||
+        (sp.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
 
     return Container(
       width: 28,
@@ -113,7 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+          color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
         ),
       ),
     );
@@ -254,7 +244,10 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sp = context.read<SettingsProvider>();
+    final isDark = sp.theme == 'dark' ||
+        (sp.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
@@ -295,7 +288,9 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = settings.theme == 'dark' ||
+        (settings.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -333,7 +328,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       Text(
-                        settings.currentGoalLabel,
+                        settings.currentGoalLabel.tr(),
                         style: TextStyle(
                           color: Theme.of(
                             context,
@@ -393,14 +388,14 @@ class _SettingsPageState extends State<SettingsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  goal['label'] as String,
+                                  (goal['label'] as String).tr(),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: isSelected ? primaryColor : null,
                                   ),
                                 ),
                                 Text(
-                                  goal['description'] as String,
+                                  (goal['description'] as String).tr(),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColorRoles.textMuted(isDark),
@@ -439,7 +434,9 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = settings.theme == 'dark' ||
+        (settings.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -509,7 +506,9 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = settings.theme == 'dark' ||
+        (settings.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -591,7 +590,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSoundSettings(BuildContext context, SettingsProvider settings) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = settings.theme == 'dark' ||
+        (settings.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -620,7 +621,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = settings.theme == 'dark' ||
+        (settings.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     final themes = [
       {
@@ -715,7 +718,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAccountSection(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sp = context.read<SettingsProvider>();
+    final isDark = sp.theme == 'dark' ||
+        (sp.theme == 'system' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final primaryColor = AppColorRoles.primary(isDark);
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
@@ -726,7 +732,7 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withValues(alpha: 0.05),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

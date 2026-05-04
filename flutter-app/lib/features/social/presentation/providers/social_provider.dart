@@ -1,27 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/features/social/data/repositories/social_repository.dart';
 import 'package:lexilingo_app/features/social/domain/entities/social_entities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Social Provider
 /// Manages followers, following, and activity feed state
 class SocialProvider extends ChangeNotifier {
-  late final ApiClient _apiClient;
+  final SocialRepository _repo;
 
-  SocialProvider() {
-    _apiClient = sl<ApiClient>();
-  }
-
-  bool _isSuccessResponse(Map<String, dynamic> response) {
-    final success = response['success'];
-    return success is bool ? success : true;
-  }
-
-  dynamic _extractData(Map<String, dynamic> response) {
-    return response.containsKey('data') ? response['data'] : response;
-  }
+  SocialProvider({required SocialRepository repository})
+      : _repo = repository;
 
   // ============== Activity Feed State ==============
   List<ActivityFeedItemEntity> _activityFeed = [];
@@ -58,6 +47,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> _suggestedUsers = [];
   bool _isLoadingSuggestions = false;
   String? _suggestionsError;
+  bool _hasMoreSuggestions = true;
 
   // ============== Nearby Users State (Phase 2) ==============
   List<UserSocialProfileEntity> _nearbyUsers = [];
@@ -72,6 +62,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> get suggestedUsers => _suggestedUsers;
   bool get isLoadingSuggestions => _isLoadingSuggestions;
   String? get suggestionsError => _suggestionsError;
+  bool get hasMoreSuggestions => _hasMoreSuggestions;
   List<UserSocialProfileEntity> get nearbyUsers => _nearbyUsers;
   bool get isLoadingNearby => _isLoadingNearby;
   String? get nearbyError => _nearbyError;
@@ -92,24 +83,14 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _activityFeed.length;
-      final response = await _apiClient.get(
-        '/gamification/feed?limit=20&offset=$offset',
-      );
+      final result = await _repo.getActivityFeed(limit: 20, offset: offset);
 
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        final activities = (data['activities'] as List? ?? [])
-            .map((e) => ActivityFeedItemEntity.fromJson(e))
-            .toList();
-
-        if (refresh) {
-          _activityFeed = activities;
-        } else {
-          _activityFeed.addAll(activities);
-        }
-
-        _hasMoreFeed = data['has_more'] ?? activities.length >= 20;
+      if (refresh) {
+        _activityFeed = result.activities;
+      } else {
+        _activityFeed.addAll(result.activities);
       }
+      _hasMoreFeed = result.hasMore;
     } catch (e) {
       _feedError = e.toString();
       debugPrint('Error loading activity feed: $e');
@@ -129,23 +110,15 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _followers.length;
-      final response = await _apiClient.get(
-        '/gamification/users/$userId/followers?limit=50&offset=$offset',
-      );
+      final result =
+          await _repo.getFollowers(userId, limit: 50, offset: offset);
 
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        final users = (data['users'] as List? ?? [])
-            .map((e) => UserSocialProfileEntity.fromJson(e))
-            .toList();
-
-        if (refresh) {
-          _followers = users;
-        } else {
-          _followers.addAll(users);
-        }
-        _followersCount = data['total'] ?? _followers.length;
+      if (refresh) {
+        _followers = result.users;
+      } else {
+        _followers.addAll(result.users);
       }
+      _followersCount = result.total;
     } catch (e) {
       debugPrint('Error loading followers: $e');
     } finally {
@@ -163,23 +136,15 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _following.length;
-      final response = await _apiClient.get(
-        '/gamification/users/$userId/following?limit=50&offset=$offset',
-      );
+      final result =
+          await _repo.getFollowing(userId, limit: 50, offset: offset);
 
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        final users = (data['users'] as List? ?? [])
-            .map((e) => UserSocialProfileEntity.fromJson(e))
-            .toList();
-
-        if (refresh) {
-          _following = users;
-        } else {
-          _following.addAll(users);
-        }
-        _followingCount = data['total'] ?? _following.length;
+      if (refresh) {
+        _following = result.users;
+      } else {
+        _following.addAll(result.users);
       }
+      _followingCount = result.total;
     } catch (e) {
       debugPrint('Error loading following: $e');
     } finally {
@@ -189,39 +154,28 @@ class SocialProvider extends ChangeNotifier {
   }
 
   // ============== Follow/Unfollow Methods ==============
-  Future<bool> followUser(String userId) async {
-    try {
-      final response = await _apiClient.post(
-        '/gamification/users/$userId/follow',
-      );
 
-      if (_isSuccessResponse(response)) {
-        // Update local state
-        _updateFollowState(userId, true);
-        return true;
-      }
-      return false;
+  /// Returns `null` on success, or an error message string to show as SnackBar.
+  Future<String?> followUser(String userId) async {
+    try {
+      await _repo.followUser(userId);
+      _updateFollowState(userId, true);
+      return null;
     } catch (e) {
       debugPrint('Error following user: $e');
-      return false;
+      return e.toString();
     }
   }
 
-  Future<bool> unfollowUser(String userId) async {
+  /// Returns `null` on success, or an error message string to show as SnackBar.
+  Future<String?> unfollowUser(String userId) async {
     try {
-      // Using POST with action parameter since DELETE not available
-      final response = await _apiClient.post(
-        '/gamification/users/$userId/unfollow',
-      );
-
-      if (_isSuccessResponse(response)) {
-        _updateFollowState(userId, false);
-        return true;
-      }
-      return false;
+      await _repo.unfollowUser(userId);
+      _updateFollowState(userId, false);
+      return null;
     } catch (e) {
       debugPrint('Error unfollowing user: $e');
-      return false;
+      return e.toString();
     }
   }
 
@@ -283,16 +237,7 @@ class SocialProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiClient.get(
-        '/users/search?q=${Uri.encodeQueryComponent(query)}&limit=20',
-      );
-
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is List) {
-        _searchResults = data
-            .map((e) => UserSocialProfileEntity.fromJson(e))
-            .toList();
-      }
+      _searchResults = await _repo.searchUsers(query);
     } catch (e) {
       debugPrint('Error searching users: $e');
       _searchResults = [];
@@ -308,26 +253,28 @@ class SocialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadSuggestedUsers({int limit = 10}) async {
+  Future<void> loadSuggestedUsers({int limit = 10, bool refresh = false}) async {
     if (_isLoadingSuggestions) return;
 
     _isLoadingSuggestions = true;
     _suggestionsError = null;
+    if (refresh) {
+      _suggestedUsers = [];
+      _hasMoreSuggestions = true;
+    }
     notifyListeners();
 
     try {
-      final response = await _apiClient.get(
-        '/gamification/users/suggestions?limit=$limit',
-      );
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        final users = (data['users'] as List? ?? [])
-            .map((e) => UserSocialProfileEntity.fromJson(e))
-            .toList();
+      final offset = refresh ? 0 : _suggestedUsers.length;
+      final users =
+          await _repo.getSuggestions(limit: limit, offset: offset);
+
+      if (refresh) {
         _suggestedUsers = users;
       } else {
-        _suggestionsError = 'Invalid suggestions payload';
+        _suggestedUsers.addAll(users);
       }
+      _hasMoreSuggestions = users.length >= limit;
     } catch (e) {
       _suggestionsError = e.toString();
       debugPrint('Error loading friend suggestions: $e');
@@ -354,19 +301,10 @@ class SocialProvider extends ChangeNotifier {
         return;
       }
 
-      final response = await _apiClient.get(
-        '/gamification/users/nearby?limit=$limit&radius_km=$radiusKm',
-      );
-      final data = _extractData(response);
-      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        final users = (data['users'] as List? ?? [])
-            .map((e) => UserSocialProfileEntity.fromJson(e))
-            .toList();
-        _nearbyUsers = users;
-        _isNearbyEnabled = data['location_enabled'] ?? users.isNotEmpty;
-      } else {
-        _nearbyError = 'Invalid nearby payload';
-      }
+      final result =
+          await _repo.getNearbyUsers(limit: limit, radiusKm: radiusKm);
+      _nearbyUsers = result.users;
+      _isNearbyEnabled = result.locationEnabled;
     } catch (e) {
       _nearbyError = e.toString();
       debugPrint('Error loading nearby users: $e');
@@ -378,10 +316,7 @@ class SocialProvider extends ChangeNotifier {
 
   Future<void> disableNearbySharing() async {
     try {
-      await _apiClient.post(
-        '/gamification/users/location',
-        body: {'enabled': false},
-      );
+      await _repo.updateLocation(enabled: false);
       _isNearbyEnabled = false;
       _nearbyUsers = [];
       _nearbyError = null;
@@ -395,9 +330,7 @@ class SocialProvider extends ChangeNotifier {
 
   Future<bool> _syncLocationAndCheckPermission() async {
     final locationPermission = await Permission.locationWhenInUse.request();
-    if (!locationPermission.isGranted) {
-      return false;
-    }
+    if (!locationPermission.isGranted) return false;
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -412,14 +345,11 @@ class SocialProvider extends ChangeNotifier {
       ),
     );
 
-    await _apiClient.post(
-      '/gamification/users/location',
-      body: {
-        'enabled': true,
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'accuracy_meters': position.accuracy,
-      },
+    await _repo.updateLocation(
+      enabled: true,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      accuracyMeters: position.accuracy,
     );
 
     return true;

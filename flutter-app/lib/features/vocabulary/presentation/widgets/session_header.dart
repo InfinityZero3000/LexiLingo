@@ -36,7 +36,7 @@ class SessionHeader extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: session.progress,
                     minHeight: 8,
-                    backgroundColor: AppColors.textGrey.withValues(alpha: 0.2),
+                    backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       AppColors.primary,
                     ),
@@ -46,10 +46,10 @@ class SessionHeader extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 '${session.reviewedCards}/${session.totalCards}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textGrey,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -83,7 +83,7 @@ class SessionHeader extends StatelessWidget {
                 icon: Icons.pending,
                 label: 'Remaining',
                 value: '${session.remainingCards}',
-                color: AppColors.textGrey,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -124,7 +124,7 @@ class _StatItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textGrey.withValues(alpha: 0.7),
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           ),
         ),
       ],

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +49,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Create New Password'),
+      title: Text('auth.createNewPassword'.tr()),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -65,7 +66,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Set a new password',
+                      'auth.setNewPassword'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -76,7 +77,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Use the reset token from your email and choose a new password.',
+                      'auth.useResetToken'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
@@ -89,7 +90,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       controller: _tokenController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: 'Reset token',
+                        labelText: 'auth.resetToken'.tr(),
                         prefixIcon: const Icon(Icons.vpn_key_outlined),
                         filled: true,
                         fillColor: isDark
@@ -101,7 +102,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter the reset token';
+                          return 'auth.pleaseEnterResetToken'.tr();
                         }
                         return null;
                       },
@@ -111,7 +112,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       controller: _newPasswordController,
                       obscureText: !_isNewPasswordVisible,
                       decoration: InputDecoration(
-                        labelText: 'New password',
+                        labelText: 'auth.newPassword'.tr(),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -135,10 +136,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter new password';
+                          return 'auth.pleaseEnterNewPassword'.tr();
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return 'auth.passwordMinLength'.tr();
                         }
                         return null;
                       },
@@ -148,7 +149,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       controller: _confirmPasswordController,
                       obscureText: !_isConfirmPasswordVisible,
                       decoration: InputDecoration(
-                        labelText: 'Confirm new password',
+                        labelText: 'auth.confirmNewPassword'.tr(),
                         prefixIcon: const Icon(Icons.lock_reset),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -173,10 +174,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please confirm new password';
+                          return 'auth.pleaseConfirmNewPassword'.tr();
                         }
                         if (value != _newPasswordController.text) {
-                          return 'Passwords do not match';
+                          return 'auth.passwordMismatch'.tr();
                         }
                         return null;
                       },
@@ -201,9 +202,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                 if (success) {
                                   setState(() => _isResetDone = true);
                                   messenger.showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text(
-                                        'Password updated successfully. Please login again.',
+                                        'auth.passwordUpdatedSuccess'.tr(),
                                       ),
                                     ),
                                   );
@@ -223,8 +224,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                 width: 20,
                                 child: LottieLoadingWidget.tiny(),
                               )
-                            : const Text(
-                                'Update Password',
+                            : Text(
+                                'auth.updatePassword'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -240,7 +241,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             context,
                           ).popUntil((route) => route.isFirst);
                         },
-                        child: const Text('Back to login'),
+                        child: Text('auth.backToLogin'.tr()),
                       ),
                     ],
                     if (authProvider.errorMessage != null) ...[

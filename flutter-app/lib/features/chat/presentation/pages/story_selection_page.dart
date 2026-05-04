@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -74,14 +75,14 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Conversation Topics',
+                      'storySelection.pageTitle'.tr(),
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
                     Text(
-                      '$total topics available',
+                      'storySelection.topicsAvailableCount'.tr(namedArgs: {'total': '$total'}),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
                             ? AppColors.textMuted
@@ -156,7 +157,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
         decoration: InputDecoration(
           isDense: true,
-          hintText: 'Search topics...',
+          hintText: 'storySelection.searchHint'.tr(),
           hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
           prefixIcon: Icon(
             Icons.search,
@@ -180,7 +181,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       child: Row(
         children: [
           _buildChip(
-            'All',
+            'storySelection.filterAll'.tr(),
             _selectedDifficulty == null,
             () {
               setState(() => _selectedDifficulty = null);
@@ -190,7 +191,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
           const SizedBox(width: 8),
           _buildChip(
-            'Beginner',
+            'storySelection.filterBeginner'.tr(),
             _selectedDifficulty == DifficultyLevel.A1 ||
                 _selectedDifficulty == DifficultyLevel.A2,
             () {
@@ -201,7 +202,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
           const SizedBox(width: 8),
           _buildChip(
-            'Intermediate',
+            'storySelection.filterIntermediate'.tr(),
             _selectedDifficulty == DifficultyLevel.B1 ||
                 _selectedDifficulty == DifficultyLevel.B2,
             () {
@@ -212,7 +213,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
           const SizedBox(width: 8),
           _buildChip(
-            'Advanced',
+            'storySelection.filterAdvanced'.tr(),
             _selectedDifficulty == DifficultyLevel.C1 ||
                 _selectedDifficulty == DifficultyLevel.C2,
             () {
@@ -296,7 +297,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Popular Scenarios',
+                  'storySelection.popularScenariosTitle'.tr(),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -304,7 +305,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                   ),
                 ),
                 Text(
-                  'See all',
+                  'storySelection.seeAllLink'.tr(),
                   style: TextStyle(
                     color: isDark
                         ? AppColorRoles.primary(isDark)
@@ -341,7 +342,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No topics found',
+            'storySelection.noTopicsFound'.tr(),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColorRoles.textSecondary(isDark),

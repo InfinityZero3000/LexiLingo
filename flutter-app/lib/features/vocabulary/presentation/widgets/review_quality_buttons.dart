@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
@@ -34,9 +35,9 @@ class ReviewQualityButtons extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'How well did you know this?',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Text(
+            'flashcard.howWellDidYouKnow'.tr(),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
 
@@ -45,8 +46,8 @@ class ReviewQualityButtons extends StatelessWidget {
             children: [
               Expanded(
                 child: _QualityButton(
-                  label: 'Again',
-                  subLabel: 'Hard',
+                  label: 'flashcard.again'.tr(),
+                  subLabel: 'flashcard.hardDifficulty'.tr(),
                   color: AppColors.errorBright,
                   quality: ReviewQuality.hard,
                   onPressed: isLoading ? null : onQualitySelected,
@@ -55,8 +56,8 @@ class ReviewQualityButtons extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _QualityButton(
-                  label: 'Good',
-                  subLabel: 'Medium',
+                  label: 'flashcard.goodDifficulty'.tr(),
+                  subLabel: 'flashcard.mediumDifficulty'.tr(),
                   color: AppColors.orange,
                   quality: ReviewQuality.good,
                   onPressed: isLoading ? null : onQualitySelected,
@@ -65,8 +66,8 @@ class ReviewQualityButtons extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _QualityButton(
-                  label: 'Easy',
-                  subLabel: 'Perfect!',
+                  label: 'flashcard.easyDifficulty'.tr(),
+                  subLabel: 'flashcard.perfectDifficulty'.tr(),
                   color: AppColors.greenSuccessBright,
                   quality: ReviewQuality.easy,
                   onPressed: isLoading ? null : onQualitySelected,
@@ -86,9 +87,9 @@ class ReviewQualityButtons extends StatelessWidget {
                     ? null
                     : () => onQualitySelected(ReviewQuality.blackout),
                 child: Text(
-                  'Blackout (0)',
+                  'flashcard.blackout'.tr(),
                   style: TextStyle(
-                    color: AppColors.textGrey.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -98,9 +99,9 @@ class ReviewQualityButtons extends StatelessWidget {
                     ? null
                     : () => onQualitySelected(ReviewQuality.perfect),
                 child: Text(
-                  'Perfect (5)',
+                  'flashcard.perfectFive'.tr(),
                   style: TextStyle(
-                    color: AppColors.textGrey.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),

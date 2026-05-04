@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -249,7 +250,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No courses in this category yet',
+                          'course.noCourses'.tr(),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(color: Colors.grey[600]),
                         ),

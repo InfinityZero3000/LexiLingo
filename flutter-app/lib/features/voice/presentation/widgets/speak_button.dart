@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -111,7 +112,7 @@ class _SpeakButtonState extends State<SpeakButton> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to play: ${e.toString()}'),
+            content: Text('voice.playError'.tr(namedArgs: {'error': e.toString()})),
             backgroundColor: AppColors.errorBright,
             duration: const Duration(seconds: 2),
           ),

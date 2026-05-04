@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 
@@ -71,7 +72,7 @@ class TtsSpeedSelector extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Playback Speed',
+              'voice.playbackSpeed'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
@@ -125,7 +126,7 @@ class TtsSpeedSelector extends StatelessWidget {
                 const Icon(Icons.speed, size: 24),
                 const SizedBox(width: 12),
                 Text(
-                  'TTS Playback Speed',
+                  'voice.playbackSpeed'.tr(),
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -134,7 +135,7 @@ class TtsSpeedSelector extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Adjust the speed of text-to-speech audio playback',
+              'voice.playbackSpeedDescription'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -236,9 +237,9 @@ class TtsSpeedButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Select Playback Speed',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'voice.selectPlaybackSpeed'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Wrap(

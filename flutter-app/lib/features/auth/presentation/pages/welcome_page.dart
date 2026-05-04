@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
@@ -61,18 +62,23 @@ class _WelcomePageState extends State<WelcomePage>
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF30E8E8,
-                          ).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
+                      GestureDetector(
+                        onTap: () => LanguageSwitcherButton.showLanguageSheet(
+                          context,
                         ),
-                        child: const Icon(
-                          Icons.language,
-                          color: AppColors.accentMint,
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF30E8E8).withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.language,
+                            color: AppColors.accentMint,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -87,7 +93,7 @@ class _WelcomePageState extends State<WelcomePage>
                           ),
                         ),
                       ),
-                      const LanguageSwitcherButton(),
+                      const SizedBox(width: 40),
                     ],
                   ),
                 ),
@@ -113,7 +119,7 @@ class _WelcomePageState extends State<WelcomePage>
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Welcome to LexiLingo',
+                          'onboarding.welcome'.tr(),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -124,7 +130,7 @@ class _WelcomePageState extends State<WelcomePage>
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'AI English tutor: The fun and effective way to master English conversation.',
+                          'app.tagline'.tr(),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDark
@@ -139,8 +145,8 @@ class _WelcomePageState extends State<WelcomePage>
                           child: ElevatedButton.icon(
                             onPressed: widget.onGetStarted,
                             icon: const Icon(Icons.arrow_forward),
-                            label: const Text(
-                              'Get Started',
+                            label: Text(
+                              'onboarding.getStarted'.tr(),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -164,8 +170,8 @@ class _WelcomePageState extends State<WelcomePage>
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'I already have an account',
+                            child: Text(
+                              'auth.alreadyHaveAccount'.tr(),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -174,9 +180,17 @@ class _WelcomePageState extends State<WelcomePage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildStatItem(context, 'Active Users', '50k+'),
+                            _buildStatItem(
+                              context,
+                              'onboarding.activeUsers'.tr(),
+                              '50k+',
+                            ),
                             const SizedBox(width: 20),
-                            _buildStatItem(context, 'Daily Lessons', '12k+'),
+                            _buildStatItem(
+                              context,
+                              'onboarding.dailyLessons'.tr(),
+                              '12k+',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
@@ -199,7 +213,7 @@ class _WelcomePageState extends State<WelcomePage>
                               ),
                             ),
                             Text(
-                              'Join a global community',
+                              'onboarding.globalCommunity'.tr(),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.textMuted

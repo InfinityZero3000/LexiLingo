@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'dart:ui';
-import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -20,9 +20,9 @@ import 'package:lexilingo_app/features/social/social.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/learning_stats_pages.dart';
+import 'package:lexilingo_app/features/user/domain/entities/weekly_activity_entity.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
-import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -84,9 +84,11 @@ class _ProfilePageState extends State<ProfilePage>
     await proficiencyProvider.loadProfile();
   }
 
-  String _formatMemberSince(DateTime? createdAt) {
-    if (createdAt == null) return 'Member';
-    return 'Member since ${DateFormat('MMM yyyy').format(createdAt)}';
+  String _formatMemberSince(BuildContext context, DateTime? createdAt) {
+    if (createdAt == null) return 'profile.member'.tr();
+    return 'profile.memberSince'.tr(
+      namedArgs: {'date': DateFormat('MMM yyyy').format(createdAt)},
+    );
   }
 
   @override
@@ -120,13 +122,13 @@ class _ProfilePageState extends State<ProfilePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Profile',
+                  'profile.title'.tr(),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  _formatMemberSince(user?.createdAt),
+                  _formatMemberSince(context, user?.createdAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textSecondary(isDark),
                   ),
@@ -137,11 +139,6 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         automaticallyImplyLeading: false,
         actions: [
-          // Language switcher
-          const Padding(
-            padding: EdgeInsets.only(right: 4),
-            child: Center(child: LanguageSwitcherButton()),
-          ),
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
@@ -187,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           IconButton(
             icon: Icon(Icons.mic_rounded, color: accent),
-            tooltip: 'Voice Practice',
+            tooltip: 'voice.pronunciation'.tr(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -251,7 +248,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.store,
-            label: 'Shop',
+            label: 'profile.shop'.tr(),
             color: AppColors.orange,
             gradient: AppColors.warmGradient,
             onTap: () => Navigator.push(
@@ -263,7 +260,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.leaderboard,
-            label: 'Ranks',
+            label: 'profile.ranks'.tr(),
             color: AppColors.greenSuccess,
             gradient: AppColors.successGradient,
             onTap: () => Navigator.push(
@@ -275,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.people,
-            label: 'Friends',
+            label: 'profile.friends'.tr(),
             color: AppColorRoles.primary(
               Theme.of(context).brightness == Brightness.dark,
             ),
@@ -291,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage>
           _buildQuickActionButton(
             context,
             icon: Icons.insights_rounded,
-            label: 'Progress',
+            label: 'profile.progress'.tr(),
             color: AppColors.purple,
             gradient: AppColors.purpleGradient,
             onTap: () => Navigator.push(
@@ -506,7 +503,7 @@ class _ProfilePageState extends State<ProfilePage>
                         const SizedBox(height: 20),
                         // User Name
                         Text(
-                          user?.displayName ?? 'Guest User',
+                          user?.displayName ?? 'profile.guestUser'.tr(),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
@@ -565,7 +562,11 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Level ${lp.displayLevel}',
+                                      'profile.level'.tr(
+                                        namedArgs: {
+                                          'level': '${lp.displayLevel}',
+                                        },
+                                      ),
                                       style: TextStyle(
                                         color: AppColors.surfaceLight,
                                         fontWeight: FontWeight.bold,
@@ -641,7 +642,7 @@ class _ProfilePageState extends State<ProfilePage>
                         const SizedBox(height: 8),
                         // Member Since
                         Text(
-                          _formatMemberSince(user?.createdAt),
+                          _formatMemberSince(context, user?.createdAt),
                           style: const TextStyle(
                             color: AppColors.grey600,
                             fontSize: 12,
@@ -690,7 +691,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Edit Profile',
+                                  'profile.editProfile'.tr(),
                                   style: TextStyle(
                                     color: AppColors.surfaceLight,
                                     fontWeight: FontWeight.bold,
@@ -727,7 +728,7 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             AnimatedSocialStat(
               value: '${stats?.totalVocabularyMastered ?? 0}',
-              label: 'Words',
+              label: 'profile.words'.tr(),
               icon: Icons.spellcheck_rounded,
               color: AppColors.greenSuccessBright,
             ),
@@ -738,7 +739,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             AnimatedSocialStat(
               value: '${stats?.totalLessonsCompleted ?? 0}',
-              label: 'Lessons',
+              label: 'profile.lessons'.tr(),
               icon: Icons.menu_book,
               color: AppColorRoles.primary(
                 Theme.of(context).brightness == Brightness.dark,
@@ -751,7 +752,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             AnimatedSocialStat(
               value: '${stats?.currentStreak ?? 0}',
-              label: 'Day Streak',
+              label: 'profile.dayStreak'.tr(),
               icon: Icons.local_fire_department,
               color: AppColors.dangerGradient[0],
             ),
@@ -796,35 +797,56 @@ class _ProfilePageState extends State<ProfilePage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Level $level  →  Level ${level + 1}',
+                    'profile.levelRange'.tr(
+                      namedArgs: {
+                        'level': '$level',
+                        'nextLevel': '${level + 1}',
+                      },
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '$xpIn / $xpFor XP',
+                    'profile.xpProgress'.tr(
+                      namedArgs: {'current': '$xpIn', 'total': '$xpFor'},
+                    ),
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              AnimatedProgressBar(
-                progress: progress,
-                primaryColor: AppColorRoles.primaryGradient(isDark)[0],
-                secondaryColor: AppColorRoles.primaryGradient(isDark)[1],
-                height: 12,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.18),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColorRoles.primary(isDark),
+                  ),
+                  minHeight: 12,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${xpFor - xpIn} XP to Level ${level + 1}',
-                    style: const TextStyle(
-                      color: AppColors.textGrey,
+                    'profile.xpToNextLevel'.tr(
+                      namedArgs: {
+                        'xp': '${xpFor - xpIn}',
+                        'level': '${level + 1}',
+                      },
+                    ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
                   Text(
-                    '${(progress * 100).toStringAsFixed(0)}% complete',
+                    'profile.percentComplete'.tr(
+                      namedArgs: {
+                        'percent': (progress * 100).toStringAsFixed(0),
+                      },
+                    ),
                     style: TextStyle(
                       color: AppColorRoles.primary(isDark),
                       fontSize: 12,
@@ -888,7 +910,7 @@ class _ProfilePageState extends State<ProfilePage>
                   Icon(Icons.insights_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Learning Stats',
+                    'profile.learningStats'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -906,9 +928,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.abc,
                           color: primaryColor,
-                          title: 'Lessons',
+                          title: 'profile.lessons'.tr(),
                           value: '$lessonsCompleted',
-                          subtitle: 'completed',
+                          subtitle: 'profile.completed'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -934,9 +956,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.school,
                           color: primaryColor,
-                          title: 'Courses',
+                          title: 'profile.courses'.tr(),
                           value: '$coursesCompleted',
-                          subtitle: 'finished',
+                          subtitle: 'profile.finished'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -966,9 +988,9 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.auto_stories,
                           color: primaryColor,
-                          title: 'Vocabulary',
+                          title: 'profile.vocabulary'.tr(),
                           value: '$vocabularyMastered',
-                          subtitle: 'mastered',
+                          subtitle: 'profile.mastered'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -995,11 +1017,15 @@ class _ProfilePageState extends State<ProfilePage>
                         child: GlassmorphicStatCard(
                           icon: Icons.quiz,
                           color: primaryColor,
-                          title: 'Tests',
+                          title: 'profile.tests'.tr(),
                           value: '$testsPassed',
                           subtitle: avgScore > 0
-                              ? '${avgScore.toStringAsFixed(0)}% avg'
-                              : 'passed',
+                              ? 'profile.averagePercent'.tr(
+                                  namedArgs: {
+                                    'percent': avgScore.toStringAsFixed(0),
+                                  },
+                                )
+                              : 'profile.passed'.tr(),
                           valueInRightCircle: true,
                           valueCircleSize: 40,
                           valueCircleFontSize: 18,
@@ -1039,7 +1065,7 @@ class _ProfilePageState extends State<ProfilePage>
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            'Learning Stats',
+            'profile.learningStats'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -1068,6 +1094,18 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  void _showWeeklyActivityDetail(
+    BuildContext context,
+    List<WeeklyActivityEntity> activities,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _WeeklyActivityDetailSheet(activities: activities),
+    );
+  }
+
   Widget _buildWeeklyActivity(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
@@ -1085,17 +1123,35 @@ class _ProfilePageState extends State<ProfilePage>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text(
-                    'Weekly Activity',
+                    'profile.weeklyActivity'.tr(),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  Text(
-                    'Last 7 Days',
-                    style: TextStyle(
-                      color: AppColors.textGrey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                  GestureDetector(
+                    onTap: activities.isNotEmpty
+                        ? () => _showWeeklyActivityDetail(context, activities)
+                        : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'profile.last7Days'.tr(),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (activities.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -1115,7 +1171,7 @@ class _ProfilePageState extends State<ProfilePage>
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           activityError == null || activityError.isEmpty
-                              ? 'No activity data yet'
+                              ? 'profile.noActivityDataYet'.tr()
                               : activityError,
                           style: const TextStyle(color: AppColors.grey600),
                           textAlign: TextAlign.center,
@@ -1190,19 +1246,19 @@ class _ProfilePageState extends State<ProfilePage>
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildActivityStat(
-                              'Total XP',
+                              'profile.totalXp'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
                               Icons.star,
                               AppColors.warning,
                             ),
                             _buildActivityStat(
-                              'Lessons',
+                              'profile.lessons'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.lessonsCompleted)}',
                               Icons.menu_book,
                               AppColorRoles.primary(isDark),
                             ),
                             _buildActivityStat(
-                              'Words',
+                              'profile.words'.tr(),
                               '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
                               Icons.abc,
                               AppColors.greenSuccessBright,
@@ -1255,7 +1311,7 @@ class _ProfilePageState extends State<ProfilePage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recent Badges',
+                    'profile.recentBadges'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -1269,7 +1325,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                       );
                     },
-                    child: const Text('View All'),
+                    child: Text('achievements.viewAll'.tr()),
                   ),
                 ],
               ),
@@ -1338,7 +1394,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete lessons to earn badges!',
+            'profile.completeLessonsToEarnBadges'.tr(),
             style: const TextStyle(color: AppColors.grey600, fontSize: 12),
           ),
         ],
@@ -1463,5 +1519,393 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class _WeeklyActivityDetailSheet extends StatelessWidget {
+  final List<WeeklyActivityEntity> activities;
+
+  const _WeeklyActivityDetailSheet({required this.activities});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = AppColorRoles.primary(isDark);
+
+    final totalXP = activities.fold<int>(0, (s, a) => s + a.xpEarned);
+    final totalLessons = activities.fold<int>(0, (s, a) => s + a.lessonsCompleted);
+    final totalWords = activities.fold<int>(0, (s, a) => s + a.vocabularyLearned);
+    final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.grey400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'profile.weeklyActivity'.tr(),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'profile.last7DaysDetailedBreakdown'.tr(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.06),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Summary row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    _SummaryChip(
+                      icon: Icons.star,
+                      color: AppColors.warning,
+                      label: 'profile.xpValue'.tr(namedArgs: {'xp': '$totalXP'}),
+                      sublabel: 'profile.total'.tr(),
+                    ),
+                    const SizedBox(width: 8),
+                    _SummaryChip(
+                      icon: Icons.menu_book,
+                      color: primary,
+                      label: '$totalLessons',
+                      sublabel: 'profile.lessons'.tr(),
+                    ),
+                    const SizedBox(width: 8),
+                    _SummaryChip(
+                      icon: Icons.abc,
+                      color: AppColors.greenSuccessBright,
+                      label: '$totalWords',
+                      sublabel: 'profile.words'.tr(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Day list
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final a = activities[index];
+                    final isBest = a.xpEarned == maxXP && maxXP > 0;
+                    final barFraction = maxXP > 0 ? a.xpEarned / maxXP : 0.0;
+
+                    DateTime? parsedDate = DateTime.tryParse(a.date);
+                    final String dayName = parsedDate != null
+                        ? DateFormat('EEEE').format(parsedDate)
+                        : a.date;
+                    final String shortDate = parsedDate != null
+                        ? DateFormat('MMM d').format(parsedDate)
+                        : '';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isBest
+                            ? primary.withValues(alpha: isDark ? 0.15 : 0.08)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.black.withValues(alpha: 0.03)),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isBest
+                              ? primary.withValues(alpha: 0.4)
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      dayName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (shortDate.isNotEmpty) ...[  
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        shortDate,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (isBest)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.warning.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.emoji_events,
+                                        size: 12,
+                                        color: AppColors.warning,
+                                      ),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'profile.bestDay'.tr(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.warning,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // XP bar
+                          if (a.xpEarned > 0) ...[  
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: barFraction,
+                                      backgroundColor:
+                                          primary.withValues(alpha: 0.12),
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(primary),
+                                      minHeight: 6,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'profile.xpValue'.tr(
+                                    namedArgs: {'xp': '${a.xpEarned}'},
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          // Stats chips
+                          Row(
+                            children: [
+                              if (a.xpEarned == 0)
+                                Text(
+                                  'profile.noActivity'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                )
+                              else ...[  
+                                _MiniStat(
+                                  icon: Icons.menu_book,
+                                  color: primary,
+                                  value: 'profile.lessonsCount'.tr(
+                                    namedArgs: {
+                                      'count': '${a.lessonsCompleted}',
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                _MiniStat(
+                                  icon: Icons.abc,
+                                  color: AppColors.greenSuccessBright,
+                                  value: 'profile.wordsCount'.tr(
+                                    namedArgs: {
+                                      'count': '${a.vocabularyLearned}',
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Bottom safe area
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String sublabel;
+
+  const _SummaryChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.sublabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  sublabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String value;
+
+  const _MiniStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
   }
 }

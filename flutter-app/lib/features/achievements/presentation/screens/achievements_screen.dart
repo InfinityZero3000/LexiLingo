@@ -1,6 +1,7 @@
 /// Achievements Screen - Display all achievements and user progress
 library;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -37,19 +38,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Achievements'),
+        title: Text('achievements.title'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
-            tooltip: 'Refresh',
+            tooltip: 'achievements.refresh'.tr(),
           ),
         ],
       ),
       body: Consumer<AchievementProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const LoadingScreen(message: 'Loading achievements...');
+            return LoadingScreen(message: 'achievements.loadingAchievements'.tr());
           }
 
           if (provider.error != null) {
@@ -63,7 +64,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadData,
-                    child: const Text('Retry'),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
@@ -136,7 +137,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Your Progress',
+                    'achievements.yourProgress'.tr(),
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
@@ -144,7 +145,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$unlocked / $total Achievements',
+                    'achievements.unlockedCount'.tr(namedArgs: {'unlocked': '$unlocked', 'total': '$total'}),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.white70,
                     ),
@@ -234,27 +235,27 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     switch (category.toLowerCase()) {
       case 'lesson':
       case 'lessons':
-        return 'Lessons';
+        return 'achievements.categoryLessons'.tr();
       case 'streak':
-        return 'Streaks';
+        return 'achievements.categoryStreaks'.tr();
       case 'vocabulary':
-        return 'Vocabulary';
+        return 'achievements.categoryVocabulary'.tr();
       case 'quiz':
-        return 'Quiz Performance';
+        return 'achievements.categoryQuiz'.tr();
       case 'course':
-        return 'Course Completion';
+        return 'achievements.categoryCourse'.tr();
       case 'voice':
-        return 'Voice Practice';
+        return 'achievements.categoryVoice'.tr();
       case 'level':
-        return 'Level Milestones';
+        return 'achievements.categoryLevel'.tr();
       case 'special':
-        return 'Special Badges';
+        return 'achievements.categorySpecial'.tr();
       case 'skill':
-        return 'Skill Mastery';
+        return 'achievements.categorySkill'.tr();
       case 'social':
-        return 'Social & Community';
+        return 'achievements.categorySocial'.tr();
       case 'milestone':
-        return 'Achievement Milestones';
+        return 'achievements.categoryMilestone'.tr();
       default:
         return category[0].toUpperCase() + category.substring(1);
     }
@@ -387,7 +388,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   const Icon(Icons.lock, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    'Complete to unlock this achievement!',
+                    'achievements.completeToUnlock'.tr(),
                     style: TextStyle(
                       color: Colors.grey[500],
                       fontStyle: FontStyle.italic,
@@ -402,7 +403,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
                   const SizedBox(width: 4),
                   Text(
-                    'Achievement Unlocked!',
+                    'achievements.achievementUnlocked'.tr(),
                     style: TextStyle(
                       color: Colors.green[600],
                       fontWeight: FontWeight.bold,

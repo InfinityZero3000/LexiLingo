@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -23,11 +24,11 @@ class _ShopScreenState extends State<ShopScreen>
   String? _purchasingItemId;
 
   final List<_CategoryTab> _categories = [
-    _CategoryTab('all', 'All', Icons.apps),
-    _CategoryTab(ShopItemEntity.categoryPowerUps, 'Power-ups', Icons.bolt),
-    _CategoryTab(ShopItemEntity.categoryBoosts, 'Boosts', Icons.rocket_launch),
-    _CategoryTab(ShopItemEntity.categoryCosmetics, 'Cosmetics', Icons.palette),
-    _CategoryTab(ShopItemEntity.categorySpecial, 'Special', Icons.star),
+    _CategoryTab('all', 'shop.categoryAll', Icons.apps),
+    _CategoryTab(ShopItemEntity.categoryPowerUps, 'shop.categoryPowerUps', Icons.bolt),
+    _CategoryTab(ShopItemEntity.categoryBoosts, 'shop.categoryBoosts', Icons.rocket_launch),
+    _CategoryTab(ShopItemEntity.categoryCosmetics, 'shop.categoryCosmetics', Icons.palette),
+    _CategoryTab(ShopItemEntity.categorySpecial, 'shop.categorySpecial', Icons.star),
   ];
 
   @override
@@ -80,8 +81,8 @@ class _ShopScreenState extends State<ShopScreen>
       _showPurchaseSuccess(item);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Purchase failed. Please try again.'),
+        SnackBar(
+          content: Text('shop.purchaseFailed'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -96,7 +97,7 @@ class _ShopScreenState extends State<ShopScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text('Confirm Purchase'),
+            title: Text('shop.confirmPurchase'.tr()),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -156,7 +157,7 @@ class _ShopScreenState extends State<ShopScreen>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Are you sure you want to purchase this item?',
+                  'shop.confirmPurchaseQuestion'.tr(),
                   style: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   textAlign: TextAlign.center,
                 ),
@@ -165,7 +166,7 @@ class _ShopScreenState extends State<ShopScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text('common.cancel'.tr()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -176,7 +177,7 @@ class _ShopScreenState extends State<ShopScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Purchase'),
+                child: Text('shop.purchase'.tr()),
               ),
             ],
           ),
@@ -208,13 +209,13 @@ class _ShopScreenState extends State<ShopScreen>
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Purchase Successful!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'shop.purchaseSuccessful'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              '${item.name} has been added to your inventory.',
+              'shop.addedToInventory'.tr(namedArgs: {'name': item.name}),
               style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
@@ -231,7 +232,7 @@ class _ShopScreenState extends State<ShopScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Great!'),
+              child: Text('shop.great'.tr()),
             ),
           ),
         ],
@@ -263,13 +264,13 @@ class _ShopScreenState extends State<ShopScreen>
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Not Enough Gems',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'shop.notEnoughGems'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete lessons and challenges to earn more gems!',
+              'shop.earnMoreGems'.tr(),
               style: TextStyle(color: AppColorRoles.textMuted(isDark)),
               textAlign: TextAlign.center,
             ),
@@ -286,7 +287,7 @@ class _ShopScreenState extends State<ShopScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Got it'),
+              child: Text('shop.gotIt'.tr()),
             ),
           ),
         ],
@@ -300,7 +301,7 @@ class _ShopScreenState extends State<ShopScreen>
     final primaryColor = AppColorRoles.primary(isDark);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shop'),
+        title: Text('shop.title'.tr()),
         centerTitle: true,
         actions: [
           Consumer<GamificationProvider>(
@@ -335,7 +336,7 @@ class _ShopScreenState extends State<ShopScreen>
                 children: [
                   Icon(cat.icon, size: 18),
                   const SizedBox(width: 6),
-                  Text(cat.label),
+                  Text(cat.label.tr()),
                 ],
               ),
             );
@@ -369,7 +370,7 @@ class _ShopScreenState extends State<ShopScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No items in this category',
+                    'shop.noItemsInCategory'.tr(),
                     style: TextStyle(
                       fontSize: 16,
                       color: AppColorRoles.textMuted(isDark),

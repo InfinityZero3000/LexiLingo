@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -134,35 +135,35 @@ class _MainScreenState extends State<MainScreen> {
                     activeIcon: Icon(
                       PhosphorIcons.compass(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Discovery',
+                    label: 'home.navDiscovery'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.bookOpen()),
                     activeIcon: Icon(
                       PhosphorIcons.bookOpen(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Learning',
+                    label: 'home.navLearning'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.bird()),
                     activeIcon: Icon(
                       PhosphorIcons.bird(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Lexi',
+                    label: 'home.navLexi'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.chatCircleText()),
                     activeIcon: Icon(
                       PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Chat',
+                    label: 'home.navTopic'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.userCircle()),
                     activeIcon: Icon(
                       PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Account',
+                    label: 'home.navAccount'.tr(),
                   ),
                 ],
               ),
@@ -174,7 +175,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _warmupAiModels() async {
-    final endpoints = ['/warmup', '/ai/warmup'];
+    final endpoints = ['/ai/warmup', '/warmup'];
 
     for (final endpoint in endpoints) {
       try {

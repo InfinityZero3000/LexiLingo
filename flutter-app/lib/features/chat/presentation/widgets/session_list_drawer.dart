@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -84,7 +85,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Chat Sessions',
+                  'chat.sessionsTitle'.tr(),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -111,7 +112,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
             child: ElevatedButton.icon(
               onPressed: widget.onNewSession,
               icon: const Icon(Icons.add, size: 20),
-              label: const Text('New Chat'),
+              label: Text('chat.newChat'.tr()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -137,7 +138,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No conversations yet',
+                          'chat.noConversations'.tr(),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -145,7 +146,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Start a new chat to begin',
+                          'chat.startNewChatPrompt'.tr(),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[500],
@@ -267,7 +268,7 @@ class _SessionListItemState extends State<SessionListItem> {
                                   : FontWeight.w500,
                               color: widget.isActive
                                   ? AppColors.primary
-                                  : AppColors.textDark,
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -312,7 +313,7 @@ class _SessionListItemState extends State<SessionListItem> {
                             _showRenameDialog(context);
                           },
                           icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Rename'),
+                          label: Text('common.rename'.tr()),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
                           ),
@@ -324,7 +325,7 @@ class _SessionListItemState extends State<SessionListItem> {
                             _showDeleteConfirmation(context);
                           },
                           icon: const Icon(Icons.delete, size: 16),
-                          label: const Text('Delete'),
+                          label: Text('common.delete'.tr()),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.errorBright,
                           ),
@@ -347,7 +348,7 @@ class _SessionListItemState extends State<SessionListItem> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Session'),
+        title: Text('chat.renameSession'.tr()),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -359,7 +360,7 @@ class _SessionListItemState extends State<SessionListItem> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -372,7 +373,7 @@ class _SessionListItemState extends State<SessionListItem> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Rename'),
+            child: Text('common.rename'.tr()),
           ),
         ],
       ),
@@ -383,14 +384,14 @@ class _SessionListItemState extends State<SessionListItem> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Session'),
+        title: Text('chat.deleteSession'.tr()),
         content: Text(
           'Are you sure you want to delete "${widget.session.title}"? This action cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -403,7 +404,7 @@ class _SessionListItemState extends State<SessionListItem> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.errorBright,
             ),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),

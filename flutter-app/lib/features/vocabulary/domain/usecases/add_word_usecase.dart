@@ -7,8 +7,19 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocab_repo
 class AddWordParams {
   final String word;
   final String definition;
+  final String? pronunciation;
+  final String? audioUrl;
+  final String? example;
+  final String? partOfSpeech;
 
-  AddWordParams({required this.word, required this.definition});
+  AddWordParams({
+    required this.word,
+    required this.definition,
+    this.pronunciation,
+    this.audioUrl,
+    this.example,
+    this.partOfSpeech,
+  });
 }
 
 class AddWordUseCase implements UseCase<void, AddWordParams> {
@@ -18,7 +29,14 @@ class AddWordUseCase implements UseCase<void, AddWordParams> {
 
   @override
   Future<Either<Failure, void>> call(AddWordParams params) async {
-    final newWord = VocabWord(word: params.word, definition: params.definition);
+    final newWord = VocabWord(
+      word: params.word,
+      definition: params.definition,
+      pronunciation: params.pronunciation,
+      audioUrl: params.audioUrl,
+      example: params.example,
+      partOfSpeech: params.partOfSpeech,
+    );
     return await repository.addWord(newWord);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -38,11 +39,12 @@ class _WalletScreenState extends State<WalletScreen> {
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.purple,
-                          AppColors.purpleLight.withValues(alpha: 0.8),
+                          Color(0xFF6D28D9),
+                          Color(0xFF8B5CF6),
+                          Color(0xFFA78BFA),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -58,28 +60,40 @@ class _WalletScreenState extends State<WalletScreen> {
                           children: [
                             // Gem icon
                             Container(
-                              width: 56,
-                              height: 56,
+                              width: 64,
+                              height: 64,
                               decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surface.withValues(alpha: 0.2),
+                                color: Colors.white.withValues(alpha: 0.18),
                                 shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.35),
+                                  width: 1.5,
+                                ),
                               ),
-                              child: Icon(
-                                Icons.diamond,
-                                color: Theme.of(context).colorScheme.surface,
-                                size: 32,
+                              child: const Icon(
+                                Icons.diamond_rounded,
+                                color: Colors.white,
+                                size: 34,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             // Balance
                             Text(
                               '${provider.gems}',
-                              style: TextStyle(
-                                fontSize: 36,
+                              style: const TextStyle(
+                                fontSize: 40,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.surface,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'gamification.gems'.tr(),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withValues(alpha: 0.75),
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ],
@@ -100,7 +114,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         child: _buildStatCard(
                           icon: Icons.arrow_upward,
                           color: AppColors.greenSuccessBright,
-                          label: 'Earned',
+                          label: 'gamification.earned'.tr(),
                           value: '${provider.wallet?.totalEarned ?? 0}',
                         ),
                       ),
@@ -109,7 +123,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         child: _buildStatCard(
                           icon: Icons.arrow_downward,
                           color: AppColors.orange,
-                          label: 'Spent',
+                          label: 'gamification.spent'.tr(),
                           value: '${provider.wallet?.totalSpent ?? 0}',
                         ),
                       ),
@@ -126,17 +140,15 @@ class _WalletScreenState extends State<WalletScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.greenSuccessBright.withValues(alpha: 0.1),
-                        AppColors.greenSuccess.withValues(alpha: 0.05),
+                        const Color(0xFF8B5CF6).withValues(alpha: 0.10),
+                        const Color(0xFF7C3AED).withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.greenSuccessBright.withValues(
-                        alpha: 0.2,
-                      ),
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
                     ),
                   ),
                   child: Column(
@@ -147,21 +159,19 @@ class _WalletScreenState extends State<WalletScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.2),
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.lightbulb_outline,
-                              color: AppColors.greenSuccessBright,
+                              Icons.diamond_rounded,
+                              color: Color(0xFF8B5CF6),
                               size: 20,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
-                            'How to Earn Gems',
-                            style: TextStyle(
+                          Text(
+                            'gamification.howToEarnGems'.tr(),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -186,16 +196,16 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Transaction History',
-                        style: TextStyle(
+                      Text(
+                        'gamification.transactionHistory'.tr(),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       TextButton(
                         onPressed: () => provider.loadTransactions(limit: 100),
-                        child: const Text('See All'),
+                        child: Text('common.seeAll'.tr()),
                       ),
                     ],
                   ),
@@ -217,7 +227,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No transactions yet',
+                            'gamification.noTransactions'.tr(),
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],
@@ -299,8 +309,8 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Row(
         children: [
           const Icon(
-            Icons.check_circle,
-            color: AppColors.greenSuccessBright,
+            Icons.check_circle_rounded,
+            color: Color(0xFF8B5CF6),
             size: 16,
           ),
           const SizedBox(width: 8),
@@ -315,7 +325,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: AppColors.purple,
+              color: Color(0xFF7C3AED),
             ),
           ),
         ],

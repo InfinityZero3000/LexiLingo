@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// Bottom-bar style audio player controls widget.
@@ -186,11 +187,11 @@ class AudioPlayerControls extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    'Playback Speed',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    'podcast.playbackSpeed'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                 ),
                 ...speeds.map((s) {

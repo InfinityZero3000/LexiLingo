@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -370,8 +371,8 @@ class _GlassmorphicLessonCardState extends State<GlassmorphicLessonCard>
           ),
           SizedBox(width: 8),
           Text(
-            'Continue',
-            style: TextStyle(
+            'learning.continueButton'.tr(),
+            style: const TextStyle(
               color: AppColors.surfaceLight,
               fontWeight: FontWeight.bold,
               fontSize: 15,

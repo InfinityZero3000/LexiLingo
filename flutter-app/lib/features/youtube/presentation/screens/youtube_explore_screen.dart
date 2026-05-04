@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -89,7 +90,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'English Videos',
+                            'youtube.exploreTitle'.tr(),
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -193,7 +194,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'English Learning Channels',
+            'youtube.channelsTitle'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -220,7 +221,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'Browse by Category',
+            'youtube.browseByCategory'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -403,7 +404,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'No videos found',
+                'youtube.noVideos'.tr(),
                 style: TextStyle(color: AppColors.grey500, fontSize: 16),
               ),
             ],

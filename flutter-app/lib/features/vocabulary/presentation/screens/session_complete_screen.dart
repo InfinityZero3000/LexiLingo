@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
@@ -113,9 +114,9 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   const SizedBox(height: 32),
 
                   // Title
-                  const Text(
-                    'Session Complete!',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  Text(
+                    'flashcard.sessionCompleteTitle'.tr(),
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
 
@@ -124,7 +125,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Motivational message
                   Text(
                     _getMotivationalMessage(accuracy),
-                    style: TextStyle(fontSize: 18, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
 
@@ -137,32 +138,32 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                         children: [
                           _StatCard(
                             icon: Icons.assignment_turned_in,
-                            label: 'Words Reviewed',
+                            label: 'flashcard.wordsReviewed'.tr(),
                             value: '${session.totalCards}',
                             color: AppColors.primary,
                           ),
                           const SizedBox(height: 16),
                           _StatCard(
                             icon: Icons.check_circle,
-                            label: 'Correct Answers',
+                            label: 'flashcard.correctAnswers'.tr(),
                             value: '${session.correctCount}',
-                            subtitle:
-                                '${accuracy.toStringAsFixed(1)}% accuracy',
+                            subtitle: 'flashcard.accuracySubtitle'.tr(
+                                namedArgs: {'percent': accuracy.toStringAsFixed(1)}),
                             color: AppColors.greenSuccess,
                           ),
                           const SizedBox(height: 16),
                           _StatCard(
                             icon: Icons.star,
-                            label: 'XP Earned',
+                            label: 'flashcard.xpEarned'.tr(),
                             value: '+${session.totalXpEarned}',
                             color: AppColors.accentYellow,
                           ),
                           const SizedBox(height: 16),
                           _StatCard(
                             icon: Icons.timer,
-                            label: 'Time Spent',
+                            label: 'flashcard.timeSpent'.tr(),
                             value: _formatDuration(duration),
-                            color: AppColors.textGrey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -185,7 +186,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('Back to Library'),
+                          child: Text('flashcard.backToLibrary'.tr()),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -201,7 +202,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('Review More'),
+                          child: Text('flashcard.reviewMore'.tr()),
                         ),
                       ),
                     ],
@@ -217,13 +218,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 
   String _getMotivationalMessage(double accuracy) {
     if (accuracy >= 90) {
-      return 'Excellent work! You\'re mastering these words!';
+      return 'flashcard.excellentMotivation'.tr();
     } else if (accuracy >= 70) {
-      return 'Great job! Keep up the good work!';
+      return 'flashcard.greatJobMotivation'.tr();
     } else if (accuracy >= 50) {
-      return 'Good effort! Practice makes perfect!';
+      return 'flashcard.goodEffortMotivation'.tr();
     } else {
-      return 'Keep practicing! You\'re making progress!';
+      return 'flashcard.keepPracticingMotivation'.tr();
     }
   }
 
@@ -284,7 +285,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -301,7 +302,7 @@ class _StatCard extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textGrey.withValues(alpha: 0.7),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

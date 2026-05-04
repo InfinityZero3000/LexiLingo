@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
@@ -48,15 +51,11 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
 
   static const int _totalPages = 2;
 
-  static const List<_LangOption> _languages = [
-    _LangOption('vi', 'Tiếng Việt', '🇻🇳'),
-    _LangOption('en', 'English', '🇺🇸'),
-    _LangOption('ja', '日本語', '🇯🇵'),
-    _LangOption('ko', '한국어', '🇰🇷'),
-    _LangOption('zh', '中文', '🇨🇳'),
-    _LangOption('fr', 'Français', '🇫🇷'),
-    _LangOption('es', 'Español', '🇪🇸'),
-    _LangOption('other', 'Other', '🌍'),
+  static final List<_LangOption> _languages = [
+    ...AppLocales.supportedLocales.map(
+      (locale) => _LangOption(locale.languageCode, AppLocales.nameOf(locale.languageCode)),
+    ),
+    const _LangOption('other', 'preAuth.otherLanguage'),
   ];
 
   @override
@@ -85,7 +84,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
     if (_currentPage == 0) {
       final trimmed = _nameController.text.trim();
       if (trimmed.isEmpty) {
-        setState(() => _nameError = 'Please enter your name');
+        setState(() => _nameError = 'auth.pleaseEnterName'.tr());
         return;
       }
       setState(() => _nameError = '');
@@ -145,7 +144,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                     ),
                     Expanded(
                       child: Text(
-                        'Quick Setup',
+                        'preAuth.quickSetup'.tr(),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
@@ -209,8 +208,8 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                     ),
                     child: Text(
                       _currentPage < _totalPages - 1
-                          ? 'Continue'
-                          : 'Create My Account',
+                          ? 'preAuth.continue'.tr()
+                          : 'preAuth.createMyAccount'.tr(),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -231,7 +230,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                         ),
                       ),
                       child: Text(
-                        'I already have an account',
+                        'auth.alreadyHaveAccount'.tr(),
                         style: TextStyle(
                           color: isDark
                               ? Colors.white60
@@ -263,7 +262,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.accentMint.withOpacity(0.15),
+                color: AppColors.accentMint.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -275,7 +274,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'What should we call you?',
+            'preAuth.nameQuestion'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
@@ -285,7 +284,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
           ),
           const SizedBox(height: 10),
           Text(
-            'This will be your display name in the app.',
+            'preAuth.nameHint'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isDark ? Colors.white60 : AppColors.textGrey,
@@ -301,7 +300,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
-              hintText: 'Your name',
+              hintText: 'preAuth.namePlaceholder'.tr(),
               hintStyle: TextStyle(
                 color: isDark ? Colors.white38 : AppColors.textGrey,
               ),
@@ -312,7 +311,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
               errorText: _nameError.isNotEmpty ? _nameError : null,
               filled: true,
               fillColor: isDark
-                  ? AppColors.slate800.withOpacity(0.6)
+                  ? AppColors.slate800.withValues(alpha: 0.6)
                   : Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -334,7 +333,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'You can always change this later in your profile.',
+            'preAuth.nameChangeLater'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
               color: isDark ? Colors.white38 : AppColors.textGrey,
@@ -352,7 +351,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
       children: [
         const SizedBox(height: 8),
         Text(
-          'What is your native language?',
+          'preAuth.nativeLanguageQuestion'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
@@ -362,7 +361,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
         ),
         const SizedBox(height: 8),
         Text(
-          "We'll use this to tailor hints and explanations for you.",
+          'preAuth.nativeLanguageHint'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: isDark ? Colors.white60 : AppColors.textGrey,
@@ -383,9 +382,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.accentMint.withOpacity(0.2)
+                      ? AppColors.accentMint.withValues(alpha: 0.2)
                         : isDark
-                            ? AppColors.slate800.withOpacity(0.5)
+                        ? AppColors.slate800.withValues(alpha: 0.5)
                             : Colors.white,
                     border: Border.all(
                       color: isSelected
@@ -400,14 +399,11 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        lang.flag,
-                        style: const TextStyle(fontSize: 22),
-                      ),
+                      _LanguageOptionIcon(code: lang.code),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          lang.label,
+                          lang.localizedLabel(context),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: isSelected
                                 ? FontWeight.w700
@@ -444,7 +440,46 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
 class _LangOption {
   final String code;
   final String label;
-  final String flag;
 
-  const _LangOption(this.code, this.label, this.flag);
+  const _LangOption(this.code, this.label);
+
+  String localizedLabel(BuildContext context) {
+    if (code == 'other') {
+      return label.tr();
+    }
+    return label;
+  }
+}
+
+class _LanguageOptionIcon extends StatelessWidget {
+  const _LanguageOptionIcon({required this.code});
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    if (code == 'other') {
+      return const Icon(Icons.public, size: 20);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: CachedNetworkImage(
+          imageUrl: AppLocales.flagPngUrlOf(code),
+          fit: BoxFit.cover,
+          fadeInDuration: const Duration(milliseconds: 100),
+          placeholder: (context, _) => DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.accentMint.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          errorWidget: (_, __, ___) => const Icon(Icons.flag_outlined, size: 20),
+        ),
+      ),
+    );
+  }
 }

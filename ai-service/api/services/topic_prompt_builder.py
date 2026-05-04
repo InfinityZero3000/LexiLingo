@@ -80,6 +80,22 @@ class TopicPromptBuilder:
             "speaking_pace": "Peer-level conversation. Debate and discuss complex topics.",
         },
     }
+
+    @staticmethod
+    def _get_value(item, *keys: str, default: str = "") -> str:
+        if item is None:
+            return default
+
+        for key in keys:
+            if isinstance(item, dict):
+                value = item.get(key)
+            else:
+                value = getattr(item, key, None)
+
+            if value not in (None, ""):
+                return str(value)
+
+        return default
     
     @staticmethod
     def build_master_prompt(
@@ -103,6 +119,41 @@ class TopicPromptBuilder:
         vocab = story.vocabulary_list
         grammar = story.grammar_points
         difficulty = story.difficulty_level
+
+        persona_name = TopicPromptBuilder._get_value(persona, "name", default="LexiLingo Tutor")
+        persona_role = TopicPromptBuilder._get_value(persona, "role", default="English conversation coach")
+        persona_personality = TopicPromptBuilder._get_value(
+            persona,
+            "personality",
+            default="Warm, patient, and encouraging",
+        )
+        persona_speaking_style = TopicPromptBuilder._get_value(
+            persona,
+            "speaking_style",
+            "speakingStyle",
+            default="Clear, friendly, and level-appropriate",
+        )
+        persona_background = TopicPromptBuilder._get_value(
+            persona,
+            "background",
+            default="A tutor who helps learners practice real-world English conversations.",
+        )
+
+        context_setting = TopicPromptBuilder._get_value(
+            context,
+            "setting",
+            default="A realistic English practice setting",
+        )
+        context_scenario = TopicPromptBuilder._get_value(
+            context,
+            "scenario",
+            default="Guide the learner through a practical, topic-focused English conversation.",
+        )
+        context_objectives = []
+        if isinstance(context, dict):
+            context_objectives = context.get("objectives") or []
+        elif context is not None:
+            context_objectives = getattr(context, "objectives", []) or []
         
         # Get adaptive difficulty guidelines
         diff_guide = TopicPromptBuilder.DIFFICULTY_GUIDELINES.get(
@@ -112,20 +163,23 @@ class TopicPromptBuilder:
         
         # Format vocabulary list (top 10)
         vocab_section = "\n".join([
-            f"- **{v.term}** ({v.part_of_speech}): {v.definition}"
+            f"- **{TopicPromptBuilder._get_value(v, 'term', 'word', default='Vocabulary item')}** "
+            f"({TopicPromptBuilder._get_value(v, 'part_of_speech', 'partOfSpeech', default='word')}): "
+            f"{TopicPromptBuilder._get_value(v, 'definition', 'meaning', default='') }"
             for v in vocab[:10]
         ]) if vocab else "No specific vocabulary focus."
         
         # Format grammar points
         grammar_section = "\n".join([
-            f"- {g.grammar_structure}: {g.explanation}"
+            f"- {TopicPromptBuilder._get_value(g, 'grammar_structure', 'grammarStructure', 'pattern', default='Grammar point')}: "
+            f"{TopicPromptBuilder._get_value(g, 'explanation', default='') }"
             for g in grammar
         ]) if grammar else "No specific grammar focus."
         
         # Format objectives
         objectives_section = "\n".join([
-            f"- {obj}" for obj in context.objectives
-        ]) if context.objectives else "General conversation practice."
+            f"- {obj}" for obj in context_objectives
+        ]) if context_objectives else "General conversation practice."
         
         # Few-shot section
         few_shot_section = FEW_SHOT_EXAMPLES if include_examples else ""
@@ -150,14 +204,14 @@ Still include natural [💡 Tip] and [📘] markers in your dialogue text for re
 '''
         
         return f'''# ROLE & IDENTITY
-You are **{persona.name}**, a {persona.role}.
-Personality: {persona.personality}
-Speaking Style: {persona.speaking_style}
-Background: {persona.background}
+    You are **{persona_name}**, a {persona_role}.
+    Personality: {persona_personality}
+    Speaking Style: {persona_speaking_style}
+    Background: {persona_background}
 
 # SCENARIO CONTEXT
-Setting: {context.setting}
-Scenario: {context.scenario}
+    Setting: {context_setting}
+    Scenario: {context_scenario}
 
 ## Learning Objectives (internal reference only)
 {objectives_section}
@@ -175,14 +229,14 @@ Scenario: {context.scenario}
 # BEHAVIORAL GUIDELINES
 
 ## 1. ROLE-PLAY IMMERSION
-- Stay in character as {persona.name} throughout the entire conversation
+- Stay in character as {persona_name} throughout the entire conversation
 - React naturally to the learner's responses as your character would
-- Create believable dialogue that matches the {context.setting} setting
+- Create believable dialogue that matches the {context_setting} setting
 - Use contextually appropriate vocabulary and expressions
 - Never break character or mention that you are an AI
 
 ## 2. STORY ADHERENCE
-- Keep the conversation focused on the scenario: {context.scenario}
+- Keep the conversation focused on the scenario: {context_scenario}
 - Guide the conversation naturally through topic-related progressions
 - If the learner goes off-topic, gently steer back: "By the way, about your [topic element]..."
 - Progress through the conversation milestones naturally

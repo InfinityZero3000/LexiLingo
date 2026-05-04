@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -75,7 +76,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'English News',
+                          'news.title'.tr(),
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
@@ -124,14 +125,14 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Failed to load articles',
+                              'news.loadError'.tr(),
                               style: TextStyle(color: AppColors.grey500),
                             ),
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: () =>
                                   provider.loadArticles(refresh: true),
-                              child: const Text('Retry'),
+                              child: Text('common.retry'.tr()),
                             ),
                           ],
                         ),
@@ -152,7 +153,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'No articles found',
+                              'news.noArticles'.tr(),
                               style: TextStyle(
                                 color: AppColors.grey500,
                                 fontSize: 16,

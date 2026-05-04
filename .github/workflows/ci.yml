@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, feature, develop]
+    branches: [main, feature, develop, dev]
   pull_request:
-    branches: [main, feature]
+    branches: [main, feature, dev]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -56,10 +56,10 @@ jobs:
       PODCASTINDEX_SECRET: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
@@ -125,14 +125,14 @@ jobs:
 
       - name: Upload test output
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: backend-pytest-output
           path: backend-service/pytest-output.txt
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend-service/coverage.xml
@@ -149,7 +149,7 @@ jobs:
         working-directory: flutter-app
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -185,7 +185,7 @@ jobs:
 
       - name: Upload analyze output
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: flutter-analyze-output
           path: flutter-app/analyze-output.txt

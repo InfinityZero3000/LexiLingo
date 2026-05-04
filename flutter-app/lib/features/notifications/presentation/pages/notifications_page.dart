@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -48,7 +49,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           size: 20,
                         ),
                         onPressed: () => Navigator.pop(context),
-                        tooltip: 'Back',
+                        tooltip: 'notifications.tooltipBack'.tr(),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
                           minWidth: 36,
@@ -73,14 +74,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Notifications',
+                          'notifications.pageTitle'.tr(),
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           unread > 0
-                              ? '$unread unread message${unread > 1 ? 's' : ''}'
-                              : 'All caught up',
+                              ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'.tr(namedArgs: {'count': unread.toString()})
+                              : 'notifications.allCaughtUp'.tr(),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.grey[600]),
                         ),
@@ -97,8 +98,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             vertical: 4,
                           ),
                         ),
-                        child: const Text(
-                          'Mark all read',
+                        child: Text(
+                          'notifications.markAllRead'.tr(),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -143,7 +144,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildLoadingState() {
-    return const LoadingScreen(message: 'Loading notifications...');
+    return LoadingScreen(message: 'notifications.loading'.tr());
   }
 
   Widget _buildErrorState(BuildContext context, NotificationProvider provider) {
@@ -156,14 +157,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
-              'Something went wrong',
+              'notifications.somethingWentWrong'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
-              provider.errorMessage ?? 'Failed to load notifications',
+              provider.errorMessage ?? 'notifications.failedToLoad'.tr(),
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -172,7 +173,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => provider.loadNotifications(),
-              child: const Text('Retry'),
+              child: Text('notifications.retry'.tr()),
             ),
           ],
         ),
@@ -182,10 +183,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Widget _buildEmptyState(BuildContext context) {
     return EmptyNotificationWidget(
-      title: 'No Notifications Yet',
-      description:
-          'You\'ll see notifications about your learning progress, achievements, and reminders here.',
-      buttonText: 'Refresh',
+      title: 'notifications.emptyTitle'.tr(),
+      description: 'notifications.emptyDescription'.tr(),
+      buttonText: 'notifications.refresh'.tr(),
       onRefresh: () =>
           context.read<NotificationProvider>().refreshNotifications(),
     );
@@ -229,13 +229,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     // Show Undo SnackBar
     final snackBar = SnackBar(
-      content: const Text('Notification removed'),
+      content: Text('notifications.removed'.tr()),
       duration: const Duration(seconds: 4),
       behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.textDark,
+      backgroundColor: Theme.of(context).colorScheme.inverseSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       action: SnackBarAction(
-        label: 'Undo',
+        label: 'notifications.undo'.tr(),
         textColor: AppColors.accentYellow,
         onPressed: () => provider.undoDelete(),
       ),
@@ -300,7 +300,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             SizedBox(height: 4),
             Text(
-              'Delete',
+              'notifications.deleteAction'.tr(),
               style: TextStyle(
                 color: Theme.of(context).colorScheme.surface,
                 fontSize: 11,
@@ -361,7 +361,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Text(
                       notification.body,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.3,
                       ),
                       maxLines: 2,
@@ -376,7 +376,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   notification.relativeTimeString,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 11,
-                    color: AppColors.textGrey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),

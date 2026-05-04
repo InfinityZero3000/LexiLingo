@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
@@ -90,12 +91,11 @@ class _GameResultScreenState extends State<GameResultScreen>
     final xpResult = widget.xpResult;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
           '${result.gameType.displayName} — Result',
-          style: TextStyle(color: AppColors.textDark),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
@@ -133,7 +133,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Icon(
               filled ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: filled ? AppColors.accentYellow : AppColors.grey300,
+              color: filled ? AppColors.accentYellow : Theme.of(context).colorScheme.outline,
               size: filled ? 52 : 44,
             ),
           );
@@ -151,7 +151,7 @@ class _GameResultScreenState extends State<GameResultScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -163,7 +163,7 @@ class _GameResultScreenState extends State<GameResultScreen>
           Icon(result.gameType.icon, size: 32, color: AppColors.primary),
           const SizedBox(height: 8),
           _statRow(
-            'Accuracy',
+            'gameResult.accuracyLabel'.tr(),
             '${result.accuracy.toStringAsFixed(0)}%',
             color: result.accuracy >= 90
                 ? AppColors.greenSuccess
@@ -172,12 +172,12 @@ class _GameResultScreenState extends State<GameResultScreen>
                 : AppColors.errorBright,
           ),
           _statRow(
-            'Correct',
+            'gameResult.correctLabel'.tr(),
             '${result.correctAnswers}/${result.totalQuestions}',
           ),
-          _statRow('Score', '${result.score}'),
-          _statRow('Duration', '${result.durationSeconds}s'),
-          _statRow('Level', result.cefrLevel),
+          _statRow('gameResult.scoreLabel'.tr(), '${result.score}'),
+          _statRow('gameResult.durationLabel'.tr(), '${result.durationSeconds}s'),
+          _statRow('gameResult.levelLabel'.tr(), result.cefrLevel),
         ],
       ),
     );
@@ -191,14 +191,14 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(color: AppColors.textGrey, fontSize: 14),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
           ),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: color ?? AppColors.textDark,
+              color: color ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -220,8 +220,8 @@ class _GameResultScreenState extends State<GameResultScreen>
       ),
       child: Column(
         children: [
-          const Text(
-            'XP Earned',
+          Text(
+            'gameResult.xpEarnedLabel'.tr(),
             style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
           const SizedBox(height: 6),
@@ -238,9 +238,9 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           if (xpResult != null) ...[
             const SizedBox(height: 8),
-            _xpStatRow('Total XP', '${xpResult.newTotalXp}'),
-            _xpStatRow('Daily XP', '${xpResult.dailyXpToday}'),
-            _xpStatRow('Streak', '${xpResult.streakDays} days'),
+            _xpStatRow('gameResult.totalXpLabel'.tr(), '${xpResult.newTotalXp}'),
+            _xpStatRow('gameResult.dailyXpLabel'.tr(), '${xpResult.dailyXpToday}'),
+            _xpStatRow('gameResult.streakLabel'.tr(), '${xpResult.streakDays} days'),
           ],
         ],
       ),
@@ -288,7 +288,7 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           const SizedBox(width: 6),
           Text(
-            'Streak bonus: ${multiplier.toStringAsFixed(1)}x',
+            'gameResult.streakBonusLabel'.tr(namedArgs: {'multiplier': multiplier.toStringAsFixed(1)}),
             style: TextStyle(
               color: Colors.orange.shade800,
               fontWeight: FontWeight.bold,
@@ -318,8 +318,8 @@ class _GameResultScreenState extends State<GameResultScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Play Again',
+            child: Text(
+              'gameResult.playAgainButton'.tr(),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
@@ -342,8 +342,8 @@ class _GameResultScreenState extends State<GameResultScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Back to Games',
+            child: Text(
+              'gameResult.backToGamesButton'.tr(),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,7 @@ class LearningStreakStatsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return _StatsPageScaffold(
-      title: 'Streak Details',
+      title: 'profile.streakDetails',
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final summary = progressProvider.summary;
@@ -25,14 +26,20 @@ class LearningStreakStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('Current streak', '$currentStreak days'),
+            _detailRow(
+              'profile.currentStreak'.tr(),
+              'profile.daysCount'.tr(namedArgs: {'count': '$currentStreak'}),
+            ),
             const Divider(height: 20),
-            _detailRow('Longest streak', '$longestStreak days'),
+            _detailRow(
+              'profile.longestStreak'.tr(),
+              'profile.daysCount'.tr(namedArgs: {'count': '$longestStreak'}),
+            ),
             const SizedBox(height: 10),
             Text(
               currentStreak > 0
-                  ? 'Keep learning daily to maintain your streak.'
-                  : 'Start one lesson today to build your streak.',
+                  ? 'profile.keepLearningDaily'.tr()
+                  : 'profile.startLessonToday'.tr(),
               style: TextStyle(color: AppColorRoles.textMuted(isDark)),
             ),
           ],
@@ -48,7 +55,7 @@ class LearningLessonsStatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StatsPageScaffold(
-      title: 'Lessons Details',
+      title: 'profile.lessonsDetails',
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final summary = progressProvider.summary;
@@ -62,9 +69,9 @@ class LearningLessonsStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('Total lessons completed', '$lessonsCompleted'),
+            _detailRow('profile.totalLessonsCompleted'.tr(), '$lessonsCompleted'),
             const Divider(height: 20),
-            _detailRow('Lessons completed this week', '$weeklyLessons'),
+            _detailRow('profile.lessonsCompletedThisWeek'.tr(), '$weeklyLessons'),
           ],
         );
       },
@@ -78,7 +85,7 @@ class LearningCoursesStatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StatsPageScaffold(
-      title: 'Courses Details',
+      title: 'profile.coursesDetails',
       builder: (context, profileProvider, progressProvider) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final stats = profileProvider.stats;
@@ -93,7 +100,7 @@ class LearningCoursesStatsPage extends StatelessWidget {
             _singleCard(
               context,
               children: [
-                _detailRow('Total courses finished', '$coursesCompleted'),
+                _detailRow('profile.totalCoursesFinished'.tr(), '$coursesCompleted'),
               ],
             ),
             const SizedBox(height: 12),
@@ -102,7 +109,7 @@ class LearningCoursesStatsPage extends StatelessWidget {
                 context,
                 children: [
                   Text(
-                    'No enrolled courses yet.',
+                    'profile.noEnrolledCoursesYet'.tr(),
                     style: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   ),
                 ],
@@ -181,7 +188,13 @@ class LearningCoursesStatsPage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '${progress.toStringAsFixed(0)}% • ${course.lessonsCompleted}/${course.totalLessons} lessons',
+              'profile.courseProgressSummary'.tr(
+                namedArgs: {
+                  'percent': progress.toStringAsFixed(0),
+                  'completed': '${course.lessonsCompleted}',
+                  'total': '${course.totalLessons}',
+                },
+              ),
               style: TextStyle(
                 color: AppColorRoles.textMuted(isDark),
                 fontSize: 12,
@@ -200,7 +213,7 @@ class LearningVocabularyStatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StatsPageScaffold(
-      title: 'Vocabulary Details',
+      title: 'profile.vocabularyDetails',
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final vocabularyMastered = stats?.totalVocabularyMastered ?? 0;
@@ -212,9 +225,9 @@ class LearningVocabularyStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('Total vocabulary mastered', '$vocabularyMastered'),
+            _detailRow('profile.totalVocabularyMastered'.tr(), '$vocabularyMastered'),
             const Divider(height: 20),
-            _detailRow('New words this week', '$weeklyVocabulary'),
+            _detailRow('profile.newWordsThisWeek'.tr(), '$weeklyVocabulary'),
           ],
         );
       },
@@ -228,7 +241,7 @@ class LearningTestsStatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StatsPageScaffold(
-      title: 'Tests Details',
+      title: 'profile.testsDetails',
       builder: (context, profileProvider, progressProvider) {
         final stats = profileProvider.stats;
         final testsPassed = stats?.totalTestsPassed ?? 0;
@@ -237,13 +250,13 @@ class LearningTestsStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('Total tests passed', '$testsPassed'),
+            _detailRow('profile.totalTestsPassed'.tr(), '$testsPassed'),
             const Divider(height: 20),
             _detailRow(
-              'Average score',
+              'profile.averageScore'.tr(),
               averageScore > 0
                   ? '${averageScore.toStringAsFixed(1)}%'
-                  : 'No score yet',
+                  : 'profile.noScoreYet'.tr(),
             ),
           ],
         );
@@ -287,7 +300,7 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: Text(widget.title.tr())),
       body: Consumer2<ProfileProvider, ProgressProvider>(
         builder: (context, profileProvider, progressProvider, _) {
           final isLoading =

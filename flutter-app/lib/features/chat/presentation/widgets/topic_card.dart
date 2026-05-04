@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../data/models/story_model.dart';
@@ -166,7 +167,7 @@ class TopicCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Preparing...',
+                        'chat.preparing'.tr(),
                         style: TextStyle(
                           fontSize: 10,
                           color: color,

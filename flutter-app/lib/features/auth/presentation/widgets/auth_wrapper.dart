@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -218,8 +219,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show loading while checking auth state
     if (authProvider.isCheckingAuth) {
-      return const Scaffold(
-        body: LoadingScreen(message: 'Checking authentication...'),
+      return Scaffold(
+        body: LoadingScreen(message: 'common.loading'.tr()),
       );
     }
 
@@ -266,8 +267,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     Widget currentPage;
     if (authProvider.isAuthenticated) {
       if (_isResolvingFlow) {
-        currentPage = const Scaffold(
-          body: LoadingScreen(message: 'Preparing your learning path...'),
+        currentPage = Scaffold(
+          body: LoadingScreen(message: 'common.loading'.tr()),
         );
       } else if (_showOnboarding) {
         currentPage = OnboardingPage(
@@ -278,8 +279,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     } else {
       if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {
-        currentPage = const Scaffold(
-          body: LoadingScreen(message: 'Preparing your learning path...'),
+        currentPage = Scaffold(
+          body: LoadingScreen(message: 'common.loading'.tr()),
         );
       } else if (_showPreAuthWelcome) {
         currentPage = WelcomePage(

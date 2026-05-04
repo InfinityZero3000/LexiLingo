@@ -600,7 +600,7 @@ class _AnimatedSocialStatState extends State<AnimatedSocialStat>
                   widget.label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textGrey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -892,7 +892,7 @@ class GlassmorphicContainer extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.textDark.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

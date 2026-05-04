@@ -20,14 +20,14 @@ class LeaderboardPodium extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         children: [
           const SizedBox(height: 4),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: Center(
                   child: Text(
@@ -35,7 +35,7 @@ class LeaderboardPodium extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -47,7 +47,7 @@ class LeaderboardPodium extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -59,7 +59,7 @@ class LeaderboardPodium extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -220,7 +220,7 @@ class LeaderboardPodium extends StatelessWidget {
                 : FontWeight.w500,
             color: entry?.isCurrentUser == true
                 ? primaryColor
-                : AppColors.textDark,
+                : Theme.of(context).colorScheme.onSurface,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -304,7 +304,7 @@ class LeaderboardPodium extends StatelessWidget {
       case 3:
         return AppColors.warning;
       default:
-        return AppColors.textGrey;
+        return Colors.grey;
     }
   }
 }
@@ -435,7 +435,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                   ),
                   Text(
                     '${entry.lessonsCompleted} lessons completed',
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -491,7 +491,7 @@ class LeaderboardEntryRow extends StatelessWidget {
       case 3:
         return AppColors.warning;
       default:
-        return AppColors.textGrey;
+        return Colors.grey;
     }
   }
 }

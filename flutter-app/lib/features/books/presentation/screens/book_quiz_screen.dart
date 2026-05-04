@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +69,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'Chapter ${widget.chapter} Quiz',
+          'books.chapterQuizTitle'.tr(namedArgs: {'chapter': '${widget.chapter}'}),
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
         ),
         backgroundColor: Colors.transparent,
@@ -88,7 +89,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           if (quiz == null || quiz.questions.isEmpty) {
             return Center(
               child: Text(
-                'Quiz not available.',
+                'books.quizNotAvailable'.tr(),
                 style: TextStyle(
                   color: isDark ? Colors.white54 : AppColors.textGrey,
                 ),
@@ -337,9 +338,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Back to Book',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                child: Text(
+                  'books.backToBook'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
               ),
             ),
