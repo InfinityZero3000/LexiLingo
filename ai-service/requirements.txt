@@ -15,7 +15,7 @@ pydantic>=2.13.3
 pydantic-settings>=2.14.0
 
 # Google Gemini AI
-google-generativeai>=0.3.0
+google-generativeai>=0.8.6
 
 # CORS and Security
 python-jose[cryptography]>=3.5.0
