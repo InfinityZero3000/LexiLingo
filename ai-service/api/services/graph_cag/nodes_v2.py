@@ -938,6 +938,43 @@ def _infer_intent_pre_diagnosis(user_input: str) -> str:
     return "correct"
 
 
+# Common phrases users write to request a native-language explanation.
+# Covers English phrases and common native scripts for supported languages.
+_NATIVE_REQUEST_PHRASES = (
+    "explain in",
+    "explain it in",
+    "say it in",
+    "tell me in",
+    "in my language",
+    # Vietnamese
+    "giải thích bằng",
+    "bằng tiếng việt",
+    "dùng tiếng việt",
+    "nói bằng tiếng",
+    # Japanese
+    "日本語で",
+    "説明して",
+    # Korean
+    "한국어로",
+    "설명해",
+    # Chinese
+    "用中文",
+    "用中文解释",
+    # Spanish
+    "explícame en",
+    "en español",
+    # French
+    "expliquer en",
+    "en français",
+)
+
+
+def _detect_native_request(user_input: str) -> bool:
+    """Return True when the user is explicitly asking for a native-language explanation."""
+    lower = (user_input or "").lower()
+    return any(phrase in lower for phrase in _NATIVE_REQUEST_PHRASES)
+
+
 def _profile_epoch(profile: Mapping[str, Any]) -> int:
     level = str(profile.get("level") or "B1").upper()
     sessions_completed = int(profile.get("sessions_completed") or 0)
@@ -1250,6 +1287,7 @@ async def input_node(state: GraphCAGState) -> Dict[str, Any]:
         return {
             "learner_profile": learner_profile,
             "conversation_history": conversation_history,
+            "native_explanation_requested": _detect_native_request(user_input),
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
         }
@@ -3895,81 +3933,109 @@ async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: floa
 
 
 # ============================================================
-# NODE 6: VIETNAMESE EXPLANATION (AI-POWERED, Lazy Load)
+# NODE 6: NATIVE LANGUAGE HINT (AI-POWERED, Lazy Load)
 # ============================================================
 
 async def vietnamese_node(state: GraphCAGState) -> Dict[str, Any]:
     """
-    Generate Vietnamese explanation for beginners using AI.
-    
-    Uses ModelGateway to:
-    - Load LLaMA-VI only when needed (lazy loading)
-    - Generate natural Vietnamese explanations
-    - Auto-unload after idle timeout
-    
-    Only called when:
-    - Level is A1/A2
-    - Confidence is low
-    - Complex grammar detected
+    Generate a short native-language hint for the learner.
+
+    Triggered when:
+    - Learner is A1/A2 and errors are present
+    - Learner explicitly requests a native-language explanation
+
+    Strategy (in order):
+    1. Qwen via ModelGateway  (local, fast)
+    2. Gemini via ModelGateway (cloud fallback)
+    3. Hardcoded Vietnamese strings (last resort)
+
+    The hint is a supplement — the main tutor_response remains in English.
     """
-    logger.info("[vietnamese_node] Generating Vietnamese explanation...")
+    logger.info("[vietnamese_node] Generating native-language hint...")
     start_time = time.time()
-    
+
     errors = state.get("diagnosis_errors", [])
-    level = state.get("learner_profile", {}).get("level", "B1")
-    tutor_response = state.get("tutor_response", "")
-    
+    learner_profile = state.get("learner_profile", {})
+    level = learner_profile.get("level", "B1")
+    native_language = learner_profile.get("native_language", "Vietnamese")
+
     try:
         gateway = await get_gateway()
-        
-        # Build Vietnamese explanation prompt
+
+        # Build prompt in the learner's native language
         if errors:
             error = errors[0]
-            vi_prompt = f"""Giải thích ngắn gọn lỗi ngữ pháp sau cho học sinh Việt Nam trình độ {level}:
-
-Lỗi: "{error.get('span', '')}" → "{error.get('correction', '')}"
-Loại lỗi: {error.get('type', 'unknown')}
-Giải thích tiếng Anh: {error.get('explanation', '')}
-
-Yêu cầu:
-1. Giải thích bằng tiếng Việt dễ hiểu
-2. Cho ví dụ minh họa
-3. Mẹo ghi nhớ nếu có
-4. Tối đa 2-3 câu"""
+            hint_prompt = (
+                f"Briefly explain this English grammar error to a {level}-level learner "
+                f"in {native_language} (2-3 sentences max):\n\n"
+                f"Error: \"{error.get('span', '')}\" → \"{error.get('correction', '')}\"\n"
+                f"Type: {error.get('type', 'unknown')}\n"
+                f"English explanation: {error.get('explanation', '')}\n\n"
+                f"Include a simple example. Do NOT switch to English."
+            )
         else:
-            vi_prompt = f"Khen ngợi học sinh bằng tiếng Việt vì họ đã viết đúng ngữ pháp. Tối đa 1-2 câu."
-        
-        # Use Qwen with Vietnamese system prompt (llama_vi is not registered)
-        result = await gateway.execute_task(
+            hint_prompt = (
+                f"In {native_language}, briefly praise the learner for writing correct English. "
+                f"1-2 sentences only."
+            )
+
+        system_prompt = (
+            f"You are a friendly English tutor. "
+            f"Respond ONLY in {native_language}. Keep it short and encouraging."
+        )
+
+        # --- Attempt 1: Qwen ---
+        native_hint: Optional[str] = None
+        models_used: list[str] = []
+
+        qwen_result = await gateway.execute_task(
             "chat",
             {
-                "message": vi_prompt,
-                "system": "You are a Vietnamese language teacher. Respond in Vietnamese only.",
+                "message": hint_prompt,
+                "system": system_prompt,
                 "max_tokens": 200,
-            }
+            },
         )
-        
-        if result.get("success") and result.get("data"):
-            vietnamese_hint = result["data"]
-            if isinstance(vietnamese_hint, dict):
-                vietnamese_hint = vietnamese_hint.get("text", vietnamese_hint.get("response", ""))
-        else:
-            # Fallback to predefined explanations
-            vietnamese_hint = _get_predefined_vietnamese(errors)
-        
+        if qwen_result.get("success") and qwen_result.get("data"):
+            raw = qwen_result["data"]
+            native_hint = raw if isinstance(raw, str) else raw.get("text") or raw.get("response", "")
+            models_used.append("qwen_native")
+
+        # --- Attempt 2: Gemini fallback ---
+        if not native_hint and "gemini" in gateway._models:
+            try:
+                gemini_result = await gateway.invoke(
+                    "gemini",
+                    "chat",
+                    {
+                        "messages": [{"role": "user", "content": hint_prompt}],
+                        "system_prompt": system_prompt,
+                        "max_tokens": 200,
+                    },
+                )
+                if gemini_result.get("success") and gemini_result.get("data"):
+                    raw = gemini_result["data"]
+                    native_hint = raw if isinstance(raw, str) else raw.get("response", "")
+                    models_used.append("gemini_native")
+            except Exception as gemini_err:
+                logger.warning(f"[vietnamese_node] Gemini fallback failed: {gemini_err}")
+
+        # --- Attempt 3: Hardcoded strings ---
+        if not native_hint:
+            native_hint = _get_predefined_vietnamese(errors)
+            models_used.append("native_fallback")
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
         return {
-            "vietnamese_hint": vietnamese_hint,
-            "models_used": ["qwen_vietnamese"],
+            "vietnamese_hint": native_hint,
+            "models_used": models_used,
         }
-        
+
     except Exception as e:
         logger.error(f"[vietnamese_node] Error: {e}")
-        vietnamese_hint = _get_predefined_vietnamese(errors)
         return {
-            "vietnamese_hint": vietnamese_hint,
-            "models_used": ["vietnamese_fallback"],
+            "vietnamese_hint": _get_predefined_vietnamese(errors),
+            "models_used": ["native_fallback"],
         }
 
 

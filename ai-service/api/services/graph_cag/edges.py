@@ -40,21 +40,23 @@ def route_after_diagnosis(state: GraphCAGState) -> Literal["retrieve_node", "ask
     
     Decision tree:
     - confidence < 0.5 → ask_clarify (need more info)
-    - level in A1/A2 and errors → vietnamese (explain in VN first)
+    - user explicitly requested native-language explanation → vietnamese_node (any level)
+    - level in A1/A2 and errors → vietnamese_node (explain in native language first)
     - otherwise → retrieve (continue normal flow)
     """
     confidence = state.get("diagnosis_confidence", 1.0)
     level = state.get("learner_profile", {}).get("level", "B1")
     errors = state.get("diagnosis_errors", [])
-    
+
     # Very low confidence - need clarification
     if confidence < 0.5:
         return "ask_clarify_node"
-    
-    # Beginner with errors - provide Vietnamese first
-    if level in ["A1", "A2"] and len(errors) > 0:
+
+    # Explicit native-language request (any level) or beginner with errors
+    native_requested = state.get("native_explanation_requested", False)
+    if native_requested or (level in ["A1", "A2"] and len(errors) > 0):
         return "vietnamese_node"
-    
+
     # Normal flow
     return "retrieve_node"
 

@@ -144,6 +144,7 @@ class GraphCAGState(TypedDict, total=False):
     # ============================================
     tutor_response: str
     vietnamese_hint: Optional[str]
+    native_explanation_requested: Optional[bool]
     pronunciation_tip: Optional[str]
     strategy: str  # praise, scaffold, socratic, feedback
     next_action: str  # continue, hint, correct
@@ -257,6 +258,7 @@ def create_initial_state(
         # Response (will be populated by generate_node)
         tutor_response="",
         vietnamese_hint=None,
+        native_explanation_requested=False,
         pronunciation_tip=None,
         strategy="scaffold",
         next_action="continue",
