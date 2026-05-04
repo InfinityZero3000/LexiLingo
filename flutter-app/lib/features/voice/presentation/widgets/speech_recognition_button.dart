@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -199,7 +200,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
       final text = provider.fullTranscript;
       if (text.isEmpty) {
         return Text(
-          'Listening...',
+          'voice.listening'.tr(),
           style: TextStyle(
             color: Colors.grey[600],
             fontStyle: FontStyle.italic,
@@ -241,7 +242,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Confidence: ${(provider.confidence * 100).toStringAsFixed(0)}%',
+                  'voice.confidence'.tr(namedArgs: {'percent': (provider.confidence * 100).toStringAsFixed(0)}),
                   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
               ),
@@ -251,7 +252,7 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
     }
 
     return Text(
-      'Tap to speak',
+      'voice.tapToSpeak'.tr(),
       style: TextStyle(color: Colors.grey[500], fontSize: 12),
     );
   }

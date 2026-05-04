@@ -791,10 +791,17 @@ class _SlideFadeTransitionState extends State<SlideFadeTransition>
           opacity: _fadeAnimation.value,
           child: Transform.translate(
             offset: _slideAnimation.value,
-            child: widget.child,
+            child: child,
           ),
         );
       },
+      // Pass widget.child as the child parameter so Flutter manages its
+      // element lifecycle separately from the animation loop. Without this,
+      // _AnimatedState only rebuilds when the animation ticks — after the
+      // entrance animation completes, Provider-driven state changes (e.g.
+      // toggling a setting) never propagate visually until the page is
+      // re-entered.
+      child: widget.child,
     );
   }
 }

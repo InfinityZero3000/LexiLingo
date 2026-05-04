@@ -28,6 +28,13 @@ LexiLingo is an English learning app with 4 services:
 
 ## Coding Conventions
 
+## App I18N Workflow
+- For Flutter app UI work, use `flutter-app/assets/i18n/en.json` as the source of truth for key shape and wording.
+- Keep all 7 locale files aligned with English: `en`, `vi`, `ja`, `ko`, `zh`, `fr`, `es`.
+- Never add new user-facing strings as hardcoded literals when a reusable i18n key is appropriate.
+- When translations are not ready for a locale, keep the English fallback string in that locale file instead of leaving the key missing.
+- Follow the detailed operating guide in `docs/i18n-global-copilot-guide.md` when touching app text, auth flows, profile, settings, onboarding, and other user-facing Flutter screens.
+
 ### Python (backend-service, ai-service)
 - Python 3.11+, FastAPI, Pydantic v2
 - Use `async/await` everywhere — no blocking I/O

@@ -1,0 +1,145 @@
+{
+  "version": "1.0.0",
+  "description": "Writing skills and pronunciation/phonology concepts. Writing covers paragraph structure, IELTS tasks, cohesion, and genre conventions. Phonology covers sounds, stress, rhythm, and features critical for Vietnamese learners.",
+  "concepts": [
+    {
+      "id": "concept:skill.paragraph_structure",
+      "title": "Paragraph Structure",
+      "level": "B1",
+      "keywords": "paragraph topic sentence supporting details concluding sentence unity coherence structure indentation example evidence explain"
+    },
+    {
+      "id": "concept:skill.essay_structure",
+      "title": "Essay Structure",
+      "level": "B2",
+      "keywords": "essay introduction body conclusion thesis statement main idea argument paragraph academic writing structure five paragraph"
+    },
+    {
+      "id": "concept:skill.cohesion_devices",
+      "title": "Cohesion & Linking Devices",
+      "level": "B2",
+      "keywords": "cohesion linking furthermore moreover however in contrast additionally on the other hand for example such as in conclusion nevertheless although despite despite despite"
+    },
+    {
+      "id": "concept:skill.formal_writing",
+      "title": "Formal Writing Conventions",
+      "level": "B1",
+      "keywords": "formal writing avoid contractions no slang passive voice complex sentences full forms formal register academic email report"
+    },
+    {
+      "id": "concept:skill.ielts_task1",
+      "title": "IELTS Writing Task 1 (Data Description)",
+      "level": "B2",
+      "keywords": "IELTS task 1 describe graph chart pie bar line table trend increase decrease rise fall fluctuate peak comparisons data figures overall"
+    },
+    {
+      "id": "concept:skill.ielts_task2",
+      "title": "IELTS Writing Task 2 (Opinion Essay)",
+      "level": "B2",
+      "keywords": "IELTS task 2 opinion essay agree disagree discuss both views advantages disadvantages argument band score introduction body conclusion topic"
+    },
+    {
+      "id": "concept:skill.punctuation",
+      "title": "Punctuation",
+      "level": "B1",
+      "keywords": "punctuation comma full stop period semicolon colon apostrophe quotation marks exclamation question mark dash hyphen capital letters"
+    },
+    {
+      "id": "concept:skill.sentence_variety",
+      "title": "Sentence Variety & Complexity",
+      "level": "B2",
+      "keywords": "sentence variety simple compound complex compound-complex variety combine clauses coordination subordination relative clause improve style"
+    },
+    {
+      "id": "concept:skill.paraphrasing",
+      "title": "Paraphrasing & Summarising",
+      "level": "B2",
+      "keywords": "paraphrase summarise rephrase restate in other words own words avoid plagiarism synonyms structure change IELTS task"
+    },
+    {
+      "id": "concept:skill.narrative_writing",
+      "title": "Narrative Writing",
+      "level": "B1",
+      "keywords": "narrative writing story plot setting character tense past simple continuous descriptive language dialogue structure beginning middle end"
+    },
+    {
+      "id": "concept:phonology.vowel_sounds",
+      "title": "English Vowel Sounds",
+      "level": "A1",
+      "keywords": "vowel sounds short long bit beat bet bait bat boot book caught cut minimal pairs pure vowels diphthongs IPA"
+    },
+    {
+      "id": "concept:phonology.consonant_clusters",
+      "title": "Consonant Clusters",
+      "level": "A2",
+      "keywords": "consonant cluster str- spl- spr- -ks -nts -lts -nds beginning end word groups together difficult Vietnamese simplified"
+    },
+    {
+      "id": "concept:phonology.final_consonants",
+      "title": "Final Consonant Sounds",
+      "level": "A2",
+      "keywords": "final consonant coda -t -d -k -p -s -z -f -v Vietnamese learner deletion dropped omission pronunciation end word stopped"
+    },
+    {
+      "id": "concept:phonology.th_sounds",
+      "title": "The /θ/ and /ð/ Sounds",
+      "level": "B1",
+      "keywords": "th sounds theta this that think thought through three there these those dental fricative /θ/ /ð/ Vietnamese difficult tongue teeth"
+    },
+    {
+      "id": "concept:phonology.word_stress",
+      "title": "Word Stress",
+      "level": "A2",
+      "keywords": "word stress syllable stressed unstressed primary secondary two-syllable noun verb REcord reCORD IMport imPORT stress shift"
+    },
+    {
+      "id": "concept:phonology.sentence_stress",
+      "title": "Sentence Stress & Content Words",
+      "level": "B1",
+      "keywords": "sentence stress content words function words stressed unstressed nouns main verbs adjectives adverbs articles prepositions rhythm pattern"
+    },
+    {
+      "id": "concept:phonology.intonation",
+      "title": "Intonation Patterns",
+      "level": "B1",
+      "keywords": "intonation rising falling yes no question statement surprise listing attitude meaning change tone pitch fall-rise"
+    },
+    {
+      "id": "concept:phonology.weak_forms",
+      "title": "Weak Forms & Schwa",
+      "level": "B2",
+      "keywords": "weak form schwa unstressed syllable the a and but for of to at from can was /ə/ natural speech reduction"
+    },
+    {
+      "id": "concept:phonology.connected_speech",
+      "title": "Connected Speech (Linking & Elision)",
+      "level": "C1",
+      "keywords": "connected speech linking intrusive r assimilation elision reduction natural fast speech gonna wanna gonna whatcha gonna do"
+    }
+  ],
+  "edges": [
+    { "from": "concept:skill.paragraph_structure", "to": "concept:skill.essay_structure", "relation": "prerequisite_of" },
+    { "from": "concept:skill.cohesion_devices", "to": "concept:skill.essay_structure", "relation": "related_to" },
+    { "from": "concept:skill.cohesion_devices", "to": "concept:grammar.discourse_cohesion", "relation": "related_to" },
+    { "from": "concept:skill.formal_writing", "to": "concept:vocab.formal_register", "relation": "related_to" },
+    { "from": "concept:skill.formal_writing", "to": "concept:grammar.passive_voice", "relation": "related_to" },
+    { "from": "concept:skill.formal_writing", "to": "concept:grammar.nominalisation", "relation": "related_to" },
+    { "from": "concept:skill.ielts_task1", "to": "concept:skill.paragraph_structure", "relation": "builds_on" },
+    { "from": "concept:skill.ielts_task2", "to": "concept:skill.essay_structure", "relation": "builds_on" },
+    { "from": "concept:skill.ielts_task2", "to": "concept:function.persuading", "relation": "related_to" },
+    { "from": "concept:skill.ielts_task2", "to": "concept:function.academic_argument", "relation": "related_to" },
+    { "from": "concept:skill.sentence_variety", "to": "concept:grammar.relative_clauses", "relation": "related_to" },
+    { "from": "concept:skill.sentence_variety", "to": "concept:grammar.adverbial_clauses", "relation": "related_to" },
+    { "from": "concept:skill.paraphrasing", "to": "concept:skill.ielts_task2", "relation": "part_of" },
+    { "from": "concept:skill.narrative_writing", "to": "concept:function.narrating", "relation": "related_to" },
+    { "from": "concept:skill.narrative_writing", "to": "concept:grammar.past_continuous", "relation": "related_to" },
+    { "from": "concept:phonology.final_consonants", "to": "concept:error.missing_auxiliary", "relation": "related_to" },
+    { "from": "concept:phonology.word_stress", "to": "concept:phonology.sentence_stress", "relation": "prerequisite_of" },
+    { "from": "concept:phonology.sentence_stress", "to": "concept:phonology.intonation", "relation": "builds_on" },
+    { "from": "concept:phonology.intonation", "to": "concept:phonology.connected_speech", "relation": "prerequisite_of" },
+    { "from": "concept:phonology.weak_forms", "to": "concept:phonology.connected_speech", "relation": "builds_on" },
+    { "from": "concept:phonology.consonant_clusters", "to": "concept:phonology.final_consonants", "relation": "related_to" },
+    { "from": "concept:phonology.vowel_sounds", "to": "concept:phonology.word_stress", "relation": "prerequisite_of" },
+    { "from": "concept:skill.punctuation", "to": "concept:skill.formal_writing", "relation": "part_of" }
+  ]
+}

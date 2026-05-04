@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -95,7 +97,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     if (!_hasRecorderPermission) {
       await _checkPermission();
       if (!_hasRecorderPermission) {
-        _showError('Microphone permission denied');
+        _showError('voice.microphonePermissionDenied'.tr());
         return;
       }
     }
@@ -131,7 +133,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         );
       });
     } catch (e) {
-      _showError('Failed to start recording: $e');
+      _showError(
+        'voice.failedToStartRecording'.tr(namedArgs: {'error': '$e'}),
+      );
     }
   }
 
@@ -150,13 +154,15 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         if (audioData != null && audioData.isNotEmpty) {
           await _assessPronunciation(audioData, 'recording.wav');
         } else {
-          _showError('Recorded audio could not be read');
+          _showError('voice.recordedAudioUnreadable'.tr());
         }
       } else {
-        _showError('No recorded audio was returned');
+        _showError('voice.noRecordedAudioReturned'.tr());
       }
     } catch (e) {
-      _showError('Failed to stop recording: $e');
+      _showError(
+        'voice.failedToStopRecording'.tr(namedArgs: {'error': '$e'}),
+      );
     }
   }
 
@@ -179,7 +185,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   Future<void> _playExample() async {
     if (_phraseController.text.trim().isEmpty) {
-      _showError('Enter a phrase first');
+      _showError('voice.enterPhraseFirst'.tr());
       return;
     }
 
@@ -212,7 +218,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         });
       } catch (e) {
         setState(() => _isProcessing = false);
-        _showError('Failed to play audio: $e');
+        _showError('voice.failedToPlayAudio'.tr(namedArgs: {'error': '$e'}));
       }
     } else {
       setState(() => _isProcessing = false);
@@ -256,12 +262,12 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Voice Practice'),
+        title: Text('voice.practiceTitle'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.shuffle),
             onPressed: _selectRandomPhrase,
-            tooltip: 'Random phrase',
+            tooltip: 'voice.randomPhrase'.tr(),
           ),
         ],
       ),
@@ -285,7 +291,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '1. Listen to the phrase\n2. Record your pronunciation\n3. Get feedback',
+                          'voice.instructions'.tr(),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -299,8 +305,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                   controller: _phraseController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Phrase to practice',
-                    hintText: 'Enter a phrase...',
+                    labelText: 'voice.phraseToPractice'.tr(),
+                    hintText: 'voice.enterPhraseHint'.tr(),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -322,7 +328,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                       ? null
                       : (_isPlaying ? _stopPlaying : _playExample),
                   icon: Icon(_isPlaying ? Icons.stop : Icons.volume_up),
-                  label: Text(_isPlaying ? 'Stop' : 'Listen to Example'),
+                  label: Text(
+                    _isPlaying ? 'voice.stop'.tr() : 'voice.listenToExample'.tr(),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -339,7 +347,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                   ElevatedButton.icon(
                     onPressed: _checkPermission,
                     icon: const Icon(Icons.mic_off),
-                    label: const Text('Grant Microphone Permission'),
+                    label: Text('voice.grantMicrophonePermission'.tr()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.orange,
                       foregroundColor: Colors.white,
@@ -347,7 +355,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                   ),
                 ] else ...[
                   Text(
-                    'Your Turn',
+                    'voice.yourTurn'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -357,7 +365,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     const LottieAnimationWidget.pulse(width: 88, height: 88),
                     const SizedBox(height: 4),
                     Text(
-                      'Đang phân tích phát âm...',
+                      'voice.analyzingPronunciation'.tr(),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textGrey,
                       ),
@@ -411,7 +419,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'You said:',
+                          'voice.youSaid'.tr(),
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(color: AppColors.textGrey),
                         ),
@@ -436,7 +444,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Phát âm xuất sắc! 🎉',
+                      'voice.excellentPronunciation'.tr(),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppColors.greenSuccessBright,
                         fontWeight: FontWeight.bold,

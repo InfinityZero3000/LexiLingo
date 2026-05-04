@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ import '../pages/login_page.dart';
 import '../pages/register_page.dart';
 import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
+import '../pages/pre_auth_questions_page.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -26,12 +28,16 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _showOnboarding = false;
   bool _showPreAuthWelcome = false;
+  bool _showPreAuthQuestions = false;
   bool _wasAuthenticated = false;
   bool _isResolvingFlow = false;
   bool _isResolvingPreAuthFlow = false;
   bool _isShowingRegister = false;
   bool _preAuthFlowResolved = false;
   String? _flowResolvedForUserId;
+  PreAuthAnswers? _pendingPreAuthAnswers;
+
+  static const String _preAuthAnswersKey = 'pre_auth_answers_pending';
 
   String _onboardingCompletedKey(String userId) =>
       '${AppConstants.firstTimeUserKey}_completed_$userId';
@@ -68,6 +74,30 @@ class _AuthWrapperState extends State<AuthWrapper> {
     setState(() {
       _showPreAuthWelcome = false;
       _isShowingRegister = openRegister;
+    });
+  }
+
+  /// Called when "Get Started" is tapped — show pre-auth questions first.
+  void _startPreAuthQuestions() {
+    setState(() {
+      _showPreAuthWelcome = false;
+      _showPreAuthQuestions = true;
+    });
+  }
+
+  /// Called when pre-auth questions are completed.
+  Future<void> _onPreAuthQuestionsComplete(PreAuthAnswers answers) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.firstTimeUserKey, false);
+    await prefs.setString(
+        _preAuthAnswersKey, jsonEncode(answers.toJson()));
+
+    if (!mounted) return;
+    setState(() {
+      _pendingPreAuthAnswers = answers;
+      _showPreAuthQuestions = false;
+      _isShowingRegister = true;
+      _preAuthFlowResolved = true;
     });
   }
 
@@ -112,6 +142,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final userId = authProvider.currentUser?.id;
     if (userId == null) return;
 
+    // Load any pre-auth answers collected before registration.
+    PreAuthAnswers? preAuth = _pendingPreAuthAnswers;
+    if (preAuth == null) {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_preAuthAnswersKey);
+      if (raw != null) {
+        try {
+          preAuth = PreAuthAnswers.fromJson(
+              jsonDecode(raw) as Map<String, dynamic>);
+        } catch (_) {}
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final config = <String, dynamic>{
       'goal': answers.goal,
@@ -129,8 +172,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     await prefs.setBool(_onboardingCompletedKey(userId), true);
     await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
+    await prefs.remove(_preAuthAnswersKey);
 
-    await authProvider.submitOnboarding(answers.toJson());
+    await authProvider.submitOnboarding(
+      answers.toJson(),
+      displayName: (preAuth?.name.isNotEmpty ?? false) ? preAuth!.name : null,
+      nativeLanguage: preAuth?.nativeLanguage,
+    );
 
     // Refresh authoritative CEFR + numeric level snapshot immediately.
     if (mounted) {
@@ -171,8 +219,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show loading while checking auth state
     if (authProvider.isCheckingAuth) {
-      return const Scaffold(
-        body: LoadingScreen(message: 'Checking authentication...'),
+      return Scaffold(
+        body: LoadingScreen(message: 'common.loading'.tr()),
       );
     }
 
@@ -219,8 +267,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     Widget currentPage;
     if (authProvider.isAuthenticated) {
       if (_isResolvingFlow) {
-        currentPage = const Scaffold(
-          body: LoadingScreen(message: 'Preparing your learning path...'),
+        currentPage = Scaffold(
+          body: LoadingScreen(message: 'common.loading'.tr()),
         );
       } else if (_showOnboarding) {
         currentPage = OnboardingPage(
@@ -231,13 +279,21 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     } else {
       if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {
-        currentPage = const Scaffold(
-          body: LoadingScreen(message: 'Preparing your learning path...'),
+        currentPage = Scaffold(
+          body: LoadingScreen(message: 'common.loading'.tr()),
         );
       } else if (_showPreAuthWelcome) {
         currentPage = WelcomePage(
-          onGetStarted: () => _dismissPreAuthWelcome(openRegister: false),
+          onGetStarted: _startPreAuthQuestions,
           onSkip: () => _dismissPreAuthWelcome(openRegister: false),
+        );
+      } else if (_showPreAuthQuestions) {
+        currentPage = PreAuthQuestionsPage(
+          onComplete: _onPreAuthQuestionsComplete,
+          onBack: () => setState(() {
+            _showPreAuthQuestions = false;
+            _showPreAuthWelcome = true;
+          }),
         );
       } else {
         currentPage = _isShowingRegister

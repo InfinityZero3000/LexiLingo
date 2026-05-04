@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -129,34 +130,30 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Level Up!',
+                  Text(
+                    'games.levelUpTitle'.tr(),
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  RichText(
+                  Text(
+                    'games.youReachedLevel'.tr(namedArgs: {'level': '${widget.newLevel}'}),
                     textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textGrey,
-                        height: 1.4,
-                      ),
-                      children: [
-                        const TextSpan(text: 'You reached '),
-                        TextSpan(
-                          text: 'Level ${widget.newLevel}',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const TextSpan(text: '!\nKeep it up!'),
-                      ],
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  Text(
+                    'games.keepItUp'.tr(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -179,7 +176,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '+${widget.xpAwarded} XP earned',
+                          'games.xpEarned'.tr(namedArgs: {'xp': '${widget.xpAwarded}'}),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -202,9 +199,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text(
-                        'Awesome!',
-                        style: TextStyle(
+                      child: Text(
+                        'games.awesome'.tr(),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),

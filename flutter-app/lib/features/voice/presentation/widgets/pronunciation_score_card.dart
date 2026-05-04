@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
@@ -63,17 +64,17 @@ class PronunciationScoreCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _ScoreItem(
-                label: 'Accuracy',
+                label: 'voice.accuracy'.tr(),
                 score: score.accuracyScore,
                 icon: Icons.check_circle_outline,
               ),
               _ScoreItem(
-                label: 'Fluency',
+                label: 'voice.fluency'.tr(),
                 score: score.fluencyScore,
                 icon: Icons.speed,
               ),
               _ScoreItem(
-                label: 'Completeness',
+                label: 'voice.completeness'.tr(),
                 score: score.completenessScore,
                 icon: Icons.format_list_numbered,
               ),
@@ -86,7 +87,7 @@ class PronunciationScoreCard extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 12),
             Text(
-              'Word Breakdown',
+              'voice.wordBreakdown'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -111,7 +112,7 @@ class PronunciationScoreCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onListenExample,
                   icon: const Icon(Icons.volume_up, size: 18),
-                  label: const Text('Listen'),
+                  label: Text('voice.listen'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
@@ -126,7 +127,7 @@ class PronunciationScoreCard extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: onTryAgain,
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Try Again'),
+                  label: Text('voice.tryAgain'.tr()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -261,7 +262,7 @@ class _WordChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: wordScore.hasIssue ? wordScore.issue! : 'Good',
+      message: wordScore.hasIssue ? wordScore.issue! : 'voice.wordGood'.tr(),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(

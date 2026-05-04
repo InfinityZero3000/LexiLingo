@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -74,8 +75,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
     _showTaskBanner(
       type: _TaskBannerType.loading,
-      title: 'Opening topic chat',
-      detail: 'Creating your conversation session...',
+      title: 'topicChat.openingTaskTitle'.tr(),
+      detail: 'topicChat.creatingSessionDetail'.tr(),
       progress: 0.25,
     );
 
@@ -88,13 +89,13 @@ class _TopicChatPageState extends State<TopicChatPage> {
     if (!success) {
       _showTaskBanner(
         type: _TaskBannerType.error,
-        title: 'Could not open chat',
-        detail: provider.sessionError ?? 'Please try again.',
+        title: 'topicChat.failedOpenTitle'.tr(),
+        detail: provider.sessionError ?? 'topicChat.tryAgainDefault'.tr(),
         progress: null,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.sessionError ?? 'Failed to start session'),
+          content: Text(provider.sessionError ?? 'topicChat.failedStartSession'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -103,8 +104,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
     _showTaskBanner(
       type: _TaskBannerType.loading,
-      title: 'Loading knowledge graph',
-      detail: 'Preparing context for smarter replies...',
+      title: 'topicChat.loadingKgTitle'.tr(),
+      detail: 'topicChat.loadingKgDetail'.tr(),
       progress: 0.7,
     );
 
@@ -117,16 +118,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
     if (warmed) {
       _showTaskBanner(
         type: _TaskBannerType.complete,
-        title: 'Context complete',
-        detail: 'Knowledge graph is ready for this chat.',
+        title: 'topicChat.contextReadyTitle'.tr(),
+        detail: 'topicChat.contextReadyDetail'.tr(),
         progress: 1.0,
       );
       _scheduleAutoHide();
     } else {
       _showTaskBanner(
         type: _TaskBannerType.error,
-        title: 'Context preload unavailable',
-        detail: provider.error ?? 'Chat is ready, but KG preload failed.',
+        title: 'topicChat.contextFailedTitle'.tr(),
+        detail: provider.error ?? 'topicChat.contextFailedDetail'.tr(),
         progress: null,
       );
     }
@@ -238,8 +239,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     ? Center(
                         child: Text(
                           provider.isLoading
-                              ? 'Preparing your topic...'
-                              : 'Say hello to start practicing.',
+                              ? 'topicChat.preparingTopicMessage'.tr()
+                              : 'topicChat.emptyStateMessage'.tr(),
                           style: TextStyle(
                             color: AppColorRoles.textMuted(isDark),
                             fontStyle: FontStyle.italic,
@@ -335,12 +336,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
         IconButton(
           icon: const Icon(Icons.menu_book_outlined),
           onPressed: _showVocabularyPreview,
-          tooltip: 'Vocabulary',
+          tooltip: 'topicChat.vocabularyTooltip'.tr(),
         ),
         IconButton(
           icon: const Icon(Icons.exit_to_app_outlined),
           onPressed: _confirmEndSession,
-          tooltip: 'End Session',
+          tooltip: 'topicChat.endSessionTooltip'.tr(),
         ),
       ],
     );
@@ -482,7 +483,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                         ),
                       ),
                       Text(
-                        'Swipe to close',
+                        'topicChat.swipeToCloseHint'.tr(),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColorRoles.textMuted(isDark),
@@ -556,7 +557,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 enabled: isEnabled,
                 style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
                 decoration: InputDecoration(
-                  hintText: 'Type in English...',
+                  hintText: 'topicChat.inputHint'.tr(),
                   hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
@@ -667,14 +668,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('End Session?'),
-        content: const Text(
-          'Are you sure you want to end this conversation? Your progress will be saved.',
+        title: Text('topicChat.endSessionTitle'.tr()),
+        content: Text(
+          'topicChat.endSessionConfirmation'.tr(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('topicChat.cancelButton'.tr()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -690,7 +691,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('End Session'),
+            child: Text('topicChat.endSessionButton'.tr()),
           ),
         ],
       ),
@@ -772,12 +773,12 @@ class _StoryContextHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.bolt, size: 12, color: AppColors.greenSuccessBright),
-                SizedBox(width: 4),
+                const Icon(Icons.bolt, size: 12, color: AppColors.greenSuccessBright),
+                const SizedBox(width: 4),
                 Text(
-                  'Context Ready',
+                  'topicChat.contextReadyBadgeLabel'.tr(),
                   style: TextStyle(
                     fontSize: 10,
                     color: AppColors.greenSuccessBright,
@@ -946,8 +947,8 @@ class VocabularyPreviewSheet extends StatelessWidget {
               children: [
                 Icon(Icons.menu_book, color: AppColorRoles.primary(isDark)),
                 const SizedBox(width: 12),
-                const Text(
-                  'Key Vocabulary',
+                Text(
+                  'topicChat.keyVocabularyTitle'.tr(),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],

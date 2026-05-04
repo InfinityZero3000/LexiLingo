@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
@@ -54,7 +55,8 @@ class HomeProvider with ChangeNotifier {
   String? get errorMessage => _coursesError ?? _dashboardError;
 
   User? get currentUser => _currentUser;
-  String get userName => _currentUser?.name ?? _currentUser?.email ?? 'User';
+  String get userName =>
+      _currentUser?.name ?? _currentUser?.email ?? 'profile.guestUser'.tr();
   int get totalXP => _currentUser?.totalXP ?? 0;
   int get streakDays => _weeklyProgress.currentStreak;
 
@@ -68,9 +70,19 @@ class HomeProvider with ChangeNotifier {
   bool get isLoadingWeekly => _isLoadingWeekly;
 
   DailyGoal? get todayGoal => _todayGoal;
-  int get dailyXP => _todayGoal?.earnedXP ?? 0;
+
+  // If a DailyGoal has been loaded, use its earnedXP.
+  // Otherwise fall back to today's xpEarned from the weekly progress data
+  // (already loaded by loadWeeklyProgress), so the card shows real data.
+  int get dailyXP =>
+      _todayGoal?.earnedXP ?? _weeklyProgress.todayProgress?.xpEarned ?? 0;
   int get dailyGoalXP => _todayGoal?.targetXP ?? 50;
-  double get dailyProgressPercentage => _todayGoal?.progressPercentage ?? 0.0;
+  double get dailyProgressPercentage {
+    if (_todayGoal != null) return _todayGoal!.progressPercentage;
+    final earned = _weeklyProgress.todayProgress?.xpEarned ?? 0;
+    final goal = dailyGoalXP;
+    return goal > 0 ? (earned / goal).clamp(0.0, 1.0) : 0.0;
+  }
 
   bool get isLoadingDashboard => _isLoadingDashboard;
   String? get dashboardError => _dashboardError;
@@ -163,6 +175,22 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update only the target XP for today's goal while preserving progress.
+  void updateDailyGoalTarget(int targetXP) {
+    final now = DateTime.now();
+    final currentGoal = _todayGoal;
+
+    _todayGoal = currentGoal?.copyWith(targetXP: targetXP) ??
+        DailyGoal(
+          id: 1,
+          userId: _currentUser?.id ?? 'guest',
+          date: now,
+          targetXP: targetXP,
+          earnedXP: 0,
+        );
+    notifyListeners();
+  }
+
   /// Load dashboard data (user stats, goals, etc.)
   Future<void> loadDashboard(User user) async {
     _isLoadingDashboard = true;
@@ -184,7 +212,9 @@ class HomeProvider with ChangeNotifier {
 
       _dashboardError = null;
     } catch (e) {
-      _dashboardError = 'Failed to load dashboard: ${e.toString()}';
+      _dashboardError = 'home.dashboardLoadFailed'.tr(
+        namedArgs: {'error': e.toString()},
+      );
     } finally {
       _isLoadingDashboard = false;
       notifyListeners();

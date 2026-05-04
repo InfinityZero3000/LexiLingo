@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -57,9 +58,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text(
-          'Book Library',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+        title: Text(
+          'books.library'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,7 +128,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             _searchController.text.length >= 2) {
           return Center(
             child: Text(
-              'No books found for "${_searchController.text}"',
+              'books.noBooksFound'.tr(namedArgs: {'query': _searchController.text}),
               style: TextStyle(
                 color: isDark ? Colors.white54 : AppColors.textGrey,
               ),
@@ -240,7 +241,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Could not load books.\nPlease try again.',
+                  'books.loadError'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isDark ? Colors.white54 : AppColors.textGrey,
@@ -249,7 +250,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => provider.loadRecommendedBooks(),
-                  child: const Text('Retry'),
+                  child: Text('common.retry'.tr()),
                 ),
               ],
             ),

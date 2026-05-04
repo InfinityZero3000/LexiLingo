@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -25,10 +26,36 @@ class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
 
+  // Pages are built lazily — only when the tab is first visited.
+  static const int _pageCount = 5;
+  final Map<int, Widget> _pageCache = {};
+
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePageNew();
+      case 1:
+        return const CourseListScreen();
+      case 2:
+        return const LexiChatPage();
+      case 3:
+        return const StorySelectionPage();
+      case 4:
+        return const ProfilePage();
+      default:
+        throw StateError('Unknown page index: $index');
+    }
+  }
+
+  Widget _getPage(int index) =>
+      _pageCache.putIfAbsent(index, () => _buildPage(index));
+
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _pages.length - 1);
+    _currentIndex = widget.initialIndex.clamp(0, _pageCount - 1);
+    // Only build the initial page; all other pages are deferred.
+    _getPage(_currentIndex);
     if (_currentIndex == 2) {
       _lexiWarmedUp = true;
       _warmupAiModels();
@@ -50,19 +77,19 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  final List<Widget> _pages = [
-    const HomePageNew(),
-    const CourseListScreen(),
-    const LexiChatPage(),
-    const StorySelectionPage(),
-    const ProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: List.generate(_pageCount, (i) {
+          // Use a lightweight placeholder until the tab is first visited.
+          return _pageCache.containsKey(i)
+              ? _pageCache[i]!
+              : const SizedBox.shrink();
+        }),
+      ),
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -97,7 +124,10 @@ class _MainScreenState extends State<MainScreen> {
                     _lexiWarmedUp = true;
                     _warmupAiModels();
                   }
-                  setState(() => _currentIndex = index);
+                  setState(() {
+                    _getPage(index); // build page lazily on first visit
+                    _currentIndex = index;
+                  });
                 },
                 items: [
                   BottomNavigationBarItem(
@@ -105,35 +135,35 @@ class _MainScreenState extends State<MainScreen> {
                     activeIcon: Icon(
                       PhosphorIcons.compass(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Discovery',
+                    label: 'home.navDiscovery'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.bookOpen()),
                     activeIcon: Icon(
                       PhosphorIcons.bookOpen(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Learning',
+                    label: 'home.navLearning'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.bird()),
                     activeIcon: Icon(
                       PhosphorIcons.bird(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Lexi',
+                    label: 'home.navLexi'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.chatCircleText()),
                     activeIcon: Icon(
                       PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Chat',
+                    label: 'home.navTopic'.tr(),
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(PhosphorIcons.userCircle()),
                     activeIcon: Icon(
                       PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
                     ),
-                    label: 'Account',
+                    label: 'home.navAccount'.tr(),
                   ),
                 ],
               ),
@@ -145,7 +175,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _warmupAiModels() async {
-    final endpoints = ['/warmup', '/ai/warmup'];
+    final endpoints = ['/ai/warmup', '/warmup'];
 
     for (final endpoint in endpoints) {
       try {

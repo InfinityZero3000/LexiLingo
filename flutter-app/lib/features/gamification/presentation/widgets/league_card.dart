@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -102,7 +103,7 @@ class LeagueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Rank #${status.currentRank} · ${status.xpEarned} XP this week',
+                    'gamification.rankWeekly'.tr(namedArgs: {'rank': '${status.currentRank}', 'xp': '${status.xpEarned}'}),
                     style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                   if (status.weekEndsInHours > 0) ...[

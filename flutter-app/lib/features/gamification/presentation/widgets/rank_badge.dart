@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -216,7 +217,7 @@ class RankCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Level $numericLevel · $proficiencyLevel',
+                    'gamification.levelProficiency'.tr(namedArgs: {'level': '$numericLevel', 'proficiency': proficiencyLevel}),
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(
@@ -239,7 +240,7 @@ class RankCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Score',
+                  'gamification.score'.tr(),
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(

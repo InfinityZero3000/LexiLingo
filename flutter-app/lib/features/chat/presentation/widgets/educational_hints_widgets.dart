@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/models/educational_hints_model.dart';
@@ -89,7 +90,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
               Icon(Icons.edit_note, size: 16, color: Colors.orange.shade700),
               const SizedBox(width: 4),
               Text(
-                'Grammar Correction',
+                'chat.grammarCorrection'.tr(),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -217,7 +218,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                'Rule: ${correction.rule}',
+                'chat.correctionRule'.tr(namedArgs: {'rule': correction.rule!}),
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.grey600,

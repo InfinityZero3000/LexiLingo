@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -229,7 +230,7 @@ class VoiceRecordingIndicator extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Processing your voice...',
+                'chat.processingVoice'.tr(),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

@@ -12,6 +12,7 @@ Integrates with the existing GraphCAG system for document retrieval
 and knowledge graph expansion to make conversations contextually rich.
 """
 
+import asyncio
 import logging
 import re
 import io
@@ -20,10 +21,12 @@ import uuid
 import time
 import base64
 import hashlib
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import AsyncGenerator, Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Header, Request
+from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from pymongo.errors import OperationFailure
@@ -549,133 +552,40 @@ async def _transcribe_audio(audio_base64: str) -> Optional[str]:
         return None
 
 
-# ─── Routes ──────────────────────────────────────────────────────────────────
-@router.post("/sessions", response_model=LexiSessionResponse)
-async def create_lexi_session(
-    request: LexiSessionRequest = LexiSessionRequest(),
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: AuthenticatedUser = Depends(get_current_user),
-) -> LexiSessionResponse:
-    """Create a new conversation session with Lexi."""
-    auth_user_id = enforce_user_scope(current_user, request.user_id)
-    request = request.model_copy(update={"user_id": auth_user_id})
+# ─── Pipeline result ─────────────────────────────────────────────────────────
 
-    session_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
-    
-    await _store.set_session(session_id, {
-        "session_id": session_id,
-        "user_id": request.user_id,
-        "created_at": now,
-        "updated_at": now,
-        "title": "Lexi Chat",
-        "message_count": 0,
-        "persona": "lexi",
-        "story_context": None,
-    })
-    await _store.init_messages(session_id)
-
-    await db["lexi_sessions"].update_one(
-        {"session_id": session_id},
-        {
-            "$set": {
-                "session_id": session_id,
-                "user_id": request.user_id,
-                "title": "Lexi Chat",
-                "created_at": now,
-                "updated_at": now,
-                "message_count": 0,
-                "persona": "lexi",
-            }
-        },
-        upsert=True,
-    )
-    
-    logger.info(f" Lexi session created: {session_id[:8]}... for user: {request.user_id}")
-    return LexiSessionResponse(session_id=session_id, created_at=now)
+@dataclass
+class _PipelineResult:
+    lexi_response: str
+    user_text: str
+    message_id: str
+    session_id: str
+    corrections: List["LexiCorrection"] = field(default_factory=list)
+    linked_concepts: List[str] = field(default_factory=list)
+    vietnamese_hint: Optional[str] = None
+    scores: Optional[Dict[str, Any]] = None
+    model_used: str = "graphcag"
+    story_ctx: Optional[str] = None
+    audio_b64: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-@router.post("/chat", response_model=LexiChatResponse)
-async def lexi_chat(
-    request_context: Request,
-    request: LexiChatRequest,
-    x_idempotency_key: Optional[str] = Header(
-        default=None,
-        alias="X-Idempotency-Key",
-    ),
-    db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: AuthenticatedUser = Depends(get_current_user),
-) -> LexiChatResponse:
+async def _run_lexi_pipeline(
+    request: "LexiChatRequest",
+    session_id: str,
+    history: List[Dict[str, Any]],
+    db: AsyncIOMotorDatabase,
+    quota: Any,
+    start_time: float,
+) -> _PipelineResult:
+    """Execute the full Lexi pipeline (STT → GraphCAG → TTS → persist) and return results.
+
+    Extracted so both the regular /chat and the streaming /stream endpoints
+    can share the same logic without duplication.
     """
-    Chat with Lexi — the full AI pipeline.
-    
-    Pipeline flow:
-      1. Session management (create if needed)
-      2. STT transcription (if voice input)
-      3. GraphCAG pipeline (KG expansion + retrieval)
-      4. LLM generation with Lexi persona (Groq → Gemini → Ollama)
-      5. TTS synthesis (if enabled)
-      6. Return structured response
-    """
-    start_time = time.time()
-    request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
-    auth_user_id = enforce_user_scope(current_user, request.user_id)
-    request = request.model_copy(update={"user_id": auth_user_id})
+    metadata: Dict[str, Any] = {"pipeline_steps": ["session_ready"]}
 
-    quota = await enforce_user_quota(
-        current_user.user_id,
-        "lexi.chat",
-        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
-        fail_closed=True,
-    )
-    metadata: Dict[str, Any] = {"pipeline_steps": []}
-    
-    # ── 1. Session management ──
-    session_id = request.session_id or str(uuid.uuid4())
-    if not await _store.has_session(session_id):
-        await _store.set_session(session_id, {
-            "session_id": session_id,
-            "user_id": request.user_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-            "title": "Lexi Chat",
-            "message_count": 0,
-            "persona": "lexi",
-            "story_context": request.story_context,
-        })
-        await _store.init_messages(session_id)
-
-        await db["lexi_sessions"].update_one(
-            {"session_id": session_id},
-            {
-                "$set": {
-                    "session_id": session_id,
-                    "user_id": request.user_id,
-                    "title": "Lexi Chat",
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat(),
-                    "message_count": 0,
-                    "persona": "lexi",
-                }
-            },
-            upsert=True,
-        )
-
-    request_hash = _idempotency_request_hash(request)
-    if x_idempotency_key:
-        cached_response = await _idempotency_store.get(
-            user_id=request.user_id,
-            session_id=session_id,
-            idempotency_key=x_idempotency_key,
-            request_hash=request_hash,
-        )
-        if cached_response:
-            return LexiChatResponse(**cached_response)
-    
-    history = await _store.get_messages(session_id)
-    metadata["pipeline_steps"].append("session_ready")
-    
-    # ── 2. STT (if voice input) ──
+    # ── STT ──
     user_text = request.message
     if request.input_type == "voice" and request.audio_base64:
         transcript = await _transcribe_audio(request.audio_base64)
@@ -685,17 +595,15 @@ async def lexi_chat(
             metadata["stt_transcript"] = transcript
         else:
             metadata["pipeline_steps"].append("stt_failed")
-    
-    # ── 3. GraphCAG pipeline (knowledge expansion + retrieval + LLM generation) ──
-    # NOTE: GraphCAG generate_node now calls the LLM directly with persona,
-    # so we use its tutor_response as the final Lexi response.
+
+    # ── GraphCAG pipeline ──
     lexi_response = ""
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used = "graphcag"
-    
+
     try:
         from api.services.orchestrator import get_orchestrator
 
@@ -707,11 +615,7 @@ async def lexi_chat(
             learner_profile={"level": request.learner_level},
             conversation_history=history,
         )
-        
-        # Use the GraphCAG tutor_response directly as Lexi's response
         lexi_response = graph_result.get("tutor_response", "")
-        
-        # Extract corrections
         for c in graph_result.get("corrections", []):
             corrections.append(LexiCorrection(
                 error_span=c.get("error", ""),
@@ -719,17 +623,15 @@ async def lexi_chat(
                 error_type=c.get("type", ""),
                 explanation=c.get("explanation", ""),
             ))
-        
         linked_concepts = graph_result.get("linked_concepts", [])
         vietnamese_hint = graph_result.get("vietnamese_hint")
         scores = graph_result.get("scores")
-        
         metadata["pipeline_steps"].append("graphcag_complete")
         metadata["graphcag_metadata"] = graph_result.get("metadata", {})
         model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["graphcag"]))
-        
+
     except Exception as e:
-        logger.error("GraphCAG hard failure in Lexi chat (primary): %s", e)
+        logger.error("GraphCAG hard failure in Lexi pipeline (primary): %s", e)
         metadata["pipeline_steps"].append("graphcag_failed_primary")
         try:
             from api.services.orchestrator import get_orchestrator
@@ -759,7 +661,7 @@ async def lexi_chat(
             }
             model_used = ", ".join(retry_meta.get("models_used", ["graphcag_retry"]))
         except Exception as retry_err:
-            logger.error("GraphCAG hard failure in Lexi chat (degraded retry): %s", retry_err)
+            logger.error("GraphCAG hard failure in Lexi pipeline (degraded retry): %s", retry_err)
             metadata["pipeline_steps"].append("graphcag_failed_hard")
             metadata["graphcag_metadata"] = {
                 "fallback_used": True,
@@ -769,34 +671,30 @@ async def lexi_chat(
             lexi_response = SAFE_FIXED_RESPONSE
             model_used = "graphcag_safe_response"
 
-    # ── 4. Safety and response guards ──
+    # ── Guards ──
     story_ctx = request.story_context
     if not story_ctx:
         sess_data = await _store.get_session(session_id)
         story_ctx = (sess_data or {}).get("story_context")
+
     if not lexi_response:
         lexi_response = SAFE_FIXED_RESPONSE
         model_used = "graphcag_safe_response"
         metadata["pipeline_steps"].append("graphcag_empty_response_guard")
 
-    # Safety net for leaked internal payloads from GraphCAG fallback paths.
     lexi_response = _sanitize_lexi_response(lexi_response)
-    
     metadata["model_used"] = model_used
-    
-    # ── 5. TTS synthesis ──
+
+    # ── TTS ──
     audio_b64: Optional[str] = None
     if request.enable_tts:
         audio_b64 = await _synthesize_tts(lexi_response)
-        if audio_b64:
-            metadata["pipeline_steps"].append("tts_complete")
-        else:
-            metadata["pipeline_steps"].append("tts_skipped")
-    
-    # ── 6. Store messages (Redis-backed) ──
+        metadata["pipeline_steps"].append("tts_complete" if audio_b64 else "tts_skipped")
+
+    # ── Persist messages ──
     message_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
-    
+
     await _store.append_message(session_id, {
         "id": str(uuid.uuid4()),
         "role": "user",
@@ -859,7 +757,6 @@ async def lexi_chat(
         "story_context": story_ctx,
     })
 
-    # Write-back to ConversationCache so input_node gets real history on next turn
     try:
         from api.core.redis_client import ConversationCache, RedisClient
         _redis = await RedisClient.get_instance()
@@ -876,8 +773,7 @@ async def lexi_chat(
         )
     except Exception as _cc_err:
         logger.debug(f"ConversationCache write skipped: {_cc_err}")
-    
-    # ── 7. Build response ──
+
     total_ms = int((time.time() - start_time) * 1000)
     metadata["latency_ms"] = total_ms
     metadata["quota"] = {
@@ -890,10 +786,165 @@ async def lexi_chat(
         "tpd_used": quota.tpd_used,
         "tpd_limit": quota.tpd_limit,
     }
-    
     logger.info(
-        f" Lexi chat complete — {total_ms}ms, model: {model_used}, "
+        f"Lexi pipeline complete — {total_ms}ms, model: {model_used}, "
         f"steps: {metadata['pipeline_steps']}"
+    )
+
+    return _PipelineResult(
+        lexi_response=lexi_response,
+        user_text=user_text,
+        message_id=message_id,
+        session_id=session_id,
+        corrections=corrections,
+        linked_concepts=linked_concepts,
+        vietnamese_hint=vietnamese_hint,
+        scores=scores,
+        model_used=model_used,
+        story_ctx=story_ctx,
+        audio_b64=audio_b64,
+        metadata=metadata,
+    )
+
+
+# ─── Routes ──────────────────────────────────────────────────────────────────
+@router.post("/sessions", response_model=LexiSessionResponse)
+async def create_lexi_session(
+    request: LexiSessionRequest = LexiSessionRequest(),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> LexiSessionResponse:
+    """Create a new conversation session with Lexi."""
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
+    session_id = str(uuid.uuid4())
+    now = datetime.utcnow().isoformat()
+    
+    await _store.set_session(session_id, {
+        "session_id": session_id,
+        "user_id": request.user_id,
+        "created_at": now,
+        "updated_at": now,
+        "title": "Lexi Chat",
+        "message_count": 0,
+        "persona": "lexi",
+        "story_context": None,
+    })
+    await _store.init_messages(session_id)
+
+    await db["lexi_sessions"].update_one(
+        {"session_id": session_id},
+        {
+            "$set": {
+                "session_id": session_id,
+                "user_id": request.user_id,
+                "title": "Lexi Chat",
+                "created_at": now,
+                "updated_at": now,
+                "message_count": 0,
+                "persona": "lexi",
+            }
+        },
+        upsert=True,
+    )
+    
+    logger.info(f" Lexi session created: {session_id[:8]}... for user: {request.user_id}")
+    return LexiSessionResponse(session_id=session_id, created_at=now)
+
+
+@router.post("/chat", response_model=LexiChatResponse)
+async def lexi_chat(
+    request_context: Request,
+    request: LexiChatRequest,
+    x_idempotency_key: Optional[str] = Header(
+        default=None,
+        alias="X-Idempotency-Key",
+    ),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> LexiChatResponse:
+    """
+    Chat with Lexi — the full AI pipeline.
+
+    Pipeline flow:
+      1. Session management (create if needed)
+      2. STT transcription (if voice input)
+      3. GraphCAG pipeline (KG expansion + retrieval)
+      4. LLM generation with Lexi persona (Groq → Gemini → Ollama)
+      5. TTS synthesis (if enabled)
+      6. Return structured response
+    """
+    start_time = time.time()
+    request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
+    quota = await enforce_user_quota(
+        current_user.user_id,
+        "lexi.chat",
+        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
+        fail_closed=True,
+    )
+
+    # ── 1. Session management ──
+    session_id = request.session_id or str(uuid.uuid4())
+    if not await _store.has_session(session_id):
+        await _store.set_session(session_id, {
+            "session_id": session_id,
+            "user_id": request.user_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "title": "Lexi Chat",
+            "message_count": 0,
+            "persona": "lexi",
+            "story_context": request.story_context,
+        })
+        await _store.init_messages(session_id)
+
+        await db["lexi_sessions"].update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "session_id": session_id,
+                    "user_id": request.user_id,
+                    "title": "Lexi Chat",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.utcnow().isoformat(),
+                    "message_count": 0,
+                    "persona": "lexi",
+                }
+            },
+            upsert=True,
+        )
+
+    request_hash = _idempotency_request_hash(request)
+    if x_idempotency_key:
+        cached_response = await _idempotency_store.get(
+            user_id=request.user_id,
+            session_id=session_id,
+            idempotency_key=x_idempotency_key,
+            request_hash=request_hash,
+        )
+        if cached_response:
+            return LexiChatResponse(**cached_response)
+
+    history = await _store.get_messages(session_id)
+
+    # ── 2–6. Execute shared pipeline (STT → GraphCAG → TTS → persist) ──
+    result = await _run_lexi_pipeline(
+        request=request,
+        session_id=session_id,
+        history=history,
+        db=db,
+        quota=quota,
+        start_time=start_time,
+    )
+
+    # ── 7. Build response ──
+    logger.info(
+        f" Lexi chat complete — {result.metadata['latency_ms']}ms, "
+        f"model: {result.model_used}, steps: {result.metadata['pipeline_steps']}"
     )
 
     await emit_ai_audit_event(
@@ -902,24 +953,24 @@ async def lexi_chat(
             "user_id": current_user.user_id,
             "endpoint": "lexi.chat",
             "status": "success",
-            "session_id": session_id,
-            "model_used": model_used,
-            "latency_ms": total_ms,
-            "quota": metadata["quota"],
+            "session_id": result.session_id,
+            "model_used": result.model_used,
+            "latency_ms": result.metadata["latency_ms"],
+            "quota": result.metadata["quota"],
         }
     )
-    
+
     response = LexiChatResponse(
-        session_id=session_id,
-        message_id=message_id,
-        lexi_response=lexi_response,
-        audio_base64=audio_b64,
-        corrections=corrections,
-        linked_concepts=linked_concepts,
-        vietnamese_hint=vietnamese_hint,
-        scores=scores,
-        story_context=story_ctx,
-        metadata=metadata,
+        session_id=result.session_id,
+        message_id=result.message_id,
+        lexi_response=result.lexi_response,
+        audio_base64=result.audio_b64,
+        corrections=result.corrections,
+        linked_concepts=result.linked_concepts,
+        vietnamese_hint=result.vietnamese_hint,
+        scores=result.scores,
+        story_context=result.story_ctx,
+        metadata=result.metadata,
     )
 
     if x_idempotency_key:
@@ -932,6 +983,146 @@ async def lexi_chat(
         )
 
     return response
+
+
+@router.post("/stream")
+async def lexi_stream_chat(
+    request_context: Request,
+    request: LexiChatRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> StreamingResponse:
+    """
+    Chat with Lexi — streaming SSE variant.
+
+    Returns a text/event-stream response. Events:
+      • ``thinking``  — sent immediately to signal the pipeline has started
+      • ``chunk``     — one word at a time as the response is "typed out"
+      • ``done``      — final event carrying message_id, corrections, audio, etc.
+      • ``error``     — sent if the pipeline raises an unrecoverable error
+
+    The full AI pipeline (GraphCAG + TTS) still runs to completion before
+    streaming begins, so overall latency is the same as /chat.  The benefit
+    is the typewriter typing-effect on the client side.
+    """
+    start_time = time.time()
+    request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
+    quota = await enforce_user_quota(
+        current_user.user_id,
+        "lexi.chat",
+        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
+        fail_closed=True,
+    )
+
+    # ── Session management (same as /chat) ──
+    session_id = request.session_id or str(uuid.uuid4())
+    if not await _store.has_session(session_id):
+        await _store.set_session(session_id, {
+            "session_id": session_id,
+            "user_id": request.user_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "title": "Lexi Chat",
+            "message_count": 0,
+            "persona": "lexi",
+            "story_context": request.story_context,
+        })
+        await _store.init_messages(session_id)
+        await db["lexi_sessions"].update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "session_id": session_id,
+                    "user_id": request.user_id,
+                    "title": "Lexi Chat",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.utcnow().isoformat(),
+                    "message_count": 0,
+                    "persona": "lexi",
+                }
+            },
+            upsert=True,
+        )
+
+    history = await _store.get_messages(session_id)
+
+    async def _sse_generator() -> AsyncGenerator[str, None]:
+        # Signal that the pipeline has started
+        yield f"event: thinking\ndata: {{}}\n\n"
+
+        try:
+            result = await _run_lexi_pipeline(
+                request=request,
+                session_id=session_id,
+                history=history,
+                db=db,
+                quota=quota,
+                start_time=start_time,
+            )
+        except Exception as exc:
+            logger.error("Lexi /stream pipeline error: %s", exc)
+            err_payload = json.dumps({"error": "Pipeline failed. Please try again."})
+            yield f"event: error\ndata: {err_payload}\n\n"
+            return
+
+        # Stream the response text word by word (typewriter effect, ~30ms/word)
+        words = result.lexi_response.split(" ")
+        for i, word in enumerate(words):
+            chunk = word if i == 0 else f" {word}"
+            yield f"event: chunk\ndata: {json.dumps({'text': chunk})}\n\n"
+            await asyncio.sleep(0.03)
+
+        # Final event with all metadata
+        done_payload = json.dumps({
+            "message_id": result.message_id,
+            "session_id": result.session_id,
+            "corrections": [
+                {
+                    "error_span": c.error_span,
+                    "correction": c.correction,
+                    "error_type": c.error_type,
+                    "explanation": c.explanation,
+                }
+                for c in result.corrections
+            ],
+            "linked_concepts": result.linked_concepts,
+            "vietnamese_hint": result.vietnamese_hint,
+            "scores": result.scores,
+            "story_context": result.story_ctx,
+            "audio_base64": result.audio_b64,
+            "metadata": result.metadata,
+        })
+        yield f"event: done\ndata: {done_payload}\n\n"
+
+        logger.info(
+            f" Lexi stream complete — {result.metadata['latency_ms']}ms, "
+            f"model: {result.model_used}"
+        )
+        await emit_ai_audit_event(
+            {
+                "request_id": request_id,
+                "user_id": current_user.user_id,
+                "endpoint": "lexi.stream",
+                "status": "success",
+                "session_id": result.session_id,
+                "model_used": result.model_used,
+                "latency_ms": result.metadata["latency_ms"],
+                "quota": result.metadata["quota"],
+            }
+        )
+
+    return StreamingResponse(
+        _sse_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disable nginx proxy buffering for SSE
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get("/sessions/{session_id}/messages")

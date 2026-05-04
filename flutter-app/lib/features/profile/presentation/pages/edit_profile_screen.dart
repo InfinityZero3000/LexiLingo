@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -90,7 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               children: [
                 Icon(Icons.check_circle, color: AppColors.surfaceLight),
                 SizedBox(width: 8),
-                Text('Profile updated successfully!'),
+                Text('profile.profileUpdatedSuccess'.tr()),
               ],
             ),
             backgroundColor: AppColors.greenSuccess,
@@ -104,7 +105,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to update profile. Please try again.';
+        _errorMessage = 'profile.profileUpdatedFailed'.tr();
       });
     } finally {
       if (mounted) {
@@ -124,7 +125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text('profile.editProfile'.tr()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => Navigator.of(context).pop(),
@@ -139,7 +140,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     child: LottieLoadingWidget.tiny(),
                   )
                 : Text(
-                    'Save',
+                  'common.save'.tr(),
                     style: TextStyle(
                       color: primaryColor,
                       fontWeight: FontWeight.bold,
@@ -202,21 +203,21 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 const SizedBox(height: 32),
 
                 // Display Name
-                _buildSectionLabel('Display Name'),
+                _buildSectionLabel('profile.displayName'.tr()),
                 const SizedBox(height: 8),
                 _buildTextField(
                   controller: _displayNameController,
-                  hint: 'Enter your display name',
+                  hint: 'profile.enterDisplayName'.tr(),
                   icon: Icons.person_outline,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Display name is required';
+                      return 'profile.displayNameRequired'.tr();
                     }
                     if (value.trim().length < 2) {
-                      return 'Must be at least 2 characters';
+                      return 'profile.displayNameMin'.tr();
                     }
                     if (value.trim().length > 50) {
-                      return 'Must be less than 50 characters';
+                      return 'profile.displayNameMax'.tr();
                     }
                     return null;
                   },
@@ -226,24 +227,24 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 const SizedBox(height: 24),
 
                 // Account Info (read-only)
-                _buildSectionLabel('Account Information'),
+                _buildSectionLabel('profile.accountInformation'.tr()),
                 const SizedBox(height: 8),
                 _buildReadOnlyField(
-                  label: 'Username',
-                  value: user?.username ?? 'N/A',
+                  label: 'profile.username'.tr(),
+                  value: user?.username ?? 'common.noData'.tr(),
                   icon: Icons.alternate_email,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildReadOnlyField(
-                  label: 'Email',
-                  value: user?.email ?? 'N/A',
+                  label: 'auth.email'.tr(),
+                  value: user?.email ?? 'common.noData'.tr(),
                   icon: Icons.email_outlined,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildReadOnlyField(
-                  label: 'Level',
+                  label: 'profile.levelTitle'.tr(),
                   value: user?.cefrLevel ?? 'A1',
                   icon: Icons.school_outlined,
                   isDark: isDark,
@@ -272,13 +273,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                             height: 24,
                             child: LottieLoadingWidget.tiny(),
                           )
-                        : const Row(
+                        : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.save_outlined, size: 20),
-                              SizedBox(width: 8),
+                              const Icon(Icons.save_outlined, size: 20),
+                              const SizedBox(width: 8),
                               Text(
-                                'Save Changes',
+                                'profile.saveChanges'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -391,7 +392,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'Tap camera to change avatar',
+            'profile.tapCameraToChangeAvatar'.tr(),
             style: TextStyle(
               color: AppColorRoles.textMuted(isDark),
               fontSize: 12,
@@ -467,8 +468,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Choose Avatar',
+                  Text(
+                    'profile.chooseAvatar'.tr(),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
@@ -543,7 +544,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       _showCustomUrlDialog();
                     },
                     icon: const Icon(Icons.link),
-                    label: const Text('Use custom URL'),
+                    label: Text('profile.useCustomUrl'.tr()),
                   ),
                 ],
               ),
@@ -565,11 +566,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Custom Avatar URL'),
+          title: Text('profile.customAvatarUrl'.tr()),
           content: TextField(
             controller: urlController,
             decoration: InputDecoration(
-              hintText: 'https://example.com/avatar.png',
+              hintText: 'profile.avatarUrlHint'.tr(),
               prefixIcon: const Icon(Icons.link),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -579,7 +580,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text('common.cancel'.tr()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -601,7 +602,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Apply'),
+              child: Text('profile.apply'.tr()),
             ),
           ],
         );

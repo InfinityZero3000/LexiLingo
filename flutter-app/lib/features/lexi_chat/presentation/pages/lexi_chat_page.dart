@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -43,10 +44,10 @@ class _LexiChatPageState extends State<LexiChatPage>
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   int _lastMessageCount = 0;
-  final List<String> _quickReplies = const [
-    'Hi Lexi, can we practice speaking?',
-    'Can you correct my sentence?',
-    'Give me a daily conversation challenge.',
+  List<String> get _quickReplies => [
+    'lexiChat.quickReply1'.tr(),
+    'lexiChat.quickReply2'.tr(),
+    'lexiChat.quickReply3'.tr(),
   ];
 
   @override
@@ -113,7 +114,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
-    final pending = provider.sendMessage(text, userId: _userId);
+    final pending = provider.sendMessageStreaming(text, userId: _userId);
     _scrollToBottom();
     await pending;
     _scrollToBottom();
@@ -129,7 +130,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     try {
       final hasPermission = await _recorder.hasPermission();
       if (!hasPermission) {
-        _showSnack('Microphone permission required');
+        _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
       }
 
@@ -156,7 +157,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
-      _showSnack('Failed to start recording: $e');
+      _showSnack('lexiChat.failedStartRecording'.tr(namedArgs: {'error': e.toString()}));
     }
   }
 
@@ -171,7 +172,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
       final bytes = await _readRecordedAudio(path);
       if (bytes == null || bytes.isEmpty) {
-        _showSnack('Recorded audio could not be read');
+        _showSnack('lexiChat.audioReadError'.tr());
         return;
       }
 
@@ -183,7 +184,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       await pending;
       _scrollToBottom();
     } catch (e) {
-      _showSnack('Failed to stop recording: $e');
+      _showSnack('lexiChat.failedStopRecording'.tr(namedArgs: {'error': e.toString()}));
     }
   }
 
@@ -277,7 +278,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                 size: 20,
               ),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: 'Session history',
+              tooltip: 'lexiChat.tooltipSessionHistory'.tr(),
             ),
           ),
           const SizedBox(width: 10),
@@ -288,7 +289,7 @@ class _LexiChatPageState extends State<LexiChatPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Lexi',
+                  'lexiChat.title'.tr(),
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
@@ -299,10 +300,10 @@ class _LexiChatPageState extends State<LexiChatPage>
                 Consumer<LexiChatProvider>(
                   builder: (_, provider, __) {
                     final status = provider.isLexiThinking
-                        ? 'Lexi is thinking...'
+                        ? 'lexiChat.statusThinking'.tr()
                         : (provider.isLexiTyping
-                              ? 'Lexi is typing...'
-                              : 'English speaking companion');
+                              ? 'lexiChat.statusTyping'.tr()
+                              : 'lexiChat.statusIdle'.tr());
                     final isActive =
                         provider.isLexiThinking || provider.isLexiTyping;
                     return Text(
@@ -343,7 +344,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     size: 20,
                   ),
                   onPressed: provider.toggleTts,
-                  tooltip: 'Toggle voice',
+                  tooltip: 'lexiChat.tooltipToggleVoice'.tr(),
                   padding: const EdgeInsets.all(8),
                 ),
               );
@@ -365,7 +366,7 @@ class _LexiChatPageState extends State<LexiChatPage>
               ),
               onPressed: () =>
                   context.read<LexiChatProvider>().createNewSession(_userId),
-              tooltip: 'New chat',
+              tooltip: 'lexiChat.tooltipNewChat'.tr(),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -387,7 +388,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     children: [
                       Expanded(
                         child: Text(
-                          'Lexi Sessions',
+                          'lexiChat.sessionsDrawerTitle'.tr(),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -401,7 +402,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                           Navigator.pop(context);
                           await provider.createNewSession(_userId);
                         },
-                        tooltip: 'New session',
+                        tooltip: 'lexiChat.tooltipNewSession'.tr(),
                       ),
                     ],
                   ),
@@ -411,7 +412,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                   child: provider.sessions.isEmpty
                       ? Center(
                           child: Text(
-                            'No previous sessions',
+                            'lexiChat.noSessions'.tr(),
                             style: TextStyle(
                               color: isDark
                                   ? Colors.white54
@@ -457,7 +458,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                                     final renamed = await showDialog<String>(
                                       context: context,
                                       builder: (_) => AlertDialog(
-                                        title: const Text('Rename session'),
+                                        title: Text('lexiChat.renameSessionTitle'.tr()),
                                         content: TextField(
                                           controller: controller,
                                         ),
@@ -465,14 +466,14 @@ class _LexiChatPageState extends State<LexiChatPage>
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context),
-                                            child: const Text('Cancel'),
+                                            child: Text('lexiChat.cancelButton'.tr()),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => Navigator.pop(
                                               context,
                                               controller.text.trim(),
                                             ),
-                                            child: const Text('Save'),
+                                            child: Text('lexiChat.saveButton'.tr()),
                                           ),
                                         ],
                                       ),
@@ -488,14 +489,14 @@ class _LexiChatPageState extends State<LexiChatPage>
                                     await provider.deleteSession(s.sessionId);
                                   }
                                 },
-                                itemBuilder: (_) => const [
+                                itemBuilder: (_) => [
                                   PopupMenuItem(
                                     value: 'rename',
-                                    child: Text('Rename'),
+                                    child: Text('lexiChat.renameAction'.tr()),
                                   ),
                                   PopupMenuItem(
                                     value: 'delete',
-                                    child: Text('Delete'),
+                                    child: Text('lexiChat.deleteAction'.tr()),
                                   ),
                                 ],
                               ),
@@ -525,7 +526,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                 LottieLoadingWidget.medium(),
                 const SizedBox(height: 12),
                 Text(
-                  'Starting conversation...',
+                  'lexiChat.startingConversation'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white54 : AppColors.textGrey,
@@ -612,7 +613,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                   const Icon(Icons.mic, color: AppColors.errorBright, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    'Recording ${_recordingDuration.inSeconds}s',
+                    'lexiChat.recordingStatus'.tr(namedArgs: {'seconds': _recordingDuration.inSeconds.toString()}),
                     style: const TextStyle(
                       color: AppColors.errorBright,
                       fontWeight: FontWeight.w600,
@@ -683,7 +684,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                       color: isDark ? Colors.white : AppColors.textDark,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Message Lexi...',
+                      hintText: 'lexiChat.inputHint'.tr(),
                       hintStyle: TextStyle(
                         color: isDark ? Colors.white38 : AppColors.textGrey,
                         fontSize: 14,
@@ -755,7 +756,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         if (_isRecording) {
           _stopRecording();
         } else {
-          _showSnack('Hold to record or tap to toggle');
+          _showSnack('lexiChat.holdToRecord'.tr());
         }
       },
       child: AnimatedContainer(

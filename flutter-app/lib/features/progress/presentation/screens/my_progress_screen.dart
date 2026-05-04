@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -26,11 +27,11 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Progress'), centerTitle: true),
+      appBar: AppBar(title: Text('progress.title'.tr()), centerTitle: true),
       body: Consumer<ProgressProvider>(
         builder: (context, progressProvider, child) {
           if (progressProvider.isLoading) {
-            return const LoadingScreen(message: 'Loading progress...');
+            return LoadingScreen(message: 'progress.loadingProgress'.tr());
           }
 
           if (progressProvider.errorMessage != null) {
@@ -55,7 +56,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       progressProvider.fetchMyProgress();
                     },
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    label: Text('common.retry'.tr()),
                   ),
                 ],
               ),
@@ -66,7 +67,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
           final courseProgressList = progressProvider.courseProgressList;
 
           if (summary == null) {
-            return const Center(child: Text('No progress data available'));
+            return Center(child: Text('progress.noProgressDataAvailable'.tr()));
           }
 
           return RefreshIndicator(
@@ -79,48 +80,52 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                 children: [
                   // Overall Stats
                   ProgressCard(
-                    title: 'Overall Statistics',
+                    title: 'progress.overallStatistics'.tr(),
                     icon: Icons.analytics,
                     children: [
                       _buildStatRow(
                         context,
-                        'Total XP',
+                        'profile.totalXp'.tr(),
                         summary.totalXp.toString(),
                         Icons.star,
                       ),
                       const Divider(),
                       _buildStatRow(
                         context,
-                        'Courses Enrolled',
+                        'progress.coursesEnrolledStat'.tr(),
                         summary.coursesEnrolled.toString(),
                         Icons.school,
                       ),
                       const Divider(),
                       _buildStatRow(
                         context,
-                        'Courses Completed',
+                        'progress.coursesCompletedStat'.tr(),
                         summary.coursesCompleted.toString(),
                         Icons.check_circle,
                       ),
                       const Divider(),
                       _buildStatRow(
                         context,
-                        'Lessons Completed',
+                        'progress.lessonsCompletedStat'.tr(),
                         summary.lessonsCompleted.toString(),
                         Icons.done_all,
                       ),
                       const Divider(),
                       _buildStatRow(
                         context,
-                        'Current Streak',
-                        '${summary.currentStreak} days',
+                        'profile.currentStreak'.tr(),
+                        'profile.daysCount'.tr(
+                          namedArgs: {'count': '${summary.currentStreak}'},
+                        ),
                         Icons.local_fire_department,
                       ),
                       const Divider(),
                       _buildStatRow(
                         context,
-                        'Longest Streak',
-                        '${summary.longestStreak} days',
+                        'profile.longestStreak'.tr(),
+                        'profile.daysCount'.tr(
+                          namedArgs: {'count': '${summary.longestStreak}'},
+                        ),
                         Icons.military_tech,
                       ),
                     ],
@@ -130,7 +135,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
 
                   // Course Progress
                   Text(
-                    'Course Progress',
+                    'progress.courseProgressTitle'.tr(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -153,7 +158,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'No courses enrolled yet',
+                                'profile.noEnrolledCoursesYet'.tr(),
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],

@@ -6,17 +6,34 @@ import 'package:easy_localization/easy_localization.dart';
 /// This ensures the locale is synced between EasyLocalization and SharedPreferences
 class LocaleService {
   static const String _localeKey = 'lexi_app_locale';
+  static const Set<String> _supportedLanguageCodes = {
+    'vi',
+    'en',
+    'ja',
+    'ko',
+    'zh',
+    'fr',
+    'es',
+  };
+
+  static String normalizeLanguageCode(String? languageCode) {
+    final normalized = (languageCode ?? '').trim().toLowerCase();
+    if (_supportedLanguageCodes.contains(normalized)) {
+      return normalized;
+    }
+    return 'en';
+  }
 
   /// Save locale to SharedPreferences
   static Future<void> saveLocale(String languageCode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, languageCode);
+    await prefs.setString(_localeKey, normalizeLanguageCode(languageCode));
   }
 
   /// Load locale from SharedPreferences
   static Future<String> getSavedLocale() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_localeKey) ?? 'vi';
+    return normalizeLanguageCode(prefs.getString(_localeKey));
   }
 
   /// Clear saved locale (useful for reset)
@@ -33,13 +50,14 @@ class LocaleService {
     String languageCode,
   ) async {
     try {
+      final normalizedLanguageCode = normalizeLanguageCode(languageCode);
       // Update EasyLocalization first
-      await context.setLocale(Locale(languageCode));
+      await context.setLocale(Locale(normalizedLanguageCode));
 
       // Persist to SharedPreferences for consistency
-      await saveLocale(languageCode);
+      await saveLocale(normalizedLanguageCode);
 
-      debugPrint('Locale updated to: $languageCode');
+      debugPrint('Locale updated to: $normalizedLanguageCode');
     } catch (e) {
       debugPrint('Failed to update locale: $e');
     }

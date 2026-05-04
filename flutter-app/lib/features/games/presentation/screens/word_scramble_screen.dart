@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -220,13 +221,12 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
             final game = provider.wordScramble!;
             final word = game.words[_currentWordIndex];
             return Scaffold(
-              backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
-                  'Word ${_currentWordIndex + 1} of ${game.words.length}',
-                  style: const TextStyle(color: AppColors.textDark),
+                  'wordScramble.wordProgress'.tr(namedArgs: {'current': '${_currentWordIndex + 1}', 'total': '${game.words.length}'}),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 actions: [
                   Padding(
@@ -245,7 +245,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                   // Progress bar
                   LinearProgressIndicator(
                     value: (_currentWordIndex) / game.words.length,
-                    backgroundColor: AppColors.grey200,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     color: AppColors.primary,
                     minHeight: 4,
                   ),
@@ -264,14 +264,13 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           _HintCard(word: word, showHint: _showHint),
                           const SizedBox(height: 20),
                           // Answer slots
-                          const Text(
-                            'Your answer:',
+                          Text(
+                            'wordScramble.yourAnswerLabel'.tr(),
                             style: TextStyle(
-                              color: AppColors.textGrey,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
-                          const SizedBox(height: 8),
                           Wrap(
                             alignment: WrapAlignment.center,
                             children: List.generate(_answerSlots.length, (i) {
@@ -287,12 +286,12 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                         ? AppColors.greenSuccess
                                         : _slotWrong[i]
                                         ? AppColors.errorDark
-                                        : Colors.white,
+                                        : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _answerSlots[i] != null
                                           ? AppColors.primary
-                                          : AppColors.grey300,
+                                          : Theme.of(context).colorScheme.outlineVariant,
                                       width: 1.5,
                                     ),
                                   ),
@@ -304,7 +303,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                       fontSize: 18,
                                       color: (_slotCorrect[i] || _slotWrong[i])
                                           ? Colors.white
-                                          : AppColors.textDark,
+                                          : Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
@@ -313,10 +312,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           ),
                           const SizedBox(height: 24),
                           // Letter pool
-                          const Text(
-                            'Available letters:',
+                          Text(
+                            'wordScramble.availableLettersLabel'.tr(),
                             style: TextStyle(
-                              color: AppColors.textGrey,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -350,7 +349,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                   Icons.lightbulb_outline,
                                   size: 16,
                                 ),
-                                label: const Text('Hint'),
+                                label: Text('wordScramble.hintButton'.tr()),
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
                                     color: AppColors.primary,
@@ -361,9 +360,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                               const SizedBox(width: 12),
                               TextButton(
                                 onPressed: _wordAnswered ? null : _skipWord,
-                                child: const Text(
-                                  'Skip',
-                                  style: TextStyle(color: AppColors.textGrey),
+                                child: Text(
+                                  'wordScramble.skipButton'.tr(),
+                                  style: TextStyle(color: AppColors.primary),
                                 ),
                               ),
                             ],
@@ -456,9 +455,9 @@ class _HintCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       word.hint,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),

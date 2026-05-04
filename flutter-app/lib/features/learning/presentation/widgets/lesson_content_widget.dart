@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -223,9 +224,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Check Answer',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: Text(
+                'learning.checkAnswer'.tr(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -262,7 +263,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          widget.isCorrect! ? 'Correct!' : 'Not quite',
+                        widget.isCorrect! ? 'learning.correct'.tr() : 'learning.notQuite'.tr(),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -277,7 +278,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                     if (!widget.isCorrect!) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Correct answer:',
+                        'learning.correctAnswer'.tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

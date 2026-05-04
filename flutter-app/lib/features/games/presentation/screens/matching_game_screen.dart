@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -186,13 +187,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
             .toList();
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
-            title: const Text(
-              'Matching Game',
-              style: TextStyle(color: AppColors.textDark),
+            title: Text(
+              'matchingGame.title'.tr(),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
               Padding(
@@ -217,9 +217,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      '${_matchedIds.length}/${game.pairs.length} matched',
-                      style: const TextStyle(
-                        color: AppColors.textGrey,
+                      'matchingGame.matchedProgress'.tr(namedArgs: {'matched': '${_matchedIds.length}', 'total': '${game.pairs.length}'}),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -252,7 +252,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                                 );
                                 _selectWord(p.wordId);
                               },
-                              label: 'Words',
+                              label: 'matchingGame.wordsColumnLabel'.tr(),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -279,8 +279,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                               pairStates: const {},
                               onTap: _selectMatchItem,
                               label: game.variation == 'definition'
-                                  ? 'Definitions'
-                                  : 'Matches',
+                                  ? 'matchingGame.definitionsLabel'.tr()
+                                  : 'matchingGame.matchesLabel'.tr(),
                             ),
                           ),
                         ],
@@ -337,10 +337,10 @@ class _ColumnList extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 13,
-            color: AppColors.textGrey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 6),
@@ -351,8 +351,8 @@ class _ColumnList extends StatelessWidget {
               final item = items[i];
               final selected = selectedItem == item;
               final state = pairStates[item];
-              Color bg = Colors.white;
-              Color border = AppColors.grey300;
+              Color bg = Theme.of(context).colorScheme.surface;
+              Color border = Theme.of(context).colorScheme.outlineVariant;
               if (selected) {
                 bg = AppColors.primary.withValues(alpha: 0.1);
                 border = AppColors.primary;
@@ -381,9 +381,9 @@ class _ColumnList extends StatelessWidget {
                   ),
                   child: Text(
                     item,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

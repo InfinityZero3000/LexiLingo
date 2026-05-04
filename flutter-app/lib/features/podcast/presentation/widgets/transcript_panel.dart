@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/quick_save_selection_area.dart';
@@ -51,7 +52,7 @@ class TranscriptPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Transcript',
+                'podcast.transcriptLabel'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
@@ -176,7 +177,7 @@ class TranscriptPanel extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'No transcript available',
+          'podcast.noTranscript'.tr(),
           style: TextStyle(
             color: isDark ? Colors.white38 : AppColors.textGrey,
             fontSize: 14,
@@ -188,7 +189,7 @@ class TranscriptPanel extends StatelessWidget {
           FilledButton.icon(
             onPressed: onGenerateTranscript,
             icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-            label: const Text('Generate Transcript'),
+            label: Text('podcast.generateTranscript'.tr()),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,

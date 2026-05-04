@@ -1,0 +1,149 @@
+{
+  "version": "1.0.0",
+  "description": "Communicative functions and speech acts — what learners DO with language in conversation. Critical for a chat-based English tutor.",
+  "concepts": [
+    {
+      "id": "concept:function.greeting",
+      "title": "Greetings & Introductions",
+      "level": "A1",
+      "keywords": "greeting hello hi good morning afternoon evening goodbye bye nice to meet you my name is I am introducing myself how are you"
+    },
+    {
+      "id": "concept:function.small_talk",
+      "title": "Small Talk",
+      "level": "A2",
+      "keywords": "small talk weather today how was your weekend lately recently by the way anyway so what do you think casual chat"
+    },
+    {
+      "id": "concept:function.expressing_opinion",
+      "title": "Expressing Opinions",
+      "level": "B1",
+      "keywords": "opinion I think I believe in my opinion as far as I'm concerned from my point of view I reckon personally I feel that"
+    },
+    {
+      "id": "concept:function.agreeing",
+      "title": "Agreeing",
+      "level": "A2",
+      "keywords": "agreeing I agree absolutely exactly that's right you're right I couldn't agree more totally definitely indeed me too so do I neither do I"
+    },
+    {
+      "id": "concept:function.disagreeing",
+      "title": "Politely Disagreeing",
+      "level": "B1",
+      "keywords": "disagreeing I'm not sure I see your point but I disagree I don't think that's true well actually on the other hand I beg to differ with respect"
+    },
+    {
+      "id": "concept:function.making_suggestions",
+      "title": "Making Suggestions",
+      "level": "A2",
+      "keywords": "suggestion how about why don't we what about shall we let's we could you might want to have you tried I suggest maybe perhaps"
+    },
+    {
+      "id": "concept:function.making_requests",
+      "title": "Making Requests & Offers",
+      "level": "A2",
+      "keywords": "request could you would you mind can you please I'd like would you help me I was wondering if you could offering can I help shall I"
+    },
+    {
+      "id": "concept:function.asking_clarification",
+      "title": "Asking for Clarification",
+      "level": "A2",
+      "keywords": "clarification sorry could you repeat what do you mean by pardon I didn't catch that could you say that again explain what exactly does mean"
+    },
+    {
+      "id": "concept:function.apologizing",
+      "title": "Apologizing & Responding",
+      "level": "A2",
+      "keywords": "apologize sorry I apologize I'm so sorry excuse me forgive me I didn't mean to I'm afraid my fault that's okay no worries don't worry"
+    },
+    {
+      "id": "concept:function.complimenting",
+      "title": "Complimenting & Responding",
+      "level": "A2",
+      "keywords": "compliment that's great well done you're very good at I love your nice job that looks amazing how kind thank you so much"
+    },
+    {
+      "id": "concept:function.expressing_preference",
+      "title": "Expressing Preferences",
+      "level": "A2",
+      "keywords": "preference I prefer I'd rather I like better I enjoy more than favourite option choose would you rather between the two"
+    },
+    {
+      "id": "concept:function.giving_advice",
+      "title": "Giving Advice & Recommendations",
+      "level": "B1",
+      "keywords": "advice you should you ought to I would recommend if I were you it might be worth why not you'd better I'd suggest have you considered"
+    },
+    {
+      "id": "concept:function.narrating",
+      "title": "Telling Stories & Narrating",
+      "level": "B1",
+      "keywords": "narrative story telling once upon a time one day it all started eventually in the end at first then suddenly after that finally so anyway"
+    },
+    {
+      "id": "concept:function.describing_cause_effect",
+      "title": "Cause & Effect Language",
+      "level": "B2",
+      "keywords": "cause effect as a result therefore consequently because of due to this led to which meant that resulted in caused triggered since owing to"
+    },
+    {
+      "id": "concept:function.persuading",
+      "title": "Persuading & Arguing",
+      "level": "B2",
+      "keywords": "persuade argue convince evidence the fact is clearly obviously there's no doubt that it's worth noting the main reason surely I'm convinced"
+    },
+    {
+      "id": "concept:function.hypothetical",
+      "title": "Hypothetical Language",
+      "level": "B2",
+      "keywords": "hypothetical imagine suppose what if let's say assuming if you were pretend picture yourself let's imagine in an ideal world theoretically"
+    },
+    {
+      "id": "concept:function.expressing_attitude",
+      "title": "Expressing Attitude & Stance",
+      "level": "B2",
+      "keywords": "attitude stance surprisingly fortunately unfortunately luckily honestly frankly to be honest to be fair admittedly needless to say interestingly"
+    },
+    {
+      "id": "concept:function.academic_argument",
+      "title": "Academic Argument Language",
+      "level": "C1",
+      "keywords": "academic argue claim suggest demonstrate conclude evidence indicates argues that it can be argued data shows this implies according to"
+    },
+    {
+      "id": "concept:function.softening",
+      "title": "Softening & Diplomatic Language",
+      "level": "C1",
+      "keywords": "soften diplomatic tend to seems to rather somewhat a little bit potentially it could be said I'm not entirely sure hedging tactful vague"
+    },
+    {
+      "id": "concept:function.turn_taking",
+      "title": "Conversation Management",
+      "level": "B1",
+      "keywords": "turn taking actually speaking of which by the way as I was saying going back to what you said can I add changing the topic anyway"
+    }
+  ],
+  "edges": [
+    { "from": "concept:function.greeting", "to": "concept:function.small_talk", "relation": "builds_on" },
+    { "from": "concept:function.expressing_opinion", "to": "concept:function.agreeing", "relation": "related_to" },
+    { "from": "concept:function.expressing_opinion", "to": "concept:function.disagreeing", "relation": "related_to" },
+    { "from": "concept:function.disagreeing", "to": "concept:function.softening", "relation": "related_to" },
+    { "from": "concept:function.persuading", "to": "concept:function.expressing_opinion", "relation": "builds_on" },
+    { "from": "concept:function.persuading", "to": "concept:function.academic_argument", "relation": "prerequisite_of" },
+    { "from": "concept:function.academic_argument", "to": "concept:function.expressing_attitude", "relation": "related_to" },
+    { "from": "concept:function.hypothetical", "to": "concept:grammar.conditionals_second", "relation": "related_to" },
+    { "from": "concept:function.hypothetical", "to": "concept:grammar.conditionals_third", "relation": "related_to" },
+    { "from": "concept:function.narrating", "to": "concept:grammar.past_simple", "relation": "related_to" },
+    { "from": "concept:function.narrating", "to": "concept:grammar.past_continuous", "relation": "related_to" },
+    { "from": "concept:function.giving_advice", "to": "concept:grammar.modal_must_should", "relation": "related_to" },
+    { "from": "concept:function.making_requests", "to": "concept:grammar.modal_can_could", "relation": "related_to" },
+    { "from": "concept:function.describing_cause_effect", "to": "concept:grammar.adverbial_clauses", "relation": "related_to" },
+    { "from": "concept:function.expressing_attitude", "to": "concept:grammar.hedging", "relation": "related_to" },
+    { "from": "concept:function.softening", "to": "concept:grammar.hedging", "relation": "builds_on" },
+    { "from": "concept:function.turn_taking", "to": "concept:function.small_talk", "relation": "builds_on" },
+    { "from": "concept:function.making_suggestions", "to": "concept:grammar.going_to", "relation": "related_to" },
+    { "from": "concept:function.agreeing", "to": "concept:grammar.ellipsis_substitution", "relation": "related_to" },
+    { "from": "concept:conversation.complaint_feedback", "to": "concept:function.apologizing", "relation": "related_to" },
+    { "from": "concept:conversation.job_interview", "to": "concept:function.expressing_opinion", "relation": "related_to" }
+  ]
+}

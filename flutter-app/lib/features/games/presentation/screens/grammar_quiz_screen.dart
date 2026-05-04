@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:confetti/confetti.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -86,7 +87,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     setState(() {
       _answered = true;
       _feedbackText =
-          'Time\'s up! ${q.explanation.isNotEmpty ? q.explanation : ''}';
+          '${'grammarQuiz.timeoutFeedback'.tr()} ${q.explanation.isNotEmpty ? q.explanation : ''}';
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -106,8 +107,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       _feedbackText = correct
           ? q.grammarTip.isNotEmpty
                 ? q.grammarTip
-                : 'Correct!'
-          : '${q.explanation.isNotEmpty ? q.explanation : 'Incorrect.'}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
+                : 'grammarQuiz.correctFeedback'.tr()
+          : '${q.explanation.isNotEmpty ? q.explanation : 'grammarQuiz.incorrectFeedback'.tr()}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
@@ -122,9 +123,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final correct = _topicCorrect[topic] ?? 0;
     if (total < 3) return '';
     final pct = correct / total * 100;
-    if (pct >= 80) return 'Great mastery of ${_formatTopic(topic)}!';
-    if (pct >= 50) return 'Keep practicing ${_formatTopic(topic)}.';
-    return 'Review ${_formatTopic(topic)} concepts.';
+    if (pct >= 80) return 'grammarQuiz.greatMastery'.tr(namedArgs: {'topic': _formatTopic(topic)});
+    if (pct >= 50) return 'grammarQuiz.keepPracticing'.tr(namedArgs: {'topic': _formatTopic(topic)});
+    return 'grammarQuiz.reviewConcepts'.tr(namedArgs: {'topic': _formatTopic(topic)});
   }
 
   String _formatTopic(String t) => t
@@ -199,13 +200,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         final q = game.questions[_questionIndex];
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'Question ${_questionIndex + 1}/${game.questions.length}',
-              style: const TextStyle(color: AppColors.textDark),
+              'grammarQuiz.questionProgress'.tr(namedArgs: {'current': '${_questionIndex + 1}', 'total': '${game.questions.length}'}),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
               Padding(
@@ -225,7 +225,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                 children: [
                   LinearProgressIndicator(
                     value: _questionIndex / game.questions.length,
-                    backgroundColor: AppColors.grey200,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     color: AppColors.primary,
                     minHeight: 4,
                   ),
@@ -254,7 +254,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                           // Timer bar
                           LinearProgressIndicator(
                             value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: AppColors.grey200,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                             color: _timeLeft > 4
                                 ? AppColors.primary
                                 : AppColors.errorBright,
@@ -270,17 +270,17 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
+                                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
                                   blurRadius: 6,
                                 ),
                               ],
                             ),
                             child: Text(
                               q.question,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textDark,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 height: 1.5,
                               ),
                             ),
@@ -288,9 +288,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                           const SizedBox(height: 16),
                           // Answer cards
                           ...List.generate(q.options.length, (i) {
-                            Color bg = Colors.white;
-                            Color border = AppColors.grey300;
-                            Color text = AppColors.textDark;
+                            Color bg = Theme.of(context).colorScheme.surface;
+                            Color border = Theme.of(context).colorScheme.outlineVariant;
+                            Color text = Theme.of(context).colorScheme.onSurface;
                             IconData? icon;
                             if (_answered) {
                               if (i == q.correctIndex) {
@@ -372,9 +372,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               ),
                               child: Text(
                                 _feedbackText!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textDark,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   height: 1.4,
                                 ),
                               ),

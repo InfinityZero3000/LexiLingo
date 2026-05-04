@@ -430,12 +430,20 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Submit onboarding payload once at the end of onboarding flow.
-  Future<void> submitOnboarding(Map<String, dynamic> payload) async {
+  ///
+  /// [displayName] and [nativeLanguage] are optional overrides from the
+  /// pre-auth questions page. If not provided, sensible defaults are used.
+  Future<void> submitOnboarding(
+    Map<String, dynamic> payload, {
+    String? displayName,
+    String? nativeLanguage,
+  }) async {
     final selectedLevel = (payload['level'] as String?)?.toUpperCase();
 
     final result = await authRepository.updateProfile(
+      displayName: displayName,
       level: selectedLevel,
-      nativeLanguage: 'vi',
+      nativeLanguage: nativeLanguage ?? 'vi',
       targetLanguage: 'en',
       isOnboardingCompleted: true,
     );

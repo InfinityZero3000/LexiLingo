@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/services/encrypted_local_cache_service.dart';
 import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
+import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
@@ -400,8 +401,7 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _enqueuePendingLexiMessage({
-    required String userId,
+  Future<void> _enqueuePendingLexiMessage({    required String userId,
     required String sessionId,
     required String message,
     required String idempotencyKey,
@@ -431,7 +431,152 @@ class LexiChatProvider extends ChangeNotifier {
     return 'lexi-$userId-$sessionId-${DateTime.now().millisecondsSinceEpoch}-$rand';
   }
 
-  // ── Voice Input ────────────────────────────────────────────────────────────
+  // ── Send Message (streaming / typewriter effect) ───────────────────────────
+
+  /// Sends a message and shows the AI response word-by-word (typewriter effect).
+  ///
+  /// Works by:
+  ///   1. Adding an optimistic user message.
+  ///   2. Inserting a placeholder assistant message with [syncStatus] = 'streaming'.
+  ///   3. Appending each [LexiStreamChunk] word to the placeholder's content.
+  ///   4. Replacing the placeholder with the final [LexiMessage] on [LexiStreamDone].
+  ///   5. Falling back to the regular [sendMessage] on streaming errors.
+  Future<void> sendMessageStreaming(String text, {String? userId}) async {
+    if (text.trim().isEmpty || _isSending) return;
+
+    final uid = userId ?? 'demo_user';
+    if (_session == null) {
+      await startSession(uid);
+    }
+    final sessionId = _session?.sessionId ?? '';
+    final requestId = _buildRequestId(uid, sessionId);
+    final placeholderId = 'stream_$requestId';
+
+    // Optimistic: user message
+    final userMsg = LexiMessage(
+      id: requestId,
+      role: 'user',
+      content: text.trim(),
+      timestamp: DateTime.now(),
+      syncStatus: 'pending_sync',
+      clientRequestId: requestId,
+    );
+    _messages.add(userMsg);
+
+    // Streaming placeholder for the assistant response
+    _messages.add(LexiMessage(
+      id: placeholderId,
+      role: 'assistant',
+      content: '',
+      timestamp: DateTime.now(),
+      syncStatus: 'streaming',
+    ));
+
+    _isSending = true;
+    _isLexiThinking = true;
+    _isLexiTyping = false;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await for (final event in repository.sendMessageStream(
+        userId: uid,
+        sessionId: sessionId,
+        message: text.trim(),
+        enableTts: _ttsEnabled,
+        learnerLevel: _learnerLevel,
+      )) {
+        switch (event) {
+          case LexiStreamThinking():
+            _isLexiThinking = true;
+            _isLexiTyping = false;
+            notifyListeners();
+
+          case LexiStreamChunk(:final text):
+            _isLexiThinking = false;
+            _isLexiTyping = true;
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              _messages[idx] = _messages[idx].copyWith(
+                content: _messages[idx].content + text,
+              );
+              notifyListeners();
+            }
+
+          case LexiStreamDone(
+              :final messageId,
+              :final corrections,
+              :final linkedConcepts,
+              :final vietnameseHint,
+              :final scores,
+              :final audioBase64,
+              :final storyContext,
+            ):
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              final finalContent = _messages[idx].content;
+              _messages[idx] = LexiMessage(
+                id: messageId.isNotEmpty ? messageId : placeholderId,
+                role: 'assistant',
+                content: finalContent,
+                timestamp: DateTime.now(),
+                audioBase64: audioBase64,
+                corrections: corrections,
+                linkedConcepts: linkedConcepts,
+                vietnameseHint: vietnameseHint,
+                scores: scores,
+                syncStatus: 'synced',
+              );
+            }
+
+            // Mark user message as synced
+            final userIdx = _messages.indexWhere((m) => m.id == requestId);
+            if (userIdx != -1) {
+              _messages[userIdx] = _messages[userIdx].copyWith(
+                syncStatus: 'synced',
+              );
+            }
+
+            await _cacheCurrentMessages();
+            _touchSession(sessionId, messageDelta: 2);
+            _isLexiThinking = false;
+            _isLexiTyping = false;
+            _isSending = false;
+            notifyListeners();
+
+            if (_ttsEnabled &&
+                audioBase64 != null &&
+                audioBase64.isNotEmpty) {
+              await _playTtsAudio(audioBase64);
+            }
+            // storyContext is returned by the server for context continuity; no local storage needed.
+          case LexiStreamError(:final error):
+            logError(_tag, 'sendMessageStreaming error event: $error');
+            // Remove placeholder and fall back to sendMessage
+            _messages.removeWhere((m) => m.id == placeholderId);
+            _messages.removeWhere((m) => m.id == requestId);
+            _isLexiThinking = false;
+            _isLexiTyping = false;
+            _isSending = false;
+            notifyListeners();
+            await sendMessage(text, userId: uid);
+            return;
+        }
+      }
+    } catch (e) {
+      logError(_tag, 'sendMessageStreaming exception: $e');
+      _messages.removeWhere((m) => m.id == placeholderId);
+      _messages.removeWhere((m) => m.id == requestId);
+      _isLexiThinking = false;
+      _isLexiTyping = false;
+      _isSending = false;
+      notifyListeners();
+      // Fall back to regular (non-streaming) endpoint
+      await sendMessage(text, userId: uid);
+    }
+  }
+
+
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {
     if (_isSending) return;
 

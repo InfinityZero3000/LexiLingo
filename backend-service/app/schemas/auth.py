@@ -2,8 +2,9 @@
 Authentication Schemas
 """
 
+import re
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class RegisterRequest(BaseModel):
@@ -12,6 +13,19 @@ class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8, max_length=100)
     display_name: Optional[str] = None
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least 1 uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least 1 lowercase letter')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('Password must contain at least 1 number')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]', v):
+            raise ValueError('Password must contain at least 1 special character')
+        return v
 
 
 class LoginRequest(BaseModel):

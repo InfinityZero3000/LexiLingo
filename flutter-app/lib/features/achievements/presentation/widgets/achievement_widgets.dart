@@ -12,6 +12,7 @@ import 'package:lexilingo_app/features/achievements/data/models/achievement_mode
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Helper function to get IconData from badge icon identifier
 IconData _getBadgeIcon(String? badgeIcon) {
@@ -564,7 +565,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
               children: [
                 // Header
                 Text(
-                  'Achievement Unlocked!',
+                  'achievements.achievementUnlocked'.tr(),
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: badgeColor,
@@ -649,9 +650,9 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    'Awesome!',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    'achievements.awesome'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

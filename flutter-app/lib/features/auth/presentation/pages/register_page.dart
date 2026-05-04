@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -41,14 +42,21 @@ class _RegisterPageState extends State<RegisterPage> {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
 
+    // Append a short numeric suffix to avoid "Username already taken" collisions
+    // when multiple users share the same display name.
+    final suffix = (DateTime.now().millisecondsSinceEpoch % 10000)
+        .toString()
+        .padLeft(4, '0');
+
     if (normalized.isNotEmpty) {
-      return normalized;
+      return '${normalized}_$suffix';
     }
 
     return 'learner_${DateTime.now().millisecondsSinceEpoch}';
   }
 
   InputDecoration _inputDecoration({
+    required BuildContext context,
     required String hint,
     required IconData icon,
     Widget? suffixIcon,
@@ -58,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: Theme.of(context).colorScheme.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -82,7 +90,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -112,7 +120,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         Expanded(
                           child: Text(
-                            'Create Account',
+                            'auth.createAccount'.tr(),
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
@@ -125,7 +133,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Start your English\njourney',
+                      'auth.startJourney'.tr(),
                       style: textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0B132B),
@@ -134,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Join thousands of learners today and master English with ease.',
+                      'auth.joinLearners'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF3E536B),
                         height: 1.35,
@@ -143,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 30),
 
                     Text(
-                      'Full Name',
+                      'auth.fullName'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -153,15 +161,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _fullNameController,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
-                        hint: 'Enter your name',
+                        context: context,
+                        hint: 'auth.enterYourName'.tr(),
                         icon: Icons.person_outline,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your name';
+                          return 'auth.pleaseEnterName'.tr();
                         }
                         if (value.trim().length < 2) {
-                          return 'Name must be at least 2 characters';
+                          return 'auth.nameMinLength'.tr();
                         }
                         return null;
                       },
@@ -169,7 +178,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 20),
                     Text(
-                      'Email Address',
+                      'auth.email'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -180,15 +189,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
-                        hint: 'example@email.com',
+                        context: context,
+                        hint: 'auth.emailHint'.tr(),
                         icon: Icons.mail_outline,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!value.contains('@')) {
-                          return 'Please enter a valid email';
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
+                          return 'auth.invalidEmail'.tr();
                         }
                         return null;
                       },
@@ -196,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 20),
                     Text(
-                      'Password',
+                      'auth.password'.tr(),
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -207,7 +217,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: !_isPasswordVisible,
                       textInputAction: TextInputAction.next,
                       decoration: _inputDecoration(
-                        hint: 'Create a password',
+                        context: context,
+                        hint: 'auth.createPassword'.tr(),
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -224,10 +235,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return 'auth.pleaseEnterPassword'.tr();
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return 'auth.passwordMinLength'.tr();
+                        }
+                        if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                          return 'auth.passwordNeedsUppercase'.tr();
+                        }
+                        if (!RegExp(r'[a-z]').hasMatch(value)) {
+                          return 'auth.passwordNeedsLowercase'.tr();
+                        }
+                        if (!RegExp(r'[0-9]').hasMatch(value)) {
+                          return 'auth.passwordNeedsNumber'.tr();
+                        }
+                        if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]').hasMatch(value)) {
+                          return 'auth.passwordNeedsSpecial'.tr();
                         }
                         return null;
                       },
@@ -239,7 +262,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: !_isConfirmPasswordVisible,
                       textInputAction: TextInputAction.done,
                       decoration: _inputDecoration(
-                        hint: 'Confirm your password',
+                        context: context,
+                        hint: 'auth.confirmYourPassword'.tr(),
                         icon: Icons.lock_outline,
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -257,10 +281,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
+                          return 'auth.pleaseConfirmPassword'.tr();
                         }
                         if (value != _passwordController.text) {
-                          return 'Passwords do not match';
+                          return 'auth.passwordMismatch'.tr();
                         }
                         return null;
                       },
@@ -293,18 +317,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: textTheme.bodyLarge?.copyWith(
                                   color: const Color(0xFF3E536B),
                                 ),
-                                children: const [
-                                  TextSpan(text: 'I agree to the '),
+                                children: [
+                                  TextSpan(text: 'auth.termsPrefix'.tr()),
                                   TextSpan(
-                                    text: 'Terms of Service',
+                                    text: 'auth.termsOfService'.tr(),
                                     style: TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  TextSpan(text: ' and '),
+                                  TextSpan(text: 'auth.termsAnd'.tr()),
                                   TextSpan(
-                                    text: 'Privacy Policy.',
+                                    text: 'auth.privacyPolicy'.tr(),
                                     style: TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
@@ -320,7 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     if (_showTermsError) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Please accept Terms of Service and Privacy Policy.',
+                        'auth.pleaseAcceptTerms'.tr(),
                         style: textTheme.bodyMedium?.copyWith(
                           color: Colors.red.shade700,
                           fontWeight: FontWeight.w600,
@@ -371,8 +395,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 20,
                                 child: LottieLoadingWidget.tiny(),
                               )
-                            : const Text(
-                                'Create Account',
+                            : Text(
+                                'auth.createAccount'.tr(),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -390,7 +414,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'OR CONTINUE WITH',
+                            'auth.orContinueWith'.tr(),
                             style: textTheme.labelLarge?.copyWith(
                               color: const Color(0xFF8C9AAF),
                               fontWeight: FontWeight.w700,
@@ -414,8 +438,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 await authProvider.signInWithGoogle();
                               },
                         icon: const Icon(Icons.g_mobiledata, size: 30),
-                        label: const Text(
-                          'Continue with Google',
+                        label: Text(
+                          'auth.continueWithGoogle'.tr(),
                           style: TextStyle(
                             color: Color(0xFF0B132B),
                             fontWeight: FontWeight.w700,
@@ -446,7 +470,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           color: AppColors.surfaceLight,
                         ),
                         label: Text(
-                          'Continue with Facebook',
+                          'auth.continueWithFacebook'.tr(),
                           style: TextStyle(
                             color: AppColors.surfaceLight,
                             fontWeight: FontWeight.w700,
@@ -468,7 +492,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Wrap(
                         children: [
                           Text(
-                            'Already have an account? ',
+                            '${'auth.alreadyHaveAccount'.tr()} ',
                             style: textTheme.titleMedium?.copyWith(
                               color: const Color(0xFF3E536B),
                             ),
@@ -486,7 +510,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               );
                             },
                             child: Text(
-                              'Log In',
+                              'auth.signIn'.tr(),
                               style: textTheme.titleMedium?.copyWith(
                                 color: AppColors.accentMint,
                                 fontWeight: FontWeight.w800,

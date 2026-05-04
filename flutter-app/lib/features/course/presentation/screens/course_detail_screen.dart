@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -56,7 +57,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => provider.loadCourseDetail(widget.courseId),
-                    child: const Text('Retry'),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
@@ -65,7 +66,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           final course = provider.courseDetail;
           if (course == null) {
-            return const Center(child: Text('Course not found'));
+            return Center(child: Text('course.notFound'.tr()));
           }
 
           return CustomScrollView(
@@ -143,9 +144,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Your Progress',
-                                  style: TextStyle(
+                                Text(
+                                  'course.yourProgress'.tr(),
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -173,7 +174,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.account_tree_outlined),
-                            label: const Text('View Full Roadmap'),
+                            label: Text('course.viewFullRoadmap'.tr()),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -204,8 +205,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 : const Icon(Icons.play_arrow),
                             label: Text(
                               provider.isEnrolling
-                                  ? 'Enrolling...'
-                                  : 'Start Learning',
+                                  ? 'course.enrolling'.tr()
+                                  : 'course.startLearning'.tr(),
                             ),
                             onPressed: provider.isEnrolling
                                 ? null
@@ -221,9 +222,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       // Roadmap Header
                       const Divider(),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Learning Roadmap',
-                        style: TextStyle(
+                      Text(
+                        'course.learningRoadmap'.tr(),
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -270,14 +271,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     if (success) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(provider.enrollmentSuccess ?? 'Successfully enrolled!'),
+          content: Text(provider.enrollmentSuccess ?? 'course.enrolledSuccess'.tr()),
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );
     } else {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(provider.enrollmentError ?? 'Failed to enroll'),
+          content: Text(provider.enrollmentError ?? 'course.enrollFailed'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );

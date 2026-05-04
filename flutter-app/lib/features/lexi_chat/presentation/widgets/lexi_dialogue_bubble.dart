@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
@@ -44,7 +45,7 @@ class LexiDialogueBubble extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Lexi',
+                'lexiChat.title'.tr(),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
@@ -75,7 +76,7 @@ class LexiDialogueBubble extends StatelessWidget {
                       ),
                       const SizedBox(width: 2),
                       Text(
-                        'Correction',
+                        'lexiChat.correctionLabel'.tr(),
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w500,
@@ -233,7 +234,7 @@ class LexiDialogueBubble extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Pending sync',
+                  'lexiChat.pendingSync'.tr(),
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.white60 : AppColors.textGrey,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -114,11 +115,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                       const SizedBox(height: 20),
                       _buildLevelPicker(provider),
                       const SizedBox(height: 20),
-                      _buildSectionTitle('Games', titleColor),
+                      _buildSectionTitle('gamesHub.gamesSectionTitle'.tr(), titleColor),
                       const SizedBox(height: 12),
                       _buildGameGrid(context, provider),
                       const SizedBox(height: 24),
-                      _buildSectionTitle('Leaderboard', titleColor),
+                      _buildSectionTitle('gamesHub.leaderboardSectionTitle'.tr(), titleColor),
                       const SizedBox(height: 12),
                       _buildLeaderboard(provider),
                       const SizedBox(height: 32),
@@ -139,7 +140,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       title: Text(
-        'Games',
+        'gamesHub.title'.tr(),
         style: TextStyle(
           color: titleColor,
           fontWeight: FontWeight.bold,
@@ -187,7 +188,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Failed to load XP profile. Tap to retry.',
+                'gamesHub.xpLoadError'.tr(),
                 style: TextStyle(color: Colors.red.shade700, fontSize: 13),
               ),
             ),
@@ -268,7 +269,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Daily Challenge', titleColor),
+        _buildSectionTitle('gamesHub.dailyChallengeLabel'.tr(), titleColor),
         const SizedBox(height: 10),
         DailyChallengeCard(
           challenge: demo,
@@ -291,7 +292,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Difficulty',
+          'gamesHub.difficultyLabel'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -372,9 +373,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            'No leaderboard data yet.',
+            'gamesHub.noLeaderboardData'.tr(),
             style: TextStyle(color: AppColors.textGrey),
           ),
         ),

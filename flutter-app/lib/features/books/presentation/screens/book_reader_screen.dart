@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -91,13 +92,13 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       ),
       builder: (_) {
         if (provider.bookmarks.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
+          return Padding(
+            padding: const EdgeInsets.all(32),
             child: Center(
               child: Text(
-                'No bookmarks yet.\nTap the bookmark icon to save your spot.',
+                'bookReader.noBookmarksYet'.tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: const TextStyle(color: Colors.grey),
               ),
             ),
           );
@@ -105,9 +106,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            const Text(
-              'Bookmarks',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Text(
+              'bookReader.bookmarks'.tr(),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             ...provider.bookmarks.map(
@@ -116,7 +117,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                   Icons.bookmark_rounded,
                   color: AppColors.primary,
                 ),
-                title: Text('Page ${b.page + 1}'),
+                title: Text('bookReader.bookmarkPage'.tr(namedArgs: {'page': '${b.page + 1}'})),
                 subtitle: b.note.isNotEmpty ? Text(b.note) : null,
                 onTap: () {
                   Navigator.pop(context);
@@ -174,7 +175,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                       const LottieLoadingWidget.medium(),
                       const SizedBox(height: 16),
                       Text(
-                        'Loading book...',
+                        'bookReader.loadingBook'.tr(),
                         style: TextStyle(
                           color: textColor.withValues(alpha: 0.6),
                         ),
@@ -196,14 +197,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Could not load book.\n${provider.error}',
+                          'bookReader.couldNotLoad'.tr() + (provider.error != null ? '\n${provider.error}' : ''),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => provider.loadBookText(),
-                          child: const Text('Retry'),
+                          child: Text('bookReader.retry'.tr()),
                         ),
                       ],
                     ),
@@ -351,12 +352,12 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
           IconButton(
             icon: Icon(Icons.bookmarks_rounded, color: textColor),
             onPressed: _showBookmarksPanel,
-            tooltip: 'All bookmarks',
+            tooltip: 'bookReader.allBookmarks'.tr(),
           ),
           IconButton(
             icon: Icon(Icons.text_format_rounded, color: textColor),
             onPressed: _showReaderControls,
-            tooltip: 'Reader settings',
+            tooltip: 'bookReader.readerSettings'.tr(),
           ),
         ],
       ),
@@ -409,7 +410,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 icon: Icon(Icons.navigate_before_rounded, color: textColor),
               ),
               Text(
-                totalPages > 0 ? 'Page ${cur + 1} / $totalPages' : '',
+                totalPages > 0 ? 'bookReader.page'.tr(namedArgs: {'current': '${cur + 1}', 'total': '$totalPages'}) : '',
                 style: TextStyle(
                   fontSize: 13,
                   color: textColor.withValues(alpha: 0.7),
@@ -504,8 +505,8 @@ class _DictionarySheetState extends State<_DictionarySheet> {
 
       if (!mounted) return;
       final message = result.alreadyInCollection
-          ? '"${result.normalizedWord}" is already in your vocabulary.'
-          : 'Saved "${result.normalizedWord}" to vocabulary.';
+          ? 'bookReader.wordAlreadyInCollection'.tr(namedArgs: {'word': result.normalizedWord})
+          : 'bookReader.wordSaved'.tr(namedArgs: {'word': result.normalizedWord});
 
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
@@ -517,8 +518,8 @@ class _DictionarySheetState extends State<_DictionarySheet> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
-          content: Text('Could not save this word right now.'),
+        SnackBar(
+          content: Text('bookReader.couldNotSaveWord'.tr()),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.errorBright,
         ),
@@ -562,7 +563,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                           const LottieLoadingWidget.tiny(),
                           const SizedBox(height: 10),
                           Text(
-                            'Looking up "${widget.word}"…',
+                            'bookReader.lookingUp'.tr(namedArgs: {'word': widget.word}),
                             style: TextStyle(
                               color: widget.subtextColor,
                               fontSize: 13,
@@ -576,7 +577,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'No definition found for "${widget.word}".',
+                          'bookReader.noDefinitionFound'.tr(namedArgs: {'word': widget.word}),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: widget.subtextColor,
@@ -633,7 +634,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                     child: LottieLoadingWidget.tiny(),
                   )
                 : const Icon(Icons.bookmark_add_outlined, size: 18),
-            label: const Text('Save Word to Vocabulary'),
+            label: Text('bookReader.saveWordToVocabulary'.tr()),
           ),
         ),
         const SizedBox(height: 8),

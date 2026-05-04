@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -93,7 +94,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Podcasts',
+                        'podcast.pageTitle'.tr(),
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
@@ -111,7 +112,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search podcasts…',
+                    hintText: 'podcast.searchHint'.tr(),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: _isTyping || _searchController.text.isNotEmpty
                         ? IconButton(
@@ -161,7 +162,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Failed to load podcasts',
+                            'podcast.failedToLoad'.tr(),
                             style: TextStyle(color: AppColors.grey500),
                           ),
                           const SizedBox(height: 8),
@@ -170,7 +171,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                               provider.clearError();
                               provider.loadCuratedPodcasts();
                             },
-                            child: const Text('Retry'),
+                            child: Text('podcast.retry'.tr()),
                           ),
                         ],
                       ),
@@ -214,12 +215,12 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               Icon(Icons.podcasts_rounded, size: 64, color: AppColors.grey300),
               const SizedBox(height: 12),
               Text(
-                'No podcasts found',
+                'podcast.noResultsFound'.tr(),
                 style: TextStyle(color: AppColors.grey500, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
-                'Try a different search term',
+                'podcast.tryDifferentSearch'.tr(),
                 style: TextStyle(color: AppColors.grey400, fontSize: 13),
               ),
             ],
@@ -258,7 +259,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       return SliverFillRemaining(
         child: Center(
           child: Text(
-            'No curated podcasts yet',
+            'podcast.noCuratedPodcasts'.tr(),
             style: TextStyle(color: AppColors.grey400),
           ),
         ),
