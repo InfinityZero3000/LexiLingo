@@ -132,9 +132,9 @@ app = FastAPI(
     * **ReDoc**: `/redoc`
     """,
     version="1.0.1",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
     lifespan=lifespan,
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
@@ -178,7 +178,7 @@ app.add_middleware(RequestIDMiddleware)
 # 4. Rate Limiting - Prevent abuse (Phase 1: Security)
 # Higher limits in development to avoid blocking local testing
 _rate_rpm = 300 if settings.is_development else 120
-_rate_rph = 5000 if settings.is_development else 5000
+_rate_rph = 5000 if settings.is_development else 1000
 app.add_middleware(
     RateLimitMiddleware,
     requests_per_minute=_rate_rpm,

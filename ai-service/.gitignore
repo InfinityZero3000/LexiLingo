@@ -1,5 +1,9 @@
 .env
 .env.docker
+.env.development
+.env.production
+.env.production.secrets
+.env.*.secrets
 .venv/
 __pycache__/
 *.pyc

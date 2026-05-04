@@ -78,8 +78,8 @@ class Settings(BaseSettings):
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
         r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
-        r"|https?://.*\.devtunnels\.ms(:\d+)?"
         r"|https?://.*\.github\.dev(:\d+)?"
+        # devtunnels.ms removed — too broad (any VS Code tunnel user can bypass CORS)
     )
     ALLOWED_HOSTS: List[str] = [
         "localhost",
