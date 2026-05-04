@@ -103,6 +103,14 @@ services:
     # across all replicas via Docker's internal DNS round-robin.
     container_name: lexilingo-backend-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
     env_file:
       - .env.production
       - .env.production.secrets
@@ -140,6 +148,14 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-ai-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
     env_file:
       - .env.production
       - .env.production.secrets

@@ -13,7 +13,51 @@ map "$status|$request_uri" $log_security {
     default 0;
     ~^4[0-9][0-9]\| 1;
     ~^5[0-9][0-9]\| 1;
-    ~^429\|/api/v1/auth/ 1;
+}
+
+# ---------------------------------------------------------------------------
+# Bot / scanner detection — matched against User-Agent
+# Sources: observed logs (libredtail 1.8k hits, zgrab 152, ffuf 155 hits)
+#
+# NOTE: Empty UA is intentionally NOT blocked here — service workers, certain
+# Fetch API calls, and health-checkers omit UA legitimately. Empty-UA floods
+# are handled by fail2ban (nginx-404-flood) after threshold is exceeded.
+# ---------------------------------------------------------------------------
+map $http_user_agent $is_scanner {
+    default              0;
+    ~*libredtail         1;   # common HTTP scanner (1807 hits in logs)
+    ~*zgrab              1;   # internet-wide scanner (Censys / ZMap)
+    ~*masscan            1;
+    ~*nikto              1;
+    ~*sqlmap             1;
+    ~*nessus             1;
+    ~*openvas            1;
+    ~*nuclei             1;   # Project Discovery nuclei
+    ~*dirbuster          1;
+    ~*gobuster           1;
+    ~*wfuzz              1;
+    ~*"fuzz faster u fool" 1; # ffuf scanner (155 hits in logs)
+    ~*ffuf               1;
+    ~*NetSystemsResearch 1;
+    ~*Shodan             1;   # Shodan-Pull crawler
+    ~*ncsrv              1;   # observed in logs
+    ~*fasthttp           1;   # raw HTTP scanner tool
+    ~*"Hello from Palo Alto" 1; # PAN recon scanner (38 hits)
+}
+
+# ---------------------------------------------------------------------------
+# Manual IP blocklist — confirmed scanners bypassing Cloudflare
+# Update after reviewing security.log: top IPs by hit count
+# ---------------------------------------------------------------------------
+geo $block_ip {
+    default         0;
+    185.177.72.52   1;   # 2770 hits — VN/NL scanner, direct origin abuse
+    179.43.146.226  1;   # 141 hits — scanner
+    176.142.69.236  1;   # 158 hits — scanner
+    212.102.40.218  1;   # 150 hits — scanner
+    79.124.40.174   1;   # 80 hits  — scanner
+    195.170.172.108 1;   # 77 hits  — scanner
+    195.178.110.104 1;   # 74 hits  — scanner
 }
 
 map $http_origin $cors_allow_origin {
@@ -32,9 +76,16 @@ log_format main_json escape=json
 log_format security_json escape=json
     '{"time":"$time_iso8601","remote_addr":"$remote_addr","host":"$host","method":"$request_method","uri":"$request_uri","status":$status,"request_time":$request_time,"upstream_addr":"$upstream_addr","upstream_status":"$upstream_status","request_id":"$request_id","referer":"$http_referer","user_agent":"$http_user_agent"}';
 
-limit_req_zone $binary_remote_addr zone=api_default_per_ip:10m rate=20r/s;
-limit_req_zone $binary_remote_addr zone=auth_login_per_ip:10m rate=8r/m;
-limit_req_zone $binary_remote_addr zone=auth_refresh_per_ip:10m rate=20r/m;
+# ---------------------------------------------------------------------------
+# Rate limiting zones
+# Tuned to allow normal web app usage without false-positive blocks:
+#   - A Flutter web app page load bursts ~20-40 parallel API requests
+#   - A logged-in user refreshing the page ~5-10 times/min is normal
+#   - Auth refresh is triggered on every cold page load
+# ---------------------------------------------------------------------------
+limit_req_zone $binary_remote_addr zone=api_default_per_ip:10m rate=30r/s;
+limit_req_zone $binary_remote_addr zone=auth_login_per_ip:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=auth_refresh_per_ip:10m rate=40r/m;
 limit_req_zone $binary_remote_addr zone=ai_general_per_ip:10m rate=8r/s;
 limit_req_zone $binary_remote_addr zone=ai_chat_per_ip:10m rate=4r/s;
 limit_req_zone $binary_remote_addr zone=ai_stt_per_ip:10m rate=1r/s;
@@ -43,6 +94,8 @@ limit_req_zone $binary_remote_addr zone=ws_per_ip:10m rate=2r/s;
 
 limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
 limit_conn_zone $binary_remote_addr zone=auth_conn_per_ip:10m;
+# Global server-wide connection cap — all IPs combined
+limit_conn_zone $server_name zone=conn_global:1m;
 
 upstream backend_upstream {
     least_conn;
@@ -69,9 +122,36 @@ server {
     server_name ${GATEWAY_SERVER_NAME};
     server_tokens off;
 
+    # -----------------------------------------------------------------------
+    # Restore real client IP when traffic arrives through Cloudflare.
+    # nginx will replace $remote_addr with the value of CF-Connecting-IP for
+    # any request that originates from a Cloudflare edge node.
+    # Ref: https://www.cloudflare.com/ips-v4  (last updated 2024-01)
+    # -----------------------------------------------------------------------
+    set_real_ip_from 173.245.48.0/20;
+    set_real_ip_from 103.21.244.0/22;
+    set_real_ip_from 103.22.200.0/22;
+    set_real_ip_from 103.31.4.0/22;
+    set_real_ip_from 141.101.64.0/18;
+    set_real_ip_from 108.162.192.0/18;
+    set_real_ip_from 190.93.240.0/20;
+    set_real_ip_from 188.114.96.0/20;
+    set_real_ip_from 197.234.240.0/22;
+    set_real_ip_from 198.41.128.0/17;
+    set_real_ip_from 162.158.0.0/15;
+    set_real_ip_from 104.16.0.0/13;
+    set_real_ip_from 104.24.0.0/14;
+    set_real_ip_from 172.64.0.0/13;
+    set_real_ip_from 131.0.72.0/22;
+    real_ip_header   CF-Connecting-IP;
+
     access_log /var/log/nginx/access.log main_json if=$log_main;
     access_log /var/log/nginx/security.log security_json if=$log_security;
     error_log /var/log/nginx/error.log warn;
+
+    # Drop confirmed scanner IPs and bot UAs before processing anything.
+    if ($block_ip)    { return 444; }
+    if ($is_scanner)  { return 444; }
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -94,6 +174,26 @@ server {
     server_name ${GATEWAY_SERVER_NAME};
     resolver 127.0.0.11 ipv6=off valid=30s;
     server_tokens off;
+
+    # -----------------------------------------------------------------------
+    # Restore real client IP from Cloudflare (same ranges as HTTP block above)
+    # -----------------------------------------------------------------------
+    set_real_ip_from 173.245.48.0/20;
+    set_real_ip_from 103.21.244.0/22;
+    set_real_ip_from 103.22.200.0/22;
+    set_real_ip_from 103.31.4.0/22;
+    set_real_ip_from 141.101.64.0/18;
+    set_real_ip_from 108.162.192.0/18;
+    set_real_ip_from 190.93.240.0/20;
+    set_real_ip_from 188.114.96.0/20;
+    set_real_ip_from 197.234.240.0/22;
+    set_real_ip_from 198.41.128.0/17;
+    set_real_ip_from 162.158.0.0/15;
+    set_real_ip_from 104.16.0.0/13;
+    set_real_ip_from 104.24.0.0/14;
+    set_real_ip_from 172.64.0.0/13;
+    set_real_ip_from 131.0.72.0/22;
+    real_ip_header   CF-Connecting-IP;
 
     access_log /var/log/nginx/access.log main_json if=$log_main;
     access_log /var/log/nginx/security.log security_json if=$log_security;
@@ -120,9 +220,33 @@ server {
 
     client_max_body_size 10m;
     limit_req_status 429;
-    limit_conn conn_per_ip 30;
+    # 60 concurrent connections per IP — allows parallel asset/API requests
+    # during a normal Flutter web app page load (~20-40 parallel fetches)
+    limit_conn conn_per_ip 60;
+    # Global cap: max 2000 concurrent connections across all IPs to the server
+    limit_conn conn_global 2000;
+
+    # -----------------------------------------------------------------------
+    # Slowloris / slow-HTTP protection — drop clients that stall mid-request.
+    # client_header_timeout: time allowed to send request headers after connect.
+    # client_body_timeout:   time between successive body chunk reads.
+    # send_timeout:          time between successive write() calls to client.
+    # keepalive_timeout:     idle keep-alive before server closes the socket.
+    # -----------------------------------------------------------------------
+    client_header_timeout  10s;
+    client_body_timeout    15s;
+    send_timeout           20s;
+    keepalive_timeout      65s;
+    keepalive_requests     500;
 
     error_page 429 = @rate_limited;
+
+    # -----------------------------------------------------------------------
+    # Immediately drop confirmed scanner IPs and bot user-agents.
+    # 444 = TCP close with no response (wastes no resources on reply).
+    # -----------------------------------------------------------------------
+    if ($block_ip)   { return 444; }
+    if ($is_scanner) { return 444; }
 
     if ($request_method = OPTIONS) {
         return 204;
@@ -134,28 +258,62 @@ server {
         return 429 '{"detail":"too_many_requests","retry_after_seconds":60}';
     }
 
-    # Deny common scanner probes early to reduce attack surface and log noise.
-    location ~* ^/(\.git|\.svn|\.hg|\.env)(/|$) {
-        return 403;
+    # -----------------------------------------------------------------------
+    # Scanner / exploit path blocking
+    # Return 444 (no response) instead of 403 to deny scanners any feedback.
+    # -----------------------------------------------------------------------
+
+    # .env anywhere in the path — catches /ip/.env, /subdir/.env.local, etc.
+    location ~* /\.env {
+        return 444;
     }
 
-    location ~* ^/(wp-config\.php|phpinfo\.php|actuator|config\.ya?ml|docker-compose\.ya?ml)$ {
-        return 403;
+    # Git, SVN, Mercurial metadata
+    location ~* ^/(\.git|\.svn|\.hg)(/|$) {
+        return 444;
     }
 
+    # PHP files — this is a Python API; no .php files exist
+    location ~* \.php$ {
+        return 444;
+    }
+
+    # Vendor / framework paths probed by PHPUnit / Laravel / Yii scanners
+    location ~* ^/vendor/ {
+        return 444;
+    }
+
+    # PHP Remote File Include exploit strings
+    location ~* (eval-stdin|allow_url_include|auto_prepend_file) {
+        return 444;
+    }
+
+    # Common CMS / infra scanner targets
+    location ~* ^/(wp-config\.php|phpinfo\.php|actuator|config\.ya?ml|docker-compose\.ya?ml|admin/config\.php)$ {
+        return 444;
+    }
+
+    # Unix path traversal probes
     location ~* ^/(cgi-bin/|etc/passwd|proc/self/environ) {
-        return 403;
+        return 444;
+    }
+
+    # Deny server-info / server-status leakage
+    location ~* ^/(server-status|server-info)$ {
+        return 444;
     }
 
     location = /api/v1/auth/login {
-        limit_req zone=auth_login_per_ip burst=5 nodelay;
+        # 10r/m + burst=8: allows ~8 quick retries then throttles to 10/min
+        limit_req zone=auth_login_per_ip burst=8 nodelay;
         limit_conn auth_conn_per_ip 8;
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_pass http://backend_upstream;
     }
 
     location = /api/v1/auth/refresh {
-        limit_req zone=auth_refresh_per_ip burst=8 nodelay;
+        # 40r/m + burst=20: user can reload page ~20 times quickly before throttle
+        limit_req zone=auth_refresh_per_ip burst=20 nodelay;
         limit_conn auth_conn_per_ip 8;
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_pass http://backend_upstream;
@@ -215,7 +373,8 @@ server {
     }
 
     location / {
-        limit_req zone=api_default_per_ip burst=40 nodelay;
+        # burst=80: a complex SPA page load can issue 40-60 parallel requests
+        limit_req zone=api_default_per_ip burst=80 nodelay;
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_pass http://backend_upstream;
     }
