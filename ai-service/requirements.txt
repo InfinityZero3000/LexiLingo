@@ -66,7 +66,7 @@ llama-cpp-python>=0.2.50
 scipy>=1.17.1
 
 # HTTP Downloads
-requests>=2.31.0
+requests>=2.33.1
 
 # System Monitoring (for ResourceManager)
 psutil==7.2.2
