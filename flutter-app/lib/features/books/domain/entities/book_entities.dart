@@ -29,6 +29,7 @@ class Book {
   final String cefrLevel;
   final CefrInfo? cefrInfo;
   final String subject;
+  final String topic;
   final int downloadCount;
   final int chapterCount;
   final int wordCount;
@@ -45,6 +46,7 @@ class Book {
     this.cefrLevel = 'B1',
     this.cefrInfo,
     this.subject = '',
+    this.topic = '',
     this.downloadCount = 0,
     this.chapterCount = 0,
     this.wordCount = 0,
@@ -64,6 +66,7 @@ class Book {
         ? CefrInfo.fromJson(json['cefr_info'] as Map<String, dynamic>)
         : null,
     subject: json['subject'] as String? ?? '',
+    topic: json['topic'] as String? ?? '',
     downloadCount: (json['download_count'] as num?)?.toInt() ?? 0,
     chapterCount: (json['chapter_count'] as num?)?.toInt() ?? 0,
     wordCount: (json['word_count'] as num?)?.toInt() ?? 0,

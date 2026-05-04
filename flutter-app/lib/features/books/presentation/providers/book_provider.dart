@@ -20,6 +20,19 @@ class BookProvider extends ChangeNotifier {
   List<Book> _searchResults = [];
   String? _selectedCefrLevel;
 
+  // Per-level browse books (lazy horizontal scroll)
+  final Map<String, List<Book>> _levelBooks = {};
+  final Map<String, int> _levelPage = {};
+  final Map<String, bool> _levelLoadingMore = {};
+  final Map<String, bool> _levelHasMore = {};
+  String? _selectedTopic;
+
+  /// All browsable genre labels.
+  static const List<String> kTopics = [
+    'Children', 'Fantasy', 'Mystery', 'Romance', 'Adventure',
+    'Fiction', 'History', 'Science Fiction', 'Philosophy', 'Poetry',
+  ];
+
   Book? _currentBook;
   String? _bookText; // Loaded plain-text content
   List<String> _pages = []; // Text split into pages
@@ -47,6 +60,24 @@ class BookProvider extends ChangeNotifier {
   List<Book> get recommendedBooks => _recommendedBooks;
   List<Book> get searchResults => _searchResults;
   String? get selectedCefrLevel => _selectedCefrLevel;
+  String? get selectedTopic => _selectedTopic;
+
+  bool isLoadingMoreForLevel(String level) =>
+      _levelLoadingMore[level] ?? false;
+  bool hasMoreForLevel(String level) => _levelHasMore[level] ?? true;
+
+  /// Curated + browse books for [level], deduplicated by id.
+  List<Book> booksForLevel(String level) {
+    final curated =
+        _recommendedBooks.where((b) => b.cefrLevel == level).toList();
+    final browse = _levelBooks[level] ?? [];
+    final seen = <String>{};
+    final result = <Book>[];
+    for (final b in [...curated, ...browse]) {
+      if (seen.add(b.id)) result.add(b);
+    }
+    return result;
+  }
 
   Book? get currentBook => _currentBook;
   String? get bookText => _bookText;
@@ -127,6 +158,42 @@ class BookProvider extends ChangeNotifier {
   void setCefrFilter(String? level) {
     _selectedCefrLevel = level;
     notifyListeners();
+  }
+
+  void setTopicFilter(String? topic) {
+    _selectedTopic = topic;
+    // Reset per-level browse state so next scroll re-fetches with new topic
+    _levelBooks.clear();
+    _levelPage.clear();
+    _levelHasMore.clear();
+    notifyListeners();
+  }
+
+  /// Load more books for [level] by fetching the next browse page.
+  /// Called when the user scrolls near the end of a level's horizontal list.
+  Future<void> loadMoreForLevel(String level) async {
+    if (_levelLoadingMore[level] == true) return;
+    if (_levelHasMore[level] == false) return;
+
+    _levelLoadingMore[level] = true;
+    notifyListeners();
+
+    final nextPage = (_levelPage[level] ?? 0) + 1;
+    try {
+      final books = await _repository.browseByLevel(
+        level: level,
+        page: nextPage,
+        topic: _selectedTopic,
+      );
+      _levelBooks[level] = [...(_levelBooks[level] ?? []), ...books];
+      _levelPage[level] = nextPage;
+      _levelHasMore[level] = books.isNotEmpty;
+    } catch (_) {
+      // Silently ignore — curated books remain visible
+    } finally {
+      _levelLoadingMore[level] = false;
+      notifyListeners();
+    }
   }
 
   // ── Book Detail & Reader ───────────────────────────────────
