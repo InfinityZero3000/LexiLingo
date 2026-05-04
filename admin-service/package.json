@@ -11,22 +11,22 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@tanstack/react-query": "^5.99.2",
+    "@tanstack/react-query": "^5.100.9",
     "@vercel/analytics": "^2.0.1",
-    "antd": "^6.3.6",
-    "axios": "^1.15.1",
+    "antd": "^6.3.7",
+    "axios": "^1.16.0",
     "dayjs": "^1.11.20",
     "dotenv": "^17.4.2",
     "gsap": "^3.15.0",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-hook-form": "^7.72.1",
-    "react-router-dom": "^7.14.1",
+    "react-hook-form": "^7.75.0",
+    "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1",
     "three": "^0.184.0",
-    "vercel": "^51.7.0",
-    "zod": "^4.3.6",
+    "vercel": "^53.1.0",
+    "zod": "^4.4.2",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -36,6 +36,6 @@
     "@types/three": "^0.184.0",
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.10"
   }
 }
