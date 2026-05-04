@@ -25,7 +25,7 @@ passlib[bcrypt]>=1.7.4
 python-dotenv>=1.2.2
 
 # Logging and Monitoring
-loguru>=0.7.2
+loguru>=0.7.3
 
 # HTTP Client (for calling DL-Model-Support)
 httpx>=0.26.0
