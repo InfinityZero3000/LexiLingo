@@ -28,7 +28,7 @@ python-dotenv>=1.2.2
 loguru>=0.7.3
 
 # HTTP Client (for calling DL-Model-Support)
-httpx>=0.26.0
+httpx>=0.28.1
 aiohttp>=3.13.5
 
 # Knowledge Graph (KuzuDB)
