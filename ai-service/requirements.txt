@@ -43,7 +43,7 @@ numpy>=1.23.0,<3.0.0
 # STT / TTS
 faster-whisper>=1.2.1
 piper-tts>=1.4.2
-gTTS>=2.5.0
+gTTS>=2.5.4
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
 # NOTE: transformers>=5.0.0 requires torch>=2.4, which is NOT available on Intel Mac (x86_64).
