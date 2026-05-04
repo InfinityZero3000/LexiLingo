@@ -306,7 +306,7 @@ def _estimate_cefr_from_description(text: str) -> str:
     # Syllable proxy: words with 8+ chars ≈ 3+ syllables
     complex_ratio = sum(1 for w in words if len(w) >= 8) / word_count
     # Weighted score calibrated to CEFR ranges
-    score = avg_word_len * 4.8 + complex_ratio * 24.0 + avg_sent_len * 0.3
+    score = avg_word_len * 7.0 + complex_ratio * 35.0 + avg_sent_len * 0.4
     if score < 9:
         return "A1"
     elif score < 15:
@@ -315,7 +315,7 @@ def _estimate_cefr_from_description(text: str) -> str:
         return "B1"
     elif score < 31:
         return "B2"
-    elif score < 48:
+    elif score < 42:
         return "C1"
     return "C2"
 
