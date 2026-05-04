@@ -133,3 +133,4 @@ backups/
 
 # gateway runtime security logs
 gateway/nginx/logs/*.log
+default.conf
