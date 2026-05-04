@@ -388,9 +388,9 @@ class _MessageBubbleState extends State<MessageBubble>
                                 ClipboardData(text: widget.message.content),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text('chat.messageCopied'.tr()),
-                                  duration: Duration(seconds: 1),
+                                  duration: const Duration(seconds: 1),
                                 ),
                               );
                               setState(() {
