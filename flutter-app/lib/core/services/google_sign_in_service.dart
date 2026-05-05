@@ -61,7 +61,8 @@ class GoogleSignInService {
   Future<String?> _signInWeb() async {
     final provider = GoogleAuthProvider()
       ..addScope('email')
-      ..addScope('profile');
+      ..addScope('profile')
+      ..setCustomParameters({'prompt': 'select_account'});
 
     // If the app has just returned from signInWithRedirect(), consume the
     // pending credential first.
@@ -157,8 +158,8 @@ class GoogleSignInService {
   /// Mobile: use google_sign_in package to get the Google id_token.
   Future<String?> _signInMobile() async {
     try {
-      // Sign out first to ensure account picker is shown
-      await _googleSignIn.signOut();
+      // Disconnect (revoke) first so account picker is always shown
+      await _googleSignIn.disconnect();
 
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) {
@@ -212,11 +213,13 @@ class GoogleSignInService {
     return e.message ?? 'Google Sign-In failed on mobile.';
   }
 
-  /// Sign out from Google
+  /// Sign out from Google and revoke access so account picker is shown on next sign-in
   Future<void> signOut() async {
     try {
       if (!kIsWeb) {
-        await _googleSignIn.signOut();
+        await _googleSignIn.disconnect();
+      } else {
+        await FirebaseAuth.instance.signOut();
       }
       logInfo(_tag, 'Google Sign Out successful');
     } catch (e) {

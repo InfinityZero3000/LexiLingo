@@ -150,10 +150,6 @@ class LanguageSwitcherButton extends StatelessWidget {
               ? AppColors.accentMint.withValues(alpha: 0.12)
               : AppColors.accentMint.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: AppColors.accentMint.withValues(alpha: 0.4),
-            width: 1,
-          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

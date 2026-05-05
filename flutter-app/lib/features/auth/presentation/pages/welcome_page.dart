@@ -49,11 +49,12 @@ class _WelcomePageState extends State<WelcomePage>
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
+        child: Center(
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -231,7 +232,8 @@ class _WelcomePageState extends State<WelcomePage>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildStatItem(BuildContext context, String label, String value) {

@@ -158,6 +158,7 @@ void main() async {
       path: 'assets/i18n',
       fallbackLocale: const Locale('vi'),
       startLocale: const Locale('vi'),
+      useOnlyLangCode: true,
       child: const LexiLingoApp(),
     ),
   );
