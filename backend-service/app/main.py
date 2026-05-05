@@ -58,6 +58,7 @@ from app.routes.games import router as games_router
 from app.routes.xp import router as xp_router
 from app.routes.books import router as books_router
 from app.routes.ai_audit import router as ai_audit_router
+from app.routes.monitoring import router as monitoring_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -258,6 +259,7 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 # Phase 5: Book Reading
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
+app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
