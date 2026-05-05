@@ -45,10 +45,6 @@ jobs:
           project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
           token: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
           
-          # File mappings
-          source: 'flutter-app/assets/i18n/vi.json'
-          translation: 'flutter-app/assets/i18n/%two_letters_code%.json'
-          
           # Options
           config: 'flutter-app/crowdin.yml'
         env:

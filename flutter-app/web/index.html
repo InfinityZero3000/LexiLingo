@@ -48,6 +48,34 @@
   <title>LexiLingo - English Learning App</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Service Worker auto-update: force new SW to activate immediately and reload -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      // When new SW takes control, reload to use fresh assets (including i18n)
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        window.location.reload();
+      });
+
+      // On page load, check if there's a waiting SW and activate it
+      navigator.serviceWorker.ready.then(function(reg) {
+        if (reg.waiting) {
+          reg.waiting.postMessage({ action: 'skipWaiting' });
+          return;
+        }
+        reg.addEventListener('updatefound', function() {
+          var newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', function() {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New SW installed while old one is active — force immediate takeover
+              newWorker.postMessage({ action: 'skipWaiting' });
+            }
+          });
+        });
+      });
+    }
+  </script>
+
   <!-- CJK font support for Chinese / Japanese / Korean UI -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
