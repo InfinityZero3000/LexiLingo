@@ -101,6 +101,12 @@
     "registerFailed": "登録失敗",
     "invalidEmail": "無効なメール",
     "passwordTooShort": "パスワードが短すぎます",
+    "emailVerificationTitle": "受信トレイを確認してください",
+    "emailVerificationMessage": "{email} に確認リンクを送信しました。メールを確認してアカウントを有効化してください。",
+    "emailVerificationResend": "確認メールを再送信",
+    "emailVerificationResendSuccess": "確認メールを再送信しました。受信トレイを確認してください。",
+    "emailVerificationResendError": "再送信に失敗しました。もう一度お試しください。",
+    "emailVerificationBackToLogin": "ログインに戻る",
     "passwordMismatch": "パスワードが一致しません"
   },
   "home": {

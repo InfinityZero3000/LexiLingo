@@ -101,6 +101,12 @@
     "registerFailed": "注册失败",
     "invalidEmail": "邮箱格式不正确",
     "passwordTooShort": "密码太短",
+    "emailVerificationTitle": "查看您的收件箱",
+    "emailVerificationMessage": "我们已向 {email} 发送了验证链接。请检查您的电子邮件以激活账户。",
+    "emailVerificationResend": "重新发送验证邮件",
+    "emailVerificationResendSuccess": "验证邮件已重新发送，请查看收件箱。",
+    "emailVerificationResendError": "重新发送失败，请重试。",
+    "emailVerificationBackToLogin": "返回登录",
     "passwordMismatch": "密码不一致"
   },
   "home": {
