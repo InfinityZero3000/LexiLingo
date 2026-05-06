@@ -27,6 +27,9 @@ wheels/
 # Environment
 .env
 .env.local
+.env.production
+.env.production.secrets
+.env.*.secrets
 .venv/
 venv/ 
 ENV/

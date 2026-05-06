@@ -1,6 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -321,7 +321,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   TextSpan(text: 'auth.termsPrefix'.tr()),
                                   TextSpan(
                                     text: 'auth.termsOfService'.tr(),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -329,7 +329,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   TextSpan(text: 'auth.termsAnd'.tr()),
                                   TextSpan(
                                     text: 'auth.privacyPolicy'.tr(),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: AppColors.accentMint,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -372,6 +372,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return;
                                 }
 
+                                final nav = Navigator.of(context);
                                 await authProvider.register(
                                   email: _emailController.text.trim(),
                                   username: _deriveUsername(
@@ -380,6 +381,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                   password: _passwordController.text,
                                   displayName: _fullNameController.text.trim(),
                                 );
+
+                                // If registration succeeded, pop back to root
+                                // so AuthWrapper can navigate to onboarding/main.
+                                if (authProvider.errorMessage == null &&
+                                    mounted) {
+                                  nav.popUntil((route) => route.isFirst);
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
@@ -397,7 +405,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               )
                             : Text(
                                 'auth.createAccount'.tr(),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -440,7 +448,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: const Icon(Icons.g_mobiledata, size: 30),
                         label: Text(
                           'auth.continueWithGoogle'.tr(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF0B132B),
                             fontWeight: FontWeight.w700,
                             fontSize: 18,
@@ -492,7 +500,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Wrap(
                         children: [
                           Text(
-                            '${'auth.alreadyHaveAccount'.tr()} ',
+                            'auth.alreadyHaveAccount'.tr(),
                             style: textTheme.titleMedium?.copyWith(
                               color: const Color(0xFF3E536B),
                             ),
@@ -510,7 +518,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               );
                             },
                             child: Text(
-                              'auth.signIn'.tr(),
+                              'auth.login'.tr(),
                               style: textTheme.titleMedium?.copyWith(
                                 color: AppColors.accentMint,
                                 fontWeight: FontWeight.w800,

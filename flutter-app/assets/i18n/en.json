@@ -226,7 +226,10 @@
     "enrollFailed": "Failed to enroll",
     "discoverCourses": "Discover Courses",
     "filterCourses": "Filter Courses",
-    "noCourses": "No courses in this category yet"
+    "noCourses": "No courses in this category yet",
+    "durationMin": "{count} min",
+    "totalLessonsCount": "{count} lessons",
+    "userProgressPercent": "{percent}% Complete"
   },
   "lesson": {
     "sessionTitle": "Learning",
@@ -581,7 +584,12 @@
     "noTransactions": "No transactions yet",
     "rankWeekly": "Rank #{rank} · {xp} XP this week",
     "earned": "Earned",
-    "spent": "Spent"
+    "spent": "Spent",
+    "earnTipCompleteLessons": "Complete lessons",
+    "earnTipFinishCourse": "Finish a course",
+    "earnTipStreakBonus": "Daily streak bonus",
+    "earnTipAchievements": "Unlock achievements",
+    "earnTipChallenges": "Weekly challenges"
   },
   "social": {
     "friends": "Friends",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "Quiz not available.",
     "backToBook": "Back to Book",
     "readerSettings": "Reader Settings",
-    "pageProgress": "Page {current} of {total}"
+    "pageProgress": "Page {current} of {total}",
+    "searchPlaceholder": "Search books by title or author..."
   },
   "news": {
     "title": "English News",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "How well did you know this word?",
     "flashcard": "Flashcard",
     "tapToRevealDefinition": "Tap to reveal definition",
-    "vietnameseLabel": "Vietnamese"
+    "vietnameseLabel": "Vietnamese",
+    "searchPlaceholder": "Search words...",
+    "filterAll": "All",
+    "filterTravel": "Travel",
+    "filterBusiness": "Business",
+    "filterDaily": "Daily",
+    "recentWordsHeader": "RECENT WORDS",
+    "wordLabel": "Word",
+    "wordInputHint": "e.g. resilient",
+    "definitionHint": "What does this word mean?",
+    "exampleSentenceLabel": "Example sentence (optional)",
+    "exampleSentenceHint": "e.g. She was resilient in the face of adversity.",
+    "failedToSaveWord": "Failed to save word"
   }
 }

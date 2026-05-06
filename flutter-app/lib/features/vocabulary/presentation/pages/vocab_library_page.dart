@@ -89,7 +89,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search words...',
+                        hintText: 'vocabulary.searchPlaceholder'.tr(),
                         border: InputBorder.none,
                         hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
@@ -106,13 +106,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _buildFilterChip('All', true),
+                _buildFilterChip('vocabulary.filterAll'.tr(), true),
                 const SizedBox(width: 8),
-                _buildFilterChip('Travel', false, icon: Icons.flight),
+                _buildFilterChip('vocabulary.filterTravel'.tr(), false, icon: Icons.flight),
                 const SizedBox(width: 8),
-                _buildFilterChip('Business', false, icon: Icons.work),
+                _buildFilterChip('vocabulary.filterBusiness'.tr(), false, icon: Icons.work),
                 const SizedBox(width: 8),
-                _buildFilterChip('Daily', false, icon: Icons.coffee),
+                _buildFilterChip('vocabulary.filterDaily'.tr(), false, icon: Icons.coffee),
               ],
             ),
           ),
@@ -123,7 +123,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             child: Row(
               children: [
                 Text(
-                  'RECENT WORDS',
+                  'vocabulary.recentWordsHeader'.tr(),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
@@ -439,7 +439,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.provider.errorMessage ?? 'Failed to save word'),
+          content: Text(widget.provider.errorMessage ?? 'vocabulary.failedToSaveWord'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -493,8 +493,8 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             textCapitalization: TextCapitalization.none,
             style: TextStyle(fontSize: 16, color: cs.onSurface),
             decoration: InputDecoration(
-              labelText: 'Word',
-              hintText: 'e.g. resilient',
+              labelText: 'vocabulary.wordLabel'.tr(),
+              hintText: 'vocabulary.wordInputHint'.tr(),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.abc_rounded),
               suffixIcon: _buildWordStatus(),
@@ -533,7 +533,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             style: TextStyle(fontSize: 15, color: cs.onSurface),
             decoration: InputDecoration(
               labelText: 'vocabulary.definition'.tr(),
-              hintText: 'What does this word mean?',
+              hintText: 'vocabulary.definitionHint'.tr(),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 40),
@@ -550,8 +550,8 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             maxLines: 2,
             style: TextStyle(fontSize: 15, color: cs.onSurface),
             decoration: InputDecoration(
-              labelText: 'Example sentence (optional)',
-              hintText: 'e.g. She was resilient in the face of adversity.',
+              labelText: 'vocabulary.exampleSentenceLabel'.tr(),
+              hintText: 'vocabulary.exampleSentenceHint'.tr(),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 24),

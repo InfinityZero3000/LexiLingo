@@ -45,6 +45,9 @@ trafilatura>=2.0.0
 # Redis (async client — used by quota manager and rate limiting)
 redis>=7.4.0
 
+# System metrics (used by admin monitoring endpoints)
+psutil>=6.0.0
+
 # Testing
 pytest>=9.0.3
 pytest-asyncio>=1.3.0

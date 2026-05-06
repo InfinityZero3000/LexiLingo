@@ -22,12 +22,18 @@ class BookLibraryScreen extends StatefulWidget {
 class _BookLibraryScreenState extends State<BookLibraryScreen> {
   final _searchController = TextEditingController();
   bool _isSearchMode = false;
+  final Map<String, ScrollController> _scrollControllers = {};
 
   static const _cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
   @override
   void initState() {
     super.initState();
+    for (final level in _cefrLevels) {
+      final sc = ScrollController();
+      sc.addListener(() => _onLevelScroll(level, sc));
+      _scrollControllers[level] = sc;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BookProvider>().loadRecommendedBooks();
     });
@@ -36,7 +42,17 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    for (final sc in _scrollControllers.values) {
+      sc.dispose();
+    }
     super.dispose();
+  }
+
+  void _onLevelScroll(String level, ScrollController sc) {
+    if (!sc.hasClients) return;
+    if (sc.position.pixels >= sc.position.maxScrollExtent * 0.75) {
+      context.read<BookProvider>().loadMoreForLevel(level);
+    }
   }
 
   void _openBook(BuildContext context, Book book) async {
@@ -103,7 +119,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         controller: _searchController,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: 'Search books by title or author...',
+          hintText: 'books.searchPlaceholder'.tr(),
           prefixIcon: const Icon(Icons.search_rounded),
           filled: true,
           fillColor: isDark ? AppColors.surfaceDarkElevated : Colors.white,
@@ -266,28 +282,23 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             children: [
               // CEFR level filter chips
               _buildCefrFilterRow(context, provider, isDark),
+              const SizedBox(height: 8),
+              // Topic / genre filter chips
+              _buildTopicFilterRow(context, provider, isDark),
               const SizedBox(height: 20),
 
               // Section: All Levels
               if (provider.selectedCefrLevel == null) ...[
-                ..._cefrLevels
-                    .where(
-                      (level) => provider.recommendedBooks.any(
-                        (b) => b.cefrLevel == level,
-                      ),
-                    )
-                    .map(
-                      (level) => _buildLevelSection(
-                        context,
-                        level,
-                        provider.recommendedBooks
-                            .where((b) => b.cefrLevel == level)
-                            .toList(),
-                        isDark,
-                      ),
-                    ),
+                ..._cefrLevels.map(
+                  (level) =>
+                      _buildLevelSection(context, level, provider, isDark),
+                ),
               ] else ...[
-                _buildBookGrid(context, provider.recommendedBooks, isDark),
+                _buildBookGrid(
+                  context,
+                  provider.booksForLevel(provider.selectedCefrLevel!),
+                  isDark,
+                ),
               ],
 
               const SizedBox(height: 32),
@@ -295,6 +306,65 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTopicFilterRow(
+    BuildContext context,
+    BookProvider provider,
+    bool isDark,
+  ) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _topicChip(context, provider, isDark, null, 'All'),
+          ...BookProvider.kTopics.map(
+            (t) => _topicChip(context, provider, isDark, t, t),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _topicChip(
+    BuildContext context,
+    BookProvider provider,
+    bool isDark,
+    String? topic,
+    String label,
+  ) {
+    final isSelected = provider.selectedTopic == topic;
+    return GestureDetector(
+      onTap: () => provider.setTopicFilter(topic),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : isDark
+              ? AppColors.surfaceDarkElevated
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.grey300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : isDark
+                ? Colors.white60
+                : AppColors.textGrey,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 12,
+          ),
+        ),
+      ),
     );
   }
 
@@ -363,9 +433,13 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   Widget _buildLevelSection(
     BuildContext context,
     String level,
-    List<Book> books,
+    BookProvider provider,
     bool isDark,
   ) {
+    final books = provider.booksForLevel(level);
+    final isLoadingMore = provider.isLoadingMoreForLevel(level);
+    if (books.isEmpty && !isLoadingMore) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -401,12 +475,27 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         SizedBox(
           height: 264,
           child: ListView.builder(
+            controller: _scrollControllers[level],
             scrollDirection: Axis.horizontal,
-            itemCount: books.length,
-            itemBuilder: (context, i) => BookCard(
-              book: books[i],
-              onTap: () => _openBook(context, books[i]),
-            ),
+            itemCount: books.length + (isLoadingMore ? 1 : 0),
+            itemBuilder: (context, i) {
+              if (i == books.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+              return BookCard(
+                book: books[i],
+                onTap: () => _openBook(context, books[i]),
+              );
+            },
           ),
         ),
         const SizedBox(height: 24),

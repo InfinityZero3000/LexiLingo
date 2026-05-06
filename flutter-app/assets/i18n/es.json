@@ -226,7 +226,10 @@
     "enrollFailed": "No se pudo inscribir",
     "discoverCourses": "Descubrir cursos",
     "filterCourses": "Filtrar cursos",
-    "noCourses": "Aún no hay cursos en esta categoría"
+    "noCourses": "Aún no hay cursos en esta categoría",
+    "durationMin": "{count} min",
+    "totalLessonsCount": "{count} lecciones",
+    "userProgressPercent": "{percent}% Completado"
   },
   "lesson": {
     "sessionTitle": "Aprendizaje",
@@ -581,7 +584,12 @@
     "noTransactions": "Aún no hay transacciones",
     "rankWeekly": "Rango #{rank} · {xp} XP esta semana",
     "earned": "Ganado",
-    "spent": "Gastado"
+    "spent": "Gastado",
+    "earnTipCompleteLessons": "Completar lecciones",
+    "earnTipFinishCourse": "Terminar un curso",
+    "earnTipStreakBonus": "Bono de racha diaria",
+    "earnTipAchievements": "Desbloquear logros",
+    "earnTipChallenges": "Desafíos semanales"
   },
   "social": {
     "friends": "Amigos",
@@ -1004,7 +1012,8 @@
     "quizNotAvailable": "Prueba no disponible.",
     "backToBook": "Volver a Reservar",
     "readerSettings": "Configuración del lector",
-    "pageProgress": "Página {current} de {total}"
+    "pageProgress": "Página {current} de {total}",
+    "searchPlaceholder": "Buscar por título o autor..."
   },
   "news": {
     "title": "noticias en ingles",
@@ -1028,6 +1037,18 @@
     "ratingQuestion": "¿Qué tan bien conocías esta palabra?",
     "flashcard": "tarjeta didáctica",
     "tapToRevealDefinition": "Toca para revelar la definición",
-    "vietnameseLabel": "Vietnamita"
+    "vietnameseLabel": "Vietnamita",
+    "searchPlaceholder": "Buscar palabras...",
+    "filterAll": "Todos",
+    "filterTravel": "Viaje",
+    "filterBusiness": "Negocios",
+    "filterDaily": "Cotidiano",
+    "recentWordsHeader": "PALABRAS RECIENTES",
+    "wordLabel": "Palabra",
+    "wordInputHint": "ej. resilient",
+    "definitionHint": "¿Qué significa esta palabra?",
+    "exampleSentenceLabel": "Oración de ejemplo (opcional)",
+    "exampleSentenceHint": "ej. She was resilient in the face of adversity.",
+    "failedToSaveWord": "Error al guardar la palabra"
   }
 }

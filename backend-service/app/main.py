@@ -58,6 +58,7 @@ from app.routes.games import router as games_router
 from app.routes.xp import router as xp_router
 from app.routes.books import router as books_router
 from app.routes.ai_audit import router as ai_audit_router
+from app.routes.monitoring import router as monitoring_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -132,9 +133,9 @@ app = FastAPI(
     * **ReDoc**: `/redoc`
     """,
     version="1.0.1",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
     lifespan=lifespan,
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
@@ -178,7 +179,7 @@ app.add_middleware(RequestIDMiddleware)
 # 4. Rate Limiting - Prevent abuse (Phase 1: Security)
 # Higher limits in development to avoid blocking local testing
 _rate_rpm = 300 if settings.is_development else 120
-_rate_rph = 5000 if settings.is_development else 5000
+_rate_rph = 5000 if settings.is_development else 1000
 app.add_middleware(
     RateLimitMiddleware,
     requests_per_minute=_rate_rpm,
@@ -258,6 +259,7 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 # Phase 5: Book Reading
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
+app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 
 
 @app.api_route("/", methods=["GET", "HEAD"])

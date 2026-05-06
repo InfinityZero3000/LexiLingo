@@ -70,7 +70,9 @@ export const resolveRole = (user: UserProfile): Role | null => {
   const hasRoleConfig = ENV.adminEmails.length > 0 || ENV.superAdminEmails.length > 0;
 
   if (!hasRoleConfig) {
-    return "admin";
+    // No client-side email config — role must come from backend (user.role / user.is_admin).
+    // Returning null prevents accidental admin access when env vars are missing.
+    return null;
   }
 
   if (ENV.superAdminEmails.map((e) => e.toLowerCase()).includes(email)) {

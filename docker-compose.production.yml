@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lexilingo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lexilingo_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env.production.secrets}
       POSTGRES_DB: ${POSTGRES_DB:-lexilingo}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -81,7 +81,7 @@ services:
     container_name: lexilingo-redis
     restart: unless-stopped
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-lexilingo_redis_pass}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env.production.secrets}
     command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
@@ -115,9 +115,9 @@ services:
       - .env.production
       - .env.production.secrets
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:-lexilingo_pass}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-lexilingo_redis_pass}@redis:6379/0
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-lexilingo_redis_pass}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
     depends_on:
       postgres:

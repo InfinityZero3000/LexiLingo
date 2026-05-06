@@ -96,6 +96,40 @@ class BookRepository {
         .toList();
   }
 
+  /// Browse books by CEFR level — triggered by horizontal scroll pagination.
+  Future<List<Book>> browseByLevel({
+    required String level,
+    int page = 1,
+    String? topic,
+  }) async {
+    final params = <String, String>{
+      'level': level,
+      'page': page.toString(),
+      if (topic != null) 'topic': topic,
+    };
+    final cacheKey =
+        'books:browse:${level.toLowerCase()}:t:${topic ?? 'all'}:p:$page';
+
+    final data = await _cache.getOrFetch(
+      key: cacheKey,
+      type: 'book',
+      fetchFn: () async {
+        final uri = Uri.parse(
+          '$_baseUrl/browse',
+        ).replace(queryParameters: params);
+        final response = await _client.get(uri);
+        if (response.statusCode != 200) {
+          throw Exception('Browse failed: ${response.statusCode}');
+        }
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      },
+    );
+
+    return (data?['books'] as List<dynamic>? ?? [])
+        .map((e) => Book.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   // ── Quiz ─────────────────────────────────────────────────────
 
   /// Fetch the comprehension quiz for [bookId] chapter [chapter].
