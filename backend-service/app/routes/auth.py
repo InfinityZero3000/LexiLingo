@@ -1,6 +1,7 @@
 """
 Authentication Routes
 """
+import logging
 import uuid
 
 from datetime import datetime, timezone, timedelta
@@ -23,6 +24,7 @@ from app.schemas.auth import (
 from app.schemas.user import UserResponse
 from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -158,8 +160,50 @@ async def register(
     await db.commit()
     await db.refresh(user)
 
+    # Send verification email (non-blocking — registration succeeds even if email fails)
+    try:
+        from app.core.security import create_verification_token
+        from app.services.email_service import EmailService
+        token = create_verification_token(
+            {"sub": str(user.id), "email": user.email, "type": "email_verification"},
+            expires_minutes=1440,  # 24 hours
+        )
+        await EmailService.send_verification_email(
+            to_email=user.email,
+            token=token,
+            display_name=user.display_name,
+        )
+    except Exception as exc:
+        logger.warning("Could not send verification email to %s: %s", user.email, exc)
+
     # Return normalized payload to avoid ResponseValidationError on optional/computed fields.
     return _build_user_response(user)
+
+
+@router.post("/resend-verification")
+async def resend_verification_email(
+    body: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend email verification link."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+    # Always return 200 to avoid email enumeration
+    if user and not getattr(user, "email_verified", False):
+        try:
+            from app.core.security import create_verification_token
+            token = create_verification_token(
+                {"sub": str(user.id), "email": user.email, "type": "email_verification"},
+                expires_minutes=1440,
+            )
+            await EmailService.send_verification_email(
+                to_email=user.email,
+                token=token,
+                display_name=user.display_name,
+            )
+        except Exception as exc:
+            logger.warning("Could not resend verification email to %s: %s", user.email, exc)
+    return {"message": "If your email is registered and unverified, a verification link has been sent."}
 
 
 @router.post("/login", response_model=LoginResponse)

@@ -1,0 +1,12 @@
+LexiLingo - Verify your email address
+
+Hi {display_name},
+
+Welcome to LexiLingo! Please verify your email address to activate your account.
+Use this link to verify:
+{verify_link}
+
+This link expires in {expiry_hours} hours.
+If you did not create this account, you can safely ignore this email.
+
+Need help? Contact us at {support_email}
