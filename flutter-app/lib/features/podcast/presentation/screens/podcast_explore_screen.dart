@@ -303,8 +303,8 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  category.cefrLevel,
-                  style: TextStyle(
+                  _cefrGroupLabel(category.cefrLevel),
+                  style: const TextStyle(
                     color: AppColors.surfaceLight,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -365,6 +365,25 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   // ──────────────────────────────────────
   //  Helpers
   // ──────────────────────────────────────
+
+  String _cefrGroupLabel(String level) {
+    switch (level) {
+      case 'A1':
+      case 'A2':
+      case 'A1-A2':
+        return 'Beginner';
+      case 'B1':
+      case 'B2':
+      case 'B1-B2':
+        return 'Intermediate';
+      case 'C1':
+      case 'C2':
+      case 'C1-C2':
+        return 'Advanced';
+      default:
+        return level;
+    }
+  }
 
   Color _cefrGroupColor(String level) {
     switch (level) {

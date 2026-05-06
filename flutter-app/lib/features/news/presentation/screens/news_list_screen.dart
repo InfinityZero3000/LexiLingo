@@ -86,14 +86,6 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 ),
               ),
 
-              // ── CEFR Level Filter ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: _buildLevelFilter(isDark),
-                ),
-              ),
-
               // ── Category Tabs ──
               SliverToBoxAdapter(
                 child: Consumer<NewsProvider>(
