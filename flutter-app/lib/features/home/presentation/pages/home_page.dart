@@ -133,7 +133,10 @@ class _HomePageNewState extends State<HomePageNew> {
                     child: DailyReviewCard(),
                   ),
                   const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'home.continueLearningSection'.tr()),
+                  _buildSectionTitle(
+                    context,
+                    'home.continueLearningSection'.tr(),
+                  ),
                   const SizedBox(height: 8),
                   _buildEnrolledCoursesSection(context, homeProvider),
                   const SizedBox(height: 12),
@@ -158,7 +161,7 @@ class _HomePageNewState extends State<HomePageNew> {
     final user = authProvider.currentUser;
     final displayName = user?.displayName.isNotEmpty == true
         ? user!.displayName
-      : user?.username ?? 'profile.guestUser'.tr();
+        : user?.username ?? 'profile.guestUser'.tr();
 
     return Consumer2<NotificationProvider, LevelProvider>(
       builder: (context, notificationProvider, levelProvider, child) {
@@ -284,8 +287,7 @@ class _HomePageNewState extends State<HomePageNew> {
     // Use user-configured daily goal from settings; fall back to HomeProvider.
     final goalXP = context.read<SettingsProvider>().dailyGoalXP;
     final earnedXP = provider.dailyXP;
-    final percentage =
-        goalXP > 0 ? (earnedXP / goalXP).clamp(0.0, 1.0) : 0.0;
+    final percentage = goalXP > 0 ? (earnedXP / goalXP).clamp(0.0, 1.0) : 0.0;
     final isCompleted = percentage >= 1.0;
     final colorScheme = Theme.of(context).colorScheme;
     final accent = AppColorRoles.primary(isDark);
@@ -324,152 +326,15 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
             ),
             child: compact
-              ? Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        isCompleted ? Icons.emoji_events : Icons.bolt,
-                        color: isCompleted
-                            ? AppColors.greenSuccessBright
-                            : accent,
-                        size: badgeIconSize,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'home.dailyGoal'.tr(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: isCompleted
-                              ? AppColors.greenSuccess
-                              : accentDeep,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.surface,
-                      ),
-                      child: glass.AnimatedProgressRing(
-                        progress: percentage.clamp(0.0, 1.0),
-                        size: ringSize + 10,
-                        strokeWidth: ringStroke,
-                        gradientColors: isCompleted
-                            ? const [
-                                AppColors.greenSuccessBright,
-                                AppColors.greenSuccess,
-                              ]
-                            : AppColorRoles.primaryGradient(isDark),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (isCompleted)
-                              const Icon(
-                                Icons.check,
-                                color: AppColors.greenSuccessBright,
-                                size: 18,
-                              )
-                            else
-                              Text(
-                                '${(percentage * 100).toInt()}%',
-                                style: TextStyle(
-                                  fontSize: ringValueFontSize,
-                                  fontWeight: FontWeight.bold,
-                                  color: accent,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$earnedXP/$goalXP XP',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isCompleted ? AppColors.greenSuccessBright : accent,
-                  ),
-                ),
-              ],
-            )
-              : Row(
-              children: [
-                // Animated Progress Ring
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colorScheme.surface,
-                  ),
-                  child: glass.AnimatedProgressRing(
-                    progress: percentage.clamp(0.0, 1.0),
-                    size: ringSize,
-                    strokeWidth: ringStroke,
-                    gradientColors: isCompleted
-                        ? const [
-                            AppColors.greenSuccessBright,
-                            AppColors.greenSuccess,
-                          ]
-                        : const [AppColors.primary, AppColors.primary],
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isCompleted)
-                          const Icon(
-                            Icons.check,
-                            color: AppColors.greenSuccessBright,
-                            size: 20,
-                          )
-                        else
-                          Text(
-                            '${(percentage * 100).toInt()}%',
-                            style: TextStyle(
-                              fontSize: ringValueFontSize,
-                              fontWeight: FontWeight.bold,
-                              color: isCompleted
-                                  ? AppColors.greenSuccessBright
-                                  : AppColors.primary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: compact ? 12 : 20),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: EdgeInsets.all(compact ? 5 : 6),
+                            padding: const EdgeInsets.all(5),
                             decoration: BoxDecoration(
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
@@ -483,15 +348,15 @@ class _HomePageNewState extends State<HomePageNew> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Expanded(
+                          Flexible(
                             child: Text(
-                              'home.dailyXpGoal'.tr(),
+                              'home.dailyGoal'.tr(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: titleFontSize,
+                                    fontSize: 15,
                                     color: isCompleted
                                         ? AppColors.greenSuccess
                                         : accentDeep,
@@ -500,51 +365,199 @@ class _HomePageNewState extends State<HomePageNew> {
                           ),
                         ],
                       ),
-                      SizedBox(height: compact ? 6 : 8),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: Center(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colorScheme.surface,
+                            ),
+                            child: glass.AnimatedProgressRing(
+                              progress: percentage.clamp(0.0, 1.0),
+                              size: ringSize + 10,
+                              strokeWidth: ringStroke,
+                              gradientColors: isCompleted
+                                  ? const [
+                                      AppColors.greenSuccessBright,
+                                      AppColors.greenSuccess,
+                                    ]
+                                  : AppColorRoles.primaryGradient(isDark),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (isCompleted)
+                                    const Icon(
+                                      Icons.check,
+                                      color: AppColors.greenSuccessBright,
+                                      size: 18,
+                                    )
+                                  else
+                                    Text(
+                                      '${(percentage * 100).toInt()}%',
+                                      style: TextStyle(
+                                        fontSize: ringValueFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        color: accent,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       Text(
                         '$earnedXP/$goalXP XP',
-                        style: Theme.of(context).textTheme.headlineSmall
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: valueFontSize,
+                              fontSize: 16,
                               color: isCompleted
                                   ? AppColors.greenSuccessBright
                                   : accent,
                             ),
                       ),
-                      SizedBox(height: compact ? 2 : 4),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      // Animated Progress Ring
                       Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 8 : 10,
-                          vertical: compact ? 3 : 4,
-                        ),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: glass.AnimatedProgressRing(
+                          progress: percentage.clamp(0.0, 1.0),
+                          size: ringSize,
+                          strokeWidth: ringStroke,
+                          gradientColors: isCompleted
+                              ? const [
+                                  AppColors.greenSuccessBright,
+                                  AppColors.greenSuccess,
+                                ]
+                              : const [AppColors.primary, AppColors.primary],
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isCompleted)
+                                const Icon(
+                                  Icons.check,
+                                  color: AppColors.greenSuccessBright,
+                                  size: 20,
+                                )
+                              else
+                                Text(
+                                  '${(percentage * 100).toInt()}%',
+                                  style: TextStyle(
+                                    fontSize: ringValueFontSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : AppColors.primary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: compact ? 12 : 20),
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              isCompleted
-                                  ? Icons.celebration
-                                  : Icons.trending_up,
-                              size: 14,
-                              color: isCompleted
-                                  ? AppColors.greenSuccessBright
-                                  : accent,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(compact ? 5 : 6),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    isCompleted
+                                        ? Icons.emoji_events
+                                        : Icons.bolt,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : accent,
+                                    size: badgeIconSize,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'home.dailyXpGoal'.tr(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: titleFontSize,
+                                          color: isCompleted
+                                              ? AppColors.greenSuccess
+                                              : accentDeep,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(height: compact ? 6 : 8),
                             Text(
-                              isCompleted
-                                  ? 'home.goalCompleted'.tr()
-                                  : 'home.keepGoing'.tr(),
-                              style: TextStyle(
-                                fontSize: chipFontSize,
-                                fontWeight: FontWeight.w600,
-                                color: isCompleted
-                                    ? AppColors.greenSuccessBright
-                                    : accent,
+                              '$earnedXP/$goalXP XP',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: valueFontSize,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : accent,
+                                  ),
+                            ),
+                            SizedBox(height: compact ? 2 : 4),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 8 : 10,
+                                vertical: compact ? 3 : 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isCompleted
+                                        ? Icons.celebration
+                                        : Icons.trending_up,
+                                    size: 14,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : accent,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isCompleted
+                                        ? 'home.goalCompleted'.tr()
+                                        : 'home.keepGoing'.tr(),
+                                    style: TextStyle(
+                                      fontSize: chipFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      color: isCompleted
+                                          ? AppColors.greenSuccessBright
+                                          : accent,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -552,9 +565,6 @@ class _HomePageNewState extends State<HomePageNew> {
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -586,216 +596,193 @@ class _HomePageNewState extends State<HomePageNew> {
 
         return Consumer<SettingsProvider>(
           builder: (sheetContext, settingsProvider, _) {
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+            return Container(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+              decoration: BoxDecoration(
+                color: Theme.of(sheetContext).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.16),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: colorScheme.outlineVariant,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
+                    ),
+                    Text(
+                      'home.dailyGoal'.tr(),
+                      style: Theme.of(sheetContext).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'home.dailyGoalDescription'.tr(),
+                      style: Theme.of(sheetContext).textTheme.bodyMedium
+                          ?.copyWith(color: AppColorRoles.textMuted(isDark)),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor,
+                            primaryColor.withValues(alpha: 0.72),
+                          ],
                         ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'home.dailyGoal'.tr(),
-                          style: Theme.of(sheetContext)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'home.dailyGoalDescription'.tr(),
-                          style: Theme.of(sheetContext).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColorRoles.textMuted(isDark),
-                              ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                primaryColor,
-                                primaryColor.withValues(alpha: 0.72),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${homeProvider.dailyXP}/${settingsProvider.dailyGoalXP} XP',
-                                style: Theme.of(sheetContext)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: colorScheme.onPrimary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'settings.goal_progress'.tr(
-                                  namedArgs: {
-                                    'percent': '${(homeProvider.dailyProgressPercentage * 100).toInt()}',
-                                  },
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${homeProvider.dailyXP}/${settingsProvider.dailyGoalXP} XP',
+                            style: Theme.of(sheetContext)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  color: colorScheme.onPrimary,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                style: Theme.of(sheetContext)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: colorScheme.onPrimary
-                                          .withValues(alpha: 0.88),
-                                    ),
-                              ),
-                            ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        ...SettingsProvider.dailyGoalPresets.map((goal) {
-                          final xp = goal['xp'] as int;
-                          final isSelected = settingsProvider.dailyGoalXP == xp;
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () async {
-                                await settingsProvider.updateDailyGoal(xp);
-                                if (!sheetContext.mounted) return;
-
-                                if (settingsProvider.error == null) {
-                                  homeProvider.updateDailyGoalTarget(xp);
-                                  Navigator.of(sheetContext).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'settings.goal_updated'.tr(
-                                          namedArgs: {'xp': '$xp'},
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                    SnackBar(
-                                      content: Text(settingsProvider.error!),
-                                    ),
-                                  );
-                                }
+                          const SizedBox(height: 4),
+                          Text(
+                            'settings.goal_progress'.tr(
+                              namedArgs: {
+                                'percent':
+                                    '${(homeProvider.dailyProgressPercentage * 100).toInt()}',
                               },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? primaryColor.withValues(alpha: 0.12)
-                                      : colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? primaryColor
-                                        : colorScheme.outlineVariant,
-                                    width: isSelected ? 2 : 1,
+                            ),
+                            style: Theme.of(sheetContext).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: colorScheme.onPrimary.withValues(
+                                    alpha: 0.88,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? primaryColor
-                                            : primaryColor.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        goal['icon'] as IconData,
-                                        color: isSelected
-                                            ? colorScheme.onPrimary
-                                            : primaryColor,
-                                      ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...SettingsProvider.dailyGoalPresets.map((goal) {
+                      final xp = goal['xp'] as int;
+                      final isSelected = settingsProvider.dailyGoalXP == xp;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            await settingsProvider.updateDailyGoal(xp);
+                            if (!sheetContext.mounted) return;
+
+                            if (settingsProvider.error == null) {
+                              homeProvider.updateDailyGoalTarget(xp);
+                              Navigator.of(sheetContext).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'settings.goal_updated'.tr(
+                                      namedArgs: {'xp': '$xp'},
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${(goal['label'] as String).tr()} • $xp XP',
-                                            style: Theme.of(sheetContext)
-                                                .textTheme
-                                                .titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            (goal['description'] as String)
-                                                .tr(),
-                                            style: Theme.of(sheetContext)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: AppColorRoles.textMuted(
-                                                    isDark,
-                                                  ),
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: primaryColor,
-                                      ),
-                                  ],
+                                  ),
                                 ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                SnackBar(
+                                  content: Text(settingsProvider.error!),
+                                ),
+                              );
+                            }
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? primaryColor.withValues(alpha: 0.12)
+                                  : colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected
+                                    ? primaryColor
+                                    : colorScheme.outlineVariant,
+                                width: isSelected ? 2 : 1,
                               ),
                             ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 42,
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? primaryColor
+                                        : primaryColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    goal['icon'] as IconData,
+                                    color: isSelected
+                                        ? colorScheme.onPrimary
+                                        : primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${(goal['label'] as String).tr()} • $xp XP',
+                                        style: Theme.of(sheetContext)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        (goal['description'] as String).tr(),
+                                        style: Theme.of(sheetContext)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AppColorRoles.textMuted(
+                                                isDark,
+                                              ),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(Icons.check_circle, color: primaryColor),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
             );
@@ -1810,7 +1797,8 @@ class _HomePageNewState extends State<HomePageNew> {
               subtitle: currentProgress != null
                   ? 'home.percentRead'.tr(
                       namedArgs: {
-                        'percent': '${(currentProgress.readingProgress * 100).toInt()}',
+                        'percent':
+                            '${(currentProgress.readingProgress * 100).toInt()}',
                       },
                     )
                   : 'home.continueReading'.tr(),

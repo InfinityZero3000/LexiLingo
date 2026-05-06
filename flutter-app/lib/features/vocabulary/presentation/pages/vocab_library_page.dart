@@ -101,10 +101,11 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           ),
 
           // Filters
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildFilterChip('vocabulary.filterAll'.tr(), true),
                 const SizedBox(width: 8),
@@ -160,48 +161,35 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   Widget _buildFilterChip(String label, bool isSelected, {IconData? icon}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? colorScheme.primary
-            : colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
-        border: isSelected
-            ? null
-            : Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
-        boxShadow: [
-          if (!isSelected)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 2,
-            ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (icon != null) ...[
-            Icon(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return FilterChip(
+      selected: isSelected,
+      showCheckmark: false,
+      avatar: icon != null
+          ? Icon(
               icon,
-              size: 18,
-              color: isSelected ? Colors.white : AppColors.primary,
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.textGrey,
+            )
+          : null,
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : AppColors.textDark),
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          fontSize: 12,
+        ),
       ),
+      backgroundColor:
+          isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100,
+      selectedColor: AppColors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      side: BorderSide.none,
+      onSelected: (_) {},
     );
   }
 
