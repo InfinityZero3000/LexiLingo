@@ -77,7 +77,7 @@
         }
 
         if (reg.waiting) {
-          reg.waiting.postMessage({ action: 'skipWaiting' });
+          reg.waiting.postMessage('skipWaiting');
           return;
         }
         reg.addEventListener('updatefound', function() {
@@ -86,7 +86,7 @@
           newWorker.addEventListener('statechange', function() {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New SW installed while old one is active — force immediate takeover
-              newWorker.postMessage({ action: 'skipWaiting' });
+              newWorker.postMessage('skipWaiting');
             }
           });
         });

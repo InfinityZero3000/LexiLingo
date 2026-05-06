@@ -274,32 +274,19 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => provider.loadRecommendedBooks(
-            cefrLevel: provider.selectedCefrLevel,
-          ),
+          onRefresh: () => provider.loadRecommendedBooks(),
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // CEFR level filter chips
-              _buildCefrFilterRow(context, provider, isDark),
-              const SizedBox(height: 8),
               // Topic / genre filter chips
               _buildTopicFilterRow(context, provider, isDark),
               const SizedBox(height: 20),
 
-              // Section: All Levels
-              if (provider.selectedCefrLevel == null) ...[
-                ..._cefrLevels.map(
-                  (level) =>
-                      _buildLevelSection(context, level, provider, isDark),
-                ),
-              ] else ...[
-                _buildBookGrid(
-                  context,
-                  provider.booksForLevel(provider.selectedCefrLevel!),
-                  isDark,
-                ),
-              ],
+              // Sections by CEFR level
+              ..._cefrLevels.map(
+                (level) =>
+                    _buildLevelSection(context, level, provider, isDark),
+              ),
 
               const SizedBox(height: 32),
             ],

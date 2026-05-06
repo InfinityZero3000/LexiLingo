@@ -153,7 +153,7 @@ class StoryApiDataSource {
 
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(body),
       );
 
@@ -277,7 +277,7 @@ class StoryApiDataSource {
 
       final response = await _client.get(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
       );
 
       if (response.statusCode != 200) {
@@ -302,7 +302,7 @@ class StoryApiDataSource {
 
       final response = await _client.get(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
       );
 
       if (response.statusCode != 200) {
@@ -339,7 +339,7 @@ class StoryApiDataSource {
 
       final response = await _client.get(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
       );
 
       if (response.statusCode != 200) {
@@ -385,7 +385,7 @@ class StoryApiDataSource {
 
     final response = await _client.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: await _authHeaders(),
     );
 
     if (response.statusCode != 200) {
