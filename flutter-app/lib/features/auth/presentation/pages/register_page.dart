@@ -372,6 +372,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return;
                                 }
 
+                                final nav = Navigator.of(context);
                                 await authProvider.register(
                                   email: _emailController.text.trim(),
                                   username: _deriveUsername(
@@ -380,6 +381,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                   password: _passwordController.text,
                                   displayName: _fullNameController.text.trim(),
                                 );
+
+                                // If registration succeeded, pop back to root
+                                // so AuthWrapper can navigate to onboarding/main.
+                                if (authProvider.errorMessage == null &&
+                                    mounted) {
+                                  nav.popUntil((route) => route.isFirst);
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentMint,

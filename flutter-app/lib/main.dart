@@ -18,6 +18,7 @@ import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Already disabled
 import 'package:lexilingo_app/core/services/health_check_service.dart';
+import 'package:lexilingo_app/core/localization/network_first_asset_loader.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
 import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
@@ -158,6 +159,8 @@ void main() async {
       path: 'assets/i18n',
       fallbackLocale: const Locale('vi'),
       startLocale: const Locale('vi'),
+      useOnlyLangCode: true,
+      assetLoader: NetworkFirstAssetLoader(),
       child: const LexiLingoApp(),
     ),
   );

@@ -56,10 +56,28 @@
         window.location.reload();
       });
 
-      // On page load, check if there's a waiting SW and activate it
+      // On page load, check if there's a waiting SW and activate it,
+      // then clear stale i18n cache entries so fresh JSON is always fetched
       navigator.serviceWorker.ready.then(function(reg) {
+        // Bust stale i18n caches before the app renders
+        if (window.caches) {
+          caches.keys().then(function(cacheNames) {
+            cacheNames.forEach(function(name) {
+              caches.open(name).then(function(cache) {
+                cache.keys().then(function(requests) {
+                  requests.forEach(function(req) {
+                    if (req.url.includes('/assets/assets/i18n/')) {
+                      cache.delete(req);
+                    }
+                  });
+                });
+              });
+            });
+          });
+        }
+
         if (reg.waiting) {
-          reg.waiting.postMessage({ action: 'skipWaiting' });
+          reg.waiting.postMessage('skipWaiting');
           return;
         }
         reg.addEventListener('updatefound', function() {
@@ -68,7 +86,7 @@
           newWorker.addEventListener('statechange', function() {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New SW installed while old one is active — force immediate takeover
-              newWorker.postMessage({ action: 'skipWaiting' });
+              newWorker.postMessage('skipWaiting');
             }
           });
         });
