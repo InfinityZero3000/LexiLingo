@@ -129,26 +129,9 @@ class _SettingsPageState extends State<SettingsPage> {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Daily Goal Section
-                AnimatedListItem(
-                  index: 0,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.flag,
-                    title: 'settings.daily_goal'.tr(),
-                    subtitle: 'settings.daily_goal_subtitle'.tr(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildDailyGoalSelector(context, settings),
-
-                const SizedBox(height: 32),
-
                 // Language Section
                 AnimatedListItem(
-                  index: 1,
+                  index: 0,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -165,7 +148,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // Notifications Section
                 AnimatedListItem(
-                  index: 2,
+                  index: 1,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -182,7 +165,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // Sound Section
                 AnimatedListItem(
-                  index: 3,
+                  index: 2,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -199,7 +182,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // Theme Section
                 AnimatedListItem(
-                  index: 4,
+                  index: 3,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -216,7 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // Account Section
                 AnimatedListItem(
-                  index: 5,
+                  index: 4,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -280,152 +263,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDailyGoalSelector(
-    BuildContext context,
-    SettingsProvider settings,
-  ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
-    final primaryColor = AppColorRoles.primary(isDark);
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Current goal display
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    settings.currentGoalIcon,
-                    size: 32,
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    children: [
-                      Text(
-                        '${settings.dailyGoalXP} XP',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        settings.currentGoalLabel.tr(),
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withValues(alpha: 0.9),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Goal options
-            ...SettingsProvider.dailyGoalPresets.map((goal) {
-              final isSelected = settings.dailyGoalXP == goal['xp'];
-              return AnimatedListItem(
-                index: SettingsProvider.dailyGoalPresets.indexOf(goal),
-                duration: const Duration(milliseconds: 200),
-                delayPerItem: const Duration(milliseconds: 30),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: () => settings.updateDailyGoal(goal['xp'] as int),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? primaryColor.withValues(alpha: 0.1)
-                            : (isDark
-                                  ? AppColors.surfaceDarkMuted.withValues(
-                                      alpha: 0.5,
-                                    )
-                                  : AppColors.grey100),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected ? primaryColor : AppColors.grey300,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            goal['icon'] as IconData,
-                            size: 24,
-                            color: isSelected
-                                ? primaryColor
-                                : AppColorRoles.textMuted(isDark),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (goal['label'] as String).tr(),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? primaryColor : null,
-                                  ),
-                                ),
-                                Text(
-                                  (goal['description'] as String).tr(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColorRoles.textMuted(isDark),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${goal['xp']} XP',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? primaryColor
-                                  : AppColorRoles.textSecondary(isDark),
-                            ),
-                          ),
-                          if (isSelected) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.check_circle, color: primaryColor),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
       ),
     );
   }

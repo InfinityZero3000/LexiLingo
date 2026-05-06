@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
+import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -382,11 +383,17 @@ class _RegisterPageState extends State<RegisterPage> {
                                   displayName: _fullNameController.text.trim(),
                                 );
 
-                                // If registration succeeded, pop back to root
-                                // so AuthWrapper can navigate to onboarding/main.
+                                // If registration succeeded, navigate to email verification page.
                                 if (authProvider.errorMessage == null &&
                                     mounted) {
-                                  nav.popUntil((route) => route.isFirst);
+                                  nav.pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          EmailVerificationPendingPage(
+                                        email: _emailController.text.trim(),
+                                      ),
+                                    ),
+                                  );
                                 }
                               },
                         style: ElevatedButton.styleFrom(

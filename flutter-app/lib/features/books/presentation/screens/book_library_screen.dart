@@ -36,6 +36,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BookProvider>().loadRecommendedBooks();
+      context.read<BookProvider>().loadSavedBooks();
     });
   }
 
@@ -263,6 +264,20 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                     color: isDark ? Colors.white54 : AppColors.textGrey,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    provider.error!,
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : AppColors.textGrey.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => provider.loadRecommendedBooks(),
@@ -278,6 +293,12 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // Saved books section
+              if (provider.savedBooks.isNotEmpty) ...[
+                _buildSavedSection(context, provider, isDark),
+                const SizedBox(height: 20),
+              ],
+
               // Topic / genre filter chips
               _buildTopicFilterRow(context, provider, isDark),
               const SizedBox(height: 20),
@@ -293,6 +314,63 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSavedSection(
+    BuildContext context,
+    BookProvider provider,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.favorite_rounded, color: Colors.red, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              'books.savedBooks'.tr(),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textDark,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${provider.savedBooks.length}',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: provider.savedBooks.length,
+            itemBuilder: (context, i) {
+              final book = provider.savedBooks[i];
+              return BookCard(
+                book: book,
+                onTap: () => _openBook(context, book),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

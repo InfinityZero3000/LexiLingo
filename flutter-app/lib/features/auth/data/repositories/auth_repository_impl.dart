@@ -225,6 +225,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, void>> resendVerificationEmail(String email) async {
+    try {
+      await backendDataSource.resendVerificationEmail(email);
+      return const Right(null);
+    } on ApiErrorException catch (e) {
+      return Left(_mapApiErrorToFailure(e));
+    } catch (e) {
+      return Left(ServerFailure('Resend verification failed: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> resetPassword({
     required String token,
     required String newPassword,

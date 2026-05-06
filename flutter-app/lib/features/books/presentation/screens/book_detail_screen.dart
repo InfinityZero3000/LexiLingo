@@ -28,7 +28,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     // Provider.openBook() was already called in the library screen
     // Load reader settings so they're ready when we enter the reader
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookProvider>().loadReaderSettings();
+      final provider = context.read<BookProvider>();
+      provider.loadReaderSettings();
+      provider.loadSavedBooks();
     });
   }
 
@@ -85,6 +87,30 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               ),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              Consumer<BookProvider>(
+                builder: (context, provider, _) {
+                  final isSaved = provider.isBookSaved(book.id);
+                  return IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isSaved
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isSaved ? Colors.red : Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    onPressed: () => provider.toggleSaveBook(book),
+                  );
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
