@@ -185,6 +185,67 @@ class BookRepository {
     }).toList();
   }
 
+  // ── Saved Books ───────────────────────────────────────────────
+
+  static const _savedBooksKey = 'book_saved_ids';
+  static const _savedBookDataPrefix = 'book_saved_data_';
+
+  Future<bool> isBookSaved(String bookId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    return ids.contains(bookId);
+  }
+
+  Future<void> saveBook(Book book) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    if (!ids.contains(book.id)) {
+      ids.add(book.id);
+      await prefs.setStringList(_savedBooksKey, ids);
+    }
+    // Persist enough data to restore book without API call
+    final data = jsonEncode({
+      'id': book.id,
+      'source': book.source,
+      'title': book.title,
+      'author': book.author,
+      'description': book.description,
+      'cover_url': book.coverUrl,
+      'download_url': book.downloadUrl,
+      'language': book.language,
+      'cefr_level': book.cefrLevel,
+      'subject': book.subject,
+      'topic': book.topic,
+      'download_count': book.downloadCount,
+      'chapter_count': book.chapterCount,
+      'word_count': book.wordCount,
+    });
+    await prefs.setString('$_savedBookDataPrefix${book.id}', data);
+  }
+
+  Future<void> unsaveBook(String bookId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    ids.remove(bookId);
+    await prefs.setStringList(_savedBooksKey, ids);
+    await prefs.remove('$_savedBookDataPrefix$bookId');
+  }
+
+  Future<List<Book>> getSavedBooks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    final books = <Book>[];
+    for (final id in ids) {
+      final raw = prefs.getString('$_savedBookDataPrefix$id');
+      if (raw != null) {
+        try {
+          books.add(Book.fromJson(jsonDecode(raw) as Map<String, dynamic>));
+        } catch (_) {}
+      }
+    }
+    return books;
+  }
+
   // ── Bookmarks ─────────────────────────────────────────────────
 
   static const _bookmarksKeyPrefix = 'book_bookmarks_';
@@ -263,7 +324,8 @@ class BookRepository {
     if (!File(filePath).existsSync()) {
       final request = http.Request('GET', Uri.parse(book.downloadUrl))
         ..followRedirects = true
-        ..maxRedirects = 5;
+        ..maxRedirects = 5
+        ..headers['User-Agent'] = 'LexiLingo/1.0 (English learning app)';
       var streamed = await _client.send(request);
       // Handle redirect manually if needed
       if (streamed.statusCode == 301 || streamed.statusCode == 302) {
@@ -271,17 +333,18 @@ class BookRepository {
         if (location != null) {
           final redirectRequest = http.Request('GET', Uri.parse(location))
             ..followRedirects = true
-            ..maxRedirects = 5;
+            ..maxRedirects = 5
+            ..headers['User-Agent'] = 'LexiLingo/1.0 (English learning app)';
           streamed = await _client.send(redirectRequest);
         }
       }
       if (streamed.statusCode >= 400) {
         throw Exception('Download failed: HTTP ${streamed.statusCode}');
       }
-      final sink = File(filePath).openWrite();
-      await streamed.stream.pipe(sink);
-      await sink.flush();
-      await sink.close();
+      final bytes = await streamed.stream.toBytes();
+      final text = utf8.decode(bytes, allowMalformed: true);
+      _assertPlainText(text, book.downloadUrl);
+      await File(filePath).writeAsString(text);
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -349,7 +412,8 @@ class BookRepository {
 
     final request = http.Request('GET', Uri.parse(book.downloadUrl))
       ..followRedirects = true
-      ..maxRedirects = 5;
+      ..maxRedirects = 5
+      ..headers['User-Agent'] = 'LexiLingo/1.0 (English learning app)';
     final streamed = await _client.send(request);
     if (streamed.statusCode == 301 || streamed.statusCode == 302) {
       // Manual redirect follow if auto-redirect didn't work
@@ -357,7 +421,8 @@ class BookRepository {
       if (location != null) {
         final redirectRequest = http.Request('GET', Uri.parse(location))
           ..followRedirects = true
-          ..maxRedirects = 5;
+          ..maxRedirects = 5
+          ..headers['User-Agent'] = 'LexiLingo/1.0 (English learning app)';
         final redirected = await _client.send(redirectRequest);
         if (redirected.statusCode >= 400) {
           throw Exception(
@@ -365,7 +430,9 @@ class BookRepository {
           );
         }
         final bytes = await redirected.stream.toBytes();
-        return utf8.decode(bytes, allowMalformed: true);
+        final text = utf8.decode(bytes, allowMalformed: true);
+        _assertPlainText(text, location);
+        return text;
       }
     }
     if (streamed.statusCode >= 400) {
@@ -373,6 +440,21 @@ class BookRepository {
     }
     final bytes = await streamed.stream.toBytes();
     // Gutenberg serves UTF-8; decode manually to handle BOMs
-    return utf8.decode(bytes, allowMalformed: true);
+    final text = utf8.decode(bytes, allowMalformed: true);
+    _assertPlainText(text, book.downloadUrl);
+    return text;
+  }
+
+  /// Throws if the content appears to be HTML rather than plain text.
+  void _assertPlainText(String content, String url) {
+    final trimmed = content.trimLeft();
+    if (trimmed.startsWith('<!DOCTYPE') ||
+        trimmed.startsWith('<html') ||
+        trimmed.startsWith('<HTML')) {
+      throw Exception(
+        'Book source returned HTML instead of plain text. '
+        'The server may be rate-limiting requests. Please try again later.',
+      );
+    }
   }
 }

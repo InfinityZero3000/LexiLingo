@@ -14,6 +14,15 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=100)
     display_name: Optional[str] = None
 
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        if not re.match(r'^[a-zA-Z0-9._-]+$', v):
+            raise ValueError(
+                'Username may only contain letters (a-z, A-Z), digits, dots, underscores, or hyphens'
+            )
+        return v
+
     @field_validator('password')
     @classmethod
     def validate_password_strength(cls, v: str) -> str:

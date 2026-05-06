@@ -47,6 +47,9 @@ abstract class AuthRepository {
   /// Verify email with token
   Future<Either<Failure, void>> verifyEmail(String token);
 
+  /// Resend verification email
+  Future<Either<Failure, void>> resendVerificationEmail(String email);
+
   /// Request password reset
   Future<Either<Failure, void>> requestPasswordReset(String email);
 

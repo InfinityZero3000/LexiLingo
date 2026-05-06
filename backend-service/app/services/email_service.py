@@ -97,3 +97,52 @@ class EmailService:
         except Exception as exc:  # pragma: no cover - external IO
             logger.exception("Failed to send password reset email to %s: %s", to_email, exc)
             return False
+
+    @classmethod
+    async def send_verification_email(
+        cls,
+        to_email: str,
+        token: str,
+        display_name: str | None = None,
+    ) -> bool:
+        """Send email verification link to a newly registered user.
+
+        Returns True when sent successfully. If SMTP is not configured, returns
+        False after logging a warning and the generated verification URL for local dev.
+        """
+        from urllib.parse import quote
+        encoded_token = quote(token, safe="")
+        verify_link = f"{settings.effective_email_verification_url_base}?token={encoded_token}"
+        if not settings.SMTP_HOST:
+            logger.warning(
+                "SMTP_HOST not configured. Verification email was not sent. "
+                "Generated verification URL for %s: %s",
+                to_email,
+                verify_link,
+            )
+            return False
+
+        context = {
+            "display_name": display_name or "Learner",
+            "verify_link": verify_link,
+            "expiry_hours": "24",
+            "support_email": settings.EMAIL_FROM,
+        }
+
+        html_body = cls._render_template("verification_email.html", context)
+        text_body = cls._render_template("verification_email.txt", context)
+
+        message = EmailMessage()
+        message["Subject"] = "LexiLingo - Verify your email address"
+        message["From"] = settings.EMAIL_FROM
+        message["To"] = to_email
+        message.set_content(text_body)
+        message.add_alternative(html_body, subtype="html")
+
+        try:
+            await run_in_threadpool(cls._send_message_blocking, message)
+            logger.info("Verification email sent to %s", to_email)
+            return True
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send verification email to %s: %s", to_email, exc)
+            return False

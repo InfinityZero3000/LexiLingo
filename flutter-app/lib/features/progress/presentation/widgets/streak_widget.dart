@@ -440,7 +440,13 @@ class StreakDetailsSheet extends StatelessWidget {
                         : streak.streakAtRisk
                         ? 'home.practiceToSaveStreak'.tr()
                         : 'home.keepLearningStreak'.tr(),
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: streak.isActiveToday
+                          ? Colors.green.shade800
+                          : streak.streakAtRisk
+                          ? Colors.orange.shade800
+                          : Colors.grey.shade700,
+                    ),
                   ),
                 ),
               ],

@@ -101,6 +101,12 @@
     "registerFailed": "등록 실패",
     "invalidEmail": "잘못된 이메일",
     "passwordTooShort": "비밀번호가 너무 짧습니다",
+    "emailVerificationTitle": "받은 편지함을 확인하세요",
+    "emailVerificationMessage": "{email}로 인증 링크를 보냈습니다. 이메일을 확인하여 계정을 활성화하세요.",
+    "emailVerificationResend": "인증 이메일 재전송",
+    "emailVerificationResendSuccess": "인증 이메일을 재전송했습니다. 받은 편지함을 확인하세요.",
+    "emailVerificationResendError": "재전송에 실패했습니다. 다시 시도해 주세요.",
+    "emailVerificationBackToLogin": "로그인으로 돌아가기",
     "passwordMismatch": "비밀번호가 일치하지 않습니다"
   },
   "home": {

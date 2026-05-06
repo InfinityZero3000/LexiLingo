@@ -101,7 +101,13 @@
     "registerFailed": "Đăng ký thất bại",
     "invalidEmail": "Email không hợp lệ",
     "passwordTooShort": "Mật khẩu quá ngắn",
-    "passwordMismatch": "Mật khẩu không khớp"
+    "passwordMismatch": "Mật khẩu không khớp",
+    "emailVerificationTitle": "Kiểm tra hộp thư",
+    "emailVerificationMessage": "Chúng tôi đã gửi liên kết xác minh đến {email}. Vui lòng kiểm tra email để kích hoạt tài khoản.",
+    "emailVerificationResend": "Gửi lại email xác minh",
+    "emailVerificationResendSuccess": "Email xác minh đã được gửi lại. Vui lòng kiểm tra hộp thư.",
+    "emailVerificationResendError": "Gửi lại thất bại. Vui lòng thử lại.",
+    "emailVerificationBackToLogin": "Quay lại đăng nhập"
   },
   "home": {
     "greeting": "Xin chào, {name}!",

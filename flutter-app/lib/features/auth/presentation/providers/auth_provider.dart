@@ -303,6 +303,34 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Resend verification email.
+  Future<bool> resendVerificationEmail(String email) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.resendVerificationEmail(email);
+
+      return result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          return false;
+        },
+        (_) {
+          _errorMessage = null;
+          return true;
+        },
+      );
+    } catch (e) {
+      _errorMessage = _parseErrorMessage(e.toString());
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Reset password with token from email link.
   Future<bool> resetPassword({
     required String token,

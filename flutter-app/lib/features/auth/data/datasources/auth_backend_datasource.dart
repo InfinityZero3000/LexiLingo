@@ -229,6 +229,12 @@ class AuthBackendDataSource {
     await apiClient.post('/auth/verify-email', body: {'token': token});
   }
 
+  /// Resend verification email
+  /// POST /auth/resend-verification
+  Future<void> resendVerificationEmail(String email) async {
+    await apiClient.post('/auth/resend-verification', body: {'email': email});
+  }
+
   /// Request password reset
   /// POST /auth/forgot-password
   Future<void> requestPasswordReset(String email) async {
