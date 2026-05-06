@@ -23,6 +23,9 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _flagsReady = false;
 
+  static const double _flagWidth = 48;
+  static const double _flagHeight = 32;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     if (!mounted) return;
+
     setState(() => _flagsReady = true);
   }
 
@@ -61,23 +65,30 @@ class _SettingsPageState extends State<SettingsPage> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        width: 28,
-        height: 20,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 120),
-          placeholder: (context, url) => _buildFlagSkeleton(context),
-          errorWidget: (context, url, error) =>
-              _buildFlagFallback(context, languageCode),
-        ),
+        width: _flagWidth,
+        height: _flagHeight,
+        child: _flagsReady
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    _buildFlagFallback(context, languageCode),
+              )
+            : _buildFlagSkeleton(context),
       ),
     );
   }
 
   Widget _buildFlagSkeleton(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
+    return Container(
+      width: _flagWidth,
+      height: _flagHeight,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grey700 : AppColors.grey300,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
@@ -85,8 +96,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
 
     return Container(
-      width: 28,
-      height: 20,
+      width: _flagWidth,
+      height: _flagHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -105,6 +116,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     return ThemeRippleOverlay(
       child: Scaffold(
         appBar: AppBar(
@@ -114,103 +127,83 @@ class _SettingsPageState extends State<SettingsPage> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: Consumer<SettingsProvider>(
-          builder: (context, settings, child) {
-            if (settings.isLoading) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Language Section
-                AnimatedListItem(
-                  index: 0,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.language,
-                    title: 'settings.language'.tr(),
-                    subtitle: 'settings.language_subtitle'.tr(),
+        body: settings.isLoading
+            ? const Center(child: LottieLoadingWidget.medium())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  AnimatedListItem(
+                    index: 0,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.language,
+                      title: 'settings.language'.tr(),
+                      subtitle: 'settings.language_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildLanguageSelector(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Notifications Section
-                AnimatedListItem(
-                  index: 1,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.notifications,
-                    title: 'settings.notifications'.tr(),
-                    subtitle: 'settings.notifications_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildLanguageSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 1,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.notifications,
+                      title: 'settings.notifications'.tr(),
+                      subtitle: 'settings.notifications_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildNotificationSettings(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Sound Section
-                AnimatedListItem(
-                  index: 2,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.volume_up,
-                    title: 'settings.sound'.tr(),
-                    subtitle: 'settings.sound_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildNotificationSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 2,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.volume_up,
+                      title: 'settings.sound'.tr(),
+                      subtitle: 'settings.sound_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildSoundSettings(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Theme Section
-                AnimatedListItem(
-                  index: 3,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.palette,
-                    title: 'settings.theme'.tr(),
-                    subtitle: 'settings.theme_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildSoundSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 3,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.palette,
+                      title: 'settings.theme'.tr(),
+                      subtitle: 'settings.theme_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildThemeSelector(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Account Section
-                AnimatedListItem(
-                  index: 4,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.manage_accounts,
-                    title: 'settings.account'.tr(),
-                    subtitle: 'settings.account_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildThemeSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 4,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.account_circle,
+                      title: 'settings.account'.tr(),
+                      subtitle: 'settings.account_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildAccountSection(context),
-
-                const SizedBox(height: 40),
-              ],
-            );
-          },
-        ),
+                  const SizedBox(height: 12),
+                  _buildAccountSection(context),
+                  const SizedBox(height: 40),
+                ],
+              ),
       ),
     );
   }
@@ -300,20 +293,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        _flagsReady
-                            ? _buildFlagWidget(context, lang['code'] ?? 'en')
-                            : _buildFlagSkeleton(context),
+                        _buildFlagWidget(context, lang['code'] ?? 'en'),
                         const SizedBox(width: 12),
-                        Text(
-                          lang['name']!,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected ? primaryColor : null,
+                        Expanded(
+                          child: Text(
+                            lang['name']!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected ? primaryColor : null,
+                            ),
                           ),
                         ),
-                        const Spacer(),
                         if (isSelected)
                           Icon(Icons.check_circle, color: primaryColor),
                       ],
