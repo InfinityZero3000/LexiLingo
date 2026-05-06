@@ -80,7 +80,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       progress: 0.25,
     );
 
-    final success = await provider.startTopicSession(
+    final success = await provider.restoreOrStartTopicSession(
       userId: userId,
       storyId: widget.story.storyId,
     );
@@ -893,17 +893,7 @@ class _TopicMessageBubble extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8, left: 36),
               child: EducationalHintsCard(hints: message.hints!),
             ),
-          if (!isUser && message.llmMetadata != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 36),
-              child: Text(
-                'AI optimized with ${message.llmMetadata!.provider}',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: AppColorRoles.textMuted(isDark),
-                ),
-              ),
-            ),
+
         ],
       ),
     );

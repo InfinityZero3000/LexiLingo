@@ -76,18 +76,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildFlagSkeleton(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
 
     return Container(
@@ -227,10 +221,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
   }) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
@@ -271,9 +262,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -343,9 +332,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -427,9 +414,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSoundSettings(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -458,9 +443,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final themes = [
       {
@@ -555,10 +538,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAccountSection(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
