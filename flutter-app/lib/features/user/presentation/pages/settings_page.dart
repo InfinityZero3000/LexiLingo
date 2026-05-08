@@ -194,7 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.account_circle,
+                      icon: Icons.person_outline,
                       title: 'settings.account'.tr(),
                       subtitle: 'settings.account_subtitle'.tr(),
                     ),
