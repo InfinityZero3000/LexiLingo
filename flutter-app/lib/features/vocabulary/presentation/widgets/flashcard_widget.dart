@@ -246,11 +246,11 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               style: const TextStyle(fontSize: 18, height: 1.5),
             ),
 
-            // Vietnamese translation
-            if (vocabulary.vietnameseTranslation != null) ...[
+            // Localized translation
+            if (vocabulary.getTranslation(context.locale.languageCode) != null) ...[
               const SizedBox(height: 24),
               Text(
-                'vocabulary.vietnameseLabel'.tr(),
+                'vocabulary.translationLabel'.tr(),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -259,7 +259,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               ),
               const SizedBox(height: 8),
               Text(
-                vocabulary.vietnameseTranslation!,
+                vocabulary.getTranslation(context.locale.languageCode)!,
                 style: const TextStyle(fontSize: 18, height: 1.5),
               ),
             ],

@@ -32,6 +32,20 @@ class VocabularyItemEntity {
     required this.createdAt,
   });
 
+  /// Get localized translation dynamically 
+  String? getTranslation(String localeCode) {
+    if (translation == null) return null;
+    // Attempt exact match
+    if (translation!.containsKey(localeCode)) {
+      return translation![localeCode] as String?;
+    }
+    // Fallbacks
+    if (translation!.containsKey('en')) {
+      return translation!['en'] as String?;
+    }
+    return vietnameseTranslation;
+  }
+
   /// Get Vietnamese translation
   String? get vietnameseTranslation {
     return translation?['vi'] as String?;
