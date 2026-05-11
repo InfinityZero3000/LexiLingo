@@ -42,6 +42,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> _searchResults = [];
   bool _isSearching = false;
   String _searchQuery = '';
+  String? _searchError;
 
   // ============== Suggested Friends State ==============
   List<UserSocialProfileEntity> _suggestedUsers = [];
@@ -59,6 +60,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> get searchResults => _searchResults;
   bool get isSearching => _isSearching;
   String get searchQuery => _searchQuery;
+  String? get searchError => _searchError;
   List<UserSocialProfileEntity> get suggestedUsers => _suggestedUsers;
   bool get isLoadingSuggestions => _isLoadingSuggestions;
   String? get suggestionsError => _suggestionsError;
@@ -234,6 +236,7 @@ class SocialProvider extends ChangeNotifier {
 
     _isSearching = true;
     _searchQuery = query;
+    _searchError = null;
     notifyListeners();
 
     try {
@@ -241,6 +244,7 @@ class SocialProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error searching users: $e');
       _searchResults = [];
+      _searchError = 'Could not search users. Please try again.';
     } finally {
       _isSearching = false;
       notifyListeners();
@@ -250,6 +254,7 @@ class SocialProvider extends ChangeNotifier {
   void clearSearch() {
     _searchResults = [];
     _searchQuery = '';
+    _searchError = null;
     notifyListeners();
   }
 

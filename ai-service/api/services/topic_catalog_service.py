@@ -42,29 +42,47 @@ class TopicCatalogService:
         
         # Cache miss or bypass
         stories, _ = await self.story_service.list_stories(limit=100)
-        
+
+        if not stories:
+            logger.warning("[TopicCatalog] MongoDB returned 0 stories — returning default topic catalog")
+            return self._default_topics()
+
         # Save to cache only when there is usable data.
         try:
-            if stories:
-                # Pydantic v2 uses model_dump()
-                data_to_cache = []
-                for s in stories:
-                    if hasattr(s, "model_dump"):
-                        data_to_cache.append(s.model_dump())
-                    else:
-                        data_to_cache.append(dict(s))
+            data_to_cache = []
+            for s in stories:
+                if hasattr(s, "model_dump"):
+                    data_to_cache.append(s.model_dump())
+                else:
+                    data_to_cache.append(dict(s))
 
-                await self.redis.set(
-                    self.CACHE_KEY,
-                    json.dumps(data_to_cache),
-                    ex=self.CACHE_TTL
-                )
-            else:
-                await self.redis.delete(self.CACHE_KEY)
+            await self.redis.set(
+                self.CACHE_KEY,
+                json.dumps(data_to_cache),
+                ex=self.CACHE_TTL
+            )
         except Exception as e:
             logger.warning(f"Failed to cache topics: {e}")
-            
+
         return stories
+
+    @staticmethod
+    def _default_topics() -> List[StoryListItem]:
+        """Hardcoded fallback topics shown when MongoDB has no stories."""
+        defaults = [
+            {"id": "default-daily-life", "title": "Daily Life", "description": "Everyday conversations and situations", "level": "beginner", "tags": ["daily", "conversation"]},
+            {"id": "default-travel", "title": "Travel & Tourism", "description": "Vocabulary and phrases for travelling", "level": "beginner", "tags": ["travel"]},
+            {"id": "default-business", "title": "Business English", "description": "Professional and workplace English", "level": "intermediate", "tags": ["business", "professional"]},
+            {"id": "default-technology", "title": "Technology", "description": "Tech vocabulary and discussions", "level": "intermediate", "tags": ["tech"]},
+            {"id": "default-culture", "title": "Culture & Society", "description": "Topics about culture, history and society", "level": "advanced", "tags": ["culture"]},
+        ]
+        items = []
+        for d in defaults:
+            try:
+                items.append(StoryListItem(**d))
+            except Exception:
+                pass
+        return items
         
     async def get_topic_by_id(self, topic_id: str) -> Optional[Story]:
         """Get full story details by ID."""

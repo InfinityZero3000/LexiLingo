@@ -109,7 +109,27 @@ class _SocialScreenState extends State<SocialScreen>
         }
 
         if (provider.activityFeed.isEmpty) {
-          return _buildEmptyFeed();
+          return RefreshIndicator(
+            onRefresh: () async {
+              await provider.loadActivityFeed(refresh: true);
+              await provider.loadSuggestedUsers();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 80),
+              child: Column(
+                children: [
+                  _SuggestedFriendsSection(
+                    users: provider.suggestedUsers,
+                    isLoading: provider.isLoadingSuggestions,
+                    onFollowToggle: _toggleFollow,
+                    onRefresh: provider.loadSuggestedUsers,
+                  ),
+                  _buildEmptyFeed(),
+                ],
+              ),
+            ),
+          );
         }
 
         return RefreshIndicator(
@@ -171,7 +191,8 @@ class _SocialScreenState extends State<SocialScreen>
   Widget _buildEmptyFeed() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -184,6 +205,7 @@ class _SocialScreenState extends State<SocialScreen>
           const SizedBox(height: 8),
           Text(
             'social.followFriendsToSeeActivity'.tr(),
+            textAlign: TextAlign.center,
             style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
           const SizedBox(height: 24),
@@ -992,6 +1014,23 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
               builder: (context, provider, child) {
                 if (provider.isSearching) {
                   return const Center(child: LottieLoadingWidget.medium());
+                }
+
+                if (provider.searchError != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          provider.searchError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 if (provider.searchQuery.isEmpty) {

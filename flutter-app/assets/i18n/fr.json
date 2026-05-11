@@ -101,6 +101,12 @@
     "registerFailed": "Échec de l'inscription",
     "invalidEmail": "Email invalide",
     "passwordTooShort": "Mot de passe trop court",
+    "emailVerificationTitle": "Vérifiez votre boîte de réception",
+    "emailVerificationMessage": "Nous avons envoyé un lien de vérification à {email}. Veuillez vérifier votre email pour activer votre compte.",
+    "emailVerificationResend": "Renvoyer l'email de vérification",
+    "emailVerificationResendSuccess": "Email de vérification renvoyé. Veuillez vérifier votre boîte de réception.",
+    "emailVerificationResendError": "Échec de l'envoi. Veuillez réessayer.",
+    "emailVerificationBackToLogin": "Retour à la connexion",
     "passwordMismatch": "Les mots de passe ne correspondent pas"
   },
   "home": {

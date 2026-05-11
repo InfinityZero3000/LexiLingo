@@ -111,6 +111,8 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@lexilingo.app"
     PASSWORD_RESET_URL_BASE: str = "http://localhost:8080/#/reset-password"
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
+    EMAIL_VERIFICATION_URL_BASE: str = "http://localhost:8080/#/verify-email"
+    EMAIL_VERIFICATION_URL_BASE_PRODUCTION: str | None = None
     
     # AI Service (optional)
     AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
@@ -204,6 +206,13 @@ class Settings(BaseSettings):
         if self.is_production and self.PASSWORD_RESET_URL_BASE_PRODUCTION:
             return self.PASSWORD_RESET_URL_BASE_PRODUCTION
         return self.PASSWORD_RESET_URL_BASE
+
+    @property
+    def effective_email_verification_url_base(self) -> str:
+        """Return email verification URL base according to current environment."""
+        if self.is_production and self.EMAIL_VERIFICATION_URL_BASE_PRODUCTION:
+            return self.EMAIL_VERIFICATION_URL_BASE_PRODUCTION
+        return self.EMAIL_VERIFICATION_URL_BASE
 
 
 # Global settings instance

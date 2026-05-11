@@ -52,6 +52,8 @@ class BookProvider extends ChangeNotifier {
   String? _downloadedPath;
   String? _error;
 
+  List<Book> _savedBooks = [];
+
   Timer? _searchDebounce;
   final Set<String> _awardedMilestones = {};
 
@@ -98,6 +100,7 @@ class BookProvider extends ChangeNotifier {
   bool get isDownloading => _isDownloading;
   String? get downloadedPath => _downloadedPath;
   String? get error => _error;
+  List<Book> get savedBooks => _savedBooks;
 
   // ── Book Discovery ─────────────────────────────────────────
 
@@ -448,6 +451,29 @@ class BookProvider extends ChangeNotifier {
         sourceDetail: 'chapter_quiz',
       );
     }
+  }
+
+  // ── Saved Books ────────────────────────────────────────────
+
+  Future<void> loadSavedBooks() async {
+    _savedBooks = await _repository.getSavedBooks();
+    notifyListeners();
+  }
+
+  bool isBookSaved(String bookId) =>
+      _savedBooks.any((b) => b.id == bookId);
+
+  Future<void> toggleSaveBook(Book book) async {
+    if (isBookSaved(book.id)) {
+      await _repository.unsaveBook(book.id);
+      _savedBooks = _savedBooks.where((b) => b.id != book.id).toList();
+    } else {
+      await _repository.saveBook(book);
+      if (!_savedBooks.any((b) => b.id == book.id)) {
+        _savedBooks = [..._savedBooks, book];
+      }
+    }
+    notifyListeners();
   }
 
   // ── Cleanup ────────────────────────────────────────────────

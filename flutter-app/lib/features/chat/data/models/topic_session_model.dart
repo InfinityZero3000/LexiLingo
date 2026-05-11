@@ -223,7 +223,12 @@ class TopicChatMessage {
     'llm_metadata': llmMetadata?.toJson(),
   };
 
-  String get displayContent => content;
+  String get displayContent {
+    // Strip <think>...</think> blocks (including multiline) from AI responses
+    return content
+        .replaceAll(RegExp(r'<think>[\s\S]*?</think>', caseSensitive: false), '')
+        .trim();
+  }
   bool get hasHints => hints?.hasAnyHints ?? false;
 }
 

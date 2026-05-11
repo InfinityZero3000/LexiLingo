@@ -614,7 +614,20 @@ async def follow_user(
     Creates a following relationship between current user and target user.
     """
     success, message = await SocialCRUD.follow_user(db, current_user.id, user_id)
-    
+
+    if success:
+        from app.models.notification import Notification
+        follower_name = current_user.display_name or current_user.username or "Someone"
+        notification = Notification(
+            user_id=user_id,
+            title="New Follower",
+            body=f"{follower_name} started following you",
+            type="social",
+            data={"follower_id": str(current_user.id), "follower_username": follower_name},
+        )
+        db.add(notification)
+        await db.commit()
+
     return ApiResponse(
         success=success,
         message=message,

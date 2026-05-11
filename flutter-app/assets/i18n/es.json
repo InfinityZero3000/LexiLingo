@@ -101,6 +101,12 @@
     "registerFailed": "Error al registrarse",
     "invalidEmail": "Correo electrónico inválido",
     "passwordTooShort": "Contraseña demasiado corta",
+    "emailVerificationTitle": "Revisa tu bandeja de entrada",
+    "emailVerificationMessage": "Enviamos un enlace de verificación a {email}. Por favor revisa tu correo para activar tu cuenta.",
+    "emailVerificationResend": "Reenviar correo de verificación",
+    "emailVerificationResendSuccess": "Correo de verificación reenviado. Por favor revisa tu bandeja de entrada.",
+    "emailVerificationResendError": "Error al reenviar. Por favor intenta de nuevo.",
+    "emailVerificationBackToLogin": "Volver al inicio de sesión",
     "passwordMismatch": "Las contraseñas no coinciden"
   },
   "home": {

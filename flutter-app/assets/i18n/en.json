@@ -101,7 +101,13 @@
     "registerFailed": "Registration failed",
     "invalidEmail": "Invalid email",
     "passwordTooShort": "Password too short",
-    "passwordMismatch": "Passwords don't match"
+    "passwordMismatch": "Passwords don't match",
+    "emailVerificationTitle": "Check your inbox",
+    "emailVerificationMessage": "We sent a verification link to {email}. Please check your email to activate your account.",
+    "emailVerificationResend": "Resend verification email",
+    "emailVerificationResendSuccess": "Verification email resent. Please check your inbox.",
+    "emailVerificationResendError": "Failed to resend. Please try again.",
+    "emailVerificationBackToLogin": "Back to login"
   },
   "home": {
     "greeting": "Hello, {name}!",
@@ -1013,7 +1019,8 @@
     "backToBook": "Back to Book",
     "readerSettings": "Reader Settings",
     "pageProgress": "Page {current} of {total}",
-    "searchPlaceholder": "Search books by title or author..."
+    "searchPlaceholder": "Search books by title or author...",
+    "savedBooks": "Saved Books"
   },
   "news": {
     "title": "English News",

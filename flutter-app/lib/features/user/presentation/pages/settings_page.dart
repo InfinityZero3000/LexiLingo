@@ -23,6 +23,9 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _flagsReady = false;
 
+  static const double _flagWidth = 48;
+  static const double _flagHeight = 32;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     if (!mounted) return;
+
     setState(() => _flagsReady = true);
   }
 
@@ -61,38 +65,39 @@ class _SettingsPageState extends State<SettingsPage> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        width: 28,
-        height: 20,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 120),
-          placeholder: (context, url) => _buildFlagSkeleton(context),
-          errorWidget: (context, url, error) =>
-              _buildFlagFallback(context, languageCode),
-        ),
+        width: _flagWidth,
+        height: _flagHeight,
+        child: _flagsReady
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    _buildFlagFallback(context, languageCode),
+              )
+            : _buildFlagSkeleton(context),
       ),
     );
   }
 
   Widget _buildFlagSkeleton(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
-    return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: _flagWidth,
+      height: _flagHeight,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grey700 : AppColors.grey300,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
 
     return Container(
-      width: 28,
-      height: 20,
+      width: _flagWidth,
+      height: _flagHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -111,6 +116,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     return ThemeRippleOverlay(
       child: Scaffold(
         appBar: AppBar(
@@ -120,120 +127,83 @@ class _SettingsPageState extends State<SettingsPage> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: Consumer<SettingsProvider>(
-          builder: (context, settings, child) {
-            if (settings.isLoading) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Daily Goal Section
-                AnimatedListItem(
-                  index: 0,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.flag,
-                    title: 'settings.daily_goal'.tr(),
-                    subtitle: 'settings.daily_goal_subtitle'.tr(),
+        body: settings.isLoading
+            ? const Center(child: LottieLoadingWidget.medium())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  AnimatedListItem(
+                    index: 0,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.language,
+                      title: 'settings.language'.tr(),
+                      subtitle: 'settings.language_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildDailyGoalSelector(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Language Section
-                AnimatedListItem(
-                  index: 1,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.language,
-                    title: 'settings.language'.tr(),
-                    subtitle: 'settings.language_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildLanguageSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 1,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.notifications,
+                      title: 'settings.notifications'.tr(),
+                      subtitle: 'settings.notifications_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildLanguageSelector(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Notifications Section
-                AnimatedListItem(
-                  index: 2,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.notifications,
-                    title: 'settings.notifications'.tr(),
-                    subtitle: 'settings.notifications_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildNotificationSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 2,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.volume_up,
+                      title: 'settings.sound'.tr(),
+                      subtitle: 'settings.sound_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildNotificationSettings(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Sound Section
-                AnimatedListItem(
-                  index: 3,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.volume_up,
-                    title: 'settings.sound'.tr(),
-                    subtitle: 'settings.sound_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildSoundSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 3,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.palette,
+                      title: 'settings.theme'.tr(),
+                      subtitle: 'settings.theme_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildSoundSettings(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Theme Section
-                AnimatedListItem(
-                  index: 4,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.palette,
-                    title: 'settings.theme'.tr(),
-                    subtitle: 'settings.theme_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildThemeSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 4,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.person_outline,
+                      title: 'settings.account'.tr(),
+                      subtitle: 'settings.account_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildThemeSelector(context, settings),
-
-                const SizedBox(height: 32),
-
-                // Account Section
-                AnimatedListItem(
-                  index: 5,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.manage_accounts,
-                    title: 'settings.account'.tr(),
-                    subtitle: 'settings.account_subtitle'.tr(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildAccountSection(context),
-
-                const SizedBox(height: 40),
-              ],
-            );
-          },
-        ),
+                  const SizedBox(height: 12),
+                  _buildAccountSection(context),
+                  const SizedBox(height: 40),
+                ],
+              ),
       ),
     );
   }
@@ -244,10 +214,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
   }) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
@@ -284,159 +251,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDailyGoalSelector(
-    BuildContext context,
-    SettingsProvider settings,
-  ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
-    final primaryColor = AppColorRoles.primary(isDark);
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Current goal display
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    settings.currentGoalIcon,
-                    size: 32,
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    children: [
-                      Text(
-                        '${settings.dailyGoalXP} XP',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        settings.currentGoalLabel.tr(),
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withValues(alpha: 0.9),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Goal options
-            ...SettingsProvider.dailyGoalPresets.map((goal) {
-              final isSelected = settings.dailyGoalXP == goal['xp'];
-              return AnimatedListItem(
-                index: SettingsProvider.dailyGoalPresets.indexOf(goal),
-                duration: const Duration(milliseconds: 200),
-                delayPerItem: const Duration(milliseconds: 30),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: () => settings.updateDailyGoal(goal['xp'] as int),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? primaryColor.withValues(alpha: 0.1)
-                            : (isDark
-                                  ? AppColors.surfaceDarkMuted.withValues(
-                                      alpha: 0.5,
-                                    )
-                                  : AppColors.grey100),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected ? primaryColor : AppColors.grey300,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            goal['icon'] as IconData,
-                            size: 24,
-                            color: isSelected
-                                ? primaryColor
-                                : AppColorRoles.textMuted(isDark),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (goal['label'] as String).tr(),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? primaryColor : null,
-                                  ),
-                                ),
-                                Text(
-                                  (goal['description'] as String).tr(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColorRoles.textMuted(isDark),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${goal['xp']} XP',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? primaryColor
-                                  : AppColorRoles.textSecondary(isDark),
-                            ),
-                          ),
-                          if (isSelected) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.check_circle, color: primaryColor),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLanguageSelector(
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -474,20 +293,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        _flagsReady
-                            ? _buildFlagWidget(context, lang['code'] ?? 'en')
-                            : _buildFlagSkeleton(context),
+                        _buildFlagWidget(context, lang['code'] ?? 'en'),
                         const SizedBox(width: 12),
-                        Text(
-                          lang['name']!,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected ? primaryColor : null,
+                        Expanded(
+                          child: Text(
+                            lang['name']!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected ? primaryColor : null,
+                            ),
                           ),
                         ),
-                        const Spacer(),
                         if (isSelected)
                           Icon(Icons.check_circle, color: primaryColor),
                       ],
@@ -506,9 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -590,9 +408,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSoundSettings(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -621,9 +437,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final themes = [
       {
@@ -718,10 +532,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAccountSection(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;

@@ -2,10 +2,11 @@
 User Routes
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from datetime import datetime, timedelta, timezone
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -131,6 +132,69 @@ async def delete_current_user(
         message="Account deactivated successfully",
         detail="Your account has been deactivated. Contact support to reactivate."
     )
+
+
+@router.get("/search", response_model=List[dict])
+async def search_users(
+    q: str = Query(..., min_length=1, max_length=100, description="Search query"),
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Search users by username or display_name.
+    Returns a list of social profile objects for the Social feature.
+    """
+    from app.models.gamification import UserFollowing
+    from sqlalchemy import and_
+
+    pattern = f"%{q}%"
+    result = await db.execute(
+        select(User)
+        .where(
+            and_(
+                User.is_active == True,
+                User.id != current_user.id,
+                or_(
+                    User.username.ilike(pattern),
+                    User.display_name.ilike(pattern),
+                ),
+            )
+        )
+        .limit(limit)
+    )
+    users = result.scalars().all()
+
+    # Batch-check which ones the current user is already following
+    if users:
+        user_ids = [u.id for u in users]
+        following_result = await db.execute(
+            select(UserFollowing.following_id).where(
+                and_(
+                    UserFollowing.follower_id == current_user.id,
+                    UserFollowing.following_id.in_(user_ids),
+                )
+            )
+        )
+        following_set = {row[0] for row in following_result.all()}
+    else:
+        following_set = set()
+
+    return [
+        {
+            "user_id": str(u.id),
+            "username": u.username or "",
+            "display_name": u.display_name or u.username or "",
+            "avatar_url": u.avatar_url,
+            "total_xp": u.total_xp or 0,
+            "current_streak": 0,
+            "league": "bronze",
+            "is_following": u.id in following_set,
+            "mutual_connections": 0,
+            "suggestion_reasons": [],
+        }
+        for u in users
+    ]
 
 
 @router.get("/{user_id}", response_model=UserResponse)
