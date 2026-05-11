@@ -27,7 +27,7 @@
     "three": "^0.184.0",
     "vercel": "^53.3.2",
     "zod": "^4.4.3",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",
