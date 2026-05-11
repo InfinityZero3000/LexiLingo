@@ -11,7 +11,7 @@ pymongo>=4.17.0,<4.18.0
 redis>=7.4.0
 
 # Data Validation
-pydantic>=2.13.3
+pydantic>=2.13.4
 pydantic-settings>=2.14.1
 
 # Google Gemini AI
