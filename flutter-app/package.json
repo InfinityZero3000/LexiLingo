@@ -1,6 +1,7 @@
 {
   "name": "lexilingo-flutter-app",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.1.0",
   "scripts": {
     "vercel-build": "test -f .env.production && test -f build/web/index.html && test -f build/web/assets/.env.production || (echo 'Missing production build artifacts or .env.production bundle. Run flutter build web --release first.' && exit 1)",
     "deploy:prod": "flutter build web --release --no-tree-shake-icons && vercel build --prod && vercel deploy --prebuilt --prod"
