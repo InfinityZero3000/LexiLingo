@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "デイリーチャレンジ",
     "play": "遊ぶ",
     "levelDisplay": "レベル{level}",
-    "levelNextShort": "Lv.{level}"
+    "levelNextShort": "Lv.{level}",
+    "levelUpSubtitle": "順調に進歩しています。",
+    "levelLabel": "レベル",
+    "sessionScore": "セッションスコア",
+    "progressToLevel": "レベル {level} までの進捗",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "新しいアンロック",
+    "unlockGoldenChest": "ゴールデンチェスト",
+    "unlockGems": "50ジェム",
+    "unlockXpBooster": "2倍XPブースター",
+    "continueJourney": "学習を続ける"
   },
   "learning": {
     "checkAnswer": "答えを確認する",

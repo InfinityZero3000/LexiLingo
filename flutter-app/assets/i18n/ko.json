@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "일일 도전",
     "play": "놀다",
     "levelDisplay": "레벨 {level}",
-    "levelNextShort": "레벨.{level}"
+    "levelNextShort": "레벨.{level}",
+    "levelUpSubtitle": "아주 잘 성장하고 있어요.",
+    "levelLabel": "레벨",
+    "sessionScore": "세션 점수",
+    "progressToLevel": "레벨 {level}까지 진행",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "새 잠금 해제",
+    "unlockGoldenChest": "황금 상자",
+    "unlockGems": "보석 50개",
+    "unlockXpBooster": "2배 XP 부스터",
+    "continueJourney": "학습 계속하기"
   },
   "learning": {
     "checkAnswer": "답변 확인",

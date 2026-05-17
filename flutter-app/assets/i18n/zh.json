@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "每日挑战",
     "play": "玩",
     "levelDisplay": "等级{level}",
-    "levelNextShort": "{level}级"
+    "levelNextShort": "{level}级",
+    "levelUpSubtitle": "你的进步非常棒。",
+    "levelLabel": "等级",
+    "sessionScore": "本次得分",
+    "progressToLevel": "距离 {level} 级",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "新解锁",
+    "unlockGoldenChest": "黄金宝箱",
+    "unlockGems": "50 宝石",
+    "unlockXpBooster": "2倍 XP 加成",
+    "continueJourney": "继续学习"
   },
   "learning": {
     "checkAnswer": "检查答案",
