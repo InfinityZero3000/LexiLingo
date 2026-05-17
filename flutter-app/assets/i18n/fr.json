@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "Défi quotidien",
     "play": "Jouer",
     "levelDisplay": "Niveau {level}",
-    "levelNextShort": "Niv. {level}"
+    "levelNextShort": "Niv. {level}",
+    "levelUpSubtitle": "Vous faites de grands progrès.",
+    "levelLabel": "Niveau",
+    "sessionScore": "Score de session",
+    "progressToLevel": "Progression vers le niv. {level}",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "Nouveaux déblocages",
+    "unlockGoldenChest": "Coffre doré",
+    "unlockGems": "50 gemmes",
+    "unlockXpBooster": "Boost XP x2",
+    "continueJourney": "Continuer"
   },
   "learning": {
     "checkAnswer": "Vérifier la réponse",

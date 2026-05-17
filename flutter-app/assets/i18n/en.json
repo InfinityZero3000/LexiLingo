@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "Daily Challenge",
     "play": "Play",
     "levelDisplay": "Level {level}",
-    "levelNextShort": "Lv.{level}"
+    "levelNextShort": "Lv.{level}",
+    "levelUpSubtitle": "You're making great progress.",
+    "levelLabel": "Level",
+    "sessionScore": "Session Score",
+    "progressToLevel": "Progress to Lvl {level}",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "New Unlocks",
+    "unlockGoldenChest": "Golden Chest",
+    "unlockGems": "50 Gems",
+    "unlockXpBooster": "2x XP Booster",
+    "continueJourney": "Continue Journey"
   },
   "learning": {
     "checkAnswer": "Check Answer",

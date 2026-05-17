@@ -992,7 +992,17 @@
     "dailyChallengeLabel": "Thử thách hàng ngày",
     "play": "Chơi",
     "levelDisplay": "Cấp {level}",
-    "levelNextShort": "Cấp {level}"
+    "levelNextShort": "Cấp {level}",
+    "levelUpSubtitle": "Bạn đang tiến bộ rất tốt.",
+    "levelLabel": "Cấp",
+    "sessionScore": "Điểm buổi học",
+    "progressToLevel": "Tiến độ tới cấp {level}",
+    "xpProgressShort": "{current} / {total}",
+    "newUnlocks": "Mở khóa mới",
+    "unlockGoldenChest": "Rương vàng",
+    "unlockGems": "50 Gem",
+    "unlockXpBooster": "2x XP Boost",
+    "continueJourney": "Tiếp tục học"
   },
   "learning": {
     "checkAnswer": "Kiểm tra đáp án",
