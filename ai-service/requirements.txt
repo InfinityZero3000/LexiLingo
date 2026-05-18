@@ -60,7 +60,7 @@ langchain-core>=1.3.3
 langchain-community>=0.4.1
 
 # LLaMA.cpp for GGUF model inference (Vietnamese explanation)
-llama-cpp-python>=0.3.22
+llama-cpp-python>=0.3.23
 
 # Audio Processing (for HuBERT resampling)
 scipy>=1.17.1
