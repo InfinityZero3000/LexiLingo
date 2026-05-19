@@ -122,7 +122,7 @@ async def _register_whisper(gateway: ModelGateway) -> None:
         estimated_memory_mb=500,
         priority=ModelPriority.NORMAL,
         idle_timeout_seconds=300,  # 5 minutes
-        preload=True, # Preload for performance
+        preload=False,  # Lazy-load to save 500MB RAM at startup on low-memory VPS
     )
     
     logger.info("Registered: whisper (stt)")

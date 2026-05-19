@@ -36,13 +36,13 @@ map $http_user_agent $is_scanner {
     ~*dirbuster          1;
     ~*gobuster           1;
     ~*wfuzz              1;
-    ~*"fuzz faster u fool" 1; # ffuf scanner (155 hits in logs)
+    ~*"fuzz.faster.u.fool" 1; # ffuf scanner (155 hits in logs)
     ~*ffuf               1;
     ~*NetSystemsResearch 1;
     ~*Shodan             1;   # Shodan-Pull crawler
     ~*ncsrv              1;   # observed in logs
     ~*fasthttp           1;   # raw HTTP scanner tool
-    ~*"Hello from Palo Alto" 1; # PAN recon scanner (38 hits)
+    ~*"Hello.from.Palo.Alto" 1; # PAN recon scanner (38 hits)
 }
 
 # ---------------------------------------------------------------------------
@@ -96,6 +96,27 @@ limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
 limit_conn_zone $binary_remote_addr zone=auth_conn_per_ip:10m;
 # Global server-wide connection cap — all IPs combined
 limit_conn_zone $server_name zone=conn_global:1m;
+
+# ---------------------------------------------------------------------------
+# Gzip compression — critical for Flutter web (JS/WASM can be 10-15 MB raw)
+# ---------------------------------------------------------------------------
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 6;
+gzip_min_length 1024;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/wasm
+    application/xml
+    application/x-font-ttf
+    font/woff
+    font/woff2
+    image/svg+xml;
 
 upstream backend_upstream {
     least_conn;

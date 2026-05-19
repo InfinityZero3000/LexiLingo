@@ -5,6 +5,31 @@ Deploy these in **Cloudflare Dashboard → Security → WAF → Custom Rules**.
 
 ---
 
+## 0. ⚠️ CRITICAL: Allow CORS Preflight (OPTIONS) — Must be Rule #1
+
+**Why**: Cloudflare Bot Fight Mode blocks OPTIONS preflight requests before they reach
+the backend, returning `cf-mitigated: challenge`. This breaks CORS for ALL authenticated
+API calls from `www.lexilingo.me` to `api.lexilingo.me`.
+
+**Fix**: Create a WAF "Skip" rule that bypasses bot protection for OPTIONS requests.
+
+**Dashboard → Security → WAF → Custom Rules → Create rule**
+
+**Rule name:** `Allow CORS preflight OPTIONS`
+**Expression:**
+```
+(http.request.method eq "OPTIONS") and (http.host eq "api.lexilingo.me")
+```
+**Action:** Skip → Bot Fight Mode
+
+> ⚡ This rule MUST be placed first (highest priority) before any Block/Challenge rules.
+
+**Also in Dashboard → Security → Bots:**
+- "Likely automated" → change from **Managed Challenge** to **Allow** (or create a
+  more targeted rule with `http.request.method ne "OPTIONS"` for Bot Fight Mode)
+
+---
+
 ## 1. Enable Bot Fight Mode (Free plan)
 
 Dashboard → Security → Bots → **Super Bot Fight Mode**

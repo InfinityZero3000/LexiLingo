@@ -16,6 +16,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
@@ -260,6 +261,12 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
+
+# Serve uploaded/imported media files
+import os
+_media_dir = "/app/data/media"
+if os.path.isdir(_media_dir):
+    app.mount("/media", StaticFiles(directory=_media_dir), name="media")
 
 
 @app.api_route("/", methods=["GET", "HEAD"])

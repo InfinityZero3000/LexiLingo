@@ -136,3 +136,4 @@ gateway/nginx/logs/*.log
 default.conf
 
 scripts/extracted_media
+scripts
