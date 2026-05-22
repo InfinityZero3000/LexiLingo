@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 if os.getenv("APP_ENV", "").lower() == "production":
-    load_dotenv(PROJECT_ROOT / ".env.production", override=True)
+    # Do not use override=True here because it overwrites real container environment variables!
+    load_dotenv(PROJECT_ROOT / ".env.production", override=False)
 
 
 class Settings(BaseSettings):

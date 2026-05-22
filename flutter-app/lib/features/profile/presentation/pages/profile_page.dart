@@ -26,6 +26,7 @@ import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -1058,7 +1059,6 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildLoadingStats(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1081,12 +1081,11 @@ class _ProfilePageState extends State<ProfilePage>
           childAspectRatio: 1.15,
           children: List.generate(
             4,
-            (index) => Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
-                borderRadius: BorderRadius.circular(12),
+            (index) => ShimmerContainer(
+              child: SkeletonBox(
+                height: double.infinity,
+                borderRadius: 12,
               ),
-              child: const Center(child: LottieLoadingWidget.medium()),
             ),
           ),
         ),
@@ -1159,10 +1158,66 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             GlassmorphicContainer(
               child: isLoading && activities.isEmpty
-                  ? const Center(
+                  ? SizedBox(
+                      width: double.infinity,
                       child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: LottieLoadingWidget.medium(),
+                        padding: const EdgeInsets.all(24.0),
+                        child: ShimmerContainer(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                height: 120,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: List.generate(7, (index) => Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: SkeletonBox(
+                                        height: 20.0 + (index % 3) * 30.0,
+                                        borderRadius: 4,
+                                      ),
+                                    ),
+                                  )),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: List.generate(7, (index) => const Expanded(
+                                  child: Center(
+                                    child: SkeletonBox(
+                                      width: 20,
+                                      height: 12,
+                                      borderRadius: 2,
+                                    ),
+                                  ),
+                                )),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: List.generate(3, (index) => const Column(
+                                  children: [
+                                    SkeletonCircle(size: 20),
+                                    SizedBox(height: 4),
+                                    SkeletonBox(
+                                      width: 40,
+                                      height: 16,
+                                      borderRadius: 4,
+                                    ),
+                                    SizedBox(height: 4),
+                                    SkeletonBox(
+                                      width: 60,
+                                      height: 12,
+                                      borderRadius: 4,
+                                    ),
+                                  ],
+                                )),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     )
                   : activities.isEmpty
@@ -1333,7 +1388,17 @@ class _ProfilePageState extends State<ProfilePage>
             SizedBox(
               height: 100,
               child: isLoading
-                  ? const Center(child: LottieLoadingWidget.medium())
+                  ? ShimmerContainer(
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: 4,
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemBuilder: (context, index) {
+                           return const SkeletonCircle(size: 80);
+                        },
+                      ),
+                    )
                   : visibleBadges.isEmpty
                   ? _buildEmptyBadges()
                   : ListView.separated(

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
@@ -274,9 +275,8 @@ class ProficiencyCard extends StatelessWidget {
             ),
           ),
           child: const Center(
-            child: Padding(
-              padding: EdgeInsets.all(40),
-              child: LottieLoadingWidget.medium(),
+            child: ShimmerContainer(
+              child: SkeletonCircle(size: 160),
             ),
           ),
         ),
