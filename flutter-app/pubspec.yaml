@@ -147,6 +147,7 @@ flutter:
     - animation/
     - assets/background-roadmap/
     - assets/badges/
+    - assets/ranking/
     - assets/i18n/
 
   # An image asset can refer to one or more resolution-specific "variants", see
