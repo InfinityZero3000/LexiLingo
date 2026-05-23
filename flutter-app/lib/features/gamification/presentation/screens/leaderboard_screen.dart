@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/leaderboard_podium.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/league_card.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 /// Leaderboard Screen
 /// Displays weekly leaderboard rankings by league
@@ -26,6 +28,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     'gold',
     'platinum',
     'diamond',
+    'master',
   ];
 
   @override
@@ -35,10 +38,27 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     _tabController.addListener(_onTabChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<GamificationProvider>();
-      provider.loadLeaderboard();
-      provider.loadLeagueStatus();
+      _loadInitialRankTab();
     });
+  }
+
+  Future<void> _loadInitialRankTab() async {
+    final provider = context.read<GamificationProvider>();
+    await provider.loadLeagueStatus();
+    if (!mounted) return;
+
+    final currentLeague = provider.leagueStatus?.league.toLowerCase();
+    final league = _leagues.contains(currentLeague)
+        ? currentLeague!
+        : _leagues.first;
+    final index = _leagues.indexOf(league);
+
+    if (_tabController.index == index) {
+      await provider.loadLeaderboard(league: league);
+      return;
+    }
+
+    _tabController.animateTo(index);
   }
 
   void _onTabChanged() {
@@ -61,8 +81,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         builder: (context, provider, child) {
           return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
-              final showLeagueCard = provider.leagueStatus != null &&
-                  provider.selectedLeague == provider.leagueStatus!.league;
+              final showLeagueCard = provider.leagueStatus != null;
               return [
                 // App Bar
                 SliverAppBar(
@@ -70,63 +89,110 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   centerTitle: true,
                   pinned: true,
                   floating: true,
-                  expandedHeight: showLeagueCard ? 200 : 120,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _getLeagueColor(
-                              provider.selectedLeague,
-                              isDark,
-                            ).withValues(alpha: 0.3),
-                            Theme.of(context).scaffoldBackgroundColor,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                  expandedHeight: showLeagueCard ? 256 : 120,
+                  flexibleSpace: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final top = constraints.biggest.height;
+                      final minHeight = MediaQuery.of(context).padding.top +
+                          kToolbarHeight +
+                          48; // TabBar height
+                      final maxHeight = showLeagueCard ? 256.0 : 120.0;
+                      final delta = maxHeight - minHeight;
+                      final t = delta > 0.0
+                          ? ((top - minHeight) / delta).clamp(0.0, 1.0)
+                          : 0.0;
+
+                      final scale = 0.8 + (0.2 * t);
+                      final blur = (1 - t) * 10.0;
+                      final opacity = Curves.easeIn.transform(t);
+
+                      return FlexibleSpaceBar(
+                        background: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                _getLeagueColor(
+                                  provider.selectedLeague,
+                                ).withValues(alpha: 0.3),
+                                Theme.of(context).scaffoldBackgroundColor,
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                          child: SafeArea(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 56), // AppBar height
+                                if (showLeagueCard)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: Opacity(
+                                      opacity: opacity,
+                                      child: Transform.scale(
+                                        scale: scale,
+                                        child: ImageFiltered(
+                                          imageFilter: ImageFilter.blur(
+                                            sigmaX: blur,
+                                            sigmaY: blur,
+                                          ),
+                                          child: LeagueCard(
+                                            status: provider.leagueStatus!,
+                                            onTap: () {
+                                              // Jump to user's league tab
+                                              final index = _leagues.indexOf(
+                                                provider.leagueStatus!.league
+                                                    .toLowerCase(),
+                                              );
+                                              if (index >= 0) {
+                                                _tabController.animateTo(index);
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (showLeagueCard) const SizedBox(height: 62),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      child: SafeArea(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 56), // AppBar height
-                            if (showLeagueCard)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: LeagueCard(
-                                  status: provider.leagueStatus!,
-                                  onTap: () {
-                                    // Jump to user's league tab
-                                    final index = _leagues.indexOf(
-                                      provider.leagueStatus!.league,
-                                    );
-                                    if (index >= 0) {
-                                      _tabController.animateTo(index);
-                                    }
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,
                     labelColor: primaryColor,
-                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    unselectedLabelColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant,
                     indicatorColor: primaryColor,
                     tabs: _leagues.map((league) {
+                      final isCurrentLeague =
+                          provider.leagueStatus?.league.toLowerCase() == league;
                       return Tab(
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             _LeagueBadgeSmall(league: league),
                             const SizedBox(width: 6),
                             Text(_getLeagueName(league)),
+                            if (isCurrentLeague) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       );
@@ -137,6 +203,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             },
             body: TabBarView(
               controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
               children: _leagues.map((league) {
                 return _LeaderboardTab(league: league);
               }).toList(),
@@ -151,21 +218,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return '${league[0].toUpperCase()}${league.substring(1)}';
   }
 
-  Color _getLeagueColor(String league, bool isDark) {
-    switch (league.toLowerCase()) {
-      case 'bronze':
-        return AppColors.orange;
-      case 'silver':
-        return AppColors.textMuted;
-      case 'gold':
-        return AppColors.warning;
-      case 'platinum':
-        return AppColors.purple;
-      case 'diamond':
-        return AppColorRoles.primary(isDark);
-      default:
-        return AppColors.orange;
-    }
+  Color _getLeagueColor(String league) {
+    return rankVisualDataFor(league).color;
   }
 }
 
@@ -177,8 +231,6 @@ class _LeaderboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColorRoles.primary(isDark);
     return Consumer<GamificationProvider>(
       builder: (context, provider, child) {
         // Only show content for the selected league
@@ -186,24 +238,29 @@ class _LeaderboardTab extends StatelessWidget {
           return const Center(child: LottieLoadingWidget.medium());
         }
 
-        if (provider.isLoadingLeaderboard && provider.leaderboard == null) {
+        final leaderboard = provider.leaderboard;
+        final hasMatchingLeaderboard =
+            leaderboard?.league.toLowerCase() == league;
+
+        if (provider.isLoadingLeaderboard && !hasMatchingLeaderboard) {
           return const Center(child: LottieLoadingWidget.medium());
         }
 
-        if (provider.leaderboardError != null && provider.leaderboard == null) {
+        if (provider.leaderboardError != null && !hasMatchingLeaderboard) {
           return ErrorDisplayWidget.fromMessage(
             message: provider.leaderboardError!,
             onRetry: () => provider.loadLeaderboard(league: league),
           );
         }
 
-        final leaderboard = provider.leaderboard;
-        if (leaderboard == null || leaderboard.entries.isEmpty) {
+        if (leaderboard == null || !hasMatchingLeaderboard) {
           return _buildEmptyState(context);
         }
 
-        final topThree = leaderboard.topThree;
-        final remaining = leaderboard.entries.skip(3).toList();
+        final rankEntries = leaderboard.entries
+            .where((entry) => entry.userRank.toLowerCase() == league)
+            .toList();
+        final topThree = rankEntries.take(3).toList();
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -211,85 +268,18 @@ class _LeaderboardTab extends StatelessWidget {
             await provider.loadLeagueStatus();
           },
           child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Week info
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 18,
-                            color: primaryColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'leaderboard.weekEnds'.tr(namedArgs: {'date': _formatDate(leaderboard.weekEnd)}),
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        'leaderboard.participants'.tr(namedArgs: {'count': leaderboard.totalParticipants.toString()}),
-                        style: TextStyle(
-                          color: AppColorRoles.textMuted(isDark),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+              SliverFillRemaining(
+                hasScrollBody: false,
+                fillOverscroll: true,
+                child: LeaderboardPodium(
+                  league: league,
+                  topThree: topThree,
+                  entries: rankEntries,
+                  totalParticipants: leaderboard.totalParticipants,
                 ),
               ),
-
-              // Podium for top 3
-              if (topThree.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: LeaderboardPodium(topThree: topThree),
-                ),
-
-              // Divider
-              if (remaining.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text(
-                      'leaderboard.moreRanks'.tr(),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final entry = remaining[index];
-                  return LeaderboardEntryRow(
-                    entry: entry,
-                    onTap: () {
-                      // Navigate to user profile
-                    },
-                  );
-                }, childCount: remaining.length),
-              ),
-
-              // Bottom padding
-              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           ),
         );
@@ -322,19 +312,6 @@ class _LeaderboardTab extends StatelessWidget {
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.difference(now);
-
-    if (diff.inDays > 1) {
-      return 'in ${diff.inDays} days';
-    } else if (diff.inHours > 0) {
-      return 'in ${diff.inHours} hours';
-    } else {
-      return 'soon';
-    }
-  }
 }
 
 /// Small league badge for tabs
@@ -345,8 +322,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _getLeagueColor(league, isDark);
+    final color = rankVisualDataFor(league).color;
 
     return Container(
       width: 20,
@@ -362,45 +338,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
           BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
         ],
       ),
-      child: Icon(
-        _getLeagueIcon(league),
-        color: Theme.of(context).colorScheme.surface,
-        size: 12,
-      ),
+      child: RankAssetIcon(rank: league, size: 16, decorated: false),
     );
-  }
-
-  Color _getLeagueColor(String league, bool isDark) {
-    switch (league.toLowerCase()) {
-      case 'bronze':
-        return AppColors.orange;
-      case 'silver':
-        return AppColors.textMuted;
-      case 'gold':
-        return AppColors.warning;
-      case 'platinum':
-        return AppColors.purple;
-      case 'diamond':
-        return AppColorRoles.primary(isDark);
-      default:
-        return AppColors.orange;
-    }
-  }
-
-  IconData _getLeagueIcon(String league) {
-    switch (league.toLowerCase()) {
-      case 'bronze':
-        return Icons.shield_outlined;
-      case 'silver':
-        return Icons.shield;
-      case 'gold':
-        return Icons.emoji_events_outlined;
-      case 'platinum':
-        return Icons.emoji_events;
-      case 'diamond':
-        return Icons.diamond;
-      default:
-        return Icons.shield_outlined;
-    }
   }
 }

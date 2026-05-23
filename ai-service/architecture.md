@@ -807,7 +807,7 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 │                                                                  │
 │  Configuration:                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Base Model: Qwen/Qwen2.5-1.5B-Instruct                    │  │
+│  │  Base Model: Qwen/Qwen3-1.7B                    │  │
 │  │  LoRA Rank: r=48                                           │  │
 │  │  LoRA Alpha: α=96                                          │  │
 │  │  Target Modules: [                                         │  │
@@ -1004,7 +1004,7 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 │  Phase 2: Qwen Unified Adapter Training (Week 2-3)               │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  Config:                                                   │  │
-│  │  • Base: Qwen2.5-1.5B-Instruct (4-bit quantized)           │  │
+│  │  • Base: Qwen3-1.7B (4-bit quantized)           │  │
 │  │  • LoRA: r=48, α=96, dropout=0.05                          │  │
 │  │  • Optimizer: AdamW (lr=2e-4, weight_decay=0.01)           │  │
 │  │  • Batch: 6 (gradient_accum=4 → effective 24)              │  │
@@ -1454,8 +1454,8 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 ### Models (HuggingFace)
 
 ```bash
-# Qwen2.5-1.5B-Instruct
-huggingface-cli download Qwen/Qwen2.5-1.5B-Instruct
+# Qwen3-1.7B
+huggingface-cli download Qwen/Qwen3-1.7B
 
 # Whisper Small (for production)
 huggingface-cli download openai/whisper-small

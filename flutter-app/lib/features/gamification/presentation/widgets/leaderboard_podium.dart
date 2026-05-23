@@ -1,13 +1,31 @@
+import 'dart:ui';
+import 'dart:math' as math;
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 /// Leaderboard Podium Widget
 /// Displays the top 3 users on a podium
 class LeaderboardPodium extends StatelessWidget {
+  final String league;
   final List<LeaderboardEntryEntity> topThree;
+  final List<LeaderboardEntryEntity> entries;
+  final int totalParticipants;
 
-  const LeaderboardPodium({super.key, required this.topThree});
+  const LeaderboardPodium({
+    super.key,
+    required this.league,
+    required this.topThree,
+    required this.entries,
+    required this.totalParticipants,
+  });
+
+  static const _backgroundAsset = 'assets/ranking/honor-ranking.png';
+  static const _backgroundAspectRatio = 941 / 1672;
 
   @override
   Widget build(BuildContext context) {
@@ -16,261 +34,239 @@ class LeaderboardPodium extends StatelessWidget {
     final second = topThree.length > 1 ? topThree[1] : null;
     final third = topThree.length > 2 ? topThree[2] : null;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 4),
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final backgroundHeight = width / _backgroundAspectRatio;
+        final listTop = backgroundHeight * 0.62;
+        final rowCount = entries.isEmpty ? 1 : entries.length;
+        final contentHeight = listTop + 82 + (rowCount * 72) + 36;
+        final minHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 0.0;
+        final stageHeight = math.max(
+          math.max(contentHeight, backgroundHeight),
+          minHeight,
+        );
+
+        return SizedBox(
+          height: stageHeight,
+          width: width,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
             children: [
-              Expanded(
-                child: Center(
-                  child: Text(
-                    '2',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                height: backgroundHeight,
+                child: Image.asset(
+                  _backgroundAsset,
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.topCenter,
+                  filterQuality: FilterQuality.high,
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+              _buildHonorSlot(
+                context,
+                canvasWidth: width,
+                backgroundHeight: backgroundHeight,
+                entry: first,
+                rank: 1,
+                centerX: 0.5,
+                centerY: 0.195,
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    '3',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+              _buildHonorSlot(
+                context,
+                canvasWidth: width,
+                backgroundHeight: backgroundHeight,
+                entry: second,
+                rank: 2,
+                centerX: 0.215,
+                centerY: 0.42,
+              ),
+              _buildHonorSlot(
+                context,
+                canvasWidth: width,
+                backgroundHeight: backgroundHeight,
+                entry: third,
+                rank: 3,
+                centerX: 0.785,
+                centerY: 0.42,
+              ),
+              Positioned(
+                left: 18,
+                right: 18,
+                top: listTop,
+                child: _buildRankingListPanel(context),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: _buildPodiumItem(
-                  context,
-                  entry: second,
-                  rank: 2,
-                  podiumHeight: 94,
-                  color: AppColors.slate200,
-                  medalColor: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPodiumItem(
-                  context,
-                  entry: first,
-                  rank: 1,
-                  podiumHeight: 116,
-                  color: AppColors.warning,
-                  medalColor: AppColors.orange,
-                  showCrown: true,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildPodiumItem(
-                  context,
-                  entry: third,
-                  rank: 3,
-                  podiumHeight: 86,
-                  color: AppColors.orange.withValues(alpha: 0.45),
-                  medalColor: AppColors.deepOrange,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildPodiumItem(
+  Widget _buildHonorSlot(
     BuildContext context, {
     required LeaderboardEntryEntity? entry,
     required int rank,
-    required double podiumHeight,
-    required Color color,
-    required Color medalColor,
-    bool showCrown = false,
+    required double canvasWidth,
+    required double backgroundHeight,
+    required double centerX,
+    required double centerY,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showCrown && entry != null)
-          Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            child: const Icon(
-              Icons.emoji_events,
-              color: AppColors.warning,
-              size: 28,
-            ),
-          ),
+    final avatarSize = (canvasWidth * (rank == 1 ? 0.255 : 0.185))
+        .clamp(rank == 1 ? 86.0 : 64.0, rank == 1 ? 150.0 : 98.0)
+        .toDouble();
+    final labelWidth = (avatarSize * (rank == 1 ? 1.58 : 1.76))
+        .clamp(112.0, rank == 1 ? 166.0 : 150.0)
+        .toDouble();
+    final left = canvasWidth * centerX - labelWidth / 2;
+    final top = backgroundHeight * centerY - avatarSize / 2;
+    final rankColor = _getRankColor(rank);
 
-        Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
+    return Positioned(
+      left: left,
+      top: top,
+      width: labelWidth,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: avatarSize,
+                height: avatarSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.98),
+                      rankColor.withValues(alpha: 0.2),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: entry?.isCurrentUser == true
+                        ? primaryColor
+                        : Colors.white.withValues(alpha: 0.96),
+                    width: rank == 1 ? 4 : 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: rankColor.withValues(alpha: 0.35),
+                      blurRadius: rank == 1 ? 18 : 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: entry != null
+                      ? NetworkAvatarImage(
+                          imageUrl: entry.avatarUrl,
+                          fallback: _buildInitialAvatar(context, entry),
+                        )
+                      : Icon(
+                          Icons.person_outline,
+                          color: Colors.grey[400],
+                          size: avatarSize * 0.46,
+                        ),
+                ),
+              ),
+              Positioned(
+                bottom: -6,
+                child: Container(
+                  width: avatarSize * 0.36,
+                  height: avatarSize * 0.36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: rankColor,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$rank',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: avatarSize * 0.17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          if (entry != null)
             Container(
-              width: rank == 1 ? 60 : 50,
-              height: rank == 1 ? 60 : 50,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 3),
-                color: entry != null
-                    ? (entry.isCurrentUser
-                          ? primaryColor.withValues(alpha: 0.18)
-                          : Colors.grey[200])
-                    : Colors.grey[200],
+                color: Colors.white.withValues(alpha: 0.74),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.4),
-                    blurRadius: 8,
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: entry != null
-                  ? (entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                        ? ClipOval(
-                            child: Image.network(
-                              entry.avatarUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildInitialAvatar(context, entry),
-                            ),
-                          )
-                        : _buildInitialAvatar(context, entry))
-                  : Icon(
-                      Icons.person_outline,
-                      color: Colors.grey[400],
-                      size: 24,
-                    ),
-            ),
-
-            Positioned(
-              bottom: -8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: medalColor,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.surface,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    '$rank',
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    entry.displayName,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppColors.surfaceLight,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: rank == 1 ? 13 : 12,
+                      fontWeight: entry.isCurrentUser
+                          ? FontWeight.w800
+                          : FontWeight.w700,
+                      color: entry.isCurrentUser
+                          ? primaryColor
+                          : AppColors.textDark,
                     ),
                   ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.68),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '---',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColorRoles.textMuted(isDark),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        Text(
-          entry?.displayName ?? '---',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: entry?.isCurrentUser == true
-                ? FontWeight.bold
-                : FontWeight.w500,
-            color: entry?.isCurrentUser == true
-                ? primaryColor
-                : Theme.of(context).colorScheme.onSurface,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-
-        if (entry != null)
-          Container(
-            margin: const EdgeInsets.only(top: 3),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: AppColors.warmGradient),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              '${entry.xpEarned}',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.surfaceLight,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-
-        const SizedBox(height: 8),
-
-        Container(
-          height: podiumHeight,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.22),
-                color.withValues(alpha: 0.08),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-          ),
-          child: Center(
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                color: _getRankColor(rank).withValues(alpha: 0.8),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -279,18 +275,289 @@ class LeaderboardPodium extends StatelessWidget {
     LeaderboardEntryEntity entry,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Center(
-      child: Text(
-        entry.displayName.isNotEmpty
-            ? entry.displayName[0].toUpperCase()
-            : entry.username[0].toUpperCase(),
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: entry.isCurrentUser
-              ? AppColorRoles.primary(isDark)
-              : Colors.grey[600],
+    final fallback = entry.displayName.isNotEmpty
+        ? entry.displayName[0]
+        : (entry.username.isNotEmpty ? entry.username[0] : '?');
+
+    return Container(
+      color: entry.isCurrentUser
+          ? AppColorRoles.primary(isDark).withValues(alpha: 0.16)
+          : Colors.white.withValues(alpha: 0.82),
+      child: Center(
+        child: Text(
+          fallback.toUpperCase(),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: entry.isCurrentUser
+                ? AppColorRoles.primary(isDark)
+                : Colors.grey[600],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRankingListPanel(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = Colors.white.withValues(alpha: isDark ? 0.14 : 0.68);
+    final panelColor = isDark
+        ? AppColors.surfaceDark.withValues(alpha: 0.5)
+        : Colors.white.withValues(alpha: 0.58);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          decoration: BoxDecoration(
+            color: panelColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  RankAssetIcon(rank: league, size: 34),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'leaderboard.title'.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? AppColors.textInverted
+                                    : AppColors.textDark,
+                              ),
+                        ),
+                        Text(
+                          rankDisplayNameFor(league),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: rankVisualDataFor(league).color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'leaderboard.participants'.tr(
+                      namedArgs: {'count': totalParticipants.toString()},
+                    ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColorRoles.textMuted(isDark),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (entries.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  child: Text(
+                    'leaderboard.noRankingsYet'.tr(),
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColorRoles.textSecondary(isDark)
+                          : AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else
+                ...entries.map(
+                  (entry) => _buildGlassRankingRow(context, entry: entry),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassRankingRow(
+    BuildContext context, {
+    required LeaderboardEntryEntity entry,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    final rankColor = _getRankColor(entry.rank);
+    final name = entry.displayName.isNotEmpty
+        ? entry.displayName
+        : entry.username;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: entry.isCurrentUser
+            ? primaryColor.withValues(alpha: isDark ? 0.22 : 0.13)
+            : Colors.white.withValues(alpha: isDark ? 0.08 : 0.48),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: entry.isCurrentUser
+              ? primaryColor.withValues(alpha: 0.52)
+              : Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: rankColor.withValues(alpha: 0.15),
+              border: Border.all(color: rankColor.withValues(alpha: 0.5)),
+            ),
+            child: Text(
+              '${entry.rank}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: rankColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.72),
+              border: Border.all(
+                color: entry.isCurrentUser
+                    ? primaryColor
+                    : Colors.white.withValues(alpha: 0.84),
+                width: entry.isCurrentUser ? 2 : 1,
+              ),
+            ),
+            child: ClipOval(
+              child: NetworkAvatarImage(
+                imageUrl: entry.avatarUrl,
+                fallback: _buildInitialAvatar(context, entry),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: entry.isCurrentUser
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          color: entry.isCurrentUser
+                              ? primaryColor
+                              : (isDark
+                                    ? AppColors.textInverted
+                                    : AppColors.textDark),
+                        ),
+                      ),
+                    ),
+                    if (entry.isCurrentUser) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'YOU',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    RankAssetIcon(
+                      rank: entry.userRank,
+                      size: 18,
+                      decorated: false,
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        '${rankDisplayNameFor(entry.userRank)} · ${entry.lessonsCompleted} lessons',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColorRoles.textMuted(isDark),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            constraints: const BoxConstraints(minWidth: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.18),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              '${entry.xpEarned} XP',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.goldDark,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -298,11 +565,11 @@ class LeaderboardPodium extends StatelessWidget {
   Color _getRankColor(int rank) {
     switch (rank) {
       case 1:
-        return AppColors.orange;
+        return AppColors.gold;
       case 2:
         return AppColors.textMuted;
       case 3:
-        return AppColors.warning;
+        return AppColors.bronze;
       default:
         return Colors.grey;
     }
@@ -365,7 +632,7 @@ class LeaderboardEntryRow extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
                 color: entry.isCurrentUser
                     ? primaryColor.withValues(alpha: 0.2)
                     : Colors.grey[200],
@@ -373,16 +640,12 @@ class LeaderboardEntryRow extends StatelessWidget {
                     ? Border.all(color: primaryColor, width: 2)
                     : null,
               ),
-              child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        entry.avatarUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildInitial(context),
-                      ),
-                    )
-                  : _buildInitial(context),
+              child: ClipOval(
+                child: NetworkAvatarImage(
+                  imageUrl: entry.avatarUrl,
+                  fallback: _buildInitial(context),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
 
@@ -435,7 +698,10 @@ class LeaderboardEntryRow extends StatelessWidget {
                   ),
                   Text(
                     '${entry.lessonsCompleted} lessons completed',
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -466,11 +732,13 @@ class LeaderboardEntryRow extends StatelessWidget {
 
   Widget _buildInitial(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fallback = entry.displayName.isNotEmpty
+        ? entry.displayName[0]
+        : (entry.username.isNotEmpty ? entry.username[0] : '?');
+
     return Center(
       child: Text(
-        entry.displayName.isNotEmpty
-            ? entry.displayName[0].toUpperCase()
-            : entry.username[0].toUpperCase(),
+        fallback.toUpperCase(),
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,

@@ -7,6 +7,7 @@ class LeaderboardEntryEntity extends Equatable {
   final String username;
   final String displayName;
   final String? avatarUrl;
+  final String userRank;
   final int xpEarned;
   final int lessonsCompleted;
   final bool isCurrentUser;
@@ -17,6 +18,7 @@ class LeaderboardEntryEntity extends Equatable {
     required this.username,
     required this.displayName,
     this.avatarUrl,
+    this.userRank = 'bronze',
     required this.xpEarned,
     this.lessonsCompleted = 0,
     this.isCurrentUser = false,
@@ -34,6 +36,7 @@ class LeaderboardEntryEntity extends Equatable {
                   '')
               .toString(),
       avatarUrl: json['avatar_url'] ?? json['avatarUrl'],
+      userRank: (json['user_rank'] ?? json['userRank'] ?? 'bronze').toString(),
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
       lessonsCompleted:
           json['lessons_completed'] ?? json['lessonsCompleted'] ?? 0,
@@ -42,12 +45,19 @@ class LeaderboardEntryEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props => [rank, userId, xpEarned];
+  List<Object?> get props => [rank, userId, userRank, xpEarned];
 }
 
 /// League Status Entity
 class LeagueStatusEntity extends Equatable {
   final String league;
+  final String rankName;
+  final double rankScore;
+  final double rankLevelScore;
+  final double rankProficiencyScore;
+  final int totalXp;
+  final int numericLevel;
+  final String proficiencyLevel;
   final int currentRank;
   final int xpEarned;
   final int lessonsCompleted;
@@ -57,6 +67,13 @@ class LeagueStatusEntity extends Equatable {
 
   const LeagueStatusEntity({
     required this.league,
+    this.rankName = 'Bronze',
+    this.rankScore = 0,
+    this.rankLevelScore = 0,
+    this.rankProficiencyScore = 0,
+    this.totalXp = 0,
+    this.numericLevel = 1,
+    this.proficiencyLevel = 'A1',
     required this.currentRank,
     required this.xpEarned,
     this.lessonsCompleted = 0,
@@ -71,6 +88,7 @@ class LeagueStatusEntity extends Equatable {
   static const String gold = 'gold';
   static const String platinum = 'platinum';
   static const String diamond = 'diamond';
+  static const String master = 'master';
 
   static const List<String> leagueOrder = [
     bronze,
@@ -78,6 +96,7 @@ class LeagueStatusEntity extends Equatable {
     gold,
     platinum,
     diamond,
+    master,
   ];
 
   String get nextLeague {
@@ -88,11 +107,23 @@ class LeagueStatusEntity extends Equatable {
     return league; // Already at top
   }
 
-  bool get isTopLeague => league == diamond;
+  bool get isTopLeague => league == master;
 
   factory LeagueStatusEntity.fromJson(Map<String, dynamic> json) {
     return LeagueStatusEntity(
       league: json['league'] ?? bronze,
+      rankName: (json['rank_name'] ?? json['rankName'] ?? 'Bronze').toString(),
+      rankScore: (json['rank_score'] ?? json['rankScore'] ?? 0).toDouble(),
+      rankLevelScore: (json['rank_level_score'] ?? json['rankLevelScore'] ?? 0)
+          .toDouble(),
+      rankProficiencyScore:
+          (json['rank_proficiency_score'] ?? json['rankProficiencyScore'] ?? 0)
+              .toDouble(),
+      totalXp: json['total_xp'] ?? json['totalXp'] ?? 0,
+      numericLevel: json['numeric_level'] ?? json['numericLevel'] ?? 1,
+      proficiencyLevel:
+          (json['proficiency_level'] ?? json['proficiencyLevel'] ?? 'A1')
+              .toString(),
       currentRank: json['current_rank'] ?? json['currentRank'] ?? 0,
       xpEarned: json['xp_earned'] ?? json['xpEarned'] ?? 0,
       lessonsCompleted:
@@ -107,7 +138,14 @@ class LeagueStatusEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props => [league, currentRank, xpEarned];
+  List<Object?> get props => [
+    league,
+    currentRank,
+    xpEarned,
+    rankScore,
+    numericLevel,
+    proficiencyLevel,
+  ];
 }
 
 /// Leaderboard Response Entity

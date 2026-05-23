@@ -86,7 +86,7 @@ When modifying the AI pipeline:
 1. KG database re-seeds on every restart (`kg_service_v3.py` line ~34 does `shutil.rmtree`)
 2. `model_gateway` MCP tool exists but not registered in `mcp-server/server.py`
 3. MCP resource URIs inconsistent: `learner://profile/` vs `learner_profile://`
-4. Architecture doc mentions Qwen3-1.7B but code uses `Qwen2.5-1.5B-Instruct`
+4. Architecture doc mentions Qwen3-1.7B but code uses `Qwen3-1.7B`
 5. DualStreamOrchestrator coded but WebSocket integration unclear
 6. `cag_service.py` (content auto-gen) not connected to GraphCAG pipeline
 

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 /// League Card Widget
 /// Shows user's current league status
@@ -14,11 +15,12 @@ class LeagueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final leagueData = _getLeagueData(status.league);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -37,31 +39,14 @@ class LeagueCard extends StatelessWidget {
         child: Row(
           children: [
             // League Icon
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [leagueData.color, leagueData.colorDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: leagueData.color.withValues(alpha: 0.4),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                leagueData.icon,
-                color: Theme.of(context).colorScheme.surface,
-                size: 28,
-              ),
+            RankAssetIcon(
+              rank: status.league,
+              size: 124,
+              iconScale: 1.42,
+              iconOffset: const Offset(0, -10),
+              paddingRatio: 0,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 26),
 
             // League Info
             Expanded(
@@ -70,12 +55,16 @@ class LeagueCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        leagueData.name,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: leagueData.color,
+                      Flexible(
+                        child: Text(
+                          leagueData.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: leagueData.color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (status.isInPromotionZone) ...[
@@ -103,8 +92,30 @@ class LeagueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'gamification.rankWeekly'.tr(namedArgs: {'rank': '${status.currentRank}', 'xp': '${status.xpEarned}'}),
+                    'gamification.rankWeekly'.tr(
+                      namedArgs: {
+                        'rank': '${status.currentRank}',
+                        'xp': '${status.xpEarned}',
+                      },
+                    ),
                     style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _RankMetricChip(
+                        label: 'Score',
+                        value: status.rankScore.toStringAsFixed(0),
+                        color: leagueData.color,
+                      ),
+                      _RankMetricChip(
+                        label: status.proficiencyLevel,
+                        value: 'Lv ${status.numericLevel}',
+                        color: AppColorRoles.primary(isDark),
+                      ),
+                    ],
                   ),
                   if (status.weekEndsInHours > 0) ...[
                     const SizedBox(height: 4),
@@ -130,8 +141,7 @@ class LeagueCard extends StatelessWidget {
               ),
             ),
 
-            // Arrow
-            Icon(Icons.chevron_right, color: Colors.grey[400]),
+            const SizedBox(width: 2),
           ],
         ),
       ),
@@ -147,62 +157,54 @@ class LeagueCard extends StatelessWidget {
   }
 
   _LeagueData _getLeagueData(String league) {
-    switch (league.toLowerCase()) {
-      case 'bronze':
-        return _LeagueData(
-          name: 'Bronze League',
-          icon: Icons.shield_outlined,
-          color: AppColors.bronze,
-          colorDark: AppColors.goldDark,
-        );
-      case 'silver':
-        return _LeagueData(
-          name: 'Silver League',
-          icon: Icons.shield,
-          color: AppColors.silver,
-          colorDark: AppColors.grey500,
-        );
-      case 'gold':
-        return _LeagueData(
-          name: 'Gold League',
-          icon: Icons.emoji_events_outlined,
-          color: AppColors.gold,
-          colorDark: const Color(0xFFE5C100),
-        );
-      case 'platinum':
-        return _LeagueData(
-          name: 'Platinum League',
-          icon: Icons.emoji_events,
-          color: const Color(0xFFE5E4E2),
-          colorDark: const Color(0xFFB8B8B6),
-        );
-      case 'diamond':
-        return _LeagueData(
-          name: 'Diamond League',
-          icon: Icons.diamond,
-          color: const Color(0xFFB9F2FF),
-          colorDark: const Color(0xFF7DD3EA),
-        );
-      default:
-        return _LeagueData(
-          name: 'Bronze League',
-          icon: Icons.shield_outlined,
-          color: AppColors.bronze,
-          colorDark: AppColors.goldDark,
-        );
-    }
+    final data = rankVisualDataFor(league);
+    return _LeagueData(
+      name: '${rankDisplayNameFor(league)} League',
+      color: data.color,
+      colorDark: data.colorDark,
+    );
+  }
+}
+
+class _RankMetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _RankMetricChip({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        '$label · $value',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
   }
 }
 
 class _LeagueData {
   final String name;
-  final IconData icon;
   final Color color;
   final Color colorDark;
 
   _LeagueData({
     required this.name,
-    required this.icon,
     required this.color,
     required this.colorDark,
   });
@@ -237,40 +239,12 @@ class LeagueBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        data.$3,
-        color: Theme.of(context).colorScheme.surface,
-        size: size * 0.5,
-      ),
+      child: RankAssetIcon(rank: league, size: size * 0.78, decorated: false),
     );
   }
 
-  (Color, Color, IconData) _getLeagueColor(String league) {
-    switch (league.toLowerCase()) {
-      case 'bronze':
-        return (AppColors.bronze, AppColors.goldDark, Icons.shield_outlined);
-      case 'silver':
-        return (AppColors.silver, AppColors.grey500, Icons.shield);
-      case 'gold':
-        return (
-          AppColors.gold,
-          const Color(0xFFE5C100),
-          Icons.emoji_events_outlined,
-        );
-      case 'platinum':
-        return (
-          const Color(0xFFE5E4E2),
-          const Color(0xFFB8B8B6),
-          Icons.emoji_events,
-        );
-      case 'diamond':
-        return (
-          const Color(0xFFB9F2FF),
-          const Color(0xFF7DD3EA),
-          Icons.diamond,
-        );
-      default:
-        return (AppColors.bronze, AppColors.goldDark, Icons.shield_outlined);
-    }
+  (Color, Color) _getLeagueColor(String league) {
+    final data = rankVisualDataFor(league);
+    return (data.color, data.colorDark);
   }
 }

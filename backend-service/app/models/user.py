@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, Integer, ForeignKey
+from sqlalchemy import String, Boolean, Integer, Float, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -41,6 +41,9 @@ class User(Base):
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
     rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, diamond, master
+    rank_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    rank_level_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    rank_proficiency_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     is_onboarding_completed: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

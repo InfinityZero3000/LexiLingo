@@ -49,6 +49,9 @@ class UserResponse(UserBase):
     total_xp: int = 0
     numeric_level: int = 1
     rank: str = "bronze"
+    rank_score: float = 0.0
+    rank_level_score: float = 0.0
+    rank_proficiency_score: float = 0.0
 
     # RBAC (admin console)
     role_slug: str = "user"

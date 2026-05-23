@@ -5,10 +5,8 @@ import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
@@ -118,9 +116,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
 
-    return ThemeRippleOverlay(
-      child: Scaffold(
-        appBar: AppBar(
+    return Scaffold(
+      appBar: AppBar(
           title: Text('settings.title'.tr()),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios),
@@ -204,7 +201,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 40),
                 ],
               ),
-      ),
     );
   }
 
@@ -462,23 +458,11 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
             final isSelected = settings.theme == theme['code'];
-            Offset? tapOrigin;
 
             return InkWell(
-              onTapDown: (details) {
-                tapOrigin = details.globalPosition;
-              },
               onTap: () {
                 if (isSelected) return;
-
                 final themeCode = theme['code'] as String;
-                final origin = tapOrigin ?? _screenCenter(context);
-
-                ThemeRippleBus.instance.emit(
-                  origin: origin,
-                  themeCode: themeCode,
-                );
-
                 settings.updateTheme(themeCode);
               },
               borderRadius: BorderRadius.circular(12),
@@ -524,11 +508,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
-  }
-
-  Offset _screenCenter(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    return Offset(size.width / 2, size.height / 2);
   }
 
   Widget _buildAccountSection(BuildContext context) {

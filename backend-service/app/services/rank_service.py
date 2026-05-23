@@ -208,6 +208,14 @@ def get_rank_info_dict(numeric_level: int, proficiency_level: str) -> dict:
     }
 
 
+def apply_rank_info_to_user(user, rank_info: RankInfo) -> None:
+    """Persist the user's single rank tier and cached rank score components."""
+    user.rank = rank_info.rank.value
+    user.rank_score = rank_info.score
+    user.rank_level_score = rank_info.level_score
+    user.rank_proficiency_score = rank_info.proficiency_score
+
+
 def get_all_ranks() -> list[dict]:
     """Get all rank tier definitions."""
     return [

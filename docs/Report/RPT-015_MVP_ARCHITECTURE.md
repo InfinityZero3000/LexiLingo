@@ -116,7 +116,7 @@ Speech:
 
 NLP:
   Core:
-    - Model: Qwen2.5-1.5B-Instruct
+    - Model: Qwen3-1.7B
     - Quantization: Q4_K_M (4-bit)
     - Fine-tuned: ✅ Yes (4 LoRA adapters)
       - Grammar correction

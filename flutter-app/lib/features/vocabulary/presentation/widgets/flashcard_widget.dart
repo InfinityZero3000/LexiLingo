@@ -93,7 +93,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
+      height: 380,
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
@@ -107,7 +107,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -130,13 +130,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
           // Word
           Text(
             vocabulary.word,
             style: const TextStyle(
-              fontSize: 48,
+              fontSize: 38,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,
             ),
@@ -212,7 +212,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
+      height: 380,
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
@@ -226,7 +226,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

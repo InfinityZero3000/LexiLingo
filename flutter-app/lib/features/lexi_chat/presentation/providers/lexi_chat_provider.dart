@@ -510,7 +510,6 @@ class LexiChatProvider extends ChangeNotifier {
               :final vietnameseHint,
               :final scores,
               :final audioBase64,
-              :final storyContext,
             ):
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {

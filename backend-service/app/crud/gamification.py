@@ -265,10 +265,17 @@ class LeaderboardCRUD:
     async def get_or_create_entry(
         db: AsyncSession,
         user_id: UUID,
-        league: str = "bronze"
+        league: Optional[str] = None,
     ) -> LeaderboardEntry:
         """Get or create leaderboard entry for current week"""
         week_start, week_end = LeaderboardCRUD.get_current_week_range()
+        user_result = await db.execute(select(User).where(User.id == user_id))
+        user = user_result.scalar_one_or_none()
+        resolved_league = (
+            (getattr(user, "rank", None) or league or "bronze")
+            .lower()
+            .strip()
+        )
         
         result = await db.execute(
             select(LeaderboardEntry).where(
@@ -279,13 +286,18 @@ class LeaderboardCRUD:
             )
         )
         entry = result.scalar_one_or_none()
+
+        if entry and entry.league != resolved_league:
+            entry.league = resolved_league
+            await db.commit()
+            await db.refresh(entry)
         
         if not entry:
             entry = LeaderboardEntry(
                 user_id=user_id,
                 week_start=week_start,
                 week_end=week_end,
-                league=league
+                league=resolved_league,
             )
             db.add(entry)
             try:
@@ -330,6 +342,7 @@ class LeaderboardCRUD:
     ) -> List[Tuple[LeaderboardEntry, User]]:
         """Get leaderboard for specific league"""
         week_start, _ = LeaderboardCRUD.get_current_week_range()
+        league_filter = league.lower().strip()
         
         result = await db.execute(
             select(LeaderboardEntry, User)
@@ -337,13 +350,34 @@ class LeaderboardCRUD:
             .where(
                 and_(
                     LeaderboardEntry.week_start == week_start,
-                    LeaderboardEntry.league == league
+                    func.lower(LeaderboardEntry.league) == league_filter,
+                    func.lower(User.rank) == league_filter,
                 )
             )
             .order_by(desc(LeaderboardEntry.xp_earned))
             .limit(limit)
         )
         return list(result.all())
+
+    @staticmethod
+    async def sync_current_week_entries_to_user_rank(db: AsyncSession) -> None:
+        """Keep each weekly leaderboard entry aligned to the user's single rank."""
+        week_start, _ = LeaderboardCRUD.get_current_week_range()
+        result = await db.execute(
+            select(LeaderboardEntry, User.rank)
+            .join(User, User.id == LeaderboardEntry.user_id)
+            .where(LeaderboardEntry.week_start == week_start)
+        )
+
+        changed = False
+        for entry, user_rank in result.all():
+            resolved_rank = (user_rank or "bronze").lower().strip()
+            if entry.league != resolved_rank:
+                entry.league = resolved_rank
+                changed = True
+
+        if changed:
+            await db.commit()
 
     @staticmethod
     async def get_leaderboard_from_users(
@@ -361,19 +395,26 @@ class LeaderboardCRUD:
         count_query = select(func.count()).select_from(base_query.subquery())
         total = int((await db.execute(count_query)).scalar() or 0)
 
-        if total == 0:
-            # If no users in requested league, fallback to global XP ranking.
-            base_query = select(User).where(User.is_active == True)
-            total = int((await db.execute(
-                select(func.count()).select_from(base_query.subquery())
-            )).scalar() or 0)
-
         result = await db.execute(
             base_query
             .order_by(desc(User.total_xp), desc(User.updated_at))
             .limit(limit)
         )
         return list(result.scalars().all()), total
+
+    @staticmethod
+    async def count_rank_participants(db: AsyncSession, league: str) -> int:
+        """Count active users whose single persisted rank matches the requested league."""
+        league_filter = league.lower().strip()
+        result = await db.execute(
+            select(func.count()).select_from(User).where(
+                and_(
+                    User.is_active == True,
+                    func.lower(User.rank) == league_filter,
+                )
+            )
+        )
+        return int(result.scalar() or 0)
     
     @staticmethod
     async def get_user_rank(
@@ -383,13 +424,17 @@ class LeaderboardCRUD:
         """Get user's current rank in their league"""
         entry = await LeaderboardCRUD.get_or_create_entry(db, user_id)
         week_start, _ = LeaderboardCRUD.get_current_week_range()
+        user_result = await db.execute(select(User.rank).where(User.id == user_id))
+        league = (user_result.scalar_one_or_none() or entry.league or "bronze").lower()
         
         result = await db.execute(
             select(func.count())
+            .select_from(LeaderboardEntry)
+            .join(User, User.id == LeaderboardEntry.user_id)
             .where(
                 and_(
                     LeaderboardEntry.week_start == week_start,
-                    LeaderboardEntry.league == entry.league,
+                    func.lower(User.rank) == league,
                     LeaderboardEntry.xp_earned > entry.xp_earned
                 )
             )

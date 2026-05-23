@@ -200,11 +200,14 @@ class GamificationProvider extends ChangeNotifier {
 
   // ============== Leaderboard Methods ==============
   Future<void> loadLeaderboard({String? league}) async {
+    final targetLeague = league ?? _selectedLeague;
+
     _isLoadingLeaderboard = true;
     _leaderboardError = null;
+    if (_leaderboard?.league.toLowerCase() != targetLeague.toLowerCase()) {
+      _leaderboard = null;
+    }
     notifyListeners();
-
-    final targetLeague = league ?? _selectedLeague;
 
     try {
       final response = await _apiClient.get(

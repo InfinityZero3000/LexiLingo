@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/markdown_message_content.dart';
-import 'package:intl/intl.dart';
 
 /// Message Reaction data
 class MessageReaction {

@@ -41,7 +41,7 @@ from app.schemas.proficiency import (
     ExamGatedProgressionResponse,
 )
 from app.services.proficiency_service import ProficiencyService
-from app.services.rank_service import calculate_rank
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank
 
 
 router = APIRouter(prefix="/proficiency", tags=["proficiency"])
@@ -766,7 +766,7 @@ async def submit_placement_test(
         numeric_level=current_user.numeric_level or 1,
         proficiency_level=assessed_level,
     )
-    current_user.rank = new_rank.rank.value
+    apply_rank_info_to_user(current_user, new_rank)
 
     await db.commit()
 
@@ -837,7 +837,7 @@ async def submit_exam_gated_progression(
             numeric_level=current_user.numeric_level or 1,
             proficiency_level=current_user.level,
         )
-        current_user.rank = rank_info.rank.value
+        apply_rank_info_to_user(current_user, rank_info)
 
         history = UserLevelHistory(
             profile_id=profile.id,

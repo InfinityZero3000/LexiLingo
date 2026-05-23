@@ -161,7 +161,7 @@ class LevelRankDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'gamification.totalXp'.tr(namedArgs: {'xp': '${_formatNumber(totalXp)}'}),
+                  'gamification.totalXp'.tr(namedArgs: {'xp': _formatNumber(totalXp)}),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.5),

@@ -26,7 +26,10 @@ from app.schemas.level import (
     XPAwardResponse
 )
 from app.services.level_service import LevelService, get_numeric_level_progress
-from app.services.rank_service import calculate_rank as calc_rank
+from app.services.rank_service import (
+    apply_rank_info_to_user,
+    calculate_rank as calc_rank,
+)
 
 router = APIRouter()
 
@@ -72,6 +75,11 @@ def _serialize_user_response(user: User) -> UserResponse:
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
         numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
+        rank_score=float(getattr(user, "rank_score", 0) or 0),
+        rank_level_score=float(getattr(user, "rank_level_score", 0) or 0),
+        rank_proficiency_score=float(
+            getattr(user, "rank_proficiency_score", 0) or 0,
+        ),
         role_id=getattr(user, "role_id", None),
         role_slug=role_slug,
         role_level=role_level,
@@ -254,7 +262,8 @@ async def get_user_level(
 
 @router.get("/me/level-full", response_model=ApiResponse[LevelFullResponse])
 async def get_user_level_full(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get full level info including numeric level, rank, and proficiency.
@@ -281,6 +290,8 @@ async def get_user_level_full(
         numeric_level=level_info.numeric_level,
         proficiency_level=current_user.level
     )
+    apply_rank_info_to_user(current_user, rank_info)
+    await db.commit()
     
     return ApiResponse(
         success=True,
