@@ -1,5 +1,5 @@
 """
-Integration tests for GraphCAG Pipeline
+Integration tests for TraceCAG Pipeline
 
 Tests the full pipeline flow from input to output.
 """
@@ -8,8 +8,8 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
 
-class TestGraphCAGPipeline:
-    """Integration tests for the full GraphCAG pipeline."""
+class TestTraceCAGPipeline:
+    """Integration tests for the full TraceCAG pipeline."""
 
     @pytest.fixture
     def mock_all_services(self, mock_model_gateway, mock_kg_service):
@@ -47,7 +47,7 @@ class TestGraphCAGPipeline:
     async def test_full_pipeline_text_input(self, mock_all_services):
         """Test complete pipeline with text input."""
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_all_services["gateway"],
         ), patch(
             "api.services.logging_service.get_logging_service",
@@ -56,9 +56,9 @@ class TestGraphCAGPipeline:
             "api.services.kg_service_v3.KnowledgeGraphServiceV3",
             return_value=mock_all_services["kg"],
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             result = await pipeline.analyze(
                 user_input="I go to school yesterday.",
@@ -77,15 +77,15 @@ class TestGraphCAGPipeline:
     async def test_pipeline_response_structure(self, mock_all_services):
         """Test that pipeline returns correct response structure."""
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_all_services["gateway"],
         ), patch(
             "api.services.logging_service.get_logging_service",
             return_value=AsyncMock(),
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             result = await pipeline.analyze(
                 user_input="Hello",
@@ -107,15 +107,15 @@ class TestGraphCAGPipeline:
     async def test_pipeline_scores_structure(self, mock_all_services):
         """Test that scores have correct structure."""
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_all_services["gateway"],
         ), patch(
             "api.services.logging_service.get_logging_service",
             return_value=AsyncMock(),
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             result = await pipeline.analyze(
                 user_input="Test input",
@@ -132,15 +132,15 @@ class TestGraphCAGPipeline:
     async def test_pipeline_metadata_includes_latency(self, mock_all_services):
         """Test that metadata includes latency information."""
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_all_services["gateway"],
         ), patch(
             "api.services.logging_service.get_logging_service",
             return_value=AsyncMock(),
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             result = await pipeline.analyze(
                 user_input="Test",
@@ -159,12 +159,12 @@ class TestGraphCAGPipeline:
         mock_gateway.execute_task.side_effect = Exception("Unexpected error")
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_gateway,
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             result = await pipeline.analyze(
                 user_input="Test",
@@ -178,15 +178,15 @@ class TestGraphCAGPipeline:
     async def test_pipeline_with_learner_profile(self, mock_all_services):
         """Test pipeline with learner profile context."""
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_all_services["gateway"],
         ), patch(
             "api.services.logging_service.get_logging_service",
             return_value=AsyncMock(),
         ):
-            from api.services.graph_cag import get_graph_cag
+            from api.services.trace_cag import get_trace_cag
 
-            pipeline = await get_graph_cag()
+            pipeline = await get_trace_cag()
             
             learner_profile = {
                 "user_id": "test_user",

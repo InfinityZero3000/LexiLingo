@@ -494,7 +494,7 @@ async def send_topic_message(
         history = await history_cursor.to_list(length=10)
         history.reverse()
         
-        preferred_llm = str(session.get("preferred_llm") or "graphcag").lower()
+        preferred_llm = str(session.get("preferred_llm") or "trace-cag").lower()
 
         # Load KG seeds from session (populated by warm_subgraph in start_topic_session).
         # Fall back to a quick in-process subgraph lookup if missing (cache miss race).
@@ -507,12 +507,12 @@ async def send_topic_message(
             except Exception:
                 pass
 
-        # Always run GraphCAG first for topic sessions.
+        # Always run TraceCAG first for topic sessions.
         # preferred_llm is retained for backward compatibility/telemetry only.
         ai_response = None
         llm_metadata = None
         
-        # Format conversation history for GraphCAG.
+        # Format conversation history for TraceCAG.
         conversation_history = [
             {"role": msg.get("role", "user"), "content": msg.get("content", "")}
             for msg in history
@@ -541,17 +541,17 @@ async def send_topic_message(
             ai_response = str(graph_result.get("tutor_response") or "").strip()
             graph_metadata = graph_result.get("metadata", {}) or {}
             if not ai_response:
-                raise RuntimeError("GraphCAG returned empty tutor_response")
+                raise RuntimeError("TraceCAG returned empty tutor_response")
 
             llm_metadata = {
-                "provider": "graphcag",
-                "model": ", ".join(graph_metadata.get("models_used") or ["graphcag_pipeline"]),
+                "provider": "trace-cag",
+                "model": ", ".join(graph_metadata.get("models_used") or ["trace-cag_pipeline"]),
                 "latency_ms": int((time.time() - graph_start) * 1000),
-                "fallback_used": preferred_llm != "graphcag",
+                "fallback_used": preferred_llm != "trace-cag",
             }
-            logger.info("Topic chat response via GraphCAG")
+            logger.info("Topic chat response via TraceCAG")
         except Exception as graph_err:
-            logger.error("GraphCAG failed for topic chat (primary): %s", graph_err)
+            logger.error("TraceCAG failed for topic chat (primary): %s", graph_err)
             try:
                 from api.services.orchestrator import get_orchestrator
 
@@ -574,19 +574,19 @@ async def send_topic_message(
                 ai_response = str(retry_result.get("tutor_response") or "").strip()
                 retry_meta = retry_result.get("metadata", {}) or {}
                 if not ai_response:
-                    raise RuntimeError("GraphCAG degraded retry returned empty tutor_response")
+                    raise RuntimeError("TraceCAG degraded retry returned empty tutor_response")
                 llm_metadata = {
-                    "provider": "graphcag",
-                    "model": ", ".join(retry_meta.get("models_used") or ["graphcag_retry"]),
+                    "provider": "trace-cag",
+                    "model": ", ".join(retry_meta.get("models_used") or ["trace-cag_retry"]),
                     "latency_ms": int((time.time() - retry_start) * 1000),
                     "fallback_used": True,
-                    "retry_mode": "graphcag_degraded",
+                    "retry_mode": "trace-cag_degraded",
                 }
             except Exception as retry_err:
-                logger.error("GraphCAG failed for topic chat (degraded retry): %s", retry_err)
+                logger.error("TraceCAG failed for topic chat (degraded retry): %s", retry_err)
                 ai_response = SAFE_FIXED_RESPONSE
                 llm_metadata = {
-                    "provider": "graphcag_safe_response",
+                    "provider": "trace-cag_safe_response",
                     "model": "safe_fixed_response",
                     "latency_ms": 0,
                     "fallback_used": True,
@@ -893,24 +893,24 @@ async def get_topic_messages_metadata(
     summary="Check LLM service health"
 )
 async def check_llm_health():
-    """Check GraphCAG and route orchestration health."""
+    """Check TraceCAG and route orchestration health."""
     health = {
         "status": "ok",
-        "graphcag_mode": "enforced",
+        "trace-cag_mode": "enforced",
         "gemini_configured": settings.GEMINI_API_KEY is not None,
         "ollama_url": getattr(settings, 'OLLAMA_BASE_URL', None),
     }
     
-    # Check GraphCAG orchestrator
+    # Check TraceCAG orchestrator
     try:
         from api.services.orchestrator import get_orchestrator
 
         orchestrator = await get_orchestrator()
-        health["graphcag_ready"] = orchestrator.is_healthy()
+        health["trace-cag_ready"] = orchestrator.is_healthy()
         health["orchestrator_stats"] = orchestrator.get_stats()
     except Exception as e:
         health["status"] = "degraded"
-        health["graphcag_ready"] = False
-        health["graphcag_error"] = str(e)
+        health["trace-cag_ready"] = False
+        health["trace-cag_error"] = str(e)
     
     return health

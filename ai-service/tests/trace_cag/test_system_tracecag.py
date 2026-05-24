@@ -1,16 +1,16 @@
 """
-GraphCAG System Test Suite — Visual Flow & End-to-End Verification
+TraceCAG System Test Suite — Visual Flow & End-to-End Verification
 
-Runs the full GraphCAG pipeline with mocked external services and
+Runs the full TraceCAG pipeline with mocked external services and
 prints a colour-coded, step-by-step trace of every node / edge
 decision so you can visually confirm the system works.
 
 Usage:
     # From ai-service/ directory:
-    python -m pytest tests/graph_cag/test_system_graphcag.py -v -s
+    python -m pytest tests/trace_cag/test_system_trace-cag.py -v -s
 
     # Or run directly for the visual report:
-    cd ai-service && python -m tests.graph_cag.test_system_graphcag
+    cd ai-service && python -m tests.trace_cag.test_system_trace-cag
 """
 
 from __future__ import annotations
@@ -189,7 +189,7 @@ def _make_gateway_mock(
             "errors": [
                 {
                     "span": "go",
-                    "type": "verb_tense",
+                    "type": "tense",
                     "correction": "went",
                     "explanation": "Use past tense for past actions",
                 }
@@ -275,7 +275,7 @@ def _make_kg_mock() -> MagicMock:
         expanded_nodes: List[_FakeNode]
         paths: List[_FakePath]
 
-    async def _expand(concepts, hops=1):
+    async def _expand(*args, **kwargs):
         nodes = [
             _FakeNode(
                 id="concept:grammar.past_tense",
@@ -304,7 +304,14 @@ def _make_kg_mock() -> MagicMock:
         ]
         return _FakeExpandResult(expanded_nodes=nodes, paths=paths)
 
+    async def _expand_best_first(seed_nodes, learner_level, max_hops=2, max_nodes=10):
+        return await _expand(seed_nodes, hops=max_hops)
+
     kg.expand = AsyncMock(side_effect=_expand)
+    kg.expand_best_first = AsyncMock(side_effect=_expand_best_first)
+    kg.get_seed_concepts_fast = MagicMock(return_value=[])
+    kg.semantic_seed_concepts = MagicMock(return_value=[])
+    kg.query_concepts = MagicMock(return_value=[])
     return kg
 
 
@@ -363,11 +370,11 @@ async def _patched_pipeline(
         httpx_mock.post = AsyncMock(return_value=default_resp)
 
     # Reset singleton so a fresh graph compiles
-    import api.services.graph_cag.graph as _graph_mod
-    _graph_mod._graph_cag_instance = None
+    import api.services.trace_cag.graph as _graph_mod
+    _graph_mod._trace_cag_instance = None
 
     # Also reset node gateway singleton
-    import api.services.graph_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.nodes_v2 as _nodes_mod
     _nodes_mod._gateway_instance = None
     _nodes_mod._MEM_RESPONSE_CACHE.clear()
     _nodes_mod._MEM_GRAPH_BUCKETS.clear()
@@ -380,7 +387,7 @@ async def _patched_pipeline(
         "api.core.redis_client.RedisClient.get_instance",
         new=AsyncMock(return_value=redis_mock),
     ), patch(
-        "api.services.graph_cag.nodes_v2.get_gateway",
+        "api.services.trace_cag.nodes_v2.get_gateway",
         new=AsyncMock(return_value=gateway_mock),
     ), patch.dict("sys.modules", {
         "api.services.kg_service_v3": fake_kg_module,
@@ -391,8 +398,8 @@ async def _patched_pipeline(
         "GROQ_API_KEY": "test-groq-key",
         "GEMINI_API_KEY": "test-gemini-key",
     }):
-        from api.services.graph_cag.graph import get_graph_cag
-        pipeline = await get_graph_cag()
+        from api.services.trace_cag.graph import get_trace_cag
+        pipeline = await get_trace_cag()
         yield pipeline
 
 
@@ -531,7 +538,7 @@ async def _run_traced(
     Run the pipeline via .stream() and capture every node's output.
     Returns (final_response_dict, list_of_node_traces).
     """
-    from api.services.graph_cag.state import create_initial_state
+    from api.services.trace_cag.state import create_initial_state
 
     initial = create_initial_state(
         user_input=user_input,
@@ -615,8 +622,7 @@ async def test_scenario_grammar_error_normal_path():
     node_names = [n.name for n in nodes]
     trace.add_check("input_ran", "input_node" in node_names)
     trace.add_check("cache_gate_ran", "cache_gate_node" in node_names)
-    trace.add_check("kg_expand_ran", "kg_expand_node" in node_names)
-    trace.add_check("diagnose_ran", "diagnose_node" in node_names)
+    trace.add_check("kg_diagnose_ran", "kg_diagnose_node" in node_names)
     trace.add_check("retrieve_ran", "retrieve_node" in node_names)
     trace.add_check("generate_ran", "generate_node" in node_names)
     trace.add_check("ask_clarify_NOT_ran", "ask_clarify_node" not in node_names)
@@ -874,7 +880,7 @@ async def test_edge_routing_decisions():
     Verify edge functions produce correct routing for various states.
     This tests the routing logic in isolation (no pipeline needed).
     """
-    from api.services.graph_cag.edges import route_after_diagnosis, check_cache_hit, should_generate_tts
+    from api.services.trace_cag.edges import route_after_diagnosis, check_cache_hit, should_generate_tts
 
     print()
     print("=" * 74)
@@ -950,7 +956,7 @@ async def test_scenario_l1_writeback_pcc_stable():
        should hit the L1 bucket and return cache_layer="L1".
     """
     import hashlib
-    import api.services.graph_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.nodes_v2 as _nodes_mod
 
     trace = PipelineTrace(
         test_name="L1 Write-Back — PCCStable Gate",
@@ -981,8 +987,9 @@ async def test_scenario_l1_writeback_pcc_stable():
             _exp, _entry = _nodes_mod._MEM_RESPONSE_CACHE[cache_key]
             _entry["fingerprint"]["root_concepts"] = ["concept:grammar.past_tense"]
             # Force bucket registration so L1 has a candidate
+            epoch = _nodes_mod._profile_epoch({"level": trace.learner_level})
             bucket_raw = _nodes_mod._build_graph_bucket(
-                trace.user_input, trace.learner_level, []
+                trace.user_input, trace.learner_level, "correct", epoch, []
             )
             _nodes_mod._register_graph_bucket(bucket_raw, cache_key)
 
@@ -1034,7 +1041,7 @@ async def test_scenario_l1_invalidation_on_version_change():
     _bucket_version_valid() return False for that bucket.  When cache_gate_node
     then runs, it calls _invalidate_bucket() and falls through to L2.
     """
-    import api.services.graph_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.nodes_v2 as _nodes_mod
 
     trace = PipelineTrace(
         test_name="L1 Invalidation — Version Mismatch (Algorithm 3)",
@@ -1059,7 +1066,8 @@ async def test_scenario_l1_invalidation_on_version_change():
         )
 
         # Confirm L1 bucket was written
-        bucket = _nodes_mod._build_graph_bucket(trace.user_input, "B2", [])
+        epoch = _nodes_mod._profile_epoch({"level": "B2"})
+        bucket = _nodes_mod._build_graph_bucket(trace.user_input, "B2", "correct", epoch, [])
         had_bucket = bucket in _nodes_mod._MEM_GRAPH_BUCKETS
         trace.add_check("bucket_populated", had_bucket, f"bucket={bucket[:8]}")
 
@@ -1135,9 +1143,9 @@ async def test_scenario_l1_invalidation_on_version_change():
 # ═══════════════════════════════════════════════════════════════
 
 def print_pipeline_diagram():
-    """Print the full GraphCAG pipeline architecture diagram."""
+    """Print the full TraceCAG pipeline architecture diagram."""
     print()
-    print(_bold("  GraphCAG Pipeline Architecture"))
+    print(_bold("  TraceCAG Pipeline Architecture"))
     print()
     print(f"  {_cyan('┌──────────┐')}")
     print(f"  {_cyan('│  INPUT   │')}  Parse input, load learner profile from Redis")
@@ -1224,7 +1232,7 @@ async def _run_all_scenarios():
 
 
 if __name__ == "__main__":
-    # Allow running directly: python -m tests.graph_cag.test_system_graphcag
+    # Allow running directly: python -m tests.trace_cag.test_system_trace-cag
     import sys
     import os
 

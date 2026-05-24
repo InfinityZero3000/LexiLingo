@@ -76,12 +76,12 @@ def mock_lexi_store(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_graphcag_primary_success(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_chat_db):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         return_value={
-            "tutor_response": "GraphCAG primary response",
-            "metadata": {"models_used": ["groq/qwen3-32b"], "path": "graphcag"},
+            "tutor_response": "TraceCAG primary response",
+            "metadata": {"models_used": ["groq/qwen3-32b"], "path": "trace-cag"},
         }
     )
 
@@ -95,9 +95,9 @@ async def test_chat_send_message_graphcag_primary_success(monkeypatch, mock_chat
         db=mock_chat_db,
     )
 
-    assert response.response == "GraphCAG primary response"
+    assert response.response == "TraceCAG primary response"
     assert response.metadata["model_used"] == "groq/qwen3-32b"
-    assert response.metadata["graphcag"]["path"] == "graphcag"
+    assert response.metadata["trace-cag"]["path"] == "trace-cag"
     assert mock_chat_db["chat_messages"].insert_one.await_count == 2
     mock_chat_db["chat_messages"].find.return_value.sort.assert_called_with("timestamp", -1)
 
@@ -142,14 +142,14 @@ async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_ch
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_graphcag_degraded_retry_success(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_degraded_retry_success(monkeypatch, mock_chat_db):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         side_effect=[
             RuntimeError("primary graph failure"),
             {
-                "tutor_response": "GraphCAG degraded retry response",
-                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "graphcag_degraded"},
+                "tutor_response": "TraceCAG degraded retry response",
+                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "trace-cag_degraded"},
             },
         ]
     )
@@ -164,15 +164,15 @@ async def test_chat_send_message_graphcag_degraded_retry_success(monkeypatch, mo
         db=mock_chat_db,
     )
 
-    assert response.response == "GraphCAG degraded retry response"
+    assert response.response == "TraceCAG degraded retry response"
     assert response.metadata["model_used"] == "groq/qwen3-retry"
-    assert response.metadata["graphcag"]["fallback_used"] is True
-    assert response.metadata["graphcag"]["retry_mode"] == "graphcag_degraded"
-    assert "primary_error" in response.metadata["graphcag"]
+    assert response.metadata["trace-cag"]["fallback_used"] is True
+    assert response.metadata["trace-cag"]["retry_mode"] == "trace-cag_degraded"
+    assert "primary_error" in response.metadata["trace-cag"]
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_graphcag_hard_failure_uses_safe_response(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(monkeypatch, mock_chat_db):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         side_effect=[
@@ -192,13 +192,13 @@ async def test_chat_send_message_graphcag_hard_failure_uses_safe_response(monkey
     )
 
     assert response.response == chat_route.SAFE_FIXED_RESPONSE
-    assert response.metadata["model_used"] == "graphcag_safe_response"
-    assert response.metadata["graphcag"]["path"] == "safe_fixed_response"
-    assert response.metadata["graphcag"]["fallback_used"] is True
+    assert response.metadata["model_used"] == "trace-cag_safe_response"
+    assert response.metadata["trace-cag"]["path"] == "safe_fixed_response"
+    assert response.metadata["trace-cag"]["fallback_used"] is True
 
 
 @pytest.mark.asyncio
-async def test_lexi_chat_voice_uses_stt_graphcag_and_tts(
+async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
     monkeypatch,
     mock_lexi_db,
     mock_lexi_store,
@@ -209,7 +209,7 @@ async def test_lexi_chat_voice_uses_stt_graphcag_and_tts(
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         return_value={
-            "tutor_response": "Lexi response from GraphCAG",
+            "tutor_response": "Lexi response from TraceCAG",
             "metadata": {"models_used": ["groq/qwen3-32b"]},
             "linked_concepts": ["past_tense"],
             "scores": {"overall": 0.92},
@@ -233,11 +233,11 @@ async def test_lexi_chat_voice_uses_stt_graphcag_and_tts(
         db=mock_lexi_db,
     )
 
-    assert response.lexi_response == "Lexi response from GraphCAG"
+    assert response.lexi_response == "Lexi response from TraceCAG"
     assert response.audio_base64 == "FAKE_AUDIO_BASE64"
     assert response.metadata["model_used"] == "groq/qwen3-32b"
     assert "stt_complete" in response.metadata["pipeline_steps"]
-    assert "graphcag_complete" in response.metadata["pipeline_steps"]
+    assert "trace-cag_complete" in response.metadata["pipeline_steps"]
     assert "tts_complete" in response.metadata["pipeline_steps"]
 
     first_user_msg = mock_lexi_store.append_message.await_args_list[0].args[1]
@@ -246,7 +246,7 @@ async def test_lexi_chat_voice_uses_stt_graphcag_and_tts(
 
 
 @pytest.mark.asyncio
-async def test_lexi_chat_graphcag_primary_fail_then_degraded_retry_with_tts(
+async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     monkeypatch,
     mock_lexi_db,
     mock_lexi_store,
@@ -258,8 +258,8 @@ async def test_lexi_chat_graphcag_primary_fail_then_degraded_retry_with_tts(
         side_effect=[
             RuntimeError("primary graph failure"),
             {
-                "tutor_response": "Lexi response from degraded GraphCAG",
-                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "graphcag_degraded"},
+                "tutor_response": "Lexi response from degraded TraceCAG",
+                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "trace-cag_degraded"},
             },
         ]
     )
@@ -280,10 +280,10 @@ async def test_lexi_chat_graphcag_primary_fail_then_degraded_retry_with_tts(
         db=mock_lexi_db,
     )
 
-    assert response.lexi_response == "Lexi response from degraded GraphCAG"
+    assert response.lexi_response == "Lexi response from degraded TraceCAG"
     assert response.audio_base64 == "FAKE_AUDIO_BASE64"
     assert response.metadata["model_used"] == "groq/qwen3-retry"
-    assert "graphcag_retry_complete" in response.metadata["pipeline_steps"]
+    assert "trace-cag_retry_complete" in response.metadata["pipeline_steps"]
     assert "tts_complete" in response.metadata["pipeline_steps"]
-    assert response.metadata["graphcag_metadata"]["fallback_used"] is True
-    assert response.metadata["graphcag_metadata"]["retry_mode"] == "graphcag_degraded"
+    assert response.metadata["trace-cag_metadata"]["fallback_used"] is True
+    assert response.metadata["trace-cag_metadata"]["retry_mode"] == "trace-cag_degraded"

@@ -293,8 +293,8 @@ if os.path.isdir(_static_dir):
 
 @app.get("/visualizer", include_in_schema=False)
 async def visualizer_redirect():
-    """Redirect to the GraphCAG Node Visualizer HTML tool."""
-    return RedirectResponse(url="/static/graphcag-node-viz.html")
+    """Redirect to the TraceCAG Node Visualizer HTML tool."""
+    return RedirectResponse(url="/static/trace-cag-node-viz.html")
 
 
 @app.get("/health")

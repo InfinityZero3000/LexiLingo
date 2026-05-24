@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GraphCAG Node Visualizer</title>
+  <title>TraceCAG Node Visualizer</title>
   <style>
     /* ── Reset & Base ───────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -216,7 +216,7 @@
 <div class="root">
   <!-- ── Header ──────────────────────────────────────────────────────── -->
   <header>
-    <span class="logo">🦜 GraphCAG</span>
+    <span class="logo">🦜 TraceCAG</span>
     <span class="subtitle">Node Pipeline Visualizer · ai-service</span>
     <span class="badge" id="api-badge">api: localhost:8001</span>
   </header>
@@ -281,7 +281,7 @@
 
     <!-- ══ MIDDLE — pipeline DAG ════════════════════════════════════════ -->
     <div class="panel-mid">
-      <div class="dag-title">GraphCAG Pipeline DAG · RAPID Routing</div>
+      <div class="dag-title">TraceCAG Pipeline DAG · RAPID Routing</div>
 
       <div class="pipeline" id="pipeline">
 
@@ -706,7 +706,7 @@ async function runAnalysis() {
   if (!text) { log('No input text.', 'warn'); _running = false; document.getElementById('btn-run').disabled = false; return; }
 
   setStatus('loading', 'Analyzing…');
-  log(`POST ${host}/api/v1/ai/graph-cag/analyze`, 'info');
+  log(`POST ${host}/api/v1/ai/trace-cag/analyze`, 'info');
   log(`input="${text.slice(0,40)}${text.length>40?'…':''}" level=${level}`, 'info');
 
   const body = {
@@ -720,7 +720,7 @@ async function runAnalysis() {
   let resp;
   try {
     const t0 = Date.now();
-    const r = await fetch(`${host}/api/v1/ai/graph-cag/analyze`, {
+    const r = await fetch(`${host}/api/v1/ai/trace-cag/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

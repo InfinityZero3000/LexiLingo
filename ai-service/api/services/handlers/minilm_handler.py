@@ -4,7 +4,7 @@ MiniLM Handler - Sentence Embeddings for Semantic Search
 Manages sentence-transformers/all-MiniLM-L6-v2 for:
 - Embedding user queries
 - Semantic similarity search against KG concept descriptions
-- Retrieval augmentation in the GraphCAG pipeline
+- Retrieval augmentation in the TraceCAG pipeline
 """
 
 import asyncio

@@ -1,8 +1,8 @@
 """
-GraphCAG StateGraph Builder
+TraceCAG StateGraph Builder
 
 Compiles the LangGraph StateGraph from nodes and edges.
-This is the main entry point for the GraphCAG pipeline.
+This is the main entry point for the TraceCAG pipeline.
 """
 
 import logging
@@ -11,10 +11,10 @@ from typing import Optional, Dict, Any, List
 
 from langgraph.graph import StateGraph, END
 
-from api.services.graph_cag.state import GraphCAGState, create_initial_state
-from api.services.graph_cag.evaluation_agent import EvaluationAgent
+from api.services.trace_cag.state import TraceCAGState, create_initial_state
+from api.services.trace_cag.evaluation_agent import EvaluationAgent
 # Using nodes_v2 with ModelGateway for lazy loading
-from api.services.graph_cag.nodes_v2 import (
+from api.services.trace_cag.nodes_v2 import (
     input_node,
     cache_gate_node,
     kg_expand_node,
@@ -28,7 +28,7 @@ from api.services.graph_cag.nodes_v2 import (
     stt_node,
     pronunciation_node,
 )
-from api.services.graph_cag.edges import (
+from api.services.trace_cag.edges import (
     route_after_diagnosis,
     should_generate_tts,
     check_cache_hit,
@@ -41,12 +41,12 @@ logger = logging.getLogger(__name__)
 
 
 # Singleton instance
-_graph_cag_instance: Optional["GraphCAGPipeline"] = None
+_trace_cag_instance: Optional["TraceCAGPipeline"] = None
 
 
-class GraphCAGPipeline:
+class TraceCAGPipeline:
     """
-    GraphCAG Pipeline using LangGraph StateGraph.
+    TraceCAG Pipeline using LangGraph StateGraph.
     
     Architecture:
     ┌─────────┐   ┌───────────┐
@@ -81,14 +81,14 @@ class GraphCAGPipeline:
         """Initialize and compile the StateGraph."""
         self.graph = self._build_graph()
         self.compiled = self.graph.compile()
-        logger.info(" GraphCAG pipeline compiled")
+        logger.info(" TraceCAG pipeline compiled")
     
     def _build_graph(self) -> StateGraph:
         """
         Build the StateGraph with all nodes and edges.
         """
         # Create StateGraph with our state schema
-        graph = StateGraph(GraphCAGState)
+        graph = StateGraph(TraceCAGState)
         
         # ============================================
         # ADD NODES
@@ -197,7 +197,7 @@ class GraphCAGPipeline:
         kg_seed_concepts: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
-        Run the GraphCAG pipeline.
+        Run the TraceCAG pipeline.
 
         Args:
             user_input: Text from user
@@ -237,7 +237,7 @@ class GraphCAGPipeline:
         if conversation_history is not None:
             initial_state["conversation_history"] = conversation_history
         
-        logger.info(f"[GraphCAG] Starting analysis: {user_input[:50]}...")
+        logger.info(f"[TraceCAG] Starting analysis: {user_input[:50]}...")
         
         # Run the graph
         try:
@@ -248,14 +248,14 @@ class GraphCAGPipeline:
             final_state["latency_ms"] = total_latency_ms
             
             logger.info(
-                f"[GraphCAG] Completed in {total_latency_ms}ms, "
+                f"[TraceCAG] Completed in {total_latency_ms}ms, "
                 f"models: {final_state.get('models_used', [])}"
             )
             
             return self._format_response(final_state)
             
         except Exception as e:
-            logger.error(f"[GraphCAG] Error: {e}")
+            logger.error(f"[TraceCAG] Error: {e}")
             return {
                 "tutor_response": "I'm sorry, something went wrong. Please try again.",
                 "error": str(e),
@@ -268,7 +268,7 @@ class GraphCAGPipeline:
                 }
             }
     
-    def _format_response(self, state: GraphCAGState) -> Dict[str, Any]:
+    def _format_response(self, state: TraceCAGState) -> Dict[str, Any]:
         """
         Format final state into API response with weighted evidence fusion.
 
@@ -318,6 +318,7 @@ class GraphCAGPipeline:
                 for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
+            "action_plan": state.get("action_plan", []),
             "vietnamese_hint": state.get("vietnamese_hint"),
             "pronunciation_tip": state.get("pronunciation_tip"),
             "scores": {
@@ -375,7 +376,7 @@ class GraphCAGPipeline:
         **kwargs,
     ):
         """
-        Stream the GraphCAG pipeline execution.
+        Stream the TraceCAG pipeline execution.
         
         Yields state updates as they happen.
         """
@@ -389,23 +390,23 @@ class GraphCAGPipeline:
             yield event
 
 
-async def get_graph_cag() -> GraphCAGPipeline:
+async def get_trace_cag() -> TraceCAGPipeline:
     """
-    Get or create the GraphCAG pipeline singleton.
+    Get or create the TraceCAG pipeline singleton.
     
     Returns:
-        Compiled GraphCAGPipeline ready for use
+        Compiled TraceCAGPipeline ready for use
     """
-    global _graph_cag_instance
+    global _trace_cag_instance
     
-    if _graph_cag_instance is None:
-        _graph_cag_instance = GraphCAGPipeline()
+    if _trace_cag_instance is None:
+        _trace_cag_instance = TraceCAGPipeline()
     
-    return _graph_cag_instance
+    return _trace_cag_instance
 
 
 # Convenience function for quick testing
 async def analyze_text(text: str, session_id: str = "test") -> Dict[str, Any]:
     """Quick analysis function for testing."""
-    pipeline = await get_graph_cag()
+    pipeline = await get_trace_cag()
     return await pipeline.analyze(text, session_id)

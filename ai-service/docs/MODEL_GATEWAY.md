@@ -191,13 +191,13 @@ GEMINI_API_KEY=your_api_key
 MODEL_DEVICE=auto  # cpu, cuda, mps, auto
 ```
 
-## GraphCAG Integration
+## TraceCAG Integration
 
-GraphCAG nodes đã được update để sử dụng ModelGateway:
+TraceCAG nodes đã được update để sử dụng ModelGateway:
 
 ```python
 # nodes_v2.py
-async def diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
+async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     gateway = await get_gateway()
     
     result = await gateway.execute_task(

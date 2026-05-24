@@ -3,14 +3,14 @@ Dual-Stream Orchestrator
 
 Main coordinator for the three concurrent streams:
 1. Listening Stream - Real-time STT with VAD
-2. Thinking Stream - GraphCAG + LLM reasoning
+2. Thinking Stream - TraceCAG + LLM reasoning
 3. Speaking Stream - Chunked TTS output
 
 Handles:
 - Stream synchronization via shared state
 - Interruption handling and context switching
 - Smart thinking with pause/resume
-- GraphCAG integration for knowledge-grounded responses
+- TraceCAG integration for knowledge-grounded responses
 """
 
 from __future__ import annotations
@@ -171,8 +171,8 @@ class DualStreamOrchestrator:
             )
         )
         
-        # GraphCAG pipeline (lazy loaded)
-        self._graph_cag = None
+        # TraceCAG pipeline (lazy loaded)
+        self._trace_cag = None
         
         # Stream tasks
         self._listening_task: Optional[asyncio.Task] = None
@@ -196,12 +196,12 @@ class DualStreamOrchestrator:
         
         logger.info(f"[Orchestrator] Created for session {session_id}")
     
-    async def _get_graph_cag(self):
-        """Get or initialize GraphCAG pipeline."""
-        if self._graph_cag is None:
-            from api.services.graph_cag.graph import get_graph_cag
-            self._graph_cag = await get_graph_cag()
-        return self._graph_cag
+    async def _get_trace_cag(self):
+        """Get or initialize TraceCAG pipeline."""
+        if self._trace_cag is None:
+            from api.services.trace_cag.graph import get_trace_cag
+            self._trace_cag = await get_trace_cag()
+        return self._trace_cag
     
     # ============================================================
     # MAIN ENTRY POINT
@@ -363,11 +363,11 @@ class DualStreamOrchestrator:
     
     async def _thinking_stream(self) -> None:
         """
-        Thinking stream: processes user input through GraphCAG.
+        Thinking stream: processes user input through TraceCAG.
         
         Flow:
         1. Receive text from thinking queue
-        2. Run GraphCAG pipeline
+        2. Run TraceCAG pipeline
         3. Stream response chunks to speaking queue
         4. Handle pause/resume from thinking buffer
         """
@@ -401,10 +401,10 @@ class DualStreamOrchestrator:
                 thinking_start = time.time()
                 
                 try:
-                    # Run GraphCAG pipeline
-                    graph_cag = await self._get_graph_cag()
+                    # Run TraceCAG pipeline
+                    trace_cag = await self._get_trace_cag()
                     
-                    result = await graph_cag.analyze(
+                    result = await trace_cag.analyze(
                         user_input=text,
                         session_id=self.session_id,
                         user_id=self.user_id,

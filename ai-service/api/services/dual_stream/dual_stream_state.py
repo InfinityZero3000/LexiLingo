@@ -6,7 +6,7 @@ Extended state for real-time streaming conversation with:
 - Thinking buffer for smart pause/resume
 - Audio control for interruption handling
 
-Inherits all fields from GraphCAGState for compatibility.
+Inherits all fields from TraceCAGState for compatibility.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from enum import Enum
 from typing import TypedDict, List, Optional, Any, Dict, Annotated
 from operator import add
 
-from api.services.graph_cag.state import GraphCAGState, LearnerProfile
+from api.services.trace_cag.state import TraceCAGState, LearnerProfile
 
 
 # ============================================================
@@ -149,7 +149,7 @@ class DualStreamState(TypedDict, total=False):
     """
     Extended state for Dual-Stream Architecture.
     
-    Inherits conceptually from GraphCAGState and adds:
+    Inherits conceptually from TraceCAGState and adds:
     - Stream control states
     - Thinking buffer management
     - Audio streaming control
@@ -157,12 +157,12 @@ class DualStreamState(TypedDict, total=False):
     
     This state flows through all three streams:
     - Listening Stream (STT)
-    - Thinking Stream (GraphCAG + LLM)
+    - Thinking Stream (TraceCAG + LLM)
     - Speaking Stream (TTS)
     """
     
     # ============================================
-    # Inherited from GraphCAGState
+    # Inherited from TraceCAGState
     # ============================================
     user_input: str
     session_id: str
@@ -388,13 +388,13 @@ def create_dual_stream_state(
     )
 
 
-def state_to_graphcag(dual_state: DualStreamState) -> GraphCAGState:
+def state_to_trace_cag(dual_state: DualStreamState) -> TraceCAGState:
     """
-    Convert DualStreamState to GraphCAGState for pipeline compatibility.
+    Convert DualStreamState to TraceCAGState for pipeline compatibility.
     
-    This allows reusing existing GraphCAG nodes with streaming state.
+    This allows reusing existing TraceCAG nodes with streaming state.
     """
-    from api.services.graph_cag.state import create_initial_state
+    from api.services.trace_cag.state import create_initial_state
     
     return create_initial_state(
         user_input=dual_state.get("user_input", ""),

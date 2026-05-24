@@ -1,16 +1,16 @@
 """
-GraphCAG Edge Functions
+TraceCAG Edge Functions
 
 Conditional routing logic for the StateGraph.
 Determines which node to execute next based on current state.
 """
 
 from typing import Literal
-from api.services.graph_cag.state import GraphCAGState
+from api.services.trace_cag.state import TraceCAGState
 
 
 def route_voice_or_text(
-    state: GraphCAGState,
+    state: TraceCAGState,
 ) -> Literal["stt_node", "cache_gate_node"]:
     """
     After input_node: route voice input to STT transcription first.
@@ -22,7 +22,7 @@ def route_voice_or_text(
 
 
 def should_analyze_pronunciation(
-    state: GraphCAGState,
+    state: TraceCAGState,
 ) -> Literal["pronunciation_node", "end"]:
     """
     After generate_node (voice path only):
@@ -34,7 +34,7 @@ def should_analyze_pronunciation(
     return "end"
 
 
-def route_after_diagnosis(state: GraphCAGState) -> Literal["retrieve_node", "ask_clarify_node", "vietnamese_node"]:
+def route_after_diagnosis(state: TraceCAGState) -> Literal["retrieve_node", "ask_clarify_node", "vietnamese_node"]:
     """
     Route after diagnosis based on confidence and learner level.
     
@@ -61,27 +61,27 @@ def route_after_diagnosis(state: GraphCAGState) -> Literal["retrieve_node", "ask
     return "retrieve_node"
 
 
-def route_after_vietnamese(state: GraphCAGState) -> Literal["retrieve_node"]:
+def route_after_vietnamese(state: TraceCAGState) -> Literal["retrieve_node"]:
     """
     After Vietnamese explanation, always continue to retrieval.
     """
     return "retrieve_node"
 
 
-def should_generate_tts(state: GraphCAGState) -> Literal["tts_node", "end"]:
+def should_generate_tts(state: TraceCAGState) -> Literal["tts_node", "end"]:
     """
-    Decide whether to generate TTS audio within the GraphCAG pipeline.
+    Decide whether to generate TTS audio within the TraceCAG pipeline.
     
     NOTE: TTS is handled by the caller (lexi_chat.py) using gTTS,
     which is more reliable and doesn't require loading Piper model.
-    GraphCAG pipeline skips TTS to avoid duplicate audio generation
+    TraceCAG pipeline skips TTS to avoid duplicate audio generation
     and unnecessary model loading (~100MB RAM for Piper).
     """
     # Always skip — TTS is handled externally by lexi_chat.py
     return "end"
 
 
-def check_cache_hit(state: GraphCAGState) -> Literal["cache_hit", "process"]:
+def check_cache_hit(state: TraceCAGState) -> Literal["cache_hit", "process"]:
     """
     RAPID cache gate (paper Alg. 1).
 

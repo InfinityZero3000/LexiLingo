@@ -3,12 +3,12 @@ Lexi Chat Route — Story-driven conversational AI with the parrot mascot.
 
 Pipeline:
   1. STT (if voice input) → Whisper transcription
-  2. GraphCAG pipeline → KG expansion + diagnosis + retrieval
-    3. GraphCAG generation (internal model fallback handled by GraphCAG)
+  2. TraceCAG pipeline → KG expansion + diagnosis + retrieval
+    3. TraceCAG generation (internal model fallback handled by TraceCAG)
   4. TTS synthesis → gTTS / Piper for Lexi's voice
   5. Return structured response with audio, story context, corrections
 
-Integrates with the existing GraphCAG system for document retrieval
+Integrates with the existing TraceCAG system for document retrieval
 and knowledge graph expansion to make conversations contextually rich.
 """
 
@@ -375,7 +375,7 @@ def _normalize_markdown_for_lexi(text: str) -> str:
 
 
 def _sanitize_lexi_response(text: str) -> str:
-    """Remove internal GraphCAG debug payloads from user-facing Lexi output."""
+    """Remove internal TraceCAG debug payloads from user-facing Lexi output."""
     cleaned = str(text or "")
     if not cleaned:
         return ""
@@ -564,7 +564,7 @@ class _PipelineResult:
     linked_concepts: List[str] = field(default_factory=list)
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
-    model_used: str = "graphcag"
+    model_used: str = "trace-cag"
     story_ctx: Optional[str] = None
     audio_b64: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -578,7 +578,7 @@ async def _run_lexi_pipeline(
     quota: Any,
     start_time: float,
 ) -> _PipelineResult:
-    """Execute the full Lexi pipeline (STT → GraphCAG → TTS → persist) and return results.
+    """Execute the full Lexi pipeline (STT → TraceCAG → TTS → persist) and return results.
 
     Extracted so both the regular /chat and the streaming /stream endpoints
     can share the same logic without duplication.
@@ -596,13 +596,13 @@ async def _run_lexi_pipeline(
         else:
             metadata["pipeline_steps"].append("stt_failed")
 
-    # ── GraphCAG pipeline ──
+    # ── TraceCAG pipeline ──
     lexi_response = ""
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
-    model_used = "graphcag"
+    model_used = "trace-cag"
 
     try:
         from api.services.orchestrator import get_orchestrator
@@ -626,13 +626,13 @@ async def _run_lexi_pipeline(
         linked_concepts = graph_result.get("linked_concepts", [])
         vietnamese_hint = graph_result.get("vietnamese_hint")
         scores = graph_result.get("scores")
-        metadata["pipeline_steps"].append("graphcag_complete")
-        metadata["graphcag_metadata"] = graph_result.get("metadata", {})
-        model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["graphcag"]))
+        metadata["pipeline_steps"].append("trace-cag_complete")
+        metadata["trace-cag_metadata"] = graph_result.get("metadata", {})
+        model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["trace-cag"]))
 
     except Exception as e:
-        logger.error("GraphCAG hard failure in Lexi pipeline (primary): %s", e)
-        metadata["pipeline_steps"].append("graphcag_failed_primary")
+        logger.error("TraceCAG hard failure in Lexi pipeline (primary): %s", e)
+        metadata["pipeline_steps"].append("trace-cag_failed_primary")
         try:
             from api.services.orchestrator import get_orchestrator
 
@@ -650,26 +650,26 @@ async def _run_lexi_pipeline(
             )
             lexi_response = str(retry_result.get("tutor_response") or "").strip()
             if not lexi_response:
-                raise RuntimeError("GraphCAG degraded retry returned empty tutor_response")
+                raise RuntimeError("TraceCAG degraded retry returned empty tutor_response")
             retry_meta = retry_result.get("metadata", {}) or {}
-            metadata["pipeline_steps"].append("graphcag_retry_complete")
-            metadata["graphcag_metadata"] = {
+            metadata["pipeline_steps"].append("trace-cag_retry_complete")
+            metadata["trace-cag_metadata"] = {
                 **retry_meta,
                 "fallback_used": True,
-                "retry_mode": "graphcag_degraded",
+                "retry_mode": "trace-cag_degraded",
                 "primary_error": str(e),
             }
-            model_used = ", ".join(retry_meta.get("models_used", ["graphcag_retry"]))
+            model_used = ", ".join(retry_meta.get("models_used", ["trace-cag_retry"]))
         except Exception as retry_err:
-            logger.error("GraphCAG hard failure in Lexi pipeline (degraded retry): %s", retry_err)
-            metadata["pipeline_steps"].append("graphcag_failed_hard")
-            metadata["graphcag_metadata"] = {
+            logger.error("TraceCAG hard failure in Lexi pipeline (degraded retry): %s", retry_err)
+            metadata["pipeline_steps"].append("trace-cag_failed_hard")
+            metadata["trace-cag_metadata"] = {
                 "fallback_used": True,
                 "primary_error": str(e),
                 "retry_error": str(retry_err),
             }
             lexi_response = SAFE_FIXED_RESPONSE
-            model_used = "graphcag_safe_response"
+            model_used = "trace-cag_safe_response"
 
     # ── Guards ──
     story_ctx = request.story_context
@@ -679,8 +679,8 @@ async def _run_lexi_pipeline(
 
     if not lexi_response:
         lexi_response = SAFE_FIXED_RESPONSE
-        model_used = "graphcag_safe_response"
-        metadata["pipeline_steps"].append("graphcag_empty_response_guard")
+        model_used = "trace-cag_safe_response"
+        metadata["pipeline_steps"].append("trace-cag_empty_response_guard")
 
     lexi_response = _sanitize_lexi_response(lexi_response)
     metadata["model_used"] = model_used
@@ -870,7 +870,7 @@ async def lexi_chat(
     Pipeline flow:
       1. Session management (create if needed)
       2. STT transcription (if voice input)
-      3. GraphCAG pipeline (KG expansion + retrieval)
+      3. TraceCAG pipeline (KG expansion + retrieval)
       4. LLM generation with Lexi persona (Groq → Gemini → Ollama)
       5. TTS synthesis (if enabled)
       6. Return structured response
@@ -931,7 +931,7 @@ async def lexi_chat(
 
     history = await _store.get_messages(session_id)
 
-    # ── 2–6. Execute shared pipeline (STT → GraphCAG → TTS → persist) ──
+    # ── 2–6. Execute shared pipeline (STT → TraceCAG → TTS → persist) ──
     result = await _run_lexi_pipeline(
         request=request,
         session_id=session_id,
@@ -1001,7 +1001,7 @@ async def lexi_stream_chat(
       • ``done``      — final event carrying message_id, corrections, audio, etc.
       • ``error``     — sent if the pipeline raises an unrecoverable error
 
-    The full AI pipeline (GraphCAG + TTS) still runs to completion before
+    The full AI pipeline (TraceCAG + TTS) still runs to completion before
     streaming begins, so overall latency is the same as /chat.  The benefit
     is the typewriter typing-effect on the client side.
     """
@@ -1423,5 +1423,5 @@ async def lexi_health() -> Dict[str, Any]:
         "status": "ok",
         "service": "lexi-chat",
         "persona": "lexi-the-parrot",
-        "capabilities": ["text-chat", "voice-input", "tts-output", "graphcag-retrieval"],
+        "capabilities": ["text-chat", "voice-input", "tts-output", "trace-cag-retrieval"],
     }

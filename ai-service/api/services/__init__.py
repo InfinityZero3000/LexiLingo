@@ -28,12 +28,12 @@ except ImportError:
     ExecutionMetrics = None  # type: ignore
     get_metrics = None  # type: ignore
 
-# New GraphCAG pipeline (replaces AIOrchestrator) - requires langgraph
+# New TraceCAG pipeline (replaces AIOrchestrator) - requires langgraph
 try:
-    from api.services.graph_cag import GraphCAGPipeline, get_graph_cag
+    from api.services.trace_cag import TraceCAGPipeline, get_trace_cag
 except ImportError:
-    GraphCAGPipeline = None  # type: ignore
-    get_graph_cag = None  # type: ignore
+    TraceCAGPipeline = None  # type: ignore
+    get_trace_cag = None  # type: ignore
 
 # New AI services - require optional heavy deps (numpy, torch, etc.)
 try:
@@ -63,9 +63,9 @@ __all__ = [
     "get_resource_manager",
     "ExecutionMetrics",
     "get_metrics",
-    # New GraphCAG
-    "GraphCAGPipeline",
-    "get_graph_cag",
+    # New TraceCAG
+    "TraceCAGPipeline",
+    "get_trace_cag",
     # AI Services
     "HuBERTService",
     "get_hubert_service",

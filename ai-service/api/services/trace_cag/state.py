@@ -1,8 +1,8 @@
 """
-GraphCAG State Schema
+TraceCAG State Schema
 
 Defines the typed state for LangGraph StateGraph.
-This state flows through all nodes in the GraphCAG pipeline.
+This state flows through all nodes in the TraceCAG pipeline.
 """
 
 from typing import TypedDict, List, Optional, Any, Dict, Annotated
@@ -71,6 +71,10 @@ class CacheEntry(TypedDict, total=False):
     execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
     diagnosis_errors: List[Dict[str, Any]]
     overall_score: float
+    grammar_score: float
+    fluency_score: float
+    vocabulary_level: str
+    action_plan: List[Dict[str, Any]]
     created_at: float                  # t_c: timestamp (monotonic)
     ttl: int                           # seconds
 
@@ -89,9 +93,9 @@ class BucketVersionRecord(TypedDict, total=False):
     t_refresh: float  # monotonic timestamp of last successful write
 
 
-class GraphCAGState(TypedDict, total=False):
+class TraceCAGState(TypedDict, total=False):
     """
-    Central state for GraphCAG pipeline.
+    Central state for TraceCAG pipeline.
     
     This state is passed through all nodes and updated progressively.
     Using total=False allows optional fields.
@@ -148,6 +152,7 @@ class GraphCAGState(TypedDict, total=False):
     pronunciation_tip: Optional[str]
     strategy: str  # praise, scaffold, socratic, feedback
     next_action: str  # continue, hint, correct
+    action_plan: List[Dict[str, Any]]
     
     # ============================================
     # Scores
@@ -207,9 +212,9 @@ def create_initial_state(
     benchmark_task: Optional[str] = None,
     benchmark_context: Optional[str] = None,
     benchmark_metadata: Optional[Dict[str, Any]] = None,
-) -> GraphCAGState:
+) -> TraceCAGState:
     """
-    Create initial state for GraphCAG pipeline.
+    Create initial state for TraceCAG pipeline.
     
     Args:
         user_input: Text from user (or STT transcript)
@@ -219,9 +224,9 @@ def create_initial_state(
         learner_profile: Optional pre-loaded profile
         
     Returns:
-        Initial GraphCAGState ready for graph execution
+        Initial TraceCAGState ready for graph execution
     """
-    return GraphCAGState(
+    return TraceCAGState(
         # Input
         user_input=user_input,
         session_id=session_id,
@@ -262,6 +267,7 @@ def create_initial_state(
         pronunciation_tip=None,
         strategy="scaffold",
         next_action="continue",
+        action_plan=[],
         
         # Scores
         fluency_score=0.0,

@@ -39,10 +39,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 
@@ -58,10 +58,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_no_errors)
 
@@ -78,10 +78,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 
@@ -97,10 +97,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 
@@ -116,10 +116,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 
@@ -135,10 +135,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 
@@ -155,10 +155,10 @@ class TestGenerateNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import generate_node
+            from api.services.trace_cag.nodes_v2 import generate_node
 
             result = await generate_node(state_with_errors)
 

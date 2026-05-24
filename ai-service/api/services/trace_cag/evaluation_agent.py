@@ -1,5 +1,5 @@
 """
-EvaluationAgent — centralised scoring and vocabulary estimation for GraphCAG pipeline.
+EvaluationAgent — centralised scoring and vocabulary estimation for TraceCAG pipeline.
 
 Pure-logic class (no I/O, no framework dependencies).
 All methods are @classmethod so no instantiation is needed.

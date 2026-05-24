@@ -234,7 +234,7 @@ def _build_fingerprint(story_id: str, seed_concepts: List[str], level: str) -> s
     """
     Build a short deterministic fingerprint for KV Cache Gating.
 
-    The GraphCAG pipeline can use this to decide whether a cached response
+    The TraceCAG pipeline can use this to decide whether a cached response
     is still valid for the same conceptual context.
     """
     import hashlib

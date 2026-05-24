@@ -1,7 +1,7 @@
 """
 Pytest Fixtures for AI Service Tests
 
-Provides shared fixtures for testing graph_cag nodes,
+Provides shared fixtures for testing trace_cag nodes,
 services, and integrations.
 """
 
@@ -80,7 +80,7 @@ def mock_redis():
 
 @pytest.fixture
 def sample_initial_state() -> Dict[str, Any]:
-    """Sample initial state for GraphCAG pipeline."""
+    """Sample initial state for TraceCAG pipeline."""
     return {
         "user_input": "I go to school yesterday.",
         "session_id": "test_session_001",

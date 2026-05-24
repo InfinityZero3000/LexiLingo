@@ -1,5 +1,5 @@
 """
-GraphCAG Node Functions - Enhanced with ModelGateway
+TraceCAG Node Functions - Enhanced with ModelGateway
 
 Each node uses ModelGateway for:
 1. Lazy loading: Models load on first use
@@ -25,11 +25,11 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional, Mapping, Sequence
 from collections import OrderedDict
 
-from api.services.graph_cag.state import (
-    GraphCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
+from api.services.trace_cag.state import (
+    TraceCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
 )
-from api.services.graph_cag.evaluation_agent import EvaluationAgent
-from api.services.graph_cag.retrieval_ranker import get_retrieval_ranker
+from api.services.trace_cag.evaluation_agent import EvaluationAgent
+from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.document_intelligence import get_doc_intel_service
 from api.services.jit_graph_service import get_jit_graph_service
 from api.services.llama_kv_service import get_local_llama_kv_service
@@ -303,18 +303,18 @@ def _provider_pressure_score() -> float:
     return _clip01((0.65 * cooldown_component) + (0.35 * disabled_component))
 
 
-def _adaptive_mode_enabled(state: GraphCAGState, benchmark_mode: str = "") -> bool:
+def _adaptive_mode_enabled(state: TraceCAGState, benchmark_mode: str = "") -> bool:
     retrieval_policy = str(state.get("retrieval_policy") or "").strip().lower()
     if retrieval_policy == "adaptive":
         return True
-    if str(benchmark_mode or "").strip().lower() == "graphcag_adaptive":
+    if str(benchmark_mode or "").strip().lower() == "trace-cag_adaptive":
         return True
     return False
 
 
 def _adaptive_context_features(
     *,
-    state: GraphCAGState,
+    state: TraceCAGState,
     user_input: str,
     benchmark_task: str,
     benchmark_metadata: Dict[str, Any],
@@ -386,7 +386,7 @@ def _adaptive_objective(
 
 def _choose_adaptive_profile(
     *,
-    state: GraphCAGState,
+    state: TraceCAGState,
     user_input: str,
     benchmark_task: str,
     benchmark_mode: str,
@@ -747,7 +747,7 @@ def _compute_reuse_risk(
     return max(0.0, min(1.0, rho))
 
 
-def _build_fingerprint(state: GraphCAGState) -> CacheFingerprint:
+def _build_fingerprint(state: TraceCAGState) -> CacheFingerprint:
     """Build a cache fingerprint from current pipeline state."""
     return CacheFingerprint(
         query_norm=state.get("user_input", "").strip().lower(),
@@ -884,7 +884,7 @@ def _invalidate_bucket(bucket: str) -> None:
         logger.debug(f"[_invalidate_bucket] invalidated bucket={bucket[:8]} evicted={len(orphan_keys)} keys")
 
 
-def _is_pcc_stable(state: GraphCAGState) -> bool:
+def _is_pcc_stable(state: TraceCAGState) -> bool:
     """
     WriteL1(x) = PCCStable ∧ Confident ∧ ¬HighlySpecific  (paper §4.1).
 
@@ -1086,6 +1086,10 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
             "retrieval_trace": raw.get("retrieval_trace", []),
             "execution_plan": raw.get("execution_plan", {"strategy": raw.get("strategy", "feedback")}),
             "diagnosis_errors": raw.get("diagnosis_errors", []),
+            "grammar_score": raw.get("grammar_score", 0.0),
+            "fluency_score": raw.get("fluency_score", 0.0),
+            "vocabulary_level": raw.get("vocabulary_level", "B1"),
+            "action_plan": raw.get("action_plan", []),
             "overall_score": raw.get("overall_score", 0.8),
             "created_at": raw.get("created_at", now - 60),
             "ttl": raw.get("ttl", 3600),
@@ -1101,7 +1105,7 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
 
 
 async def _write_cache_entry(
-    state: GraphCAGState,
+    state: TraceCAGState,
     response: str,
     strategy: str,
     errors: list,
@@ -1150,6 +1154,10 @@ async def _write_cache_entry(
             "model": model_used or "unknown",
         },
         diagnosis_errors=[dict(e) for e in errors] if errors else [],
+        grammar_score=state.get("grammar_score", 0.0),
+        fluency_score=state.get("fluency_score", 0.0),
+        vocabulary_level=state.get("vocabulary_level", "B1"),
+        action_plan=state.get("action_plan", []),
         overall_score=overall_score,
         created_at=now,
         ttl=ttl,
@@ -1225,7 +1233,7 @@ async def _get_retrieval_v3():
 # NODE 1: INPUT NODE
 # ============================================================
 
-async def input_node(state: GraphCAGState) -> Dict[str, Any]:
+async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Parse and validate user input, load learner context.
     
@@ -1301,7 +1309,7 @@ async def input_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 1.5: CACHE GATE (Response Cache Check)
 # ============================================================
 
-async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
+async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     RAPID Risk-Aware Cache Gate (paper Alg. 1).
 
@@ -1354,7 +1362,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
     tau_reuse = float(adaptive_choice.get("tau_reuse", _TAU_REUSE))
     tau_patch = float(adaptive_choice.get("tau_patch", _TAU_PATCH))
 
-    if benchmark_task in {"multihop_qa", "retrieval_qa"} and benchmark_mode == "graphcag_rapid":
+    if benchmark_task in {"multihop_qa", "retrieval_qa"} and benchmark_mode == "trace-cag_rapid":
         # Slightly relax cache thresholds for benchmark-repeat runs to raise valid hit-rate.
         tau_reuse = min(0.85, tau_reuse + 0.03)
         tau_patch = min(0.95, tau_patch + 0.04)
@@ -1409,6 +1417,10 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "retrieval_trace": entry.get("retrieval_trace", []),
                 "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "grammar_score": entry.get("grammar_score", 0.0),
+                "fluency_score": entry.get("fluency_score", 0.0),
+                "vocabulary_level": entry.get("vocabulary_level", "B1"),
+                "action_plan": entry.get("action_plan", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
                 "ttft_ms": 1,
@@ -1428,6 +1440,10 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "retrieval_trace": entry.get("retrieval_trace", []),
                 "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "grammar_score": entry.get("grammar_score", 0.0),
+                "fluency_score": entry.get("fluency_score", 0.0),
+                "vocabulary_level": entry.get("vocabulary_level", "B1"),
+                "action_plan": entry.get("action_plan", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
                 "ttft_ms": 1,
@@ -1487,6 +1503,10 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
                 "retrieval_trace": entry.get("retrieval_trace", []),
                 "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
                 "diagnosis_errors": entry.get("diagnosis_errors", []),
+                "grammar_score": entry.get("grammar_score", 0.0),
+                "fluency_score": entry.get("fluency_score", 0.0),
+                "vocabulary_level": entry.get("vocabulary_level", "B1"),
+                "action_plan": entry.get("action_plan", []),
                 "overall_score": entry.get("overall_score", 0.8),
                 "path": "fast",
                 "ttft_ms": 1,
@@ -1505,6 +1525,10 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
             "retrieval_trace": entry.get("retrieval_trace", []),
             "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
             "diagnosis_errors": entry.get("diagnosis_errors", []),
+            "grammar_score": entry.get("grammar_score", 0.0),
+            "fluency_score": entry.get("fluency_score", 0.0),
+            "vocabulary_level": entry.get("vocabulary_level", "B1"),
+            "action_plan": entry.get("action_plan", []),
             "overall_score": entry.get("overall_score", 0.8),
             "path": "fast",
             "ttft_ms": 1,
@@ -1528,7 +1552,7 @@ async def cache_gate_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 2: KNOWLEDGE GRAPH EXPANSION
 # ============================================================
 
-async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
+async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Level-aware best-first KG expansion (paper Alg. 4).
 
@@ -1704,7 +1728,7 @@ async def kg_expand_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 3: DIAGNOSIS (AI-POWERED via ModelGateway)
 # ============================================================
 
-async def diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
+async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Analyze user input for grammar, fluency, intent using AI.
     
@@ -1942,7 +1966,7 @@ def _rule_based_diagnosis(text: str) -> tuple:
 # PARALLEL NODE: KG_EXPAND + DIAGNOSE concurrent (paper Alg. 3+4)
 # ============================================================
 
-async def kg_diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
+async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Run kg_expand_node and diagnose_node concurrently via asyncio.gather.
 
@@ -1969,7 +1993,7 @@ async def kg_diagnose_node(state: GraphCAGState) -> Dict[str, Any]:
     return merged
 
 
-async def _jit_graph_extract_node(state: GraphCAGState) -> Dict[str, Any]:
+async def _jit_graph_extract_node(state: TraceCAGState) -> Dict[str, Any]:
     """Extract compact JIT graph payload for downstream retrieval/generation."""
     user_input = str(state.get("user_input") or "").strip()
     if not user_input:
@@ -2296,10 +2320,10 @@ def _compute_evidence_budget(
     if benchmark_candidates:
         if benchmark_mode == "graphrag_proxy":
             budget = max(3, budget - 1)
-        elif benchmark_mode == "graphcag_rapid":
+        elif benchmark_mode == "trace-cag_rapid":
             # Broaden candidate coverage for better R@3/R@5, not only top-1.
             budget = max(7, min(max_budget, budget + 2))
-        elif benchmark_mode == "graphcag_adaptive":
+        elif benchmark_mode == "trace-cag_adaptive":
             config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
             if config is not None:
                 budget = max(4, min(max_budget, budget + int(config.evidence_budget_delta)))
@@ -2411,7 +2435,7 @@ def _rank_benchmark_candidates(
                     + (0.08 * query_coverage)
                     + (0.08 * anchor_coverage)
                 )
-            elif benchmark_mode == "graphcag_rapid":
+            elif benchmark_mode == "trace-cag_rapid":
                 # Rebalance toward broader top-k coverage (R@1..R@5) over top-1 peaking.
                 final_score = (
                     (0.34 * base_score)
@@ -2428,7 +2452,7 @@ def _rank_benchmark_candidates(
                     final_score += 0.03
                 else:
                     final_score += 0.01 * title_phrase
-            elif benchmark_mode == "graphcag_adaptive":
+            elif benchmark_mode == "trace-cag_adaptive":
                 profile = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
                 if profile is None:
                     profile = _ADAPTIVE_PROFILES["balanced"]
@@ -2592,7 +2616,7 @@ def _rank_with_online_ranker(
 
     # Keep graph/title heuristic dominant until online ranker has enough updates.
     mode = str(benchmark_mode or "").strip().lower()
-    if mode == "graphcag_rapid":
+    if mode == "trace-cag_rapid":
         snapshot = ranker.snapshot()
         updates = int(snapshot.get("updates", 0) or 0)
         warmup_updates = max(1, _env_int("GRAPHCAG_RANKER_WARMUP_UPDATES", 40))
@@ -2650,7 +2674,7 @@ def _rank_with_online_ranker(
     return ranked
 
 
-def _build_benchmark_candidates(state: GraphCAGState) -> tuple[list[Dict[str, Any]], set[str]]:
+def _build_benchmark_candidates(state: TraceCAGState) -> tuple[list[Dict[str, Any]], set[str]]:
     benchmark_metadata = state.get("benchmark_metadata") or {}
     benchmark_task = state.get("benchmark_task") or ""
 
@@ -2693,7 +2717,7 @@ def _build_benchmark_candidates(state: GraphCAGState) -> tuple[list[Dict[str, An
 # NODE 4: BUDGETED HYBRID RETRIEVAL (paper Alg. 5)
 # ============================================================
 
-async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
+async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Budgeted hybrid retrieval with fusion scoring (paper Alg. 5).
 
@@ -3129,7 +3153,7 @@ async def retrieve_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 5: GROUNDED GENERATION (LLM call with context)
 # ============================================================
 
-async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
+async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Generate the tutor response using LLM grounded in KG evidence.
     
@@ -3385,7 +3409,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
             # Ollama — last resort, tight 15s timeout.
             if not response:
                 ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-                ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
+                ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
                 try:
                     resp = await _throttled_post_json(
                         provider="ollama",
@@ -3436,6 +3460,48 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         retrieval_trace=list(state.get("retrieval_trace") or []),
     )
 
+    # Generate personalized practice exercises via ContentAutoGenerator (cag_service)
+    action_plan = []
+    if errors or intent == "practice":
+        try:
+            from api.services.cag_service import ContentAutoGenerator
+            cag_gen = ContentAutoGenerator()
+            err_types = [err.get("type", "grammar") for err in errors if isinstance(err, dict)]
+            if not err_types:
+                err_types = ["grammar"]
+            
+            first_err_type = err_types[0] if errors else "vocabulary"
+            if "vocab" in first_err_type.lower() or intent == "practice":
+                vocab_ex = cag_gen.generate_vocabulary_exercise(
+                    level=level,
+                    error_patterns=err_types if errors else None,
+                    count=3
+                )
+                action_plan.append({
+                    "action": "practice",
+                    "type": "vocabulary",
+                    "concept": vocab_ex.get("topic", ""),
+                    "count": len(vocab_ex.get("words", [])),
+                    "exercise": vocab_ex
+                })
+            else:
+                grammar_drill = cag_gen.generate_grammar_drill(
+                    level=level,
+                    error_patterns=err_types,
+                    count=3
+                )
+                action_plan.append({
+                    "action": "practice",
+                    "type": "grammar",
+                    "concept": grammar_drill.get("grammar_point", ""),
+                    "count": len(grammar_drill.get("exercises", [])),
+                    "exercise": grammar_drill
+                })
+        except Exception as cag_err:
+            logger.warning(f"[generate_node] Failed to generate CAG practice: {cag_err}")
+
+    state["action_plan"] = action_plan
+
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on":
         try:
@@ -3467,6 +3533,7 @@ async def generate_node(state: GraphCAGState) -> Dict[str, Any]:
         "strategy": strategy,
         "next_action": next_action,
         "overall_score": overall_score,
+        "action_plan": action_plan,
         "ttft_ms": latency_ms,
         "models_used": [model_used],
     }
@@ -3760,7 +3827,7 @@ def _postprocess_benchmark_qa_answer(
     return candidate
 
 
-async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: float) -> Dict[str, Any]:
+async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
     """Generate concise QA outputs for paper-style public benchmarks."""
     question = state.get("user_input", "")
     context = state.get("retrieved_context", "") or (state.get("benchmark_context") or "")
@@ -3852,7 +3919,7 @@ async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: floa
 
                 elif provider == "ollama":
                     ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-                    ollama_model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
+                    ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
                     try:
                         resp = await _throttled_post_json(
                             provider="ollama",
@@ -3936,7 +4003,7 @@ async def _generate_benchmark_qa_response(state: GraphCAGState, start_time: floa
 # NODE 6: NATIVE LANGUAGE HINT (AI-POWERED, Lazy Load)
 # ============================================================
 
-async def vietnamese_node(state: GraphCAGState) -> Dict[str, Any]:
+async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Generate a short native-language hint for the learner.
 
@@ -4060,7 +4127,7 @@ def _get_predefined_vietnamese(errors: list) -> str:
 # NODE 7: TEXT-TO-SPEECH (AI-POWERED via ModelGateway)
 # ============================================================
 
-async def tts_node(state: GraphCAGState) -> Dict[str, Any]:
+async def tts_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Convert tutor response to speech using TTS model.
     
@@ -4119,7 +4186,7 @@ async def tts_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 8: ASK CLARIFICATION (Low Confidence Path)
 # ============================================================
 
-async def ask_clarify_node(state: GraphCAGState) -> Dict[str, Any]:
+async def ask_clarify_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Generate clarification question when confidence is low.
     
@@ -4191,7 +4258,7 @@ Keep it short and friendly (1-2 sentences)."""
 # NODE 9: PRONUNCIATION ANALYSIS (Optional, Heavy Model)
 # ============================================================
 
-async def pronunciation_node(state: GraphCAGState) -> Dict[str, Any]:
+async def pronunciation_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Analyze pronunciation from audio input.
     
@@ -4252,7 +4319,7 @@ async def pronunciation_node(state: GraphCAGState) -> Dict[str, Any]:
 # NODE 10: STT NODE (Speech-to-Text for Voice Input)
 # ============================================================
 
-async def stt_node(state: GraphCAGState) -> Dict[str, Any]:
+async def stt_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Convert speech to text for voice input.
     

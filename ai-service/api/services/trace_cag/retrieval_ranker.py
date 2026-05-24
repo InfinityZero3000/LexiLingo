@@ -1,5 +1,5 @@
 """
-Online retrieval ranker for GraphCAG.
+Online retrieval ranker for TraceCAG.
 
 This module implements a model-agnostic, pairwise online ranker that blends
 multiple retrieval signals (lexical, graph, semantic, recency) and updates

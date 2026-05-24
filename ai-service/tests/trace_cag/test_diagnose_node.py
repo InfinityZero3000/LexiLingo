@@ -42,10 +42,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state_with_input)
 
@@ -72,10 +72,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state)
 
@@ -93,10 +93,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state_with_input)
 
@@ -112,10 +112,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state_with_input)
 
@@ -136,10 +136,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state_with_input)
 
@@ -155,10 +155,10 @@ class TestDiagnoseNode:
         }
 
         with patch(
-            "api.services.graph_cag.nodes_v2.get_gateway",
+            "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
         ):
-            from api.services.graph_cag.nodes_v2 import diagnose_node
+            from api.services.trace_cag.nodes_v2 import diagnose_node
 
             result = await diagnose_node(state_with_input)
 

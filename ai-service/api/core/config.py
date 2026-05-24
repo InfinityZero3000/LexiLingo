@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     # Ollama (Local LLM) Configuration
     # ============================================================
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen3:4b")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
     OLLAMA_TIMEOUT: int = int(os.getenv("OLLAMA_TIMEOUT", "60"))
     
     # ============================================================
