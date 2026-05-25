@@ -168,6 +168,16 @@ class UserVocabulary(Base):
     )
     
     last_reviewed_at: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
+
+    # ===== FSRS Algorithm Fields =====
+    fsrs_stability: Mapped[Optional[float]] = mapped_column(Float, default=0.0, nullable=True)
+    fsrs_difficulty: Mapped[Optional[float]] = mapped_column(Float, default=0.0, nullable=True)
+    fsrs_elapsed_days: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_scheduled_days: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_reps: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_lapses: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_state: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_last_review: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
     
     # ===== Statistics =====
     total_reviews: Mapped[int] = mapped_column(Integer, default=0)

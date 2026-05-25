@@ -5,6 +5,7 @@ Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 
 import uuid
 import re
+import math
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlalchemy import select, func, and_, or_
@@ -209,6 +210,13 @@ class VocabularyCRUD:
                     interval=1,
                     repetitions=0,
                     next_review_date=next_review,
+                    fsrs_stability=0.0,
+                    fsrs_difficulty=0.0,
+                    fsrs_elapsed_days=0,
+                    fsrs_scheduled_days=0,
+                    fsrs_reps=0,
+                    fsrs_lapses=0,
+                    fsrs_state=0,
                     added_at=now,
                     total_reviews=0,
                     correct_reviews=0,
@@ -236,6 +244,13 @@ class VocabularyCRUD:
                     interval=1,
                     repetitions=0,
                     next_review_date=next_review,
+                    fsrs_stability=0.0,
+                    fsrs_difficulty=0.0,
+                    fsrs_elapsed_days=0,
+                    fsrs_scheduled_days=0,
+                    fsrs_reps=0,
+                    fsrs_lapses=0,
+                    fsrs_state=0,
                 )
                 db.add(user_vocab)
                 await db.commit()
@@ -342,6 +357,104 @@ class VocabularyCRUD:
         next_review_date = datetime.now(timezone.utc) + timedelta(days=interval)
         
         return ease_factor, interval, repetitions, next_review_date
+
+    def _clamp(self, value: float, lower: float, upper: float) -> float:
+        """Clamp a numeric value to an inclusive range."""
+        return max(lower, min(upper, value))
+
+    def calculate_fsrs_review(
+        self,
+        quality: int,
+        stability: Optional[float],
+        difficulty: Optional[float],
+        scheduled_days: Optional[int],
+        reps: Optional[int],
+        lapses: Optional[int],
+        fsrs_last_review: Optional[datetime],
+        sm2_last_review: Optional[datetime],
+        now: Optional[datetime] = None,
+    ) -> dict:
+        """
+        Calculate FSRS-style scheduling fields for a review.
+
+        This intentionally keeps FSRS side-by-side with the existing SM-2 fields.
+        It uses the FSRS concepts of stability, difficulty, retrievability, reps,
+        lapses, state, elapsed days, and scheduled days without adding a new
+        dependency or changing existing review contracts.
+        """
+        now = now or datetime.now(timezone.utc)
+        quality = max(0, min(5, quality))
+
+        last_review = fsrs_last_review or sm2_last_review
+        if last_review and last_review.tzinfo is None:
+            last_review = last_review.replace(tzinfo=timezone.utc)
+        elapsed_days = max(0, (now - last_review).days) if last_review else 0
+
+        current_reps = max(0, reps or 0)
+        current_lapses = max(0, lapses or 0)
+        current_scheduled_days = max(0, scheduled_days or 0)
+        current_stability = stability if stability and stability > 0 else None
+        current_difficulty = difficulty if difficulty and difficulty > 0 else None
+
+        if current_reps == 0 or current_stability is None or current_difficulty is None:
+            initial_stability = {
+                0: 0.4,
+                1: 0.6,
+                2: 1.0,
+                3: 2.4,
+                4: 3.8,
+                5: 5.8,
+            }[quality]
+            new_stability = initial_stability
+            new_difficulty = self._clamp(7.0 - (quality - 3) * 0.8, 1.0, 10.0)
+        else:
+            decay = -0.5
+            factor = 19 / 81
+            retrievability = (1 + factor * elapsed_days / current_stability) ** decay
+            retrievability = self._clamp(retrievability, 0.01, 1.0)
+
+            mean_reversion = (4.0 - current_difficulty) * 0.05
+            new_difficulty = self._clamp(
+                current_difficulty - (quality - 3) * 0.3 + mean_reversion,
+                1.0,
+                10.0,
+            )
+
+            if quality < 3:
+                new_stability = max(0.5, current_stability * 0.55)
+            else:
+                rating_boost = {3: 1.2, 4: 2.0, 5: 2.8}[quality]
+                difficulty_factor = (11.0 - new_difficulty) / 10.0
+                recall_gap = 1.0 - retrievability
+                growth = 1.0 + rating_boost * difficulty_factor * (recall_gap + 0.2)
+                new_stability = max(current_stability + 0.5, current_stability * growth)
+
+        if quality < 3:
+            next_lapses = current_lapses + 1
+            next_state = 3 if current_reps > 0 else 1  # relearning or learning
+            next_scheduled_days = 1
+        else:
+            next_lapses = current_lapses
+            next_state = 2 if new_stability >= 2 else 1  # review or learning
+            next_scheduled_days = max(1, int(math.ceil(new_stability)))
+            if quality == 3 and current_scheduled_days:
+                next_scheduled_days = min(next_scheduled_days, current_scheduled_days + 1)
+            elif quality == 5:
+                next_scheduled_days = max(next_scheduled_days, int(math.ceil(new_stability * 1.15)))
+
+        next_scheduled_days = min(next_scheduled_days, 36500)
+
+        return {
+            "fsrs_stability": round(new_stability, 4),
+            "fsrs_difficulty": round(new_difficulty, 4),
+            "fsrs_elapsed_days": elapsed_days,
+            "fsrs_scheduled_days": next_scheduled_days,
+            "fsrs_reps": current_reps + 1,
+            "fsrs_lapses": next_lapses,
+            "fsrs_state": next_state,
+            "fsrs_last_review": now,
+            "next_review_date": now + timedelta(days=next_scheduled_days),
+        }
     
     def determine_status(self, ease_factor: float, interval: int, repetitions: int) -> VocabularyStatus:
         """
@@ -375,6 +488,8 @@ class VocabularyCRUD:
         )
         user_vocab = result.scalar_one()
         
+        now = datetime.now(timezone.utc)
+
         # Calculate new SRS parameters
         new_ease, new_interval, new_reps, next_review = self.calculate_next_review(
             quality=quality,
@@ -382,13 +497,33 @@ class VocabularyCRUD:
             interval=user_vocab.interval,
             repetitions=user_vocab.repetitions
         )
+
+        fsrs_update = self.calculate_fsrs_review(
+            quality=quality,
+            stability=user_vocab.fsrs_stability,
+            difficulty=user_vocab.fsrs_difficulty,
+            scheduled_days=user_vocab.fsrs_scheduled_days,
+            reps=user_vocab.fsrs_reps,
+            lapses=user_vocab.fsrs_lapses,
+            fsrs_last_review=user_vocab.fsrs_last_review,
+            sm2_last_review=user_vocab.last_reviewed_at,
+            now=now,
+        )
         
         # Update user vocabulary
         user_vocab.ease_factor = new_ease
         user_vocab.interval = new_interval
         user_vocab.repetitions = new_reps
-        user_vocab.next_review_date = next_review
-        user_vocab.last_reviewed_at = datetime.now(timezone.utc)
+        user_vocab.next_review_date = fsrs_update["next_review_date"] or next_review
+        user_vocab.last_reviewed_at = now
+        user_vocab.fsrs_stability = fsrs_update["fsrs_stability"]
+        user_vocab.fsrs_difficulty = fsrs_update["fsrs_difficulty"]
+        user_vocab.fsrs_elapsed_days = fsrs_update["fsrs_elapsed_days"]
+        user_vocab.fsrs_scheduled_days = fsrs_update["fsrs_scheduled_days"]
+        user_vocab.fsrs_reps = fsrs_update["fsrs_reps"]
+        user_vocab.fsrs_lapses = fsrs_update["fsrs_lapses"]
+        user_vocab.fsrs_state = fsrs_update["fsrs_state"]
+        user_vocab.fsrs_last_review = fsrs_update["fsrs_last_review"]
         user_vocab.total_reviews += 1
         
         # Update streak and stats

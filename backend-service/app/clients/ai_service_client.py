@@ -9,7 +9,7 @@ This module is safe to include even when AI is not enabled.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -47,3 +47,32 @@ class AIServiceClient:
             data = data["data"]
 
         return AIChatResponse(**data)
+
+    async def assess_pronunciation(
+        self,
+        *,
+        audio_bytes: bytes,
+        filename: str,
+        target_text: str,
+        authorization: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Send audio to the AI service for HuBERT pronunciation assessment."""
+        url = f"{self._base_url}/stt/assess-pronunciation"
+        headers = {}
+        if authorization:
+            headers["Authorization"] = authorization
+
+        files = {
+            "audio": (
+                filename or "recording.wav",
+                audio_bytes,
+                "audio/wav",
+            )
+        }
+        data = {"target_text": target_text}
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
+            resp = await client.post(url, data=data, files=files, headers=headers)
+
+        resp.raise_for_status()
+        return resp.json() or {}

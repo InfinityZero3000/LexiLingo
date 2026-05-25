@@ -16,15 +16,44 @@ class ReviewResultModel extends ReviewResultEntity {
 
   /// Create from JSON (API response)
   factory ReviewResultModel.fromJson(Map<String, dynamic> json) {
+    final userVocabulary = json['user_vocabulary'] is Map<String, dynamic>
+        ? json['user_vocabulary'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final qualityValue = json['quality'] as int? ?? 3;
+    final nextReviewRaw =
+        (json['next_review_date'] as String?) ??
+        (userVocabulary['next_review_date'] as String?);
+    final reviewedAtRaw =
+        (json['reviewed_at'] as String?) ??
+        (userVocabulary['last_reviewed_at'] as String?);
+
     return ReviewResultModel(
-      userVocabularyId: json['user_vocabulary_id'] as String,
-      quality: _parseQuality(json['quality'] as int),
-      xpEarned: (json['xp_earned'] as int?) ?? 0,
-      newEaseFactor: (json['new_ease_factor'] as num).toDouble(),
-      newInterval: json['new_interval'] as int,
-      newRepetitions: json['new_repetitions'] as int,
-      nextReviewDate: DateTime.parse(json['next_review_date'] as String),
-      reviewedAt: DateTime.parse(json['reviewed_at'] as String),
+      userVocabularyId:
+          (json['user_vocabulary_id'] as String?) ??
+          (userVocabulary['id'] as String?) ??
+          '',
+      quality: _parseQuality(qualityValue),
+      xpEarned:
+          (json['xp_earned'] as int?) ?? (json['xp_awarded'] as int?) ?? 0,
+      newEaseFactor:
+          (json['new_ease_factor'] as num?)?.toDouble() ??
+          (userVocabulary['ease_factor'] as num?)?.toDouble() ??
+          2.5,
+      newInterval:
+          (json['new_interval'] as int?) ??
+          (userVocabulary['interval'] as int?) ??
+          (json['next_review_in_days'] as int?) ??
+          1,
+      newRepetitions:
+          (json['new_repetitions'] as int?) ??
+          (userVocabulary['repetitions'] as int?) ??
+          0,
+      nextReviewDate: nextReviewRaw != null
+          ? DateTime.parse(nextReviewRaw)
+          : DateTime.now(),
+      reviewedAt: reviewedAtRaw != null
+          ? DateTime.parse(reviewedAtRaw)
+          : DateTime.now(),
     );
   }
 

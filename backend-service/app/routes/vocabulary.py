@@ -14,13 +14,15 @@ Endpoints:
 
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import httpx
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.cache import build_cache_key, get_cached, set_cached
+from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
 from app.schemas.vocabulary import (
@@ -33,6 +35,7 @@ from app.schemas.vocabulary import (
     QuickSaveVocabularyResponse,
     ReviewSubmission,
     ReviewResponse,
+    PronunciationEvaluationResponse,
     DueVocabularyResponse,
     VocabularyStatsResponse,
     VocabularySearchParams,
@@ -43,6 +46,15 @@ from app.schemas.vocabulary import (
 )
 
 router = APIRouter(tags=["vocabulary"])
+
+
+def _pronunciation_feedback(score: float) -> tuple[int, str, int]:
+    """Map HuBERT score to UI stars, label, and review quality."""
+    if score >= 80:
+        return 3, "Amazing", 5
+    if score >= 60:
+        return 2, "Good", 3
+    return 1, "Try again", 1
 
 
 # ===== Vocabulary Items (Master List) =====
@@ -339,6 +351,68 @@ async def bulk_add_to_collection(
 
 # ===== Review System =====
 
+@router.post("/pronunciation/evaluate", response_model=PronunciationEvaluationResponse)
+async def evaluate_pronunciation(
+    request: Request,
+    vocabulary_id: uuid.UUID = Form(...),
+    audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Evaluate a user's pronunciation for a vocabulary item.
+
+    The backend keeps this as a thin authenticated proxy so Flutter only talks
+    to backend-service while ai-service owns HuBERT model execution.
+    """
+    vocab = await vocabulary_crud.get_vocabulary_item(db, vocabulary_id)
+    if not vocab:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vocabulary item not found",
+        )
+
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Audio file is empty",
+        )
+
+    try:
+        ai_data = await AIServiceClient().assess_pronunciation(
+            audio_bytes=audio_bytes,
+            filename=audio.filename or "recording.wav",
+            target_text=vocab.word,
+            authorization=request.headers.get("authorization"),
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI service pronunciation assessment failed: {exc.response.status_code}",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI service is unavailable: {exc}",
+        ) from exc
+
+    score = float(ai_data.get("overall_score") or ai_data.get("score") or 0.0)
+    stars, feedback_label, _quality = _pronunciation_feedback(score)
+
+    return PronunciationEvaluationResponse(
+        vocabulary_id=vocabulary_id,
+        target_word=vocab.word,
+        score=score,
+        stars=stars,
+        feedback_label=feedback_label,
+        transcription=ai_data.get("transcription") or ai_data.get("text"),
+        phoneme_scores=ai_data.get("phoneme_scores") or {},
+        errors=ai_data.get("errors") or [],
+        duration_ms=ai_data.get("duration_ms"),
+    )
+
+
 @router.get("/due", response_model=DueVocabularyResponse)
 async def get_due_vocabulary(
     limit: int = Query(20, ge=1, le=50, description="Max words to review"),
@@ -469,7 +543,7 @@ async def submit_review(
         user_vocabulary=updated_vocab,
         xp_awarded=xp_awarded,
         streak_bonus=streak_bonus,
-        next_review_in_days=updated_vocab.interval,
+        next_review_in_days=updated_vocab.fsrs_scheduled_days or updated_vocab.interval,
         message=messages.get(review.quality, "Keep going!")
     )
 
