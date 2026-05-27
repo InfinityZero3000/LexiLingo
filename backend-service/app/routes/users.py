@@ -90,13 +90,23 @@ def _serialize_user_response(user: User) -> UserResponse:
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get current user profile.
     
     Requires authentication.
     """
+    # Always recalculate rank on profile fetch to ensure UI is up-to-date
+    # with the latest gamification constants
+    rank_info = calc_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level or "A1"
+    )
+    apply_rank_info_to_user(current_user, rank_info)
+    await db.commit()
+    
     return _serialize_user_response(current_user)
 
 
@@ -116,6 +126,12 @@ async def update_current_user_profile(
     
     for field, value in update_dict.items():
         setattr(current_user, field, value)
+        
+    rank_info = calc_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level or "A1"
+    )
+    apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     await db.refresh(current_user)
