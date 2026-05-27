@@ -123,14 +123,16 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final correct = _topicCorrect[topic] ?? 0;
     if (total < 3) return '';
     final pct = correct / total * 100;
-    if (pct >= 80)
+    if (pct >= 80) {
       return 'grammarQuiz.greatMastery'.tr(
         namedArgs: {'topic': _formatTopic(topic)},
       );
-    if (pct >= 50)
+    }
+    if (pct >= 50) {
       return 'grammarQuiz.keepPracticing'.tr(
         namedArgs: {'topic': _formatTopic(topic)},
       );
+    }
     return 'grammarQuiz.reviewConcepts'.tr(
       namedArgs: {'topic': _formatTopic(topic)},
     );

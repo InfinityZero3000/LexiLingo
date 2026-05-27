@@ -20,6 +20,7 @@ import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widg
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_up_dialog.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
@@ -64,21 +65,38 @@ class _HomePageNewState extends State<HomePageNew> {
     super.dispose();
   }
 
-  /// Shows the Level-Up celebration dialog when the provider signals a level up.
+  /// Shows the Level-Up or Rank-Up celebration dialog when the provider signals it.
   void _onLevelProviderChange() {
     final levelProvider = _levelProvider;
-    if (levelProvider == null || !levelProvider.showLevelUpDialog || !mounted) {
+    if (levelProvider == null || !mounted) {
       return;
     }
-    levelProvider.dismissLevelUpDialog();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      LevelUpDialog.show(
-        context,
-        newLevel: levelProvider.displayLevel,
-        xpAwarded: levelProvider.displayXpForNextLevel,
-      );
-    });
+
+    if (levelProvider.showLevelUpDialog) {
+      levelProvider.dismissLevelUpDialog();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        LevelUpDialog.show(
+          context,
+          newLevel: levelProvider.displayLevel,
+          xpAwarded: levelProvider.displayXpForNextLevel,
+        );
+      });
+    }
+
+    if (levelProvider.showRankUpDialog) {
+      final oldRank = levelProvider.previousRank;
+      levelProvider.dismissRankUpDialog();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Need to import RankUpDialog, though it seems it should be in gamification
+        if (!mounted || oldRank == null) return;
+        RankUpDialog.show(
+          context,
+          newRank: levelProvider.rank,
+          oldRank: oldRank,
+        );
+      });
+    }
   }
 
   @override

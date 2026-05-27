@@ -775,17 +775,22 @@ class _ActivityFeedCard extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return 'datetime.justNow'.tr();
-    if (diff.inHours < 1)
+    if (diff.inMinutes < 1) {
+      return 'datetime.justNow'.tr();
+    }
+    if (diff.inHours < 1) {
       return 'datetime.minutesAgo'.tr(
         namedArgs: {'minutes': diff.inMinutes.toString()},
       );
-    if (diff.inDays < 1)
+    }
+    if (diff.inDays < 1) {
       return 'datetime.hoursAgo'.tr(
         namedArgs: {'hours': diff.inHours.toString()},
       );
-    if (diff.inDays < 7)
+    }
+    if (diff.inDays < 7) {
       return 'datetime.daysAgo'.tr(namedArgs: {'days': diff.inDays.toString()});
+    }
     return DateFormat('MMM d').format(date);
   }
 }

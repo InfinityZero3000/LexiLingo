@@ -266,9 +266,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'leaderboard.aboutLeagues'.tr() == 'leaderboard.aboutLeagues'
-                    ? 'Về các giải đấu'
-                    : 'leaderboard.aboutLeagues'.tr(),
+                'leaderboard.aboutLeagues'.tr(),
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -286,26 +284,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     // Reversed list so Master is at top
                     final rank = _leagues[_leagues.length - 1 - index];
                     final visualData = rankVisualDataFor(rank);
-
-                    final rankDescriptions = {
-                      'bronze':
-                          'Khởi đầu hành trình. Tích lũy điểm để thăng hạng!',
-                      'silver':
-                          'Bắt đầu nóng lên! Hãy tiếp tục học để tiến xa hơn.',
-                      'gold': 'Nỗ lực tuyệt vời! Bạn đang thực sự nổi bật.',
-                      'platinum':
-                          'Dành cho những người tinh anh. Cần sự tập trung cao độ.',
-                      'sapphire':
-                          'Sự chói sáng vượt bậc. Sự kiên trì của bạn đang được đền đáp.',
-                      'ruby':
-                          'Bậc thầy của sự cống hiến. Bạn đã đến rất gần đỉnh cao!',
-                      'amethyst':
-                          'Trạng thái huyền thoại. Rất ít người đạt được đến mức này.',
-                      'master':
-                          'Đỉnh cao tuyệt đối. Bạn đích thực là một bậc thầy ngôn ngữ!',
-                    };
-
-                    final defaultDesc = rankDescriptions[rank] ?? '';
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -347,10 +325,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                                       ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'leaderboard.${rank}Desc'.tr() ==
-                                          'leaderboard.${rank}Desc'
-                                      ? defaultDesc
-                                      : 'leaderboard.${rank}Desc'.tr(),
+                                  'leaderboard.${rank}Desc'.tr(),
                                   style: TextStyle(
                                     color: AppColorRoles.textMuted(isDark),
                                     fontSize: 13,

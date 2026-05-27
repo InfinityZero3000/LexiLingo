@@ -64,6 +64,7 @@ class LessonContentModel {
 class ExerciseModel {
   final String id;
   final String type;
+  final String? uiType;
   final String question;
   final List<ExerciseOptionModel>? options;
   final String correctAnswer;
@@ -77,6 +78,7 @@ class ExerciseModel {
   ExerciseModel({
     required this.id,
     required this.type,
+    this.uiType,
     required this.question,
     this.options,
     required this.correctAnswer,
@@ -92,6 +94,7 @@ class ExerciseModel {
     return ExerciseModel(
       id: json['id']?.toString() ?? '',
       type: json['type'] as String? ?? 'multiple_choice',
+      uiType: json['ui_type'] as String?,
       question: json['question'] as String? ?? '',
       options: (json['options'] as List?)
           ?.map((e) => ExerciseOptionModel.fromJson(e as Map<String, dynamic>))
@@ -111,6 +114,7 @@ class ExerciseModel {
     return Exercise(
       id: id,
       type: _parseExerciseType(type),
+      uiType: uiType,
       question: question,
       options: options?.map((o) => o.text).toList(),
       correctAnswer: correctAnswer,
