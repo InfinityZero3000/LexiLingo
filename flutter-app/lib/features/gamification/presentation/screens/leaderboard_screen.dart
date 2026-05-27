@@ -457,19 +457,27 @@ class _LeagueBadgeSmall extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = rankVisualDataFor(league).color;
+    final isMaster = league.toLowerCase() == 'master';
 
     return Container(
       width: 20,
       height: 20,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.7)],
+          colors: isMaster
+              ? [const Color(0xFF5AB6FF), const Color(0xFFFFD64F)]
+              : [color, color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
+          BoxShadow(
+            color: isMaster
+                ? const Color(0xFF5AB6FF).withValues(alpha: 0.3)
+                : color.withValues(alpha: 0.3),
+            blurRadius: 4,
+          ),
         ],
       ),
       child: RankAssetIcon(rank: league, size: 16, decorated: false),
