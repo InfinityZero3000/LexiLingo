@@ -163,7 +163,9 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
 
           // No session
           if (!provider.hasSession) {
-            return Center(child: Text('flashcard.noReviewSessionAvailable'.tr()));
+            return Center(
+              child: Text('flashcard.noReviewSessionAvailable'.tr()),
+            );
           }
 
           final session = provider.currentSession!;
@@ -217,9 +219,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: Text('flashcard.exitReviewTitle'.tr()),
-        content: Text(
-          'flashcard.exitReviewMessage'.tr(),
-        ),
+        content: Text('flashcard.exitReviewMessage'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

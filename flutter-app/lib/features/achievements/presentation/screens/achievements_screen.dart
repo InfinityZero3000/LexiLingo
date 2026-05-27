@@ -50,7 +50,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       body: Consumer<AchievementProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return LoadingScreen(message: 'achievements.loadingAchievements'.tr());
+            return LoadingScreen(
+              message: 'achievements.loadingAchievements'.tr(),
+            );
           }
 
           if (provider.error != null) {
@@ -145,7 +147,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'achievements.unlockedCount'.tr(namedArgs: {'unlocked': '$unlocked', 'total': '$total'}),
+                    'achievements.unlockedCount'.tr(
+                      namedArgs: {'unlocked': '$unlocked', 'total': '$total'},
+                    ),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.white70,
                     ),

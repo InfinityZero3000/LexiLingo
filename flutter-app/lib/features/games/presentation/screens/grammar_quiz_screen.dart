@@ -123,9 +123,17 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final correct = _topicCorrect[topic] ?? 0;
     if (total < 3) return '';
     final pct = correct / total * 100;
-    if (pct >= 80) return 'grammarQuiz.greatMastery'.tr(namedArgs: {'topic': _formatTopic(topic)});
-    if (pct >= 50) return 'grammarQuiz.keepPracticing'.tr(namedArgs: {'topic': _formatTopic(topic)});
-    return 'grammarQuiz.reviewConcepts'.tr(namedArgs: {'topic': _formatTopic(topic)});
+    if (pct >= 80)
+      return 'grammarQuiz.greatMastery'.tr(
+        namedArgs: {'topic': _formatTopic(topic)},
+      );
+    if (pct >= 50)
+      return 'grammarQuiz.keepPracticing'.tr(
+        namedArgs: {'topic': _formatTopic(topic)},
+      );
+    return 'grammarQuiz.reviewConcepts'.tr(
+      namedArgs: {'topic': _formatTopic(topic)},
+    );
   }
 
   String _formatTopic(String t) => t
@@ -204,7 +212,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'grammarQuiz.questionProgress'.tr(namedArgs: {'current': '${_questionIndex + 1}', 'total': '${game.questions.length}'}),
+              'grammarQuiz.questionProgress'.tr(
+                namedArgs: {
+                  'current': '${_questionIndex + 1}',
+                  'total': '${game.questions.length}',
+                },
+              ),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
@@ -225,7 +238,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                 children: [
                   LinearProgressIndicator(
                     value: _questionIndex / game.questions.length,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     color: AppColors.primary,
                     minHeight: 4,
                   ),
@@ -254,7 +269,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                           // Timer bar
                           LinearProgressIndicator(
                             value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             color: _timeLeft > 4
                                 ? AppColors.primary
                                 : AppColors.errorBright,
@@ -270,7 +287,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.shadow.withValues(alpha: 0.05),
                                   blurRadius: 6,
                                 ),
                               ],
@@ -289,8 +308,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                           // Answer cards
                           ...List.generate(q.options.length, (i) {
                             Color bg = Theme.of(context).colorScheme.surface;
-                            Color border = Theme.of(context).colorScheme.outlineVariant;
-                            Color text = Theme.of(context).colorScheme.onSurface;
+                            Color border = Theme.of(
+                              context,
+                            ).colorScheme.outlineVariant;
+                            Color text = Theme.of(
+                              context,
+                            ).colorScheme.onSurface;
                             IconData? icon;
                             if (_answered) {
                               if (i == q.correctIndex) {
@@ -374,7 +397,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 _feedbackText!,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   height: 1.4,
                                 ),
                               ),

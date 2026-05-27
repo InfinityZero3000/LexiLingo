@@ -89,8 +89,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Future<void> _onPreAuthQuestionsComplete(PreAuthAnswers answers) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.firstTimeUserKey, false);
-    await prefs.setString(
-        _preAuthAnswersKey, jsonEncode(answers.toJson()));
+    await prefs.setString(_preAuthAnswersKey, jsonEncode(answers.toJson()));
 
     if (!mounted) return;
     setState(() {
@@ -150,7 +149,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
       if (raw != null) {
         try {
           preAuth = PreAuthAnswers.fromJson(
-              jsonDecode(raw) as Map<String, dynamic>);
+            jsonDecode(raw) as Map<String, dynamic>,
+          );
         } catch (_) {}
       }
     }
@@ -219,9 +219,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show loading while checking auth state
     if (authProvider.isCheckingAuth) {
-      return Scaffold(
-        body: LoadingScreen(message: 'common.loading'.tr()),
-      );
+      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
     }
 
     // Detect when user just logged in

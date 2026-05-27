@@ -14,7 +14,9 @@ TextTheme _withCjkFallback(TextTheme base) {
     displayMedium: base.displayMedium?.copyWith(fontFamilyFallback: fallbacks),
     displaySmall: base.displaySmall?.copyWith(fontFamilyFallback: fallbacks),
     headlineLarge: base.headlineLarge?.copyWith(fontFamilyFallback: fallbacks),
-    headlineMedium: base.headlineMedium?.copyWith(fontFamilyFallback: fallbacks),
+    headlineMedium: base.headlineMedium?.copyWith(
+      fontFamilyFallback: fallbacks,
+    ),
     headlineSmall: base.headlineSmall?.copyWith(fontFamilyFallback: fallbacks),
     titleLarge: base.titleLarge?.copyWith(fontFamilyFallback: fallbacks),
     titleMedium: base.titleMedium?.copyWith(fontFamilyFallback: fallbacks),

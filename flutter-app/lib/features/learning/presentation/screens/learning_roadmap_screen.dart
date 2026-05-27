@@ -275,7 +275,17 @@ class _ZigzagRoadmap extends StatelessWidget {
                           layout: n,
                           onTap: n.lesson.isLocked
                               ? null
-                              : () => _showLessonSheet(context, n, courseId),
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => LearningSessionScreen(
+                                        lessonId: n.lesson.lessonId,
+                                        courseId: courseId,
+                                      ),
+                                    ),
+                                  );
+                                },
                         ),
                       ),
                     // ── Current lesson label bubble ───────────

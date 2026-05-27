@@ -43,14 +43,30 @@ class RankBadgeLabelled extends StatelessWidget {
         children: [
           RankBadge(rank: rank, size: iconSize, onTap: null),
           const SizedBox(height: 4),
-          Text(
-            rankDisplayNameFor(rank),
-            style: TextStyle(
-              color: data.color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
+          rank == 'master'
+              ? ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    rankDisplayNameFor(rank),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+              : Text(
+                  rankDisplayNameFor(rank),
+                  style: TextStyle(
+                    color: data.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
         ],
       ),
     );
@@ -107,14 +123,30 @@ class RankCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    rankDisplayNameFor(rank),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: data.color,
-                    ),
-                  ),
+                  rank == 'master'
+                      ? ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(bounds),
+                          child: Text(
+                            rankDisplayNameFor(rank),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          rankDisplayNameFor(rank),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: data.color,
+                          ),
+                        ),
                   const SizedBox(height: 4),
                   Text(
                     'gamification.levelProficiency'.tr(

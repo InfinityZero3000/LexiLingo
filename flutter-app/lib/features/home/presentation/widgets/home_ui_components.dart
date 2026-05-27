@@ -620,7 +620,9 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
           ),
           const SizedBox(height: 6),
           Text(
-            'home.activeDaysThisWeek'.tr(namedArgs: {'count': '$completedDays'}),
+            'home.activeDaysThisWeek'.tr(
+              namedArgs: {'count': '$completedDays'},
+            ),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,

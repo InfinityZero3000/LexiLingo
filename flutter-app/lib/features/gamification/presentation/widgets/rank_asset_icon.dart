@@ -43,8 +43,8 @@ const Map<String, RankVisualData> _rankVisuals = {
     key: 'platinum',
     name: 'Platinum',
     assetPath: 'assets/ranking/4-platinum.png',
-    color: Color(0xFFE5E4E2),
-    colorDark: Color(0xFFB8B8B6),
+    color: Color(0xFF00E5FF),
+    colorDark: Color(0xFF00B8D4),
   ),
   'sapphire': RankVisualData(
     key: 'sapphire',
@@ -138,23 +138,34 @@ class RankAssetIcon extends StatelessWidget {
       );
     }
 
+    final isMaster = data.key == 'master';
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [
-            data.color.withValues(alpha: 0.2),
-            data.color.withValues(alpha: 0.05),
-          ],
+          colors: isMaster
+              ? [const Color(0xFF5AB6FF), const Color(0xFFFFD64F)]
+              : [
+                  data.color.withValues(alpha: 0.2),
+                  data.color.withValues(alpha: 0.05),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: data.color.withValues(alpha: 0.28), width: 1),
+        border: Border.all(
+          color: isMaster
+              ? const Color(0xFF5AB6FF).withValues(alpha: 0.5)
+              : data.color.withValues(alpha: 0.28),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: data.color.withValues(alpha: 0.24),
+            color: isMaster
+                ? const Color(0xFF5AB6FF).withValues(alpha: 0.3)
+                : data.color.withValues(alpha: 0.24),
             blurRadius: size * 0.22,
             offset: Offset(0, size * 0.08),
           ),

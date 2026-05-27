@@ -87,7 +87,9 @@ class LeagueStatusEntity extends Equatable {
   static const String silver = 'silver';
   static const String gold = 'gold';
   static const String platinum = 'platinum';
-  static const String diamond = 'diamond';
+  static const String sapphire = 'sapphire';
+  static const String ruby = 'ruby';
+  static const String amethyst = 'amethyst';
   static const String master = 'master';
 
   static const List<String> leagueOrder = [
@@ -95,7 +97,9 @@ class LeagueStatusEntity extends Equatable {
     silver,
     gold,
     platinum,
-    diamond,
+    sapphire,
+    ruby,
+    amethyst,
     master,
   ];
 

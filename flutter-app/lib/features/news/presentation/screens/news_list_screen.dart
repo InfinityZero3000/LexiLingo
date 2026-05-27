@@ -190,7 +190,6 @@ class _NewsListScreenState extends State<NewsListScreen> {
     );
   }
 
-
   // ──────────────────────────────────────
   //  Category Tabs
   // ──────────────────────────────────────

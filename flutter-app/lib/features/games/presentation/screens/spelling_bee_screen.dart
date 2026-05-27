@@ -184,7 +184,12 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
             title: Text(
-              'spellingBee.wordProgress'.tr(namedArgs: {'current': '${_wordIndex + 1}', 'total': '${game.words.length}'}),
+              'spellingBee.wordProgress'.tr(
+                namedArgs: {
+                  'current': '${_wordIndex + 1}',
+                  'total': '${game.words.length}',
+                },
+              ),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
@@ -242,7 +247,12 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'spellingBee.playsLeftLabel'.tr(namedArgs: {'plays': '$_playsLeft', 'max': '${word.maxReplays}'}),
+                        'spellingBee.playsLeftLabel'.tr(
+                          namedArgs: {
+                            'plays': '$_playsLeft',
+                            'max': '${word.maxReplays}',
+                          },
+                        ),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 13,
@@ -260,7 +270,11 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'spellingBee.inputHint'.tr(),
-                          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          hintStyle: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
@@ -321,7 +335,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           child: Column(
                             children: [
                               Text(
-                                _isCorrect ? 'spellingBee.correctFeedback'.tr() : 'spellingBee.answerRevealLabel'.tr(),
+                                _isCorrect
+                                    ? 'spellingBee.correctFeedback'.tr()
+                                    : 'spellingBee.answerRevealLabel'.tr(),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _isCorrect
@@ -336,7 +352,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -347,7 +365,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                   word.ipaPronunciation!,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -358,7 +378,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                   word.definition,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                     height: 1.4,
                                   ),
                                   textAlign: TextAlign.center,

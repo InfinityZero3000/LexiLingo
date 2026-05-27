@@ -161,9 +161,7 @@ class LevelProgressCard extends StatelessWidget {
         final toNextFontSize = compact ? 10.0 : 11.0;
 
         return GestureDetector(
-          onTap:
-              onTap ??
-              () => _showLevelDetails(context),
+          onTap: onTap ?? () => _showLevelDetails(context),
           child: Container(
             padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
@@ -202,7 +200,9 @@ class LevelProgressCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'profile.level'.tr(namedArgs: {'level': '$level'}),
+                              'profile.level'.tr(
+                                namedArgs: {'level': '$level'},
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
@@ -212,7 +212,12 @@ class LevelProgressCard extends StatelessWidget {
                                   ),
                             ),
                             Text(
-                              'profile.xpProgress'.tr(namedArgs: {'current': '$xpIn', 'total': '$xpFor'}),
+                              'profile.xpProgress'.tr(
+                                namedArgs: {
+                                  'current': '$xpIn',
+                                  'total': '$xpFor',
+                                },
+                              ),
 
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -250,7 +255,9 @@ class LevelProgressCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'profile.level'.tr(namedArgs: {'level': '$level'}),
+                                'profile.level'.tr(
+                                  namedArgs: {'level': '$level'},
+                                ),
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.bold,
@@ -258,7 +265,12 @@ class LevelProgressCard extends StatelessWidget {
                                     ),
                               ),
                               Text(
-                                'home.xpThisLevel'.tr(namedArgs: {'current': '$xpIn', 'total': '$xpFor'}),
+                                'home.xpThisLevel'.tr(
+                                  namedArgs: {
+                                    'current': '$xpIn',
+                                    'total': '$xpFor',
+                                  },
+                                ),
 
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
@@ -299,7 +311,9 @@ class LevelProgressCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'profile.percentComplete'.tr(namedArgs: {'percent': '${(progress * 100).toInt()}'}),
+                        'profile.percentComplete'.tr(
+                          namedArgs: {'percent': '${(progress * 100).toInt()}'},
+                        ),
 
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: accent,
@@ -320,7 +334,12 @@ class LevelProgressCard extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 3 : 4),
                     Text(
-                      'profile.xpToNextLevel'.tr(namedArgs: {'xp': '${xpFor - xpIn}', 'level': '${level + 1}'}),
+                      'profile.xpToNextLevel'.tr(
+                        namedArgs: {
+                          'xp': '${xpFor - xpIn}',
+                          'level': '${level + 1}',
+                        },
+                      ),
 
                       maxLines: compact ? 1 : null,
                       overflow: compact ? TextOverflow.ellipsis : null,
@@ -421,9 +440,7 @@ class LevelDetailsSheet extends StatelessWidget {
                         children: [
                           Text(
                             lp.proficiencyLevel,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
+                            style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: cefrColor,
@@ -431,13 +448,11 @@ class LevelDetailsSheet extends StatelessWidget {
                           ),
                           Text(
                             lp.proficiencyName,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -473,18 +488,20 @@ class LevelDetailsSheet extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'profile.level'.tr(namedArgs: {'level': '${lp.displayLevel}'}),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            'profile.level'.tr(
+                              namedArgs: {'level': '${lp.displayLevel}'},
+                            ),
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            'home.xpTotal'.tr(namedArgs: {'xp': LevelCalculator.formatXP(lp.totalXp)}),
+                            'home.xpTotal'.tr(
+                              namedArgs: {
+                                'xp': LevelCalculator.formatXP(lp.totalXp),
+                              },
+                            ),
 
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: accent,
                                   fontWeight: FontWeight.w600,
@@ -508,20 +525,16 @@ class LevelDetailsSheet extends StatelessWidget {
                         children: [
                           Text(
                             '${lp.displayXpInLevel} / ${lp.displayXpForNextLevel} XP',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                           Text(
                             '${(lp.displayLevelProgress * 100).toInt()}%',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: accent,
                                   fontWeight: FontWeight.w600,
@@ -531,14 +544,15 @@ class LevelDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'profile.xpToNextLevel'.tr(namedArgs: {
-                          'xp': '${lp.displayXpForNextLevel - lp.displayXpInLevel}',
-                          'level': '${lp.displayLevel + 1}',
-                        }),
+                        'profile.xpToNextLevel'.tr(
+                          namedArgs: {
+                            'xp':
+                                '${lp.displayXpForNextLevel - lp.displayXpInLevel}',
+                            'level': '${lp.displayLevel + 1}',
+                          },
+                        ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 11,
                         ),
                       ),
@@ -581,10 +595,9 @@ class _SectionHeader extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),

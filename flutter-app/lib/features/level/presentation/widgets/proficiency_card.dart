@@ -146,7 +146,9 @@ class ProficiencyCard extends StatelessWidget {
               // Unlock message
               if (!hasEnoughData) ...[
                 Text(
-                  'profile.proficiencyUnlockThreshold'.tr(namedArgs: {'count': '$unlockThreshold'}),
+                  'profile.proficiencyUnlockThreshold'.tr(
+                    namedArgs: {'count': '$unlockThreshold'},
+                  ),
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[500],
                     fontSize: 12,
@@ -274,9 +276,7 @@ class ProficiencyCard extends StatelessWidget {
             ),
           ),
           child: const Center(
-            child: ShimmerContainer(
-              child: SkeletonCircle(size: 160),
-            ),
+            child: ShimmerContainer(child: SkeletonCircle(size: 160)),
           ),
         ),
       ],

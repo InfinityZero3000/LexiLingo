@@ -497,9 +497,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('lesson.exitLessonTitle'.tr()),
-        content: Text(
-          'lesson.exitLessonMessage'.tr(),
-        ),
+        content: Text('lesson.exitLessonMessage'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

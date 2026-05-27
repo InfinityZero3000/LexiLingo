@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +26,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     'silver',
     'gold',
     'platinum',
-    'diamond',
+    'sapphire',
+    'ruby',
+    'amethyst',
     'master',
   ];
 
@@ -76,141 +77,157 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
-    return Scaffold(
-      body: Consumer<GamificationProvider>(
-        builder: (context, provider, child) {
-          return NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              final showLeagueCard = provider.leagueStatus != null;
-              return [
-                // App Bar
-                SliverAppBar(
-                  title: Text('leaderboard.title'.tr()),
-                  centerTitle: true,
-                  pinned: true,
-                  floating: true,
-                  expandedHeight: showLeagueCard ? 256 : 120,
-                  flexibleSpace: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final top = constraints.biggest.height;
-                      final minHeight = MediaQuery.of(context).padding.top +
-                          kToolbarHeight +
-                          48; // TabBar height
-                      final maxHeight = showLeagueCard ? 256.0 : 120.0;
-                      final delta = maxHeight - minHeight;
-                      final t = delta > 0.0
-                          ? ((top - minHeight) / delta).clamp(0.0, 1.0)
-                          : 0.0;
+    return Consumer<GamificationProvider>(
+      builder: (context, provider, child) {
+        final isMaster = provider.selectedLeague.toLowerCase() == 'master';
+        final showLeagueCard = provider.leagueStatus != null;
 
-                      final scale = 0.8 + (0.2 * t);
-                      final blur = (1 - t) * 10.0;
-                      final opacity = Curves.easeIn.transform(t);
-
-                      return FlexibleSpaceBar(
-                        background: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                _getLeagueColor(
-                                  provider.selectedLeague,
-                                ).withValues(alpha: 0.3),
-                                Theme.of(context).scaffoldBackgroundColor,
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                          ),
-                          child: SafeArea(
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 56), // AppBar height
-                                if (showLeagueCard)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    child: Opacity(
-                                      opacity: opacity,
-                                      child: Transform.scale(
-                                        scale: scale,
-                                        child: ImageFiltered(
-                                          imageFilter: ImageFilter.blur(
-                                            sigmaX: blur,
-                                            sigmaY: blur,
-                                          ),
-                                          child: LeagueCard(
-                                            status: provider.leagueStatus!,
-                                            onTap: () {
-                                              // Jump to user's league tab
-                                              final index = _leagues.indexOf(
-                                                provider.leagueStatus!.league
-                                                    .toLowerCase(),
-                                              );
-                                              if (index >= 0) {
-                                                _tabController.animateTo(index);
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                if (showLeagueCard) const SizedBox(height: 62),
-                              ],
-                            ),
-                          ),
-                        ),
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            title: Text(
+              'leaderboard.title'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                onPressed: () => _showRankInfoDialog(context),
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              if (showLeagueCard)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: LeagueCard(
+                    status: provider.leagueStatus!,
+                    onTap: () {
+                      // Jump to user's league tab
+                      final index = _leagues.indexOf(
+                        provider.leagueStatus!.league.toLowerCase(),
                       );
+                      if (index >= 0) {
+                        _tabController.animateTo(index);
+                      }
                     },
                   ),
-                  bottom: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    labelColor: primaryColor,
-                    unselectedLabelColor: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant,
-                    indicatorColor: primaryColor,
-                    tabs: _leagues.map((league) {
-                      final isCurrentLeague =
-                          provider.leagueStatus?.league.toLowerCase() == league;
-                      return Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _LeagueBadgeSmall(league: league),
-                            const SizedBox(width: 6),
-                            Text(_getLeagueName(league)),
-                            if (isCurrentLeague) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
                 ),
-              ];
-            },
-            body: TabBarView(
-              controller: _tabController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: _leagues.map((league) {
-                return _LeaderboardTab(league: league);
-              }).toList(),
-            ),
-          );
-        },
-      ),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                labelColor: primaryColor,
+                unselectedLabelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant,
+                indicatorColor: primaryColor,
+                tabs: _leagues.map((league) {
+                  final isCurrentLeague =
+                      provider.leagueStatus?.league.toLowerCase() == league;
+                  return Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _LeagueBadgeSmall(league: league),
+                        const SizedBox(width: 6),
+                        Text(_getLeagueName(league)),
+                        if (isCurrentLeague) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    const backgroundAspectRatio = 941 / 1672;
+                    final backgroundHeight = width / backgroundAspectRatio;
+
+                    return Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: backgroundHeight,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isMaster
+                                    ? [
+                                        const Color(
+                                          0xFF5AB6FF,
+                                        ).withValues(alpha: 0.35),
+                                        const Color(
+                                          0xFFFFD64F,
+                                        ).withValues(alpha: 0.25),
+                                        Theme.of(
+                                          context,
+                                        ).scaffoldBackgroundColor,
+                                      ]
+                                    : [
+                                        _getLeagueColor(
+                                          provider.selectedLeague,
+                                        ).withValues(alpha: 0.25),
+                                        Theme.of(
+                                          context,
+                                        ).scaffoldBackgroundColor,
+                                      ],
+                                stops: isMaster
+                                    ? const [0.0, 0.4, 0.9]
+                                    : const [0.0, 0.8],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: backgroundHeight,
+                          child: Image.asset(
+                            'assets/ranking/honor-ranking.png',
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.topCenter,
+                            filterQuality: FilterQuality.high,
+                          ),
+                        ),
+                        TabBarView(
+                          controller: _tabController,
+                          children: _leagues.map((league) {
+                            return _LeaderboardTab(league: league);
+                          }).toList(),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          // removed container
+        );
+      },
     );
   }
 
@@ -220,6 +237,139 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   Color _getLeagueColor(String league) {
     return rankVisualDataFor(league).color;
+  }
+
+  void _showRankInfoDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[700] : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'leaderboard.aboutLeagues'.tr() == 'leaderboard.aboutLeagues'
+                    ? 'Về các giải đấu'
+                    : 'leaderboard.aboutLeagues'.tr(),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  itemCount: _leagues.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    // Reversed list so Master is at top
+                    final rank = _leagues[_leagues.length - 1 - index];
+                    final visualData = rankVisualDataFor(rank);
+
+                    final rankDescriptions = {
+                      'bronze':
+                          'Khởi đầu hành trình. Tích lũy điểm để thăng hạng!',
+                      'silver':
+                          'Bắt đầu nóng lên! Hãy tiếp tục học để tiến xa hơn.',
+                      'gold': 'Nỗ lực tuyệt vời! Bạn đang thực sự nổi bật.',
+                      'platinum':
+                          'Dành cho những người tinh anh. Cần sự tập trung cao độ.',
+                      'sapphire':
+                          'Sự chói sáng vượt bậc. Sự kiên trì của bạn đang được đền đáp.',
+                      'ruby':
+                          'Bậc thầy của sự cống hiến. Bạn đã đến rất gần đỉnh cao!',
+                      'amethyst':
+                          'Trạng thái huyền thoại. Rất ít người đạt được đến mức này.',
+                      'master':
+                          'Đỉnh cao tuyệt đối. Bạn đích thực là một bậc thầy ngôn ngữ!',
+                    };
+
+                    final defaultDesc = rankDescriptions[rank] ?? '';
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          RankAssetIcon(rank: rank, size: 56),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                rank == 'master'
+                                    ? ShaderMask(
+                                        shaderCallback: (bounds) =>
+                                            const LinearGradient(
+                                              colors: [
+                                                Color(0xFF5AB6FF),
+                                                Color(0xFFFFD64F),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ).createShader(bounds),
+                                        child: Text(
+                                          rankDisplayNameFor(rank),
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        rankDisplayNameFor(rank),
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: visualData.color,
+                                        ),
+                                      ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'leaderboard.${rank}Desc'.tr() ==
+                                          'leaderboard.${rank}Desc'
+                                      ? defaultDesc
+                                      : 'leaderboard.${rank}Desc'.tr(),
+                                  style: TextStyle(
+                                    color: AppColorRoles.textMuted(isDark),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -233,55 +383,39 @@ class _LeaderboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GamificationProvider>(
       builder: (context, provider, child) {
-        // Only show content for the selected league
-        if (provider.selectedLeague != league) {
-          return const Center(child: LottieLoadingWidget.medium());
-        }
+        final leaderboard = provider.leaderboardFor(league);
+        final isSelected =
+            provider.selectedLeague.toLowerCase() == league.toLowerCase();
 
-        final leaderboard = provider.leaderboard;
-        final hasMatchingLeaderboard =
-            leaderboard?.league.toLowerCase() == league;
+        if (leaderboard == null) {
+          if (provider.isLoadingLeaderboard && isSelected) {
+            return const Center(child: LottieLoadingWidget.medium());
+          }
 
-        if (provider.isLoadingLeaderboard && !hasMatchingLeaderboard) {
-          return const Center(child: LottieLoadingWidget.medium());
-        }
+          if (provider.leaderboardError != null && isSelected) {
+            return ErrorDisplayWidget.fromMessage(
+              message: provider.leaderboardError!,
+              onRetry: () => provider.loadLeaderboard(league: league),
+            );
+          }
 
-        if (provider.leaderboardError != null && !hasMatchingLeaderboard) {
-          return ErrorDisplayWidget.fromMessage(
-            message: provider.leaderboardError!,
-            onRetry: () => provider.loadLeaderboard(league: league),
-          );
-        }
-
-        if (leaderboard == null || !hasMatchingLeaderboard) {
           return _buildEmptyState(context);
         }
 
         final rankEntries = leaderboard.entries
-            .where((entry) => entry.userRank.toLowerCase() == league)
+            .where((entry) => rankVisualDataFor(entry.userRank).key == league)
             .toList();
         final topThree = rankEntries.take(3).toList();
 
-        return RefreshIndicator(
+        return LeaderboardPodium(
+          league: league,
+          topThree: topThree,
+          entries: rankEntries,
+          totalParticipants: leaderboard.totalParticipants,
           onRefresh: () async {
             await provider.loadLeaderboard(league: league);
             await provider.loadLeagueStatus();
           },
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                fillOverscroll: true,
-                child: LeaderboardPodium(
-                  league: league,
-                  topThree: topThree,
-                  entries: rankEntries,
-                  totalParticipants: leaderboard.totalParticipants,
-                ),
-              ),
-            ],
-          ),
         );
       },
     );

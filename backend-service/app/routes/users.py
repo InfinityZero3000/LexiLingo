@@ -314,6 +314,7 @@ async def get_user_level_full(
             rank_score=round(rank_info.score, 2),
             rank_color=rank_info.color,
             rank_icon=rank_info.icon,
+            rank_icon_url=rank_info.icon_url,
         ),
         message="Full level information retrieved successfully"
     )

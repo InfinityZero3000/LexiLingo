@@ -818,7 +818,9 @@ class _ProfilePageState extends State<ProfilePage>
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.18),
+                  backgroundColor: AppColorRoles.primary(
+                    isDark,
+                  ).withValues(alpha: 0.18),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppColorRoles.primary(isDark),
                   ),
@@ -1081,10 +1083,7 @@ class _ProfilePageState extends State<ProfilePage>
           children: List.generate(
             4,
             (index) => ShimmerContainer(
-              child: SkeletonBox(
-                height: double.infinity,
-                borderRadius: 12,
-              ),
+              child: SkeletonBox(height: double.infinity, borderRadius: 12),
             ),
           ),
         ),
@@ -1136,7 +1135,9 @@ class _ProfilePageState extends State<ProfilePage>
                         Text(
                           'profile.last7Days'.tr(),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -1146,7 +1147,9 @@ class _ProfilePageState extends State<ProfilePage>
                           Icon(
                             Icons.chevron_right,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ],
@@ -1168,51 +1171,64 @@ class _ProfilePageState extends State<ProfilePage>
                               SizedBox(
                                 height: 120,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: List.generate(7, (index) => Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: SkeletonBox(
-                                        height: 20.0 + (index % 3) * 30.0,
-                                        borderRadius: 4,
+                                  children: List.generate(
+                                    7,
+                                    (index) => Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        child: SkeletonBox(
+                                          height: 20.0 + (index % 3) * 30.0,
+                                          borderRadius: 4,
+                                        ),
                                       ),
                                     ),
-                                  )),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Row(
-                                children: List.generate(7, (index) => const Expanded(
-                                  child: Center(
-                                    child: SkeletonBox(
-                                      width: 20,
-                                      height: 12,
-                                      borderRadius: 2,
+                                children: List.generate(
+                                  7,
+                                  (index) => const Expanded(
+                                    child: Center(
+                                      child: SkeletonBox(
+                                        width: 20,
+                                        height: 12,
+                                        borderRadius: 2,
+                                      ),
                                     ),
                                   ),
-                                )),
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: List.generate(3, (index) => const Column(
-                                  children: [
-                                    SkeletonCircle(size: 20),
-                                    SizedBox(height: 4),
-                                    SkeletonBox(
-                                      width: 40,
-                                      height: 16,
-                                      borderRadius: 4,
-                                    ),
-                                    SizedBox(height: 4),
-                                    SkeletonBox(
-                                      width: 60,
-                                      height: 12,
-                                      borderRadius: 4,
-                                    ),
-                                  ],
-                                )),
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: List.generate(
+                                  3,
+                                  (index) => const Column(
+                                    children: [
+                                      SkeletonCircle(size: 20),
+                                      SizedBox(height: 4),
+                                      SkeletonBox(
+                                        width: 40,
+                                        height: 16,
+                                        borderRadius: 4,
+                                      ),
+                                      SizedBox(height: 4),
+                                      SkeletonBox(
+                                        width: 60,
+                                        height: 12,
+                                        borderRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -1394,7 +1410,7 @@ class _ProfilePageState extends State<ProfilePage>
                         itemCount: 4,
                         separatorBuilder: (_, __) => const SizedBox(width: 16),
                         itemBuilder: (context, index) {
-                           return const SkeletonCircle(size: 80);
+                          return const SkeletonCircle(size: 80);
                         },
                       ),
                     )
@@ -1597,9 +1613,17 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
     final primary = AppColorRoles.primary(isDark);
 
     final totalXP = activities.fold<int>(0, (s, a) => s + a.xpEarned);
-    final totalLessons = activities.fold<int>(0, (s, a) => s + a.lessonsCompleted);
-    final totalWords = activities.fold<int>(0, (s, a) => s + a.vocabularyLearned);
-    final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
+    final totalLessons = activities.fold<int>(
+      0,
+      (s, a) => s + a.lessonsCompleted,
+    );
+    final totalWords = activities.fold<int>(
+      0,
+      (s, a) => s + a.vocabularyLearned,
+    );
+    final maxXP = activities
+        .map((a) => a.xpEarned)
+        .reduce((a, b) => a > b ? a : b);
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
@@ -1650,7 +1674,9 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                           'profile.last7DaysDetailedBreakdown'.tr(),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1673,13 +1699,18 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
               ),
               // Summary row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     _SummaryChip(
                       icon: Icons.star,
                       color: AppColors.warning,
-                      label: 'profile.xpValue'.tr(namedArgs: {'xp': '$totalXP'}),
+                      label: 'profile.xpValue'.tr(
+                        namedArgs: {'xp': '$totalXP'},
+                      ),
                       sublabel: 'profile.total'.tr(),
                     ),
                     const SizedBox(width: 8),
@@ -1729,8 +1760,8 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                         color: isBest
                             ? primary.withValues(alpha: isDark ? 0.15 : 0.08)
                             : (isDark
-                                ? Colors.white.withValues(alpha: 0.04)
-                                : Colors.black.withValues(alpha: 0.03)),
+                                  ? Colors.white.withValues(alpha: 0.04)
+                                  : Colors.black.withValues(alpha: 0.03)),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isBest
@@ -1754,15 +1785,15 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                         fontSize: 14,
                                       ),
                                     ),
-                                    if (shortDate.isNotEmpty) ...[  
+                                    if (shortDate.isNotEmpty) ...[
                                       const SizedBox(width: 6),
                                       Text(
                                         shortDate,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -1776,10 +1807,14 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.warning.withValues(alpha: 0.15),
+                                    color: AppColors.warning.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: AppColors.warning.withValues(alpha: 0.5),
+                                      color: AppColors.warning.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -1806,7 +1841,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           // XP bar
-                          if (a.xpEarned > 0) ...[  
+                          if (a.xpEarned > 0) ...[
                             Row(
                               children: [
                                 Expanded(
@@ -1814,10 +1849,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(4),
                                     child: LinearProgressIndicator(
                                       value: barFraction,
-                                      backgroundColor:
-                                          primary.withValues(alpha: 0.12),
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(primary),
+                                      backgroundColor: primary.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        primary,
+                                      ),
                                       minHeight: 6,
                                     ),
                                   ),
@@ -1845,12 +1882,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                   'profile.noActivity'.tr(),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 )
-                              else ...[  
+                              else ...[
                                 _MiniStat(
                                   icon: Icons.menu_book,
                                   color: primary,

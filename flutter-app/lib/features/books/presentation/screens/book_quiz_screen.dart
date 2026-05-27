@@ -69,7 +69,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'books.chapterQuizTitle'.tr(namedArgs: {'chapter': '${widget.chapter}'}),
+          'books.chapterQuizTitle'.tr(
+            namedArgs: {'chapter': '${widget.chapter}'},
+          ),
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
         ),
         backgroundColor: Colors.transparent,
@@ -340,7 +342,10 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 ),
                 child: Text(
                   'books.backToBook'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),

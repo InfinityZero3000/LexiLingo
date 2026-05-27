@@ -217,7 +217,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      'matchingGame.matchedProgress'.tr(namedArgs: {'matched': '${_matchedIds.length}', 'total': '${game.pairs.length}'}),
+                      'matchingGame.matchedProgress'.tr(
+                        namedArgs: {
+                          'matched': '${_matchedIds.length}',
+                          'total': '${game.pairs.length}',
+                        },
+                      ),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,

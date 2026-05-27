@@ -117,7 +117,11 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                   Icons.bookmark_rounded,
                   color: AppColors.primary,
                 ),
-                title: Text('bookReader.bookmarkPage'.tr(namedArgs: {'page': '${b.page + 1}'})),
+                title: Text(
+                  'bookReader.bookmarkPage'.tr(
+                    namedArgs: {'page': '${b.page + 1}'},
+                  ),
+                ),
                 subtitle: b.note.isNotEmpty ? Text(b.note) : null,
                 onTap: () {
                   Navigator.pop(context);
@@ -197,7 +201,10 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'bookReader.couldNotLoad'.tr() + (provider.error != null ? '\n${provider.error}' : ''),
+                          'bookReader.couldNotLoad'.tr() +
+                              (provider.error != null
+                                  ? '\n${provider.error}'
+                                  : ''),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.grey),
                         ),
@@ -410,7 +417,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 icon: Icon(Icons.navigate_before_rounded, color: textColor),
               ),
               Text(
-                totalPages > 0 ? 'bookReader.page'.tr(namedArgs: {'current': '${cur + 1}', 'total': '$totalPages'}) : '',
+                totalPages > 0
+                    ? 'bookReader.page'.tr(
+                        namedArgs: {
+                          'current': '${cur + 1}',
+                          'total': '$totalPages',
+                        },
+                      )
+                    : '',
                 style: TextStyle(
                   fontSize: 13,
                   color: textColor.withValues(alpha: 0.7),
@@ -505,8 +519,12 @@ class _DictionarySheetState extends State<_DictionarySheet> {
 
       if (!mounted) return;
       final message = result.alreadyInCollection
-          ? 'bookReader.wordAlreadyInCollection'.tr(namedArgs: {'word': result.normalizedWord})
-          : 'bookReader.wordSaved'.tr(namedArgs: {'word': result.normalizedWord});
+          ? 'bookReader.wordAlreadyInCollection'.tr(
+              namedArgs: {'word': result.normalizedWord},
+            )
+          : 'bookReader.wordSaved'.tr(
+              namedArgs: {'word': result.normalizedWord},
+            );
 
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
@@ -563,7 +581,9 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                           const LottieLoadingWidget.tiny(),
                           const SizedBox(height: 10),
                           Text(
-                            'bookReader.lookingUp'.tr(namedArgs: {'word': widget.word}),
+                            'bookReader.lookingUp'.tr(
+                              namedArgs: {'word': widget.word},
+                            ),
                             style: TextStyle(
                               color: widget.subtextColor,
                               fontSize: 13,
@@ -577,7 +597,9 @@ class _DictionarySheetState extends State<_DictionarySheet> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'bookReader.noDefinitionFound'.tr(namedArgs: {'word': widget.word}),
+                          'bookReader.noDefinitionFound'.tr(
+                            namedArgs: {'word': widget.word},
+                          ),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: widget.subtextColor,

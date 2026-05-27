@@ -222,7 +222,8 @@ class _VocabularySpeakingPracticeScreenState
     if (provider.currentSession?.isCompleted ?? false) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => SessionCompleteScreen(session: provider.currentSession!),
+          builder: (_) =>
+              SessionCompleteScreen(session: provider.currentSession!),
         ),
       );
       return;
@@ -236,7 +237,9 @@ class _VocabularySpeakingPracticeScreenState
     });
   }
 
-  ReviewQuality _qualityFromEvaluation(PronunciationEvaluationEntity evaluation) {
+  ReviewQuality _qualityFromEvaluation(
+    PronunciationEvaluationEntity evaluation,
+  ) {
     if (evaluation.score >= 80) return ReviewQuality.perfect;
     if (evaluation.score >= 60) return ReviewQuality.good;
     return ReviewQuality.incorrect;
@@ -265,9 +268,9 @@ class _VocabularySpeakingPracticeScreenState
           children: [
             Text(
               vocabulary.word,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(vocabulary.definition),
@@ -478,7 +481,9 @@ class _VocabularySpeakingPracticeScreenState
             ),
             child: Icon(
               _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-              color: _isRecording ? AppColors.errorBright : const Color(0xFF168348),
+              color: _isRecording
+                  ? AppColors.errorBright
+                  : const Color(0xFF168348),
               size: 48,
             ),
           ),

@@ -89,7 +89,9 @@ class DailyChallengeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    completed ? 'games.challengeCompleted'.tr() : 'games.dailyChallengeLabel'.tr(),
+                    completed
+                        ? 'games.challengeCompleted'.tr()
+                        : 'games.dailyChallengeLabel'.tr(),
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 13,

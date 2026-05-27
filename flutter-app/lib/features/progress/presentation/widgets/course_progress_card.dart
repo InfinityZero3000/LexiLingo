@@ -113,7 +113,11 @@ class CourseProgressCard extends StatelessWidget {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    'progress.lastActivity'.tr(namedArgs: {'date': _formatDate(courseProgress.lastActivityAt)}),
+                    'progress.lastActivity'.tr(
+                      namedArgs: {
+                        'date': _formatDate(courseProgress.lastActivityAt),
+                      },
+                    ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

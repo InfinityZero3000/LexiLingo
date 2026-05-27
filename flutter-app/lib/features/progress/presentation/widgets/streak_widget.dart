@@ -213,7 +213,11 @@ class StreakCard extends StatelessWidget {
                             Row(
                               children: [
                                 Text(
-                                  'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
+                                  'home.dayStreakCount'.tr(
+                                    namedArgs: {
+                                      'count': '${streak.currentStreak}',
+                                    },
+                                  ),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -302,7 +306,9 @@ class StreakCard extends StatelessWidget {
                         Icon(Icons.ac_unit, size: 16, color: Colors.cyan),
                         const SizedBox(width: 8),
                         Text(
-                          'home.streakFreezesAvailable'.tr(namedArgs: {'count': '${streak.freezeCount}'}),
+                          'home.streakFreezesAvailable'.tr(
+                            namedArgs: {'count': '${streak.freezeCount}'},
+                          ),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -365,7 +371,9 @@ class StreakDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
+            'home.dayStreakCount'.tr(
+              namedArgs: {'count': '${streak.currentStreak}'},
+            ),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -476,7 +484,9 @@ class StreakDetailsSheet extends StatelessWidget {
                               final accent = AppColorRoles.primary(isDark);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('home.streakFreezeActivated'.tr()),
+                                  content: Text(
+                                    'home.streakFreezeActivated'.tr(),
+                                  ),
                                   backgroundColor: accent,
                                 ),
                               );
@@ -543,7 +553,9 @@ class StreakBadge extends StatelessWidget {
         final streak = provider.streak!;
 
         return Tooltip(
-          message: 'home.dayStreakCount'.tr(namedArgs: {'count': '${streak.currentStreak}'}),
+          message: 'home.dayStreakCount'.tr(
+            namedArgs: {'count': '${streak.currentStreak}'},
+          ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(

@@ -189,13 +189,17 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               Icon(
                 Icons.touch_app,
                 size: 20,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 8),
               Text(
                 'vocabulary.tapToReveal'.tr(),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -247,7 +251,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             ),
 
             // Localized translation
-            if (vocabulary.getTranslation(context.locale.languageCode) != null) ...[
+            if (vocabulary.getTranslation(context.locale.languageCode) !=
+                null) ...[
               const SizedBox(height: 24),
               Text(
                 'vocabulary.translationLabel'.tr(),
@@ -296,7 +301,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                               example,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -305,7 +312,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                           SpeakIconButton(
                             text: example,
                             size: 18,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -320,7 +329,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               child: Text(
                 'vocabulary.ratingQuestion'.tr(),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),

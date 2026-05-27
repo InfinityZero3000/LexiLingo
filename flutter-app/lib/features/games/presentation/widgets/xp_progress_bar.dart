@@ -90,7 +90,10 @@ class _XPProgressBarState extends State<XPProgressBar>
               const SizedBox(height: 2),
               Text(
                 '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -115,7 +118,9 @@ class _XPProgressBarState extends State<XPProgressBar>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'games.levelDisplay'.tr(namedArgs: {'level': '${widget.numericLevel}'}),
+                      'games.levelDisplay'.tr(
+                        namedArgs: {'level': '${widget.numericLevel}'},
+                      ),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -151,10 +156,15 @@ class _XPProgressBarState extends State<XPProgressBar>
           children: [
             Text(
               '${widget.progressPercent.toStringAsFixed(0)}% to next level',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             Text(
-              'games.levelNextShort'.tr(namedArgs: {'level': '${widget.numericLevel + 1}'}),
+              'games.levelNextShort'.tr(
+                namedArgs: {'level': '${widget.numericLevel + 1}'},
+              ),
               style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.primary,

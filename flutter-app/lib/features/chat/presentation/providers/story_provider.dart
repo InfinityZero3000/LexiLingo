@@ -274,29 +274,26 @@ class StoryProvider extends ChangeNotifier {
         limit: _messagesPageSize,
       );
 
-      final restored = result.fold(
-        (_) => false,
-        (page) {
-          _currentSession = saved;
-          _messages = page.messages.isNotEmpty
-              ? page.messages
-              : [
-                  TopicChatMessage(
-                    id: 'opening_${saved.sessionId}',
-                    sessionId: saved.sessionId,
-                    content: saved.openingMessage,
-                    isUser: false,
-                    timestamp: saved.createdAt,
-                  ),
-                ];
-          _hasMoreMessages = page.hasMore;
-          _nextMessageCursor = page.nextCursor;
-          _isLoadingMoreMessages = false;
-          _isLoading = false;
-          notifyListeners();
-          return true;
-        },
-      );
+      final restored = result.fold((_) => false, (page) {
+        _currentSession = saved;
+        _messages = page.messages.isNotEmpty
+            ? page.messages
+            : [
+                TopicChatMessage(
+                  id: 'opening_${saved.sessionId}',
+                  sessionId: saved.sessionId,
+                  content: saved.openingMessage,
+                  isUser: false,
+                  timestamp: saved.createdAt,
+                ),
+              ];
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoadingMoreMessages = false;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      });
 
       if (restored) return true;
 

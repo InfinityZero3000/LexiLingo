@@ -13,14 +13,14 @@ class PreAuthAnswers {
   const PreAuthAnswers({required this.name, required this.nativeLanguage});
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'native_language': nativeLanguage,
-      };
+    'name': name,
+    'native_language': nativeLanguage,
+  };
 
   factory PreAuthAnswers.fromJson(Map<String, dynamic> json) => PreAuthAnswers(
-        name: json['name'] as String? ?? '',
-        nativeLanguage: json['native_language'] as String? ?? 'vi',
-      );
+    name: json['name'] as String? ?? '',
+    nativeLanguage: json['native_language'] as String? ?? 'vi',
+  );
 }
 
 class PreAuthQuestionsPage extends StatefulWidget {
@@ -53,7 +53,10 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
 
   static final List<_LangOption> _languages = [
     ...AppLocales.supportedLocales.map(
-      (locale) => _LangOption(locale.languageCode, AppLocales.nameOf(locale.languageCode)),
+      (locale) => _LangOption(
+        locale.languageCode,
+        AppLocales.nameOf(locale.languageCode),
+      ),
     ),
     const _LangOption('other', 'preAuth.otherLanguage'),
   ];
@@ -122,8 +125,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SafeArea(
@@ -169,8 +173,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                   child: LinearProgressIndicator(
                     value: (_currentPage + 1) / _totalPages,
                     minHeight: 6,
-                    backgroundColor:
-                        isDark ? AppColors.slate800 : AppColors.slate200,
+                    backgroundColor: isDark
+                        ? AppColors.slate800
+                        : AppColors.slate200,
                     valueColor: const AlwaysStoppedAnimation(
                       AppColors.accentMint,
                     ),
@@ -232,9 +237,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                       child: Text(
                         'auth.alreadyHaveAccount'.tr(),
                         style: TextStyle(
-                          color: isDark
-                              ? Colors.white60
-                              : AppColors.textSlate,
+                          color: isDark ? Colors.white60 : AppColors.textSlate,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -249,8 +252,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
     );
   }
 
-  Widget _buildNameStep(
-      BuildContext context, bool isDark, ThemeData theme) {
+  Widget _buildNameStep(BuildContext context, bool isDark, ThemeData theme) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -345,7 +347,10 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
   }
 
   Widget _buildLanguageStep(
-      BuildContext context, bool isDark, ThemeData theme) {
+    BuildContext context,
+    bool isDark,
+    ThemeData theme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -382,16 +387,16 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     color: isSelected
-                      ? AppColors.accentMint.withValues(alpha: 0.2)
+                        ? AppColors.accentMint.withValues(alpha: 0.2)
                         : isDark
                         ? AppColors.slate800.withValues(alpha: 0.5)
-                            : Colors.white,
+                        : Colors.white,
                     border: Border.all(
                       color: isSelected
                           ? AppColors.accentMint
                           : isDark
-                              ? AppColors.slate800
-                              : AppColors.slate200,
+                          ? AppColors.slate800
+                          : AppColors.slate200,
                       width: isSelected ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -411,8 +416,8 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                             color: isSelected
                                 ? AppColors.accentMint
                                 : isDark
-                                    ? Colors.white
-                                    : AppColors.textDark,
+                                ? Colors.white
+                                : AppColors.textDark,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -477,7 +482,8 @@ class _LanguageOptionIcon extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          errorWidget: (_, __, ___) => const Icon(Icons.flag_outlined, size: 20),
+          errorWidget: (_, __, ___) =>
+              const Icon(Icons.flag_outlined, size: 20),
         ),
       ),
     );

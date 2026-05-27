@@ -413,7 +413,9 @@ class BookRepository {
     if (kIsWeb) {
       final response = await _client.get(Uri.parse(book.downloadUrl));
       if (response.statusCode >= 400) {
-        throw Exception('Failed to fetch book text: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch book text: HTTP ${response.statusCode}',
+        );
       }
       final text = utf8.decode(response.bodyBytes, allowMalformed: true);
       _assertPlainText(text, book.downloadUrl);

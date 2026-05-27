@@ -26,9 +26,9 @@ class PronunciationEvaluationModel extends PronunciationEvaluationEntity {
     final rawErrors = json['errors'];
     final errors = rawErrors is List
         ? rawErrors
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList()
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList()
         : <Map<String, dynamic>>[];
 
     return PronunciationEvaluationModel(

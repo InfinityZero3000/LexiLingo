@@ -4,9 +4,9 @@ class VocabWord {
   final String definition;
   final bool isLearned;
   final String? pronunciation; // IPA phonetic, e.g. /rɪˈzɪl.jənt/
-  final String? audioUrl;      // Remote audio URL for TTS playback
-  final String? example;       // Example sentence
-  final String? partOfSpeech;  // noun, verb, adjective…
+  final String? audioUrl; // Remote audio URL for TTS playback
+  final String? example; // Example sentence
+  final String? partOfSpeech; // noun, verb, adjective…
 
   VocabWord({
     this.id,

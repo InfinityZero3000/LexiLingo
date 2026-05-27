@@ -194,7 +194,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                 elevation: 0,
                 title: Text(
                   'hangman.title'.tr(),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 actions: [
                   Padding(
@@ -226,7 +228,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                       children: [
                         Chip(
                           label: Text(
-                            game.category.isEmpty ? 'hangman.defaultCategory'.tr() : game.category,
+                            game.category.isEmpty
+                                ? 'hangman.defaultCategory'.tr()
+                                : game.category,
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
@@ -239,9 +243,13 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                         const Spacer(),
                         Text(
-                          'hangman.livesLeftLabel'.tr(namedArgs: {'lives': '${maxWrong - _wrongGuesses}'}),
+                          'hangman.livesLeftLabel'.tr(
+                            namedArgs: {'lives': '${maxWrong - _wrongGuesses}'},
+                          ),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
@@ -302,7 +310,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                               bottom: BorderSide(
                                 color: revealed
                                     ? AppColors.primary
-                                    : Theme.of(context).colorScheme.outlineVariant,
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
                                 width: 2,
                               ),
                             ),
@@ -314,7 +324,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                 )
                               : null,
@@ -327,7 +339,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        'hangman.wordRevealLabel'.tr(namedArgs: {'word': game.word}),
+                        'hangman.wordRevealLabel'.tr(
+                          namedArgs: {'word': game.word},
+                        ),
                         style: const TextStyle(
                           color: AppColors.errorBright,
                           fontWeight: FontWeight.bold,
@@ -433,10 +447,14 @@ class _HintButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: active
+              ? color.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: active ? color : Theme.of(context).colorScheme.outlineVariant,
+            color: active
+                ? color
+                : Theme.of(context).colorScheme.outlineVariant,
             width: 1.5,
           ),
         ),
@@ -448,11 +466,13 @@ class _HintButton extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: active ? color : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: active
+                    ? color
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             Text(
-            used ? 'hangman.hintUsedLabel'.tr() : detail,
+              used ? 'hangman.hintUsedLabel'.tr() : detail,
               style: TextStyle(
                 fontSize: 10,
                 color: active

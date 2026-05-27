@@ -80,7 +80,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         ),
                         Text(
                           unread > 0
-                              ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'.tr(namedArgs: {'count': unread.toString()})
+                              ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'
+                                    .tr(namedArgs: {'count': unread.toString()})
                               : 'notifications.allCaughtUp'.tr(),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.grey[600]),

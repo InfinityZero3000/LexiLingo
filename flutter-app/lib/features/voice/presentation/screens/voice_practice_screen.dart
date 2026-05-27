@@ -133,9 +133,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         );
       });
     } catch (e) {
-      _showError(
-        'voice.failedToStartRecording'.tr(namedArgs: {'error': '$e'}),
-      );
+      _showError('voice.failedToStartRecording'.tr(namedArgs: {'error': '$e'}));
     }
   }
 
@@ -160,9 +158,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         _showError('voice.noRecordedAudioReturned'.tr());
       }
     } catch (e) {
-      _showError(
-        'voice.failedToStopRecording'.tr(namedArgs: {'error': '$e'}),
-      );
+      _showError('voice.failedToStopRecording'.tr(namedArgs: {'error': '$e'}));
     }
   }
 
@@ -329,7 +325,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                       : (_isPlaying ? _stopPlaying : _playExample),
                   icon: Icon(_isPlaying ? Icons.stop : Icons.volume_up),
                   label: Text(
-                    _isPlaying ? 'voice.stop'.tr() : 'voice.listenToExample'.tr(),
+                    _isPlaying
+                        ? 'voice.stop'.tr()
+                        : 'voice.listenToExample'.tr(),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

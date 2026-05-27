@@ -32,7 +32,7 @@ class VocabularyItemEntity {
     required this.createdAt,
   });
 
-  /// Get localized translation dynamically 
+  /// Get localized translation dynamically
   String? getTranslation(String localeCode) {
     if (translation == null) return null;
     // Attempt exact match

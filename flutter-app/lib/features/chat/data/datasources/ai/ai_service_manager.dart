@@ -84,7 +84,10 @@ class AIServiceManager {
           temperature: temperature,
         );
       } catch (e) {
-        logWarn(_tag, 'Current service ${_currentService!.modelName} failed: $e');
+        logWarn(
+          _tag,
+          'Current service ${_currentService!.modelName} failed: $e',
+        );
       }
     }
 
