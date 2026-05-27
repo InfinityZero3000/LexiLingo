@@ -385,11 +385,6 @@ server {
     # -------------------------------------------------------------------
     # AI Service admin routes (super-admin only; X-Admin-Key protected)
     # -------------------------------------------------------------------
-    location /api/v1/admin/ {
-        limit_req zone=ai_general_per_ip burst=20 nodelay;
-        include /etc/nginx/snippets/proxy-common.conf;
-        proxy_pass http://ai_upstream;
-    }
 
     # Backwards-compatible alias used by admin-service
     location /api/v1/ai-admin/ {

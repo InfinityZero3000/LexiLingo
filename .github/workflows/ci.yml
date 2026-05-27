@@ -87,7 +87,7 @@ jobs:
           done
 
       - name: Create all DB tables
-        run: python create_tables.py
+        run: python scripts/create_tables.py
 
       - name: Seed proficiency integration test data
         env:
