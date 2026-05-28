@@ -157,7 +157,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
-      _showSnack('lexiChat.failedStartRecording'.tr(namedArgs: {'error': e.toString()}));
+      _showSnack(
+        'lexiChat.failedStartRecording'.tr(namedArgs: {'error': e.toString()}),
+      );
     }
   }
 
@@ -184,7 +186,9 @@ class _LexiChatPageState extends State<LexiChatPage>
       await pending;
       _scrollToBottom();
     } catch (e) {
-      _showSnack('lexiChat.failedStopRecording'.tr(namedArgs: {'error': e.toString()}));
+      _showSnack(
+        'lexiChat.failedStopRecording'.tr(namedArgs: {'error': e.toString()}),
+      );
     }
   }
 
@@ -424,85 +428,105 @@ class _LexiChatPageState extends State<LexiChatPage>
                           builder: (_) {
                             final sessions = provider.sessions;
                             return ListView.builder(
-                          itemCount: sessions.length,
-                          itemBuilder: (context, index) {
-                            final s = sessions[index];
-                            final selected =
-                                provider.session?.sessionId == s.sessionId;
-                            return ListTile(
-                              selected: selected,
-                              selectedTileColor: AppColorRoles.primary(
-                                isDark,
-                              ).withValues(alpha: 0.08),
-                              title: Text(
-                                s.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                s.updatedAt.toLocal().toString().substring(
-                                  0,
-                                  16,
-                                ),
-                              ),
-                              onTap: () async {
-                                Navigator.pop(context);
-                                await provider.selectSession(s);
-                              },
-                              trailing: PopupMenuButton<String>(
-                                onSelected: (value) async {
-                                  if (value == 'rename') {
-                                    final controller = TextEditingController(
-                                      text: s.title,
-                                    );
-                                    final renamed = await showDialog<String>(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        title: Text('lexiChat.renameSessionTitle'.tr()),
-                                        content: TextField(
-                                          controller: controller,
+                              itemCount: sessions.length,
+                              itemBuilder: (context, index) {
+                                final s = sessions[index];
+                                final selected =
+                                    provider.session?.sessionId == s.sessionId;
+                                return ListTile(
+                                  selected: selected,
+                                  selectedTileColor: AppColorRoles.primary(
+                                    isDark,
+                                  ).withValues(alpha: 0.08),
+                                  title: Text(
+                                    s.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    s.updatedAt.toLocal().toString().substring(
+                                      0,
+                                      16,
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    await provider.selectSession(s);
+                                  },
+                                  trailing: PopupMenuButton<String>(
+                                    onSelected: (value) async {
+                                      if (value == 'rename') {
+                                        final controller =
+                                            TextEditingController(
+                                              text: s.title,
+                                            );
+                                        final renamed =
+                                            await showDialog<String>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                title: Text(
+                                                  'lexiChat.renameSessionTitle'
+                                                      .tr(),
+                                                ),
+                                                content: TextField(
+                                                  controller: controller,
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: Text(
+                                                      'lexiChat.cancelButton'
+                                                          .tr(),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          context,
+                                                          controller.text
+                                                              .trim(),
+                                                        ),
+                                                    child: Text(
+                                                      'lexiChat.saveButton'
+                                                          .tr(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                        if (renamed != null &&
+                                            renamed.isNotEmpty) {
+                                          await provider.renameSession(
+                                            s.sessionId,
+                                            renamed,
+                                          );
+                                        }
+                                      }
+                                      if (value == 'delete') {
+                                        await provider.deleteSession(
+                                          s.sessionId,
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      PopupMenuItem(
+                                        value: 'rename',
+                                        child: Text(
+                                          'lexiChat.renameAction'.tr(),
                                         ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text('lexiChat.cancelButton'.tr()),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () => Navigator.pop(
-                                              context,
-                                              controller.text.trim(),
-                                            ),
-                                            child: Text('lexiChat.saveButton'.tr()),
-                                          ),
-                                        ],
                                       ),
-                                    );
-                                    if (renamed != null && renamed.isNotEmpty) {
-                                      await provider.renameSession(
-                                        s.sessionId,
-                                        renamed,
-                                      );
-                                    }
-                                  }
-                                  if (value == 'delete') {
-                                    await provider.deleteSession(s.sessionId);
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  PopupMenuItem(
-                                    value: 'rename',
-                                    child: Text('lexiChat.renameAction'.tr()),
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text(
+                                          'lexiChat.deleteAction'.tr(),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('lexiChat.deleteAction'.tr()),
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             );
-                          },
-                        );
                           },
                         ),
                 ),
@@ -613,7 +637,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                   const Icon(Icons.mic, color: AppColors.errorBright, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    'lexiChat.recordingStatus'.tr(namedArgs: {'seconds': _recordingDuration.inSeconds.toString()}),
+                    'lexiChat.recordingStatus'.tr(
+                      namedArgs: {
+                        'seconds': _recordingDuration.inSeconds.toString(),
+                      },
+                    ),
                     style: const TextStyle(
                       color: AppColors.errorBright,
                       fontWeight: FontWeight.w600,

@@ -142,6 +142,14 @@ def _make_mock_user_vocab():
     uv.repetitions = 0
     uv.next_review_date = datetime.utcnow()
     uv.last_reviewed_at = None
+    uv.fsrs_stability = 0.0
+    uv.fsrs_difficulty = 0.0
+    uv.fsrs_elapsed_days = 0
+    uv.fsrs_scheduled_days = 0
+    uv.fsrs_reps = 0
+    uv.fsrs_lapses = 0
+    uv.fsrs_state = 0
+    uv.fsrs_last_review = None
     uv.is_due = False
     uv.accuracy = 0.0
     uv.total_reviews = 0
@@ -458,6 +466,57 @@ class TestBulkAddToCollection:
 # ============================================================================
 # GET /api/v1/vocabulary/due  — Due for review (auth)
 # ============================================================================
+
+
+class TestEvaluatePronunciation:
+    """Tests for POST /api/v1/vocabulary/pronunciation/evaluate."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.post(
+            f"{BASE}/pronunciation/evaluate",
+            data={"vocabulary_id": VOCAB_ID},
+            files={"audio": ("recording.wav", b"audio-bytes", "audio/wav")},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_maps_ai_score_to_feedback(self, auth_client):
+        client, _, _, _ = auth_client
+        mock_item = _make_mock_vocab_item()
+        ai_response = {
+            "overall_score": 84.5,
+            "transcription": "hello",
+            "phoneme_scores": {"overall_confidence": 0.91},
+            "errors": [],
+            "duration_ms": 42.0,
+        }
+
+        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=mock_item)), \
+             patch("app.routes.vocabulary.AIServiceClient.assess_pronunciation", new=AsyncMock(return_value=ai_response)):
+            response = await client.post(
+                f"{BASE}/pronunciation/evaluate",
+                data={"vocabulary_id": VOCAB_ID},
+                files={"audio": ("recording.wav", b"audio-bytes", "audio/wav")},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["score"] == 84.5
+        assert data["stars"] == 3
+        assert data["feedback_label"] == "Amazing"
+
+    @pytest.mark.asyncio
+    async def test_returns_404_when_vocabulary_missing(self, auth_client):
+        client, _, _, _ = auth_client
+        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=None)):
+            response = await client.post(
+                f"{BASE}/pronunciation/evaluate",
+                data={"vocabulary_id": VOCAB_ID},
+                files={"audio": ("recording.wav", b"audio-bytes", "audio/wav")},
+            )
+
+        assert response.status_code == 404
 
 class TestGetDueVocabulary:
     """Tests for GET /api/v1/vocabulary/due."""

@@ -95,7 +95,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.sessionError ?? 'topicChat.failedStartSession'.tr()),
+          content: Text(
+            provider.sessionError ?? 'topicChat.failedStartSession'.tr(),
+          ),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -669,9 +671,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('topicChat.endSessionTitle'.tr()),
-        content: Text(
-          'topicChat.endSessionConfirmation'.tr(),
-        ),
+        content: Text('topicChat.endSessionConfirmation'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -775,7 +775,11 @@ class _StoryContextHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.bolt, size: 12, color: AppColors.greenSuccessBright),
+                const Icon(
+                  Icons.bolt,
+                  size: 12,
+                  color: AppColors.greenSuccessBright,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'topicChat.contextReadyBadgeLabel'.tr(),
@@ -893,7 +897,6 @@ class _TopicMessageBubble extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8, left: 36),
               child: EducationalHintsCard(hints: message.hints!),
             ),
-
         ],
       ),
     );

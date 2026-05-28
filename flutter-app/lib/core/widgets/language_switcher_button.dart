@@ -57,76 +57,82 @@ class LanguageSwitcherButton extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: AppLocales.supportedLocales.map((locale) {
-                  final code = locale.languageCode;
-                  final name = AppLocales.nameOf(code);
-                  final nameEn = AppLocales.nameEnOf(code);
-                  final isSelected = code == currentCode;
+                        final code = locale.languageCode;
+                        final name = AppLocales.nameOf(code);
+                        final nameEn = AppLocales.nameEnOf(code);
+                        final isSelected = code == currentCode;
 
-                  return Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      tileColor: isSelected
-                          ? AppColors.accentMint
-                              .withValues(alpha: isDark ? 0.08 : 0.06)
-                          : null,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.accentMint
-                                  .withValues(alpha: isDark ? 0.2 : 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _FlagImage(languageCode: code, width: 28, height: 20),
-                      ),
-                      title: Text(
-                        name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: isSelected
-                              ? AppColors.accentMint
-                              : isDark
-                                  ? Colors.white
-                                  : AppColors.textDark,
-                        ),
-                      ),
-                      subtitle: name != nameEn
-                          ? Text(
-                              nameEn,
-                              style: TextStyle(
-                                color: isDark
-                                    ? AppColors.textMuted
-                                    : AppColors.textSlateLight,
-                                fontSize: 12,
+                        return Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            tileColor: isSelected
+                                ? AppColors.accentMint.withValues(
+                                    alpha: isDark ? 0.08 : 0.06,
+                                  )
+                                : null,
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.accentMint.withValues(
+                                        alpha: isDark ? 0.2 : 0.15,
+                                      )
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            )
-                          : null,
-                      trailing: isSelected
-                          ? const Icon(
-                              Icons.check_rounded,
-                              color: AppColors.accentMint,
-                            )
-                          : null,
-                      onTap: () {
-                        Navigator.of(sheetContext).pop();
-                        _applyLanguage(context, code);
-                      },
+                              child: _FlagImage(
+                                languageCode: code,
+                                width: 28,
+                                height: 20,
+                              ),
+                            ),
+                            title: Text(
+                              name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? AppColors.accentMint
+                                    : isDark
+                                    ? Colors.white
+                                    : AppColors.textDark,
+                              ),
+                            ),
+                            subtitle: name != nameEn
+                                ? Text(
+                                    nameEn,
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? AppColors.textMuted
+                                          : AppColors.textSlateLight,
+                                      fontSize: 12,
+                                    ),
+                                  )
+                                : null,
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_rounded,
+                                    color: AppColors.accentMint,
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.of(sheetContext).pop();
+                              _applyLanguage(context, code);
+                            },
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
+                  ),
+                ),
               ],
             ),
           ),

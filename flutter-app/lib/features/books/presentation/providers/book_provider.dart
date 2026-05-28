@@ -29,8 +29,16 @@ class BookProvider extends ChangeNotifier {
 
   /// All browsable genre labels.
   static const List<String> kTopics = [
-    'Children', 'Fantasy', 'Mystery', 'Romance', 'Adventure',
-    'Fiction', 'History', 'Science Fiction', 'Philosophy', 'Poetry',
+    'Children',
+    'Fantasy',
+    'Mystery',
+    'Romance',
+    'Adventure',
+    'Fiction',
+    'History',
+    'Science Fiction',
+    'Philosophy',
+    'Poetry',
   ];
 
   Book? _currentBook;
@@ -64,14 +72,14 @@ class BookProvider extends ChangeNotifier {
   String? get selectedCefrLevel => _selectedCefrLevel;
   String? get selectedTopic => _selectedTopic;
 
-  bool isLoadingMoreForLevel(String level) =>
-      _levelLoadingMore[level] ?? false;
+  bool isLoadingMoreForLevel(String level) => _levelLoadingMore[level] ?? false;
   bool hasMoreForLevel(String level) => _levelHasMore[level] ?? true;
 
   /// Curated + browse books for [level], deduplicated by id.
   List<Book> booksForLevel(String level) {
-    final curated =
-        _recommendedBooks.where((b) => b.cefrLevel == level).toList();
+    final curated = _recommendedBooks
+        .where((b) => b.cefrLevel == level)
+        .toList();
     final browse = _levelBooks[level] ?? [];
     final seen = <String>{};
     final result = <Book>[];
@@ -460,8 +468,7 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isBookSaved(String bookId) =>
-      _savedBooks.any((b) => b.id == bookId);
+  bool isBookSaved(String bookId) => _savedBooks.any((b) => b.id == bookId);
 
   Future<void> toggleSaveBook(Book book) async {
     if (isBookSaved(book.id)) {

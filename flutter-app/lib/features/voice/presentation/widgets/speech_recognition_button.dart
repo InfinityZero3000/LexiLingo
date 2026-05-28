@@ -242,7 +242,11 @@ class _SpeechRecognitionButtonState extends State<SpeechRecognitionButton>
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'voice.confidence'.tr(namedArgs: {'percent': (provider.confidence * 100).toStringAsFixed(0)}),
+                  'voice.confidence'.tr(
+                    namedArgs: {
+                      'percent': (provider.confidence * 100).toStringAsFixed(0),
+                    },
+                  ),
                   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
               ),

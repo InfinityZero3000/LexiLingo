@@ -145,7 +145,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             _searchController.text.length >= 2) {
           return Center(
             child: Text(
-              'books.noBooksFound'.tr(namedArgs: {'query': _searchController.text}),
+              'books.noBooksFound'.tr(
+                namedArgs: {'query': _searchController.text},
+              ),
               style: TextStyle(
                 color: isDark ? Colors.white54 : AppColors.textGrey,
               ),
@@ -274,7 +276,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white38 : AppColors.textGrey.withValues(alpha: 0.6),
+                      color: isDark
+                          ? Colors.white38
+                          : AppColors.textGrey.withValues(alpha: 0.6),
                     ),
                   ),
                 ),
@@ -305,8 +309,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
 
               // Sections by CEFR level
               ..._cefrLevels.map(
-                (level) =>
-                    _buildLevelSection(context, level, provider, isDark),
+                (level) => _buildLevelSection(context, level, provider, isDark),
               ),
 
               const SizedBox(height: 32),
@@ -433,7 +436,6 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     );
   }
 
-
   Widget _buildLevelSection(
     BuildContext context,
     String level,
@@ -506,7 +508,6 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
       ],
     );
   }
-
 
   Color _cefrColor(String level) {
     switch (level) {

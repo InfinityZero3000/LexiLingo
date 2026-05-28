@@ -49,8 +49,12 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
         SnackBar(
           content: Text(
             isNowFollowed
-                ? 'podcast.followingSnack'.tr(namedArgs: {'title': widget.podcast.title})
-                : 'podcast.unfollowedSnack'.tr(namedArgs: {'title': widget.podcast.title}),
+                ? 'podcast.followingSnack'.tr(
+                    namedArgs: {'title': widget.podcast.title},
+                  )
+                : 'podcast.unfollowedSnack'.tr(
+                    namedArgs: {'title': widget.podcast.title},
+                  ),
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -110,7 +114,11 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                                   : Icons.add_rounded,
                               size: 18,
                             ),
-                            label: Text(isFollowed ? 'podcast.following'.tr() : 'podcast.follow'.tr()),
+                            label: Text(
+                              isFollowed
+                                  ? 'podcast.following'.tr()
+                                  : 'podcast.follow'.tr(),
+                            ),
                             style: TextButton.styleFrom(
                               foregroundColor: isFollowed
                                   ? AppColors.greenSuccess
@@ -349,7 +357,9 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  _descriptionExpanded ? 'podcast.showLess'.tr() : 'podcast.showMore'.tr(),
+                  _descriptionExpanded
+                      ? 'podcast.showLess'.tr()
+                      : 'podcast.showMore'.tr(),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,

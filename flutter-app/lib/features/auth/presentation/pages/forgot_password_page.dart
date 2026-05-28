@@ -44,7 +44,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-      title: Text('auth.forgotPassword'.tr()),
+        title: Text('auth.forgotPassword'.tr()),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,

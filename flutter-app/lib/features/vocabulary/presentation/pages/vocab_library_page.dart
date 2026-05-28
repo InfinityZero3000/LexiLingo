@@ -83,7 +83,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 12, right: 8),
-                    child: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    child: Icon(
+                      Icons.search,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   Expanded(
                     child: TextField(
@@ -91,7 +94,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       decoration: InputDecoration(
                         hintText: 'vocabulary.searchPlaceholder'.tr(),
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        hintStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -109,11 +114,23 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               children: [
                 _buildFilterChip('vocabulary.filterAll'.tr(), true),
                 const SizedBox(width: 8),
-                _buildFilterChip('vocabulary.filterTravel'.tr(), false, icon: Icons.flight),
+                _buildFilterChip(
+                  'vocabulary.filterTravel'.tr(),
+                  false,
+                  icon: Icons.flight,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('vocabulary.filterBusiness'.tr(), false, icon: Icons.work),
+                _buildFilterChip(
+                  'vocabulary.filterBusiness'.tr(),
+                  false,
+                  icon: Icons.work,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('vocabulary.filterDaily'.tr(), false, icon: Icons.coffee),
+                _buildFilterChip(
+                  'vocabulary.filterDaily'.tr(),
+                  false,
+                  icon: Icons.coffee,
+                ),
               ],
             ),
           ),
@@ -182,12 +199,11 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           fontSize: 12,
         ),
       ),
-      backgroundColor:
-          isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100,
+      backgroundColor: isDark
+          ? Colors.white.withValues(alpha: 0.06)
+          : AppColors.grey100,
       selectedColor: AppColors.primary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       side: BorderSide.none,
       onSelected: (_) {},
     );
@@ -196,10 +212,27 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   // ignore: unused_element
   Widget _buildDemoList(BuildContext context) {
     final demoWords = [
-      VocabWord(word: 'Resilient', definition: 'Able to recoil or spring back into shape after bending or being compressed.', pronunciation: '/rɪˈzɪl.jənt/'),
-      VocabWord(word: 'Departure', definition: 'The action of leaving, especially to start a journey.', pronunciation: '/dɪˈpɑː.tʃər/'),
-      VocabWord(word: 'Ubiquitous', definition: 'Present, appearing, or found everywhere.', pronunciation: '/juːˈbɪk.wɪ.təs/'),
-      VocabWord(word: 'Benevolent', definition: 'Well meaning and kindly; marked by doing good.', pronunciation: '/bəˈnev.əl.ənt/'),
+      VocabWord(
+        word: 'Resilient',
+        definition:
+            'Able to recoil or spring back into shape after bending or being compressed.',
+        pronunciation: '/rɪˈzɪl.jənt/',
+      ),
+      VocabWord(
+        word: 'Departure',
+        definition: 'The action of leaving, especially to start a journey.',
+        pronunciation: '/dɪˈpɑː.tʃər/',
+      ),
+      VocabWord(
+        word: 'Ubiquitous',
+        definition: 'Present, appearing, or found everywhere.',
+        pronunciation: '/juːˈbɪk.wɪ.təs/',
+      ),
+      VocabWord(
+        word: 'Benevolent',
+        definition: 'Well meaning and kindly; marked by doing good.',
+        pronunciation: '/bəˈnev.əl.ənt/',
+      ),
     ];
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -252,7 +285,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.menu_book, color: colorScheme.primary),
+                        child: Icon(
+                          Icons.menu_book,
+                          color: colorScheme.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -275,7 +311,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                                   Text(
                                     ipa,
                                     style: TextStyle(
-                                      color: AppColors.primary.withValues(alpha: 0.7),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.7,
+                                      ),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -288,7 +326,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 fontSize: 14,
                               ),
                             ),
@@ -416,7 +456,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
       def,
       pronunciation: _ipa,
       audioUrl: _audioUrl,
-      example: _exampleController.text.trim().isEmpty ? null : _exampleController.text.trim(),
+      example: _exampleController.text.trim().isEmpty
+          ? null
+          : _exampleController.text.trim(),
       partOfSpeech: _partOfSpeech,
     );
     if (!mounted) return;
@@ -427,7 +469,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.provider.errorMessage ?? 'vocabulary.failedToSaveWord'.tr()),
+          content: Text(
+            widget.provider.errorMessage ?? 'vocabulary.failedToSaveWord'.tr(),
+          ),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -483,7 +527,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.wordLabel'.tr(),
               hintText: 'vocabulary.wordInputHint'.tr(),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               prefixIcon: const Icon(Icons.abc_rounded),
               suffixIcon: _buildWordStatus(),
             ),
@@ -522,7 +568,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.definition'.tr(),
               hintText: 'vocabulary.definitionHint'.tr(),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 40),
                 child: Icon(Icons.menu_book_outlined),
@@ -540,7 +588,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.exampleSentenceLabel'.tr(),
               hintText: 'vocabulary.exampleSentenceHint'.tr(),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 24),
                 child: Icon(Icons.format_quote_outlined),
@@ -625,7 +675,11 @@ class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _InfoChip({required this.icon, required this.label, required this.color});
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {

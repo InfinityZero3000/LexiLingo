@@ -760,7 +760,16 @@
     "participants": "{count} participants",
     "moreRanks": "More Ranks",
     "noRankingsYet": "No rankings yet",
-    "firstToCompete": "Be the first to compete this week!"
+    "firstToCompete": "Be the first to compete this week!",
+    "aboutLeagues": "About Leagues",
+    "bronzeDesc": "The starting line. Compete and earn XP to advance!",
+    "silverDesc": "Heating up! Keep learning to reach higher tiers.",
+    "goldDesc": "Solid effort! You are standing out from the crowd.",
+    "platinumDesc": "Elite learners only. Focus and dedication required.",
+    "sapphireDesc": "Outstanding brilliance. Your persistence is paying off.",
+    "rubyDesc": "The masters of dedication. Almost at the peak!",
+    "amethystDesc": "Legendary status. Very few make it this far.",
+    "masterDesc": "The absolute pinnacle. You are a true language master!"
   },
   "newsQuiz": {
     "title": "Comprehension Quiz",

@@ -275,10 +275,7 @@ class StoryApiDataSource {
       final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId');
       logDebug(_tag, 'getTopicSession: $uri');
 
-      final response = await _client.get(
-        uri,
-        headers: await _authHeaders(),
-      );
+      final response = await _client.get(uri, headers: await _authHeaders());
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get session: ${response.statusCode}');
@@ -300,10 +297,7 @@ class StoryApiDataSource {
       );
       logDebug(_tag, 'getTopicMessages: $uri');
 
-      final response = await _client.get(
-        uri,
-        headers: await _authHeaders(),
-      );
+      final response = await _client.get(uri, headers: await _authHeaders());
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get messages: ${response.statusCode}');
@@ -337,10 +331,7 @@ class StoryApiDataSource {
       ).replace(queryParameters: query);
       logDebug(_tag, 'getTopicMessagesPaged: $uri');
 
-      final response = await _client.get(
-        uri,
-        headers: await _authHeaders(),
-      );
+      final response = await _client.get(uri, headers: await _authHeaders());
 
       if (response.statusCode != 200) {
         throw ServerException(
@@ -383,10 +374,7 @@ class StoryApiDataSource {
     );
     logDebug(_tag, 'getTopicMessagesMetadata: $uri');
 
-    final response = await _client.get(
-      uri,
-      headers: await _authHeaders(),
-    );
+    final response = await _client.get(uri, headers: await _authHeaders());
 
     if (response.statusCode != 200) {
       throw ServerException(

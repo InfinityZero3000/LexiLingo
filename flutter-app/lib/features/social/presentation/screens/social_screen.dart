@@ -333,10 +333,7 @@ class _SocialScreenState extends State<SocialScreen>
 
     if (error != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(error), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -446,7 +443,11 @@ class _SuggestedFriendsSection extends StatelessWidget {
                   ),
                   trailing: TextButton(
                     onPressed: () => onFollowToggle(user),
-                    child: Text(user.isFollowing ? 'social.following'.tr() : 'social.follow'.tr()),
+                    child: Text(
+                      user.isFollowing
+                          ? 'social.following'.tr()
+                          : 'social.follow'.tr(),
+                    ),
                   ),
                 );
               }).toList(),
@@ -603,7 +604,11 @@ class _NearbyLearnersSection extends StatelessWidget {
                   ),
                   trailing: TextButton(
                     onPressed: () => onFollowToggle(user),
-                    child: Text(user.isFollowing ? 'social.following'.tr() : 'social.follow'.tr()),
+                    child: Text(
+                      user.isFollowing
+                          ? 'social.following'.tr()
+                          : 'social.follow'.tr(),
+                    ),
                   ),
                 );
               }).toList(),
@@ -770,10 +775,22 @@ class _ActivityFeedCard extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return 'datetime.justNow'.tr();
-    if (diff.inHours < 1) return 'datetime.minutesAgo'.tr(namedArgs: {'minutes': diff.inMinutes.toString()});
-    if (diff.inDays < 1) return 'datetime.hoursAgo'.tr(namedArgs: {'hours': diff.inHours.toString()});
-    if (diff.inDays < 7) return 'datetime.daysAgo'.tr(namedArgs: {'days': diff.inDays.toString()});
+    if (diff.inMinutes < 1) {
+      return 'datetime.justNow'.tr();
+    }
+    if (diff.inHours < 1) {
+      return 'datetime.minutesAgo'.tr(
+        namedArgs: {'minutes': diff.inMinutes.toString()},
+      );
+    }
+    if (diff.inDays < 1) {
+      return 'datetime.hoursAgo'.tr(
+        namedArgs: {'hours': diff.inHours.toString()},
+      );
+    }
+    if (diff.inDays < 7) {
+      return 'datetime.daysAgo'.tr(namedArgs: {'days': diff.inDays.toString()});
+    }
     return DateFormat('MMM d').format(date);
   }
 }
@@ -890,7 +907,9 @@ class _UserProfileCard extends StatelessWidget {
               ),
               child: Text(
                 user.isFollowing
-                    ? (showUnfollow ? 'social.unfollow'.tr() : 'social.following'.tr())
+                    ? (showUnfollow
+                          ? 'social.unfollow'.tr()
+                          : 'social.following'.tr())
                     : 'social.follow'.tr(),
                 style: TextStyle(
                   color: user.isFollowing
@@ -972,7 +991,10 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
               children: [
                 Text(
                   'social.findFriends'.tr(),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // Search field
@@ -1020,12 +1042,18 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red.shade300,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           provider.searchError!,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColorRoles.textMuted(isDark)),
+                          style: TextStyle(
+                            color: AppColorRoles.textMuted(isDark),
+                          ),
                         ),
                       ],
                     ),

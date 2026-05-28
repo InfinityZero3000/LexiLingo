@@ -86,63 +86,73 @@ void main() {
   });
 
   group('getMessagesPaged metadata-first', () {
-    test('returns empty page when metadata says session has no messages', () async {
-      dataSource.metadataResult = const LexiMessagesMetadata(
-        totalCount: 0,
-        hasMessages: false,
-        latestCursor: null,
-        oldestCursor: null,
-        latestTs: null,
-        oldestTs: null,
-      );
+    test(
+      'returns empty page when metadata says session has no messages',
+      () async {
+        dataSource.metadataResult = const LexiMessagesMetadata(
+          totalCount: 0,
+          hasMessages: false,
+          latestCursor: null,
+          oldestCursor: null,
+          latestTs: null,
+          oldestTs: null,
+        );
 
-      final result = await repository.getMessagesPaged(sessionId: 'session_1');
+        final result = await repository.getMessagesPaged(
+          sessionId: 'session_1',
+        );
 
-      expect(result.messages, isEmpty);
-      expect(result.hasMore, false);
-      expect(result.nextCursor, isNull);
-      expect(result.returned, 0);
-      expect(dataSource.metadataCalls, 1);
-      expect(dataSource.lastMetadataSessionId, 'session_1');
-      expect(dataSource.pagedCalls, 0);
-    });
+        expect(result.messages, isEmpty);
+        expect(result.hasMore, false);
+        expect(result.nextCursor, isNull);
+        expect(result.returned, 0);
+        expect(dataSource.metadataCalls, 1);
+        expect(dataSource.lastMetadataSessionId, 'session_1');
+        expect(dataSource.pagedCalls, 0);
+      },
+    );
 
-    test('calls paged endpoint when metadata indicates messages exist', () async {
-      dataSource.metadataResult = const LexiMessagesMetadata(
-        totalCount: 8,
-        hasMessages: true,
-        latestCursor: 'latest',
-        oldestCursor: 'oldest',
-        latestTs: '2026-04-16T00:00:10Z',
-        oldestTs: '2026-04-16T00:00:00Z',
-      );
-      dataSource.pagedResult = LexiMessagesPage(
-        messages: [
-          LexiMessage(
-            id: 'm1',
-            role: 'assistant',
-            content: 'Hi learner',
-            timestamp: DateTime.parse('2026-04-16T00:00:00Z'),
-          ),
-        ],
-        hasMore: true,
-        nextCursor: 'next-cursor',
-        returned: 1,
-      );
+    test(
+      'calls paged endpoint when metadata indicates messages exist',
+      () async {
+        dataSource.metadataResult = const LexiMessagesMetadata(
+          totalCount: 8,
+          hasMessages: true,
+          latestCursor: 'latest',
+          oldestCursor: 'oldest',
+          latestTs: '2026-04-16T00:00:10Z',
+          oldestTs: '2026-04-16T00:00:00Z',
+        );
+        dataSource.pagedResult = LexiMessagesPage(
+          messages: [
+            LexiMessage(
+              id: 'm1',
+              role: 'assistant',
+              content: 'Hi learner',
+              timestamp: DateTime.parse('2026-04-16T00:00:00Z'),
+            ),
+          ],
+          hasMore: true,
+          nextCursor: 'next-cursor',
+          returned: 1,
+        );
 
-      final result = await repository.getMessagesPaged(sessionId: 'session_1');
+        final result = await repository.getMessagesPaged(
+          sessionId: 'session_1',
+        );
 
-      expect(result.messages.length, 1);
-      expect(result.messages.first.id, 'm1');
-      expect(result.hasMore, true);
-      expect(result.nextCursor, 'next-cursor');
-      expect(result.returned, 1);
-      expect(dataSource.metadataCalls, 1);
-      expect(dataSource.pagedCalls, 1);
-      expect(dataSource.lastPagedSessionId, 'session_1');
-      expect(dataSource.lastPagedLimit, 50);
-      expect(dataSource.lastPagedCursor, isNull);
-    });
+        expect(result.messages.length, 1);
+        expect(result.messages.first.id, 'm1');
+        expect(result.hasMore, true);
+        expect(result.nextCursor, 'next-cursor');
+        expect(result.returned, 1);
+        expect(dataSource.metadataCalls, 1);
+        expect(dataSource.pagedCalls, 1);
+        expect(dataSource.lastPagedSessionId, 'session_1');
+        expect(dataSource.lastPagedLimit, 50);
+        expect(dataSource.lastPagedCursor, isNull);
+      },
+    );
 
     test('still calls paged endpoint when metadata request throws', () async {
       dataSource.metadataError = Exception('metadata unavailable');

@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_quality_buttons.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/session_header.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/vocabulary_speaking_practice_screen.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -79,6 +80,18 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
     _slideController.reset();
   }
 
+  void _openSpeakingPractice() {
+    final provider = context.read<FlashcardProvider>();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider.value(
+          value: provider,
+          child: const VocabularySpeakingPracticeScreen(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,10 +110,15 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
-        actions: const [
+        actions: [
+          IconButton(
+            tooltip: 'Speaking practice',
+            icon: const Icon(Icons.mic_none_rounded),
+            onPressed: _openSpeakingPractice,
+          ),
           // TTS Speed Control Button
-          TtsSpeedButton(),
-          SizedBox(width: 8),
+          const TtsSpeedButton(),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer<FlashcardProvider>(
@@ -145,7 +163,9 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
 
           // No session
           if (!provider.hasSession) {
-            return Center(child: Text('flashcard.noReviewSessionAvailable'.tr()));
+            return Center(
+              child: Text('flashcard.noReviewSessionAvailable'.tr()),
+            );
           }
 
           final session = provider.currentSession!;
@@ -199,9 +219,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: Text('flashcard.exitReviewTitle'.tr()),
-        content: Text(
-          'flashcard.exitReviewMessage'.tr(),
-        ),
+        content: Text('flashcard.exitReviewMessage'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

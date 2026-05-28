@@ -118,89 +118,89 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text('settings.title'.tr()),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () => Navigator.pop(context),
-          ),
+        title: Text('settings.title'.tr()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
         ),
-        body: settings.isLoading
-            ? const Center(child: LottieLoadingWidget.medium())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  AnimatedListItem(
-                    index: 0,
-                    duration: const Duration(milliseconds: 300),
-                    delayPerItem: const Duration(milliseconds: 50),
-                    child: _buildSectionHeader(
-                      context,
-                      icon: Icons.language,
-                      title: 'settings.language'.tr(),
-                      subtitle: 'settings.language_subtitle'.tr(),
-                    ),
+      ),
+      body: settings.isLoading
+          ? const Center(child: LottieLoadingWidget.medium())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                AnimatedListItem(
+                  index: 0,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.language,
+                    title: 'settings.language'.tr(),
+                    subtitle: 'settings.language_subtitle'.tr(),
                   ),
-                  const SizedBox(height: 12),
-                  _buildLanguageSelector(context, settings),
-                  const SizedBox(height: 32),
-                  AnimatedListItem(
-                    index: 1,
-                    duration: const Duration(milliseconds: 300),
-                    delayPerItem: const Duration(milliseconds: 50),
-                    child: _buildSectionHeader(
-                      context,
-                      icon: Icons.notifications,
-                      title: 'settings.notifications'.tr(),
-                      subtitle: 'settings.notifications_subtitle'.tr(),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                _buildLanguageSelector(context, settings),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 1,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.notifications,
+                    title: 'settings.notifications'.tr(),
+                    subtitle: 'settings.notifications_subtitle'.tr(),
                   ),
-                  const SizedBox(height: 12),
-                  _buildNotificationSettings(context, settings),
-                  const SizedBox(height: 32),
-                  AnimatedListItem(
-                    index: 2,
-                    duration: const Duration(milliseconds: 300),
-                    delayPerItem: const Duration(milliseconds: 50),
-                    child: _buildSectionHeader(
-                      context,
-                      icon: Icons.volume_up,
-                      title: 'settings.sound'.tr(),
-                      subtitle: 'settings.sound_subtitle'.tr(),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                _buildNotificationSettings(context, settings),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 2,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.volume_up,
+                    title: 'settings.sound'.tr(),
+                    subtitle: 'settings.sound_subtitle'.tr(),
                   ),
-                  const SizedBox(height: 12),
-                  _buildSoundSettings(context, settings),
-                  const SizedBox(height: 32),
-                  AnimatedListItem(
-                    index: 3,
-                    duration: const Duration(milliseconds: 300),
-                    delayPerItem: const Duration(milliseconds: 50),
-                    child: _buildSectionHeader(
-                      context,
-                      icon: Icons.palette,
-                      title: 'settings.theme'.tr(),
-                      subtitle: 'settings.theme_subtitle'.tr(),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                _buildSoundSettings(context, settings),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 3,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.palette,
+                    title: 'settings.theme'.tr(),
+                    subtitle: 'settings.theme_subtitle'.tr(),
                   ),
-                  const SizedBox(height: 12),
-                  _buildThemeSelector(context, settings),
-                  const SizedBox(height: 32),
-                  AnimatedListItem(
-                    index: 4,
-                    duration: const Duration(milliseconds: 300),
-                    delayPerItem: const Duration(milliseconds: 50),
-                    child: _buildSectionHeader(
-                      context,
-                      icon: Icons.person_outline,
-                      title: 'settings.account'.tr(),
-                      subtitle: 'settings.account_subtitle'.tr(),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                _buildThemeSelector(context, settings),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 4,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.person_outline,
+                    title: 'settings.account'.tr(),
+                    subtitle: 'settings.account_subtitle'.tr(),
                   ),
-                  const SizedBox(height: 12),
-                  _buildAccountSection(context),
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+                const SizedBox(height: 12),
+                _buildAccountSection(context),
+                const SizedBox(height: 40),
+              ],
+            ),
     );
   }
 
@@ -253,6 +253,8 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
+    final currentLocaleCode = context.locale.languageCode;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -260,7 +262,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: SettingsProvider.availableLanguages.map((lang) {
-            final isSelected = settings.language == lang['code'];
+            final isSelected = currentLocaleCode == lang['code'];
             return AnimatedListItem(
               index: SettingsProvider.availableLanguages.indexOf(lang),
               duration: const Duration(milliseconds: 200),

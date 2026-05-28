@@ -235,7 +235,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                           children: [
                             if (widget.article.author.isNotEmpty)
                               Text(
-                                'news.byAuthor'.tr(namedArgs: {'author': widget.article.author}),
+                                'news.byAuthor'.tr(
+                                  namedArgs: {'author': widget.article.author},
+                                ),
                                 style: TextStyle(
                                   color: isDark
                                       ? Colors.white54

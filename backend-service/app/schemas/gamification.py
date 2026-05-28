@@ -20,7 +20,10 @@ class League(str, Enum):
     SILVER = "silver"
     GOLD = "gold"
     PLATINUM = "platinum"
-    DIAMOND = "diamond"
+    SAPPHIRE = "sapphire"
+    RUBY = "ruby"
+    AMETHYST = "amethyst"
+    MASTER = "master"
 
 
 class AchievementCategory(str, Enum):
@@ -199,6 +202,7 @@ class UserLeagueStatusResponse(BaseModel):
     is_in_promotion_zone: bool = False
     is_in_demotion_zone: bool = False
     week_ends_in_hours: int
+    rank_icon_url: str = ""
     
     class Config:
         from_attributes = True

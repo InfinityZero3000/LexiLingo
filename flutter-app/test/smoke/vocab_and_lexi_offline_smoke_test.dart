@@ -120,12 +120,9 @@ void main() {
 
       final wordsResult = await repo.getWords();
       expect(wordsResult.isRight(), isTrue);
-      wordsResult.fold(
-        (_) => fail('Expected words list'),
-        (words) {
-          expect(words.any((w) => w.word == 'resilient'), isTrue);
-        },
-      );
+      wordsResult.fold((_) => fail('Expected words list'), (words) {
+        expect(words.any((w) => w.word == 'resilient'), isTrue);
+      });
     });
 
     test('lexi session restore keeps cached messages when offline', () async {

@@ -82,7 +82,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                       ),
                     ),
                     Text(
-                      'storySelection.topicsAvailableCount'.tr(namedArgs: {'total': '$total'}),
+                      'storySelection.topicsAvailableCount'.tr(
+                        namedArgs: {'total': '$total'},
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
                             ? AppColors.textMuted

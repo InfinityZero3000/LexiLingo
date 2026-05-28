@@ -38,9 +38,10 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _anim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -90,7 +91,10 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
 
               // Header row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -120,7 +124,10 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Column(
                     children: [
                       GestureDetector(
@@ -138,7 +145,8 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                               child: showingBack
                                   ? Transform(
                                       alignment: Alignment.center,
-                                      transform: Matrix4.identity()..rotateY(pi),
+                                      transform: Matrix4.identity()
+                                        ..rotateY(pi),
                                       child: _CardBack(
                                         word: widget.word,
                                         isDark: isDark,
@@ -335,9 +343,7 @@ class _CardBack extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
@@ -377,11 +383,7 @@ class _CardBack extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             word.definition,
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.6,
-              color: cs.onSurface,
-            ),
+            style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
           ),
 
           // Example

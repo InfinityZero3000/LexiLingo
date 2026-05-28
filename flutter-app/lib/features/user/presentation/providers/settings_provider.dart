@@ -105,8 +105,8 @@ class SettingsProvider extends ChangeNotifier {
           // their local choice instead of overriding it.
           final effectiveLang =
               (settings.language == 'en' && savedLocale != 'en')
-                  ? savedLocale
-                  : settings.language;
+              ? savedLocale
+              : settings.language;
           _settings = settings.copyWith(
             theme: _normalizeTheme(settings.theme),
             language: effectiveLang,

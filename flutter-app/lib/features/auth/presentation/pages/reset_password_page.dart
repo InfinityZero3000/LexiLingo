@@ -49,7 +49,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-      title: Text('auth.createNewPassword'.tr()),
+        title: Text('auth.createNewPassword'.tr()),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,

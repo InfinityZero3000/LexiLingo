@@ -12,9 +12,9 @@ String getTimeBasedGreeting() {
     return 'home.greetingNight'.tr();
   } else if (hour < 12) {
     return 'home.greetingMorning'.tr();
-  } else if (hour < 17) {
+  } else if (hour < 18) {
     return 'home.greetingAfternoon'.tr();
-  } else if (hour < 21) {
+  } else if (hour < 22) {
     return 'home.greetingEvening'.tr();
   } else {
     return 'home.greetingNight'.tr();
@@ -28,10 +28,10 @@ IconData getTimeBasedIcon() {
     return Icons.nightlight_round;
   } else if (hour < 12) {
     return Icons.wb_sunny;
-  } else if (hour < 17) {
-    return Icons.wb_cloudy;
-  } else if (hour < 21) {
-    return Icons.wb_twilight;
+  } else if (hour < 18) {
+    return Icons.wb_twilight; // Sunset/afternoon
+  } else if (hour < 22) {
+    return Icons.nightlight_round; // Evening
   } else {
     return Icons.nightlight_round;
   }
@@ -44,15 +44,14 @@ Color getTimeBasedIconColor({required bool isDark}) {
     return AppColorRoles.primary(isDark);
   } else if (hour < 12) {
     return AppColors.warning; // Amber for morning
-  } else if (hour < 17) {
-    return AppColorRoles.primary(isDark);
-  } else if (hour < 21) {
-    return AppColors.orange; // Deep orange for evening
+  } else if (hour < 18) {
+    return AppColors.orange; // Deep orange for afternoon
+  } else if (hour < 22) {
+    return AppColorRoles.primary(isDark); // Primary for evening
   } else {
     return AppColorRoles.primary(isDark);
   }
 }
-
 /// Personalized greeting header with glassmorphism
 class PersonalizedGreetingHeader extends StatelessWidget {
   final String userName;
@@ -620,7 +619,9 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
           ),
           const SizedBox(height: 6),
           Text(
-            'home.activeDaysThisWeek'.tr(namedArgs: {'count': '$completedDays'}),
+            'home.activeDaysThisWeek'.tr(
+              namedArgs: {'count': '$completedDays'},
+            ),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,

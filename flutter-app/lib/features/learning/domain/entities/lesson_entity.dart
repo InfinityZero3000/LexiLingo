@@ -63,6 +63,7 @@ enum ExerciseType {
 class Exercise {
   final String id;
   final ExerciseType type;
+  final String? uiType;
   final String question;
   final List<String>? options; // For multiple choice
   final String correctAnswer;
@@ -74,6 +75,7 @@ class Exercise {
   Exercise({
     required this.id,
     required this.type,
+    this.uiType,
     required this.question,
     this.options,
     required this.correctAnswer,
@@ -87,6 +89,7 @@ class Exercise {
     return Exercise(
       id: json['id'] as String,
       type: _parseExerciseType(json['type'] as String),
+      uiType: json['ui_type'] as String?,
       question: json['question'] as String,
       options: (json['options'] as List?)?.map((e) => e as String).toList(),
       correctAnswer: json['correct_answer'] as String,
@@ -101,6 +104,7 @@ class Exercise {
     return {
       'id': id,
       'type': type.name,
+      'ui_type': uiType,
       'question': question,
       'options': options,
       'correct_answer': correctAnswer,

@@ -111,7 +111,10 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     children: [
                       Text(
                         'learning.courseProgress'.tr(),
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                       Text(
                         '${roadmap.completionPercentage.toStringAsFixed(1)}%',

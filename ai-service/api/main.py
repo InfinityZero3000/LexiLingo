@@ -274,10 +274,11 @@ async def get_ollama_response(message: str) -> Optional[str]:
 
 
 # Include Routers
-from api.routes import chat, stt, tts, admin, ai, lexi_chat, topic_chat, ollama_router
+from api.routes import chat, stt, tts, admin, ai, lexi_chat, topic_chat, ollama_router, pronunciation
 
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["STT"])
+app.include_router(pronunciation.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
 app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])

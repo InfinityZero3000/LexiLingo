@@ -193,7 +193,9 @@ class _LexiLingoAppState extends State<LexiLingoApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
-      _syncQueueRunner = SyncQueueLifecycleRunner(apiClient: di.sl<ApiClient>());
+      _syncQueueRunner = SyncQueueLifecycleRunner(
+        apiClient: di.sl<ApiClient>(),
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _syncQueueRunner?.start();
       });

@@ -112,7 +112,9 @@ class _SpeakButtonState extends State<SpeakButton> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('voice.playError'.tr(namedArgs: {'error': e.toString()})),
+            content: Text(
+              'voice.playError'.tr(namedArgs: {'error': e.toString()}),
+            ),
             backgroundColor: AppColors.errorBright,
             duration: const Duration(seconds: 2),
           ),

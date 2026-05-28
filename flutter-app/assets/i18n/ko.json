@@ -760,7 +760,16 @@
     "participants": "{count} 참가자",
     "moreRanks": "더 많은 순위",
     "noRankingsYet": "아직 순위가 없습니다",
-    "firstToCompete": "이번 주에 가장 먼저 경쟁해보세요!"
+    "firstToCompete": "이번 주에 가장 먼저 경쟁해보세요!",
+    "aboutLeagues": "About Leagues",
+    "bronzeDesc": "The starting line. Compete and earn XP to advance!",
+    "silverDesc": "Heating up! Keep learning to reach higher tiers.",
+    "goldDesc": "Solid effort! You are standing out from the crowd.",
+    "platinumDesc": "Elite learners only. Focus and dedication required.",
+    "sapphireDesc": "Outstanding brilliance. Your persistence is paying off.",
+    "rubyDesc": "The masters of dedication. Almost at the peak!",
+    "amethystDesc": "Legendary status. Very few make it this far.",
+    "masterDesc": "The absolute pinnacle. You are a true language master!"
   },
   "newsQuiz": {
     "title": "이해력 퀴즈",

@@ -301,6 +301,7 @@ class Exercise(BaseModel):
     """Exercise within a lesson."""
     id: str
     type: str = Field(..., description="multiple_choice, true_false, fill_blank, translate, matching, reorder")
+    ui_type: Optional[str] = None
     question: str
     options: Optional[List[ExerciseOption]] = None
     correct_answer: str

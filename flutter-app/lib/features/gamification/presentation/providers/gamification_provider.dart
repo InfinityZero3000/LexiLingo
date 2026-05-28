@@ -64,13 +64,16 @@ class GamificationProvider extends ChangeNotifier {
   String? get inventoryError => _inventoryError;
 
   // ============== Leaderboard State ==============
-  LeaderboardEntity? _leaderboard;
+  final Map<String, LeaderboardEntity> _leaderboards = {};
   LeagueStatusEntity? _leagueStatus;
   bool _isLoadingLeaderboard = false;
   String? _leaderboardError;
   String _selectedLeague = 'bronze';
 
-  LeaderboardEntity? get leaderboard => _leaderboard;
+  LeaderboardEntity? get leaderboard =>
+      _leaderboards[_selectedLeague.toLowerCase()];
+  LeaderboardEntity? leaderboardFor(String league) =>
+      _leaderboards[league.toLowerCase()];
   LeagueStatusEntity? get leagueStatus => _leagueStatus;
   bool get isLoadingLeaderboard => _isLoadingLeaderboard;
   String? get leaderboardError => _leaderboardError;
@@ -204,9 +207,6 @@ class GamificationProvider extends ChangeNotifier {
 
     _isLoadingLeaderboard = true;
     _leaderboardError = null;
-    if (_leaderboard?.league.toLowerCase() != targetLeague.toLowerCase()) {
-      _leaderboard = null;
-    }
     notifyListeners();
 
     try {
@@ -216,7 +216,8 @@ class GamificationProvider extends ChangeNotifier {
 
       final data = _extractData(response);
       if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        _leaderboard = LeaderboardEntity.fromJson(data);
+        final newLeaderboard = LeaderboardEntity.fromJson(data);
+        _leaderboards[targetLeague.toLowerCase()] = newLeaderboard;
         _selectedLeague = targetLeague;
       } else {
         _leaderboardError = 'Leaderboard payload is invalid';

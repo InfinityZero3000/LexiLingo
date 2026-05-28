@@ -158,7 +158,9 @@ class _WalletScreenState extends State<WalletScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.18),
+                              color: const Color(
+                                0xFF8B5CF6,
+                              ).withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -178,11 +180,26 @@ class _WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildEarnTip('gamification.earnTipCompleteLessons'.tr(), '+5 gems'),
-                      _buildEarnTip('gamification.earnTipFinishCourse'.tr(), '+50 gems'),
-                      _buildEarnTip('gamification.earnTipStreakBonus'.tr(), '+3 gems'),
-                      _buildEarnTip('gamification.earnTipAchievements'.tr(), '+10-100 gems'),
-                      _buildEarnTip('gamification.earnTipChallenges'.tr(), '+20 gems'),
+                      _buildEarnTip(
+                        'gamification.earnTipCompleteLessons'.tr(),
+                        '+5 gems',
+                      ),
+                      _buildEarnTip(
+                        'gamification.earnTipFinishCourse'.tr(),
+                        '+50 gems',
+                      ),
+                      _buildEarnTip(
+                        'gamification.earnTipStreakBonus'.tr(),
+                        '+3 gems',
+                      ),
+                      _buildEarnTip(
+                        'gamification.earnTipAchievements'.tr(),
+                        '+10-100 gems',
+                      ),
+                      _buildEarnTip(
+                        'gamification.earnTipChallenges'.tr(),
+                        '+20 gems',
+                      ),
                     ],
                   ),
                 ),

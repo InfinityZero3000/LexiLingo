@@ -227,7 +227,9 @@ class _MessageBubbleState extends State<MessageBubble>
                                       fontSize: 10,
                                       color: isUser
                                           ? Colors.white.withValues(alpha: 0.7)
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(width: 8),

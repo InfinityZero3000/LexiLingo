@@ -9,22 +9,20 @@ class SocialRepository {
   SocialRepository({required SocialRemoteDataSource remote}) : _remote = remote;
 
   Future<({List<ActivityFeedItemEntity> activities, bool hasMore})>
-      getActivityFeed({int limit = 20, int offset = 0}) =>
-          _remote.getActivityFeed(limit: limit, offset: offset);
+  getActivityFeed({int limit = 20, int offset = 0}) =>
+      _remote.getActivityFeed(limit: limit, offset: offset);
 
   Future<({List<UserSocialProfileEntity> users, int total})> getFollowers(
     String userId, {
     int limit = 50,
     int offset = 0,
-  }) =>
-      _remote.getFollowers(userId, limit: limit, offset: offset);
+  }) => _remote.getFollowers(userId, limit: limit, offset: offset);
 
   Future<({List<UserSocialProfileEntity> users, int total})> getFollowing(
     String userId, {
     int limit = 50,
     int offset = 0,
-  }) =>
-      _remote.getFollowing(userId, limit: limit, offset: offset);
+  }) => _remote.getFollowing(userId, limit: limit, offset: offset);
 
   /// Returns `true` on success, throws [SocialException] on failure.
   Future<bool> followUser(String userId) async {
@@ -53,31 +51,28 @@ class SocialRepository {
   Future<List<UserSocialProfileEntity>> getSuggestions({
     int limit = 10,
     int offset = 0,
-  }) =>
-      _remote.getSuggestions(limit: limit, offset: offset);
+  }) => _remote.getSuggestions(limit: limit, offset: offset);
 
   Future<List<UserSocialProfileEntity>> searchUsers(
     String query, {
     int limit = 20,
-  }) =>
-      _remote.searchUsers(query, limit: limit);
+  }) => _remote.searchUsers(query, limit: limit);
 
   Future<({List<UserSocialProfileEntity> users, bool locationEnabled})>
-      getNearbyUsers({int limit = 10, double radiusKm = 25}) =>
-          _remote.getNearbyUsers(limit: limit, radiusKm: radiusKm);
+  getNearbyUsers({int limit = 10, double radiusKm = 25}) =>
+      _remote.getNearbyUsers(limit: limit, radiusKm: radiusKm);
 
   Future<void> updateLocation({
     required bool enabled,
     double? latitude,
     double? longitude,
     double? accuracyMeters,
-  }) =>
-      _remote.updateLocation(
-        enabled: enabled,
-        latitude: latitude,
-        longitude: longitude,
-        accuracyMeters: accuracyMeters,
-      );
+  }) => _remote.updateLocation(
+    enabled: enabled,
+    latitude: latitude,
+    longitude: longitude,
+    accuracyMeters: accuracyMeters,
+  );
 
   String _message(Object e) {
     final s = e.toString();

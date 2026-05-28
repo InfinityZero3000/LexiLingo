@@ -230,7 +230,8 @@ class LexiChatProvider extends ChangeNotifier {
 
       if (loaded.isEmpty) {
         if (summary.messageCount > 0) {
-          _error = 'Session history is temporarily unavailable. You can continue chatting.';
+          _error =
+              'Session history is temporarily unavailable. You can continue chatting.';
         }
         _messages.add(
           LexiMessage(
@@ -401,7 +402,8 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _enqueuePendingLexiMessage({    required String userId,
+  Future<void> _enqueuePendingLexiMessage({
+    required String userId,
     required String sessionId,
     required String message,
     required String idempotencyKey,
@@ -464,13 +466,15 @@ class LexiChatProvider extends ChangeNotifier {
     _messages.add(userMsg);
 
     // Streaming placeholder for the assistant response
-    _messages.add(LexiMessage(
-      id: placeholderId,
-      role: 'assistant',
-      content: '',
-      timestamp: DateTime.now(),
-      syncStatus: 'streaming',
-    ));
+    _messages.add(
+      LexiMessage(
+        id: placeholderId,
+        role: 'assistant',
+        content: '',
+        timestamp: DateTime.now(),
+        syncStatus: 'streaming',
+      ),
+    );
 
     _isSending = true;
     _isLexiThinking = true;
@@ -504,13 +508,13 @@ class LexiChatProvider extends ChangeNotifier {
             }
 
           case LexiStreamDone(
-              :final messageId,
-              :final corrections,
-              :final linkedConcepts,
-              :final vietnameseHint,
-              :final scores,
-              :final audioBase64,
-            ):
+            :final messageId,
+            :final corrections,
+            :final linkedConcepts,
+            :final vietnameseHint,
+            :final scores,
+            :final audioBase64,
+          ):
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
               final finalContent = _messages[idx].content;
@@ -543,12 +547,10 @@ class LexiChatProvider extends ChangeNotifier {
             _isSending = false;
             notifyListeners();
 
-            if (_ttsEnabled &&
-                audioBase64 != null &&
-                audioBase64.isNotEmpty) {
+            if (_ttsEnabled && audioBase64 != null && audioBase64.isNotEmpty) {
               await _playTtsAudio(audioBase64);
             }
-            // storyContext is returned by the server for context continuity; no local storage needed.
+          // storyContext is returned by the server for context continuity; no local storage needed.
           case LexiStreamError(:final error):
             logError(_tag, 'sendMessageStreaming error event: $error');
             // Remove placeholder and fall back to sendMessage
@@ -574,7 +576,6 @@ class LexiChatProvider extends ChangeNotifier {
       await sendMessage(text, userId: uid);
     }
   }
-
 
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {
     if (_isSending) return;

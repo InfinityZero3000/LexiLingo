@@ -62,7 +62,10 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('home.allCaughtUpMessage'.tr()), duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text('home.allCaughtUpMessage'.tr()),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -145,7 +148,9 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           )
                         : Text(
                             _dueCount > 0
-                                ? 'home.wordsWaiting'.tr(namedArgs: {'count': '$_dueCount'})
+                                ? 'home.wordsWaiting'.tr(
+                                    namedArgs: {'count': '$_dueCount'},
+                                  )
                                 : 'home.allCaughtUpTapToCheck'.tr(),
                             style: TextStyle(
                               color: Theme.of(

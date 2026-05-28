@@ -286,7 +286,7 @@ async def get_wallet_history(
 @router.get("/leaderboard", response_model=ApiResponse[LeaderboardResponse])
 async def get_leaderboard(
     response: Response,
-    league: str = Query("bronze", description="Rank: bronze, silver, gold, platinum, diamond, master"),
+    league: str = Query("bronze", description="Rank: bronze, silver, gold, platinum, sapphire, ruby, amethyst, master"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -453,7 +453,8 @@ async def get_my_league_status(
             lessons_completed=entry.lessons_completed,
             is_in_promotion_zone=rank <= 3 if rank else False,
             is_in_demotion_zone=False,  # TODO: Implement based on league size
-            week_ends_in_hours=max(0, hours_remaining)
+            week_ends_in_hours=max(0, hours_remaining),
+            rank_icon_url=rank_info.icon_url
         )
     )
 

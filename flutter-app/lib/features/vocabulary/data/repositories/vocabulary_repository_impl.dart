@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/entities/pronunciation_evaluation_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
@@ -134,6 +137,28 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
         timeSpentMs: timeSpentMs,
       );
       return Right(model.toEntity());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PronunciationEvaluationEntity>> evaluatePronunciation({
+    required String vocabularyId,
+    required Uint8List audioData,
+    required String filename,
+  }) async {
+    try {
+      final model = await remoteDataSource.evaluatePronunciation(
+        vocabularyId: vocabularyId,
+        audioData: audioData,
+        filename: filename,
+      );
+      return Right(model);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

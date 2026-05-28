@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +14,7 @@ class LeaderboardPodium extends StatelessWidget {
   final List<LeaderboardEntryEntity> topThree;
   final List<LeaderboardEntryEntity> entries;
   final int totalParticipants;
+  final Future<void> Function()? onRefresh;
 
   const LeaderboardPodium({
     super.key,
@@ -22,9 +22,9 @@ class LeaderboardPodium extends StatelessWidget {
     required this.topThree,
     required this.entries,
     required this.totalParticipants,
+    this.onRefresh,
   });
 
-  static const _backgroundAsset = 'assets/ranking/honor-ranking.png';
   static const _backgroundAspectRatio = 941 / 1672;
 
   @override
@@ -38,35 +38,14 @@ class LeaderboardPodium extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final backgroundHeight = width / _backgroundAspectRatio;
-        final listTop = backgroundHeight * 0.62;
-        final rowCount = entries.isEmpty ? 1 : entries.length;
-        final contentHeight = listTop + 82 + (rowCount * 72) + 36;
-        final minHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : 0.0;
-        final stageHeight = math.max(
-          math.max(contentHeight, backgroundHeight),
-          minHeight,
-        );
 
         return SizedBox(
-          height: stageHeight,
           width: width,
+          height: constraints.maxHeight,
           child: Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                height: backgroundHeight,
-                child: Image.asset(
-                  _backgroundAsset,
-                  fit: BoxFit.fitWidth,
-                  alignment: Alignment.topCenter,
-                  filterQuality: FilterQuality.high,
-                ),
-              ),
+              // Dont change slot positions, they are carefully calculated to fit the background design
               _buildHonorSlot(
                 context,
                 canvasWidth: width,
@@ -74,7 +53,7 @@ class LeaderboardPodium extends StatelessWidget {
                 entry: first,
                 rank: 1,
                 centerX: 0.5,
-                centerY: 0.195,
+                centerY: 0.17,
               ),
               _buildHonorSlot(
                 context,
@@ -82,8 +61,8 @@ class LeaderboardPodium extends StatelessWidget {
                 backgroundHeight: backgroundHeight,
                 entry: second,
                 rank: 2,
-                centerX: 0.215,
-                centerY: 0.42,
+                centerX: 0.265,
+                centerY: 0.368,
               ),
               _buildHonorSlot(
                 context,
@@ -91,14 +70,18 @@ class LeaderboardPodium extends StatelessWidget {
                 backgroundHeight: backgroundHeight,
                 entry: third,
                 rank: 3,
-                centerX: 0.785,
-                centerY: 0.42,
+                centerX: 0.735,
+                centerY: 0.368,
               ),
-              Positioned(
-                left: 18,
-                right: 18,
-                top: listTop,
-                child: _buildRankingListPanel(context),
+              DraggableScrollableSheet(
+                initialChildSize: 0.38,
+                minChildSize: 0.38,
+                maxChildSize: 0.67,
+                snap: true,
+                snapSizes: const [0.38, 0.67],
+                builder: (context, scrollController) {
+                  return _buildRankingListPanel(context, scrollController);
+                },
               ),
             ],
           ),
@@ -298,98 +281,176 @@ class LeaderboardPodium extends StatelessWidget {
     );
   }
 
-  Widget _buildRankingListPanel(BuildContext context) {
+  Widget _buildRankingListPanel(
+    BuildContext context,
+    ScrollController scrollController,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor = Colors.white.withValues(alpha: isDark ? 0.14 : 0.68);
     final panelColor = isDark
-        ? AppColors.surfaceDark.withValues(alpha: 0.5)
-        : Colors.white.withValues(alpha: 0.58);
+        ? AppColors.surfaceDark.withValues(alpha: 0.82)
+        : Colors.white.withValues(alpha: 0.85);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-          decoration: BoxDecoration(
-            color: panelColor,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: panelColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  RankAssetIcon(rank: league, size: 34),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'leaderboard.title'.tr(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.textInverted
-                                    : AppColors.textDark,
-                              ),
-                        ),
-                        Text(
-                          rankDisplayNameFor(league),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: rankVisualDataFor(league).color,
+              border: Border(
+                top: BorderSide(color: borderColor, width: 1.2),
+                left: BorderSide(color: borderColor, width: 1.2),
+                right: BorderSide(color: borderColor, width: 1.2),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: RefreshIndicator(
+              onRefresh: onRefresh ?? () async {},
+              child: CustomScrollView(
+                controller: scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Drag Handle & Header info
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                      child: Column(
+                        children: [
+                          // Drag Indicator
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                        ),
-                      ],
+                          Row(
+                            children: [
+                              RankAssetIcon(rank: league, size: 34),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'leaderboard.title'.tr(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark
+                                                ? AppColors.textInverted
+                                                : AppColors.textDark,
+                                          ),
+                                    ),
+                                    league == 'master'
+                                        ? ShaderMask(
+                                            shaderCallback: (bounds) =>
+                                                const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFF5AB6FF),
+                                                    Color(0xFFFFD64F),
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ).createShader(bounds),
+                                            child: Text(
+                                              rankDisplayNameFor(league),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            rankDisplayNameFor(league),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: rankVisualDataFor(
+                                                league,
+                                              ).color,
+                                            ),
+                                          ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'leaderboard.participants'.tr(
+                                  namedArgs: {
+                                    'count': totalParticipants.toString(),
+                                  },
+                                ),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColorRoles.textMuted(isDark),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  Text(
-                    'leaderboard.participants'.tr(
-                      namedArgs: {'count': totalParticipants.toString()},
-                    ),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColorRoles.textMuted(isDark),
-                    ),
+                  // Ranking list items
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    sliver: entries.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              child: Text(
+                                'leaderboard.noRankingsYet'.tr(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppColorRoles.textSecondary(isDark)
+                                      : AppColors.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              return _buildGlassRankingRow(
+                                context,
+                                entry: entries[index],
+                              );
+                            }, childCount: entries.length),
+                          ),
                   ),
+                  // Bottom spacing
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
               ),
-              const SizedBox(height: 10),
-              if (entries.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  child: Text(
-                    'leaderboard.noRankingsYet'.tr(),
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColorRoles.textSecondary(isDark)
-                          : AppColors.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              else
-                ...entries.map(
-                  (entry) => _buildGlassRankingRow(context, entry: entry),
-                ),
-            ],
+            ),
           ),
         ),
       ),

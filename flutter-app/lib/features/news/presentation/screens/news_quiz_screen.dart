@@ -496,7 +496,9 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   if (!isCorrect) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'newsQuiz.correct'.tr(namedArgs: {'answer': q.options[q.correctIndex]}),
+                      'newsQuiz.correct'.tr(
+                        namedArgs: {'answer': q.options[q.correctIndex]},
+                      ),
                       style: const TextStyle(
                         color: AppColors.greenSuccessBright,
                         fontSize: 12,

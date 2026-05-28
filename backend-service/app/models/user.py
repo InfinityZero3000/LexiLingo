@@ -40,7 +40,7 @@ class User(Base):
     level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
-    rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, diamond, master
+    rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, sapphire, ruby, amethyst, master
     rank_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     rank_level_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     rank_proficiency_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)

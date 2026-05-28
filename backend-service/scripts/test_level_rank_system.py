@@ -292,9 +292,11 @@ async def test_rank_calculation():
     test_cases = [
         (10, "A1", RankTier.BRONZE),
         (50, "B1", RankTier.SILVER),
-        (70, "B2", RankTier.GOLD),
-        (85, "C1", RankTier.PLATINUM),
-        (95, "C1", RankTier.DIAMOND),
+        (55, "B2", RankTier.GOLD),
+        (70, "B2", RankTier.PLATINUM),
+        (85, "C1", RankTier.SAPPHIRE),
+        (90, "C1", RankTier.RUBY),
+        (95, "C1", RankTier.AMETHYST),
         (100, "C2", RankTier.MASTER),
     ]
     

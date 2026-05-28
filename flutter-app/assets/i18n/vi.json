@@ -121,7 +121,7 @@
     "greetingNight": "Chúc ngủ ngon",
     "dayStreakCount": "Chuỗi {count} ngày",
     "fireToday": "Hôm nay bạn đang rất sung sức!",
-    "completeLessonToday": "Hãy hoàn thành một bài học hôm nay!",
+    "completeLessonToday": "Hãy học 1 bài hôm nay!",
     "calendar": "Lịch",
     "weekdayMonShort": "T2",
     "weekdayTueShort": "T3",
@@ -760,7 +760,16 @@
     "participants": "{count} người tham gia",
     "moreRanks": "Xếp hạng khác",
     "noRankingsYet": "Chưa có xếp hạng",
-    "firstToCompete": "Hãy là người đầu tiên thi đấu tuần này!"
+    "firstToCompete": "Hãy là người đầu tiên thi đấu tuần này!",
+    "aboutLeagues": "Về các Giải đấu",
+    "bronzeDesc": "Khởi đầu hành trình. Tích lũy điểm để thăng hạng!",
+    "silverDesc": "Bắt đầu nóng lên! Hãy tiếp tục học để tiến xa hơn.",
+    "goldDesc": "Nỗ lực tuyệt vời! Bạn đang thực sự nổi bật.",
+    "platinumDesc": "Dành cho những người tinh anh. Cần sự tập trung cao độ.",
+    "sapphireDesc": "Sự chói sáng vượt bậc. Sự kiên trì của bạn đang được đền đáp.",
+    "rubyDesc": "Bậc thầy của sự cống hiến. Bạn đã đến rất gần đỉnh cao!",
+    "amethystDesc": "Trạng thái huyền thoại. Rất ít người đạt được đến mức này.",
+    "masterDesc": "Đỉnh cao tuyệt đối. Bạn đích thực là một bậc thầy ngôn ngữ!"
   },
   "newsQuiz": {
     "title": "Bài kiểm tra đọc hiểu",
