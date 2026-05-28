@@ -174,7 +174,7 @@ export const SuperAdminDashboard = () => {
         <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
           <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.superDashboard.systemWarnings}</h4>
           {monitor.health.warnings.map((w, i) => (
-            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w}</p>
+            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w.message}</p>
           ))}
         </div>
       )}
