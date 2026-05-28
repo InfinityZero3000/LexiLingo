@@ -19,9 +19,38 @@ export class ApiError extends Error {
   }
 }
 
+type ApiFetchOptions = RequestInit & {
+  skipAuth?: boolean;
+};
+
 // Track refresh state to avoid concurrent refresh calls
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
+
+const TOKEN_REFRESH_BUFFER_MS = 30_000;
+
+const getJwtExpiryMs = (token: string): number => {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return 0;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "="
+    );
+    const decoded = JSON.parse(window.atob(padded));
+    return typeof decoded.exp === "number" ? decoded.exp * 1000 : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const shouldRefreshAccessToken = (token: string | null): boolean => {
+  if (!token) return true;
+  const expiryMs = getJwtExpiryMs(token);
+  return !expiryMs || expiryMs - Date.now() <= TOKEN_REFRESH_BUFFER_MS;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fallback fetch: thử primary URL trước, nếu network error → thử fallback.
@@ -117,22 +146,41 @@ async function tryRefreshToken(): Promise<boolean> {
   return refreshPromise;
 }
 
+async function getUsableAccessToken(): Promise<string | null> {
+  const token = authStore.accessToken;
+
+  if (!authStore.refreshToken) {
+    return token;
+  }
+
+  if (shouldRefreshAccessToken(token)) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      return authStore.accessToken;
+    }
+  }
+
+  return authStore.accessToken;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main API fetch — gọi với full URL, tự động attach token + refresh + fallback
 // ─────────────────────────────────────────────────────────────────────────────
 export const apiFetch = async <T>(
   url: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> => {
+  const { skipAuth = false, ...requestOptions } = options;
+
   const makeRequest = async (token: string | null) => {
-    const headers = new Headers(options.headers);
+    const headers = new Headers(requestOptions.headers);
     headers.set("Accept", "application/json");
 
-    if (!(options.body instanceof FormData)) {
+    if (!(requestOptions.body instanceof FormData)) {
       headers.set("Content-Type", "application/json");
     }
 
-    if (token) {
+    if (!skipAuth && token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
@@ -140,14 +188,14 @@ export const apiFetch = async <T>(
       headers.set("X-Api-Key", ENV.apiKey);
     }
 
-    return fetchWithFallback(url, { ...options, headers });
+    return fetchWithFallback(url, { ...requestOptions, headers });
   };
 
   // First attempt
-  let response = await makeRequest(authStore.accessToken);
+  let response = await makeRequest(skipAuth ? null : await getUsableAccessToken());
 
   // If 401 and we have a refresh token, try to refresh and retry once
-  if (response.status === 401 && authStore.refreshToken) {
+  if (!skipAuth && response.status === 401 && authStore.refreshToken) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       response = await makeRequest(authStore.accessToken);
@@ -167,10 +215,24 @@ export const apiFetch = async <T>(
       authStore.clear();
       window.location.href = "/login";
     }
-    const message =
-      typeof payload === "string"
-        ? payload
-        : payload?.detail || payload?.message || "Request failed";
+    
+    let message = "Request failed";
+    if (typeof payload === "string") {
+      message = payload;
+    } else if (payload && typeof payload === "object") {
+      if (Array.isArray(payload.detail)) {
+        message = payload.detail.map((err: any) => err.msg || JSON.stringify(err)).join(", ");
+      } else if (typeof payload.detail === "string") {
+        message = payload.detail;
+      } else if (typeof payload.message === "string") {
+        message = payload.message;
+      } else if (typeof payload.error?.message === "string") {
+        message = payload.error.message;
+      } else if (payload.detail || payload.message) {
+        message = JSON.stringify(payload.detail || payload.message);
+      }
+    }
+    
     throw new ApiError(message, response.status, payload);
   }
 

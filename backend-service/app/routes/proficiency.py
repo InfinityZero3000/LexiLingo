@@ -42,6 +42,7 @@ from app.schemas.proficiency import (
 )
 from app.services.proficiency_service import ProficiencyService
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.level_service import calculate_numeric_level
 
 
 router = APIRouter(prefix="/proficiency", tags=["proficiency"])
@@ -495,6 +496,21 @@ async def record_exercise_results(
         profile.overall_score = sum(s.score for s in all_skill_scores) / len(all_skill_scores)
     
     profile.last_assessment_at = datetime.now(timezone.utc)
+    
+    # Sync current_user profile
+    current_user.level = new_level.value
+    
+    old_xp = current_user.total_xp or 0
+    new_xp = old_xp + xp_earned
+    current_user.total_xp = new_xp
+    current_user.numeric_level = calculate_numeric_level(new_xp)
+    
+    # Recalculate and update rank
+    rank_info = calculate_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level,
+    )
+    apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     

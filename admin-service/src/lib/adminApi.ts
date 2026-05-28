@@ -8,6 +8,21 @@ export type AdminResponse<T> = {
   error?: string;
 };
 
+const asAdminResponse = <T>(payload: T | AdminResponse<T>): AdminResponse<T> => {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    ("success" in payload || "data" in payload || "error" in payload)
+  ) {
+    return payload as AdminResponse<T>;
+  }
+
+  return {
+    success: true,
+    data: payload as T,
+  };
+};
+
 export type AdminUser = {
   id: string;
   email: string;
@@ -516,10 +531,18 @@ export type VocabEffectiveness = {
 };
 
 export const getContentPerformance = async () =>
-  apiFetch<AdminResponse<ContentPerformance>>(`${ENV.backendUrl}/admin/analytics/content-performance`);
+  asAdminResponse(
+    await apiFetch<ContentPerformance | AdminResponse<ContentPerformance>>(
+      `${ENV.backendUrl}/admin/analytics/content-performance`
+    )
+  );
 
 export const getVocabEffectiveness = async () =>
-  apiFetch<AdminResponse<VocabEffectiveness>>(`${ENV.backendUrl}/admin/analytics/vocabulary-effectiveness`);
+  asAdminResponse(
+    await apiFetch<VocabEffectiveness | AdminResponse<VocabEffectiveness>>(
+      `${ENV.backendUrl}/admin/analytics/vocabulary-effectiveness`
+    )
+  );
 
 // ============================================================================
 // System Info
@@ -563,4 +586,3 @@ export const updateSystemInfo = async (payload: SystemInfoUpdatePayload) =>
     method: "PUT",
     body: JSON.stringify(payload),
   });
-

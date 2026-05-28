@@ -6,11 +6,11 @@ import { authStore } from "../lib/auth";
 export const RequireAuth = () => {
   const { user, loading } = useAuth();
 
-  if (loading && authStore.accessToken) {
+  if (loading) {
     return <div className="loading">Đang xác thực phiên...</div>;
   }
 
-  if (!user) {
+  if (!user || !authStore.accessToken) {
     return <Navigate to="/login" replace />;
   }
 

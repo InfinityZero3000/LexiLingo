@@ -25,7 +25,7 @@ from app.schemas.level import (
     XPAwardRequest,
     XPAwardResponse
 )
-from app.services.level_service import LevelService, get_numeric_level_progress
+from app.services.level_service import LevelService, get_numeric_level_progress, calculate_numeric_level
 from app.services.rank_service import (
     apply_rank_info_to_user,
     calculate_rank as calc_rank,
@@ -537,11 +537,17 @@ async def award_xp(
     # Check if user leveled up
     leveled_up, previous_tier = LevelService.check_level_up(old_xp, new_xp)
     
-    # Update user XP and level
+    # Update user XP, level, numeric_level, and rank
     current_user.total_xp = new_xp
     if leveled_up:
         new_level_status = LevelService.calculate_level_status(new_xp)
         current_user.level = new_level_status.current_tier.code
+    
+    current_user.numeric_level = calculate_numeric_level(new_xp)
+    
+    # Recalculate rank
+    rank_info = calc_rank(current_user.numeric_level, current_user.level or "A1")
+    apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     await db.refresh(current_user)

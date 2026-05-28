@@ -2,9 +2,58 @@
 Schemas for Grammar, Question Bank, and Test Exams.
 """
 
-from typing import Optional, List, Any
+import json
 from datetime import datetime
-from pydantic import BaseModel, Field, UUID4
+from typing import Any
+from pydantic import BaseModel, Field, UUID4, field_validator
+
+
+def _coerce_json_list(value: Any) -> list[Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple | set):
+        return list(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            return [text]
+        return _coerce_json_list(parsed)
+    return [value]
+
+
+def _coerce_tags(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            return [tag.strip() for tag in text.split(",") if tag.strip()]
+        return _coerce_tags(parsed)
+    if isinstance(value, dict):
+        tags: list[str] = []
+        for key, item in value.items():
+            if item is None or item is False:
+                continue
+            if item is True:
+                tags.append(str(key))
+            elif isinstance(item, list):
+                tags.extend(str(tag) for tag in item if tag is not None)
+            else:
+                tags.append(str(item))
+        return tags
+    if isinstance(value, list | tuple | set):
+        return [str(item) for item in value if item is not None]
+    return [str(value)]
 
 
 # ------------------- Grammar -------------------
@@ -12,12 +61,22 @@ from pydantic import BaseModel, Field, UUID4
 class GrammarBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     level: str = Field(default="A1")
-    topic: Optional[str] = None
-    summary: Optional[str] = None
+    topic: str | None = None
+    summary: str | None = None
     content: str
-    examples: Optional[List[Any]] = None
-    tags: Optional[List[str]] = None
+    examples: list[Any] | None = None
+    tags: list[str] | None = None
     is_active: bool = True
+
+    @field_validator("examples", mode="before")
+    @classmethod
+    def coerce_examples(cls, value: Any) -> list[Any] | None:
+        return _coerce_json_list(value)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def coerce_tags(cls, value: Any) -> list[str] | None:
+        return _coerce_tags(value)
 
 
 class GrammarCreate(GrammarBase):
@@ -25,14 +84,14 @@ class GrammarCreate(GrammarBase):
 
 
 class GrammarUpdate(BaseModel):
-    title: Optional[str] = None
-    level: Optional[str] = None
-    topic: Optional[str] = None
-    summary: Optional[str] = None
-    content: Optional[str] = None
-    examples: Optional[List[Any]] = None
-    tags: Optional[List[str]] = None
-    is_active: Optional[bool] = None
+    title: str | None = None
+    level: str | None = None
+    topic: str | None = None
+    summary: str | None = None
+    content: str | None = None
+    examples: list[Any] | None = None
+    tags: list[str] | None = None
+    is_active: bool | None = None
 
 
 class GrammarResponse(GrammarBase):
@@ -49,13 +108,23 @@ class GrammarResponse(GrammarBase):
 class QuestionBase(BaseModel):
     prompt: str
     question_type: str = "mcq"
-    options: Optional[List[Any]] = None
-    answer: Optional[Any] = None
-    explanation: Optional[str] = None
+    options: list[Any] | None = None
+    answer: Any | None = None
+    explanation: str | None = None
     difficulty_level: str = "A1"
-    tags: Optional[List[str]] = None
-    grammar_id: Optional[UUID4] = None
+    tags: list[str] | None = None
+    grammar_id: UUID4 | None = None
     is_active: bool = True
+
+    @field_validator("options", mode="before")
+    @classmethod
+    def coerce_options(cls, value: Any) -> list[Any] | None:
+        return _coerce_json_list(value)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def coerce_tags(cls, value: Any) -> list[str] | None:
+        return _coerce_tags(value)
 
 
 class QuestionCreate(QuestionBase):
@@ -63,15 +132,15 @@ class QuestionCreate(QuestionBase):
 
 
 class QuestionUpdate(BaseModel):
-    prompt: Optional[str] = None
-    question_type: Optional[str] = None
-    options: Optional[List[Any]] = None
-    answer: Optional[Any] = None
-    explanation: Optional[str] = None
-    difficulty_level: Optional[str] = None
-    tags: Optional[List[str]] = None
-    grammar_id: Optional[UUID4] = None
-    is_active: Optional[bool] = None
+    prompt: str | None = None
+    question_type: str | None = None
+    options: list[Any] | None = None
+    answer: Any | None = None
+    explanation: str | None = None
+    difficulty_level: str | None = None
+    tags: list[str] | None = None
+    grammar_id: UUID4 | None = None
+    is_active: bool | None = None
 
 
 class QuestionResponse(QuestionBase):
@@ -87,12 +156,17 @@ class QuestionResponse(QuestionBase):
 
 class TestExamBase(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     level: str = "A1"
     duration_minutes: int = 20
     passing_score: int = 70
-    question_ids: Optional[List[UUID4]] = None
+    question_ids: list[UUID4] | None = None
     is_published: bool = False
+
+    @field_validator("question_ids", mode="before")
+    @classmethod
+    def coerce_question_ids(cls, value: Any) -> list[Any] | None:
+        return _coerce_json_list(value)
 
 
 class TestExamCreate(TestExamBase):
@@ -100,13 +174,13 @@ class TestExamCreate(TestExamBase):
 
 
 class TestExamUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    level: Optional[str] = None
-    duration_minutes: Optional[int] = None
-    passing_score: Optional[int] = None
-    question_ids: Optional[List[UUID4]] = None
-    is_published: Optional[bool] = None
+    title: str | None = None
+    description: str | None = None
+    level: str | None = None
+    duration_minutes: int | None = None
+    passing_score: int | None = None
+    question_ids: list[UUID4] | None = None
+    is_published: bool | None = None
 
 
 class TestExamResponse(TestExamBase):

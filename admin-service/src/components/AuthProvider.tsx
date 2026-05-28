@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(authStore.user);
   const [role, setRole] = useState<Role | null>(authStore.role);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(authStore.accessToken || authStore.refreshToken));
 
   const processLogin = async (accessToken: string, refreshToken: string) => {
     authStore.accessToken = accessToken;
@@ -68,11 +68,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshProfile = async () => {
-    if (!authStore.accessToken) return;
+    if (!authStore.accessToken && !authStore.refreshToken) return;
     setLoading(true);
     try {
       const profile = await getCurrentUser();
       const resolvedRole = resolveRole(profile);
+      if (!resolvedRole) {
+        authStore.clear();
+        setUser(null);
+        setRole(null);
+        throw new Error("Tài khoản không có quyền truy cập Admin Dashboard.");
+      }
       authStore.user = profile;
       authStore.role = resolvedRole;
       setUser(profile);
@@ -83,10 +89,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    if (authStore.accessToken && !user) {
-      void refreshProfile();
-    }
-  }, [user]);
+    let cancelled = false;
+
+    const bootstrapSession = async () => {
+      if (!authStore.accessToken && !authStore.refreshToken) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const profile = await getCurrentUser();
+        const resolvedRole = resolveRole(profile);
+
+        if (!resolvedRole) {
+          throw new Error("Tài khoản không có quyền truy cập Admin Dashboard.");
+        }
+
+        authStore.user = profile;
+        authStore.role = resolvedRole;
+
+        if (!cancelled) {
+          setUser(profile);
+          setRole(resolvedRole);
+        }
+      } catch {
+        authStore.clear();
+        if (!cancelled) {
+          setUser(null);
+          setRole(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void bootstrapSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const value = useMemo(
     () => ({ user, role, loading, signIn, signInWithGoogle, signOut, refreshProfile }),
