@@ -1,17 +1,14 @@
-# LexiLingo MCP Server
+# LexiLingo Coding-Time MCP Server
 
-Model Context Protocol server for LexiLingo AI services.
+Model Context Protocol server strictly meant for **IDE assistance** (Cursor, Copilot CLI, Claude Desktop).
+
+> **Note**: For actual app runtime AI logic (Tutor, STT, TTS, KuzuDB API), please refer to `ai-service/api/mcp/` instead.
 
 ## 🎯 Overview
 
 This MCP server provides standardized tools and resources for:
-- Chat with AI tutor (Qwen/Gemini)
-- Speech-to-Text (Whisper)
-- Text-to-Speech (Piper)
-- Pronunciation analysis (HuBERT)
-- Grammar evaluation
-- Knowledge graph queries
-- Exercise generation
+- Writing and mapping `.json` strings across 7 localization files in `flutter-app`
+- Querying and validating KuzuDB Knowledge Graph structures.
 
 ## 📦 Installation
 
@@ -22,65 +19,23 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Set environment variables
-export GEMINI_API_KEY="your_api_key_here"
 ```
-
-## ⚙️ Configuration
-
-Edit `config.yaml` to configure:
-- Models (Qwen, Whisper, Piper, etc.)
-- Storage (Redis, MongoDB, KuzuDB)
-- Features (caching, logging)
 
 ## 🚀 Usage
 
-### Start MCP Server
+### Start MCP Server (for IDE integration)
 
+Configure your IDE's `cline_mcp.json` or Copilot setting to run:
 ```bash
 python server.py
 ```
 
-### Test with MCP Client
+## 🛠️ Available DEV Tools
 
-```python
-from mcp.client.stdio import stdio_client
-from mcp import ClientSession, StdioServerParameters
-
-async def test():
-    server_params = StdioServerParameters(
-        command="python",
-        args=["server.py"],
-    )
-    
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            
-            # List tools
-            tools = await session.list_tools()
-            print(f"Available: {[t.name for t in tools.tools]}")
-            
-            # Call chat tool
-            result = await session.call_tool(
-                "chat_with_ai",
-                {"message": "Hello!", "model": "qwen"},
-            )
-            print(result.content[0].text)
-```
-
-## 🛠️ Available Tools
-
-| Tool | Description | Status |
-|------|-------------|--------|
-| `chat_with_ai` | Chat with Qwen/Gemini | ✅ Ready |
-| `transcribe_audio` | Whisper STT | ✅ Ready |
-| `generate_speech` | Piper TTS | ✅ Ready |
-| `evaluate_grammar` | Grammar check | ✅ Ready |
-| `analyze_pronunciation` | HuBERT scoring | 🚧 TODO |
-| `query_knowledge_graph` | KuzuDB queries | 🚧 TODO |
-| `generate_exercise` | Exercise gen | 🚧 TODO |
+| Tool | Description |
+|------|-------------|
+| `manage_i18n_key` | Write and sync keys across `en.json`, `vi.json`, `ko.json`, etc. |
+| `query_knowledge_graph` | Query local DB during dev (Placeholder for developers) |
 
 ## 📚 Resources
 

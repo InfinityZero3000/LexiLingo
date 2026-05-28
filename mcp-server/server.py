@@ -1,266 +1,91 @@
 """
-LexiLingo MCP Server
-Entry point for Model Context Protocol server
+LexiLingo MCP Server - Coding Time Tools
+Entry point for Model Context Protocol server, specifically designed for IDE assistance.
 """
 
 import asyncio
 import logging
 import sys
+import json
 from pathlib import Path
 from typing import Any
 
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
+from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp import types
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from tools import chat, stt, pronunciation, tts, knowledge_graph, exercise, grammar
-from tools import model_gateway
-from resources import learner_profile, conversation, lesson_context
-from utils.config import Config
+from tools.i18n_manager import manage_i18n_key
 from utils.logger import setup_logger
 
 # Setup logging
 logger = setup_logger(__name__)
 
-# Load config
-config = Config.load(str(Path(__file__).parent / "config.yaml"))
-
 # Create MCP server instance
-server = Server("lexilingo-mcp")
-
+server = Server("lexilingo-coding-mcp")
 
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
-    """List all available tools"""
-    logger.info("Listing available tools")
+    """List all available tools for code editors"""
+    logger.info("Listing available DEV tools")
     
     return [
         types.Tool(
-            name="chat_with_ai",
-            description="Chat with AI tutor using Qwen or Gemini. Provides personalized English learning assistance.",
+            name="manage_i18n_key",
+            description="Add or update a localization key across all 7 language JSON files in Flutter.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "message": {
+                    "key_path": {
                         "type": "string",
-                        "description": "User's message or question",
+                        "description": "Dot-separated key path, e.g., 'common.buttons.start'",
                     },
-                    "context": {
-                        "type": "object",
-                        "description": "Conversation context",
-                        "properties": {
-                            "session_id": {"type": "string"},
-                            "user_id": {"type": "string"},
-                            "user_level": {
-                                "type": "string",
-                                "enum": ["A1", "A2", "B1", "B2", "C1", "C2"],
-                                "description": "CEFR level",
-                            },
-                            "lesson_id": {"type": "string"},
-                        },
-                    },
-                    "model": {
+                    "english_text": {
                         "type": "string",
-                        "enum": ["qwen", "gemini"],
-                        "default": "qwen",
-                        "description": "AI model to use",
+                        "description": "The English default text",
                     },
                 },
-                "required": ["message"],
-            },
-        ),
-        types.Tool(
-            name="transcribe_audio",
-            description="Transcribe audio to text using Whisper STT. Returns text and word-level timestamps.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "audio_bytes": {
-                        "type": "string",
-                        "description": "Base64 encoded audio (WAV/MP3)",
-                    },
-                    "language": {
-                        "type": "string",
-                        "default": "en",
-                        "description": "Language code (en, vi, etc.)",
-                    },
-                    "return_timestamps": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Include word-level timestamps",
-                    },
-                },
-                "required": ["audio_bytes"],
-            },
-        ),
-        types.Tool(
-            name="analyze_pronunciation",
-            description="Analyze pronunciation accuracy using HuBERT. Returns phoneme-level scores and feedback.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "audio_bytes": {
-                        "type": "string",
-                        "description": "Base64 encoded audio",
-                    },
-                    "reference_text": {
-                        "type": "string",
-                        "description": "Expected text to pronounce",
-                    },
-                    "return_phonemes": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Include phoneme-level analysis",
-                    },
-                },
-                "required": ["audio_bytes", "reference_text"],
-            },
-        ),
-        types.Tool(
-            name="generate_speech",
-            description="Generate speech from text using Piper TTS. Returns audio bytes.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "Text to convert to speech",
-                    },
-                    "voice_id": {
-                        "type": "string",
-                        "default": "en_US-lessac-medium",
-                        "description": "Voice identifier",
-                    },
-                    "speed": {
-                        "type": "number",
-                        "default": 1.0,
-                        "description": "Speech speed (0.5 to 2.0)",
-                    },
-                },
-                "required": ["text"],
+                "required": ["key_path", "english_text"],
             },
         ),
         types.Tool(
             name="query_knowledge_graph",
-            description="Query knowledge graph for concept relationships and prerequisites.",
+            description="Query the KuzuDB graph to learn about connected grammar/vocab concepts.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "concept": {
+                    "cypher_query": {
                         "type": "string",
-                        "description": "Concept to query (e.g., 'present perfect')",
-                    },
-                    "relation_type": {
-                        "type": "string",
-                        "enum": ["prerequisite", "related", "all"],
-                        "default": "all",
-                        "description": "Type of relations to retrieve",
-                    },
-                    "depth": {
-                        "type": "integer",
-                        "default": 2,
-                        "description": "Depth of graph traversal",
-                    },
+                        "description": "Cypher query to execute on KuzuDB (local DB instance)",
+                    }
                 },
-                "required": ["concept"],
+                "required": ["cypher_query"],
             },
-        ),
-        types.Tool(
-            name="generate_exercise",
-            description="Generate exercise based on concept and difficulty level.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "concept": {
-                        "type": "string",
-                        "description": "Grammar/vocab concept",
-                    },
-                    "difficulty": {
-                        "type": "string",
-                        "enum": ["easy", "medium", "hard"],
-                        "description": "Difficulty level",
-                    },
-                    "exercise_type": {
-                        "type": "string",
-                        "enum": ["mcq", "fill_blank", "translation", "reorder"],
-                        "description": "Type of exercise",
-                    },
-                    "count": {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Number of exercises to generate",
-                    },
-                },
-                "required": ["concept", "difficulty", "exercise_type"],
-            },
-        ),
-        types.Tool(
-            name="evaluate_grammar",
-            description="Evaluate grammar and provide corrections with explanations.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sentence": {
-                        "type": "string",
-                        "description": "Sentence to evaluate",
-                    },
-                    "detailed": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Include detailed explanations",
-                    },
-                    "user_level": {
-                        "type": "string",
-                        "enum": ["A1", "A2", "B1", "B2", "C1", "C2"],
-                        "description": "User's CEFR level for appropriate explanations",
-                    },
-                },
-                "required": ["sentence"],
-            },
-        ),
-        types.Tool(
-            name=model_gateway.TOOL_DEFINITION["name"],
-            description=model_gateway.TOOL_DEFINITION["description"],
-            inputSchema=model_gateway.TOOL_DEFINITION["inputSchema"],
-        ),
+        )
     ]
-
 
 @server.call_tool()
 async def handle_call_tool(
     name: str, arguments: dict[str, Any] | None
-) -> list[types.TextContent | types.ImageContent]:
-    """Handle tool execution"""
+) -> list[types.TextContent]:
+    """Handle DEV tool execution"""
     logger.info(f"Tool called: {name}")
     logger.debug(f"Arguments: {arguments}")
     
+    if not arguments:
+        arguments = {}
+        
     try:
-        # Route to appropriate tool
-        if name == "chat_with_ai":
-            result = await chat.execute(arguments or {})
-        elif name == "transcribe_audio":
-            result = await stt.execute(arguments or {})
-        elif name == "analyze_pronunciation":
-            result = await pronunciation.execute(arguments or {})
-        elif name == "generate_speech":
-            result = await tts.execute(arguments or {})
+        if name == "manage_i18n_key":
+            result = manage_i18n_key(arguments.get("key_path", ""), arguments.get("english_text", ""))
         elif name == "query_knowledge_graph":
-            result = await knowledge_graph.execute(arguments or {})
-        elif name == "generate_exercise":
-            result = await exercise.execute(arguments or {})
-        elif name == "evaluate_grammar":
-            result = await grammar.execute(arguments or {})
-        elif name == "model_gateway":
-            result = await model_gateway.execute(arguments or {})
+            # Placeholder for KuzuDB local IDE runner
+            result = {"message": f"Simulating query: {arguments.get('cypher_query')}. Implement full KuzuDB connection if needed."}
         else:
             raise ValueError(f"Unknown tool: {name}")
         
-        # Return result as text
-        import json
         return [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
     
     except Exception as e:
@@ -272,32 +97,31 @@ async def handle_call_tool(
             )
         ]
 
-
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
-    """List available resources"""
-    logger.info("Listing available resources")
-    
+    """List available resources for coding context"""
     return [
         types.Resource(
-            uri="learner_profile://{user_id}",
-            name="Learner Profile",
-            description="User's learning profile, preferences, and progress",
+            uri="lexilingo://architecture/openapi",
+            name="Backend OpenAPI Schema",
+            description="Latest FastAPI swagger/openapi specs for the backend",
             mimeType="application/json",
         ),
         types.Resource(
-            uri="conversation_history://{session_id}",
-            name="Conversation History",
-            description="Chat history and context for a session",
-            mimeType="application/json",
-        ),
-        types.Resource(
-            uri="lesson_context://{lesson_id}",
-            name="Lesson Context",
-            description="Current lesson vocabulary, grammar points, and objectives",
-            mimeType="application/json",
+            uri="lexilingo://docs/rules",
+            name="Global Rules",
+            description="Project coding conventions and rules",
+            mimeType="text/markdown",
         ),
     ]
+
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        logger.info("LexiLingo Coding MCP Server started")
+        await server.run(read_stream, write_stream, server.create_initialization_options())
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
 @server.read_resource()
