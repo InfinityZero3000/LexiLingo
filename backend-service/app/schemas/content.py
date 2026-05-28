@@ -2,7 +2,7 @@
 Schemas for Grammar, Question Bank, and Test Exams.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, UUID4
 
@@ -15,7 +15,7 @@ class GrammarBase(BaseModel):
     topic: Optional[str] = None
     summary: Optional[str] = None
     content: str
-    examples: Optional[List[dict]] = None
+    examples: Optional[List[Any]] = None
     tags: Optional[List[str]] = None
     is_active: bool = True
 
@@ -30,7 +30,7 @@ class GrammarUpdate(BaseModel):
     topic: Optional[str] = None
     summary: Optional[str] = None
     content: Optional[str] = None
-    examples: Optional[List[dict]] = None
+    examples: Optional[List[Any]] = None
     tags: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
@@ -49,8 +49,8 @@ class GrammarResponse(GrammarBase):
 class QuestionBase(BaseModel):
     prompt: str
     question_type: str = "mcq"
-    options: Optional[List[dict]] = None
-    answer: Optional[dict] = None
+    options: Optional[List[Any]] = None
+    answer: Optional[Any] = None
     explanation: Optional[str] = None
     difficulty_level: str = "A1"
     tags: Optional[List[str]] = None
@@ -65,8 +65,8 @@ class QuestionCreate(QuestionBase):
 class QuestionUpdate(BaseModel):
     prompt: Optional[str] = None
     question_type: Optional[str] = None
-    options: Optional[List[dict]] = None
-    answer: Optional[dict] = None
+    options: Optional[List[Any]] = None
+    answer: Optional[Any] = None
     explanation: Optional[str] = None
     difficulty_level: Optional[str] = None
     tags: Optional[List[str]] = None

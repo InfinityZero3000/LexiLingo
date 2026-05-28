@@ -63,25 +63,25 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(10, 10, 12, 0.85);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: rgba(225, 242, 255, 0.45);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 99999;
-          font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-          color: #f3f4f6;
+          font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+          color: var(--text, #1a2835);
         }
 
         .lock-card {
-          background: rgba(20, 20, 25, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%);
+          border: 1px solid var(--line, #b8d9f5);
           border-radius: 24px;
           padding: 40px;
           width: 380px;
           max-width: 90%;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 20px 44px rgba(10, 50, 90, 0.12);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -96,48 +96,49 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           top: 0;
           left: 0;
           right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+          height: 4px;
+          background: linear-gradient(90deg, var(--accent, #ff4d00) 0%, var(--accent-2, #2aa7a1) 100%);
         }
 
         .lock-icon-wrapper {
           width: 64px;
           height: 64px;
-          border-radius: 20px;
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.2);
+          border-radius: 18px;
+          background: rgba(255, 77, 0, 0.08);
+          border: 1px solid rgba(255, 77, 0, 0.15);
           display: flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 24px;
-          color: #3b82f6;
+          color: var(--accent, #ff4d00);
           transition: all 0.3s ease;
         }
 
         .lock-icon-wrapper.success {
-          background: rgba(16, 185, 129, 0.1);
-          border-color: rgba(16, 185, 129, 0.3);
-          color: #10b981;
-          transform: scale(1.1);
+          background: rgba(42, 167, 161, 0.12);
+          border-color: rgba(42, 167, 161, 0.3);
+          color: var(--accent-2, #2aa7a1);
+          transform: scale(1.05);
         }
 
         .lock-icon-wrapper.error {
-          background: rgba(239, 68, 68, 0.1);
-          border-color: rgba(239, 68, 68, 0.3);
-          color: #ef4444;
+          background: rgba(218, 50, 76, 0.1);
+          border-color: rgba(218, 50, 76, 0.3);
+          color: #b7324c;
         }
 
         .lock-title {
-          font-size: 20px;
+          font-family: 'Space Grotesk', 'Instrument Sans', sans-serif;
+          font-size: 22px;
           font-weight: 700;
-          margin-bottom: 8px;
-          letter-spacing: -0.025em;
-          color: #ffffff;
+          margin: 0 0 10px;
+          letter-spacing: -0.015em;
+          color: var(--text, #1a2835);
         }
 
         .lock-subtitle {
           font-size: 14px;
-          color: #9ca3af;
+          color: var(--muted, #4a6070);
           margin-bottom: 32px;
           line-height: 1.5;
         }
@@ -153,27 +154,28 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           width: 14px;
           height: 14px;
           border-radius: 50%;
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          border: 2px solid var(--line, #b8d9f5);
+          background: transparent;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .pin-dot.filled {
-          background: #ffffff;
-          border-color: #ffffff;
+          background: var(--accent, #ff4d00);
+          border-color: var(--accent, #ff4d00);
           transform: scale(1.15);
-          box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+          box-shadow: 0 0 10px rgba(255, 77, 0, 0.3);
         }
 
         .pin-dot.success {
-          background: #10b981;
-          border-color: #10b981;
-          box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+          background: var(--accent-2, #2aa7a1);
+          border-color: var(--accent-2, #2aa7a1);
+          box-shadow: 0 0 10px rgba(42, 167, 161, 0.4);
         }
 
         .pin-dot.error {
-          background: #ef4444;
-          border-color: #ef4444;
-          box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+          background: #b7324c;
+          border-color: #b7324c;
+          box-shadow: 0 0 10px rgba(183, 50, 76, 0.4);
         }
 
         .keypad {
@@ -186,9 +188,9 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
         .keypad-btn {
           height: 56px;
           border-radius: 16px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          color: #f3f4f6;
+          background: #ffffff;
+          border: 1px solid var(--line, #b8d9f5);
+          color: var(--text, #1a2835);
           font-size: 18px;
           font-weight: 600;
           cursor: pointer;
@@ -197,23 +199,32 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           align-items: center;
           justify-content: center;
           user-select: none;
+          box-shadow: 0 2px 4px rgba(10, 50, 90, 0.04);
         }
 
         .keypad-btn:hover {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.1);
+          background: var(--panel-soft, #cde8ff);
+          border-color: var(--line-strong, #9dc2e2);
           transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(10, 50, 90, 0.08);
         }
 
         .keypad-btn:active {
           transform: translateY(1px);
-          background: rgba(255, 255, 255, 0.12);
+          background: var(--line-strong, #9dc2e2);
+          box-shadow: none;
         }
 
         .keypad-btn.action-btn {
-          font-size: 13px;
-          font-weight: 500;
-          color: #9ca3af;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--muted, #4a6070);
+          background: rgba(225, 242, 255, 0.35);
+        }
+
+        .keypad-btn.action-btn:hover {
+          background: var(--panel-soft, #cde8ff);
+          color: var(--text, #1a2835);
         }
 
         .shake {
@@ -227,7 +238,7 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
         }
 
         .error-message {
-          color: #ef4444;
+          color: #b7324c;
           font-size: 13px;
           margin-top: -16px;
           margin-bottom: 24px;

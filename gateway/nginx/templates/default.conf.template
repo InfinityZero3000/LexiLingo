@@ -36,13 +36,13 @@ map $http_user_agent $is_scanner {
     ~*dirbuster          1;
     ~*gobuster           1;
     ~*wfuzz              1;
-    ~*"fuzz.faster.u.fool" 1; # ffuf scanner (155 hits in logs)
+    ~*fuzz\.faster\.u\.fool 1; # ffuf scanner (155 hits in logs)
     ~*ffuf               1;
     ~*NetSystemsResearch 1;
     ~*Shodan             1;   # Shodan-Pull crawler
     ~*ncsrv              1;   # observed in logs
     ~*fasthttp           1;   # raw HTTP scanner tool
-    ~*"Hello.from.Palo.Alto" 1; # PAN recon scanner (38 hits)
+    ~*Hello\.from\.Palo\.Alto 1; # PAN recon scanner (38 hits)
 }
 
 # ---------------------------------------------------------------------------

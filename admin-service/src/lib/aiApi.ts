@@ -16,7 +16,7 @@ export type MonitoringDashboard = {
   };
   health?: {
     healthy?: boolean;
-    warnings?: string[];
+    warnings?: Array<{ type: string; message: string; severity: string; value: number }>;
     critical_count?: number;
     warning_count?: number;
   };
