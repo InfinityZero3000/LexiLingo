@@ -547,3 +547,20 @@ export type SystemInfo = {
 
 export const getSystemInfo = async () =>
   apiFetch<AdminResponse<SystemInfo>>(`${ENV.backendUrl}/admin/system-info`);
+
+export type SystemInfoUpdatePayload = {
+  app_name?: string;
+  debug?: boolean;
+  log_level?: string;
+  token_expire_minutes?: number;
+  refresh_token_days?: number;
+  cors_origins?: string;
+  ai_service_url?: string;
+};
+
+export const updateSystemInfo = async (payload: SystemInfoUpdatePayload) =>
+  apiFetch<AdminResponse<SystemInfo>>(`${ENV.backendUrl}/admin/system-info`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+

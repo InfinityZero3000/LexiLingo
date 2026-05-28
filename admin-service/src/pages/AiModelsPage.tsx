@@ -51,6 +51,9 @@ export const AiModelsPage = () => {
   if (loading) return <div className="loading">{t.common.loading}</div>;
 
   const sys = monitor?.system;
+  const cpuPercent = sys ? (sys.cpu_percent ?? sys.cpu?.percent) : undefined;
+  const memoryPercent = sys ? (sys.memory_percent ?? sys.memory?.percent) : undefined;
+  const diskPercent = sys ? (sys.disk_percent ?? sys.disk?.percent) : undefined;
   const proc = monitor?.process;
   const aiOk = health?.status === "healthy" || health?.status === "ok";
   const warnings = monitor?.health?.warnings || [];
@@ -72,18 +75,18 @@ export const AiModelsPage = () => {
         />
         <StatCard
           label={t.aiModelsPage.cpuUsage}
-          value={sys?.cpu_percent != null ? `${sys.cpu_percent.toFixed(1)}%` : "--"}
-          accent={sys?.cpu_percent && sys.cpu_percent > 80 ? "orange" : "teal"}
+          value={cpuPercent !== undefined ? `${cpuPercent.toFixed(1)}%` : "--"}
+          accent={cpuPercent && cpuPercent > 80 ? "orange" : "teal"}
         />
         <StatCard
           label={t.aiModelsPage.memory}
-          value={sys?.memory_percent != null ? `${sys.memory_percent.toFixed(1)}%` : "--"}
-          accent={sys?.memory_percent && sys.memory_percent > 80 ? "orange" : "berry"}
+          value={memoryPercent !== undefined ? `${memoryPercent.toFixed(1)}%` : "--"}
+          accent={memoryPercent && memoryPercent > 80 ? "orange" : "berry"}
         />
         <StatCard
           label={t.aiModelsPage.disk}
-          value={sys?.disk_percent != null ? `${sys.disk_percent.toFixed(1)}%` : "--"}
-          accent={sys?.disk_percent && sys.disk_percent > 90 ? "orange" : "ink"}
+          value={diskPercent !== undefined ? `${diskPercent.toFixed(1)}%` : "--"}
+          accent={diskPercent && diskPercent > 90 ? "orange" : "ink"}
         />
       </div>
 

@@ -38,6 +38,10 @@ export const SuperAdminDashboard = () => {
 
   const healthy = monitor?.health?.healthy;
   const sys = monitor?.system;
+  const cpuPercent = sys ? (sys.cpu_percent ?? sys.cpu?.percent) : undefined;
+  const memoryPercent = sys ? (sys.memory_percent ?? sys.memory?.percent) : undefined;
+  const diskPercent = sys ? (sys.disk_percent ?? sys.disk?.percent) : undefined;
+
   const beOk = backendHealth?.status === "healthy";
   const aiOk = aiHealth?.status === "healthy" || aiHealth?.status === "ok";
   const warnCount = monitor?.health?.warning_count || 0;
@@ -59,13 +63,13 @@ export const SuperAdminDashboard = () => {
         />
         <StatCard
           label={t.superDashboard.cpuMemory}
-          value={sys ? `${sys.cpu_percent?.toFixed(0)}% / ${sys.memory_percent?.toFixed(0)}%` : "--"}
-          accent={sys?.cpu_percent && sys.cpu_percent > 80 ? "orange" : "teal"}
+          value={cpuPercent !== undefined && memoryPercent !== undefined ? `${cpuPercent.toFixed(0)}% / ${memoryPercent.toFixed(0)}%` : "--"}
+          accent={cpuPercent && cpuPercent > 80 ? "orange" : "teal"}
         />
         <StatCard
           label={t.superDashboard.diskUsage}
-          value={sys?.disk_percent != null ? `${sys.disk_percent.toFixed(1)}%` : "--"}
-          accent={sys?.disk_percent && sys.disk_percent > 90 ? "orange" : "berry"}
+          value={diskPercent !== undefined ? `${diskPercent.toFixed(1)}%` : "--"}
+          accent={diskPercent && diskPercent > 90 ? "orange" : "berry"}
         />
         <StatCard
           label={t.superDashboard.systemHealth}
