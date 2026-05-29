@@ -87,12 +87,13 @@ void main() async {
   };
 
   try {
-    // Load .env.production for release builds, .env for dev on all platforms
-    // so Web and mobile use the same production config source.
-    final envFile = kReleaseMode ? '.env.production' : '.env';
+    // Load only public client config. Raw .env files may contain server
+    // secrets and must never be bundled into Flutter web assets.
+    final envFile =
+        kReleaseMode ? 'assets/env/prod_config' : 'assets/env/dev_config';
     await dotenv.load(fileName: envFile);
   } catch (e) {
-    debugPrint('Warning: Could not load .env file: $e');
+    debugPrint('Warning: Could not load public config: $e');
   }
 
   debugPrint('Backend API base URL: ${ApiConfig.baseUrl}');

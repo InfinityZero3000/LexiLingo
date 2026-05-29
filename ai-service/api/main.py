@@ -210,6 +210,9 @@ app = FastAPI(
     title="LexiLingo AI Service",
     description="AI Service for Chat, STT, TTS with ModelGateway",
     version="2.1.0",
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
+    openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
     lifespan=lifespan,
 )
 
@@ -220,7 +223,14 @@ app.add_middleware(
     allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX or None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Admin-Key", "X-Request-Id", "X-Api-Key"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Admin-Key",
+        "X-Request-Id",
+        "X-Api-Key",
+        "X-Idempotency-Key",
+    ],
     allow_private_network=True,
 )
 

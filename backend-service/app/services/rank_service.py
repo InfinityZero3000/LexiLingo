@@ -61,14 +61,14 @@ PROFICIENCY_VALUES = {
 # Rank tier definitions with thresholds (min_score inclusive, max_score exclusive except Master)
 # Using only min_score for determination: score >= min_s picks the rank
 RANK_THRESHOLDS = [
-    (RankTier.BRONZE, "Bronze", 0, 20, "#CD7F32", "🥉", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/1-bronze.png"),
-    (RankTier.SILVER, "Silver", 20, 35, "#C0C0C0", "🥈", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/2-silver.png"),
-    (RankTier.GOLD, "Gold", 35, 50, "#FFD700", "🥇", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/3-gold.png"),
-    (RankTier.PLATINUM, "Platinum", 50, 60, "#E5E4E2", "💎", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/4-platinum.png"),
-    (RankTier.SAPPHIRE, "Sapphire", 60, 70, "#4783EB", "🔹", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/5-sapphire.png"),
-    (RankTier.RUBY, "Ruby", 70, 80, "#E14242", "🔻", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/6-ruby.png"),
-    (RankTier.AMETHYST, "Amethyst", 80, 95, "#9652E3", "🔮", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/7-amethyst.png"),
-    (RankTier.MASTER, "Master", 95, 101, "#9966CC", "👑", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/8-master.png"),
+    (RankTier.BRONZE, "Bronze", 0, 20, "#CD7F32", "🥉", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/1-bronze.png"),
+    (RankTier.SILVER, "Silver", 20, 35, "#C0C0C0", "🥈", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/2-silver.png"),
+    (RankTier.GOLD, "Gold", 35, 50, "#FFD700", "🥇", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/3-gold.png"),
+    (RankTier.PLATINUM, "Platinum", 50, 60, "#E5E4E2", "💎", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/4-platinum.png"),
+    (RankTier.SAPPHIRE, "Sapphire", 60, 70, "#4783EB", "🔹", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/5-sapphire.png"),
+    (RankTier.RUBY, "Ruby", 70, 80, "#E14242", "🔻", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/6-ruby.png"),
+    (RankTier.AMETHYST, "Amethyst", 80, 95, "#9652E3", "🔮", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/7-amethyst.png"),
+    (RankTier.MASTER, "Master", 95, 101, "#9966CC", "👑", "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/8-master.png"),
 ]
 
 
@@ -134,7 +134,7 @@ def calculate_rank(numeric_level: int, proficiency_level: str) -> RankInfo:
     max_score = 20
     color = "#CD7F32"
     icon = "🥉"
-    icon_url = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/1-bronze.png"
+    icon_url = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/1-bronze.png"
     
     for tier, name, min_s, max_s, c, i, u in RANK_THRESHOLDS:
         if min_s <= score < max_s:
@@ -153,7 +153,7 @@ def calculate_rank(numeric_level: int, proficiency_level: str) -> RankInfo:
             max_score = 100
             color = "#9966CC"
             icon = "👑"
-            icon_url = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/ranking/8-master.png"
+            icon_url = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/ranking/8-master.png"
             break
     
     # Calculate component scores

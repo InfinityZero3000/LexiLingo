@@ -234,14 +234,14 @@ LLAMA_MODEL_NAME=vilm/vinallama-7b-chat
 # ============================================================
 
 # MongoDB
-MONGODB_URI=mongodb://admin:lexilingo2026@localhost:27017/
+MONGODB_URI=mongodb://localhost:27017
 MONGODB_DATABASE=lexilingo_dev
 
 # Redis
-REDIS_URL=redis://:lexilingo2026@localhost:6379/0
+REDIS_URL=redis://localhost:6379/0
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=lexilingo2026
+REDIS_PASSWORD=
 REDIS_DB=0
 
 # KuzuDB
@@ -257,7 +257,7 @@ AI_MODEL_API_KEY=
 
 # Environment
 ENVIRONMENT=development
-DEBUG=true
+DEBUG=false
 LOG_LEVEL=INFO
 
 # CORS

@@ -25,10 +25,9 @@ services:
       - key: DATABASE_URL
         sync: false  # Nhập manual: postgresql://user:pass@host:5432/db
       
-      # AI Service (từ local machine qua tunnel)
+      # AI Service (public production gateway)
       - key: AI_SERVICE_URL
-        value: https://your-tunnel-url.trycloudflare.com
-        # UPDATE THIS sau khi setup tunnel!
+        value: https://api.lexilingo.me/api/v1
       
       # JWT Secret
       - key: SECRET_KEY
@@ -44,7 +43,7 @@ services:
         value: 7
       
       # Firebase (copy content từ firebase-service-account.json)
-      - key: FIREBASE_SERVICE_ACCOUNT
+      - key: FIREBASE_CREDENTIALS_JSON
         sync: false  # Paste JSON content manually
       
       - key: FIREBASE_PROJECT_ID
@@ -54,10 +53,11 @@ services:
       - key: ENABLE_APP_CORS
         value: "false"
       - key: ALLOWED_ORIGINS
-        value: https://your-app.vercel.app,https://your-admin.netlify.app
-        # UPDATE sau khi deploy frontend!
+        value: https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me
       - key: CORS_ALLOW_ORIGIN_REGEX
-        value: https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?|https?://.*\.devtunnels\.ms(:\d+)?|https?://.*\.github\.dev(:\d+)?
+        value: https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?
+      - key: ALLOWED_HOSTS
+        value: api.lexilingo.me,lexilingo-backend.onrender.com
       
       # Environment
       - key: APP_ENV
@@ -80,8 +80,7 @@ services:
       timeout: 10s
       unhealthyThreshold: 3
 
-# Note: After deployment, update these URLs:
-# 1. AI_SERVICE_URL: URL từ cloudflare tunnel
-# 2. ALLOWED_ORIGINS: URL của Vercel (frontend) và Netlify (admin)
-# 3. DATABASE_URL: Connection string từ Supabase
-# 4. FIREBASE_SERVICE_ACCOUNT: Content của firebase-service-account.json
+# Note: After deployment, update these values:
+# 1. DATABASE_URL: Connection string từ Supabase
+# 2. FIREBASE_CREDENTIALS_JSON: Content của firebase-service-account.json
+# 3. ALLOWED_ORIGINS/ALLOWED_HOSTS nếu bổ sung domain chính thức

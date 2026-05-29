@@ -35,16 +35,130 @@ const rarityColor: Record<string, "info" | "success" | "warning" | "danger"> = {
   legendary: "danger",
 };
 
-const BACKEND_BASE = ENV.backendUrl.replace("/api/v1", "");
-const CDN_BASE = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges";
+type BadgeSource = {
+  name?: string | null;
+  slug?: string | null;
+  badge_icon?: string | null;
+  badge_color?: string | null;
+};
 
-const badgeImgUrl = (icon?: string | null) => {
-  if (!icon) return null;
+const BACKEND_BASE = ENV.backendUrl.replace("/api/v1", "");
+const CDN_BASE = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/badges";
+const LEGACY_CDN_BASE = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges";
+
+const BADGE_ASSET_BY_SLUG: Record<string, string> = {
+  first_steps: "common-lesson.png",
+  dedicated_learner: "common-lesson.png",
+  knowledge_seeker: "rare-lesson.png",
+  scholar: "epic-lesson.png",
+  professor: "legendary-lesson.png",
+  getting_started: "streak3.png",
+  week_warrior: "streak7.png",
+  two_weeks_strong: "streak30.png",
+  month_master: "streak30.png",
+  quarterly_champion: "streak90.png",
+  year_legend: "streak365.png",
+  word_collector: "common-vocabulary.png",
+  vocab_builder: "rare-vocabulary.png",
+  vocab_master: "epic-vocabulary.png",
+  walking_dictionary: "legendary-vocabulary.png",
+  perfectionist: "100%.png",
+  first_perfect_score: "first-perfect.png",
+  accuracy_master: "perfect-10.png",
+  flawless: "perfect-50.png",
+  quiz_champion: "quiz-champion.png",
+  course_explorer: "course-graduate.png",
+  course_champion: "course-master.png",
+  voice_beginner: "voice-starter.png",
+  voice_talent: "voice-pro.png",
+  pronunciation_master: "pronunciation-pro.png",
+  level_25: "lv25.png",
+  level_50: "lv50.png",
+  level_100: "lv100.png",
+  level_150: "lv150.png",
+  level_200: "lv200.png",
+  level_300: "lv300.png",
+  level_500: "lv500.png",
+  night_owl: "moon.png",
+  early_bird: "early-bird.png",
+  speed_demon: "speed-demon.png",
+  grammar_guardian: "grammar-guardian.png",
+  culture_explorer: "culture-explorer.png",
+  writing_wizard: "writing-wizard.png",
+  listening_legend: "listening-legend.png",
+  social_butterfly: "social-butterfly.png",
+  conversation_champion: "conversation-champion.png",
+  feedback_friend: "feedback-friend.png",
+  challenge_crusher: "challenge-crusher.png",
+  milestone_maker: "milestone-maker.png",
+  comeback_king: "comeback-king.png",
+};
+
+const isBadgeFilename = (value: string) => /\.(png|jpe?g|webp)$/i.test(value);
+
+const badgeCdnUrl = (filename: string) =>
+  `${CDN_BASE}/${encodeURIComponent(filename).replace(/%2F/g, "/")}`;
+
+const safeDecode = (value: string) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const badgeImgUrl = (badge: BadgeSource) => {
+  const icon = badge.badge_icon?.trim();
+  const mappedFile = badge.slug ? BADGE_ASSET_BY_SLUG[badge.slug.toLowerCase()] : null;
+
+  if (!icon) return mappedFile ? badgeCdnUrl(mappedFile) : null;
+
+  if (icon.startsWith(LEGACY_CDN_BASE)) {
+    const filename = safeDecode(icon.slice(LEGACY_CDN_BASE.length + 1));
+    return isBadgeFilename(filename) ? badgeCdnUrl(filename) : mappedFile ? badgeCdnUrl(mappedFile) : null;
+  }
+
+  if (icon.includes("/assets/badges/")) {
+    const filename = safeDecode(icon.split("/assets/badges/").pop() || "");
+    return isBadgeFilename(filename) ? badgeCdnUrl(filename) : mappedFile ? badgeCdnUrl(mappedFile) : null;
+  }
+
   if (icon.startsWith("http")) return icon;
   if (icon.startsWith("/static")) return `${BACKEND_BASE}${icon}`;
-  // If it's just a filename, use CDN
-  if (icon.endsWith(".png") || icon.endsWith(".jpg") || icon.endsWith(".webp")) return `${CDN_BASE}/${icon}`;
+  if (isBadgeFilename(icon)) return badgeCdnUrl(icon);
+  if (mappedFile) return badgeCdnUrl(mappedFile);
   return null;
+};
+
+const BadgeFallback = ({ badge, size }: { badge: BadgeSource; size: number }) => (
+  <div style={{
+    width: size, height: size, background: badge.badge_color || "var(--panel-soft)",
+    borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: size <= 44 ? 11 : 12, color: "#fff", fontWeight: 700,
+  }}>
+    {(badge.name || "BD").substring(0, 2).toUpperCase()}
+  </div>
+);
+
+const BadgeImage = ({ badge, size = 44 }: { badge: BadgeSource; size?: number }) => {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const imgUrl = badgeImgUrl(badge);
+
+  if (!imgUrl || failedUrl === imgUrl) {
+    return <BadgeFallback badge={badge} size={size} />;
+  }
+
+  return (
+    <img
+      src={imgUrl}
+      alt=""
+      onError={() => setFailedUrl(imgUrl)}
+      style={{
+        width: size, height: size, objectFit: "contain", borderRadius: 8,
+        background: "var(--panel-soft)", padding: 2, display: "block",
+      }}
+    />
+  );
 };
 
 export const AchievementsPage = () => {
@@ -207,27 +321,7 @@ export const AchievementsPage = () => {
             columns={[
               {
                 header: "Badge",
-                render: (row) => {
-                  const imgUrl = badgeImgUrl(row.badge_icon);
-                  return imgUrl ? (
-                    <img
-                      src={imgUrl}
-                      alt={row.name}
-                      style={{
-                        width: 44, height: 44, objectFit: "contain", borderRadius: 8,
-                        background: "var(--panel-soft)", padding: 2,
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: 44, height: 44, background: row.badge_color || "var(--panel-soft)",
-                      borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 11, color: "#fff", fontWeight: 600,
-                    }}>
-                      {row.name.substring(0, 2).toUpperCase()}
-                    </div>
-                  );
-                },
+                render: (row) => <BadgeImage badge={row} />,
                 align: "center",
               },
               {
@@ -338,11 +432,7 @@ export const AchievementsPage = () => {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     overflow: "hidden", flexShrink: 0,
                   }}>
-                    {badgeImgUrl(form.badge_icon) ? (
-                      <img src={badgeImgUrl(form.badge_icon)!} alt="Preview" style={{ width: 56, height: 56, objectFit: "contain" }} />
-                    ) : (
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>No image</span>
-                    )}
+                    <BadgeImage badge={{ ...form, name: form.name || "Badge" }} size={56} />
                   </div>
                 </div>
               </label>

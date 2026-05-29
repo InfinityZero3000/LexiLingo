@@ -9,7 +9,7 @@ import os
 import json
 from typing import List, Optional, Union
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from functools import lru_cache
 
 
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Environment
     # ============================================================
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
+    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     API_VERSION: str = "1.0.0"
     APP_NAME: str = "LexiLingo AI Service"
     
@@ -31,14 +31,10 @@ class Settings(BaseSettings):
     MONGODB_URI: str = os.getenv(
         "MONGODB_URI",
         ""
-    ).strip() or MONGODB_ATLAS_URI or (
-        "mongodb://localhost:10255/?"
-        "ssl=true&replicaSet=globaldb&retrywrites=false"
-        "&maxIdleTimeMS=120000&tlsAllowInvalidCertificates=true"
-    )
+    ).strip() or MONGODB_ATLAS_URI or "mongodb://localhost:27017"
     MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "lexilingo_dev")
     MONGODB_TLS_ALLOW_INVALID_CERTIFICATES: bool = (
-        os.getenv("MONGODB_TLS_ALLOW_INVALID_CERTIFICATES", "true").lower() == "true"
+        os.getenv("MONGODB_TLS_ALLOW_INVALID_CERTIFICATES", "false").lower() == "true"
     )
     MONGODB_SERVER_SELECTION_TIMEOUT_MS: int = int(
         os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "10000")
@@ -62,19 +58,16 @@ class Settings(BaseSettings):
     # ============================================================
     # CORS Settings
     # ============================================================
-    ALLOWED_ORIGINS: Union[str, List[str]] = [
-        "http://localhost:3000",  # Flutter web dev
-        "http://localhost:8080",  # Flutter web dev (alternate)
-        "http://127.0.0.1:3000",
-        "https://lexilingo.vercel.app",  # Production Flutter web
-        # Add your custom domains here
-    ]
+    ALLOWED_ORIGINS: Union[str, List[str]] = Field(
+        default=[
+            "https://lexilingo.me",
+            "https://www.lexilingo.me",
+            "https://admin.lexilingo.me",
+        ],
+        validation_alias=AliasChoices("ALLOWED_ORIGINS", "CORS_ORIGINS"),
+    )
     CORS_ALLOW_ORIGIN_REGEX: str = (
-        r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
-        r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
-        r"|https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
-        r"|https?://.*\.devtunnels\.ms(:\d+)?"
-        r"|https?://.*\.github\.dev(:\d+)?"
+        r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
     )
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
@@ -87,8 +80,35 @@ class Settings(BaseSettings):
                 return json.loads(v)
             except json.JSONDecodeError:
                 # If not JSON, split by comma
-                return [origin.strip() for origin in v.split(',')]
+                return [origin.strip() for origin in v.split(',') if origin.strip()]
         return v
+
+    @model_validator(mode="after")
+    def validate_production_security(self):
+        """Reject common insecure deployment settings."""
+        if self.ENVIRONMENT != "production":
+            return self
+
+        if self.DEBUG:
+            raise ValueError("DEBUG must be false when ENVIRONMENT=production")
+
+        if self.MONGODB_TLS_ALLOW_INVALID_CERTIFICATES:
+            raise ValueError("MongoDB invalid TLS certificates are not allowed in production")
+
+        origins = self.ALLOWED_ORIGINS
+        if isinstance(origins, str):
+            origins = [origin.strip() for origin in origins.split(",") if origin.strip()]
+
+        if "*" in origins:
+            raise ValueError("Wildcard CORS origins are not allowed with credentials in production")
+
+        if any("localhost" in origin or "127.0.0.1" in origin for origin in origins):
+            raise ValueError("Localhost CORS origins are not allowed when ENVIRONMENT=production")
+
+        if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
+            raise ValueError("Broad development tunnel CORS regex is not allowed in production")
+
+        return self
     
     # ============================================================
     # API Keys (for external services)

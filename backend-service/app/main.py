@@ -201,8 +201,16 @@ if settings.enable_app_cors:
         allow_origins=settings.cors_origins,
         allow_origin_regex=_cors_origin_regex,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Api-Key",
+            "X-Admin-Key",
+            "X-Request-Id",
+            "X-Idempotency-Key",
+            "X-AI-Service-Secret",
+        ],
         allow_private_network=True,
     )
     logger.info("App-level CORS middleware enabled")

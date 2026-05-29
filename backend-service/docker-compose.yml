@@ -35,9 +35,9 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
-      DEBUG: ${DEBUG:-True}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
     depends_on:
       postgres:
         condition: service_healthy

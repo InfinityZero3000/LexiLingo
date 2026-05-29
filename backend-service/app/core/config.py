@@ -8,6 +8,7 @@ from typing import List
 from pathlib import Path
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator, model_validator
 from dotenv import load_dotenv
 
 # Get project root directory and load environment files explicitly.
@@ -75,20 +76,23 @@ class Settings(BaseSettings):
     # None => auto mode (disabled in production, enabled otherwise).
     # Set explicit true/false to override auto mode.
     ENABLE_APP_CORS: bool | None = None
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5176"
+    ALLOWED_ORIGINS: str = "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
     CORS_ALLOW_ORIGIN_REGEX: str = (
-        r"https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?"
-        r"|https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?"
-        r"|https?://.*\.github\.dev(:\d+)?"
-        # devtunnels.ms removed — too broad (any VS Code tunnel user can bypass CORS)
+        r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
     )
     ALLOWED_HOSTS: List[str] = [
-        "localhost",
-        "127.0.0.1",
-        "*.lexilingo.com",
-        "*.onrender.com",
-        "*.vercel.app",
+        "api.lexilingo.me",
+        "*.lexilingo.me",
+        "lexilingo-backend.onrender.com",
     ]
+
+    @field_validator("ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, value):
+        """Accept either JSON/list values or a comma-separated env var."""
+        if isinstance(value, str):
+            return [host.strip() for host in value.split(",") if host.strip()]
+        return value
     
     @property
     def cors_origins(self) -> List[str]:
@@ -98,6 +102,33 @@ class Settings(BaseSettings):
             for origin in self.ALLOWED_ORIGINS.split(",")
             if origin.strip()
         ]
+
+    @model_validator(mode="after")
+    def validate_production_security(self):
+        """Fail fast on unsafe production security settings."""
+        if not self.is_production:
+            return self
+
+        if self.DEBUG:
+            raise ValueError("DEBUG must be false when APP_ENV=production")
+
+        if self.SECRET_KEY.strip().lower().startswith(("your-secret", "change_me", "replace_")):
+            raise ValueError("SECRET_KEY must be a real secret when APP_ENV=production")
+
+        if self.enable_app_cors:
+            origins = self.cors_origins
+            local_origins = [
+                origin for origin in origins
+                if "localhost" in origin or "127.0.0.1" in origin
+            ]
+            if "*" in origins:
+                raise ValueError("Wildcard CORS origins are not allowed with credentials in production")
+            if local_origins:
+                raise ValueError("Localhost CORS origins are not allowed when APP_ENV=production")
+            if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
+                raise ValueError("Broad development tunnel CORS regex is not allowed in production")
+
+        return self
     
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -110,13 +141,13 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = False
     EMAIL_FROM: str = "noreply@lexilingo.app"
-    PASSWORD_RESET_URL_BASE: str = "http://localhost:8080/#/reset-password"
+    PASSWORD_RESET_URL_BASE: str = "https://lexilingo.me/reset-password"
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
-    EMAIL_VERIFICATION_URL_BASE: str = "http://localhost:8080/#/verify-email"
+    EMAIL_VERIFICATION_URL_BASE: str = "https://lexilingo.me/verify-email"
     EMAIL_VERIFICATION_URL_BASE_PRODUCTION: str | None = None
     
     # AI Service (optional)
-    AI_SERVICE_URL: str = "http://localhost:8001/api/v1"
+    AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"
     AI_AUDIT_INGEST_SECRET: str = ""
 
     # Google OAuth
