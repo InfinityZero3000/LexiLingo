@@ -46,6 +46,8 @@ __pycache__/
 venv/
 ENV/
 env/
+!flutter-app/assets/env/
+!flutter-app/assets/env/*
 *.egg-info/
 .pytest_cache/
 .coverage

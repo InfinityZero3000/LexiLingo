@@ -62,12 +62,7 @@ geo $block_ip {
 
 map $http_origin $cors_allow_origin {
     default "";
-    ~^https?://localhost(:\d+)?$ $http_origin;
-    ~^https?://127\.0\.0\.1(:\d+)?$ $http_origin;
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?$ $http_origin;
-    ~^https?://.*\.devtunnels\.ms(:\d+)?$ $http_origin;
 }
 
 log_format main_json escape=json

@@ -16,13 +16,13 @@ services:
       KONG_PLUGINS: bundled
       KONG_NGINX_WORKER_PROCESSES: "auto"
       KONG_REAL_IP_HEADER: X-Forwarded-For
-      KONG_TRUSTED_IPS: 0.0.0.0/0,::/0
-      KONG_MOBILE_API_KEY: ${KONG_MOBILE_API_KEY:-replace-mobile-key}
-      KONG_ADMIN_API_KEY: ${KONG_ADMIN_API_KEY:-replace-admin-key}
-      KONG_INTERNAL_API_KEY: ${KONG_INTERNAL_API_KEY:-replace-internal-key}
+      KONG_TRUSTED_IPS: 127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      KONG_MOBILE_API_KEY: ${KONG_MOBILE_API_KEY:?Set KONG_MOBILE_API_KEY in gateway/.env}
+      KONG_ADMIN_API_KEY: ${KONG_ADMIN_API_KEY:?Set KONG_ADMIN_API_KEY in gateway/.env}
+      KONG_INTERNAL_API_KEY: ${KONG_INTERNAL_API_KEY:?Set KONG_INTERNAL_API_KEY in gateway/.env}
     ports:
       - "8008:8000"  # Public gateway endpoint
-      - "8009:8001"  # Admin API (secure this in non-local environments)
+      - "127.0.0.1:8009:8001"  # Admin API is local-only
     volumes:
       - ./kong/kong.yml:/etc/kong/kong.yml:ro
     depends_on:
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in gateway/.env}
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
       - "3001:3000"

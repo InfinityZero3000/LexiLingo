@@ -38,29 +38,42 @@ jobs:
         run: flutter pub get
 
       - name: Create firebase_options.dart
+        env:
+          FIREBASE_WEB_API_KEY: ${{ vars.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_MEASUREMENT_ID: ${{ vars.FIREBASE_MEASUREMENT_ID }}
         run: |
+          : "${FIREBASE_WEB_API_KEY:?Set FIREBASE_WEB_API_KEY repository variable}"
+          : "${FIREBASE_WEB_APP_ID:?Set FIREBASE_WEB_APP_ID repository variable}"
+          : "${FIREBASE_MESSAGING_SENDER_ID:?Set FIREBASE_MESSAGING_SENDER_ID repository variable}"
+          : "${FIREBASE_PROJECT_ID:?Set FIREBASE_PROJECT_ID repository variable}"
+          : "${FIREBASE_MEASUREMENT_ID:?Set FIREBASE_MEASUREMENT_ID repository variable}"
           sed \
-            -e 's/YOUR_WEB_API_KEY/AIzaSyDxb89kPDmWalE3fx8Jlo45pNYMfpe-Q5I/' \
-            -e 's/YOUR_WEB_APP_ID/1:432329288238:web:f34e2fdf685d5b8a718dbf/' \
-            -e 's/YOUR_MESSAGING_SENDER_ID/432329288238/g' \
-            -e 's/YOUR_PROJECT_ID/lexilingo-88492/g' \
-            -e 's/YOUR_MEASUREMENT_ID/G-M8B2FXYJ42/' \
+            -e "s|YOUR_WEB_API_KEY|${FIREBASE_WEB_API_KEY}|" \
+            -e "s|YOUR_WEB_APP_ID|${FIREBASE_WEB_APP_ID}|" \
+            -e "s|YOUR_MESSAGING_SENDER_ID|${FIREBASE_MESSAGING_SENDER_ID}|g" \
+            -e "s|YOUR_PROJECT_ID|${FIREBASE_PROJECT_ID}|g" \
+            -e "s|YOUR_MEASUREMENT_ID|${FIREBASE_MEASUREMENT_ID}|" \
             lib/firebase_options.dart.example > lib/firebase_options.dart
 
-      - name: Create env files for build
+      - name: Create public env config for build
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
         run: |
-          cat > .env <<'EOF'
+          : "${GOOGLE_SERVER_CLIENT_ID:?Set GOOGLE_SERVER_CLIENT_ID repository variable}"
+          cat > assets/env/prod_config <<'EOF'
           ENVIRONMENT=production
           API_BASE_URL=https://api.lexilingo.me/api/v1
-          API_BASE_URL_FALLBACK=https://lexilingo-4gu6.onrender.com/api/v1
+          API_BASE_URL_FALLBACK=
           AI_SERVICE_URL=https://api.lexilingo.me/api/v1
-          AI_SERVICE_URL_FALLBACK=https://enable-tell-memphis-wing.trycloudflare.com/api/v1
+          AI_SERVICE_URL_FALLBACK=
           ENABLE_VOICE_FEATURE=true
           ENABLE_GAMIFICATION=true
           DEBUG_MODE=false
-          GOOGLE_SERVER_CLIENT_ID=432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com
           EOF
-          cp .env .env.production
+          printf 'GOOGLE_SERVER_CLIENT_ID=%s\n' "$GOOGLE_SERVER_CLIENT_ID" >> assets/env/prod_config
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub

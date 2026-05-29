@@ -46,8 +46,8 @@ services:
     mem_limit: 768m
     memswap_limit: 768m
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@lexilingo.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@lexilingo.me}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
       PGADMIN_CONFIG_LOGIN_BANNER: "'LexiLingo Database Management'"
     ports:
@@ -111,7 +111,7 @@ services:
       ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
       ME_CONFIG_MONGODB_AUTH_DATABASE: admin
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
     ports:
       - "8081:8081"
     depends_on:
@@ -220,9 +220,9 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
-      DEBUG: ${DEBUG:-True}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       # Redis (use container hostname, not localhost)
       REDIS_URL: redis://redis:6379/0
@@ -231,8 +231,8 @@ services:
       # Firebase
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
       FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com}
-      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-432329288238-co06he7ecljb7ubupm5mj84t3i0r1u7j.apps.googleusercontent.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -275,8 +275,8 @@ services:
       REDIS_DB: 0
       REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
-      DEBUG: ${DEBUG:-true}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      DEBUG: ${DEBUG:-false}
     depends_on:
       mongodb:
         condition: service_healthy
