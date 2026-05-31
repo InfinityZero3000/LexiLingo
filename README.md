@@ -167,7 +167,7 @@ flowchart TB
 | **Frontend (Admin)** | React 18, TypeScript 6, Vite, Zustand 5, Recharts, TanStack Query 5 |
 | **Backend** | Python 3.11, FastAPI 0.136+, SQLAlchemy 2 async, Alembic, Pydantic v2 |
 | **AI Orchestration** | LangGraph 1.2+, LangChain Core |
-| **LLM (Local)** | Qwen2.5-1.5B (4-bit), LLaMA3-VI 3B (lazy-loaded), Ollama (qwen3 1.7b) |
+| **LLM (Local)** | Qwen3-1.7B(4-bit), LLaMA3-VI 3B (lazy-loaded), Ollama (qwen3 1.7b) |
 | **LLM (Cloud)** | Google Gemini 2.5 Flash (primary cloud fallback), Groq (qwen3-32b) |
 | **Voice STT** | Faster-Whisper (base–small, int8, CUDA) |
 | **Voice TTS** | Piper TTS (en_US-lessac-medium.onnx) |
@@ -186,68 +186,8 @@ flowchart TB
 
 ---
 
-## 5. Repository Structure
 
-```
-LexiLingo/
-├── flutter-app/ # Flutter mobile/web app (Dart)
-│ ├── lib/
-│ │ ├── core/ # DI, network, shared utilities
-│ │ └── features/ # 21 feature modules (auth, learning, chat, voice…)
-│ ├── assets/ # i18n JSON, images, Lottie animations
-│ └── pubspec.yaml
-│
-├── backend-service/ # FastAPI REST API (Python)
-│ ├── app/
-│ │ ├── core/ # Config, DB, security, middleware, Redis
-│ │ ├── models/ # SQLAlchemy ORM models
-│ │ ├── schemas/ # Pydantic request/response schemas
-│ │ ├── routes/ # 24 route groups (auth, courses, gamification…)
-│ │ ├── crud/ # Async DB operations
-│ │ └── services/ # Business logic (level, rank, item effects…)
-│ ├── alembic/ # DB migrations
-│ ├── tests/
-│ └── requirements.txt
-│
-├── ai-service/ # AI / ML service (Python)
-│ ├── api/
-│ │ ├── core/ # Config, auth, Redis, quota guard, rate limiter
-│ │ ├── routes/ # chat, stt, tts, topics, lexi_chat, pronunciation…
-│ │ ├── services/
-│ │ │ ├── trace_cag/ # LangGraph TraceCag pipeline (state, nodes, graph, edges)
-│ │ │ ├── dual_stream/ # Real-time WebSocket STT/TTS orchestration
-│ │ │ ├── handlers/ # Model handlers (Whisper, HuBERT, Piper, Qwen, Gemini)
-│ │ │ ├── kg_service_v3.py # KuzuDB graph engine
-│ │ │ └── embedding_service_v3.py
-│ │ └── models/ # Pydantic schemas
-│ ├── data/ # KG seed JSON, topic graphs, knowledge base
-│ ├── scripts/ # Model download, KG build, DB init
-│ └── requirements.txt
-│
-├── admin-service/ # React admin dashboard (TypeScript)
-│ ├── src/
-│ │ ├── components/ # Shared UI + dashboard charts + login globe
-│ │ ├── pages/ # 18 pages (users, courses, monitoring, AI models…)
-│ │ └── lib/ # API clients, auth, i18n, RBAC
-│ └── package.json
-│
-├── mcp-server/ # MCP agent server (Python, IDE tools)
-│ ├── handlers/ # Gemini, Whisper, Piper, Qwen handlers
-│ ├── tools/ # i18n manager
-│ └── server.py # MCP server entry point
-│
-├── gateway/ # Kong API gateway config + observability
-├── scripts/ # Dev/deploy shell scripts (start-all, deploy, smoke…)
-├── docs/ # Architecture docs, feature plans
-├── .github/workflows/ # CI/CD pipelines
-├── docker-compose.yml # Local dev compose
-├── docker-compose.production.yml
-└── Makefile # Flutter convenience targets
-```
-
----
-
-## 6. Getting Started
+## 5. Getting Started
 
 ### Prerequisites
 
@@ -333,249 +273,71 @@ pnpm dev # dev server at http://localhost:5173
 
 ---
 
-## 7. Environment Variables
+## 6. Environment Variables
 
-### Backend (`backend-service/.env`)
+Copy `.env.example` in each service directory and fill in the required values.
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL async URL (`postgresql+asyncpg://...`) | Yes |
-| `SECRET_KEY` | JWT signing secret (use `openssl rand -hex 32`) | Yes |
-| `ALGORITHM` | JWT algorithm (default: `HS256`) | Yes |
-| `REDIS_URL` | Redis connection URL | Yes |
-| `FIREBASE_PROJECT_ID` | Firebase project for token verification | Optional |
-| `FIREBASE_CREDENTIALS_JSON` | Firebase Admin SDK credentials (JSON string) | Optional |
-| `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | Email (password reset, verification) | Optional |
-| `AI_SERVICE_URL` | Internal URL to AI service (default: `http://localhost:8001/api/v1`) | Optional |
-| `ALLOWED_ORIGINS` | CORS origins (comma-separated) | Yes |
-
-### AI Service (`ai-service/.env`)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GEMINI_API_KEY` | Google Gemini API key | Yes |
-| `GEMINI_MODEL` | Model name (default: `gemini-2.5-flash`) | Yes |
-| `GROQ_API_KEY` | Groq API key (optional cloud fallback) | Optional |
-| `KUZU_DB_PATH` | Path to KuzuDB data directory | Yes |
-| `REDIS_URL` | Redis URL for subgraph cache | Yes |
-| `MONGODB_URI` | MongoDB URI for logs and chat history | Yes |
-| `OLLAMA_BASE_URL` | Ollama server URL (default: `http://localhost:11434`) | Optional |
-| `WHISPER_MODEL_SIZE` | `tiny` / `base` / `small` / `medium` | Optional |
-| `PIPER_MODEL_PATH` | Path to `.onnx` voice model | Optional |
-| `HUBERT_MODEL_ID` | HuBERT model ID (default: `facebook/hubert-large-ls960-ft`) | Optional |
-| `BACKEND_SERVICE_URL` | Backend URL for cross-service calls | Yes |
-
-See `.env.example` in each service directory for the full list.
+| Service | Key variables |
+|---------|--------------|
+| `backend-service` | `DATABASE_URL`, `SECRET_KEY`, `REDIS_URL`, `ALLOWED_ORIGINS` |
+| `ai-service` | `GEMINI_API_KEY`, `KUZU_DB_PATH`, `REDIS_URL`, `MONGODB_URI`, `BACKEND_SERVICE_URL` |
+| `admin-service` | `VITE_BACKEND_URL`, `VITE_AI_URL` |
 
 ---
 
-## 8. Available Scripts / Commands
-
-### Root
+## 7. Scripts
 
 ```bash
-bash scripts/start-all.sh # Start backend + AI service + Flutter web locally
-bash scripts/stop-all.sh # Stop all local services
-bash scripts/status.sh # Check running service status
-bash scripts/smoke-prod.sh # Run production smoke tests
-docker-compose up -d # Start all services via Docker
-docker-compose down # Stop Docker services
-```
+# Start / stop all services locally
+bash scripts/start-all.sh
+bash scripts/stop-all.sh
 
-### Flutter (via Makefile)
+# Docker
+docker-compose up -d
+docker-compose down
 
-```bash
-make get # flutter pub get
-make test # flutter test
-make analyze # flutter analyze
-make format # dart format
-make run-web # Run on Chrome
-make run-ios # Run on iOS simulator
-make run-android # Run on Android device
-make build-web # Build web release
-make build-apk # Build Android APK
-```
+# Flutter (via Makefile)
+make run-web       # Chrome
+make run-ios       # iOS simulator
+make build-apk     # Android release
 
-### Backend
-
-```bash
-alembic upgrade head # Apply DB migrations
-alembic revision --autogenerate -m "description" # Create migration
-uvicorn app.main:app --reload # Development server
-pytest tests/ # Run tests
-```
-
-### Admin Dashboard
-
-```bash
-pnpm dev # Dev server (http://localhost:5173)
-pnpm build # Production build to dist/
-pnpm preview # Preview production build
+# Backend
+alembic upgrade head   # run migrations
+pytest tests/          # run tests
 ```
 
 ---
 
-## 9. API / Service Overview
+## 8. API Overview
 
-All external requests route through **Kong Gateway** (`:80`/`:443` in production).
+All requests route through **Kong Gateway** (`:80`/`:443` in production). Interactive OpenAPI docs at `http://localhost:8000/docs` (backend) and `http://localhost:8001/docs` (AI service).
 
-### Backend API — `/api/v1/`
+**Backend `/api/v1/`** — auth, users, courses, vocabulary, learning, progress, gamification, challenges, games, proficiency, admin, analytics, monitoring, content feeds (books/news/podcasts/youtube)
 
-| Group | Prefix | Description |
-|-------|--------|-------------|
-| Auth | `/auth` | Register, login, refresh token, Firebase exchange, Google OAuth |
-| Users | `/users` | Profile CRUD, avatar |
-| Courses | `/courses` | Course catalog (CEFR-tagged units and lessons) |
-| Vocabulary | `/vocabulary` | Word bank, SM-2 review scheduling |
-| Learning | *(root)* | Session tracking, lesson completion |
-| Progress | *(root)* | Streak, enrollment, roadmap |
-| Gamification | *(root)* | XP, achievements, wallet, leaderboard, shop, social |
-| Challenges | *(root)* | Weekly challenges |
-| Games | *(root)* | Game session management |
-| Proficiency | *(root)* | CEFR multi-skill assessment |
-| Admin | *(root)* | Content management (courses, vocabulary, grammar) |
-| Analytics | *(root)* | DAU/MAU, retention, engagement metrics |
-| Monitoring | *(root)* | Service health, AI model status |
-| AI Audit | *(root)* | AI request/response audit log |
-| Content | `/books`, `/news`, `/podcasts`, `/youtube` | External content feeds |
-
-Full OpenAPI docs available at `http://localhost:8000/docs` when running locally.
-
-### AI Service — `/api/v1/`
-
-| Group | Prefix | Description |
-|-------|--------|-------------|
-| Lexi Chat | `/lexi` | AI tutor session (TraceCag, full state management) |
-| Chat | `/chat` | General conversation endpoint |
-| Topic Chat | `/topics` | Topic-based conversation catalog and sessions |
-| STT | `/stt` | Speech-to-text (Faster-Whisper) |
-| Pronunciation | `/stt` | Phoneme scoring and feedback (HuBERT) |
-| TTS | `/tts` | Text-to-speech synthesis (Piper) |
-| WebSocket | `/ws/stream` | Dual-stream real-time voice session |
-| AI Analytics | `/ai` | Model health and usage metrics |
-| Admin | `/admin` | AI model config and management |
+**AI Service `/api/v1/`** — lexi chat (TraceCag), topic chat, STT/pronunciation, TTS, WebSocket dual-stream (`/ws/stream`), AI analytics, admin config
 
 ---
 
-## 10. AI / GraphCAG / Knowledge Graph
+## 9. GraphCAG / Knowledge Graph
 
-### TraceCag Pipeline
+The AI tutor uses a **LangGraph StateGraph** (`ai-service/api/services/trace_cag/`) with 4 nodes: **Diagnose → Retrieve → Ground → Generate**. Each response is grounded in the learner's live KuzuDB concept graph rather than static documents. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed pipeline diagram.
 
-The AI tutor's intelligence is powered by a **LangGraph StateGraph** (in `ai-service/api/services/trace_cag/`):
-
-```
-User input
- │
- ▼
-┌────────────────────────────────────────────────────┐
-│ TraceCag LangGraph Pipeline │
-│ │
-│ DIAGNOSE ──▶ RETRIEVE ──▶ GROUND ──▶ GENERATE │
-│ │
-│ Classify KuzuDB BFS Merge KG Qwen2.5 │
-│ error type + Vector + learner → Gemini │
-│ Map to KG + Redis L0 profile into (cloud │
-│ concept ID cache LLM prompt fallback)│
-└────────────────────────────────────────────────────┘
- │
- ▼
-Response grounded in this learner's personal concept graph
-```
-
-Key source files:
-
-| File | Purpose |
-|------|---------|
-| `trace_cag/state.py` | `GraphCAGState` TypedDict (shared pipeline state) |
-| `trace_cag/nodes_v2.py` | All 4 node implementations (Diagnose, Retrieve, Ground, Generate) |
-| `trace_cag/graph.py` | LangGraph graph wiring + conditional routing |
-| `trace_cag/edges.py` | Edge routing logic |
-| `kg_service_v3.py` | KuzuDB engine: TF-IDF index, CEFR-weighted BFS, Redis subgraph cache |
-| `embedding_service_v3.py` | all-MiniLM-L6-v2 sentence embeddings |
-| `retrieval_service_v3.py` | Orchestrates KG + vector retrieval |
-
-### Knowledge graph location
-
-- **Runtime graph DB**: `ai-service/data/kuzu_db/` (KuzuDB embedded)
-- **Seed concept data**: `ai-service/data/kg/*.json`
-- **Codebase knowledge graph** (architecture graph built by `/understand`): 
- `.understand-anything/knowledge-graph.json`
-
-### Rebuild / explore the codebase knowledge graph
-
-```bash
-# Rebuild (in Claude Code)
-/understand-anything:understand
-
-# Open interactive dashboard
-/understand-anything:understand-dashboard
-# → http://127.0.0.1:5173/?token=<TOKEN>
-```
-
-The codebase graph covers **1,844 nodes, 2,174 edges** across all 5 service layers.
+Key locations:
+- Runtime graph DB: `ai-service/data/kuzu_db/`
+- Seed concepts: `ai-service/data/kg/*.json`
+- Codebase architecture graph: `.understand-anything/knowledge-graph.json`
 
 ---
 
-## 11. Development Notes
+## 10. Contributing
 
-### Reading the codebase
-
-- **Start here**: `backend-service/app/main.py` (wires all 24 routes) and `ai-service/api/main.py` (wires all AI routes)
-- **Data models**: `backend-service/app/models/` — SQLAlchemy ORM, all tables defined here
-- **API contracts**: `backend-service/app/schemas/` — Pydantic v2 input/output schemas
-- **AI pipeline**: `ai-service/api/services/trace_cag/` — LangGraph nodes, state, edges
-- **Flutter features**: each feature module follows `data / domain / presentation` layers
-
-### Understanding the layers
-
-The codebase knowledge graph (built by `understand-anything`) maps all imports, class relationships, and tested-by edges. Use it to trace which files a change could affect:
-
-```bash
-# Interactive architecture explorer
-/understand-anything:understand-dashboard
-
-# Or ask questions about the codebase
-/understand-anything:understand-chat
-```
-
-### After large code changes
-
-Rebuild the knowledge graph to keep architecture docs current:
-
-```bash
-/understand-anything:understand --full
-```
-
-### Checking cross-service dependencies
-
-The knowledge graph shows 8 isolated layers with no cross-service import edges (each service is a separate Python/Dart/TS runtime). Cross-service calls are made via HTTP through Kong gateway — trace them by searching for `AI_SERVICE_URL` or `BACKEND_SERVICE_URL` in env config.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 12. Roadmap
+## 11. License
 
-- [ ] Expand automated test coverage (backend integration tests, Flutter widget tests)
-- [ ] FSRS v5 spaced repetition (currently SM-2)
-- [ ] Speaking fluency score (prosody + rhythm, not just phoneme accuracy)
-- [ ] Writing assessment module
-- [ ] Expand knowledge graph concepts (IELTS, Business English, Academic vocabulary)
-- [ ] Admin analytics: learner cohort analysis and retention funnel
-- [ ] Improve deployment docs (Kubernetes / Render / Railway configs)
-- [ ] GraphCAG evaluation benchmarks (retrieval accuracy, grounding quality)
-
----
-
-## 13. Contributing
-
-Contributions are welcome — especially on the AI pipeline, Flutter UI, and test coverage.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on branch naming, commit style, and PR review process.
-
----
-
-## 14. License
-
-MIT License — see [LICENSE](LICENSE) for full text.
+MIT License — see [LICENSE](LICENSE).
 
 ```
 Copyright (c) 2026 Nguyen Thang
