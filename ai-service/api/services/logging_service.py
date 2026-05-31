@@ -6,7 +6,7 @@ Follows the schema defined in docs/MONGODB_SCHEMA.md.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -14,6 +14,15 @@ from pydantic import BaseModel, Field
 from api.core.database import get_database
 
 logger = logging.getLogger(__name__)
+
+
+def _utc_now() -> datetime:
+    """Return UTC time in the legacy naive datetime format used by Mongo docs."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _utc_now_iso() -> str:
+    return _utc_now().isoformat()
 
 
 # ============================================================
@@ -85,22 +94,17 @@ class AIInteraction(BaseModel):
     """Full AI interaction log document."""
     session_id: str
     user_id: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=_utc_now)
     user_input: UserInput
     models_used: List[str] = Field(default_factory=list)
     processing_time_ms: ProcessingTime = Field(default_factory=ProcessingTime)
     analysis: AnalysisResult = Field(default_factory=AnalysisResult)
     user_feedback: Optional[UserFeedback] = None
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-
 
 class ModelMetric(BaseModel):
     """Model performance metric document."""
-    date: datetime = Field(default_factory=datetime.utcnow)
+    date: datetime = Field(default_factory=_utc_now)
     model_name: str
     avg_latency_ms: float = 0.0
     p95_latency_ms: float = 0.0
@@ -245,7 +249,7 @@ class LoggingService:
                 helpful=helpful,
                 correction=correction,
                 rating=rating,
-                submitted_at=datetime.utcnow(),
+                submitted_at=_utc_now(),
             )
 
             result = await db[self.COLLECTION_INTERACTIONS].update_one(
@@ -289,7 +293,7 @@ class LoggingService:
             db = await self._get_db()
 
             # Use today's date as aggregation key
-            today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today = _utc_now().replace(hour=0, minute=0, second=0, microsecond=0)
 
             # Upsert daily aggregation
             await db[self.COLLECTION_METRICS].update_one(
@@ -378,7 +382,7 @@ class LoggingService:
 
             from datetime import timedelta
 
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = _utc_now() - timedelta(days=days)
 
             pipeline = [
                 {
@@ -412,7 +416,7 @@ class LoggingService:
                 "user_id": user_id,
                 "period_days": days,
                 "common_errors": errors,
-                "analyzed_at": datetime.utcnow().isoformat(),
+                "analyzed_at": _utc_now_iso(),
             }
 
         except Exception as e:

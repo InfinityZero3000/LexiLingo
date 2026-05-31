@@ -1362,11 +1362,6 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     tau_reuse = float(adaptive_choice.get("tau_reuse", _TAU_REUSE))
     tau_patch = float(adaptive_choice.get("tau_patch", _TAU_PATCH))
 
-    if benchmark_task in {"multihop_qa", "retrieval_qa"} and benchmark_mode == "trace-cag_rapid":
-        # Slightly relax cache thresholds for benchmark-repeat runs to raise valid hit-rate.
-        tau_reuse = min(0.85, tau_reuse + 0.03)
-        tau_patch = min(0.95, tau_patch + 0.04)
-
     adaptive_payload = {
         "adaptive_profile": adaptive_choice.get("profile"),
         "adaptive_features": adaptive_choice.get("features", {}),
@@ -1477,7 +1472,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         return_exceptions=True,
     )
     for candidate_key, candidate_entry in zip(candidate_keys, candidate_entries):
-        if not isinstance(candidate_entry, CacheEntry) or not candidate_entry:
+        if not isinstance(candidate_entry, dict) or not candidate_entry:
             continue
         if not _cache_entry_quality_ok_for_benchmark(candidate_entry, benchmark_task):
             continue
@@ -2317,18 +2312,10 @@ def _compute_evidence_budget(
         if config is not None:
             budget += int(config.evidence_budget_delta)
 
-    if benchmark_candidates:
-        if benchmark_mode == "graphrag_proxy":
-            budget = max(3, budget - 1)
-        elif benchmark_mode == "trace-cag_rapid":
-            # Broaden candidate coverage for better R@3/R@5, not only top-1.
-            budget = max(7, min(max_budget, budget + 2))
-        elif benchmark_mode == "trace-cag_adaptive":
-            config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
-            if config is not None:
-                budget = max(4, min(max_budget, budget + int(config.evidence_budget_delta)))
-        elif benchmark_mode == "hipporag_proxy":
-            budget = min(max_budget, budget + 1)
+    if benchmark_candidates and benchmark_mode == "trace-cag_adaptive":
+        config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
+        if config is not None:
+            budget = max(4, min(max_budget, budget + int(config.evidence_budget_delta)))
 
     return max(2, min(max_budget, budget))
 

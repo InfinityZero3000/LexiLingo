@@ -12,10 +12,15 @@ Following architecture.md principles for adaptive learning
 
 import random
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _utc_now_iso() -> str:
+    """Return UTC timestamp with the legacy naive ISO format."""
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
 
 class ContentAutoGenerator:
@@ -93,7 +98,7 @@ class ContentAutoGenerator:
                     }
                     for i in range(min(5, len(words)))
                 ],
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return exercise
@@ -151,7 +156,7 @@ class ContentAutoGenerator:
                 "instructions": "Choose the correct form or fill in the blanks",
                 "exercises": exercises,
                 "tips": self._get_grammar_tips(grammar_point),
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return drill
@@ -203,7 +208,7 @@ class ContentAutoGenerator:
                 "starter_phrases": template["starters"],
                 "vocabulary_hints": template["key_vocabulary"],
                 "cultural_notes": template.get("cultural_notes", []),
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return prompt
@@ -265,7 +270,7 @@ class ContentAutoGenerator:
                     for q in template["questions"]
                 ],
                 "vocabulary_glossary": template.get("glossary", {}),
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return passage
@@ -321,7 +326,7 @@ class ContentAutoGenerator:
                     "grammar": "Accuracy",
                     "vocabulary": "Range and appropriateness"
                 },
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return prompt
@@ -371,7 +376,7 @@ class ContentAutoGenerator:
                 "practice_sentences": template["sentences"],
                 "minimal_pairs": template.get("minimal_pairs", []),
                 "tips": template["tips"],
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": _utc_now_iso()
             }
             
             return exercise
@@ -454,7 +459,7 @@ class ContentAutoGenerator:
                 )
                 lesson["components"].append(reading)
             
-            lesson["generated_at"] = datetime.utcnow().isoformat()
+            lesson["generated_at"] = _utc_now_iso()
             lesson["estimated_duration_minutes"] = len(lesson["components"]) * 10
             
             return lesson

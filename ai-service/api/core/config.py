@@ -8,13 +8,20 @@ Similar to Flutter's environment configuration
 import os
 import json
 from typing import List, Optional, Union
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
     """Application settings."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
     
     # ============================================================
     # Environment
@@ -82,6 +89,19 @@ class Settings(BaseSettings):
                 # If not JSON, split by comma
                 return [origin.strip() for origin in v.split(',') if origin.strip()]
         return v
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, v):
+        """Accept common host DEBUG values without breaking app startup."""
+        if isinstance(v, bool):
+            return v
+        raw = str(v or "").strip().lower()
+        if raw in {"1", "true", "yes", "on", "debug"}:
+            return True
+        if raw in {"0", "false", "no", "off", "release", "prod", "production", ""}:
+            return False
+        return False
 
     @model_validator(mode="after")
     def validate_production_security(self):
@@ -204,13 +224,6 @@ class Settings(BaseSettings):
     # ============================================================
     IS_VERCEL: bool = os.getenv("VERCEL", "").lower() == "1"
     
-    class Config:
-        """Pydantic configuration."""
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "ignore"  # Ignore extra fields from .env file
-
 
 @lru_cache()
 def get_settings() -> Settings:
