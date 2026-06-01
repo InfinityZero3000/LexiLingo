@@ -110,6 +110,108 @@ class FlashcardProvider extends ChangeNotifier {
     }
   }
 
+  /// Start a new review session for a specific topic (tag)
+  Future<void> startTopicSession({required String tag, int limit = 20}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _currentSession = null;
+    notifyListeners();
+
+    try {
+      // 1. Fetch master vocabulary items for the tag
+      final itemsResult = await vocabularyRepository.getVocabularyItems(
+        tag: tag,
+        limit: limit,
+      );
+
+      await itemsResult.fold(
+        (failure) async {
+          _errorMessage = _getFailureMessage(failure);
+          _isLoading = false;
+          notifyListeners();
+        },
+        (vocabItems) async {
+          if (vocabItems.isEmpty) {
+            _errorMessage = 'No vocabulary found for topic: $tag';
+            _isLoading = false;
+            notifyListeners();
+            return;
+          }
+
+          // 2. Fetch user's collection to check what is already saved
+          final collectionResult = await vocabularyRepository.getUserCollection(
+            limit: 1000, // get a lot so we can map it
+          );
+
+          await collectionResult.fold(
+            (failure) async {
+              _errorMessage = _getFailureMessage(failure);
+              _isLoading = false;
+              notifyListeners();
+            },
+            (userCollection) async {
+              final cards = <ReviewCardEntity>[];
+
+              // Create lookup map of user collection by vocabularyId
+              final collectionMap = {
+                for (var uc in userCollection) uc.vocabularyId: uc
+              };
+
+              for (final item in vocabItems) {
+                var userVocab = collectionMap[item.id];
+
+                // 3. If not in user collection, add it on the fly
+                if (userVocab == null) {
+                  final addResult = await vocabularyRepository.addToCollection(item.id);
+                  addResult.fold(
+                    (failure) {
+                      debugPrint('Failed to auto-add item to collection: ${item.id}');
+                    },
+                    (addedUserVocab) {
+                      userVocab = addedUserVocab;
+                    },
+                  );
+                }
+
+                if (userVocab != null) {
+                  cards.add(
+                    ReviewCardEntity(
+                      userVocabulary: userVocab!,
+                      vocabularyItem: item,
+                    ),
+                  );
+                }
+              }
+
+              if (cards.isEmpty) {
+                _errorMessage = 'Failed to prepare vocabulary cards for study.';
+                _isLoading = false;
+                notifyListeners();
+                return;
+              }
+
+              // 4. Create and set the session
+              _currentSession = ReviewSessionEntity(
+                cards: cards,
+                startedAt: DateTime.now(),
+                totalCards: cards.length,
+              );
+
+              _cardStartTime = DateTime.now();
+              _isLoading = false;
+              _isCardFlipped = false;
+              notifyListeners();
+            },
+          );
+        },
+      );
+    } catch (e) {
+      _errorMessage = 'Unexpected error: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Flip current card (front <-> back)
   void flipCard() {
     _isCardFlipped = !_isCardFlipped;

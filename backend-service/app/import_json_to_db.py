@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime, timezone
 
 # Add parent directory to Python path
-sys.path.append("/opt/lexilingo/backend-service")
+sys.path.append("/app")
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models.vocabulary import VocabularyItem, PartOfSpeech, DifficultyLevel
 from app.core.config import settings
 
-INPUT_FILE = "/app/data/vocabulary_import.json"
+INPUT_FILE = "/tmp/vocabulary_import.json"
 
 def guess_pos(word, defn):
     # Basic guessing from Anki info
@@ -34,7 +34,7 @@ async def main():
     # Database setup
     # PostgreSQL URI from settings or .env
     # Let's read MONGODB_URI/Postgres URI
-    engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URI, echo=False)
+    engine = create_async_engine(settings.DATABASE_URL, echo=False)
     AsyncSessionLocal = sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
@@ -71,8 +71,7 @@ async def main():
                 elif isinstance(audios, list) and audios:
                     audio_url = f"/media/{audios[0]}"
                 
-                # Create the DB object
-                db_item = VocabularyItem(
+                db_item = dict(
                     id=uuid.uuid4(),
                     word=word,
                     definition=defn,
@@ -85,8 +84,14 @@ async def main():
                 )
                 items.append(db_item)
             
-            session.add_all(items)
-            await session.commit()
+            from sqlalchemy.dialects.postgresql import insert
+            if items:
+                stmt = insert(VocabularyItem).values(items)
+                # Ignore duplicates based on word + part_of_speech
+                stmt = stmt.on_conflict_do_nothing(index_elements=['word', 'part_of_speech'])
+                await session.execute(stmt)
+                await session.commit()
+            
             total += len(items)
             print(f"Imported {total} / {len(data)}")
             

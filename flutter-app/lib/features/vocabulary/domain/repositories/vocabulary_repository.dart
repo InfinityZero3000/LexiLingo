@@ -16,6 +16,7 @@ abstract class VocabularyRepository {
     String? courseId,
     String? lessonId,
     String? difficultyLevel,
+    String? tag,
     String? search,
     int limit = 50,
     int offset = 0,

@@ -90,6 +90,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
   Widget _buildCardFront() {
     final vocabulary = widget.card.vocabularyItem;
+    final hasGeneralTag = vocabulary.tags?.contains('general') ?? false;
 
     return Container(
       width: double.infinity,
@@ -132,55 +133,92 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
           const SizedBox(height: 24),
 
-          // Word
-          Text(
-            vocabulary.word,
-            style: const TextStyle(
-              fontSize: 38,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 16),
-
-          // Pronunciation with Speak Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (vocabulary.pronunciation != null)
-                Text(
-                  vocabulary.pronunciation!,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
-                  ),
+          if (hasGeneralTag) ...[
+            // Hidden word placeholder for audio questions
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: SpeakIconButton(
+                        text: vocabulary.word,
+                        size: 48,
+                        color: AppColors.primary,
+                        autoplay: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'vocabulary.audioQuestionHint'.tr(defaultValue: 'Listen and guess the word'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              const SizedBox(width: 8),
-              // TTS Speak Button
-              SpeakIconButton(
-                text: vocabulary.word,
-                size: 24,
-                color: AppColors.primary,
               ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Part of speech
-          Text(
-            vocabulary.partOfSpeech,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
             ),
-          ),
+          ] else ...[
+            // Word
+            Text(
+              vocabulary.word,
+              style: const TextStyle(
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
 
-          const Spacer(),
+            const SizedBox(height: 16),
+
+            // Pronunciation with Speak Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (vocabulary.pronunciation != null)
+                  Text(
+                    vocabulary.pronunciation!,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                // TTS Speak Button
+                SpeakIconButton(
+                  text: vocabulary.word,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Part of speech
+            Text(
+              vocabulary.partOfSpeech,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+
+            const Spacer(),
+          ],
 
           // Tap hint
           Row(
@@ -213,6 +251,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   Widget _buildCardBack() {
     final vocabulary = widget.card.vocabularyItem;
     final examples = vocabulary.examples;
+    final hasGeneralTag = vocabulary.tags?.contains('general') ?? false;
 
     return Container(
       width: double.infinity,
@@ -235,6 +274,54 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (hasGeneralTag) ...[
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      vocabulary.word,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (vocabulary.pronunciation != null)
+                          Text(
+                            vocabulary.pronunciation!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        SpeakIconButton(
+                          text: vocabulary.word,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      vocabulary.partOfSpeech,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 24),
+            ],
             // Definition section
             Text(
               'vocabulary.definition'.tr(),

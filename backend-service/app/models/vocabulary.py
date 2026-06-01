@@ -5,7 +5,7 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean
+from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
@@ -112,6 +112,7 @@ class VocabularyItem(Base):
     __table_args__ = (
         Index("ix_vocabulary_items_word_lower", "word"),
         Index("ix_vocabulary_items_course_difficulty", "course_id", "difficulty_level"),
+        UniqueConstraint("word", "part_of_speech", name="uq_vocab_word_pos"),
     )
 
 

@@ -970,6 +970,10 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final hasAudio = widget.exercise.audioUrl != null && widget.exercise.audioUrl!.isNotEmpty;
+    final hasGeneralTag = widget.exercise.metadata?['tags']?.toString().contains('general') ?? false;
+    final isGeneralVocab = hasAudio || hasGeneralTag;
+
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Column(
@@ -1008,34 +1012,96 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                               alignment: Alignment.center,
                               child: Padding(
                                 padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      widget.exercise.explanation ?? 'Definition detail',
-                                      style: const TextStyle(fontSize: 18, height: 1.4),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text('(Tap card to flip back)', style: TextStyle(color: Colors.grey)),
-                                  ],
-                                ),
+                                child: isGeneralVocab
+                                    ? Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            widget.exercise.question,
+                                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              SpeakIconButton(
+                                                text: widget.exercise.question,
+                                                size: 24,
+                                                color: AppColors.primary,
+                                              ),
+                                            ],
+                                          ),
+                                          const Divider(height: 24),
+                                          Text(
+                                            widget.exercise.explanation ?? 'Definition detail',
+                                            style: const TextStyle(fontSize: 18, height: 1.4),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Text('(Tap card to flip back)', style: TextStyle(color: Colors.grey)),
+                                        ],
+                                      )
+                                    : Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            widget.exercise.explanation ?? 'Definition detail',
+                                            style: const TextStyle(fontSize: 18, height: 1.4),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Text('(Tap card to flip back)', style: TextStyle(color: Colors.grey)),
+                                        ],
+                                      ),
                               ),
                             )
                           : Padding(
                               padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    widget.exercise.question,
-                                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  const Text('(Tap card to flip definition)', style: TextStyle(color: Colors.grey)),
-                                ],
-                              ),
+                              child: isGeneralVocab
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: SpeakIconButton(
+                                            text: widget.exercise.question,
+                                            size: 48,
+                                            color: AppColors.primary,
+                                            autoplay: true,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Listen and guess the word',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text('(Tap card to flip definition)', style: TextStyle(color: Colors.grey)),
+                                      ],
+                                    )
+                                  : Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          widget.exercise.question,
+                                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text('(Tap card to flip definition)', style: TextStyle(color: Colors.grey)),
+                                      ],
+                                    ),
                             ),
                     ),
                   ),

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'dart:convert';
 
 /// Voice Remote DataSource
@@ -21,10 +22,14 @@ abstract class VoiceRemoteDataSource {
 class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
   final http.Client client;
   final String baseUrl;
+  final BackendAuthHeaderProvider authHeaderProvider;
 
-  VoiceRemoteDataSourceImpl({http.Client? client, String? baseUrl})
-    : client = client ?? http.Client(),
-      baseUrl = baseUrl ?? ApiConfig.aiServiceUrl;
+  VoiceRemoteDataSourceImpl({
+    http.Client? client,
+    String? baseUrl,
+    required this.authHeaderProvider,
+  }) : client = client ?? http.Client(),
+       baseUrl = baseUrl ?? ApiConfig.aiServiceUrl;
 
   @override
   Future<Map<String, dynamic>> transcribeAudio({
@@ -36,6 +41,9 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
       final uri = Uri.parse('$baseUrl/stt/transcribe');
 
       final request = http.MultipartRequest('POST', uri);
+
+      final authHeaders = await authHeaderProvider.call();
+      request.headers.addAll(authHeaders);
 
       // Add audio file
       request.files.add(
@@ -70,9 +78,14 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
     try {
       final uri = Uri.parse('$baseUrl/tts/synthesize');
 
+      final authHeaders = await authHeaderProvider.call();
+
       final response = await client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
         body: json.encode({'text': text}),
       );
 
