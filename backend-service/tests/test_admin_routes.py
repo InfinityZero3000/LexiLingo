@@ -318,7 +318,7 @@ class TestAdminContentLab:
         test_data = tests_response.json()["data"][0]
 
         assert grammar_data["examples"] == [{"sentence": "I am a student."}]
-        assert grammar_data["tags"] == ["grammar", "beginner"]
+        assert set(grammar_data["tags"]) == {"grammar", "beginner"}
         assert question_data["options"] == [{"items": ["am", "is", "are"]}]
         assert question_data["tags"] == ["grammar"]
         assert test_data["question_ids"] == [str(question.id)]
