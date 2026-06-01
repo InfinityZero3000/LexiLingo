@@ -48,6 +48,9 @@ plugins:
         - Content-Type
         - X-Api-Key
         - X-Request-Id
+        - X-Idempotency-Key
+        - X-Admin-Key
+        - X-AI-Service-Secret
       exposed_headers:
         - X-Request-Id
         - X-RateLimit-Remaining-Minute
