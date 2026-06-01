@@ -13,7 +13,8 @@ import re
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from urllib.parse import quote, urlparse
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -61,6 +62,7 @@ NEWS_CATEGORIES = [
 
 @router.get("")
 async def get_news(
+    request: Request,
     category: str = Query("general", description="News category"),
     level: Optional[str] = Query(None, description="CEFR level filter (A1-C2)"),
     page: int = Query(1, ge=1, le=10),
@@ -124,6 +126,15 @@ async def get_news(
         if level:
             articles = [a for a in articles if a.get("cefr_level") == level]
         
+        # Proxy image URLs to avoid CORS
+        base_url = str(request.base_url).rstrip("/")
+        api_prefix = settings.API_V1_PREFIX.strip("/")
+        news_prefix = router.prefix.strip("/")
+        path_prefix = f"{api_prefix}/{news_prefix}".strip("/")
+        for a in articles:
+            if a.get("image_url"):
+                a["image_url"] = f"{base_url}/{path_prefix}/proxy/image?url={quote(a['image_url'])}"
+        
         return {
             "articles": articles,
             "total": len(articles),
@@ -144,6 +155,48 @@ async def get_news(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(e),
         )
+
+
+@router.get("/proxy/image", summary="Proxy news images to bypass CORS")
+async def proxy_image(url: str = Query(..., description="The image URL to proxy")):
+    """
+    Proxy news images to bypass browser CORS on web.
+    """
+    try:
+        parsed_url = urlparse(url)
+        if not parsed_url.netloc:
+            raise ValueError()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid URL."
+        )
+        
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.get(
+                url, 
+                headers={"User-Agent": "LexiLingo/1.0 (English learning app; proxy)"},
+                follow_redirects=True
+            )
+            if resp.status_code != 200:
+                raise HTTPException(
+                    status_code=resp.status_code,
+                    detail=f"Failed to fetch image: HTTP {resp.status_code}"
+                )
+            return Response(
+                content=resp.content,
+                media_type=resp.headers.get("content-type", "image/jpeg"),
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error proxying image {url}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to proxy image."
+            )
 
 
 @router.get("/categories")

@@ -47,6 +47,6 @@ void initVoiceDependencies(GetIt sl) {
 
   // Data Sources
   sl.registerLazySingleton<VoiceRemoteDataSource>(
-    () => VoiceRemoteDataSourceImpl(),
+    () => VoiceRemoteDataSourceImpl(authHeaderProvider: sl()),
   );
 }

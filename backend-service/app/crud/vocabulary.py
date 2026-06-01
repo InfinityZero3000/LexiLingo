@@ -53,10 +53,12 @@ class VocabularyCRUD:
         course_id: Optional[uuid.UUID] = None,
         lesson_id: Optional[uuid.UUID] = None,
         difficulty_level: Optional[str] = None,
+        tag: Optional[str] = None,
         limit: int = 50,
         offset: int = 0
     ) -> List[VocabularyItem]:
         """Get vocabulary items with filters"""
+        from sqlalchemy import String
         query = select(VocabularyItem)
         
         conditions = []
@@ -66,6 +68,11 @@ class VocabularyCRUD:
             conditions.append(VocabularyItem.lesson_id == lesson_id)
         if difficulty_level:
             conditions.append(VocabularyItem.difficulty_level == difficulty_level)
+        if tag:
+            if db.bind.dialect.name == 'postgresql':
+                conditions.append(VocabularyItem.tags.contains([tag]))
+            else:
+                conditions.append(func.coalesce(VocabularyItem.tags, '[]').cast(String).like(f'%{tag}%'))
         
         if conditions:
             query = query.where(and_(*conditions))

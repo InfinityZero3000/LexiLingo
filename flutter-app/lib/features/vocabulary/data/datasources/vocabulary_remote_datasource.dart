@@ -16,6 +16,7 @@ abstract class VocabularyRemoteDataSource {
     String? courseId,
     String? lessonId,
     String? difficultyLevel,
+    String? tag,
     String? search,
     int limit = 50,
     int offset = 0,
@@ -66,6 +67,7 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
     String? courseId,
     String? lessonId,
     String? difficultyLevel,
+    String? tag,
     String? search,
     int limit = 50,
     int offset = 0,
@@ -79,6 +81,7 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       if (difficultyLevel != null) {
         pathParams.add('difficulty_level=$difficultyLevel');
       }
+      if (tag != null) pathParams.add('tag=$tag');
       if (search != null) pathParams.add('search=$search');
 
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
