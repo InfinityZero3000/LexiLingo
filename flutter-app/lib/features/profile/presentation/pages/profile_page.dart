@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
@@ -82,6 +84,26 @@ class _ProfilePageState extends State<ProfilePage>
 
     // Load proficiency data (AI-evaluated skill assessment)
     await proficiencyProvider.loadProfile();
+  }
+
+  static const _adminUsernames = {'nhthang312'};
+  static const _adminEmails = {'thefirestar312@gmail.com'};
+
+  bool _isAdminUser(UserEntity? user) {
+    if (user == null) return false;
+    return _adminUsernames.contains(user.username.toLowerCase()) ||
+        _adminEmails.contains(user.email.toLowerCase());
+  }
+
+  Future<void> _openAdminPanel() async {
+    final uri = Uri.parse('https://admin.lexilingo.me');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open admin panel')),
+        );
+      }
+    }
   }
 
   String _formatMemberSince(BuildContext context, DateTime? createdAt) {
@@ -201,6 +223,13 @@ class _ProfilePageState extends State<ProfilePage>
               );
             },
           ),
+          if (_isAdminUser(user))
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings_rounded),
+              color: Colors.deepOrange,
+              tooltip: 'Admin Panel',
+              onPressed: _openAdminPanel,
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -230,6 +259,9 @@ class _ProfilePageState extends State<ProfilePage>
 
               // Recent Badges
               _buildRecentBadges(context),
+
+              // Admin Panel shortcut (only for authorised accounts)
+              if (_isAdminUser(user)) _buildAdminPanelTile(context),
 
               const SizedBox(height: 80),
             ],
@@ -1702,6 +1734,85 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _buildAdminPanelTile(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _openAdminPanel,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF6B35), Color(0xFFFF3B00)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepOrange.withValues(alpha: isDark ? 0.4 : 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.admin_panel_settings_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Switch to Admin Panel',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'admin.lexilingo.me',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
