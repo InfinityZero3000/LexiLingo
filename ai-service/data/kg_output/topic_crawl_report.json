@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-06-01T15:48:05.509693+00:00",
+  "model": "qwen/qwen3-32b",
+  "stories_processed": 8,
+  "concept_count": 111,
+  "edge_count": 130,
+  "reports": [
+    {
+      "story_id": "story_airport_checkin",
+      "title": "Airport Check-In Adventure",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/air-travel",
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/at-the-airport"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 16,
+      "edges": 15,
+      "errors": []
+    },
+    {
+      "story_id": "story_job_interview",
+      "title": "Job Interview Success",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business-magazine/job-interviews",
+        "https://learnenglish.britishcouncil.org/skills/listening/b1-listening/job-interview"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 16,
+      "edges": 21,
+      "errors": []
+    },
+    {
+      "story_id": "story_restaurant_order",
+      "title": "Dining at a Restaurant",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/restaurants-1",
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/ordering-food-cafe"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 14,
+      "edges": 15,
+      "errors": []
+    },
+    {
+      "story_id": "story_shopping_clothes",
+      "title": "Shopping for Clothes",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/shopping-clothes",
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/clothes-1"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 12,
+      "edges": 14,
+      "errors": []
+    },
+    {
+      "story_id": "story_doctor_visit",
+      "title": "At the Doctor's Office",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health",
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/body-parts-1"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 7,
+      "edges": 10,
+      "errors": []
+    },
+    {
+      "story_id": "story_apartment_renting",
+      "title": "Apartment Renting - Finding a New Home",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/skills/listening/c1-listening/renting-house",
+        "https://learnenglish.ecenglish.com/lessons/vocabulary-renting-apartment"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 15,
+      "edges": 21,
+      "errors": []
+    },
+    {
+      "story_id": "story_software_interview",
+      "title": "Software Engineer Job Interview",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business-magazine/job-interviews",
+        "https://www.freecodecamp.org/news/software-engineering-interview-questions-and-answers/"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 9,
+      "edges": 13,
+      "errors": []
+    },
+    {
+      "story_id": "story_weather_plans",
+      "title": "Weather & Daily Plans",
+      "urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather",
+        "https://learnenglishteens.britishcouncil.org/vocabulary/beginner-vocabulary/weather"
+      ],
+      "crawled_ok": 2,
+      "crawled_failed": 0,
+      "used_groq": true,
+      "used_local_fallback": false,
+      "concepts": 16,
+      "edges": 17,
+      "errors": []
+    }
+  ]
+}

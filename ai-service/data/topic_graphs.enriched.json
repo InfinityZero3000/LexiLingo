@@ -1,0 +1,1426 @@
+{
+  "version": "1.1.0",
+  "description": "Topic-specific knowledge graphs for LexiLingo GraphCAG",
+  "concepts": [
+    {
+      "id": "concept:collocation.boarding_procedures",
+      "title": "Boarding Procedure Collocations",
+      "level": "A2",
+      "keywords": "boarding begins gate closes final call security check"
+    },
+    {
+      "id": "concept:collocation.body_parts",
+      "title": "Body Part Terms",
+      "level": "B2",
+      "keywords": "sore throat runny nose",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/body-parts-1"
+      ]
+    },
+    {
+      "id": "concept:collocation.check_forecast",
+      "title": "Check the Forecast",
+      "level": "A2",
+      "keywords": "weather app plan ahead",
+      "source_urls": []
+    },
+    {
+      "id": "concept:collocation.check_in",
+      "title": "Check-In Collocations",
+      "level": "A2",
+      "keywords": "check in luggage at counter online"
+    },
+    {
+      "id": "concept:collocation.clothing_terms",
+      "title": "Clothing Collocations",
+      "level": "A2",
+      "keywords": "wear jacket buy t-shirt need jeans",
+      "source_urls": []
+    },
+    {
+      "id": "concept:collocation.dessert_menu",
+      "title": "Dessert Menu",
+      "level": "A1",
+      "keywords": "sweet options menu section after-dinner"
+    },
+    {
+      "id": "concept:collocation.furnished_apartment",
+      "title": "Furnished Apartment",
+      "level": "B1",
+      "keywords": "includes furniture ready to live no additional costs"
+    },
+    {
+      "id": "concept:collocation.leave_tip",
+      "title": "Leave a Tip",
+      "level": "A1",
+      "keywords": "service appreciation payment addition customary practice"
+    },
+    {
+      "id": "concept:collocation.move_in",
+      "title": "Move In",
+      "level": "B1",
+      "keywords": "start date apartment readiness early move-in"
+    },
+    {
+      "id": "concept:collocation.take_umbrella",
+      "title": "Take an Umbrella",
+      "level": "A2",
+      "keywords": "rain prepared weather",
+      "source_urls": []
+    },
+    {
+      "id": "concept:collocation.technical_vocabulary",
+      "title": "Technical Vocabulary Usage",
+      "level": "C1",
+      "keywords": "domain-specific terms clear explanations professional communication",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:collocation.temperature_check",
+      "title": "Check the Temperature",
+      "level": "A2",
+      "keywords": "weather degrees clothing",
+      "source_urls": []
+    },
+    {
+      "id": "concept:collocation.tight_deadlines",
+      "title": "Tight Deadlines",
+      "level": "B1",
+      "keywords": "tight deadlines"
+    },
+    {
+      "id": "concept:function.ask_terms",
+      "title": "Ask About Terms",
+      "level": "B1",
+      "keywords": "inquire about conditions clarify details negotiate terms"
+    },
+    {
+      "id": "concept:function.cancel_plans",
+      "title": "Cancel or Reschedule Plans",
+      "level": "A2",
+      "keywords": "rain bad weather alternative plans",
+      "source_urls": []
+    },
+    {
+      "id": "concept:function.flight_info",
+      "title": "Flight Information Exchange",
+      "level": "A2",
+      "keywords": "flight number departure time gate change delay notice"
+    },
+    {
+      "id": "concept:function.health_history",
+      "title": "Health History Questions",
+      "level": "B2",
+      "keywords": "allergic reactions medical history",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health"
+      ]
+    },
+    {
+      "id": "concept:function.salary_discussion",
+      "title": "Salary Expectations Discussion",
+      "level": "B1",
+      "keywords": "salary expectations discussion"
+    },
+    {
+      "id": "concept:function.seat_selection",
+      "title": "Seat Preference Inquiry",
+      "level": "A2",
+      "keywords": "seat assignment window/aisle available seats row choice"
+    },
+    {
+      "id": "concept:function.star_method",
+      "title": "STAR Method for Problem-Solving",
+      "level": "C1",
+      "keywords": "interview technique structured response s-situation t-task a-action r-result",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:function.suggestions",
+      "title": "Making Suggestions",
+      "level": "A2",
+      "keywords": "how about why don't we let's",
+      "source_urls": []
+    },
+    {
+      "id": "concept:function.weakness_disclosure",
+      "title": "Weakness Disclosure",
+      "level": "B1",
+      "keywords": "weakness disclosure"
+    },
+    {
+      "id": "concept:grammar.comparatives_superlatives",
+      "title": "Comparatives and Superlatives",
+      "level": "A2",
+      "keywords": "more/less best/worst adjective comparison",
+      "source_urls": []
+    },
+    {
+      "id": "concept:grammar.conditional",
+      "title": "Conditional for Hypotheticals",
+      "level": "B1",
+      "keywords": "conditional for hypotheticals"
+    },
+    {
+      "id": "concept:grammar.conditional_sentences",
+      "title": "Conditional Sentences",
+      "level": "B1",
+      "keywords": "if clauses hypothetical scenarios lease terms"
+    },
+    {
+      "id": "concept:grammar.future_simple",
+      "title": "Future Simple for Plans",
+      "level": "A2",
+      "keywords": "will going to tomorrow plans",
+      "source_urls": []
+    },
+    {
+      "id": "concept:grammar.past_simple",
+      "title": "Past Simple for Specific Experiences",
+      "level": "B1",
+      "keywords": "past simple for specific experiences"
+    },
+    {
+      "id": "concept:grammar.phrasal_verbs",
+      "title": "Phrasal Verbs for Shopping",
+      "level": "A2",
+      "keywords": "try on put take off",
+      "source_urls": []
+    },
+    {
+      "id": "concept:grammar.polite_requests",
+      "title": "Polite Request Forms",
+      "level": "A2",
+      "keywords": "could please would you mind request courtesy"
+    },
+    {
+      "id": "concept:grammar.present_perfect",
+      "title": "Present Perfect for Achievements",
+      "level": "B1",
+      "keywords": "present perfect for achievements"
+    },
+    {
+      "id": "concept:grammar.present_perfect_continuous",
+      "title": "Duration of Symptoms",
+      "level": "B2",
+      "keywords": "have been sick",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health"
+      ]
+    },
+    {
+      "id": "concept:grammar.present_simple",
+      "title": "Present Simple for Schedules",
+      "level": "A2",
+      "keywords": "flight departs gate closes boarding begins timetable"
+    },
+    {
+      "id": "concept:grammar.some_any",
+      "title": "Some/Any Usage",
+      "level": "A1",
+      "keywords": "countable nouns uncountable quantifiers"
+    },
+    {
+      "id": "concept:grammar.would_like",
+      "title": "Would Like for Requests",
+      "level": "A1",
+      "keywords": "polite request would like formal ordering"
+    },
+    {
+      "id": "concept:phrase.ask_for_help",
+      "title": "Asking for Help",
+      "level": "A2",
+      "keywords": "can you help me what size do take",
+      "source_urls": []
+    },
+    {
+      "id": "concept:phrase.boarding_pass",
+      "title": "Boarding Pass Phrases",
+      "level": "A2",
+      "keywords": "here is your boarding pass keep it safe show"
+    },
+    {
+      "id": "concept:phrase.deadline_handling",
+      "title": "Deadline Handling Question",
+      "level": "B1",
+      "keywords": "deadline handling question"
+    },
+    {
+      "id": "concept:phrase.deployment_discussion",
+      "title": "Discuss Deployment Strategies",
+      "level": "C1",
+      "keywords": "ci/cd pipelines infrastructure release management",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:phrase.deposit_amount",
+      "title": "Deposit Amount",
+      "level": "B1",
+      "keywords": "one month's rent security deposit size payment details"
+    },
+    {
+      "id": "concept:phrase.deposit_refund",
+      "title": "Deposit Refund",
+      "level": "B1",
+      "keywords": "return of deposit no damage end lease"
+    },
+    {
+      "id": "concept:phrase.express_preferences",
+      "title": "Expressing Preferences",
+      "level": "A2",
+      "keywords": "prefer this looks better could have",
+      "source_urls": []
+    },
+    {
+      "id": "concept:phrase.lease_duration",
+      "title": "Lease Duration",
+      "level": "B1",
+      "keywords": "12-month lease short-term agreement fixed term"
+    },
+    {
+      "id": "concept:phrase.lease_terms",
+      "title": "Lease Terms",
+      "level": "B1",
+      "keywords": "read carefully understand conditions legal obligations"
+    },
+    {
+      "id": "concept:phrase.luggage_questions",
+      "title": "Luggage Inquiry Phrases",
+      "level": "A2",
+      "keywords": "do you have luggage to check carry-on only excess baggage"
+    },
+    {
+      "id": "concept:phrase.order_food",
+      "title": "Ordering Phrases",
+      "level": "A1",
+      "keywords": "can have i'd like could you"
+    },
+    {
+      "id": "concept:phrase.please_statements",
+      "title": "Polite Service Phrases",
+      "level": "A2",
+      "keywords": "please show me your passport proceed to gate thank you for flying"
+    },
+    {
+      "id": "concept:phrase.qualification_question",
+      "title": "Qualification Question Phrase",
+      "level": "B1",
+      "keywords": "qualification question phrase"
+    },
+    {
+      "id": "concept:phrase.scalability_question",
+      "title": "How would you handle scalability for this microservices architecture?",
+      "level": "C1",
+      "keywords": "interview question technical discussion system design",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:phrase.team_player",
+      "title": "Team Player Statement",
+      "level": "B1",
+      "keywords": "team player statement"
+    },
+    {
+      "id": "concept:phrase.technical_debt_question",
+      "title": "How do you balance feature delivery with technical debt?",
+      "level": "C1",
+      "keywords": "interview question trade-offs long-term planning",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:phrase.treatment_advice",
+      "title": "Treatment Recommendations",
+      "level": "B2",
+      "keywords": "get rest avoid allergens",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health"
+      ]
+    },
+    {
+      "id": "concept:phrase.utilities_included",
+      "title": "Utilities Included",
+      "level": "B1",
+      "keywords": "included in rent separate charges clarify terms"
+    },
+    {
+      "id": "concept:phrase.what_weather",
+      "title": "What's the Weather Like Today?",
+      "level": "A2",
+      "keywords": "greeting conversation starter",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.appetizer",
+      "title": "Appetizer",
+      "level": "A1",
+      "keywords": "starter small dish before main course"
+    },
+    {
+      "id": "concept:vocab.bill",
+      "title": "Bill",
+      "level": "A1",
+      "keywords": "payment check total cost"
+    },
+    {
+      "id": "concept:vocab.boarding_pass",
+      "title": "Boarding Pass",
+      "level": "A2",
+      "keywords": "boarding pass flight document security seat number"
+    },
+    {
+      "id": "concept:vocab.budget",
+      "title": "Budget",
+      "level": "B1",
+      "keywords": "financial plan affordable rent expenses"
+    },
+    {
+      "id": "concept:vocab.check_in",
+      "title": "Check-In Process",
+      "level": "A2",
+      "keywords": "check-in counter registration luggage drop boarding pass collection"
+    },
+    {
+      "id": "concept:vocab.cloudy",
+      "title": "Cloudy",
+      "level": "A2",
+      "keywords": "overcast sky weather",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    },
+    {
+      "id": "concept:vocab.deadline",
+      "title": "Deadline",
+      "level": "B1",
+      "keywords": "deadline"
+    },
+    {
+      "id": "concept:vocab.departure_gate",
+      "title": "Departure Gate",
+      "level": "A2",
+      "keywords": "boarding area gate number security clearance waiting"
+    },
+    {
+      "id": "concept:vocab.dessert",
+      "title": "Dessert",
+      "level": "A1",
+      "keywords": "sweet dish after meal cake"
+    },
+    {
+      "id": "concept:vocab.discount",
+      "title": "Discount",
+      "level": "A2",
+      "keywords": "price reduction 20 off sale",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.fit",
+      "title": "Fit",
+      "level": "A2",
+      "keywords": "clothes size comfort adjust",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.fitting_room",
+      "title": "Fitting Room",
+      "level": "A2",
+      "keywords": "private room try on clothes",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.forecast",
+      "title": "Forecast",
+      "level": "A2",
+      "keywords": "prediction weather planning",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.humid",
+      "title": "Humid",
+      "level": "A2",
+      "keywords": "moist damp weather condition",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.lease_agreement",
+      "title": "Lease Agreement",
+      "level": "B1",
+      "keywords": "legal contract rental terms 12-month lease"
+    },
+    {
+      "id": "concept:vocab.luggage",
+      "title": "Travel Luggage",
+      "level": "A2",
+      "keywords": "carry-on checked baggage weight limit suitcase"
+    },
+    {
+      "id": "concept:vocab.main_course",
+      "title": "Main Course",
+      "level": "A1",
+      "keywords": "main dish primary meal pasta"
+    },
+    {
+      "id": "concept:vocab.menu",
+      "title": "Menu",
+      "level": "A1",
+      "keywords": "menu food list restaurant options"
+    },
+    {
+      "id": "concept:vocab.microservices",
+      "title": "Microservices Architecture",
+      "level": "C1",
+      "keywords": "distributed systems service decomposition api integration",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:vocab.passport",
+      "title": "Passport",
+      "level": "A2",
+      "keywords": "travel document nationality visa security check"
+    },
+    {
+      "id": "concept:vocab.prescription",
+      "title": "Prescription Instructions",
+      "level": "B2",
+      "keywords": "medicine dosage twice daily",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health"
+      ]
+    },
+    {
+      "id": "concept:vocab.qualifications",
+      "title": "Qualifications",
+      "level": "B1",
+      "keywords": "qualifications"
+    },
+    {
+      "id": "concept:vocab.rainy",
+      "title": "Rainy",
+      "level": "A2",
+      "keywords": "wet precipitation umbrella",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    },
+    {
+      "id": "concept:vocab.receipt",
+      "title": "Receipt",
+      "level": "A2",
+      "keywords": "purchase proof return policy payment record",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.rent",
+      "title": "Rent",
+      "level": "B1",
+      "keywords": "monthly payment housing cost fixed amount"
+    },
+    {
+      "id": "concept:vocab.resume",
+      "title": "Resume",
+      "level": "B1",
+      "keywords": "resume"
+    },
+    {
+      "id": "concept:vocab.salary_expectations",
+      "title": "Salary Expectations",
+      "level": "B1",
+      "keywords": "salary expectations"
+    },
+    {
+      "id": "concept:vocab.scalability",
+      "title": "Scalability",
+      "level": "C1",
+      "keywords": "system growth capacity planning load handling",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:vocab.scattered_showers",
+      "title": "Scattered Showers",
+      "level": "A2",
+      "keywords": "light rain weather pattern",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.security_deposit",
+      "title": "Security Deposit",
+      "level": "B1",
+      "keywords": "upfront payment damage coverage refundable"
+    },
+    {
+      "id": "concept:vocab.size",
+      "title": "Size",
+      "level": "A2",
+      "keywords": "small medium large measure clothing size",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.snowy",
+      "title": "Snowy",
+      "level": "A2",
+      "keywords": "snowfall cold winter",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    },
+    {
+      "id": "concept:vocab.sunny",
+      "title": "Sunny",
+      "level": "A2",
+      "keywords": "sun clear skies weather",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    },
+    {
+      "id": "concept:vocab.symptom",
+      "title": "Symptom Description",
+      "level": "B2",
+      "keywords": "fever headache sore throat",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health"
+      ]
+    },
+    {
+      "id": "concept:vocab.team_player",
+      "title": "Team Player",
+      "level": "B1",
+      "keywords": "team player"
+    },
+    {
+      "id": "concept:vocab.technical_debt",
+      "title": "Technical Debt",
+      "level": "C1",
+      "keywords": "code quality refactoring maintenance costs",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "concept:vocab.tip",
+      "title": "Tip",
+      "level": "A1",
+      "keywords": "gratuity service charge extra money"
+    },
+    {
+      "id": "concept:vocab.try_on",
+      "title": "Try On",
+      "level": "A2",
+      "keywords": "test clothes fitting room phrasal verb",
+      "source_urls": []
+    },
+    {
+      "id": "concept:vocab.utilities",
+      "title": "Utilities",
+      "level": "B1",
+      "keywords": "electricity water gas included in rent"
+    },
+    {
+      "id": "concept:vocab.weakness",
+      "title": "Weakness",
+      "level": "B1",
+      "keywords": "weakness"
+    },
+    {
+      "id": "concept:vocab.window_seat",
+      "title": "Window Seat",
+      "level": "A2",
+      "keywords": "seat selection view aisle row number"
+    },
+    {
+      "id": "concept:vocab.windy",
+      "title": "Windy",
+      "level": "A2",
+      "keywords": "breezy gusty weather",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    },
+    {
+      "id": "entity:customer",
+      "title": "Customer",
+      "level": "A1",
+      "keywords": "diner restaurant guest order placer"
+    },
+    {
+      "id": "entity:lease_agreement",
+      "title": "Lease Agreement",
+      "keywords": "legal contract duration terms conditions signature landlord tenant"
+    },
+    {
+      "id": "entity:microservices",
+      "title": "Microservices Architecture",
+      "keywords": "distributed systems scaling api gateway service mesh database per service"
+    },
+    {
+      "id": "entity:security_deposit",
+      "title": "Security Deposit",
+      "keywords": "money upfront damage refund move-in move-out"
+    },
+    {
+      "id": "entity:technical_debt",
+      "title": "Technical Debt",
+      "keywords": "refactoring legacy code quality deadline tradeoff maintainability"
+    },
+    {
+      "id": "entity:waiter",
+      "title": "Waiter",
+      "level": "A1",
+      "keywords": "restaurant staff order taker service provider"
+    },
+    {
+      "id": "topic:airport_checkin",
+      "title": "Airport Check-In Adventure",
+      "level": "A2",
+      "keywords": "story id airport checkin title check-in adventure level a2 category travel setting international counter at departure terminal scenario traveler arrives the to get their boarding pass for an flight agent helps with luggage seat selection and provides important information objectives practice vocabulary gate use polite request forms could would you mind present simple schedules learn airport-specific phrases document that allows board airplane here's your please keep it safe process of registering getting welcome bags suitcases take when traveling do have",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/air-travel",
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/at-the-airport"
+      ]
+    },
+    {
+      "id": "topic:apartment_renting",
+      "title": "Apartment Renting Context",
+      "keywords": "landlord tenant lease agreement security deposit utilities furnished unfurnished studio balcony rent maintenance notice period story id apartment renting title finding new home level b1 category daily life setting inside rental agency or at potential viewing scenario prospective meets with agent to discuss an they terms like duration and objectives practice housing vocabulary ask about conditions express requirements preferences conditional sentences if move in early legal contract for property you'll need sign 12-month money paid upfront cover damages the is",
+      "level": "B1",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/skills/listening/c1-listening/renting-house",
+        "https://learnenglish.ecenglish.com/lessons/vocabulary-renting-apartment"
+      ]
+    },
+    {
+      "id": "topic:cafe_ordering",
+      "title": "Cafe Ordering Context",
+      "keywords": "espresso latte cappuccino pastry muffin croissant sugar decaf extra shot dine-in take-away loyalty card receipt"
+    },
+    {
+      "id": "topic:doctor_visit",
+      "title": "At the Doctor's Office",
+      "level": "B2",
+      "keywords": "story id doctor visit title at the doctor's office level b2 category daily life setting modern medical clinic with friendly scenario patient visits common symptoms asks about gives diagnosis and provides treatment advice objectives practice describing health learn vocabulary medicine use present perfect continuous for duration giving history symptom sign of illness in your body fever headache etc can you describe temperature higher than normal do have prescription written order i'll write some substance used to treat take this twice",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary/health",
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/body-parts-1"
+      ]
+    },
+    {
+      "id": "topic:job_interview",
+      "title": "Job Interview Success",
+      "level": "B1",
+      "keywords": "story id job interview title success level b1 category business setting modern office meeting room for scenario candidate is being interviewed marketing position at tech company the hr manager asks about experience skills and motivation while demonstrates their qualifications objectives practice past tenses describing work use present perfect achievements learn vocabulary formal english resume document listing your education i've reviewed i'm impressed with knowledge or that make you suitable what do have this team player someone who works well others",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business-magazine/job-interviews"
+      ]
+    },
+    {
+      "id": "topic:medical_consultation",
+      "title": "Medical Consultation Context",
+      "keywords": "symptoms prescription dosage allergy side effects blood test referral specialist follow-up recovery insurance"
+    },
+    {
+      "id": "topic:restaurant_order",
+      "title": "Dining at a Restaurant",
+      "level": "A1",
+      "keywords": "story id restaurant order title dining at level a1 category food setting cozy italian in the city center scenario customer visits for dinner waiter takes their recommends dishes and ensures they have pleasant experience objectives practice ordering drinks learn vocabulary use would like polite requests countable uncountable nouns menu list of available here's your take time to decide appetizer small dish served before main course you start with an largest most important meal recommend pasta dessert sweet eaten end see",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/restaurants-1",
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/ordering-food-cafe"
+      ]
+    },
+    {
+      "id": "topic:shopping_clothes",
+      "title": "Shopping for Clothes",
+      "level": "A2",
+      "keywords": "story id shopping clothes title for level a2 category setting modern clothing store in mall scenario customer is looking special occasion the sales assistant helps them find right size style and tries to understand their preferences objectives practice vocabulary color use comparative superlative adjectives learn how ask help express trying on phrases fitting room private where you try before buying rooms are just over there big or small medium large what discount reduction usual price this dress 20 off today",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/skills/listening/a1-listening/shopping-clothes",
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/clothes-1"
+      ]
+    },
+    {
+      "id": "topic:software_interview",
+      "title": "Software Engineering Interview Context",
+      "keywords": "technical stack fullstack backend frontend architecture scalability code review agile scrum sprint deployment testing bugs refactoring story id software interview title engineer job level c1 category work setting formal office or video conference call scenario senior developer is interviewing candidate for position they discuss experience and problem-solving objectives practice professional vocabulary microservices explain complex concepts clearly past projects challenges handle questions using the star method capacity to be changed in size scale growth how would you this debt implied cost",
+      "level": "C1",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/business-english/business/magazine/job-interviews",
+        "https://www.freecodecamp.org/news/software-engineering-interview-questions-and-answers/"
+      ]
+    },
+    {
+      "id": "topic:weather_plans",
+      "title": "Weather & Daily Plans",
+      "level": "A2",
+      "keywords": "story id weather plans title daily level a2 category life setting casual morning conversation over breakfast scenario discuss today's and make accordingly this topic uses real-time data to provide an authentic experience objectives practice weather-related vocabulary learn suggestions based on conditions use future simple for master expressions like how about or why don't we forecast prediction of what's the today humid feeling damp moist due water vapor in air it's quite isn't it scattered showers rain that occurs some places",
+      "source_urls": [
+        "https://learnenglish.britishcouncil.org/vocabulary/a1-a2-vocabulary/weather"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:collocation.boarding_procedures",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:collocation.check_in",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:function.flight_info",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:function.seat_selection",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:grammar.polite_requests",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:grammar.present_simple",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:phrase.boarding_pass",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:phrase.luggage_questions",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:phrase.please_statements",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.boarding_pass",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.check_in",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.departure_gate",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.luggage",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.passport",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:airport_checkin",
+      "to": "concept:vocab.window_seat",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:collocation.furnished_apartment",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:collocation.move_in",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:function.ask_terms",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:grammar.conditional_sentences",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.deposit_amount",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.deposit_refund",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.lease_duration",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.lease_terms",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.utilities_included",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:vocab.budget",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:vocab.lease_agreement",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:vocab.rent",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:vocab.security_deposit",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:vocab.utilities",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.deposit_amount",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.deposit_refund",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.lease_duration",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.lease_terms",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:phrase.utilities_included",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "entity:security_deposit",
+      "relation": "includes_cost"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:function.ask_terms",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "concept:grammar.conditional_sentences",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "entity:lease_agreement",
+      "relation": "requires"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:collocation.body_parts",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:function.health_history",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:grammar.present_perfect_continuous",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:phrase.treatment_advice",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:vocab.prescription",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:vocab.symptom",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:function.health_history",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:grammar.present_perfect_continuous",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:phrase.treatment_advice",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:doctor_visit",
+      "to": "concept:collocation.body_parts",
+      "relation": "requires"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:collocation.tight_deadlines",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:function.salary_discussion",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:function.weakness_disclosure",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.conditional",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.past_simple",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.present_perfect",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.deadline_handling",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.qualification_question",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.team_player",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.deadline",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.qualifications",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.resume",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.salary_expectations",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.team_player",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:vocab.weakness",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.conditional",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.past_simple",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:grammar.present_perfect",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.deadline_handling",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.qualification_question",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:job_interview",
+      "to": "concept:phrase.team_player",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:collocation.dessert_menu",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:collocation.leave_tip",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:grammar.some_any",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:grammar.would_like",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:phrase.order_food",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.appetizer",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.bill",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.dessert",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.main_course",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.menu",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "concept:vocab.tip",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "entity:customer",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "entity:waiter",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "entity:customer",
+      "relation": "part_of"
+    },
+    {
+      "from": "topic:restaurant_order",
+      "to": "entity:waiter",
+      "relation": "part_of"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:collocation.clothing_terms",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:grammar.comparatives_superlatives",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:grammar.phrasal_verbs",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:phrase.ask_for_help",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:phrase.express_preferences",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.discount",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.fit",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.fitting_room",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.receipt",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.size",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:vocab.try_on",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:grammar.comparatives_superlatives",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:phrase.ask_for_help",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:shopping_clothes",
+      "to": "concept:phrase.express_preferences",
+      "relation": "related_to"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:collocation.technical_vocabulary",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:function.star_method",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.deployment_discussion",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.scalability_question",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.technical_debt_question",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:vocab.microservices",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:vocab.scalability",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:vocab.technical_debt",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.deployment_discussion",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.scalability_question",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:phrase.technical_debt_question",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "entity:microservices",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "entity:technical_debt",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:function.star_method",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "concept:collocation.technical_vocabulary",
+      "relation": "requires"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:collocation.check_forecast",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:collocation.take_umbrella",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:collocation.temperature_check",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:function.cancel_plans",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:function.suggestions",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:grammar.future_simple",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:phrase.what_weather",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.cloudy",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.forecast",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.humid",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.rainy",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.scattered_showers",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.snowy",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.sunny",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:vocab.windy",
+      "relation": "contains"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:function.suggestions",
+      "relation": "practices"
+    },
+    {
+      "from": "topic:weather_plans",
+      "to": "concept:grammar.future_simple",
+      "relation": "practices"
+    }
+  ]
+}

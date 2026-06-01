@@ -8,6 +8,7 @@ Rebuilds/updates the KuzuDB knowledge graph from all source data files:
   - data/kg/03_errors_vietnamese.json    (Vietnamese learner errors)
   - data/kg/04_writing_phonology.json    (writing/phonology)
   - data/kg/05_vocabulary_advanced.json  (advanced vocabulary)
+  - data/kg/06_tracecag_topic_expansion.json (expanded topic chat corpus)
 
 Usage:
   # From ai-service directory or inside container:
@@ -50,6 +51,7 @@ _SOURCES: List[Path] = [
     _KG_DATA_DIR / "03_errors_vietnamese.json",
     _KG_DATA_DIR / "04_writing_phonology.json",
     _KG_DATA_DIR / "05_vocabulary_advanced.json",
+    _KG_DATA_DIR / "06_tracecag_topic_expansion.json",
 ]
 
 

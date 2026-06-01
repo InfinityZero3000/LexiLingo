@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "total_stories": 68,
+  "generated_topic_count": 60,
+  "quadruple_lines": 18240,
+  "edge_lines": 14640,
+  "kg_concepts": 4040,
+  "kg_edges": 14640,
+  "duplicate_story_ids": 0,
+  "duplicate_concepts": 0,
+  "duplicate_edges": 0,
+  "dangling_edges": 0,
+  "min_required_lines": 10000,
+  "blueprint_count": 60,
+  "pipeline": "TraceCAG"
+}
