@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 
 /// Firebase Cloud Messaging Service
 /// Handles push notifications from Firebase
@@ -168,7 +169,7 @@ class FirebaseMessagingService {
       final deviceType = _getDeviceType();
 
       await client.post(
-        '/api/devices',
+        '/devices',
         body: {
           'device_id': deviceId,
           'device_type': deviceType,
@@ -242,6 +243,11 @@ class FirebaseMessagingService {
     final targetId = data['target_id'] as String?;
 
     switch (type) {
+      case 'vocabulary_review_reminder':
+        final route = data['route'] as String? ?? '/vocabulary/review';
+        AppNavigationService.openRoute(route);
+        debugPrint('Navigate to vocabulary review screen');
+        break;
       case 'streak_reminder':
         // Navigate to home/streak screen
         debugPrint('Navigate to streak screen');

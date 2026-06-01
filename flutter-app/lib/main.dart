@@ -11,6 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lexilingo_app/firebase_options.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
+import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
@@ -42,6 +43,9 @@ import 'package:lexilingo_app/features/progress/presentation/providers/progress_
 import 'package:lexilingo_app/features/social/presentation/providers/social_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
+    as vocab_di;
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
@@ -89,8 +93,9 @@ void main() async {
   try {
     // Load only public client config. Raw .env files may contain server
     // secrets and must never be bundled into Flutter web assets.
-    final envFile =
-        kReleaseMode ? 'assets/env/prod_config' : 'assets/env/dev_config';
+    final envFile = kReleaseMode
+        ? 'assets/env/prod_config'
+        : 'assets/env/dev_config';
     await dotenv.load(fileName: envFile);
   } catch (e) {
     debugPrint('Warning: Could not load public config: $e');
@@ -320,6 +325,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
 
           return MaterialApp(
             title: 'LexiLingo',
+            navigatorKey: AppNavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
@@ -350,6 +356,10 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               },
               // Phase 3: English Games
               '/games': (context) => const GamesHubScreen(),
+              '/vocabulary/review': (context) => ChangeNotifierProvider(
+                create: (_) => vocab_di.getIt<FlashcardProvider>(),
+                child: const FlashcardReviewScreen(),
+              ),
               // Phase 4: Podcast
               '/podcast': (context) => const PodcastExploreScreen(),
               '/podcast/detail': (context) {

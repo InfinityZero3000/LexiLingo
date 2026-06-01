@@ -87,6 +87,17 @@ class ApiClient {
     return _send('POST', uri, headers: headers, body: body, timeout: timeout);
   }
 
+  /// PATCH request returning unwrapped data
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    Duration? timeout,
+  }) async {
+    final uri = _resolve(path);
+    return _send('PATCH', uri, headers: headers, body: body, timeout: timeout);
+  }
+
   /// POST multipart request returning unwrapped data.
   Future<Map<String, dynamic>> postMultipart(
     String path, {

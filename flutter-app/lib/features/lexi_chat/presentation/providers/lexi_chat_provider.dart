@@ -55,6 +55,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isRestoringSession = false;
   String? _error;
   bool _ttsEnabled = true;
+  double _ttsSpeed = 1.0;
   String _learnerLevel = 'B1';
   Timer? _typingStageTimer;
   DateTime? _responseStateStartedAt;
@@ -82,6 +83,15 @@ class LexiChatProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
+  double get ttsSpeed => _ttsSpeed;
+
+  String get ttsSpeedLabel {
+    if (_ttsSpeed == 1.0) return '1.0x';
+    if (_ttsSpeed == 1.25) return '1.25x';
+    if (_ttsSpeed == 1.5) return '1.5x';
+    if (_ttsSpeed == 0.75) return '0.75x';
+    return '${_ttsSpeed}x';
+  }
 
   bool _isUnauthorizedError(Object error) {
     final normalized = error.toString().toLowerCase();
@@ -759,6 +769,7 @@ class LexiChatProvider extends ChangeNotifier {
       final bytes = base64Decode(base64Audio);
       final uri = Uri.dataFromBytes(bytes, mimeType: 'audio/mpeg');
       await _ttsPlayer.setUrl(uri.toString());
+      await _ttsPlayer.setSpeed(_ttsSpeed);
       await _ttsPlayer.play();
     } catch (e) {
       logWarn(_tag, 'TTS playback failed: $e');
@@ -792,6 +803,23 @@ class LexiChatProvider extends ChangeNotifier {
   // ── Settings ──────────────────────────────────────────────────────────────
   void toggleTts() {
     _ttsEnabled = !_ttsEnabled;
+    if (!_ttsEnabled) {
+      _ttsPlayer.stop();
+    }
+    notifyListeners();
+  }
+
+  Future<void> cycleTtsSpeed() async {
+    if (_ttsSpeed == 1.0) {
+      _ttsSpeed = 1.25;
+    } else if (_ttsSpeed == 1.25) {
+      _ttsSpeed = 1.5;
+    } else if (_ttsSpeed == 1.5) {
+      _ttsSpeed = 0.75;
+    } else {
+      _ttsSpeed = 1.0;
+    }
+    await _ttsPlayer.setSpeed(_ttsSpeed);
     notifyListeners();
   }
 

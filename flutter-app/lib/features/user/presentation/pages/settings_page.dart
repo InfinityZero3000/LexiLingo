@@ -354,7 +354,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             if (settings.notificationEnabled) ...[
               const Divider(),
-              // Reminder time
               InkWell(
                 onTap: () async {
                   final time = await showTimePicker(
@@ -398,9 +397,153 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ),
+              const Divider(),
+              _buildSwitchRow(
+                context,
+                label: 'settings.pushReminder'.tr(),
+                value: settings.pushReminderEnabled,
+                onChanged: (value) =>
+                    settings.updateReminderChannels(pushEnabled: value),
+                primaryColor: primaryColor,
+              ),
+              _buildSwitchRow(
+                context,
+                label: 'settings.emailReminder'.tr(),
+                value: settings.emailReminderEnabled,
+                onChanged: (value) =>
+                    settings.updateReminderChannels(emailEnabled: value),
+                primaryColor: primaryColor,
+              ),
+              if (settings.emailReminderEnabled)
+                _buildCadenceRow(context, settings, primaryColor),
+              _buildMinDueCountRow(context, settings, primaryColor),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow(
+    BuildContext context, {
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color primaryColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: primaryColor.withValues(alpha: 0.5),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return primaryColor;
+              }
+              return null;
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCadenceRow(
+    BuildContext context,
+    SettingsProvider settings,
+    Color primaryColor,
+  ) {
+    final options = <int, String>{
+      3: 'settings.emailCadenceEvery3Days'.tr(),
+      7: 'settings.emailCadenceWeekly'.tr(),
+      14: 'settings.emailCadenceEvery2Weeks'.tr(),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'settings.emailCadence'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          DropdownButton<int>(
+            value: options.containsKey(settings.emailCadenceDays)
+                ? settings.emailCadenceDays
+                : 7,
+            underline: const SizedBox.shrink(),
+            items: options.entries
+                .map(
+                  (entry) => DropdownMenuItem<int>(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              settings.updateReminderChannels(emailCadenceDays: value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMinDueCountRow(
+    BuildContext context,
+    SettingsProvider settings,
+    Color primaryColor,
+  ) {
+    final count = settings.reminderMinDueCount;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'settings.minDueCount'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            color: count <= 1 ? AppColors.grey400 : primaryColor,
+            onPressed: count <= 1
+                ? null
+                : () => settings.updateReminderChannels(minDueCount: count - 1),
+          ),
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$count',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            color: primaryColor,
+            onPressed: count >= 20
+                ? null
+                : () => settings.updateReminderChannels(minDueCount: count + 1),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -69,39 +70,17 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // ── Header + Search ──
+            // ── Header (floating: hiện ngay khi scroll lên) ──
+            const SliverPersistentHeader(
+              floating: true,
+              delegate: _YouTubeFloatingHeader(),
+            ),
+
+            // ── Search Bar ──
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.black.withValues(alpha: 0.04),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'youtube.exploreTitle'.tr(),
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSearchBar(isDark),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: _buildSearchBar(isDark),
               ),
             ),
 
@@ -595,4 +574,64 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         return AppColors.primary;
     }
   }
+}
+
+// ──────────────────────────────────────
+//  Floating Header Delegate
+// ──────────────────────────────────────
+
+class _YouTubeFloatingHeader extends SliverPersistentHeaderDelegate {
+  const _YouTubeFloatingHeader();
+
+  static const double _height = 72.0;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  FloatingHeaderSnapConfiguration get snapConfiguration =>
+      FloatingHeaderSnapConfiguration(
+        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 200),
+      );
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.04),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'youtube.exploreTitle'.tr(),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_YouTubeFloatingHeader old) => false;
 }

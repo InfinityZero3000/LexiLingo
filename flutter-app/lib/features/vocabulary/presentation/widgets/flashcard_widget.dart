@@ -156,7 +156,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'vocabulary.audioQuestionHint'.tr(defaultValue: 'Listen and guess the word'),
+                      'vocabulary.audioQuestionHint'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),

@@ -8,6 +8,9 @@ enum NotificationType {
   /// Reminder to start a lesson
   lessonReminder,
 
+  /// Reminder to review due vocabulary
+  vocabularyReviewReminder,
+
   /// Achievement unlocked
   achievement,
 
@@ -165,6 +168,32 @@ class NotificationEntity extends Equatable {
     );
   }
 
+  /// Factory for creating notification from backend persisted payload.
+  factory NotificationEntity.fromBackend(Map<String, dynamic> json) {
+    final typeString = json['type'] as String?;
+    final type = _parseNotificationType(typeString);
+    final timestampRaw =
+        json['created_at'] as String? ?? json['timestamp'] as String?;
+    final timestamp = timestampRaw != null
+        ? DateTime.tryParse(timestampRaw) ?? DateTime.now()
+        : DateTime.now();
+    final data = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : null;
+
+    return NotificationEntity(
+      id: json['id'] as String,
+      type: type,
+      title: json['title'] as String? ?? 'Notification',
+      body: json['body'] as String? ?? '',
+      timestamp: timestamp,
+      isRead: json['is_read'] as bool? ?? json['isRead'] as bool? ?? false,
+      data: data,
+      iconIdentifier: _getIconForType(type),
+      colorHex: _getColorForType(type),
+    );
+  }
+
   /// Parse notification type from string
   static NotificationType _parseNotificationType(String? typeString) {
     switch (typeString) {
@@ -172,6 +201,8 @@ class NotificationEntity extends Equatable {
         return NotificationType.streakReminder;
       case 'lesson_reminder':
         return NotificationType.lessonReminder;
+      case 'vocabulary_review_reminder':
+        return NotificationType.vocabularyReviewReminder;
       case 'achievement':
         return NotificationType.achievement;
       case 'new_content':
@@ -193,6 +224,7 @@ class NotificationEntity extends Equatable {
       case NotificationType.streakReminder:
         return 'local_fire_department';
       case NotificationType.lessonReminder:
+      case NotificationType.vocabularyReviewReminder:
         return 'schedule';
       case NotificationType.achievement:
         return 'emoji_events';
@@ -215,6 +247,7 @@ class NotificationEntity extends Equatable {
       case NotificationType.streakReminder:
         return '#FF9800'; // Orange
       case NotificationType.lessonReminder:
+      case NotificationType.vocabularyReviewReminder:
         return '#2196F3'; // Blue
       case NotificationType.achievement:
         return '#FFD700'; // Gold

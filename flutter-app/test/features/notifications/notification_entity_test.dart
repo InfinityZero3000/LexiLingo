@@ -78,6 +78,22 @@ void main() {
       expect(updatedNotification.body, 'Original Body');
       expect(updatedNotification.isRead, true);
     });
+
+    test('fromBackend parses vocabulary review reminder', () {
+      final notification = NotificationEntity.fromBackend({
+        'id': 'backend-1',
+        'type': 'vocabulary_review_reminder',
+        'title': 'Review',
+        'body': 'You have words due',
+        'created_at': '2026-06-01T10:00:00Z',
+        'is_read': false,
+        'data': {'route': '/vocabulary/review', 'due_count': 3},
+      });
+
+      expect(notification.type, NotificationType.vocabularyReviewReminder);
+      expect(notification.route, '/vocabulary/review');
+      expect(notification.iconIdentifier, 'schedule');
+    });
   });
 
   group('NotificationEntity - isToday', () {

@@ -3,24 +3,52 @@ import 'package:lexilingo_app/core/error/failures.dart';
 import '../../domain/entities/settings.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../datasources/settings_local_data_source.dart';
+import '../datasources/settings_remote_data_source.dart';
 import '../models/settings_model.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   final SettingsLocalDataSource localDataSource;
+  final SettingsRemoteDataSource? remoteDataSource;
 
-  SettingsRepositoryImpl({required this.localDataSource});
+  SettingsRepositoryImpl({
+    required this.localDataSource,
+    this.remoteDataSource,
+  });
 
   @override
   Future<Either<Failure, Settings>> getSettings(String userId) async {
     try {
-      final settings = await localDataSource.getSettings(userId);
-      if (settings != null) {
-        return Right(settings);
+      final cachedSettings = await localDataSource.getSettings(userId);
+      SettingsModel settings;
+      if (cachedSettings == null) {
+        settings = SettingsModel(id: 0, userId: userId);
+        await localDataSource.createSettings(settings);
+      } else {
+        settings = cachedSettings;
       }
-      // Create default settings if not found
-      final defaultSettings = SettingsModel(id: 0, userId: userId);
-      await localDataSource.createSettings(defaultSettings);
-      return Right(defaultSettings);
+
+      if (remoteDataSource != null) {
+        try {
+          final remote = await remoteDataSource!.getReminderPreferences(userId);
+          final merged = SettingsModel.fromEntity(
+            settings.copyWith(
+              notificationEnabled: remote.notificationEnabled,
+              notificationTime: remote.notificationTime,
+              pushReminderEnabled: remote.pushReminderEnabled,
+              emailReminderEnabled: remote.emailReminderEnabled,
+              emailCadenceDays: remote.emailCadenceDays,
+              reminderMinDueCount: remote.reminderMinDueCount,
+              reminderTimezone: remote.reminderTimezone,
+            ),
+          );
+          await localDataSource.updateSettings(merged);
+          settings = merged;
+        } catch (_) {
+          // Backend reminder sync is best-effort; local settings remain usable.
+        }
+      }
+
+      return Right(settings);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
     }
@@ -42,6 +70,13 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final settingsModel = SettingsModel.fromEntity(settings);
       await localDataSource.updateSettings(settingsModel);
+      if (remoteDataSource != null) {
+        try {
+          await remoteDataSource!.updateReminderPreferences(settings);
+        } catch (_) {
+          // Keep offline/local-first settings behavior.
+        }
+      }
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

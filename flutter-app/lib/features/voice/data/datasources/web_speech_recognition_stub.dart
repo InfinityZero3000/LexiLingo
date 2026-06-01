@@ -13,7 +13,10 @@ class WebSpeechRecognition {
     return false;
   }
 
-  Stream<WebSpeechResult> startListening({String language = 'en-US'}) {
+  Stream<WebSpeechResult> startListening({
+    String language = 'en-US',
+    bool continuous = false,
+  }) {
     throw UnsupportedError(
       'Web Speech Recognition is only available on web platform',
     );

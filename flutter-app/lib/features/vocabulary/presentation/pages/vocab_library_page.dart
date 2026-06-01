@@ -71,7 +71,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   children: [
                     const Icon(Icons.list_alt_rounded, size: 20),
                     const SizedBox(width: 8),
-                    Text('vocabulary.tabWords'.tr(defaultValue: 'Words')),
+                    Text('vocabulary.tabWords'.tr()),
                   ],
                 ),
               ),
@@ -81,7 +81,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   children: [
                     const Icon(Icons.style_outlined, size: 20),
                     const SizedBox(width: 8),
-                    Text('vocabulary.tabTopics'.tr(defaultValue: 'Topic Flashcards')),
+                    Text('vocabulary.tabTopics'.tr()),
                   ],
                 ),
               ),
@@ -296,7 +296,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'vocabulary.startLearning'.tr(defaultValue: 'Start'),
+                        'vocabulary.startLearning'.tr(),
                         style: TextStyle(
                           color: topic.gradient[0],
                           fontSize: 12,

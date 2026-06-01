@@ -7,6 +7,11 @@ class Settings {
   final String language; // "en", "vi", etc.
   final bool soundEnabled;
   final int dailyGoalXP;
+  final bool pushReminderEnabled;
+  final bool emailReminderEnabled;
+  final int emailCadenceDays;
+  final int reminderMinDueCount;
+  final String reminderTimezone;
 
   const Settings({
     required this.id,
@@ -17,6 +22,11 @@ class Settings {
     this.language = "en",
     this.soundEnabled = true,
     this.dailyGoalXP = 50,
+    this.pushReminderEnabled = true,
+    this.emailReminderEnabled = false,
+    this.emailCadenceDays = 7,
+    this.reminderMinDueCount = 1,
+    this.reminderTimezone = "Asia/Ho_Chi_Minh",
   });
 
   Settings copyWith({
@@ -28,6 +38,11 @@ class Settings {
     String? language,
     bool? soundEnabled,
     int? dailyGoalXP,
+    bool? pushReminderEnabled,
+    bool? emailReminderEnabled,
+    int? emailCadenceDays,
+    int? reminderMinDueCount,
+    String? reminderTimezone,
   }) {
     return Settings(
       id: id ?? this.id,
@@ -38,6 +53,11 @@ class Settings {
       language: language ?? this.language,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       dailyGoalXP: dailyGoalXP ?? this.dailyGoalXP,
+      pushReminderEnabled: pushReminderEnabled ?? this.pushReminderEnabled,
+      emailReminderEnabled: emailReminderEnabled ?? this.emailReminderEnabled,
+      emailCadenceDays: emailCadenceDays ?? this.emailCadenceDays,
+      reminderMinDueCount: reminderMinDueCount ?? this.reminderMinDueCount,
+      reminderTimezone: reminderTimezone ?? this.reminderTimezone,
     );
   }
 }
