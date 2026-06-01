@@ -152,6 +152,64 @@ services:
     networks:
       - lexilingo-prod
 
+  backend-reminder-worker:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile.prod
+    container_name: lexilingo-reminder-worker
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
+    env_file:
+      - .env.production
+      - .env.production.secrets
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - lexilingo-prod
+
+  backend-reminder-beat:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile.prod
+    container_name: lexilingo-reminder-beat
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
+    env_file:
+      - .env.production
+      - .env.production.secrets
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - lexilingo-prod
+
   ai-service:
     build:
       context: ./ai-service

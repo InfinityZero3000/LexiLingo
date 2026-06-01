@@ -246,6 +246,56 @@ services:
     networks:
       - lexilingo-network
 
+  backend-reminder-worker:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-reminder-worker
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      REDIS_URL: redis://redis:6379/0
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+    networks:
+      - lexilingo-network
+
+  backend-reminder-beat:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-reminder-beat
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      REDIS_URL: redis://redis:6379/0
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+    networks:
+      - lexilingo-network
+
   # ============================================
   # AI Service (FastAPI + MongoDB)
   # ============================================
