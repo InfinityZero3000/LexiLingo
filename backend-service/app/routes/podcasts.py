@@ -162,6 +162,12 @@ def _proxy_podcast_urls(podcast: dict, request: Request) -> dict:
     return proxied
 
 
+# CORS header included on every proxy response so browsers can load images even
+# when app-level CORS middleware is disabled (edge handles it for the API, but
+# edge proxies often strip CORS from error responses like 502/404/403).
+_PROXY_CORS = {"Access-Control-Allow-Origin": "*"}
+
+
 @router.get("/proxy/image", summary="Proxy podcast artwork images to bypass CORS")
 async def proxy_image(url: str = Query(..., description="The image URL to proxy")):
     """
@@ -173,10 +179,11 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
         if parsed_url.scheme not in ("http", "https"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only HTTP/HTTPS image URLs are allowed."
+                detail="Only HTTP/HTTPS image URLs are allowed.",
+                headers=_PROXY_CORS,
             )
         host = (parsed_url.hostname or "").lower()
-        
+
         # SSRF protection: block private/local hosts
         private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
                             "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
@@ -186,9 +193,10 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
         if any(host == p or host.startswith(p) for p in private_prefixes):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Internal/private URLs are not allowed."
+                detail="Internal/private URLs are not allowed.",
+                headers=_PROXY_CORS,
             )
-        
+
         # Resolve hostname and verify the IP is public
         from ipaddress import ip_address
         import socket
@@ -197,20 +205,24 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             if ip_address(resolved_ip).is_private or ip_address(resolved_ip).is_loopback:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Internal/private URLs are not allowed."
+                    detail="Internal/private URLs are not allowed.",
+                    headers=_PROXY_CORS,
                 )
         except (socket.gaierror, ValueError):
             pass  # DNS resolution failed or invalid IP, httpx will fail
-            
+
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid URL."
+            detail="Invalid URL.",
+            headers=_PROXY_CORS,
         )
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    # Reduced timeout to 8s so FastAPI responds before any upstream proxy can
+    # generate its own 502 (which would lack CORS headers entirely).
+    async with httpx.AsyncClient(timeout=8.0) as client:
         try:
             resp = await client.get(
                 url,
@@ -220,23 +232,26 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             if resp.status_code != 200:
                 raise HTTPException(
                     status_code=resp.status_code,
-                    detail=f"Failed to fetch image: HTTP {resp.status_code}"
+                    detail=f"Failed to fetch image: HTTP {resp.status_code}",
+                    headers=_PROXY_CORS,
                 )
-            
+
             # Content-type check: only allow images
             content_type = resp.headers.get("content-type", "")
             if content_type and not content_type.startswith("image/"):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="URL did not return an image content type."
+                    detail="URL did not return an image content type.",
+                    headers=_PROXY_CORS,
                 )
-                
+
             return Response(
                 content=resp.content,
                 media_type=content_type or "image/jpeg",
                 headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
-                }
+                    **_PROXY_CORS,
+                    "Cache-Control": "public, max-age=86400",
+                },
             )
         except HTTPException:
             raise
@@ -244,13 +259,15 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             logger.error("HTTP request error proxying podcast image %s: %s", url, e)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Failed to reach image source: {str(e)}"
+                detail=f"Failed to reach image source: {str(e)}",
+                headers=_PROXY_CORS,
             )
         except Exception as e:
             logger.error("Unexpected error proxying podcast image %s: %s", url, e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal proxy error."
+                detail="Internal proxy error.",
+                headers=_PROXY_CORS,
             )
 
 
