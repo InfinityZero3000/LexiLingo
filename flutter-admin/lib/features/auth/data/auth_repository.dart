@@ -14,6 +14,12 @@ class AdminUser {
   final bool isAdmin;
   final bool hasUserAccount;
 
+  // Accounts that also have a learner profile in the user app.
+  static const _userZoneWhitelist = [
+    'nhthang312@gmail.com',
+    'thefirestar312@gmail.com',
+  ];
+
   const AdminUser({
     required this.id,
     required this.email,
@@ -25,6 +31,9 @@ class AdminUser {
     required this.isAdmin,
     required this.hasUserAccount,
   });
+
+  bool get hasUserZoneAccess =>
+      _userZoneWhitelist.contains(email.toLowerCase());
 
   factory AdminUser.fromJson(Map<String, dynamic> json) => AdminUser(
         id: json['id'] ?? '',

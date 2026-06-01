@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../auth/presentation/auth_provider.dart';
 
 class SuperDashboardScreen extends StatefulWidget {
   const SuperDashboardScreen({super.key});
@@ -33,6 +35,49 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isSuperAdmin = context.watch<AuthProvider>().isSuperAdmin;
+    if (!isSuperAdmin) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+            onPressed: () => context.pop(),
+          ),
+          title: Text('Super Admin Dashboard',
+              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72, height: 72,
+                  decoration: BoxDecoration(
+                    color: AppColors.errorContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.lock_outlined,
+                      color: AppColors.error, size: 36),
+                ),
+                const SizedBox(height: 20),
+                Text('Access Restricted',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 20, fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface)),
+                const SizedBox(height: 8),
+                Text('This section is only accessible to Super Administrators.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13, color: AppColors.onSurfaceMuted)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

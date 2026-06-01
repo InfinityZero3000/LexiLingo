@@ -15,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _state == AuthState.authenticated;
   bool get isSuperAdmin => _user?.isSuperAdmin ?? false;
+  bool get hasUserZoneAccess => _user?.hasUserZoneAccess ?? false;
 
   Future<void> init() async {
     _user = await _repo.getMe();

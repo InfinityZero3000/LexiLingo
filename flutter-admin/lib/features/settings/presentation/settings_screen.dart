@@ -333,46 +333,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
                 const SizedBox(height: 16),
 
-                // Switch to User Zone (for admins who also have user accounts)
-                _Card(
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.swap_horiz_outlined,
-                                color: AppColors.onSurfaceVariant, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Switch to User Zone',
-                                    style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.onSurface)),
-                                Text('Open LexiLingo learner app with your account',
-                                    style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 11, color: AppColors.onSurfaceMuted)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.open_in_new,
-                              size: 16, color: AppColors.onSurfaceMuted),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
+                // Switch to User Zone — only visible for whitelisted accounts
+                if (auth.hasUserZoneAccess) ...[
+                  _UserZoneSwitchCard(user: user),
+                  const SizedBox(height: 16),
+                ],
 
                 // Logout
                 SizedBox(
@@ -643,6 +608,308 @@ class _ToolLink extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Switch to User Zone card + bottom sheet
+// ─────────────────────────────────────────────
+
+class _UserZoneSwitchCard extends StatelessWidget {
+  final dynamic user;
+  const _UserZoneSwitchCard({required this.user});
+
+  void _show(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _UserZoneSheet(user: user),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _show(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0A192F), Color(0xFF213145)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.swap_horiz_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Switch to User Zone',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                  const SizedBox(height: 2),
+                  Text('Open LexiLingo as a learner',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11, color: Colors.white54)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBright,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text('SWITCH',
+                  style: GoogleFonts.spaceGrotesk(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.06)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UserZoneSheet extends StatelessWidget {
+  final dynamic user;
+  const _UserZoneSheet({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = user?.displayName as String? ?? 'Admin';
+    final email = user?.email as String? ?? '';
+    final isSuperAdmin = (user?.isSuperAdmin as bool?) ?? false;
+    final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          // Dark header
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0A192F), Color(0xFF152840)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppColors.primaryContainer,
+                      child: Text(initials,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary)),
+                    ),
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBright,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF0A192F), width: 2),
+                        ),
+                        child: const Icon(Icons.school_outlined,
+                            color: Colors.white, size: 10),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(displayName,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
+                      Text(email,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 11, color: Colors.white54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBright,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN',
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.06),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Body
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your dual account',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16, fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface)),
+                const SizedBox(height: 8),
+                Text(
+                  'Your admin account is linked to a LexiLingo learner profile with the same email. '
+                  'Open the LexiLingo app on your device to continue as a learner — '
+                  'you\'ll be logged in automatically if you use the same email.',
+                  style: GoogleFonts.spaceGrotesk(
+                      fontSize: 13, color: AppColors.onSurfaceVariant, height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                // Step cards
+                _StepRow(
+                  step: '1',
+                  text: 'Open the LexiLingo app on your device',
+                ),
+                const SizedBox(height: 10),
+                _StepRow(
+                  step: '2',
+                  text: 'Sign in with $email',
+                ),
+                const SizedBox(height: 10),
+                _StepRow(
+                  step: '3',
+                  text: 'Your learner progress and data will be ready',
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          // Buttons
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+                20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    label: Text('Open LexiLingo App',
+                        style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w700, fontSize: 14)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBright,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Dismiss',
+                      style: GoogleFonts.spaceGrotesk(
+                          color: AppColors.onSurfaceMuted,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepRow extends StatelessWidget {
+  final String step;
+  final String text;
+  const _StepRow({required this.step, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(step,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(text,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: 13, color: AppColors.onSurface)),
+        ),
+      ],
     );
   }
 }

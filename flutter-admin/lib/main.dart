@@ -28,11 +28,13 @@ class LexiLingoAdminApp extends StatefulWidget {
 }
 
 class _LexiLingoAdminAppState extends State<LexiLingoAdminApp> {
-  final _authProvider = AuthProvider();
+  late final AuthProvider _authProvider;
+  late final _router = createRouter(_authProvider);
 
   @override
   void initState() {
     super.initState();
+    _authProvider = AuthProvider();
     _authProvider.init();
   }
 
@@ -50,7 +52,7 @@ class _LexiLingoAdminAppState extends State<LexiLingoAdminApp> {
         title: 'LexiLingo Admin',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        routerConfig: appRouter,
+        routerConfig: _router,
       ),
     );
   }
