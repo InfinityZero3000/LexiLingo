@@ -48,7 +48,7 @@ LexiLingo is a full-stack AI English tutoring platform built as a **monorepo wit
 - **Adaptive vocabulary** — SM-2 spaced repetition with per-user ease factor (EF-adjusted intervals)
 - **Structured courses** — CEFR-tagged A1→C2 curriculum with units, lessons, and exercises
 - **AI tutor (Lexi Chat)** — Contextual conversation powered by the GraphCAG pipeline
-- **Topic-based chat** — Conversation practice across 50+ topic catalogs
+- **Topic-based chat** — Conversation practice across 68 topic catalogs (60 TraceCAG-generated, A1–C1, 16 categories)
 - **Voice / pronunciation** — Real-time dual-stream STT/TTS + HuBERT phoneme analysis with Vietnamese-specific error feedback
 - **CEFR proficiency assessment** — Multi-skill diagnostic (grammar, vocabulary, fluency)
 - **Gamification** — XP, leagues, achievements, shop, leaderboard, streaks
@@ -75,58 +75,7 @@ The system is organized into 8 architectural layers:
 
 ### System diagram
 
-```mermaid
-flowchart TB
- subgraph Clients
- Mobile[" Flutter Mobile App\n(iOS · Android · Web)"]
- AdminUI[" Admin Dashboard\n(React SPA)"]
- IDE[" IDE / Claude Code\n(MCP client)"]
- end
-
- subgraph Gateway[" Kong API Gateway :80/:443"]
- KONG[" "]
- end
-
- subgraph BackendSvc[" Backend API Service :8000"]
- B_CORE["Auth · Users · Courses\nVocabulary · Gamification\nProgress · Analytics · Admin"]
- end
-
- subgraph AISvc[" AI Service :8001"]
- TRACECAG["TraceCag Pipeline\n(LangGraph StateGraph)"]
- KG["KuzuDB\nKnowledge Graph"]
- VOICE["Voice Pipeline\nWhisper · Piper · HuBERT"]
- MODELS["Model Gateway\nQwen · Gemini · LLaMA3-VI\nOllama"]
- end
-
- subgraph MCPSvc[" MCP Agent Server :8001 (stdio)"]
- MCP_TOOLS["i18n Manager\nModel Handlers"]
- end
-
- subgraph Data[" Data Layer"]
- PG[("PostgreSQL")]
- REDIS[("Redis")]
- MONGO[("MongoDB")]
- KUZU[("KuzuDB")]
- end
-
- Mobile -->|HTTPS / WebSocket| KONG
- AdminUI -->|HTTPS| KONG
- IDE -->|stdio| MCPSvc
-
- KONG --> BackendSvc
- KONG --> AISvc
-
- BackendSvc --> PG
- BackendSvc --> REDIS
- BackendSvc -->|AI proxy| AISvc
-
- TRACECAG --> KG
- TRACECAG --> VOICE
- TRACECAG --> MODELS
- KG --> KUZU
- AISvc --> REDIS
- AISvc --> MONGO
-```
+![LexiLingo System Architecture](docs/architecture_lexilingo.png)
 
 ### Why GraphCAG over RAG?
 
@@ -150,7 +99,7 @@ flowchart TB
 | Voice Pronunciation | Dual-stream WebSocket: simultaneous STT (Whisper) + TTS (Piper) + HuBERT phoneme scoring | AI Service |
 | Structured Curriculum | CEFR A1–C2 courses, units, lessons with XP rewards | Backend + Mobile |
 | Gamification | XP, level-up, leagues, weekly challenges, achievements, in-app shop | Backend + Mobile |
-| Topic Chat | AI conversations on 50+ topic catalogs (cached context bundles) | AI Service |
+| Topic Chat | AI conversations on 68 topic catalogs — 60 TraceCAG-generated scenarios (A1–C1, 16 real-world categories) | AI Service |
 | Content Feed | Books, BBC Learning English articles, podcasts, YouTube clips | Backend + Mobile |
 | Admin CMS | Full CRUD for courses, vocabulary, users + analytics and AI model config | Admin Dashboard |
 | MCP IDE Tools | i18n key manager, local model handlers for developer workflow | MCP Server |
@@ -322,9 +271,25 @@ All requests route through **Kong Gateway** (`:80`/`:443` in production). Intera
 
 The AI tutor uses a **LangGraph StateGraph** (`ai-service/api/services/trace_cag/`) with 4 nodes: **Diagnose → Retrieve → Ground → Generate**. Each response is grounded in the learner's live KuzuDB concept graph rather than static documents. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed pipeline diagram.
 
+### TRACE-CAG Architecture
+
+![TRACE-CAG Architecture](docs/trace_cag.png)
+
+TRACE-CAG runs as a **hierarchical, memory-first pipeline** with three reuse tiers:
+
+| Tier | Mechanism | When triggered |
+|------|-----------|----------------|
+| **L0 Exact Reuse** | Normalized query + level key lookup | Identical query seen before |
+| **L1 Concept-State Reuse** | Bucket lookup → PCC filter → candidate ranking | Near-hit on concept fingerprint |
+| **L2 Grounded Reconstruction** | KG expand → retrieve evidence → diagnose → generate | Cache miss or unsafe reuse |
+
+Online routing extracts 5 features per query — Intent, Level, Seed Concepts, Neighborhood, Profile State — and passes them through the **TRACE Gate / PCC Gate** for admissibility checks (intent match, concept scope, level compatibility, freshness, profile epoch) before selecting the reuse tier.
+
 Key locations:
 - Runtime graph DB: `ai-service/data/kuzu_db/`
-- Seed concepts: `ai-service/data/kg/*.json`
+- Seed concepts: `ai-service/data/kg/*.json` (incl. `06_tracecag_topic_expansion.json` — 4,040 nodes)
+- KG synthesis: `ai-service/scripts/build_kg.py --force`
+- Pipeline source: `ai-service/api/services/trace_cag/`
 - Codebase architecture graph: `.understand-anything/knowledge-graph.json`
 
 ---
