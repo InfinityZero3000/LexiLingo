@@ -13,7 +13,7 @@ importers:
         version: 2.1.2(gsap@3.15.0)(react@19.2.6)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.4.0(react-hook-form@7.76.1(react@19.2.6))
+        version: 5.4.0(react-hook-form@7.77.0(react@19.2.6))
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.14(react@19.2.6)
@@ -45,8 +45,8 @@ importers:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       react-hook-form:
-        specifier: ^7.75.0
-        version: 7.76.1(react@19.2.6)
+        specifier: ^7.77.0
+        version: 7.77.0(react@19.2.6)
       react-router-dom:
         specifier: ^7.16.0
         version: 7.16.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -2137,8 +2137,8 @@ packages:
     peerDependencies:
       react: ^19.2.6
 
-  react-hook-form@7.76.1:
-    resolution: {integrity: sha512-rYM7tPiWlu3nZchkR/ex7piyzui2vFPyaLnXnI/RnblB/L4qfMmyses8llJVtF1NpE9WBBsJlGtcSZzPCXW1qQ==}
+  react-hook-form@7.77.0:
+    resolution: {integrity: sha512-Sslh9YDYc0GDlWT/lxasnIduNo4v3yyvqRGvmGKUre5AFjDs/HV9/OafHGD8d+sB2yoL4UIL9L8X9i0WlZZebg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -2756,10 +2756,10 @@ snapshots:
       gsap: 3.15.0
       react: 19.2.6
 
-  '@hookform/resolvers@5.4.0(react-hook-form@7.76.1(react@19.2.6))':
+  '@hookform/resolvers@5.4.0(react-hook-form@7.77.0(react@19.2.6))':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.76.1(react@19.2.6)
+      react-hook-form: 7.77.0(react@19.2.6)
 
   '@isaacs/balanced-match@4.0.1': {}
 
@@ -4612,7 +4612,7 @@ snapshots:
       react: 19.2.6
       scheduler: 0.27.0
 
-  react-hook-form@7.76.1(react@19.2.6):
+  react-hook-form@7.77.0(react@19.2.6):
     dependencies:
       react: 19.2.6
 
