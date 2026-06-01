@@ -6,6 +6,7 @@ import uuid
 
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -829,3 +830,111 @@ async def verify_email(
         verified=True,
         message="Email verified successfully"
     )
+
+
+# ============================================================================
+# Admin passwordless OTP login
+# ============================================================================
+
+import random
+import time
+
+# In-memory OTP store: {email: (otp, expires_at)}
+# For production, replace with Redis or a DB table.
+_admin_otp_store: dict[str, tuple[str, float]] = {}
+_OTP_TTL_SECONDS = 300  # 5 minutes
+
+
+@router.post("/admin/request-otp")
+async def admin_request_otp(
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Send a 6-digit OTP to an admin email address.
+    Only users with role_level >= 1 (admin/super_admin) are accepted.
+    """
+    email: str = (body.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
+
+    result = await db.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one_or_none()
+
+    # Respond the same way whether the user exists or not (anti-enumeration)
+    if user and user.is_active and getattr(user, "role_level", 0) >= 1:
+        otp = str(random.randint(100000, 999999))
+        _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
+
+        try:
+            from app.services.email_service import EmailService
+            await run_in_threadpool(
+                EmailService._send_message_blocking,
+                EmailService._build_otp_message(
+                    to_email=email,
+                    otp=otp,
+                    display_name=user.display_name or user.username or email,
+                ),
+            )
+        except Exception as exc:
+            logger.warning("Failed to send admin OTP to %s: %s", email, exc)
+            # In dev, log the OTP so you can still test
+            logger.info("DEV OTP for %s: %s", email, otp)
+
+    return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
+
+
+@router.post("/admin/verify-otp")
+async def admin_verify_otp(
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Verify the 6-digit OTP and return JWT tokens for admin access.
+    """
+    email: str = (body.get("email") or "").strip().lower()
+    otp: str = (body.get("otp") or "").strip()
+
+    if not email or not otp:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and OTP are required")
+
+    stored = _admin_otp_store.get(email)
+    if not stored or stored[1] < time.time() or stored[0] != otp:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
+
+    # Consume OTP (one-time use)
+    del _admin_otp_store[email]
+
+    result = await db.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user or not user.is_active or getattr(user, "role_level", 0) < 1:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+
+    user_id = str(user.id)
+    user.last_login = datetime.now(timezone.utc)
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+
+    access_token = create_access_token({"sub": user_id})
+    refresh_token_val = create_refresh_token({"sub": user_id})
+    await _save_refresh_token(db, user.id, refresh_token_val)
+
+    user_data = _build_user_response(user)
+
+    return {
+        "success": True,
+        "message": "Login successful",
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token_val,
+            "token_type": "bearer",
+            "user": user_data.model_dump(),
+        },
+    }

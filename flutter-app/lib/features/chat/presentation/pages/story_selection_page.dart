@@ -82,7 +82,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                       ),
                     ),
                     Text(
-                      'storySelection.topicsAvailableCount'.tr(namedArgs: {'total': '$total'}),
+                      'storySelection.topicsAvailableCount'.tr(
+                        namedArgs: {'total': '$total'},
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
                             ? AppColors.textMuted
@@ -540,14 +542,35 @@ class _TopicListItem extends StatelessWidget {
       case 'work':
         return Icons.work;
       case 'daily_life':
+      case 'housing':
         return Icons.home;
       case 'food':
       case 'cafe':
         return Icons.coffee;
       case 'shopping':
         return Icons.shopping_cart;
+      case 'finance':
+        return Icons.account_balance_wallet;
       case 'health':
         return Icons.local_hospital;
+      case 'education':
+        return Icons.school;
+      case 'technology':
+        return Icons.devices;
+      case 'services':
+        return Icons.support_agent;
+      case 'culture':
+        return Icons.museum;
+      case 'leisure':
+        return Icons.sports_soccer;
+      case 'social':
+        return Icons.groups;
+      case 'emergency':
+        return Icons.emergency;
+      case 'environment':
+        return Icons.eco;
+      case 'media':
+        return Icons.mic;
       default:
         return Icons.chat_bubble;
     }

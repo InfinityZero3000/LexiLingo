@@ -317,6 +317,31 @@ class TestGetRecommendedBooks:
         levels = {b["cefr_level"] for b in response.json()["books"]}
         assert len(levels) >= 3
 
+    @pytest.mark.asyncio
+    async def test_recommended_respects_x_forwarded_proto(self, no_db_client: AsyncClient):
+        """Proxy URLs should have https scheme if X-Forwarded-Proto is https."""
+        headers = {"X-Forwarded-Proto": "https"}
+        response = await no_db_client.get(f"{BASE}/recommended", headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        for book in data["books"]:
+            if book.get("cover_url"):
+                assert book["cover_url"].startswith("https://")
+            if book.get("download_url"):
+                assert book["download_url"].startswith("https://")
+
+    @pytest.mark.asyncio
+    async def test_recommended_defaults_to_http_without_header(self, no_db_client: AsyncClient):
+        """Proxy URLs should have http scheme if X-Forwarded-Proto is not present (since base_url is http://test)."""
+        response = await no_db_client.get(f"{BASE}/recommended")
+        assert response.status_code == 200
+        data = response.json()
+        for book in data["books"]:
+            if book.get("cover_url"):
+                assert book["cover_url"].startswith("http://")
+            if book.get("download_url"):
+                assert book["download_url"].startswith("http://")
+
 
 # ============================================================================
 # Route Tests — GET /books/search
@@ -669,3 +694,86 @@ class TestFetchBooks:
 
         # French book should be filtered out
         assert len(result["books"]) == 0
+
+
+# ============================================================================
+# Route Tests — CORS Proxy Endpoints
+# ============================================================================
+
+class TestProxyEndpoints:
+    """Tests for GET /books/proxy/image and GET /books/proxy/text endpoints."""
+
+    def test_proxy_book_urls_rewrites_gutenberg_links(self):
+        from app.routes.books import _proxy_book_urls
+        from fastapi import Request
+
+        # Create a mock FastAPI Request
+        mock_request = MagicMock(spec=Request)
+        mock_request.base_url = "http://testserver/"
+
+        book = {
+            "title": "Grimms' Fairy Tales",
+            "cover_url": "https://www.gutenberg.org/cache/epub/2591/pg2591.cover.medium.jpg",
+            "download_url": "https://www.gutenberg.org/cache/epub/2591/pg2591.txt",
+        }
+
+        with patch("app.routes.books.settings") as mock_settings:
+            mock_settings.API_V1_PREFIX = "/api/v1"
+            proxied = _proxy_book_urls(book, mock_request)
+
+        assert "http://testserver/api/v1/books/proxy/image" in proxied["cover_url"]
+        assert "url=https%3A//www.gutenberg.org" in proxied["cover_url"]
+        assert "http://testserver/api/v1/books/proxy/text" in proxied["download_url"]
+        assert "url=https%3A//www.gutenberg.org" in proxied["download_url"]
+
+    @pytest.mark.asyncio
+    async def test_proxy_image_success(self, no_db_client: AsyncClient):
+        target_url = "https://www.gutenberg.org/cache/epub/2591/pg2591.cover.medium.jpg"
+        
+        # Mock httpx.AsyncClient inside the route
+        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+            
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.content = b"fakeimagebinary"
+            mock_resp.headers = {"content-type": "image/jpeg"}
+            mock_client.get = AsyncMock(return_value=mock_resp)
+
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+
+        assert response.status_code == 200
+        assert response.content == b"fakeimagebinary"
+        assert response.headers["content-type"] == "image/jpeg"
+        assert "max-age=86400" in response.headers["cache-control"]
+
+    @pytest.mark.asyncio
+    async def test_proxy_image_blocked_domain(self, no_db_client: AsyncClient):
+        # A domain not in ALLOWED_PROXY_DOMAINS
+        target_url = "https://malicious.com/virus.png"
+        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_proxy_text_success(self, no_db_client: AsyncClient):
+        target_url = "https://www.gutenberg.org/cache/epub/2591/pg2591.txt"
+        
+        # Mock httpx.AsyncClient inside the route
+        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+            
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.content = b"Chapter 1: Once upon a time..."
+            mock_resp.headers = {"content-type": "text/plain; charset=utf-8"}
+            mock_client.get = AsyncMock(return_value=mock_resp)
+
+            response = await no_db_client.get(f"{BASE}/proxy/text?url={target_url}")
+
+        assert response.status_code == 200
+        assert response.content == b"Chapter 1: Once upon a time..."
+        assert response.headers["content-type"] == "text/plain; charset=utf-8"
+        assert "max-age=86400" in response.headers["cache-control"]
+

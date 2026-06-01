@@ -34,6 +34,7 @@ from app.schemas.gamification import (
     LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse
 )
 from app.schemas.response import ApiResponse
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank
 
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
@@ -285,7 +286,7 @@ async def get_wallet_history(
 @router.get("/leaderboard", response_model=ApiResponse[LeaderboardResponse])
 async def get_leaderboard(
     response: Response,
-    league: str = Query("bronze", description="League: bronze, silver, gold, platinum, diamond"),
+    league: str = Query("bronze", description="Rank: bronze, silver, gold, platinum, sapphire, ruby, amethyst, master"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -294,9 +295,22 @@ async def get_leaderboard(
     
     Returns top players in the league with XP earned this week.
     """
-    cache_key = build_cache_key("leaderboard", league=league, user_id=str(current_user.id))
+    normalized_league = league.lower().strip()
+    await LeaderboardCRUD.sync_current_week_entries_to_user_rank(db)
+
+    cache_key = build_cache_key("leaderboard", league=normalized_league, user_id=str(current_user.id))
     cached = await get_cached(cache_key)
-    if cached:
+    cached_entries = cached.get("entries", []) if isinstance(cached, dict) else []
+    cached_matches_rank = (
+        isinstance(cached, dict)
+        and str(cached.get("league", "")).lower() == normalized_league
+        and all(
+            str(entry.get("user_rank", "")).lower() == normalized_league
+            for entry in cached_entries
+            if isinstance(entry, dict)
+        )
+    )
+    if cached and cached_matches_rank:
         response.headers["X-Cache-Version"] = compute_cache_version(cached)
         response.headers["X-Cache-Source"] = "redis"
         return ApiResponse(
@@ -310,12 +324,15 @@ async def get_leaderboard(
     
     leaderboard_entries = []
     current_user_rank = None
-    total_participants = len(entries)
+    total_participants = await LeaderboardCRUD.count_rank_participants(
+        db,
+        normalized_league,
+    )
 
     if not entries:
         fallback_users, fallback_total = await LeaderboardCRUD.get_leaderboard_from_users(
             db,
-            league,
+            normalized_league,
         )
         total_participants = fallback_total
         for rank, user in enumerate(fallback_users, 1):
@@ -329,15 +346,19 @@ async def get_leaderboard(
                 username=user.username,
                 display_name=user.display_name,
                 avatar_url=user.avatar_url,
+                user_rank=user.rank,
                 xp_earned=user.total_xp,
                 lessons_completed=0,
                 is_current_user=is_current,
             ))
     
     for rank, (entry, user) in enumerate(entries, 1):
-        is_current = entry.user_id == current_user.id
+        is_current = user.id == current_user.id
         if is_current:
             current_user_rank = rank
+
+        xp = entry.xp_earned if entry is not None else 0
+        lessons = entry.lessons_completed if entry is not None else 0
 
         leaderboard_entries.append(LeaderboardUserEntry(
             rank=rank,
@@ -345,10 +366,30 @@ async def get_leaderboard(
             username=user.username,
             display_name=user.display_name,
             avatar_url=user.avatar_url if hasattr(user, 'avatar_url') else None,
-            xp_earned=entry.xp_earned,
-            lessons_completed=entry.lessons_completed,
+            user_rank=user.rank,
+            xp_earned=xp,
+            lessons_completed=lessons,
             is_current_user=is_current
         ))
+
+    if normalized_league == (current_user.rank or "bronze").lower():
+        current_user_rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
+        if not any(entry.user_id == current_user.id for entry in leaderboard_entries):
+            current_entry = await LeaderboardCRUD.get_or_create_entry(
+                db,
+                current_user.id,
+            )
+            leaderboard_entries.append(LeaderboardUserEntry(
+                rank=current_user_rank or len(leaderboard_entries) + 1,
+                user_id=current_user.id,
+                username=current_user.username,
+                display_name=current_user.display_name,
+                avatar_url=current_user.avatar_url,
+                user_rank=current_user.rank,
+                xp_earned=current_entry.xp_earned,
+                lessons_completed=current_entry.lessons_completed,
+                is_current_user=True,
+            ))
 
     if not current_user_rank and total_participants > 0:
         current_user_rank = next(
@@ -357,7 +398,7 @@ async def get_leaderboard(
         )
     
     leaderboard_data = LeaderboardResponse(
-        league=league,
+        league=normalized_league,
         week_start=week_start,
         week_end=week_end,
         entries=leaderboard_entries,
@@ -385,6 +426,13 @@ async def get_my_league_status(
     
     Returns league, rank, and promotion/demotion zone status.
     """
+    rank_info = calculate_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level or "A1",
+    )
+    apply_rank_info_to_user(current_user, rank_info)
+    await db.commit()
+
     entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
     rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
     _, week_end = LeaderboardCRUD.get_current_week_range()
@@ -395,13 +443,21 @@ async def get_my_league_status(
         success=True,
         message="League status retrieved successfully",
         data=UserLeagueStatusResponse(
-            league=entry.league,
+            league=current_user.rank,
+            rank_name=rank_info.name,
+            rank_score=rank_info.score,
+            rank_level_score=rank_info.level_score,
+            rank_proficiency_score=rank_info.proficiency_score,
+            total_xp=current_user.total_xp or 0,
+            numeric_level=current_user.numeric_level or 1,
+            proficiency_level=current_user.level or "A1",
             current_rank=rank,
             xp_earned=entry.xp_earned,
             lessons_completed=entry.lessons_completed,
             is_in_promotion_zone=rank <= 3 if rank else False,
             is_in_demotion_zone=False,  # TODO: Implement based on league size
-            week_ends_in_hours=max(0, hours_remaining)
+            week_ends_in_hours=max(0, hours_remaining),
+            rank_icon_url=rank_info.icon_url
         )
     )
 

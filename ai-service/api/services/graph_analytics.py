@@ -6,7 +6,7 @@ Implements:
 2. Community Detection - Group related concepts together
 3. Smart Pruning - Output only necessary information
 
-Based on GraphCAG principles for memory optimization.
+Based on TraceCAG principles for memory optimization.
 """
 
 from __future__ import annotations

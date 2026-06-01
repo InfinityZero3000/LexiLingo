@@ -92,7 +92,7 @@ class RedisClient:
         """Drop existing client/pool so next attempt builds clean connections."""
         if cls._instance:
             try:
-                await cls._instance.close()
+                await cls._instance.aclose()
             except Exception:
                 pass
             cls._instance = None

@@ -16,6 +16,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
@@ -59,6 +60,8 @@ from app.routes.xp import router as xp_router
 from app.routes.books import router as books_router
 from app.routes.ai_audit import router as ai_audit_router
 from app.routes.monitoring import router as monitoring_router
+from app.routes.notifications import router as notifications_router
+from app.routes.reminders import router as reminders_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -200,8 +203,16 @@ if settings.enable_app_cors:
         allow_origins=settings.cors_origins,
         allow_origin_regex=_cors_origin_regex,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Api-Key",
+            "X-Admin-Key",
+            "X-Request-Id",
+            "X-Idempotency-Key",
+            "X-AI-Service-Secret",
+        ],
         allow_private_network=True,
     )
     logger.info("App-level CORS middleware enabled")
@@ -215,6 +226,15 @@ app.add_middleware(PrivateNetworkAccessMiddleware)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
+
+
+@app.middleware("http")
+async def forward_proto_middleware(request: Request, call_next):
+    """Respect x-forwarded-proto header to set request scheme for reverse proxies."""
+    x_forwarded_proto = request.headers.get("x-forwarded-proto")
+    if x_forwarded_proto:
+        request.scope["scheme"] = x_forwarded_proto
+    return await call_next(request)
 
 
 # ===== Request Body Size Limit (Phase 4) =====
@@ -246,6 +266,8 @@ app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
 app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])
 app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
+app.include_router(reminders_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Reminder Preferences"])
+app.include_router(notifications_router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
 
 # Content Features
 app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])
@@ -260,6 +282,12 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
+
+# Serve uploaded/imported media files
+import os
+_media_dir = "/app/data/media"
+if os.path.isdir(_media_dir):
+    app.mount("/media", StaticFiles(directory=_media_dir), name="media")
 
 
 @app.api_route("/", methods=["GET", "HEAD"])

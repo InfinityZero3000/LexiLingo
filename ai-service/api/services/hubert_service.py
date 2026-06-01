@@ -62,15 +62,18 @@ class PronunciationResult:
         phoneme_scores: Dict[str, float],
         errors: List[PronunciationError],
         duration_ms: float,
+        transcription: Optional[str] = None,
     ):
         self.overall_score = overall_score
         self.phoneme_scores = phoneme_scores
         self.errors = errors
         self.duration_ms = duration_ms
+        self.transcription = transcription
     
     def to_dict(self) -> Dict[str, Any]:
         return {
             "overall_score": self.overall_score,
+            "transcription": self.transcription,
             "phoneme_scores": self.phoneme_scores,
             "errors": [e.to_dict() for e in self.errors],
             "duration_ms": self.duration_ms,
@@ -223,6 +226,7 @@ class HuBERTService:
                 phoneme_scores=phoneme_scores,
                 errors=errors,
                 duration_ms=duration_ms,
+                transcription=transcription,
             )
             
         except Exception as e:

@@ -80,7 +80,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       progress: 0.25,
     );
 
-    final success = await provider.startTopicSession(
+    final success = await provider.restoreOrStartTopicSession(
       userId: userId,
       storyId: widget.story.storyId,
     );
@@ -95,7 +95,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.sessionError ?? 'topicChat.failedStartSession'.tr()),
+          content: Text(
+            provider.sessionError ?? 'topicChat.failedStartSession'.tr(),
+          ),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -172,7 +174,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   String _currentUserId(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    return auth.user?.id ?? 'demo_user_001';
+    return auth.user?.id ?? '';
   }
 
   Future<void> _sendMessage([String? text]) async {
@@ -669,9 +671,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('topicChat.endSessionTitle'.tr()),
-        content: Text(
-          'topicChat.endSessionConfirmation'.tr(),
-        ),
+        content: Text('topicChat.endSessionConfirmation'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -775,7 +775,11 @@ class _StoryContextHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.bolt, size: 12, color: AppColors.greenSuccessBright),
+                const Icon(
+                  Icons.bolt,
+                  size: 12,
+                  color: AppColors.greenSuccessBright,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'topicChat.contextReadyBadgeLabel'.tr(),
@@ -892,17 +896,6 @@ class _TopicMessageBubble extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 36),
               child: EducationalHintsCard(hints: message.hints!),
-            ),
-          if (!isUser && message.llmMetadata != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 36),
-              child: Text(
-                'AI optimized with ${message.llmMetadata!.provider}',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: AppColorRoles.textMuted(isDark),
-                ),
-              ),
             ),
         ],
       ),

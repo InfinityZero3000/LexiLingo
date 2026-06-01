@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
@@ -26,6 +27,7 @@ import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -82,6 +84,26 @@ class _ProfilePageState extends State<ProfilePage>
 
     // Load proficiency data (AI-evaluated skill assessment)
     await proficiencyProvider.loadProfile();
+  }
+
+  static const _adminUsernames = {'nhthang312'};
+  static const _adminEmails = {'thefirestar312@gmail.com'};
+
+  bool _isAdminUser(UserEntity? user) {
+    if (user == null) return false;
+    return _adminUsernames.contains(user.username.toLowerCase()) ||
+        _adminEmails.contains(user.email.toLowerCase());
+  }
+
+  Future<void> _openAdminPanel() async {
+    final uri = Uri.parse('https://admin.lexilingo.me');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open admin panel')),
+        );
+      }
+    }
   }
 
   String _formatMemberSince(BuildContext context, DateTime? createdAt) {
@@ -201,6 +223,13 @@ class _ProfilePageState extends State<ProfilePage>
               );
             },
           ),
+          if (_isAdminUser(user))
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings_rounded),
+              color: Colors.deepOrange,
+              tooltip: 'Admin Panel',
+              onPressed: _openAdminPanel,
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -230,6 +259,9 @@ class _ProfilePageState extends State<ProfilePage>
 
               // Recent Badges
               _buildRecentBadges(context),
+
+              // Admin Panel shortcut (only for authorised accounts)
+              if (_isAdminUser(user)) _buildAdminPanelTile(context),
 
               const SizedBox(height: 80),
             ],
@@ -522,122 +554,225 @@ class _ProfilePageState extends State<ProfilePage>
                             ),
                           ),
                         const SizedBox(height: 12),
-                        // Level Badge + CEFR Proficiency Badge
+                        // Level Badge + CEFR Proficiency Badge + Rank Badge
                         Consumer<LevelProvider>(
-                          builder: (_, lp, __) => Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            children: [
-                              // Numeric Level badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: AppColorRoles.primaryGradient(
-                                      isDark,
-                                    ),
+                          builder: (_, lp, __) {
+                            final rankData = rankVisualDataFor(lp.rank);
+                            final isMasterRank = lp.rank == 'master';
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                // Numeric Level badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          (isDark ? accent : AppColors.primary)
-                                              .withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.workspace_premium_rounded,
-                                      color: AppColors.surfaceLight,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'profile.level'.tr(
-                                        namedArgs: {
-                                          'level': '${lp.displayLevel}',
-                                        },
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: AppColorRoles.primaryGradient(
+                                        isDark,
                                       ),
-                                      style: TextStyle(
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (isDark
+                                                ? accent
+                                                : AppColors.primary)
+                                            .withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.workspace_premium_rounded,
                                         color: AppColors.surfaceLight,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                        size: 16,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'profile.level'.tr(
+                                          namedArgs: {
+                                            'level': '${lp.displayLevel}',
+                                          },
+                                        ),
+                                        style: TextStyle(
+                                          color: AppColors.surfaceLight,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              // CEFR Proficiency Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getTierColor(
-                                    lp.proficiencyLevel,
-                                  ).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
+                                // CEFR Proficiency Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: _getTierColor(
                                       lp.proficiencyLevel,
-                                    ).withValues(alpha: 0.5),
+                                    ).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: _getTierColor(
+                                        lp.proficiencyLevel,
+                                      ).withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _getTierIcon(lp.proficiencyLevel),
+                                        size: 14,
+                                        color: _getTierColor(
+                                          lp.proficiencyLevel,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        lp.proficiencyLevel,
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '·',
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ).withValues(alpha: 0.6),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        lp.proficiencyName,
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _getTierIcon(lp.proficiencyLevel),
-                                      size: 14,
-                                      color: _getTierColor(lp.proficiencyLevel),
+                                // League Rank Badge
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const LeaderboardScreen(),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      lp.proficiencyLevel,
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
+                                  ),
+                                  child: isMasterRank
+                                      ? ShaderMask(
+                                          shaderCallback: (bounds) =>
+                                              const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF5AB6FF),
+                                                  Color(0xFFFFD64F),
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ).createShader(bounds),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.4,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                RankAssetIcon(
+                                                  rank: lp.rank,
+                                                  size: 16,
+                                                  decorated: false,
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  lp.rankName,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: rankData.color.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: rankData.color.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              RankAssetIcon(
+                                                rank: lp.rank,
+                                                size: 16,
+                                                decorated: false,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                lp.rankName,
+                                                style: TextStyle(
+                                                  color: rankData.color,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '·',
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
-                                        ).withValues(alpha: 0.6),
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      lp.proficiencyName,
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
-                                        ),
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
                         // Member Since
@@ -818,7 +953,9 @@ class _ProfilePageState extends State<ProfilePage>
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: AppColorRoles.primary(isDark).withValues(alpha: 0.18),
+                  backgroundColor: AppColorRoles.primary(
+                    isDark,
+                  ).withValues(alpha: 0.18),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppColorRoles.primary(isDark),
                   ),
@@ -1058,7 +1195,6 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildLoadingStats(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1081,12 +1217,8 @@ class _ProfilePageState extends State<ProfilePage>
           childAspectRatio: 1.15,
           children: List.generate(
             4,
-            (index) => Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(child: LottieLoadingWidget.medium()),
+            (index) => ShimmerContainer(
+              child: SkeletonBox(height: double.infinity, borderRadius: 12),
             ),
           ),
         ),
@@ -1138,7 +1270,9 @@ class _ProfilePageState extends State<ProfilePage>
                         Text(
                           'profile.last7Days'.tr(),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -1148,7 +1282,9 @@ class _ProfilePageState extends State<ProfilePage>
                           Icon(
                             Icons.chevron_right,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ],
@@ -1159,10 +1295,79 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             GlassmorphicContainer(
               child: isLoading && activities.isEmpty
-                  ? const Center(
+                  ? SizedBox(
+                      width: double.infinity,
                       child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: LottieLoadingWidget.medium(),
+                        padding: const EdgeInsets.all(24.0),
+                        child: ShimmerContainer(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                height: 120,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: List.generate(
+                                    7,
+                                    (index) => Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        child: SkeletonBox(
+                                          height: 20.0 + (index % 3) * 30.0,
+                                          borderRadius: 4,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: List.generate(
+                                  7,
+                                  (index) => const Expanded(
+                                    child: Center(
+                                      child: SkeletonBox(
+                                        width: 20,
+                                        height: 12,
+                                        borderRadius: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: List.generate(
+                                  3,
+                                  (index) => const Column(
+                                    children: [
+                                      SkeletonCircle(size: 20),
+                                      SizedBox(height: 4),
+                                      SkeletonBox(
+                                        width: 40,
+                                        height: 16,
+                                        borderRadius: 4,
+                                      ),
+                                      SizedBox(height: 4),
+                                      SkeletonBox(
+                                        width: 60,
+                                        height: 12,
+                                        borderRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     )
                   : activities.isEmpty
@@ -1333,7 +1538,17 @@ class _ProfilePageState extends State<ProfilePage>
             SizedBox(
               height: 100,
               child: isLoading
-                  ? const Center(child: LottieLoadingWidget.medium())
+                  ? ShimmerContainer(
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: 4,
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemBuilder: (context, index) {
+                          return const SkeletonCircle(size: 80);
+                        },
+                      ),
+                    )
                   : visibleBadges.isEmpty
                   ? _buildEmptyBadges()
                   : ListView.separated(
@@ -1520,6 +1735,85 @@ class _ProfilePageState extends State<ProfilePage>
 
     return const SizedBox.shrink();
   }
+
+  Widget _buildAdminPanelTile(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _openAdminPanel,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF6B35), Color(0xFFFF3B00)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepOrange.withValues(alpha: isDark ? 0.4 : 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.admin_panel_settings_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Switch to Admin Panel',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'admin.lexilingo.me',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _WeeklyActivityDetailSheet extends StatelessWidget {
@@ -1533,9 +1827,17 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
     final primary = AppColorRoles.primary(isDark);
 
     final totalXP = activities.fold<int>(0, (s, a) => s + a.xpEarned);
-    final totalLessons = activities.fold<int>(0, (s, a) => s + a.lessonsCompleted);
-    final totalWords = activities.fold<int>(0, (s, a) => s + a.vocabularyLearned);
-    final maxXP = activities.map((a) => a.xpEarned).reduce((a, b) => a > b ? a : b);
+    final totalLessons = activities.fold<int>(
+      0,
+      (s, a) => s + a.lessonsCompleted,
+    );
+    final totalWords = activities.fold<int>(
+      0,
+      (s, a) => s + a.vocabularyLearned,
+    );
+    final maxXP = activities
+        .map((a) => a.xpEarned)
+        .reduce((a, b) => a > b ? a : b);
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
@@ -1586,7 +1888,9 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                           'profile.last7DaysDetailedBreakdown'.tr(),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1609,13 +1913,18 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
               ),
               // Summary row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     _SummaryChip(
                       icon: Icons.star,
                       color: AppColors.warning,
-                      label: 'profile.xpValue'.tr(namedArgs: {'xp': '$totalXP'}),
+                      label: 'profile.xpValue'.tr(
+                        namedArgs: {'xp': '$totalXP'},
+                      ),
                       sublabel: 'profile.total'.tr(),
                     ),
                     const SizedBox(width: 8),
@@ -1665,8 +1974,8 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                         color: isBest
                             ? primary.withValues(alpha: isDark ? 0.15 : 0.08)
                             : (isDark
-                                ? Colors.white.withValues(alpha: 0.04)
-                                : Colors.black.withValues(alpha: 0.03)),
+                                  ? Colors.white.withValues(alpha: 0.04)
+                                  : Colors.black.withValues(alpha: 0.03)),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isBest
@@ -1690,15 +1999,15 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                         fontSize: 14,
                                       ),
                                     ),
-                                    if (shortDate.isNotEmpty) ...[  
+                                    if (shortDate.isNotEmpty) ...[
                                       const SizedBox(width: 6),
                                       Text(
                                         shortDate,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -1712,10 +2021,14 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.warning.withValues(alpha: 0.15),
+                                    color: AppColors.warning.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: AppColors.warning.withValues(alpha: 0.5),
+                                      color: AppColors.warning.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -1742,7 +2055,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           // XP bar
-                          if (a.xpEarned > 0) ...[  
+                          if (a.xpEarned > 0) ...[
                             Row(
                               children: [
                                 Expanded(
@@ -1750,10 +2063,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(4),
                                     child: LinearProgressIndicator(
                                       value: barFraction,
-                                      backgroundColor:
-                                          primary.withValues(alpha: 0.12),
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(primary),
+                                      backgroundColor: primary.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        primary,
+                                      ),
                                       minHeight: 6,
                                     ),
                                   ),
@@ -1781,12 +2096,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                   'profile.noActivity'.tr(),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 )
-                              else ...[  
+                              else ...[
                                 _MiniStat(
                                   icon: Icons.menu_book,
                                   color: primary,

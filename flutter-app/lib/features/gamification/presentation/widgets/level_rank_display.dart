@@ -90,7 +90,9 @@ class LevelRankDisplay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'gamification.levelShort'.tr(namedArgs: {'level': '$numericLevel'}),
+                    'gamification.levelShort'.tr(
+                      namedArgs: {'level': '$numericLevel'},
+                    ),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.bold,
@@ -161,7 +163,9 @@ class LevelRankDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'gamification.totalXp'.tr(namedArgs: {'xp': '${_formatNumber(totalXp)}'}),
+                  'gamification.totalXp'.tr(
+                    namedArgs: {'xp': _formatNumber(totalXp)},
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.5),

@@ -193,8 +193,8 @@ export const MonitoringPage = () => {
       setHistory((prev) => {
         const point: TimePoint = {
           time: label,
-          cpu: sysVal?.cpu_percent ?? aiVal?.system?.cpu_percent ?? 0,
-          memory: sysVal?.memory?.percent ?? aiVal?.system?.memory_percent ?? 0,
+          cpu: sysVal?.cpu_percent ?? aiVal?.system?.cpu?.percent ?? aiVal?.system?.cpu_percent ?? 0,
+          memory: sysVal?.memory?.percent ?? aiVal?.system?.memory?.percent ?? aiVal?.system?.memory_percent ?? 0,
           connections: rqVal?.active_connections ?? 0,
         };
         const next = [...prev, point];
@@ -218,9 +218,9 @@ export const MonitoringPage = () => {
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
-  const cpu = system?.cpu_percent ?? aiDash?.system?.cpu_percent;
-  const mem = system?.memory?.percent ?? aiDash?.system?.memory_percent;
-  const disk = system?.disk?.percent ?? aiDash?.system?.disk_percent;
+  const cpu = system?.cpu_percent ?? aiDash?.system?.cpu?.percent ?? aiDash?.system?.cpu_percent;
+  const mem = system?.memory?.percent ?? aiDash?.system?.memory?.percent ?? aiDash?.system?.memory_percent;
+  const disk = system?.disk?.percent ?? aiDash?.system?.disk?.percent ?? aiDash?.system?.disk_percent;
   const load1 = system?.load_avg?.["1m"] ?? (aiDash?.system?.load_avg?.[0]);
   const load5 = system?.load_avg?.["5m"] ?? (aiDash?.system?.load_avg?.[1]);
   const load15 = system?.load_avg?.["15m"] ?? (aiDash?.system?.load_avg?.[2]);
@@ -323,7 +323,7 @@ export const MonitoringPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis dataKey="time" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
               <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+              <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
               <Legend />
               <Area
                 type="monotone"
@@ -364,7 +364,7 @@ export const MonitoringPage = () => {
             >
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
               <RadialBar dataKey="value" background angleAxisId={0} label={{ position: "insideStart", fill: "#fff", fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+              <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
               <Legend iconSize={10} />
             </RadialBarChart>
           </ResponsiveContainer>
@@ -519,11 +519,11 @@ export const MonitoringPage = () => {
           <div className="card-grid">
             <StatCard
               label="AI CPU"
-              value={aiDash.system?.cpu_percent !== undefined ? `${fmt(aiDash.system.cpu_percent)}%` : "--"}
+              value={(aiDash.system?.cpu?.percent ?? aiDash.system?.cpu_percent) !== undefined ? `${fmt(aiDash.system?.cpu?.percent ?? aiDash.system?.cpu_percent)}%` : "--"}
             />
             <StatCard
               label="AI Memory"
-              value={aiDash.system?.memory_percent !== undefined ? `${fmt(aiDash.system.memory_percent)}%` : "--"}
+              value={(aiDash.system?.memory?.percent ?? aiDash.system?.memory_percent) !== undefined ? `${fmt(aiDash.system?.memory?.percent ?? aiDash.system?.memory_percent)}%` : "--"}
               accent="teal"
             />
             <StatCard

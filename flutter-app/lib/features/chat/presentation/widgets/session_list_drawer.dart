@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_session.dart';
-import 'package:intl/intl.dart';
 
 /// Widget for displaying list of chat sessions
 class SessionListDrawer extends StatefulWidget {

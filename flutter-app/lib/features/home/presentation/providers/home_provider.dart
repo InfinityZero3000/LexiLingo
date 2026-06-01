@@ -180,7 +180,8 @@ class HomeProvider with ChangeNotifier {
     final now = DateTime.now();
     final currentGoal = _todayGoal;
 
-    _todayGoal = currentGoal?.copyWith(targetXP: targetXP) ??
+    _todayGoal =
+        currentGoal?.copyWith(targetXP: targetXP) ??
         DailyGoal(
           id: 1,
           userId: _currentUser?.id ?? 'guest',

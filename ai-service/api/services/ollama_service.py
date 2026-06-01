@@ -29,7 +29,7 @@ class OllamaService:
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        model: str = "qwen2.5:8b",
+        model: str = "lexilingo-qwen3-1.7b",
         timeout: float = 120.0,
     ):
         """
@@ -322,6 +322,6 @@ def get_ollama_service() -> OllamaService:
         from api.core.config import settings
         _ollama_service = OllamaService(
             base_url=getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434'),
-            model=getattr(settings, 'OLLAMA_MODEL', 'qwen2.5:8b'),
+            model=getattr(settings, 'OLLAMA_MODEL', 'lexilingo-qwen3-1.7b'),
         )
     return _ollama_service

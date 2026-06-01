@@ -39,7 +39,11 @@ from app.services.level_service import (
     LevelService, calculate_numeric_level, get_numeric_level_progress,
     check_numeric_level_up
 )
-from app.services.rank_service import calculate_rank as calc_rank, check_rank_up
+from app.services.rank_service import (
+    apply_rank_info_to_user,
+    calculate_rank as calc_rank,
+    check_rank_up,
+)
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 logger = logging.getLogger(__name__)
@@ -264,7 +268,7 @@ async def complete_lesson(
             if current_user.rank != new_rank_info.rank.value:
                 rank_up = True
                 new_rank = new_rank_info.rank.value
-                current_user.rank = new_rank_info.rank.value
+            apply_rank_info_to_user(current_user, new_rank_info)
             
             # --- Update DailyActivity ---
             from datetime import date as date_type

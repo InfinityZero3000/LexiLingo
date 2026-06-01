@@ -206,9 +206,14 @@ def main():
     args = parser.parse_args()
     
     data_dir = Path(__file__).parent.parent / "data"
+    topic_graphs_path = (
+        data_dir / "topic_graphs.enriched.json"
+        if (data_dir / "topic_graphs.enriched.json").exists()
+        else data_dir / "topic_graphs.json"
+    )
     default_files = [
         data_dir / "knowledge_extended.json",
-        data_dir / "topic_graphs.json"
+        topic_graphs_path,
     ]
     
     # If explicit path provided, use only that

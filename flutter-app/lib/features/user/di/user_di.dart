@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_da
 import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source_web.dart';
+import 'package:lexilingo_app/features/user/data/datasources/settings_remote_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/streak_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/user_backend_data_source.dart';
@@ -82,6 +83,9 @@ void registerUserModule({required bool skipDatabase}) {
   sl.registerLazySingleton<UserBackendDataSource>(
     () => UserBackendDataSourceImpl(apiClient: sl<ApiClient>()),
   );
+  sl.registerLazySingleton<SettingsRemoteDataSource>(
+    () => SettingsRemoteDataSource(apiClient: sl<ApiClient>()),
+  );
 
   sl.registerLazySingleton<UserRepository>(
     () => UserRepositoryImpl(
@@ -93,7 +97,10 @@ void registerUserModule({required bool skipDatabase}) {
     ),
   );
   sl.registerLazySingleton<SettingsRepository>(
-    () => SettingsRepositoryImpl(localDataSource: sl()),
+    () => SettingsRepositoryImpl(
+      localDataSource: sl(),
+      remoteDataSource: sl<SettingsRemoteDataSource>(),
+    ),
   );
   sl.registerLazySingleton<DailyGoalRepository>(
     () => DailyGoalRepositoryImpl(localDataSource: sl()),

@@ -41,7 +41,7 @@
 |-----------|------------|------|---------|
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
-| NLP (English) | Qwen2.5-1.5B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
+| NLP (English) | Qwen3-1.7B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
 | NLP (Vietnamese) | LLaMA3-8B-VI (lazy) | 8GB | 200ms |
 | Knowledge Graph | NetworkX / KuzuDB | <50MB | <5ms |
 | Pronunciation | HuBERT-large | 960MB | 100-200ms |
@@ -270,7 +270,7 @@
    │                                             │
    ▼                                             ▼
 ┌─────────────────────────────┐    ┌─────────────────────────────┐
-│   PRIMARY: Qwen2.5-1.5B     │    │   PARALLEL: HuBERT-large    │
+│   PRIMARY: Qwen3-1.7B     │    │   PARALLEL: HuBERT-large    │
 │   + Unified LoRA Adapter    │    │   Pronunciation Analysis    │
 ├─────────────────────────────┤    ├─────────────────────────────┤
 │                             │    │                             │
@@ -440,13 +440,13 @@
 
 ---
 
-### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + GraphCAG Cache)
+### 2.2 Knowledge-Centric Pipeline v3 (LLM + KG + TraceCAG Cache)
 
 Mục tiêu của V3 là biến “Knowledge Graph” từ *ô trong sơ đồ* thành “hệ tri thức vận hành được”, đồng thời giữ phản hồi nhanh bằng cách tách **Fast Path / Slow Path / Background Path**.
 
 Quy ước trong tài liệu này:
-- **GraphCAG** = pipeline hội thoại có **cache gate** (RAPID L0/L1) + KG retrieval + grounded generation.
-- **CAG (Content Auto-Generation)** = dịch vụ sinh bài luyện/lộ trình học chạy nền, tách riêng khỏi pipeline hội thoại GraphCAG.
+- **TraceCAG** = pipeline hội thoại có **cache gate** (RAPID L0/L1) + KG retrieval + grounded generation.
+- **CAG (Content Auto-Generation)** = dịch vụ sinh bài luyện/lộ trình học chạy nền, tách riêng khỏi pipeline hội thoại TraceCAG.
 
 #### 2.2.1 Ba đường chạy (Fast/Slow/Background)
 
@@ -514,7 +514,7 @@ Quy ước trong tài liệu này:
                                  └──────────────────────┘
 ```
 
-#### 2.2.3 Hợp đồng dữ liệu (JSON) để GraphCAG chạy ổn định (trước đây là Orchestrator)
+#### 2.2.3 Hợp đồng dữ liệu (JSON) để TraceCAG chạy ổn định (trước đây là Orchestrator)
 
 **A) `DiagnosisV3` (đầu ra của bước Diagnose)**
 
@@ -594,7 +594,7 @@ Quy ước trong tài liệu này:
 - **Hybrid Retrieval bắt buộc**: Vector để bắt ngôn ngữ tự nhiên + KG để suy ra prerequisite/root-cause (1–2 hops) và tạo “đường giải thích”.
 - **Diagnose tách riêng**: bước rẻ, ổn định, trả JSON (intent/skill/root-cause/confidence) để quyết định hỏi làm rõ hay đi thẳng.
 - **Grounded Generation**: LLM phải nhận `RetrievalBundleV3` và bị ràng buộc trả lời dựa trên evidence + trả `linked_concepts`.
-- **GraphCAG ưu tiên phản hồi nhanh**: cache gate chạy trước để quyết định reuse/patch/full retrieval.
+- **TraceCAG ưu tiên phản hồi nhanh**: cache gate chạy trước để quyết định reuse/patch/full retrieval.
 - **Content Auto-Generation không chặn phản hồi**: dịch vụ sinh lesson chạy nền dựa trên `target_concepts` và `error_patterns`.
 
 #### 2.2.5 Mapping theo các Phase truyền thống
@@ -662,7 +662,7 @@ into a LangGraph StateGraph-based architecture. Below is the mapping:
 | Phase 4: Result Aggr    | `_format_response()` in `graph.py` |
 | Phase 5: State Update   | Background job (async, non-blocking) |
 
-Each node is an async function that reads/writes to `GraphCAGState`.
+Each node is an async function that reads/writes to `TraceCAGState`.
 
 ### 3.3 Pipeline Benefits & Metrics
 
@@ -671,7 +671,7 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 │              WHY ORCHESTRATOR IS ESSENTIAL                       │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Problem Without GraphCAG:                                   │
+│  Problem Without TraceCAG:                                   │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  [!] Tight coupling between components                       │  │
 │  │  [!] No centralized error handling                           │  │
@@ -682,7 +682,7 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 │  │  [!] Hard to test individual components                      │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
-│  Solutions With GraphCAG:                                    │
+│  Solutions With TraceCAG:                                    │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  [*] Single responsibility principle                         │  │
 │  │  [*] Centralized error handling & fallback                   │  │
@@ -802,12 +802,12 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│              UNIFIED LoRA ADAPTER (Qwen2.5-1.5B)                 │
+│              UNIFIED LoRA ADAPTER (Qwen3-1.7B)                 │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Configuration:                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Base Model: Qwen/Qwen2.5-1.5B-Instruct                    │  │
+│  │  Base Model: Qwen/Qwen3-1.7B                    │  │
 │  │  LoRA Rank: r=48                                           │  │
 │  │  LoRA Alpha: α=96                                          │  │
 │  │  Target Modules: [                                         │  │
@@ -1004,7 +1004,7 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 │  Phase 2: Qwen Unified Adapter Training (Week 2-3)               │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  Config:                                                   │  │
-│  │  • Base: Qwen2.5-1.5B-Instruct (4-bit quantized)           │  │
+│  │  • Base: Qwen3-1.7B (4-bit quantized)           │  │
 │  │  • LoRA: r=48, α=96, dropout=0.05                          │  │
 │  │  • Optimizer: AdamW (lr=2e-4, weight_decay=0.01)           │  │
 │  │  • Batch: 6 (gradient_accum=4 → effective 24)              │  │
@@ -1454,8 +1454,8 @@ Each node is an async function that reads/writes to `GraphCAGState`.
 ### Models (HuggingFace)
 
 ```bash
-# Qwen2.5-1.5B-Instruct
-huggingface-cli download Qwen/Qwen2.5-1.5B-Instruct
+# Qwen3-1.7B
+huggingface-cli download Qwen/Qwen3-1.7B
 
 # Whisper Small (for production)
 huggingface-cli download openai/whisper-small

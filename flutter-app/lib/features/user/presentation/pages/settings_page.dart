@@ -5,10 +5,8 @@ import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_overlay.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
-import 'package:lexilingo_app/core/theme/theme_ripple_bus.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
@@ -22,6 +20,9 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _flagsReady = false;
+
+  static const double _flagWidth = 48;
+  static const double _flagHeight = 32;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     if (!mounted) return;
+
     setState(() => _flagsReady = true);
   }
 
@@ -61,38 +63,39 @@ class _SettingsPageState extends State<SettingsPage> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        width: 28,
-        height: 20,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 120),
-          placeholder: (context, url) => _buildFlagSkeleton(context),
-          errorWidget: (context, url, error) =>
-              _buildFlagFallback(context, languageCode),
-        ),
+        width: _flagWidth,
+        height: _flagHeight,
+        child: _flagsReady
+            ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    _buildFlagFallback(context, languageCode),
+              )
+            : _buildFlagSkeleton(context),
       ),
     );
   }
 
   Widget _buildFlagSkeleton(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
-    return Container(color: isDark ? AppColors.grey700 : AppColors.grey300);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: _flagWidth,
+      height: _flagHeight,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.grey700 : AppColors.grey300,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
   }
 
   Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
 
     return Container(
-      width: 28,
-      height: 20,
+      width: _flagWidth,
+      height: _flagHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -111,25 +114,21 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeRippleOverlay(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('settings.title'.tr()),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: Consumer<SettingsProvider>(
-          builder: (context, settings, child) {
-            if (settings.isLoading) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
+    final settings = context.watch<SettingsProvider>();
 
-            return ListView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('settings.title'.tr()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: settings.isLoading
+          ? const Center(child: LottieLoadingWidget.medium())
+          : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Language Section
                 AnimatedListItem(
                   index: 0,
                   duration: const Duration(milliseconds: 300),
@@ -143,10 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildLanguageSelector(context, settings),
-
                 const SizedBox(height: 32),
-
-                // Notifications Section
                 AnimatedListItem(
                   index: 1,
                   duration: const Duration(milliseconds: 300),
@@ -160,10 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildNotificationSettings(context, settings),
-
                 const SizedBox(height: 32),
-
-                // Sound Section
                 AnimatedListItem(
                   index: 2,
                   duration: const Duration(milliseconds: 300),
@@ -177,10 +170,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildSoundSettings(context, settings),
-
                 const SizedBox(height: 32),
-
-                // Theme Section
                 AnimatedListItem(
                   index: 3,
                   duration: const Duration(milliseconds: 300),
@@ -194,30 +184,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildThemeSelector(context, settings),
-
                 const SizedBox(height: 32),
-
-                // Account Section
                 AnimatedListItem(
                   index: 4,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
                     context,
-                    icon: Icons.manage_accounts,
+                    icon: Icons.person_outline,
                     title: 'settings.account'.tr(),
                     subtitle: 'settings.account_subtitle'.tr(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 _buildAccountSection(context),
-
                 const SizedBox(height: 40),
               ],
-            );
-          },
-        ),
-      ),
+            ),
     );
   }
 
@@ -227,10 +210,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String title,
     required String subtitle,
   }) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
@@ -271,10 +251,10 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
+    final currentLocaleCode = context.locale.languageCode;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -282,7 +262,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: SettingsProvider.availableLanguages.map((lang) {
-            final isSelected = settings.language == lang['code'];
+            final isSelected = currentLocaleCode == lang['code'];
             return AnimatedListItem(
               index: SettingsProvider.availableLanguages.indexOf(lang),
               duration: const Duration(milliseconds: 200),
@@ -311,20 +291,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: Row(
                       children: [
-                        _flagsReady
-                            ? _buildFlagWidget(context, lang['code'] ?? 'en')
-                            : _buildFlagSkeleton(context),
+                        _buildFlagWidget(context, lang['code'] ?? 'en'),
                         const SizedBox(width: 12),
-                        Text(
-                          lang['name']!,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected ? primaryColor : null,
+                        Expanded(
+                          child: Text(
+                            lang['name']!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected ? primaryColor : null,
+                            ),
                           ),
                         ),
-                        const Spacer(),
                         if (isSelected)
                           Icon(Icons.check_circle, color: primaryColor),
                       ],
@@ -343,9 +324,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -375,7 +354,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             if (settings.notificationEnabled) ...[
               const Divider(),
-              // Reminder time
               InkWell(
                 onTap: () async {
                   final time = await showTimePicker(
@@ -419,6 +397,26 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ),
+              const Divider(),
+              _buildSwitchRow(
+                context,
+                label: 'settings.pushReminder'.tr(),
+                value: settings.pushReminderEnabled,
+                onChanged: (value) =>
+                    settings.updateReminderChannels(pushEnabled: value),
+                primaryColor: primaryColor,
+              ),
+              _buildSwitchRow(
+                context,
+                label: 'settings.emailReminder'.tr(),
+                value: settings.emailReminderEnabled,
+                onChanged: (value) =>
+                    settings.updateReminderChannels(emailEnabled: value),
+                primaryColor: primaryColor,
+              ),
+              if (settings.emailReminderEnabled)
+                _buildCadenceRow(context, settings, primaryColor),
+              _buildMinDueCountRow(context, settings, primaryColor),
             ],
           ],
         ),
@@ -426,10 +424,132 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildSwitchRow(
+    BuildContext context, {
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color primaryColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: primaryColor.withValues(alpha: 0.5),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return primaryColor;
+              }
+              return null;
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCadenceRow(
+    BuildContext context,
+    SettingsProvider settings,
+    Color primaryColor,
+  ) {
+    final options = <int, String>{
+      3: 'settings.emailCadenceEvery3Days'.tr(),
+      7: 'settings.emailCadenceWeekly'.tr(),
+      14: 'settings.emailCadenceEvery2Weeks'.tr(),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'settings.emailCadence'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          DropdownButton<int>(
+            value: options.containsKey(settings.emailCadenceDays)
+                ? settings.emailCadenceDays
+                : 7,
+            underline: const SizedBox.shrink(),
+            items: options.entries
+                .map(
+                  (entry) => DropdownMenuItem<int>(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              settings.updateReminderChannels(emailCadenceDays: value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMinDueCountRow(
+    BuildContext context,
+    SettingsProvider settings,
+    Color primaryColor,
+  ) {
+    final count = settings.reminderMinDueCount;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'settings.minDueCount'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            color: count <= 1 ? AppColors.grey400 : primaryColor,
+            onPressed: count <= 1
+                ? null
+                : () => settings.updateReminderChannels(minDueCount: count - 1),
+          ),
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$count',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            color: primaryColor,
+            onPressed: count >= 20
+                ? null
+                : () => settings.updateReminderChannels(minDueCount: count + 1),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSoundSettings(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
@@ -458,9 +578,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeSelector(BuildContext context, SettingsProvider settings) {
-    final isDark = settings.theme == 'dark' ||
-        (settings.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final themes = [
       {
@@ -485,23 +603,11 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
             final isSelected = settings.theme == theme['code'];
-            Offset? tapOrigin;
 
             return InkWell(
-              onTapDown: (details) {
-                tapOrigin = details.globalPosition;
-              },
               onTap: () {
                 if (isSelected) return;
-
                 final themeCode = theme['code'] as String;
-                final origin = tapOrigin ?? _screenCenter(context);
-
-                ThemeRippleBus.instance.emit(
-                  origin: origin,
-                  themeCode: themeCode,
-                );
-
                 settings.updateTheme(themeCode);
               },
               borderRadius: BorderRadius.circular(12),
@@ -549,16 +655,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Offset _screenCenter(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    return Offset(size.width / 2, size.height / 2);
-  }
-
   Widget _buildAccountSection(BuildContext context) {
-    final sp = context.read<SettingsProvider>();
-    final isDark = sp.theme == 'dark' ||
-        (sp.theme == 'system' &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;

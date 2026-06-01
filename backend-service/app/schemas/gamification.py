@@ -20,7 +20,10 @@ class League(str, Enum):
     SILVER = "silver"
     GOLD = "gold"
     PLATINUM = "platinum"
-    DIAMOND = "diamond"
+    SAPPHIRE = "sapphire"
+    RUBY = "ruby"
+    AMETHYST = "amethyst"
+    MASTER = "master"
 
 
 class AchievementCategory(str, Enum):
@@ -159,6 +162,7 @@ class LeaderboardUserEntry(BaseModel):
     username: str
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    user_rank: str = "bronze"
     xp_earned: int
     lessons_completed: int
     is_current_user: bool = False
@@ -185,12 +189,20 @@ class LeaderboardResponse(BaseModel):
 class UserLeagueStatusResponse(BaseModel):
     """User's current league status"""
     league: str
+    rank_name: str = "Bronze"
+    rank_score: float = 0.0
+    rank_level_score: float = 0.0
+    rank_proficiency_score: float = 0.0
+    total_xp: int = 0
+    numeric_level: int = 1
+    proficiency_level: str = "A1"
     current_rank: Optional[int] = None
     xp_earned: int
     lessons_completed: int
     is_in_promotion_zone: bool = False
     is_in_demotion_zone: bool = False
     week_ends_in_hours: int
+    rank_icon_url: str = ""
     
     class Config:
         from_attributes = True

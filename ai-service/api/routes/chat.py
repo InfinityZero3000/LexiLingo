@@ -1,7 +1,7 @@
 """
 Chat routes
 
-Endpoints for chat functionality with GraphCAG-first orchestration.
+Endpoints for chat functionality with TraceCAG-first orchestration.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -180,7 +180,7 @@ async def send_message(
     msg_req: SendMessageRequest,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """Send message and get AI response via GraphCAG."""
+    """Send message and get AI response via TraceCAG."""
     try:
         start_time = time.time()
 
@@ -231,9 +231,9 @@ async def send_message(
             db["chat_messages"].insert_one(user_message)
         )
 
-        # 2. GraphCAG-first response
+        # 2. TraceCAG-first response
         graph_metadata: Dict[str, Any] = {}
-        model_used = "graphcag"
+        model_used = "trace-cag"
         try:
             from api.services.orchestrator import get_orchestrator
 
@@ -248,11 +248,11 @@ async def send_message(
             ai_response = str(graph_result.get("tutor_response") or "").strip()
             graph_metadata = graph_result.get("metadata", {}) or {}
             if not ai_response:
-                raise RuntimeError("GraphCAG returned empty tutor_response")
-            models_used = graph_metadata.get("models_used") or ["graphcag"]
+                raise RuntimeError("TraceCAG returned empty tutor_response")
+            models_used = graph_metadata.get("models_used") or ["trace-cag"]
             model_used = ", ".join(models_used)
         except Exception as graph_err:
-            logger.error("GraphCAG failed in /chat/messages (primary): %s", graph_err)
+            logger.error("TraceCAG failed in /chat/messages (primary): %s", graph_err)
             try:
                 from api.services.orchestrator import get_orchestrator
 
@@ -271,18 +271,18 @@ async def send_message(
                 ai_response = str(retry_result.get("tutor_response") or "").strip()
                 retry_meta = retry_result.get("metadata", {}) or {}
                 if not ai_response:
-                    raise RuntimeError("GraphCAG degraded retry returned empty tutor_response")
-                model_used = ", ".join(retry_meta.get("models_used") or ["graphcag_retry"])
+                    raise RuntimeError("TraceCAG degraded retry returned empty tutor_response")
+                model_used = ", ".join(retry_meta.get("models_used") or ["trace-cag_retry"])
                 graph_metadata = {
                     **retry_meta,
                     "fallback_used": True,
-                    "retry_mode": "graphcag_degraded",
+                    "retry_mode": "trace-cag_degraded",
                     "primary_error": str(graph_err),
                 }
             except Exception as retry_err:
-                logger.error("GraphCAG failed in /chat/messages (degraded retry): %s", retry_err)
+                logger.error("TraceCAG failed in /chat/messages (degraded retry): %s", retry_err)
                 ai_response = SAFE_FIXED_RESPONSE
-                model_used = "graphcag_safe_response"
+                model_used = "trace-cag_safe_response"
                 graph_metadata = {
                     "path": "safe_fixed_response",
                     "cache_hit": False,
@@ -316,7 +316,7 @@ async def send_message(
         
         processing_time = int((time.time() - start_time) * 1000)
 
-        # Keep ConversationCache synchronized for GraphCAG next-turn reuse.
+        # Keep ConversationCache synchronized for TraceCAG next-turn reuse.
         try:
             from api.core.redis_client import ConversationCache, RedisClient
 
@@ -340,7 +340,7 @@ async def send_message(
             metadata={
                 "processing_time_ms": processing_time,
                 "model_used": model_used,
-                "graphcag": graph_metadata,
+                "trace-cag": graph_metadata,
             },
         )
         

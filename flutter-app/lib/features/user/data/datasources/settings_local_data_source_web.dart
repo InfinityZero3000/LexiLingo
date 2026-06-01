@@ -53,6 +53,11 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       theme: settings.theme,
       language: settings.language,
       dailyGoalXP: settings.dailyGoalXP,
+      pushReminderEnabled: settings.pushReminderEnabled,
+      emailReminderEnabled: settings.emailReminderEnabled,
+      emailCadenceDays: settings.emailCadenceDays,
+      reminderMinDueCount: settings.reminderMinDueCount,
+      reminderTimezone: settings.reminderTimezone,
     );
 
     return await updateSettings(updatedSettings);
@@ -73,6 +78,11 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       theme: settings.theme,
       language: settings.language,
       dailyGoalXP: xp,
+      pushReminderEnabled: settings.pushReminderEnabled,
+      emailReminderEnabled: settings.emailReminderEnabled,
+      emailCadenceDays: settings.emailCadenceDays,
+      reminderMinDueCount: settings.reminderMinDueCount,
+      reminderTimezone: settings.reminderTimezone,
     );
 
     return await updateSettings(updatedSettings);

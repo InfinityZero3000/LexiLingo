@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -114,7 +113,11 @@ class CourseProgressCard extends StatelessWidget {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    'progress.lastActivity'.tr(namedArgs: {'date': _formatDate(courseProgress.lastActivityAt)}),
+                    'progress.lastActivity'.tr(
+                      namedArgs: {
+                        'date': _formatDate(courseProgress.lastActivityAt),
+                      },
+                    ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

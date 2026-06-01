@@ -29,7 +29,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -79,6 +79,24 @@ class DatabaseHelper {
       // Phase 2: Encrypted cache + persistent sync queue
       await EncryptedLocalCacheService.createTable(db);
       await BackgroundSyncQueueService.createTable(db);
+    }
+
+    if (oldVersion < 7) {
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN pushReminderEnabled BOOLEAN DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN emailReminderEnabled BOOLEAN DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN emailCadenceDays INTEGER DEFAULT 7',
+      );
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN reminderMinDueCount INTEGER DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN reminderTimezone TEXT DEFAULT "Asia/Ho_Chi_Minh"',
+      );
     }
   }
 
@@ -137,6 +155,11 @@ CREATE TABLE settings (
   language TEXT DEFAULT "en",
   soundEnabled BOOLEAN DEFAULT 1,
   dailyGoalXP INTEGER DEFAULT 50,
+  pushReminderEnabled BOOLEAN DEFAULT 1,
+  emailReminderEnabled BOOLEAN DEFAULT 0,
+  emailCadenceDays INTEGER DEFAULT 7,
+  reminderMinDueCount INTEGER DEFAULT 1,
+  reminderTimezone TEXT DEFAULT "Asia/Ho_Chi_Minh",
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 )
 ''');

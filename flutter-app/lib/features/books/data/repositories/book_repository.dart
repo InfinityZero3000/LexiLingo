@@ -314,6 +314,9 @@ class BookRepository {
   ///
   /// Returns the local file path on success.
   Future<String> downloadBook(Book book) async {
+    if (kIsWeb) {
+      throw UnsupportedError('Book downloading is not supported on Web.');
+    }
     final appDir = await getApplicationDocumentsDirectory();
     final booksDir = Directory('${appDir.path}/books');
     if (!booksDir.existsSync()) booksDir.createSync(recursive: true);
@@ -353,6 +356,7 @@ class BookRepository {
   }
 
   Future<String?> getDownloadedPath(String bookId) async {
+    if (kIsWeb) return null;
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('$_downloadedKeyPrefix$bookId');
     if (path == null) return null;
@@ -360,6 +364,7 @@ class BookRepository {
   }
 
   Future<void> deleteDownload(String bookId) async {
+    if (kIsWeb) return;
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('$_downloadedKeyPrefix$bookId');
     if (path != null && File(path).existsSync()) {
@@ -369,7 +374,7 @@ class BookRepository {
   }
 
   bool isDownloaded(String bookId, {required String downloadedPath}) =>
-      downloadedPath.isNotEmpty && File(downloadedPath).existsSync();
+      !kIsWeb && downloadedPath.isNotEmpty && File(downloadedPath).existsSync();
 
   // ── XP Award ─────────────────────────────────────────────────
 
@@ -405,6 +410,18 @@ class BookRepository {
   ///
   /// Resolves: local downloaded file → streaming network fetch.
   Future<String> fetchBookText(Book book) async {
+    if (kIsWeb) {
+      final response = await _client.get(Uri.parse(book.downloadUrl));
+      if (response.statusCode >= 400) {
+        throw Exception(
+          'Failed to fetch book text: HTTP ${response.statusCode}',
+        );
+      }
+      final text = utf8.decode(response.bodyBytes, allowMalformed: true);
+      _assertPlainText(text, book.downloadUrl);
+      return text;
+    }
+
     final localPath = await getDownloadedPath(book.id);
     if (localPath != null && File(localPath).existsSync()) {
       return File(localPath).readAsString();

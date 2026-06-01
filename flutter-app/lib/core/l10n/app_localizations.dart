@@ -27,41 +27,13 @@ class AppLocales {
   static const Locale fallback = Locale('en');
 
   static const Map<String, Map<String, String>> metadata = {
-    'vi': {
-      'flagCode': 'vn',
-      'name': 'Tiếng Việt',
-      'nameEn': 'Vietnamese',
-    },
-    'en': {
-      'flagCode': 'us',
-      'name': 'English',
-      'nameEn': 'English',
-    },
-    'ja': {
-      'flagCode': 'jp',
-      'name': '日本語',
-      'nameEn': 'Japanese',
-    },
-    'ko': {
-      'flagCode': 'kr',
-      'name': '한국어',
-      'nameEn': 'Korean',
-    },
-    'zh': {
-      'flagCode': 'cn',
-      'name': '中文',
-      'nameEn': 'Chinese',
-    },
-    'fr': {
-      'flagCode': 'fr',
-      'name': 'Français',
-      'nameEn': 'French',
-    },
-    'es': {
-      'flagCode': 'es',
-      'name': 'Español',
-      'nameEn': 'Spanish',
-    },
+    'vi': {'flagCode': 'vn', 'name': 'Tiếng Việt', 'nameEn': 'Vietnamese'},
+    'en': {'flagCode': 'us', 'name': 'English', 'nameEn': 'English'},
+    'ja': {'flagCode': 'jp', 'name': '日本語', 'nameEn': 'Japanese'},
+    'ko': {'flagCode': 'kr', 'name': '한국어', 'nameEn': 'Korean'},
+    'zh': {'flagCode': 'cn', 'name': '中文', 'nameEn': 'Chinese'},
+    'fr': {'flagCode': 'fr', 'name': 'Français', 'nameEn': 'French'},
+    'es': {'flagCode': 'es', 'name': 'Español', 'nameEn': 'Spanish'},
   };
 
   static String flagCodeOf(String code) => metadata[code]?['flagCode'] ?? 'un';

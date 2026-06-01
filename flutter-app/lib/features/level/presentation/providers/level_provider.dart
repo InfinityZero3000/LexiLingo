@@ -12,6 +12,8 @@ class LevelProvider with ChangeNotifier {
   String? _errorMessage;
   bool _showLevelUpDialog = false;
   LevelTier? _previousTier;
+  bool _showRankUpDialog = false;
+  String? _previousRank;
 
   // --- Full level data from API ---
   int _numericLevel = 1;
@@ -32,6 +34,8 @@ class LevelProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get showLevelUpDialog => _showLevelUpDialog;
   LevelTier? get previousTier => _previousTier;
+  bool get showRankUpDialog => _showRankUpDialog;
+  String? get previousRank => _previousRank;
 
   LevelTier get currentTier => _levelStatus.currentTier;
   String get levelDisplayName => _levelStatus.displayName;
@@ -143,6 +147,13 @@ class LevelProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Dismiss the rank up dialog
+  void dismissRankUpDialog() {
+    _showRankUpDialog = false;
+    _previousRank = null;
+    notifyListeners();
+  }
+
   /// Get formatted XP display string
   String getFormattedTotalXP() {
     return LevelCalculator.formatXP(_levelStatus.totalXP);
@@ -199,6 +210,8 @@ class LevelProvider with ChangeNotifier {
     _errorMessage = null;
     _showLevelUpDialog = false;
     _previousTier = null;
+    _showRankUpDialog = false;
+    _previousRank = null;
     _numericLevel = 1;
     _currentXpInLevel = 0;
     _xpForNextLevel = 100;
@@ -228,6 +241,8 @@ class LevelProvider with ChangeNotifier {
 
     try {
       final data = await apiClient.get('/users/me/level-full');
+      final bool isFirstLoad = _rawLevelFull.isEmpty;
+
       _rawLevelFull = data;
       _numericLevel = data['numeric_level'] ?? 1;
       _currentXpInLevel = data['current_xp_in_level'] ?? 0;
@@ -238,9 +253,28 @@ class LevelProvider with ChangeNotifier {
           data['cefr_level'] ?? data['proficiency_level'] ?? 'A1';
       _proficiencyName =
           data['cefr_name'] ?? data['proficiency_name'] ?? 'Beginner';
-      _rank = data['rank'] ?? 'bronze';
+
+      final oldRank = _rank;
+      final newRank = data['rank'] ?? 'bronze';
+      
+      // Rank thresholds usually go: bronze -> silver -> gold -> platinum -> diamond -> master -> grandmaster.
+      // Easiest is to check just if it's different and oldRank is not initial state (unless we just started).
+      // Or we can just trust if oldRank != newRank and we already had a valid rank.
+      // But wait: What if oldRank is 'bronze' from reset() but the user was actually 'gold' on first load?
+      // If we show rank up, we only want to show it if we PREVIOUSLY fetched their rank successfully and NOW it changed.
+      // How do we know it's a "first load"? `_rawLevelFull.isEmpty` tells us if it's the first fetch.
+      
+      _rank = newRank;
       _rankName = data['rank_name'] ?? 'Bronze';
       _rankScore = (data['rank_score'] ?? 0).toDouble();
+
+      // Check for rank change. If not first load, and oldRank != newRank, show popup
+      if (!isFirstLoad && oldRank != newRank && oldRank.isNotEmpty) {
+        // Technically this could trigger on rank down too, but LexiLingo rank scores only go up right now.
+        _showRankUpDialog = true;
+        _previousRank = oldRank;
+        debugPrint('Rank up! $oldRank -> $newRank');
+      }
 
       // Keep CEFR LevelStatus in sync for legacy display (no extra notifyListeners).
       _levelStatus = LevelCalculator.calculateLevelStatus(_totalXp);

@@ -28,7 +28,10 @@ enum LottieAnimation {
   heartbeat('animation/HeartBeat.json'),
 
   /// Star burst celebration (custom)
-  starBurst('animation/StarBurst.json');
+  starBurst('animation/StarBurst.json'),
+
+  /// Level-up orbit celebration (custom)
+  levelUpOrbit('animation/LevelUpOrbit.json');
 
   final String path;
   const LottieAnimation(this.path);

@@ -92,7 +92,12 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                               ),
                             ),
                             Text(
-                              'home.challengesCompleted'.tr(namedArgs: {'completed': '${provider.completedCount}', 'total': '${provider.totalChallenges}'}),
+                              'home.challengesCompleted'.tr(
+                                namedArgs: {
+                                  'completed': '${provider.completedCount}',
+                                  'total': '${provider.totalChallenges}',
+                                },
+                              ),
 
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.grey,
@@ -166,7 +171,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                         onPressed: () =>
                             _showChallengesSheet(context, provider),
                         child: Text(
-                          'home.viewAllChallenges'.tr(namedArgs: {'count': '${provider.challenges.length}'}),
+                          'home.viewAllChallenges'.tr(
+                            namedArgs: {
+                              'count': '${provider.challenges.length}',
+                            },
+                          ),
                           style: TextStyle(color: Colors.purple.shade600),
                         ),
                       ),
@@ -318,7 +327,9 @@ class DailyChallengesSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'home.completeBonusXp'.tr(namedArgs: {'xp': '${provider.bonusXp}'}),
+                      'home.completeBonusXp'.tr(
+                        namedArgs: {'xp': '${provider.bonusXp}'},
+                      ),
 
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.purple,
@@ -407,7 +418,9 @@ class DailyChallengesSheet extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'home.bonusXpEarned'.tr(namedArgs: {'xp': '${provider.bonusXp}'}),
+                          'home.bonusXpEarned'.tr(
+                            namedArgs: {'xp': '${provider.bonusXp}'},
+                          ),
 
                           style: TextStyle(
                             color: Colors.orange.shade800,

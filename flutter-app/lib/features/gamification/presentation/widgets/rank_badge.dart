@@ -1,65 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
-
-/// Rank tier configuration
-class RankTierData {
-  final String name;
-  final Color color;
-  final Color colorDark;
-  final IconData icon;
-
-  const RankTierData({
-    required this.name,
-    required this.color,
-    required this.colorDark,
-    required this.icon,
-  });
-}
-
-/// Mapping from rank key → visual data
-const Map<String, RankTierData> _rankTiers = {
-  'bronze': RankTierData(
-    name: 'Bronze',
-    color: AppColors.bronze,
-    colorDark: Color(0xFF8B5A2B),
-    icon: Icons.shield_outlined,
-  ),
-  'silver': RankTierData(
-    name: 'Silver',
-    color: AppColors.silver,
-    colorDark: Color(0xFF808080),
-    icon: Icons.shield,
-  ),
-  'gold': RankTierData(
-    name: 'Gold',
-    color: AppColors.gold,
-    colorDark: Color(0xFFDAA520),
-    icon: Icons.military_tech,
-  ),
-  'platinum': RankTierData(
-    name: 'Platinum',
-    color: Color(0xFF00CED1),
-    colorDark: Color(0xFF008B8B),
-    icon: Icons.diamond_outlined,
-  ),
-  'diamond': RankTierData(
-    name: 'Diamond',
-    color: Color(0xFF7B68EE),
-    colorDark: Color(0xFF483D8B),
-    icon: Icons.diamond,
-  ),
-  'master': RankTierData(
-    name: 'Master',
-    color: Color(0xFFFF4500),
-    colorDark: Color(0xFFB22222),
-    icon: Icons.workspace_premium,
-  ),
-};
-
-RankTierData _getRankData(String rank) {
-  return _rankTiers[rank.toLowerCase()] ?? _rankTiers['bronze']!;
-}
+import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 /// Compact rank badge for profile / header display
 class RankBadge extends StatelessWidget {
@@ -71,34 +12,9 @@ class RankBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _getRankData(rank);
-
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [data.color, data.colorDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: data.color.withValues(alpha: 0.4),
-              blurRadius: 6,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          data.icon,
-          size: size * 0.5,
-          color: Theme.of(context).colorScheme.surface,
-        ),
-      ),
+      child: RankAssetIcon(rank: rank, size: size),
     );
   }
 }
@@ -118,7 +34,7 @@ class RankBadgeLabelled extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _getRankData(rank);
+    final data = rankVisualDataFor(rank);
 
     return GestureDetector(
       onTap: onTap,
@@ -127,14 +43,30 @@ class RankBadgeLabelled extends StatelessWidget {
         children: [
           RankBadge(rank: rank, size: iconSize, onTap: null),
           const SizedBox(height: 4),
-          Text(
-            data.name,
-            style: TextStyle(
-              color: data.color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
+          rank == 'master'
+              ? ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    rankDisplayNameFor(rank),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+              : Text(
+                  rankDisplayNameFor(rank),
+                  style: TextStyle(
+                    color: data.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
         ],
       ),
     );
@@ -160,7 +92,7 @@ class RankCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _getRankData(rank);
+    final data = rankVisualDataFor(rank);
 
     return GestureDetector(
       onTap: onTap,
@@ -184,40 +116,45 @@ class RankCard extends StatelessWidget {
         child: Row(
           children: [
             // Rank Icon
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [data.color, data.colorDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                data.icon,
-                size: 28,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-            ),
+            RankAssetIcon(rank: rank, size: 56),
             const SizedBox(width: 16),
             // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    data.name,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: data.color,
-                    ),
-                  ),
+                  rank == 'master'
+                      ? ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(bounds),
+                          child: Text(
+                            rankDisplayNameFor(rank),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          rankDisplayNameFor(rank),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: data.color,
+                          ),
+                        ),
                   const SizedBox(height: 4),
                   Text(
-                    'gamification.levelProficiency'.tr(namedArgs: {'level': '$numericLevel', 'proficiency': proficiencyLevel}),
+                    'gamification.levelProficiency'.tr(
+                      namedArgs: {
+                        'level': '$numericLevel',
+                        'proficiency': proficiencyLevel,
+                      },
+                    ),
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(

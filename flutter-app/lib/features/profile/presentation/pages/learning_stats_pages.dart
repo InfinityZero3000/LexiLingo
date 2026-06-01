@@ -69,9 +69,15 @@ class LearningLessonsStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('profile.totalLessonsCompleted'.tr(), '$lessonsCompleted'),
+            _detailRow(
+              'profile.totalLessonsCompleted'.tr(),
+              '$lessonsCompleted',
+            ),
             const Divider(height: 20),
-            _detailRow('profile.lessonsCompletedThisWeek'.tr(), '$weeklyLessons'),
+            _detailRow(
+              'profile.lessonsCompletedThisWeek'.tr(),
+              '$weeklyLessons',
+            ),
           ],
         );
       },
@@ -100,7 +106,10 @@ class LearningCoursesStatsPage extends StatelessWidget {
             _singleCard(
               context,
               children: [
-                _detailRow('profile.totalCoursesFinished'.tr(), '$coursesCompleted'),
+                _detailRow(
+                  'profile.totalCoursesFinished'.tr(),
+                  '$coursesCompleted',
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -225,7 +234,10 @@ class LearningVocabularyStatsPage extends StatelessWidget {
         return _singleCard(
           context,
           children: [
-            _detailRow('profile.totalVocabularyMastered'.tr(), '$vocabularyMastered'),
+            _detailRow(
+              'profile.totalVocabularyMastered'.tr(),
+              '$vocabularyMastered',
+            ),
             const Divider(height: 20),
             _detailRow('profile.newWordsThisWeek'.tr(), '$weeklyVocabulary'),
           ],

@@ -53,6 +53,13 @@ LexiLingo is an English learning app with 4 services:
 ### TypeScript (admin-service)
 - React + Vite + TypeScript
 - Component files in `src/components/`, pages in `src/pages/`
+- **Animations (GSAP Best Practices)**:
+  - **React Integration**: Import và sử dụng package `@gsap/react` với hook `useGSAP()`. Hook này tự động xử lý cleanup, tối quan trọng trong React Strict Mode. Luôn define `scope` (`{ scope: containerRef }`) để tránh conflict selector.
+  - **Performance**: Ưu tiên animate các thuộc tính transform (`x`, `y`, `scale`, `rotation`) và `autoAlpha` thay vì can thiệp vào các layout props (như `top`, `left`, `width`, `height`).
+  - **Sequencing**: Sử dụng `gsap.timeline()` để điều phối các chuỗi animation thay vì dùng thông số `delay` rời rạc.
+  - **ScrollTrigger**: Nếu React state làm thay đổi layout/DOM rendering, gọi `ScrollTrigger.refresh()`.
+  - **Accessibility**: Luôn kết hợp sử dụng `gsap.matchMedia()` bên trong context/hook để dọn dẹp (cleanup) và hỗ trợ thuộc tính `prefers-reduced-motion` của OS.
+  - *Lưu ý*: Toàn bộ Plugins của GSAP (kể cả SplitText, MorphSVG...) hiện đã miễn phí 100% trên package npm public `gsap`, không cần yêu cầu membership hay token.
 
 ## Graph-CAG Pipeline Rules
 When modifying the AI pipeline:
@@ -86,7 +93,7 @@ When modifying the AI pipeline:
 1. KG database re-seeds on every restart (`kg_service_v3.py` line ~34 does `shutil.rmtree`)
 2. `model_gateway` MCP tool exists but not registered in `mcp-server/server.py`
 3. MCP resource URIs inconsistent: `learner://profile/` vs `learner_profile://`
-4. Architecture doc mentions Qwen3-1.7B but code uses `Qwen2.5-1.5B-Instruct`
+4. Architecture doc mentions Qwen3-1.7B but code uses `Qwen3-1.7B`
 5. DualStreamOrchestrator coded but WebSocket integration unclear
 6. `cag_service.py` (content auto-gen) not connected to GraphCAG pipeline
 

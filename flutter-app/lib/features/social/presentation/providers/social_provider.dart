@@ -9,8 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 class SocialProvider extends ChangeNotifier {
   final SocialRepository _repo;
 
-  SocialProvider({required SocialRepository repository})
-      : _repo = repository;
+  SocialProvider({required SocialRepository repository}) : _repo = repository;
 
   // ============== Activity Feed State ==============
   List<ActivityFeedItemEntity> _activityFeed = [];
@@ -112,8 +111,11 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _followers.length;
-      final result =
-          await _repo.getFollowers(userId, limit: 50, offset: offset);
+      final result = await _repo.getFollowers(
+        userId,
+        limit: 50,
+        offset: offset,
+      );
 
       if (refresh) {
         _followers = result.users;
@@ -138,8 +140,11 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _following.length;
-      final result =
-          await _repo.getFollowing(userId, limit: 50, offset: offset);
+      final result = await _repo.getFollowing(
+        userId,
+        limit: 50,
+        offset: offset,
+      );
 
       if (refresh) {
         _following = result.users;
@@ -258,7 +263,10 @@ class SocialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadSuggestedUsers({int limit = 10, bool refresh = false}) async {
+  Future<void> loadSuggestedUsers({
+    int limit = 10,
+    bool refresh = false,
+  }) async {
     if (_isLoadingSuggestions) return;
 
     _isLoadingSuggestions = true;
@@ -271,8 +279,7 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final offset = refresh ? 0 : _suggestedUsers.length;
-      final users =
-          await _repo.getSuggestions(limit: limit, offset: offset);
+      final users = await _repo.getSuggestions(limit: limit, offset: offset);
 
       if (refresh) {
         _suggestedUsers = users;
@@ -306,8 +313,10 @@ class SocialProvider extends ChangeNotifier {
         return;
       }
 
-      final result =
-          await _repo.getNearbyUsers(limit: limit, radiusKm: radiusKm);
+      final result = await _repo.getNearbyUsers(
+        limit: limit,
+        radiusKm: radiusKm,
+      );
       _nearbyUsers = result.users;
       _isNearbyEnabled = result.locationEnabled;
     } catch (e) {

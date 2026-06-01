@@ -1388,7 +1388,95 @@ async def seed_sample_data(
                             "order_index": 1,
                             "estimated_minutes": 12,
                             "xp_reward": 20,
-                            "total_exercises": 8,
+                            "total_exercises": 10,
+                            "exercises": [
+                                {
+                                    "id": "ex_g1_1",
+                                    "type": "multiple_choice",
+                                    "ui_type": "multiple_choice",
+                                    "question": "Choose the correct form: 'I ___ coffee every morning.'",
+                                    "options": [{"id": "0", "text": "drink", "is_correct": True}, {"id": "1", "text": "drinks", "is_correct": False}, {"id": "2", "text": "drinking", "is_correct": False}, {"id": "3", "text": "drunk", "is_correct": False}],
+                                    "correct_answer": "drink",
+                                    "explanation": "With I/You/We/They, use the base verb form."
+                                },
+                                {
+                                    "id": "ex_g1_2",
+                                    "type": "true_false",
+                                    "ui_type": "true_or_false",
+                                    "question": "True or False: 'They plays football' is grammatically correct.",
+                                    "options": [{"id": "0", "text": "True", "is_correct": False}, {"id": "1", "text": "False", "is_correct": True}],
+                                    "correct_answer": "False",
+                                    "explanation": "'They' is plural and takes the base verb 'play', not 'plays'."
+                                },
+                                {
+                                    "id": "ex_g1_3",
+                                    "type": "fill_blank",
+                                    "ui_type": "fill_in_the_blank",
+                                    "question": "Complete the sentence: 'We {blank} in a big city.'",
+                                    "correct_answer": "live",
+                                    "explanation": "'We' takes the base verb 'live'."
+                                },
+                                {
+                                    "id": "ex_g1_4",
+                                    "type": "reorder",
+                                    "ui_type": "arrange_the_sentence",
+                                    "question": "Arrange: 'day / every / study / they'",
+                                    "options": [{"id": "0", "text": "they"}, {"id": "1", "text": "study"}, {"id": "2", "text": "every"}, {"id": "3", "text": "day"}],
+                                    "correct_answer": "they study every day",
+                                    "explanation": "Subject + Verb + Time expression is the standard structure."
+                                },
+                                {
+                                    "id": "ex_g1_5",
+                                    "type": "translate",
+                                    "ui_type": "translation_choice",
+                                    "question": "Choose the translation for: 'Chúng tôi muốn học.'",
+                                    "options": [{"id": "0", "text": "We want to learn.", "is_correct": True}, {"id": "1", "text": "We wants to learn.", "is_correct": False}, {"id": "2", "text": "We learning.", "is_correct": False}],
+                                    "correct_answer": "We want to learn.",
+                                    "explanation": "'Chúng tôi' translates to 'We', which takes the base verb 'want'."
+                                },
+                                {
+                                    "id": "ex_g1_6",
+                                    "type": "fill_blank",
+                                    "ui_type": "dialogue_completion",
+                                    "question": "A: Do you speak English? B: Yes, I {blank}.",
+                                    "correct_answer": "do",
+                                    "explanation": "Short answer to 'Do you...' is 'I do'."
+                                },
+                                {
+                                    "id": "ex_g1_7",
+                                    "type": "multiple_choice",
+                                    "ui_type": "collocation_choice",
+                                    "question": "Complete the phrase: 'They ___ homework together.'",
+                                    "options": [{"id": "0", "text": "do", "is_correct": True}, {"id": "1", "text": "make", "is_correct": False}],
+                                    "correct_answer": "do",
+                                    "explanation": "The collocation is 'do homework'."
+                                },
+                                {
+                                    "id": "ex_g1_8",
+                                    "type": "fill_blank",
+                                    "ui_type": "dictation",
+                                    "question": "Listen and write what you hear: '{blank}'",
+                                    "correct_answer": "We go home",
+                                    "explanation": "Type the exact words heard in the audio."
+                                },
+                                {
+                                    "id": "ex_g1_9",
+                                    "type": "translate",
+                                    "ui_type": "speaking_repeat",
+                                    "question": "Repeat: 'I listen to music.'",
+                                    "correct_answer": "I listen to music",
+                                    "explanation": "Record yourself repeating this sentence."
+                                },
+                                {
+                                    "id": "ex_g1_10",
+                                    "type": "multiple_choice",
+                                    "ui_type": "vocabulary_flashcard",
+                                    "question": "Learn the card: 'Routine'",
+                                    "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
+                                    "correct_answer": "Got it!",
+                                    "explanation": "Routine is a sequence of actions regularly followed."
+                                }
+                            ]
                         },
                         {
                             "title": "He/She/It + Verb-s",
@@ -1396,7 +1484,95 @@ async def seed_sample_data(
                             "order_index": 2,
                             "estimated_minutes": 12,
                             "xp_reward": 20,
-                            "total_exercises": 8,
+                            "total_exercises": 10,
+                            "exercises": [
+                                {
+                                    "id": "ex_g2_1",
+                                    "type": "multiple_choice",
+                                    "ui_type": "multiple_choice",
+                                    "question": "Choose correct: 'He ___ to school by bus.'",
+                                    "options": [{"id": "0", "text": "go", "is_correct": False}, {"id": "1", "text": "goes", "is_correct": True}, {"id": "2", "text": "going", "is_correct": False}],
+                                    "correct_answer": "goes",
+                                    "explanation": "He/she/it takes verb+s/es."
+                                },
+                                {
+                                    "id": "ex_g2_2",
+                                    "type": "true_false",
+                                    "ui_type": "true_or_false",
+                                    "question": "True or False: 'It rain a lot' is correct.",
+                                    "options": [{"id": "0", "text": "True", "is_correct": False}, {"id": "1", "text": "False", "is_correct": True}],
+                                    "correct_answer": "False",
+                                    "explanation": "It should be 'It rains a lot'."
+                                },
+                                {
+                                    "id": "ex_g2_3",
+                                    "type": "fill_blank",
+                                    "ui_type": "fill_in_the_blank",
+                                    "question": "Complete: 'She {blank} the piano well.'",
+                                    "correct_answer": "plays",
+                                    "explanation": "She requires plays."
+                                },
+                                {
+                                    "id": "ex_g2_4",
+                                    "type": "fill_blank",
+                                    "ui_type": "grammar_correction",
+                                    "question": "Correct the error: 'He play tennis.' -> '{blank}'",
+                                    "correct_answer": "He plays tennis",
+                                    "explanation": "Add 's' to play."
+                                },
+                                {
+                                    "id": "ex_g2_5",
+                                    "type": "multiple_choice",
+                                    "ui_type": "image_based_choice",
+                                    "question": "Choose the image that represents: 'She runs.'",
+                                    "options": [{"id": "0", "text": "Running", "is_correct": True}, {"id": "1", "text": "Sleeping", "is_correct": False}],
+                                    "correct_answer": "Running",
+                                    "explanation": "Select the correct action card."
+                                },
+                                {
+                                    "id": "ex_g2_6",
+                                    "type": "multiple_choice",
+                                    "ui_type": "listen_and_choose",
+                                    "question": "Listen and select what he does.",
+                                    "options": [{"id": "0", "text": "He eats breakfast", "is_correct": True}, {"id": "1", "text": "He plays games", "is_correct": False}],
+                                    "correct_answer": "He eats breakfast",
+                                    "explanation": "Audio matches breakfast."
+                                },
+                                {
+                                    "id": "ex_g2_7",
+                                    "type": "translate",
+                                    "ui_type": "pronunciation_practice",
+                                    "question": "Practice speaking: 'He plays tennis.'",
+                                    "correct_answer": "He plays tennis",
+                                    "explanation": "Evaluate pronunciation of He plays tennis."
+                                },
+                                {
+                                    "id": "ex_g2_8",
+                                    "type": "multiple_choice",
+                                    "ui_type": "reading_comprehension",
+                                    "question": "Read and answer: 'Tom is a chef. He works in a restaurant.' Where does Tom work?",
+                                    "options": [{"id": "0", "text": "restaurant", "is_correct": True}, {"id": "1", "text": "office", "is_correct": False}],
+                                    "correct_answer": "restaurant",
+                                    "explanation": "The text states he works in a restaurant."
+                                },
+                                {
+                                    "id": "ex_g2_9",
+                                    "type": "fill_blank",
+                                    "ui_type": "short_writing_answer",
+                                    "question": "Write in English: 'Cô ấy nói tiếng Anh.'",
+                                    "correct_answer": "She speaks English",
+                                    "explanation": "Translate exactly."
+                                },
+                                {
+                                    "id": "ex_g2_10",
+                                    "type": "matching",
+                                    "ui_type": "categorization",
+                                    "question": "Categorize the pronouns: Singular vs Plural",
+                                    "options": [{"id": "he", "text": "Singular"}, {"id": "they", "text": "Plural"}],
+                                    "correct_answer": "he:Singular, they:Plural",
+                                    "explanation": "He is singular, they is plural."
+                                }
+                            ]
                         },
                     ],
                 },
@@ -1425,7 +1601,96 @@ async def seed_sample_data(
                             "order_index": 1,
                             "estimated_minutes": 10,
                             "xp_reward": 20,
-                            "total_exercises": 7,
+                            "total_exercises": 10,
+                            "exercises": [
+                                {
+                                    "id": "ex_v1_1",
+                                    "type": "multiple_choice",
+                                    "ui_type": "multiple_choice",
+                                    "question": "Your father's sister is your ___.",
+                                    "options": [{"id": "0", "text": "aunt", "is_correct": True}, {"id": "1", "text": "uncle", "is_correct": False}],
+                                    "correct_answer": "aunt",
+                                    "explanation": "Father's sister is aunt."
+                                },
+                                {
+                                    "id": "ex_v1_2",
+                                    "type": "matching",
+                                    "ui_type": "match_word_to_meaning",
+                                    "question": "Match the family words with meanings.",
+                                    "options": [{"id": "father", "text": "Male parent"}, {"id": "mother", "text": "Female parent"}],
+                                    "correct_answer": "father:Male parent, mother:Female parent",
+                                    "explanation": "Father is male parent, mother is female."
+                                },
+                                {
+                                    "id": "ex_v1_3",
+                                    "type": "fill_blank",
+                                    "ui_type": "fill_in_the_blank",
+                                    "question": "Complete: 'My mother's husband is my {blank}.'",
+                                    "correct_answer": "father",
+                                    "explanation": "Mother's husband is father."
+                                },
+                                {
+                                    "id": "ex_v1_4",
+                                    "type": "matching",
+                                    "ui_type": "cognitive_fluidity",
+                                    "question": "Match: mother, sister",
+                                    "options": [{"id": "mother", "text": "female parent"}, {"id": "sister", "text": "female sibling"}],
+                                    "correct_answer": "mother:female parent, sister:female sibling",
+                                    "explanation": "Fast match."
+                                },
+                                {
+                                    "id": "ex_v1_5",
+                                    "type": "multiple_choice",
+                                    "ui_type": "vocabulary_flashcard",
+                                    "question": "Learn: 'Sibling' (anh chị em ruột)",
+                                    "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
+                                    "correct_answer": "Got it!",
+                                    "explanation": "A sibling is a brother or sister."
+                                },
+                                {
+                                    "id": "ex_v1_6",
+                                    "type": "true_false",
+                                    "ui_type": "true_or_false",
+                                    "question": "True or False: 'Cousin' is the child of your aunt or uncle.",
+                                    "options": [{"id": "0", "text": "True", "is_correct": True}, {"id": "1", "text": "False", "is_correct": False}],
+                                    "correct_answer": "True",
+                                    "explanation": "Cousin is child of aunt/uncle."
+                                },
+                                {
+                                    "id": "ex_v1_7",
+                                    "type": "reorder",
+                                    "ui_type": "arrange_the_sentence",
+                                    "question": "Arrange: 'my / this / is / brother'",
+                                    "options": [{"id": "0", "text": "this"}, {"id": "1", "text": "is"}, {"id": "2", "text": "my"}, {"id": "3", "text": "brother"}],
+                                    "correct_answer": "this is my brother",
+                                    "explanation": "Sentence structure."
+                                },
+                                {
+                                    "id": "ex_v1_8",
+                                    "type": "translate",
+                                    "ui_type": "translation_choice",
+                                    "question": "Translation of: 'Anh trai'",
+                                    "options": [{"id": "0", "text": "brother", "is_correct": True}, {"id": "1", "text": "sister", "is_correct": False}],
+                                    "correct_answer": "brother",
+                                    "explanation": "Anh trai is brother."
+                                },
+                                {
+                                    "id": "ex_v1_9",
+                                    "type": "translate",
+                                    "ui_type": "speaking_repeat",
+                                    "question": "Repeat: 'My grandmother is nice.'",
+                                    "correct_answer": "My grandmother is nice",
+                                    "explanation": "Practice speaking."
+                                },
+                                {
+                                    "id": "ex_v1_10",
+                                    "type": "fill_blank",
+                                    "ui_type": "dictation",
+                                    "question": "Dictation: Listen and write '{blank}'",
+                                    "correct_answer": "He is my uncle",
+                                    "explanation": "Type what you hear."
+                                }
+                            ]
                         },
                         {
                             "title": "Rooms and Objects",
@@ -1433,7 +1698,96 @@ async def seed_sample_data(
                             "order_index": 2,
                             "estimated_minutes": 10,
                             "xp_reward": 20,
-                            "total_exercises": 7,
+                            "total_exercises": 10,
+                            "exercises": [
+                                {
+                                    "id": "ex_v2_1",
+                                    "type": "multiple_choice",
+                                    "ui_type": "multiple_choice",
+                                    "question": "You cook meals in the ___.",
+                                    "options": [{"id": "0", "text": "kitchen", "is_correct": True}, {"id": "1", "text": "bedroom", "is_correct": False}],
+                                    "correct_answer": "kitchen",
+                                    "explanation": "Kitchen is for cooking."
+                                },
+                                {
+                                    "id": "ex_v2_2",
+                                    "type": "matching",
+                                    "ui_type": "match_word_to_meaning",
+                                    "question": "Match rooms with objects.",
+                                    "options": [{"id": "bedroom", "text": "bed"}, {"id": "kitchen", "text": "fridge"}],
+                                    "correct_answer": "bedroom:bed, kitchen:fridge",
+                                    "explanation": "Bed in bedroom, fridge in kitchen."
+                                },
+                                {
+                                    "id": "ex_v2_3",
+                                    "type": "fill_blank",
+                                    "ui_type": "fill_in_the_blank",
+                                    "question": "Complete: 'I sleep in my {blank}.'",
+                                    "correct_answer": "bedroom",
+                                    "explanation": "Bedroom is for sleeping."
+                                },
+                                {
+                                    "id": "ex_v2_4",
+                                    "type": "true_false",
+                                    "ui_type": "true_or_false",
+                                    "question": "True or False: A sofa is typically placed in the living room.",
+                                    "options": [{"id": "0", "text": "True", "is_correct": True}, {"id": "1", "text": "False", "is_correct": False}],
+                                    "correct_answer": "True",
+                                    "explanation": "Sofa in living room."
+                                },
+                                {
+                                    "id": "ex_v2_5",
+                                    "type": "reorder",
+                                    "ui_type": "arrange_the_sentence",
+                                    "question": "Arrange: 'in / the / bed / is / bedroom / the'",
+                                    "options": [{"id": "0", "text": "the"}, {"id": "1", "text": "bed"}, {"id": "2", "text": "is"}, {"id": "3", "text": "in"}, {"id": "4", "text": "the"}, {"id": "5", "text": "bedroom"}],
+                                    "correct_answer": "the bed is in the bedroom",
+                                    "explanation": "Correct sentence structure."
+                                },
+                                {
+                                    "id": "ex_v2_6",
+                                    "type": "translate",
+                                    "ui_type": "translation_choice",
+                                    "question": "Translation of: 'Phòng tắm'",
+                                    "options": [{"id": "0", "text": "bathroom", "is_correct": True}, {"id": "1", "text": "garden", "is_correct": False}],
+                                    "correct_answer": "bathroom",
+                                    "explanation": "Phòng tắm is bathroom."
+                                },
+                                {
+                                    "id": "ex_v2_7",
+                                    "type": "translate",
+                                    "ui_type": "speaking_repeat",
+                                    "question": "Repeat: 'The desk is clean.'",
+                                    "correct_answer": "The desk is clean",
+                                    "explanation": "Evaluate pronunciation."
+                                },
+                                {
+                                    "id": "ex_v2_8",
+                                    "type": "fill_blank",
+                                    "ui_type": "dictation",
+                                    "question": "Dictation: Listen and write '{blank}'",
+                                    "correct_answer": "Open the window",
+                                    "explanation": "Write what you hear."
+                                },
+                                {
+                                    "id": "ex_v2_9",
+                                    "type": "multiple_choice",
+                                    "ui_type": "image_based_choice",
+                                    "question": "Select the image that shows a table.",
+                                    "options": [{"id": "0", "text": "Table", "is_correct": True}, {"id": "1", "text": "Chair", "is_correct": False}],
+                                    "correct_answer": "Table",
+                                    "explanation": "Card with table."
+                                },
+                                {
+                                    "id": "ex_v2_10",
+                                    "type": "multiple_choice",
+                                    "ui_type": "vocabulary_flashcard",
+                                    "question": "Learn: 'Furnishings'",
+                                    "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
+                                    "correct_answer": "Got it!",
+                                    "explanation": "Furniture and appliances in a room."
+                                }
+                            ]
                         },
                     ],
                 },
@@ -1447,7 +1801,8 @@ async def seed_sample_data(
         )
         existing_course = result.scalar_one_or_none()
         if existing_course:
-            continue
+            await db.delete(existing_course)
+            await db.flush()
 
         unit_seed = course_data.pop("units")
         category_slug = course_data.pop("category_slug")
@@ -1474,11 +1829,12 @@ async def seed_sample_data(
             created["units"] += 1
 
             for lesson_data in lesson_seed:
+                exercises = lesson_data.pop("exercises", [])
                 lesson = Lesson(
                     **lesson_data,
                     course_id=course.id,
                     unit_id=unit.id,
-                    content={"type": "seed", "version": 1},
+                    content={"exercises": exercises, "version": 1},
                     pass_threshold=70,
                     lesson_type="lesson",
                 )
@@ -1542,6 +1898,123 @@ async def get_system_info(
                 "vocabulary": vocab_count,
                 "achievements": achievement_count,
             }
+        }
+    )
+
+
+from pydantic import BaseModel
+
+class SystemInfoUpdate(BaseModel):
+    app_name: Optional[str] = None
+    debug: Optional[bool] = None
+    log_level: Optional[str] = None
+    token_expire_minutes: Optional[int] = None
+    refresh_token_days: Optional[int] = None
+    cors_origins: Optional[str] = None
+    ai_service_url: Optional[str] = None
+
+@router.put("/system-info", response_model=ApiResponse[dict])
+async def update_system_info(
+    payload: SystemInfoUpdate,
+    admin_user: User = Depends(require_admin)
+):
+    """Update system configuration. Admin only."""
+    from app.core.config import settings as app_settings
+    from pathlib import Path
+
+    updates = {}
+    
+    if payload.app_name is not None:
+        app_settings.APP_NAME = payload.app_name
+        updates["APP_NAME"] = payload.app_name
+        
+    if payload.debug is not None:
+        app_settings.DEBUG = payload.debug
+        updates["DEBUG"] = payload.debug
+        
+    if payload.log_level is not None:
+        level = payload.log_level.upper()
+        if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+            app_settings.LOG_LEVEL = level
+            updates["LOG_LEVEL"] = level
+            
+    if payload.token_expire_minutes is not None:
+        app_settings.ACCESS_TOKEN_EXPIRE_MINUTES = payload.token_expire_minutes
+        updates["ACCESS_TOKEN_EXPIRE_MINUTES"] = payload.token_expire_minutes
+        
+    if payload.refresh_token_days is not None:
+        app_settings.REFRESH_TOKEN_EXPIRE_DAYS = payload.refresh_token_days
+        updates["REFRESH_TOKEN_EXPIRE_DAYS"] = payload.refresh_token_days
+        
+    if payload.cors_origins is not None:
+        app_settings.ALLOWED_ORIGINS = payload.cors_origins
+        updates["ALLOWED_ORIGINS"] = payload.cors_origins
+        
+    if payload.ai_service_url is not None:
+        app_settings.AI_SERVICE_URL = payload.ai_service_url
+        updates["AI_SERVICE_URL"] = payload.ai_service_url
+
+    if updates:
+        project_root = Path(__file__).parent.parent.parent
+        env_file = project_root / ".env"
+        if app_settings.APP_ENV == "production":
+            prod_env = project_root / ".env.production"
+            if prod_env.exists():
+                env_file = prod_env
+        
+        try:
+            content = env_file.read_text() if env_file.exists() else ""
+            lines = content.splitlines()
+            new_lines = []
+            updated_keys = set()
+            
+            for line in lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    new_lines.append(line)
+                    continue
+                if "=" in stripped:
+                    key, val = stripped.split("=", 1)
+                    key = key.strip()
+                    if key in updates:
+                        new_val = updates[key]
+                        if isinstance(new_val, bool):
+                            new_val_str = "true" if new_val else "false"
+                        else:
+                            new_val_str = str(new_val)
+                        new_lines.append(f"{key}={new_val_str}")
+                        updated_keys.add(key)
+                    else:
+                        new_lines.append(line)
+                else:
+                    new_lines.append(line)
+                    
+            for key, val in updates.items():
+                if key not in updated_keys:
+                    if isinstance(val, bool):
+                        val_str = "true" if val else "false"
+                    else:
+                        val_str = str(val)
+                    new_lines.append(f"{key}={val_str}")
+                    
+            env_file.write_text("\n".join(new_lines) + "\n")
+        except Exception as e:
+            # Silently fallback if unable to write file in docker environment
+            pass
+
+    return ApiResponse(
+        success=True,
+        message="System configuration updated successfully",
+        data={
+            "app_name": app_settings.APP_NAME,
+            "app_env": app_settings.APP_ENV,
+            "debug": app_settings.DEBUG,
+            "api_prefix": app_settings.API_V1_PREFIX,
+            "log_level": app_settings.LOG_LEVEL,
+            "token_expire_minutes": app_settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            "refresh_token_days": app_settings.REFRESH_TOKEN_EXPIRE_DAYS,
+            "cors_origins": app_settings.cors_origins,
+            "ai_service_url": app_settings.AI_SERVICE_URL,
         }
     )
 

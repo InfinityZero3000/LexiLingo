@@ -36,7 +36,7 @@ class SmartRouter:
         # Model latency estimates (seconds)
         self.latency_estimates = {
             "local_fast": 3.0,      # gemma2:2b, phi-3:mini
-            "local_quality": 20.0,  # qwen3:4b-thinking
+            "local_quality": 20.0,  # lexilingo-qwen3-1.7b
             "cloud": 2.0,           # Gemini
         }
         
@@ -144,7 +144,7 @@ class SmartRouter:
         """Get actual model name for model type."""
         mapping = {
             "local_fast": os.getenv("OLLAMA_MODEL_SIMPLE", "gemma2:2b"),
-            "local_quality": os.getenv("OLLAMA_MODEL", "qwen3:4b"),
+            "local_quality": os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b"),
             "cloud": "gemini",
         }
         return mapping[model_type]

@@ -90,10 +90,11 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
   Widget _buildCardFront() {
     final vocabulary = widget.card.vocabularyItem;
+    final hasGeneralTag = vocabulary.tags?.contains('general') ?? false;
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
+      height: 380,
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
@@ -107,7 +108,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -130,57 +131,94 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // Word
-          Text(
-            vocabulary.word,
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 16),
-
-          // Pronunciation with Speak Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (vocabulary.pronunciation != null)
-                Text(
-                  vocabulary.pronunciation!,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
-                  ),
+          if (hasGeneralTag) ...[
+            // Hidden word placeholder for audio questions
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: SpeakIconButton(
+                        text: vocabulary.word,
+                        size: 48,
+                        color: AppColors.primary,
+                        autoplay: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'vocabulary.audioQuestionHint'.tr(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              const SizedBox(width: 8),
-              // TTS Speak Button
-              SpeakIconButton(
-                text: vocabulary.word,
-                size: 24,
-                color: AppColors.primary,
               ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Part of speech
-          Text(
-            vocabulary.partOfSpeech,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
             ),
-          ),
+          ] else ...[
+            // Word
+            Text(
+              vocabulary.word,
+              style: const TextStyle(
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
 
-          const Spacer(),
+            const SizedBox(height: 16),
+
+            // Pronunciation with Speak Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (vocabulary.pronunciation != null)
+                  Text(
+                    vocabulary.pronunciation!,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                // TTS Speak Button
+                SpeakIconButton(
+                  text: vocabulary.word,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Part of speech
+            Text(
+              vocabulary.partOfSpeech,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+
+            const Spacer(),
+          ],
 
           // Tap hint
           Row(
@@ -189,13 +227,17 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               Icon(
                 Icons.touch_app,
                 size: 20,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 8),
               Text(
                 'vocabulary.tapToReveal'.tr(),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -209,10 +251,11 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   Widget _buildCardBack() {
     final vocabulary = widget.card.vocabularyItem;
     final examples = vocabulary.examples;
+    final hasGeneralTag = vocabulary.tags?.contains('general') ?? false;
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 400, maxHeight: 500),
+      height: 380,
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
@@ -226,11 +269,59 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (hasGeneralTag) ...[
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      vocabulary.word,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (vocabulary.pronunciation != null)
+                          Text(
+                            vocabulary.pronunciation!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        SpeakIconButton(
+                          text: vocabulary.word,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      vocabulary.partOfSpeech,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 24),
+            ],
             // Definition section
             Text(
               'vocabulary.definition'.tr(),
@@ -246,11 +337,12 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               style: const TextStyle(fontSize: 18, height: 1.5),
             ),
 
-            // Vietnamese translation
-            if (vocabulary.vietnameseTranslation != null) ...[
+            // Localized translation
+            if (vocabulary.getTranslation(context.locale.languageCode) !=
+                null) ...[
               const SizedBox(height: 24),
               Text(
-                'vocabulary.vietnameseLabel'.tr(),
+                'vocabulary.translationLabel'.tr(),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -259,7 +351,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               ),
               const SizedBox(height: 8),
               Text(
-                vocabulary.vietnameseTranslation!,
+                vocabulary.getTranslation(context.locale.languageCode)!,
                 style: const TextStyle(fontSize: 18, height: 1.5),
               ),
             ],
@@ -296,7 +388,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                               example,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -305,7 +399,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                           SpeakIconButton(
                             text: example,
                             size: 18,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -320,7 +416,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               child: Text(
                 'vocabulary.ratingQuestion'.tr(),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),

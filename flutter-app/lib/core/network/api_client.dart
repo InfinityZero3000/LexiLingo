@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../error/exceptions.dart';
 import 'api_config.dart';
@@ -84,6 +85,73 @@ class ApiClient {
   }) async {
     final uri = _resolve(path);
     return _send('POST', uri, headers: headers, body: body, timeout: timeout);
+  }
+
+  /// PATCH request returning unwrapped data
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    Duration? timeout,
+  }) async {
+    final uri = _resolve(path);
+    return _send('PATCH', uri, headers: headers, body: body, timeout: timeout);
+  }
+
+  /// POST multipart request returning unwrapped data.
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, String>? headers,
+    Map<String, String>? fields,
+    required String fileField,
+    required Uint8List fileBytes,
+    required String filename,
+    Duration? timeout,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      throw ServerException('No network connection');
+    }
+
+    final uri = _resolve(path);
+
+    Future<Map<String, dynamic>> sendOnce() async {
+      final resolvedHeaders = await _buildHeaders(headers);
+      resolvedHeaders.removeWhere(
+        (key, _) => key.toLowerCase() == 'content-type',
+      );
+
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(resolvedHeaders);
+      request.fields.addAll(fields ?? <String, String>{});
+      request.files.add(
+        http.MultipartFile.fromBytes(fileField, fileBytes, filename: filename),
+      );
+
+      final streamed = await request.send().timeout(
+        timeout ?? ApiConfig.receiveTimeout,
+      );
+      final response = await http.Response.fromStream(streamed);
+      final apiResponse = ApiResponse(
+        statusCode: response.statusCode,
+        uri: uri,
+        body: response.body,
+      );
+
+      await _notifyResponse(apiResponse);
+      return await _handleResponse(apiResponse);
+    }
+
+    try {
+      return await sendOnce();
+    } on TokenRefreshedException {
+      return await sendOnce();
+    } catch (e) {
+      await _notifyError(
+        ApiError(method: 'POST', uri: uri, cause: e, message: e.toString()),
+      );
+      if (e is ServerException) rethrow;
+      throw ServerException('POST multipart ${uri.path} failed: $e');
+    }
   }
 
   /// GET request returning full ApiResponseEnvelope

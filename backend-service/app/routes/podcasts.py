@@ -14,10 +14,10 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 
 import httpx
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -149,12 +149,135 @@ CURATED_CATEGORIES = [
 ]
 
 
+def _proxy_podcast_urls(podcast: dict, request: Request) -> dict:
+    """Rewrite podcast artwork_url to go through backend proxy to avoid CORS."""
+    proxied = podcast.copy()
+    artwork_url = podcast.get("artwork_url")
+    if artwork_url:
+        base_url = str(request.base_url).rstrip("/")
+        api_prefix = settings.API_V1_PREFIX.strip("/")
+        podcasts_prefix = router.prefix.strip("/")
+        path_prefix = f"{api_prefix}/{podcasts_prefix}".strip("/")
+        proxied["artwork_url"] = f"{base_url}/{path_prefix}/proxy/image?url={quote(artwork_url)}"
+    return proxied
+
+
+# CORS header included on every proxy response so browsers can load images even
+# when app-level CORS middleware is disabled (edge handles it for the API, but
+# edge proxies often strip CORS from error responses like 502/404/403).
+_PROXY_CORS = {"Access-Control-Allow-Origin": "*"}
+
+
+@router.get("/proxy/image", summary="Proxy podcast artwork images to bypass CORS")
+async def proxy_image(url: str = Query(..., description="The image URL to proxy")):
+    """
+    Proxy podcast artwork images from any public host to bypass browser CORS.
+    Includes SSRF protection and validates that the content is an image.
+    """
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only HTTP/HTTPS image URLs are allowed.",
+                headers=_PROXY_CORS,
+            )
+        host = (parsed_url.hostname or "").lower()
+
+        # SSRF protection: block private/local hosts
+        private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
+                            "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
+                            "172.22.", "172.23.", "172.24.", "172.25.", "172.26.",
+                            "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
+                            "169.254.", "fc00", "fd", "fe80")
+        if any(host == p or host.startswith(p) for p in private_prefixes):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Internal/private URLs are not allowed.",
+                headers=_PROXY_CORS,
+            )
+
+        # Resolve hostname and verify the IP is public
+        from ipaddress import ip_address
+        import socket
+        try:
+            resolved_ip = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
+            if ip_address(resolved_ip).is_private or ip_address(resolved_ip).is_loopback:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Internal/private URLs are not allowed.",
+                    headers=_PROXY_CORS,
+                )
+        except (socket.gaierror, ValueError):
+            pass  # DNS resolution failed or invalid IP, httpx will fail
+
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid URL.",
+            headers=_PROXY_CORS,
+        )
+
+    # Reduced timeout to 8s so FastAPI responds before any upstream proxy can
+    # generate its own 502 (which would lack CORS headers entirely).
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        try:
+            resp = await client.get(
+                url,
+                headers={"User-Agent": "LexiLingo/1.0 (English learning app; podcast-artwork-proxy)"},
+                follow_redirects=True
+            )
+            if resp.status_code != 200:
+                raise HTTPException(
+                    status_code=resp.status_code,
+                    detail=f"Failed to fetch image: HTTP {resp.status_code}",
+                    headers=_PROXY_CORS,
+                )
+
+            # Content-type check: only allow images
+            content_type = resp.headers.get("content-type", "")
+            if content_type and not content_type.startswith("image/"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="URL did not return an image content type.",
+                    headers=_PROXY_CORS,
+                )
+
+            return Response(
+                content=resp.content,
+                media_type=content_type or "image/jpeg",
+                headers={
+                    **_PROXY_CORS,
+                    "Cache-Control": "public, max-age=86400",
+                },
+            )
+        except HTTPException:
+            raise
+        except httpx.RequestError as e:
+            logger.error("HTTP request error proxying podcast image %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to reach image source: {str(e)}",
+                headers=_PROXY_CORS,
+            )
+        except Exception as e:
+            logger.error("Unexpected error proxying podcast image %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal proxy error.",
+                headers=_PROXY_CORS,
+            )
+
+
 # ============================================================================
 # 1. Search Podcasts
 # ============================================================================
 
 @router.get("/search")
 async def search_podcasts(
+    request: Request,
     q: str = Query(..., description="Search query"),
     max_results: int = Query(10, ge=1, le=50, description="Max number of results"),
     db: AsyncSession = Depends(get_db),
@@ -173,8 +296,9 @@ async def search_podcasts(
     if not settings.PODCASTINDEX_KEY or not settings.PODCASTINDEX_SECRET:
         logger.warning("PodcastIndex API keys not configured, falling back to curated list.")
         grouped = _group_curated_by_cefr()
+        proxied_curated = [_proxy_podcast_urls(p, request) for p in CURATED_PODCASTS]
         return {
-            "podcasts": CURATED_PODCASTS,
+            "podcasts": proxied_curated,
             "source": "curated_fallback",
             "is_stale": False,
             "note": "PodcastIndex API not configured. Showing curated list.",
@@ -196,13 +320,16 @@ async def search_podcasts(
         )
 
         podcasts = result.data.get("podcasts", [])
+        proxied_podcasts = []
         for podcast in podcasts:
-            if "cefr_level" not in podcast or not podcast["cefr_level"]:
-                podcast["cefr_level"] = _estimate_cefr(podcast.get("description", ""))
-                podcast["cefr_info"] = CEFR_LEVELS.get(podcast["cefr_level"], {})
+            p_copy = podcast.copy()
+            if "cefr_level" not in p_copy or not p_copy["cefr_level"]:
+                p_copy["cefr_level"] = _estimate_cefr(p_copy.get("description", ""))
+            p_copy["cefr_info"] = CEFR_LEVELS.get(p_copy["cefr_level"], {})
+            proxied_podcasts.append(_proxy_podcast_urls(p_copy, request))
 
         return {
-            "podcasts": podcasts,
+            "podcasts": proxied_podcasts,
             "source": result.source,
             "is_stale": result.is_stale,
         }
@@ -225,7 +352,7 @@ async def search_podcasts(
 # ============================================================================
 
 @router.get("/curated")
-async def get_curated_podcasts():
+async def get_curated_podcasts(request: Request):
     """
     Return a handpicked list of English-learning podcasts grouped by CEFR level.
 
@@ -233,8 +360,9 @@ async def get_curated_podcasts():
     Returns podcasts in each CEFR band with category metadata.
     """
     grouped = _group_curated_by_cefr()
+    proxied_curated = [_proxy_podcast_urls(p, request) for p in CURATED_PODCASTS]
     return {
-        "podcasts": CURATED_PODCASTS,
+        "podcasts": proxied_curated,
         "categories": grouped,
     }
 
@@ -245,6 +373,7 @@ async def get_curated_podcasts():
 
 @router.get("/episodes")
 async def get_podcast_episodes(
+    request: Request,
     feed_url: str = Query(..., description="RSS feed URL (URL-encoded)"),
     limit: int = Query(20, ge=1, le=50, description="Number of episodes to return"),
     db: AsyncSession = Depends(get_db),
@@ -296,8 +425,22 @@ async def get_podcast_episodes(
             db_ttl=86400,       # 24 hours
         )
 
+        episodes = result.data.get("episodes", [])
+        base_url = str(request.base_url).rstrip("/")
+        api_prefix = settings.API_V1_PREFIX.strip("/")
+        podcasts_prefix = router.prefix.strip("/")
+        path_prefix = f"{api_prefix}/{podcasts_prefix}".strip("/")
+
+        proxied_episodes = []
+        for ep in episodes:
+            proxied_ep = ep.copy()
+            img_url = ep.get("image_url")
+            if img_url:
+                proxied_ep["image_url"] = f"{base_url}/{path_prefix}/proxy/image?url={quote(img_url)}"
+            proxied_episodes.append(proxied_ep)
+
         return {
-            "episodes": result.data.get("episodes", []),
+            "episodes": proxied_episodes,
             "podcast_title": result.data.get("podcast_title", ""),
             "podcast_description": result.data.get("podcast_description", ""),
             "feed_url": feed_url,

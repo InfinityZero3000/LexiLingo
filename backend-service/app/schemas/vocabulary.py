@@ -70,6 +70,16 @@ class UserVocabularyResponse(BaseModel):
     repetitions: int
     next_review_date: datetime
     last_reviewed_at: Optional[datetime]
+
+    # FSRS data
+    fsrs_stability: Optional[float] = 0.0
+    fsrs_difficulty: Optional[float] = 0.0
+    fsrs_elapsed_days: Optional[int] = 0
+    fsrs_scheduled_days: Optional[int] = 0
+    fsrs_reps: Optional[int] = 0
+    fsrs_lapses: Optional[int] = 0
+    fsrs_state: Optional[int] = 0
+    fsrs_last_review: Optional[datetime] = None
     
     # Statistics
     total_reviews: int
@@ -159,6 +169,20 @@ class ReviewResponse(BaseModel):
     streak_bonus: bool
     next_review_in_days: int
     message: str
+
+
+class PronunciationEvaluationResponse(BaseModel):
+    """Response for vocabulary pronunciation evaluation."""
+
+    vocabulary_id: uuid.UUID
+    target_word: str
+    score: float
+    stars: int
+    feedback_label: str
+    transcription: Optional[str] = None
+    phoneme_scores: Dict[str, float] = Field(default_factory=dict)
+    errors: List[Dict[str, Any]] = Field(default_factory=list)
+    duration_ms: Optional[float] = None
 
 
 class VocabularyReviewHistoryItem(BaseModel):

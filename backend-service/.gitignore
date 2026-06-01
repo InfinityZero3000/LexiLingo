@@ -61,7 +61,7 @@ htmlcov/
 *.sqlite3
 seed_*
 !tests/seed_*
-
+data/
 
 # Logs
 *.log

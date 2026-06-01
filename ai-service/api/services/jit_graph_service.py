@@ -1,4 +1,4 @@
-"""JIT mini-graph extraction service for GraphCAG.
+"""JIT mini-graph extraction service for TraceCAG.
 
 This service is designed for low-latency query-time extraction:
 - Entity extraction via GLiNER (lazy-loaded)

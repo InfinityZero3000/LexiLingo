@@ -14,6 +14,7 @@ export type LoginResponse = {
 
 export const loginRequest = async (email: string, password: string) => {
   return apiFetch<LoginResponse>(`${ENV.backendUrl}/auth/login`, {
+    skipAuth: true,
     method: "POST",
     body: JSON.stringify({ email, password })
   });
@@ -21,6 +22,7 @@ export const loginRequest = async (email: string, password: string) => {
 
 export const googleLoginRequest = async (idToken: string) => {
   return apiFetch<LoginResponse>(`${ENV.backendUrl}/auth/google`, {
+    skipAuth: true,
     method: "POST",
     body: JSON.stringify({ id_token: idToken, source: "admin" })
   });
@@ -30,6 +32,7 @@ export const refreshTokenRequest = async (refreshToken: string) => {
   return apiFetch<{ access_token: string; refresh_token: string; token_type: string }>(
     `${ENV.backendUrl}/auth/refresh`,
     {
+      skipAuth: true,
       method: "POST",
       body: JSON.stringify({ refresh_token: refreshToken })
     }

@@ -7,6 +7,7 @@ import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
 import '../widgets/lesson_content_widget.dart';
+import '../widgets/premium_exercise_widgets.dart';
 import '../../../voice/presentation/widgets/tts_speed_selector.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -158,6 +159,164 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     if (exercise == null) {
       return Center(child: Text('lesson.noExerciseAvailable'.tr()));
+    }
+
+    final uiType = exercise.uiType;
+    if (uiType != null) {
+      switch (uiType) {
+        case 'arrange_the_sentence':
+          return ArrangeSentenceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'categorization':
+          return CategorizationWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'cognitive_fluidity':
+          return CognitiveFluidityWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'collocation_choice':
+          return CollocationChoiceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'dialogue_completion':
+          return DialogueCompletionWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'dictation':
+          return DictationWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'fill_in_the_blank':
+          return FillBlankWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'grammar_correction':
+          return GrammarCorrectionWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'image_based_choice':
+          return ImageBasedChoiceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'listen_and_choose':
+          return ListeningChoiceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'match_word_to_meaning':
+          return MatchWordMeaningWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'multiple_choice':
+          return MultipleChoiceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'pronunciation_practice':
+          return PronunciationPracticeWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'reading_comprehension':
+          return ReadingComprehensionWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'short_writing_answer':
+          return ShortWritingAnswerWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'speaking_repeat':
+          return SpeakingRepeatWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'translation_choice':
+          return TranslationChoiceWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'true_or_false':
+          return TrueOrFalseWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+        case 'vocabulary_flashcard':
+          return VocabularyFlashcardWidget(
+            exercise: exercise,
+            onAnswer: (answer) => provider.submitAnswer(answer),
+            isAnswered: provider.isCurrentAnswered,
+            userAnswer: provider.currentUserAnswer,
+            isCorrect: provider.isCurrentCorrect,
+          );
+      }
     }
 
     switch (exercise.type) {
@@ -497,9 +656,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('lesson.exitLessonTitle'.tr()),
-        content: Text(
-          'lesson.exitLessonMessage'.tr(),
-        ),
+        content: Text('lesson.exitLessonMessage'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

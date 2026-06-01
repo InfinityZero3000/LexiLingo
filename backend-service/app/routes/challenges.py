@@ -500,12 +500,12 @@ async def claim_daily_bonus(
 
     # Award XP and update numeric level/rank
     from app.services.level_service import calculate_numeric_level
-    from app.services.rank_service import calculate_rank as calc_rank
+    from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
 
     current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
     current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
     new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
-    current_user.rank = new_rank_info.rank.value
+    apply_rank_info_to_user(current_user, new_rank_info)
 
     # Award gems
     await WalletCRUD.add_gems(
@@ -601,12 +601,12 @@ async def claim_challenge_reward(
     
     # Award XP and update numeric level/rank
     from app.services.level_service import calculate_numeric_level
-    from app.services.rank_service import calculate_rank as calc_rank
+    from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
     
     current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
     current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
     new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
-    current_user.rank = new_rank_info.rank.value
+    apply_rank_info_to_user(current_user, new_rank_info)
     
     # Award gems if any
     if gems_reward > 0:
@@ -652,4 +652,3 @@ async def claim_challenge_reward(
             "claimed_at": datetime.now(timezone.utc).isoformat(),
         }
     )
-

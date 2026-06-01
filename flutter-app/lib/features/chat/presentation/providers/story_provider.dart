@@ -10,6 +10,7 @@ import '../../domain/repositories/story_repository.dart';
 class StoryProvider extends ChangeNotifier {
   final StoryRepository repository;
   static const String _recentTopicsKey = 'recent_topic_ids';
+  static const String _topicSessionPrefix = 'topic_session_';
 
   StoryProvider({required this.repository}) {
     _loadRecentlyUsed();
@@ -198,7 +199,7 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   }) async {
     // Clear previous session state
     clearActiveSession();
@@ -245,9 +246,68 @@ class StoryProvider extends ChangeNotifier {
         _nextMessageCursor = null;
         _isLoadingMoreMessages = false;
         _isLoading = false;
+        _saveTopicSession(storyId, session);
         notifyListeners();
         return true;
       },
+    );
+  }
+
+  /// Restore an existing topic session for [storyId], or start a new one.
+  ///
+  /// On success the provider state is ready for the chat page.
+  Future<bool> restoreOrStartTopicSession({
+    required String userId,
+    required String storyId,
+    String? sessionTitle,
+    String preferredLlm = 'tracecag',
+  }) async {
+    final saved = await _loadSavedTopicSession(storyId);
+
+    if (saved != null) {
+      _isLoading = true;
+      _sessionError = null;
+      notifyListeners();
+
+      final result = await repository.getTopicMessagesPaged(
+        saved.sessionId,
+        limit: _messagesPageSize,
+      );
+
+      final restored = result.fold((_) => false, (page) {
+        _currentSession = saved;
+        _messages = page.messages.isNotEmpty
+            ? page.messages
+            : [
+                TopicChatMessage(
+                  id: 'opening_${saved.sessionId}',
+                  sessionId: saved.sessionId,
+                  content: saved.openingMessage,
+                  isUser: false,
+                  timestamp: saved.createdAt,
+                ),
+              ];
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        _isLoadingMoreMessages = false;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      });
+
+      if (restored) return true;
+
+      // Session expired or not found — discard stale cache
+      _isLoading = false;
+      _clearSavedTopicSession(storyId);
+      notifyListeners();
+    }
+
+    return startTopicSession(
+      userId: userId,
+      storyId: storyId,
+      sessionTitle: sessionTitle,
+      preferredLlm: preferredLlm,
     );
   }
 
@@ -418,6 +478,39 @@ class StoryProvider extends ChangeNotifier {
   Future<Map<String, dynamic>?> checkLlmHealth() async {
     final result = await repository.checkLlmHealth();
     return result.fold((failure) => null, (health) => health);
+  }
+
+  Future<void> _saveTopicSession(String storyId, TopicSession session) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        '$_topicSessionPrefix$storyId',
+        jsonEncode(session.toJson()),
+      );
+    } catch (e) {
+      debugPrint('Error saving topic session: $e');
+    }
+  }
+
+  Future<TopicSession?> _loadSavedTopicSession(String storyId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('$_topicSessionPrefix$storyId');
+      if (raw == null) return null;
+      return TopicSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error loading saved topic session: $e');
+      return null;
+    }
+  }
+
+  Future<void> _clearSavedTopicSession(String storyId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('$_topicSessionPrefix$storyId');
+    } catch (e) {
+      debugPrint('Error clearing saved topic session: $e');
+    }
   }
 
   Future<void> _saveRecentlyUsed() async {

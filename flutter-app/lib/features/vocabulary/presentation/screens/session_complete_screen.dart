@@ -116,7 +116,10 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Title
                   Text(
                     'flashcard.sessionCompleteTitle'.tr(),
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
 
@@ -125,7 +128,10 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                   // Motivational message
                   Text(
                     _getMotivationalMessage(accuracy),
-                    style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
 
@@ -148,7 +154,10 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                             label: 'flashcard.correctAnswers'.tr(),
                             value: '${session.correctCount}',
                             subtitle: 'flashcard.accuracySubtitle'.tr(
-                                namedArgs: {'percent': accuracy.toStringAsFixed(1)}),
+                              namedArgs: {
+                                'percent': accuracy.toStringAsFixed(1),
+                              },
+                            ),
                             color: AppColors.greenSuccess,
                           ),
                           const SizedBox(height: 16),
@@ -163,7 +172,9 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                             icon: Icons.timer,
                             label: 'flashcard.timeSpent'.tr(),
                             value: _formatDuration(duration),
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -285,7 +296,10 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -302,7 +316,9 @@ class _StatCard extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

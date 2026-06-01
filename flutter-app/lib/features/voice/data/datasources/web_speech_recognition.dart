@@ -57,14 +57,17 @@ class WebSpeechRecognition {
   }
 
   /// Start listening for speech
-  Stream<WebSpeechResult> startListening({String language = 'en-US'}) {
+  Stream<WebSpeechResult> startListening({
+    String language = 'en-US',
+    bool continuous = false,
+  }) {
     _resultController?.close();
     _errorController?.close();
 
     _resultController = StreamController<WebSpeechResult>.broadcast();
     _errorController = StreamController<String>.broadcast();
 
-    if (!initialize(language: language)) {
+    if (!initialize(language: language, continuous: continuous)) {
       _resultController!.addError('Speech recognition not supported');
       return _resultController!.stream;
     }

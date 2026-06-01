@@ -533,12 +533,14 @@ class LexiChatDataSource {
                 final rawCorrections = json['corrections'] as List?;
                 if (rawCorrections != null) {
                   for (final c in rawCorrections) {
-                    corrections.add(LexiCorrection(
-                      errorSpan: c['error_span'] ?? '',
-                      correction: c['correction'] ?? '',
-                      errorType: c['error_type'] ?? '',
-                      explanation: c['explanation'] ?? '',
-                    ));
+                    corrections.add(
+                      LexiCorrection(
+                        errorSpan: c['error_span'] ?? '',
+                        correction: c['correction'] ?? '',
+                        errorType: c['error_type'] ?? '',
+                        explanation: c['explanation'] ?? '',
+                      ),
+                    );
                   }
                 }
                 final linkedConcepts = <String>[];
@@ -548,9 +550,7 @@ class LexiChatDataSource {
                 }
                 Map<String, dynamic>? scores;
                 if (json['scores'] != null) {
-                  scores = Map<String, dynamic>.from(
-                    json['scores'] as Map,
-                  );
+                  scores = Map<String, dynamic>.from(json['scores'] as Map);
                 }
                 yield LexiStreamDone(
                   messageId: json['message_id'] as String? ?? '',
@@ -566,7 +566,10 @@ class LexiChatDataSource {
                       : const {},
                 );
               } catch (e) {
-                logError(_tag, 'sendMessageStream: failed to parse done event: $e');
+                logError(
+                  _tag,
+                  'sendMessageStream: failed to parse done event: $e',
+                );
               }
               break;
             case 'error':

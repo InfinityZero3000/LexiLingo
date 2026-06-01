@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/domain/entities/chat_message.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/markdown_message_content.dart';
-import 'package:intl/intl.dart';
 
 /// Message Reaction data
 class MessageReaction {
@@ -228,7 +227,9 @@ class _MessageBubbleState extends State<MessageBubble>
                                       fontSize: 10,
                                       color: isUser
                                           ? Colors.white.withValues(alpha: 0.7)
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(width: 8),

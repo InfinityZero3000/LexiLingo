@@ -25,8 +25,11 @@ from app.schemas.level import (
     XPAwardRequest,
     XPAwardResponse
 )
-from app.services.level_service import LevelService, get_numeric_level_progress
-from app.services.rank_service import calculate_rank as calc_rank
+from app.services.level_service import LevelService, get_numeric_level_progress, calculate_numeric_level
+from app.services.rank_service import (
+    apply_rank_info_to_user,
+    calculate_rank as calc_rank,
+)
 
 router = APIRouter()
 
@@ -72,6 +75,11 @@ def _serialize_user_response(user: User) -> UserResponse:
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
         numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
+        rank_score=float(getattr(user, "rank_score", 0) or 0),
+        rank_level_score=float(getattr(user, "rank_level_score", 0) or 0),
+        rank_proficiency_score=float(
+            getattr(user, "rank_proficiency_score", 0) or 0,
+        ),
         role_id=getattr(user, "role_id", None),
         role_slug=role_slug,
         role_level=role_level,
@@ -82,13 +90,23 @@ def _serialize_user_response(user: User) -> UserResponse:
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get current user profile.
     
     Requires authentication.
     """
+    # Always recalculate rank on profile fetch to ensure UI is up-to-date
+    # with the latest gamification constants
+    rank_info = calc_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level or "A1"
+    )
+    apply_rank_info_to_user(current_user, rank_info)
+    await db.commit()
+    
     return _serialize_user_response(current_user)
 
 
@@ -108,6 +126,12 @@ async def update_current_user_profile(
     
     for field, value in update_dict.items():
         setattr(current_user, field, value)
+        
+    rank_info = calc_rank(
+        numeric_level=current_user.numeric_level or 1,
+        proficiency_level=current_user.level or "A1"
+    )
+    apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     await db.refresh(current_user)
@@ -254,7 +278,8 @@ async def get_user_level(
 
 @router.get("/me/level-full", response_model=ApiResponse[LevelFullResponse])
 async def get_user_level_full(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get full level info including numeric level, rank, and proficiency.
@@ -281,6 +306,8 @@ async def get_user_level_full(
         numeric_level=level_info.numeric_level,
         proficiency_level=current_user.level
     )
+    apply_rank_info_to_user(current_user, rank_info)
+    await db.commit()
     
     return ApiResponse(
         success=True,
@@ -303,6 +330,7 @@ async def get_user_level_full(
             rank_score=round(rank_info.score, 2),
             rank_color=rank_info.color,
             rank_icon=rank_info.icon,
+            rank_icon_url=rank_info.icon_url,
         ),
         message="Full level information retrieved successfully"
     )
@@ -509,11 +537,17 @@ async def award_xp(
     # Check if user leveled up
     leveled_up, previous_tier = LevelService.check_level_up(old_xp, new_xp)
     
-    # Update user XP and level
+    # Update user XP, level, numeric_level, and rank
     current_user.total_xp = new_xp
     if leveled_up:
         new_level_status = LevelService.calculate_level_status(new_xp)
         current_user.level = new_level_status.current_tier.code
+    
+    current_user.numeric_level = calculate_numeric_level(new_xp)
+    
+    # Recalculate rank
+    rank_info = calc_rank(current_user.numeric_level, current_user.level or "A1")
+    apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     await db.refresh(current_user)

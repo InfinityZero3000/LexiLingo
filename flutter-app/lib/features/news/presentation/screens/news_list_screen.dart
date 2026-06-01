@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -58,32 +59,10 @@ class _NewsListScreenState extends State<NewsListScreen> {
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-              // ── Header ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        style: IconButton.styleFrom(
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.black.withValues(alpha: 0.04),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'news.title'.tr(),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              // ── Header (floating: hiện ngay khi scroll lên) ──
+              const SliverPersistentHeader(
+                floating: true,
+                delegate: _NewsFloatingHeader(),
               ),
 
               // ── Category Tabs ──
@@ -184,75 +163,6 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 },
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────
-  //  CEFR Level Filter
-  // ──────────────────────────────────────
-
-  Widget _buildLevelFilter(bool isDark) {
-    final levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-
-    return Consumer<NewsProvider>(
-      builder: (context, provider, _) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildLevelChip(
-                label: 'All',
-                isSelected: provider.selectedLevel == null,
-                color: AppColors.primary,
-                onTap: () => provider.selectLevel(null),
-              ),
-              const SizedBox(width: 6),
-              ...levels.map((level) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: _buildLevelChip(
-                    label: level,
-                    isSelected: provider.selectedLevel == level,
-                    color: _cefrColor(level),
-                    onTap: () => provider.selectLevel(level),
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLevelChip({
-    required String label,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? color : color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : color,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
           ),
         ),
       ),
@@ -553,4 +463,64 @@ class _NewsListScreenState extends State<NewsListScreen> {
         return AppColors.primary;
     }
   }
+}
+
+// ──────────────────────────────────────
+//  Floating Header Delegate
+// ──────────────────────────────────────
+
+class _NewsFloatingHeader extends SliverPersistentHeaderDelegate {
+  const _NewsFloatingHeader();
+
+  static const double _height = 72.0;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  FloatingHeaderSnapConfiguration get snapConfiguration =>
+      FloatingHeaderSnapConfiguration(
+        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 200),
+      );
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.04),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'news.title'.tr(),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_NewsFloatingHeader old) => false;
 }

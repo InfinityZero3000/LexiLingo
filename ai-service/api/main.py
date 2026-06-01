@@ -210,6 +210,9 @@ app = FastAPI(
     title="LexiLingo AI Service",
     description="AI Service for Chat, STT, TTS with ModelGateway",
     version="2.1.0",
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
+    openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
     lifespan=lifespan,
 )
 
@@ -220,7 +223,14 @@ app.add_middleware(
     allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX or None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Admin-Key", "X-Request-Id", "X-Api-Key"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Admin-Key",
+        "X-Request-Id",
+        "X-Api-Key",
+        "X-Idempotency-Key",
+    ],
     allow_private_network=True,
 )
 
@@ -274,15 +284,17 @@ async def get_ollama_response(message: str) -> Optional[str]:
 
 
 # Include Routers
-from api.routes import chat, stt, tts, admin, ai, lexi_chat, topic_chat
+from api.routes import chat, stt, tts, admin, ai, lexi_chat, topic_chat, ollama_router, pronunciation
 
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["STT"])
+app.include_router(pronunciation.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
 app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
+app.include_router(ollama_router.router, prefix="/api/v1", tags=["Ollama"])
 
 # Static files (dev tools / visualizers)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
@@ -292,8 +304,8 @@ if os.path.isdir(_static_dir):
 
 @app.get("/visualizer", include_in_schema=False)
 async def visualizer_redirect():
-    """Redirect to the GraphCAG Node Visualizer HTML tool."""
-    return RedirectResponse(url="/static/graphcag-node-viz.html")
+    """Redirect to the TraceCAG Node Visualizer HTML tool."""
+    return RedirectResponse(url="/static/trace-cag-node-viz.html")
 
 
 @app.get("/health")

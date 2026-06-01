@@ -225,8 +225,15 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 title: Text(
-                  'wordScramble.wordProgress'.tr(namedArgs: {'current': '${_currentWordIndex + 1}', 'total': '${game.words.length}'}),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  'wordScramble.wordProgress'.tr(
+                    namedArgs: {
+                      'current': '${_currentWordIndex + 1}',
+                      'total': '${game.words.length}',
+                    },
+                  ),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 actions: [
                   Padding(
@@ -245,7 +252,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                   // Progress bar
                   LinearProgressIndicator(
                     value: (_currentWordIndex) / game.words.length,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     color: AppColors.primary,
                     minHeight: 4,
                   ),
@@ -267,7 +276,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           Text(
                             'wordScramble.yourAnswerLabel'.tr(),
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -291,7 +302,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                     border: Border.all(
                                       color: _answerSlots[i] != null
                                           ? AppColors.primary
-                                          : Theme.of(context).colorScheme.outlineVariant,
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.outlineVariant,
                                       width: 1.5,
                                     ),
                                   ),
@@ -303,7 +316,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                       fontSize: 18,
                                       color: (_slotCorrect[i] || _slotWrong[i])
                                           ? Colors.white
-                                          : Theme.of(context).colorScheme.onSurface,
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
@@ -315,7 +330,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                           Text(
                             'wordScramble.availableLettersLabel'.tr(),
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),

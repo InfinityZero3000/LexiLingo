@@ -16,7 +16,7 @@ class StartTopicSessionRequest {
     required this.userId,
     required this.storyId,
     this.sessionTitle,
-    this.preferredLlm = 'graphcag',
+    this.preferredLlm = 'tracecag',
   });
 
   Map<String, dynamic> toJson() => {
@@ -223,7 +223,16 @@ class TopicChatMessage {
     'llm_metadata': llmMetadata?.toJson(),
   };
 
-  String get displayContent => content;
+  String get displayContent {
+    // Strip <think>...</think> blocks (including multiline) from AI responses
+    return content
+        .replaceAll(
+          RegExp(r'<think>[\s\S]*?</think>', caseSensitive: false),
+          '',
+        )
+        .trim();
+  }
+
   bool get hasHints => hints?.hasAnyHints ?? false;
 }
 

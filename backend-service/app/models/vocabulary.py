@@ -5,7 +5,7 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean
+from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
@@ -112,6 +112,7 @@ class VocabularyItem(Base):
     __table_args__ = (
         Index("ix_vocabulary_items_word_lower", "word"),
         Index("ix_vocabulary_items_course_difficulty", "course_id", "difficulty_level"),
+        UniqueConstraint("word", "part_of_speech", name="uq_vocab_word_pos"),
     )
 
 
@@ -168,6 +169,16 @@ class UserVocabulary(Base):
     )
     
     last_reviewed_at: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
+
+    # ===== FSRS Algorithm Fields =====
+    fsrs_stability: Mapped[Optional[float]] = mapped_column(Float, default=0.0, nullable=True)
+    fsrs_difficulty: Mapped[Optional[float]] = mapped_column(Float, default=0.0, nullable=True)
+    fsrs_elapsed_days: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_scheduled_days: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_reps: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_lapses: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_state: Mapped[Optional[int]] = mapped_column(Integer, default=0, nullable=True)
+    fsrs_last_review: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
     
     # ===== Statistics =====
     total_reviews: Mapped[int] = mapped_column(Integer, default=0)

@@ -1,20 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
+import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
+import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 
 /// Lexi Chat Page — Minimalist design with clean conversation UI.
 ///
@@ -38,11 +40,21 @@ class _LexiChatPageState extends State<LexiChatPage>
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
-  // Voice recording
+  // Voice recording (mobile/desktop)
   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
+  bool _isTranscribing = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
+
+  // Web Speech Recognition (web platform)
+  WebSpeechRecognition? _webSpeech;
+  StreamSubscription<WebSpeechResult>? _webSpeechSub;
+  bool _isWebSpeechActive = false;
+  String _liveTranscript = '';
+
+  bool get _isVoiceActive => _isRecording || _isTranscribing || _isWebSpeechActive;
+
   int _lastMessageCount = 0;
   List<String> get _quickReplies => [
     'lexiChat.quickReply1'.tr(),
@@ -83,6 +95,8 @@ class _LexiChatPageState extends State<LexiChatPage>
     _focusNode.dispose();
     _recorder.dispose();
     _recordingTimer?.cancel();
+    _webSpeechSub?.cancel();
+    _webSpeech?.dispose();
     super.dispose();
   }
 
@@ -125,8 +139,60 @@ class _LexiChatPageState extends State<LexiChatPage>
     await _sendMessage();
   }
 
-  // ── Voice Recording ─────────────────────────────────────────────────────
-  Future<void> _startRecording() async {
+  // ── Web: Real-time STT via Browser Speech API ─────────────────────────────
+  void _startWebSpeech() {
+    _webSpeech?.dispose();
+    _webSpeech = WebSpeechRecognition();
+    _liveTranscript = '';
+    _controller.clear();
+
+    setState(() => _isWebSpeechActive = true);
+
+    final stream = _webSpeech!.startListening(
+      language: 'en-US',
+      continuous: true,
+    );
+
+    _webSpeechSub?.cancel();
+    _webSpeechSub = stream.listen(
+      (result) {
+        if (result.isFinal) {
+          _liveTranscript += result.transcript;
+        }
+        // Show accumulated + current interim text in input field live
+        final display = _liveTranscript +
+            (result.isFinal ? '' : result.transcript);
+        _controller.text = display;
+        _controller.selection = TextSelection.collapsed(
+          offset: display.length,
+        );
+      },
+      onError: (error) {
+        setState(() => _isWebSpeechActive = false);
+        _showSnack(
+          'lexiChat.sttFailed'.tr(namedArgs: {'error': error.toString()}),
+        );
+      },
+      onDone: () {
+        if (_isWebSpeechActive) {
+          setState(() => _isWebSpeechActive = false);
+        }
+      },
+    );
+  }
+
+  void _stopWebSpeech() {
+    _webSpeech?.stopListening();
+    _webSpeechSub?.cancel();
+    setState(() => _isWebSpeechActive = false);
+    // Text is already in _controller — send if non-empty
+    if (_controller.text.trim().isNotEmpty) {
+      unawaited(_sendMessage());
+    }
+  }
+
+  // ── Mobile/Desktop: Record → REST STT → send as text ─────────────────────
+  Future<void> _startMobileRecording() async {
     try {
       final hasPermission = await _recorder.hasPermission();
       if (!hasPermission) {
@@ -134,14 +200,8 @@ class _LexiChatPageState extends State<LexiChatPage>
         return;
       }
 
-      String recordingPath;
-      if (kIsWeb) {
-        recordingPath =
-            'lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      } else {
-        recordingPath =
-            '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      }
+      final recordingPath =
+          '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
@@ -157,51 +217,73 @@ class _LexiChatPageState extends State<LexiChatPage>
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
-      _showSnack('lexiChat.failedStartRecording'.tr(namedArgs: {'error': e.toString()}));
+      _showSnack(
+        'lexiChat.failedStartRecording'.tr(namedArgs: {'error': e.toString()}),
+      );
     }
   }
 
-  Future<void> _stopRecording() async {
+  Future<void> _stopMobileRecordingAndTranscribe() async {
     _recordingTimer?.cancel();
 
     try {
       final path = await _recorder.stop();
-      setState(() => _isRecording = false);
+      setState(() {
+        _isRecording = false;
+        _isTranscribing = true;
+      });
 
-      if (path == null) return;
-
-      final bytes = await _readRecordedAudio(path);
-      if (bytes == null || bytes.isEmpty) {
-        _showSnack('lexiChat.audioReadError'.tr());
+      if (path == null) {
+        setState(() => _isTranscribing = false);
         return;
       }
 
-      if (!mounted) return;
-      final b64 = base64Encode(bytes);
-      final provider = context.read<LexiChatProvider>();
-      final pending = provider.sendVoiceMessage(b64, userId: _userId);
-      _scrollToBottom();
-      await pending;
-      _scrollToBottom();
-    } catch (e) {
-      _showSnack('lexiChat.failedStopRecording'.tr(namedArgs: {'error': e.toString()}));
-    }
-  }
-
-  Future<List<int>?> _readRecordedAudio(String path) async {
-    if (kIsWeb) {
-      final uri = Uri.tryParse(path);
-      if (uri == null) return null;
-      final response = await http.get(uri);
-      if (response.statusCode == 200) {
-        return response.bodyBytes;
+      final file = File(path);
+      if (!await file.exists()) {
+        _showSnack('lexiChat.audioReadError'.tr());
+        setState(() => _isTranscribing = false);
+        return;
       }
-      return null;
-    }
+      final bytes = await file.readAsBytes();
 
-    final file = File(path);
-    if (!await file.exists()) return null;
-    return file.readAsBytes();
+      if (!mounted) {
+        setState(() => _isTranscribing = false);
+        return;
+      }
+
+      final aiClient = sl<AiApiClient>();
+      final result = await aiClient.postMultipart(
+        '/stt/transcribe',
+        fileField: 'audio',
+        fileBytes: bytes,
+        filename: 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+        timeout: AppConstants.aiOperationTimeout,
+      );
+
+      final transcript = (result['text'] as String? ?? '').trim();
+      setState(() => _isTranscribing = false);
+
+      if (transcript.isEmpty) {
+        _showSnack('lexiChat.noSpeechDetected'.tr());
+        return;
+      }
+
+      _controller.text = transcript;
+      _controller.selection = TextSelection.collapsed(
+        offset: transcript.length,
+      );
+
+      if (!mounted) return;
+      await _sendMessage();
+    } catch (e) {
+      setState(() {
+        _isRecording = false;
+        _isTranscribing = false;
+      });
+      _showSnack(
+        'lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}),
+      );
+    }
   }
 
   void _showSnack(String msg) {
@@ -326,27 +408,58 @@ class _LexiChatPageState extends State<LexiChatPage>
           // TTS toggle
           Consumer<LexiChatProvider>(
             builder: (_, provider, __) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceDarkChat
-                      : AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    provider.ttsEnabled
-                        ? Icons.volume_up_rounded
-                        : Icons.volume_off_rounded,
-                    color: provider.ttsEnabled
-                        ? AppColorRoles.primary(isDark)
-                        : (isDark ? Colors.white38 : AppColors.textGrey),
-                    size: 20,
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (provider.ttsEnabled) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.surfaceDarkChat
+                            : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        onTap: provider.cycleTtsSpeed,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          child: Text(
+                            provider.ttsSpeedLabel,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColorRoles.primary(isDark),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.surfaceDarkChat
+                          : AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        provider.ttsEnabled
+                            ? Icons.volume_up_rounded
+                            : Icons.volume_off_rounded,
+                        color: provider.ttsEnabled
+                            ? AppColorRoles.primary(isDark)
+                            : (isDark ? Colors.white38 : AppColors.textGrey),
+                        size: 20,
+                      ),
+                      onPressed: provider.toggleTts,
+                      tooltip: 'lexiChat.tooltipToggleVoice'.tr(),
+                      padding: const EdgeInsets.all(8),
+                    ),
                   ),
-                  onPressed: provider.toggleTts,
-                  tooltip: 'lexiChat.tooltipToggleVoice'.tr(),
-                  padding: const EdgeInsets.all(8),
-                ),
+                ],
               );
             },
           ),
@@ -424,85 +537,105 @@ class _LexiChatPageState extends State<LexiChatPage>
                           builder: (_) {
                             final sessions = provider.sessions;
                             return ListView.builder(
-                          itemCount: sessions.length,
-                          itemBuilder: (context, index) {
-                            final s = sessions[index];
-                            final selected =
-                                provider.session?.sessionId == s.sessionId;
-                            return ListTile(
-                              selected: selected,
-                              selectedTileColor: AppColorRoles.primary(
-                                isDark,
-                              ).withValues(alpha: 0.08),
-                              title: Text(
-                                s.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                s.updatedAt.toLocal().toString().substring(
-                                  0,
-                                  16,
-                                ),
-                              ),
-                              onTap: () async {
-                                Navigator.pop(context);
-                                await provider.selectSession(s);
-                              },
-                              trailing: PopupMenuButton<String>(
-                                onSelected: (value) async {
-                                  if (value == 'rename') {
-                                    final controller = TextEditingController(
-                                      text: s.title,
-                                    );
-                                    final renamed = await showDialog<String>(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        title: Text('lexiChat.renameSessionTitle'.tr()),
-                                        content: TextField(
-                                          controller: controller,
+                              itemCount: sessions.length,
+                              itemBuilder: (context, index) {
+                                final s = sessions[index];
+                                final selected =
+                                    provider.session?.sessionId == s.sessionId;
+                                return ListTile(
+                                  selected: selected,
+                                  selectedTileColor: AppColorRoles.primary(
+                                    isDark,
+                                  ).withValues(alpha: 0.08),
+                                  title: Text(
+                                    s.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    s.updatedAt.toLocal().toString().substring(
+                                      0,
+                                      16,
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    await provider.selectSession(s);
+                                  },
+                                  trailing: PopupMenuButton<String>(
+                                    onSelected: (value) async {
+                                      if (value == 'rename') {
+                                        final controller =
+                                            TextEditingController(
+                                              text: s.title,
+                                            );
+                                        final renamed =
+                                            await showDialog<String>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                title: Text(
+                                                  'lexiChat.renameSessionTitle'
+                                                      .tr(),
+                                                ),
+                                                content: TextField(
+                                                  controller: controller,
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: Text(
+                                                      'lexiChat.cancelButton'
+                                                          .tr(),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          context,
+                                                          controller.text
+                                                              .trim(),
+                                                        ),
+                                                    child: Text(
+                                                      'lexiChat.saveButton'
+                                                          .tr(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                        if (renamed != null &&
+                                            renamed.isNotEmpty) {
+                                          await provider.renameSession(
+                                            s.sessionId,
+                                            renamed,
+                                          );
+                                        }
+                                      }
+                                      if (value == 'delete') {
+                                        await provider.deleteSession(
+                                          s.sessionId,
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      PopupMenuItem(
+                                        value: 'rename',
+                                        child: Text(
+                                          'lexiChat.renameAction'.tr(),
                                         ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text('lexiChat.cancelButton'.tr()),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () => Navigator.pop(
-                                              context,
-                                              controller.text.trim(),
-                                            ),
-                                            child: Text('lexiChat.saveButton'.tr()),
-                                          ),
-                                        ],
                                       ),
-                                    );
-                                    if (renamed != null && renamed.isNotEmpty) {
-                                      await provider.renameSession(
-                                        s.sessionId,
-                                        renamed,
-                                      );
-                                    }
-                                  }
-                                  if (value == 'delete') {
-                                    await provider.deleteSession(s.sessionId);
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  PopupMenuItem(
-                                    value: 'rename',
-                                    child: Text('lexiChat.renameAction'.tr()),
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text(
+                                          'lexiChat.deleteAction'.tr(),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('lexiChat.deleteAction'.tr()),
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             );
-                          },
-                        );
                           },
                         ),
                 ),
@@ -598,31 +731,70 @@ class _LexiChatPageState extends State<LexiChatPage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_isRecording)
+          if (_isVoiceActive)
             Container(
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.08),
+                color: (_isWebSpeechActive
+                        ? Colors.blue
+                        : _isTranscribing
+                            ? Colors.orange
+                            : Colors.red)
+                    .withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: (_isWebSpeechActive
+                          ? Colors.blue
+                          : _isTranscribing
+                              ? Colors.orange
+                              : Colors.red)
+                      .withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.mic, color: AppColors.errorBright, size: 16),
+                  if (_isTranscribing)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.orange,
+                      ),
+                    )
+                  else
+                    Icon(
+                      _isWebSpeechActive ? Icons.graphic_eq : Icons.mic,
+                      color: _isWebSpeechActive
+                          ? Colors.blue
+                          : AppColors.errorBright,
+                      size: 16,
+                    ),
                   const SizedBox(width: 8),
                   Text(
-                    'lexiChat.recordingStatus'.tr(namedArgs: {'seconds': _recordingDuration.inSeconds.toString()}),
-                    style: const TextStyle(
-                      color: AppColors.errorBright,
+                    _isTranscribing
+                        ? 'lexiChat.transcribingStatus'.tr()
+                        : _isWebSpeechActive
+                            ? 'lexiChat.webSpeechRecording'.tr()
+                            : 'lexiChat.recordingStatus'.tr(namedArgs: {
+                                'seconds':
+                                    _recordingDuration.inSeconds.toString(),
+                              }),
+                    style: TextStyle(
+                      color: _isWebSpeechActive
+                          ? Colors.blue
+                          : _isTranscribing
+                              ? Colors.orange
+                              : AppColors.errorBright,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-          if (!_isRecording) ...[
+          if (!_isVoiceActive) ...[
             SizedBox(
               height: 34,
               child: ListView.separated(
@@ -741,50 +913,90 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   Widget _buildVoiceButton(bool isDark) {
+    final isActive = _isVoiceActive;
+    final isWebSpeech = kIsWeb && WebSpeechRecognition.isSupported;
+
+    // Active color depends on mode
+    final activeColor = _isWebSpeechActive
+        ? Colors.blue
+        : _isTranscribing
+            ? Colors.orange
+            : Colors.red;
+
+    Widget button = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: isActive
+            ? activeColor.withValues(alpha: 0.1)
+            : (isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isActive
+              ? activeColor.withValues(alpha: 0.3)
+              : (isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight),
+          width: 1,
+        ),
+      ),
+      child: _isTranscribing
+          ? const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.orange,
+                ),
+              ),
+            )
+          : Icon(
+              isActive
+                  ? (_isWebSpeechActive
+                        ? Icons.graphic_eq_rounded
+                        : Icons.stop_rounded)
+                  : Icons.mic_none_rounded,
+              color: isActive
+                  ? activeColor
+                  : (isDark ? Colors.white54 : AppColors.textGrey),
+              size: 20,
+            ),
+    );
+
+    if (isWebSpeech) {
+      // Web: tap to toggle on/off
+      return GestureDetector(
+        onTap: () {
+          if (_isWebSpeechActive) {
+            _stopWebSpeech();
+          } else if (!_isTranscribing) {
+            _startWebSpeech();
+          }
+        },
+        child: button,
+      );
+    }
+
+    // Mobile/Desktop: hold to record
     return GestureDetector(
       onLongPressStart: (_) {
-        if (!_isRecording) {
-          _startRecording();
+        if (!isActive) {
+          unawaited(_startMobileRecording());
         }
       },
       onLongPressEnd: (_) {
         if (_isRecording) {
-          _stopRecording();
+          unawaited(_stopMobileRecordingAndTranscribe());
         }
       },
       onTap: () {
         if (_isRecording) {
-          _stopRecording();
-        } else {
+          unawaited(_stopMobileRecordingAndTranscribe());
+        } else if (!_isTranscribing) {
           _showSnack('lexiChat.holdToRecord'.tr());
         }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: _isRecording
-              ? Colors.red.withValues(alpha: 0.1)
-              : (isDark
-                    ? AppColors.surfaceDarkChat
-                    : AppColors.backgroundLight),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _isRecording
-                ? Colors.red.withValues(alpha: 0.3)
-                : (isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          _isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
-          color: _isRecording
-              ? AppColors.errorBright
-              : (isDark ? Colors.white54 : AppColors.textGrey),
-          size: 20,
-        ),
-      ),
+      child: button,
     );
   }
 }

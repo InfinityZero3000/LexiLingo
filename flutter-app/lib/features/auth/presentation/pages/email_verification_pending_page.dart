@@ -38,7 +38,7 @@ class _EmailVerificationPendingPageState
       _message = success
           ? 'auth.emailVerificationResendSuccess'.tr()
           : (authProvider.errorMessage ??
-              'auth.emailVerificationResendError'.tr());
+                'auth.emailVerificationResendError'.tr());
     });
   }
 
@@ -48,8 +48,9 @@ class _EmailVerificationPendingPageState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.accentMintDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.accentMintDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text('auth.emailVerificationTitle'.tr()),
         centerTitle: true,
@@ -61,8 +62,7 @@ class _EmailVerificationPendingPageState
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,8 +88,7 @@ class _EmailVerificationPendingPageState
                     ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          isDark ? Colors.white70 : AppColors.textSlateLight,
+                      color: isDark ? Colors.white70 : AppColors.textSlateLight,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -130,17 +129,16 @@ class _EmailVerificationPendingPageState
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (_) => const LoginPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
                         (route) => false,
                       );
                     },
                     child: Text(
                       'auth.emailVerificationBackToLogin'.tr(),
                       style: TextStyle(
-                        color:
-                            isDark ? AppColors.accentMint : AppColors.primary,
+                        color: isDark
+                            ? AppColors.accentMint
+                            : AppColors.primary,
                       ),
                     ),
                   ),

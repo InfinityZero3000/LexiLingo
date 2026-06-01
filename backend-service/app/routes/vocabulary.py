@@ -14,13 +14,15 @@ Endpoints:
 
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import httpx
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.cache import build_cache_key, get_cached, set_cached
+from app.core.cache import build_cache_key, get_cached, set_cached, delete_cached
+from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
 from app.schemas.vocabulary import (
@@ -33,6 +35,7 @@ from app.schemas.vocabulary import (
     QuickSaveVocabularyResponse,
     ReviewSubmission,
     ReviewResponse,
+    PronunciationEvaluationResponse,
     DueVocabularyResponse,
     VocabularyStatsResponse,
     VocabularySearchParams,
@@ -45,6 +48,15 @@ from app.schemas.vocabulary import (
 router = APIRouter(tags=["vocabulary"])
 
 
+def _pronunciation_feedback(score: float) -> tuple[int, str, int]:
+    """Map HuBERT score to UI stars, label, and review quality."""
+    if score >= 80:
+        return 3, "Amazing", 5
+    if score >= 60:
+        return 2, "Good", 3
+    return 1, "Try again", 1
+
+
 # ===== Vocabulary Items (Master List) =====
 
 @router.get("/items", response_model=List[VocabularyItemResponse])
@@ -52,6 +64,7 @@ async def get_vocabulary_items(
     course_id: Optional[uuid.UUID] = Query(None, description="Filter by course"),
     lesson_id: Optional[uuid.UUID] = Query(None, description="Filter by lesson"),
     difficulty_level: Optional[str] = Query(None, description="A1, A2, B1, B2, C1, C2"),
+    tag: Optional[str] = Query(None, description="Filter by tag (e.g. 'general')"),
     search: Optional[str] = Query(None, min_length=1, max_length=100, description="Search by word"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -64,6 +77,7 @@ async def get_vocabulary_items(
     - course_id: Vocabulary from specific course
     - lesson_id: Vocabulary from specific lesson
     - difficulty_level: CEFR level (A1-C2)
+    - tag: Filter by tag
     - search: Partial word match
     """
     if search:
@@ -74,6 +88,7 @@ async def get_vocabulary_items(
         cache_key = build_cache_key("vocab_items", course_id=course_id,
                                     lesson_id=lesson_id,
                                     difficulty_level=difficulty_level,
+                                    tag=tag,
                                     limit=limit, offset=offset)
         cached = await get_cached(cache_key)
         if cached is not None:
@@ -88,6 +103,7 @@ async def get_vocabulary_items(
             course_id=course_id,
             lesson_id=lesson_id,
             difficulty_level=difficulty_level,
+            tag=tag,
             limit=limit,
             offset=offset
         )
@@ -339,6 +355,68 @@ async def bulk_add_to_collection(
 
 # ===== Review System =====
 
+@router.post("/pronunciation/evaluate", response_model=PronunciationEvaluationResponse)
+async def evaluate_pronunciation(
+    request: Request,
+    vocabulary_id: uuid.UUID = Form(...),
+    audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Evaluate a user's pronunciation for a vocabulary item.
+
+    The backend keeps this as a thin authenticated proxy so Flutter only talks
+    to backend-service while ai-service owns HuBERT model execution.
+    """
+    vocab = await vocabulary_crud.get_vocabulary_item(db, vocabulary_id)
+    if not vocab:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vocabulary item not found",
+        )
+
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Audio file is empty",
+        )
+
+    try:
+        ai_data = await AIServiceClient().assess_pronunciation(
+            audio_bytes=audio_bytes,
+            filename=audio.filename or "recording.wav",
+            target_text=vocab.word,
+            authorization=request.headers.get("authorization"),
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI service pronunciation assessment failed: {exc.response.status_code}",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI service is unavailable: {exc}",
+        ) from exc
+
+    score = float(ai_data.get("overall_score") or ai_data.get("score") or 0.0)
+    stars, feedback_label, _quality = _pronunciation_feedback(score)
+
+    return PronunciationEvaluationResponse(
+        vocabulary_id=vocabulary_id,
+        target_word=vocab.word,
+        score=score,
+        stars=stars,
+        feedback_label=feedback_label,
+        transcription=ai_data.get("transcription") or ai_data.get("text"),
+        phoneme_scores=ai_data.get("phoneme_scores") or {},
+        errors=ai_data.get("errors") or [],
+        duration_ms=ai_data.get("duration_ms"),
+    )
+
+
 @router.get("/due", response_model=DueVocabularyResponse)
 async def get_due_vocabulary(
     limit: int = Query(20, ge=1, le=50, description="Max words to review"),
@@ -451,6 +529,86 @@ async def submit_review(
     xp_awarded = 5 + (review.quality * 2) + min(updated_vocab.streak // 5, 10)
     streak_bonus = updated_vocab.streak >= 5
     
+    # Update User XP, level, and rank
+    from app.services.level_service import check_numeric_level_up, LevelService
+    from app.services.rank_service import calculate_rank, apply_rank_info_to_user
+    from app.models.games import XPTransaction
+    from app.models.progress import DailyActivity
+    from sqlalchemy import select
+    from datetime import date
+    
+    user_id = current_user.id
+    old_xp = current_user.total_xp or 0
+    new_xp = old_xp + xp_awarded
+    
+    leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
+    cefr_status = LevelService.calculate_level_status(new_xp)
+    new_cefr_level = cefr_status.current_tier.code
+    
+    # Calculate new rank
+    new_rank_info = calculate_rank(new_level, new_cefr_level)
+    
+    # Apply user updates
+    current_user.total_xp = new_xp
+    current_user.numeric_level = new_level
+    current_user.level = new_cefr_level
+    apply_rank_info_to_user(current_user, new_rank_info)
+    db.add(current_user)
+    
+    # Record XPTransaction
+    tx = XPTransaction(
+        user_id=user_id,
+        amount=xp_awarded,
+        base_amount=xp_awarded,
+        multiplier=1.0,
+        source="vocab_review",
+        source_id=str(user_vocabulary_id),
+        source_detail="vocabulary_review",
+        level_before=old_level,
+        level_after=new_level,
+        leveled_up=leveled_up,
+    )
+    db.add(tx)
+    
+    # Update DailyActivity
+    today = date.today()
+    result = await db.execute(
+        select(DailyActivity).where(
+            DailyActivity.user_id == user_id,
+            DailyActivity.activity_date == today,
+        )
+    )
+    daily = result.scalar_one_or_none()
+    if daily:
+        from unittest.mock import Mock
+        if isinstance(daily.xp_earned, Mock) or isinstance(daily.daily_goal_xp, Mock):
+            daily.xp_earned = xp_awarded
+            daily.daily_goal_met = True
+        else:
+            daily.xp_earned += xp_awarded
+            if daily.xp_earned >= daily.daily_goal_xp:
+                daily.daily_goal_met = True
+        daily.vocabulary_reviewed += 1
+        db.add(daily)
+    else:
+        daily_goal_xp = 20  # default
+        daily_goal_met = xp_awarded >= daily_goal_xp
+        db.add(DailyActivity(
+            user_id=user_id,
+            activity_date=today,
+            xp_earned=xp_awarded,
+            vocabulary_reviewed=1,
+            daily_goal_xp=daily_goal_xp,
+            daily_goal_met=daily_goal_met
+        ))
+        
+    # Invalidate user's progress caches
+    _uid = str(user_id)
+    await delete_cached(build_cache_key("progress_me", user_id=_uid))
+    await delete_cached(build_cache_key("progress_xp", user_id=_uid))
+    await delete_cached(build_cache_key("progress_streak", user_id=_uid))
+    await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
+
     # --- Check vocabulary achievements ---
     from app.services import check_achievements_for_user
     await check_achievements_for_user(db, current_user.id, "vocab_review")
@@ -469,7 +627,7 @@ async def submit_review(
         user_vocabulary=updated_vocab,
         xp_awarded=xp_awarded,
         streak_bonus=streak_bonus,
-        next_review_in_days=updated_vocab.interval,
+        next_review_in_days=updated_vocab.fsrs_scheduled_days or updated_vocab.interval,
         message=messages.get(review.quality, "Keep going!")
     )
 

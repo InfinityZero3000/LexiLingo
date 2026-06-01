@@ -27,6 +27,7 @@ from app.services.level_service import (
     get_numeric_level_progress,
     check_numeric_level_up,
 )
+from app.services.rank_service import calculate_rank, apply_rank_info_to_user
 
 logger = logging.getLogger(__name__)
 
@@ -223,13 +224,23 @@ async def award_xp(
     new_xp = old_xp + xp_awarded
     leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
 
-    # ── 7. Update User.total_xp and numeric_level ────────────────────────────
+    # ── 7. Update User.total_xp, numeric_level, and rank ─────────────────────
+    rank_info = calculate_rank(new_level, current_user.level or "A1")
+    
+    current_user.total_xp = new_xp
+    current_user.numeric_level = new_level
+    apply_rank_info_to_user(current_user, rank_info)
+
     await db.execute(
         update(User)
         .where(User.id == user_id)
         .values(
             total_xp=new_xp,
             numeric_level=new_level,
+            rank=rank_info.rank.value,
+            rank_score=rank_info.score,
+            rank_level_score=rank_info.level_score,
+            rank_proficiency_score=rank_info.proficiency_score,
         )
     )
 

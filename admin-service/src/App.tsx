@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
 import { AppShell, NavItem } from "./components/AppShell";
+import { ConfigLock } from "./components/ConfigLock";
 import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
@@ -101,16 +102,16 @@ const AppRoutes = () => {
               <Route path="/admin/ads" element={<AdsPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/monitoring" element={<MonitoringPage />} />
-              <Route path="/admin/settings" element={<SystemSettingsPage />} />
+              <Route path="/admin/settings" element={<ConfigLock><SystemSettingsPage /></ConfigLock>} />
             </Route>
           </Route>
 
           <Route element={<RequireRole allowed={["super_admin"]} />}>
             <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
               <Route path="/super" element={<SuperAdminDashboard />} />
-              <Route path="/super/admins" element={<AdminManagementPage />} />
-              <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
-              <Route path="/super/db" element={<DatabasePage />} />
+              <Route path="/super/admins" element={<ConfigLock><AdminManagementPage /></ConfigLock>} />
+              <Route path="/super/ai-chat" element={<ConfigLock><AiChatSettingsPage /></ConfigLock>} />
+              <Route path="/super/db" element={<ConfigLock><DatabasePage /></ConfigLock>} />
               <Route path="/super/ai-models" element={<AiModelsPage />} />
             </Route>
           </Route>

@@ -1,0 +1,80 @@
+"""Regression tests for TraceCAG cache-gate L1 near-hit routing."""
+
+import hashlib
+import time
+
+import pytest
+
+import api.services.trace_cag.nodes_v2 as nodes
+
+
+@pytest.mark.asyncio
+async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
+    """A true L1 near-hit should not runtime-check TypedDict with isinstance()."""
+    user_input = "I go to school yesterday."
+    candidate_input = "I went to school yesterday."
+    level = "B1"
+    profile = {"level": level}
+    now = time.monotonic()
+
+    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
+    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    profile_epoch = nodes._profile_epoch(profile)
+    bucket = nodes._build_graph_bucket(
+        user_input,
+        level,
+        nodes._infer_intent_pre_diagnosis(user_input),
+        profile_epoch,
+        [],
+    )
+    entry = {
+        "fingerprint": {
+            "query_norm": candidate_input.lower(),
+            "intent": "correct",
+            "level": level,
+            "root_concepts": nodes._extract_lightweight_graph_concepts(user_input),
+            "session_turn": 0,
+        },
+        "graph_bucket": bucket,
+        "profile_snapshot": profile,
+        "response": "Cached feedback from a related past-tense turn.",
+        "evidence_bundle": [],
+        "retrieval_trace": [],
+        "execution_plan": {"strategy": "feedback", "intent": "correct"},
+        "diagnosis_errors": [],
+        "grammar_score": 0.9,
+        "fluency_score": 0.9,
+        "vocabulary_level": level,
+        "action_plan": [],
+        "overall_score": 0.9,
+        "created_at": now,
+        "ttl": 3600,
+    }
+
+    async def fake_get_cache_entry(cache_key, _level, _now):
+        if cache_key == current_key:
+            return None
+        if cache_key == candidate_key:
+            return entry
+        raise AssertionError(f"unexpected cache key: {cache_key}")
+
+    async def fake_get_bucket_candidate_keys(_bucket):
+        assert _bucket == bucket
+        return [candidate_key]
+
+    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+
+    result = await nodes.cache_gate_node(
+        {
+            "user_input": user_input,
+            "session_id": "test-session",
+            "learner_profile": profile,
+            "conversation_history": [],
+            "cache_policy": "on",
+        }
+    )
+
+    assert result["cache_hit"] is True
+    assert result["cache_layer"] == "L1"
+    assert result["cache_decision"] in {"reuse", "patch"}

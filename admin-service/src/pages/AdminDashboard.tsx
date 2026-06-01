@@ -27,8 +27,8 @@ export const AdminDashboard = () => {
   }, []);
 
   const health = monitor?.health?.healthy;
-  const cpu = monitor?.system?.cpu_percent;
-  const memory = monitor?.system?.memory_percent;
+  const cpu = monitor?.system ? (monitor.system.cpu_percent ?? monitor.system.cpu?.percent) : undefined;
+  const memory = monitor?.system ? (monitor.system.memory_percent ?? monitor.system.memory?.percent) : undefined;
 
   return (
     <div className="stack">

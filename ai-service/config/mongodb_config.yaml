@@ -6,7 +6,7 @@
 # =============================================================================
 development:
   mongodb:
-    uri: mongodb://admin:lexilingo2026@localhost:27017/
+    uri: ${MONGODB_DEV_URI}
     database: lexilingo_dev
     options:
       maxPoolSize: 10
@@ -20,7 +20,7 @@ development:
   redis:
     host: localhost
     port: 6379
-    password: lexilingo2026
+    password: ${REDIS_PASSWORD}
     db: 0
     decode_responses: true
     max_connections: 10

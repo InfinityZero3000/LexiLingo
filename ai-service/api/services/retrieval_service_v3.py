@@ -6,7 +6,7 @@ Hybrid retrieval design:
 3) Centrality-based ranking (structural importance)
 4) Community-aware pruning (output diversity + memory optimization)
 
-Enhanced with GraphCAG principles for optimal LLM context.
+Enhanced with TraceCAG principles for optimal LLM context.
 """
 
 from __future__ import annotations

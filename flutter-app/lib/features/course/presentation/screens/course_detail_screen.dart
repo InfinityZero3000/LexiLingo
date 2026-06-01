@@ -125,11 +125,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           ),
                           _StatChip(
                             icon: Icons.access_time,
-                            label: 'course.durationMin'.tr(namedArgs: {'count': '${course.estimatedDuration}'}),
+                            label: 'course.durationMin'.tr(
+                              namedArgs: {
+                                'count': '${course.estimatedDuration}',
+                              },
+                            ),
                           ),
                           _StatChip(
                             icon: Icons.book,
-                            label: 'course.totalLessonsCount'.tr(namedArgs: {'count': '${course.totalLessons}'}),
+                            label: 'course.totalLessonsCount'.tr(
+                              namedArgs: {'count': '${course.totalLessons}'},
+                            ),
                           ),
                         ],
                       ),
@@ -158,7 +164,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'course.userProgressPercent'.tr(namedArgs: {'percent': course.userProgress?.toStringAsFixed(0) ?? '0'}),
+                                  'course.userProgressPercent'.tr(
+                                    namedArgs: {
+                                      'percent':
+                                          course.userProgress?.toStringAsFixed(
+                                            0,
+                                          ) ??
+                                          '0',
+                                    },
+                                  ),
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[700],
@@ -271,7 +285,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     if (success) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(provider.enrollmentSuccess ?? 'course.enrolledSuccess'.tr()),
+          content: Text(
+            provider.enrollmentSuccess ?? 'course.enrolledSuccess'.tr(),
+          ),
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );

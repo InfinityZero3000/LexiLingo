@@ -32,10 +32,9 @@ plugins:
   - name: cors
     config:
       origins:
-        - http://localhost:8080
-        - http://localhost:5173
-        - https://lexilingo.vercel.app
-        - https://flutter-app-nine-pied.vercel.app
+        - https://lexilingo.me
+        - https://www.lexilingo.me
+        - https://admin.lexilingo.me
       methods:
         - GET
         - POST
@@ -48,6 +47,9 @@ plugins:
         - Content-Type
         - X-Api-Key
         - X-Request-Id
+        - X-Idempotency-Key
+        - X-Admin-Key
+        - X-AI-Service-Secret
       exposed_headers:
         - X-Request-Id
         - X-RateLimit-Remaining-Minute
@@ -79,7 +81,7 @@ plugins:
 
 services:
   - name: backend-service
-    url: https://lexilingo-4gu6.onrender.com
+    url: https://lexilingo-backend.onrender.com
     routes:
       - name: backend-health
         paths:
@@ -158,7 +160,7 @@ services:
               hide_client_headers: false
 
   - name: ai-service
-    url: https://enable-tell-memphis-wing.trycloudflare.com
+    url: https://ai.lexilingo.me
     routes:
       - name: ai-health
         paths:

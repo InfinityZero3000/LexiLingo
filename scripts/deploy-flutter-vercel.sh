@@ -149,6 +149,20 @@ fi
 
 printf "${GREEN}✓${NC} .env.production exists and Google client ID is synchronized\n\n"
 
+cat > assets/env/prod_config <<EOF
+ENVIRONMENT=production
+API_BASE_URL=${api_base_url}
+API_BASE_URL_FALLBACK=
+AI_SERVICE_URL=${ai_base_url}
+AI_SERVICE_URL_FALLBACK=
+ENABLE_VOICE_FEATURE=true
+ENABLE_GAMIFICATION=true
+DEBUG_MODE=false
+GOOGLE_SERVER_CLIENT_ID=${google_id_env}
+EOF
+
+printf "${GREEN}✓${NC} Public Flutter config generated without server secrets\n\n"
+
 printf "${BLUE}[3/7] Installing JS dependencies for Vercel build hooks...${NC}\n\n"
 if [[ -f package-lock.json ]]; then
   npm ci
@@ -157,7 +171,7 @@ else
 fi
 printf "${GREEN}✓${NC} npm dependencies installed\n\n"
 
-printf "${BLUE}[4/7] Building Flutter Web release (uses .env.production)...${NC}\n\n"
+printf "${BLUE}[4/7] Building Flutter Web release (uses generated public config)...${NC}\n\n"
 flutter clean
 flutter pub get
 flutter build web --release --no-tree-shake-icons
@@ -167,8 +181,13 @@ if [[ ! -f "build/web/index.html" ]]; then
   exit 1
 fi
 
-if [[ ! -f "build/web/assets/.env.production" ]]; then
-  printf "${RED}✗${NC} Missing build/web/assets/.env.production (env not bundled)\n"
+if [[ ! -f "build/web/assets/assets/env/prod_config" ]]; then
+  printf "${RED}✗${NC} Missing build/web/assets/assets/env/prod_config (public env not bundled)\n"
+  exit 1
+fi
+
+if [[ -f "build/web/assets/.env" || -f "build/web/assets/.env.production" ]]; then
+  printf "${RED}✗${NC} Raw .env files were bundled into the web build\n"
   exit 1
 fi
 

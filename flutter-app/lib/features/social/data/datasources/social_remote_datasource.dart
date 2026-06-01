@@ -7,7 +7,7 @@ class SocialRemoteDataSource {
   final ApiClient _apiClient;
 
   SocialRemoteDataSource({required ApiClient apiClient})
-      : _apiClient = apiClient;
+    : _apiClient = apiClient;
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -22,9 +22,10 @@ class SocialRemoteDataSource {
   // ── Activity Feed ─────────────────────────────────────────────────────────
 
   Future<({List<ActivityFeedItemEntity> activities, bool hasMore})>
-      getActivityFeed({int limit = 20, int offset = 0}) async {
-    final response =
-        await _apiClient.get('/gamification/feed?limit=$limit&offset=$offset');
+  getActivityFeed({int limit = 20, int offset = 0}) async {
+    final response = await _apiClient.get(
+      '/gamification/feed?limit=$limit&offset=$offset',
+    );
     final data = _data(response);
     if (_ok(response) && data is Map<String, dynamic>) {
       return (
@@ -79,15 +80,17 @@ class SocialRemoteDataSource {
 
   /// Returns `true` on success. Throws on network/server error.
   Future<bool> followUser(String userId) async {
-    final response =
-        await _apiClient.post('/gamification/users/$userId/follow');
+    final response = await _apiClient.post(
+      '/gamification/users/$userId/follow',
+    );
     return _ok(response);
   }
 
   /// Returns `true` on success. Throws on network/server error.
   Future<bool> unfollowUser(String userId) async {
-    final response =
-        await _apiClient.post('/gamification/users/$userId/unfollow');
+    final response = await _apiClient.post(
+      '/gamification/users/$userId/unfollow',
+    );
     return _ok(response);
   }
 
@@ -128,7 +131,7 @@ class SocialRemoteDataSource {
   // ── Nearby ────────────────────────────────────────────────────────────────
 
   Future<({List<UserSocialProfileEntity> users, bool locationEnabled})>
-      getNearbyUsers({int limit = 10, double radiusKm = 25}) async {
+  getNearbyUsers({int limit = 10, double radiusKm = 25}) async {
     final response = await _apiClient.get(
       '/gamification/users/nearby?limit=$limit&radius_km=$radiusKm',
     );

@@ -1,0 +1,63 @@
+"""Firebase Cloud Messaging push notification service."""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi.concurrency import run_in_threadpool
+from firebase_admin import messaging
+
+from app.core.firebase_auth import _init_firebase_app
+
+logger = logging.getLogger(__name__)
+
+
+class PushNotificationService:
+    """Small FCM wrapper that fails closed when Firebase is not configured."""
+
+    async def send_review_reminder(
+        self,
+        *,
+        tokens: list[str],
+        due_count: int,
+        title: str,
+        body: str,
+        data: dict[str, str] | None = None,
+    ) -> bool:
+        """Send a review reminder to FCM device tokens."""
+        clean_tokens = [token for token in tokens if token]
+        if not clean_tokens:
+            logger.info("No FCM tokens available for review reminder")
+            return False
+
+        try:
+            _init_firebase_app()
+        except Exception as exc:
+            logger.warning("Firebase is not configured; skipping push reminder: %s", exc)
+            return False
+
+        payload = {
+            "type": "vocabulary_review_reminder",
+            "route": "/vocabulary/review",
+            "due_count": str(due_count),
+            **(data or {}),
+        }
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data={key: str(value) for key, value in payload.items()},
+            tokens=clean_tokens,
+        )
+
+        try:
+            response = await run_in_threadpool(messaging.send_each_for_multicast, message)
+            success_count = int(getattr(response, "success_count", 0) or 0)
+            failure_count = int(getattr(response, "failure_count", 0) or 0)
+            if failure_count:
+                logger.warning(
+                    "Review reminder push had %s failed FCM delivery attempt(s)",
+                    failure_count,
+                )
+            return success_count > 0
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send review reminder push: %s", exc)
+            return False

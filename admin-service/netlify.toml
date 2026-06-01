@@ -8,8 +8,9 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_VERSION = "10"
-  VITE_BACKEND_URL = "https://lexilingo-backend.onrender.com"
-  VITE_AI_SERVICE_URL = "https://your-tunnel-url.trycloudflare.com"
+  VITE_ENV = "production"
+  VITE_BACKEND_URL = "https://api.lexilingo.me/api/v1"
+  VITE_AI_URL = "https://api.lexilingo.me/api/v1"
 
 # Redirect all routes to index.html for SPA
 [[redirects]]
@@ -25,6 +26,8 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
     X-XSS-Protection = "1; mode=block"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com; connect-src 'self' https://api.lexilingo.me https://accounts.google.com https://oauth2.googleapis.com; form-action 'self'"
 
 # Cache static assets
 [[headers]]

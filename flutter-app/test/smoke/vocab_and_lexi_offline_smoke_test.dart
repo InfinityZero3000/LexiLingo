@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
+import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/data/repositories/vocab_repository_impl.dart';
@@ -87,6 +88,20 @@ class _FakeLexiRepo implements LexiChatRepository {
       ),
     ];
   }
+
+  @override
+  Stream<LexiStreamEvent> sendMessageStream({
+    required String userId,
+    required String sessionId,
+    required String message,
+    String inputType = 'text',
+    String? audioBase64,
+    bool enableTts = true,
+    String learnerLevel = 'B1',
+    String? storyContext,
+  }) {
+    return Stream.empty();
+  }
 }
 
 void main() {
@@ -105,12 +120,9 @@ void main() {
 
       final wordsResult = await repo.getWords();
       expect(wordsResult.isRight(), isTrue);
-      wordsResult.fold(
-        (_) => fail('Expected words list'),
-        (words) {
-          expect(words.any((w) => w.word == 'resilient'), isTrue);
-        },
-      );
+      wordsResult.fold((_) => fail('Expected words list'), (words) {
+        expect(words.any((w) => w.word == 'resilient'), isTrue);
+      });
     });
 
     test('lexi session restore keeps cached messages when offline', () async {

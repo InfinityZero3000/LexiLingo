@@ -140,7 +140,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     child: LottieLoadingWidget.tiny(),
                   )
                 : Text(
-                  'common.save'.tr(),
+                    'common.save'.tr(),
                     style: TextStyle(
                       color: primaryColor,
                       fontWeight: FontWeight.bold,

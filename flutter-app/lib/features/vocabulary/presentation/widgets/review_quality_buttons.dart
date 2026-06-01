@@ -89,7 +89,9 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'flashcard.blackout'.tr(),
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -101,7 +103,9 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: Text(
                   'flashcard.perfectFive'.tr(),
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),

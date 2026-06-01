@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
+import 'package:lexilingo_app/features/vocabulary/data/models/pronunciation_evaluation_model.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/vocabulary_item_model.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/user_vocabulary_model.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/review_result_model.dart';
@@ -13,6 +16,7 @@ abstract class VocabularyRemoteDataSource {
     String? courseId,
     String? lessonId,
     String? difficultyLevel,
+    String? tag,
     String? search,
     int limit = 50,
     int offset = 0,
@@ -41,6 +45,13 @@ abstract class VocabularyRemoteDataSource {
     int? timeSpentMs,
   });
 
+  /// Evaluate a pronunciation recording for one vocabulary item
+  Future<PronunciationEvaluationModel> evaluatePronunciation({
+    required String vocabularyId,
+    required Uint8List audioData,
+    required String filename,
+  });
+
   /// Get vocabulary statistics
   Future<Map<String, dynamic>> getVocabularyStats();
 }
@@ -56,6 +67,7 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
     String? courseId,
     String? lessonId,
     String? difficultyLevel,
+    String? tag,
     String? search,
     int limit = 50,
     int offset = 0,
@@ -69,6 +81,7 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       if (difficultyLevel != null) {
         pathParams.add('difficulty_level=$difficultyLevel');
       }
+      if (tag != null) pathParams.add('tag=$tag');
       if (search != null) pathParams.add('search=$search');
 
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
@@ -175,11 +188,34 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
         body: body,
       );
 
-      return ReviewResultModel.fromJson(response);
+      return ReviewResultModel.fromJson({...response, 'quality': quality});
     } on ServerException {
       rethrow;
     } catch (e) {
       throw ServerException('Failed to submit review: $e');
+    }
+  }
+
+  @override
+  Future<PronunciationEvaluationModel> evaluatePronunciation({
+    required String vocabularyId,
+    required Uint8List audioData,
+    required String filename,
+  }) async {
+    try {
+      final response = await apiClient.postMultipart(
+        '/vocabulary/pronunciation/evaluate',
+        fields: {'vocabulary_id': vocabularyId},
+        fileField: 'audio',
+        fileBytes: audioData,
+        filename: filename,
+      );
+
+      return PronunciationEvaluationModel.fromJson(response);
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to evaluate pronunciation: $e');
     }
   }
 

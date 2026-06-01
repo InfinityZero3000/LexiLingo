@@ -32,6 +32,12 @@ class SettingsProvider extends ChangeNotifier {
   bool get notificationEnabled => _settings?.notificationEnabled ?? true;
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
+  bool get pushReminderEnabled => _settings?.pushReminderEnabled ?? true;
+  bool get emailReminderEnabled => _settings?.emailReminderEnabled ?? false;
+  int get emailCadenceDays => _settings?.emailCadenceDays ?? 7;
+  int get reminderMinDueCount => _settings?.reminderMinDueCount ?? 1;
+  String get reminderTimezone =>
+      _settings?.reminderTimezone ?? 'Asia/Ho_Chi_Minh';
 
   /// Available languages for settings selection.
   /// Must match supported locales in EasyLocalization (assets/i18n/*.json)
@@ -105,8 +111,8 @@ class SettingsProvider extends ChangeNotifier {
           // their local choice instead of overriding it.
           final effectiveLang =
               (settings.language == 'en' && savedLocale != 'en')
-                  ? savedLocale
-                  : settings.language;
+              ? savedLocale
+              : settings.language;
           _settings = settings.copyWith(
             theme: _normalizeTheme(settings.theme),
             language: effectiveLang,
@@ -259,11 +265,51 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  /// Update backend-managed review reminder channels.
+  Future<void> updateReminderChannels({
+    bool? pushEnabled,
+    bool? emailEnabled,
+    int? emailCadenceDays,
+    int? minDueCount,
+  }) async {
+    if (_settings == null) return;
+
+    final oldSettings = _settings!;
+    _settings = _settings!.copyWith(
+      pushReminderEnabled: pushEnabled ?? oldSettings.pushReminderEnabled,
+      emailReminderEnabled: emailEnabled ?? oldSettings.emailReminderEnabled,
+      emailCadenceDays: emailCadenceDays ?? oldSettings.emailCadenceDays,
+      reminderMinDueCount: minDueCount ?? oldSettings.reminderMinDueCount,
+    );
+    notifyListeners();
+
+    try {
+      final result = await _repository.updateSettings(_settings!);
+      result.fold(
+        (failure) {
+          _settings = oldSettings;
+          _error = failure.message;
+          notifyListeners();
+        },
+        (_) async {
+          _error = null;
+          await _syncReminderWithSettings(_settings!);
+        },
+      );
+    } catch (e) {
+      _settings = oldSettings;
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   Future<void> _syncReminderWithSettings(Settings settings) async {
     await _notificationService.ensureInitialized();
     final permissionGranted = await _notificationService.requestPermissions();
 
-    if (!permissionGranted || !settings.notificationEnabled) {
+    if (!permissionGranted ||
+        !settings.notificationEnabled ||
+        !settings.pushReminderEnabled) {
       await _notificationService.cancelDailyReminder();
       return;
     }

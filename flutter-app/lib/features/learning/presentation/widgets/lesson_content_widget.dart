@@ -226,7 +226,10 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
               ),
               child: Text(
                 'learning.checkAnswer'.tr(),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 
@@ -263,7 +266,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                        widget.isCorrect! ? 'learning.correct'.tr() : 'learning.notQuite'.tr(),
+                          widget.isCorrect!
+                              ? 'learning.correct'.tr()
+                              : 'learning.notQuite'.tr(),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

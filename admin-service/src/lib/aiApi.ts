@@ -10,10 +10,13 @@ export type MonitoringDashboard = {
     memory_percent?: number;
     disk_percent?: number;
     load_avg?: number[];
+    cpu?: { percent?: number };
+    memory?: { percent?: number };
+    disk?: { percent?: number };
   };
   health?: {
     healthy?: boolean;
-    warnings?: string[];
+    warnings?: Array<{ type: string; message: string; severity: string; value: number }>;
     critical_count?: number;
     warning_count?: number;
   };

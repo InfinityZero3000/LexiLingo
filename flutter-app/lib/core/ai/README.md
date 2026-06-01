@@ -250,7 +250,7 @@ print('Loaded: $loaded');
 - [ ] Replace MockSTTService with real Faster-Whisper integration
 - [ ] Replace MockTTSService with real Piper VITS integration
 - [ ] Replace MockPronunciationService with real HuBERT integration
-- [ ] Integrate Qwen2.5-1.5B + Unified LoRA adapter
+- [ ] Integrate Qwen3-1.7B + Unified LoRA adapter
 - [ ] Integrate LLaMA3-8B-VI for Vietnamese explanations
 - [ ] Integrate all-MiniLM-L6-v2 for context embeddings
 - [ ] Setup Redis cache for learner profiles

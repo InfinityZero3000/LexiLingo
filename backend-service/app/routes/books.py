@@ -12,11 +12,13 @@ Phase 5: Book Reading Feature.
 import logging
 import re
 from typing import Optional
+from urllib.parse import quote, urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.services.api_cache_service import (
     APICacheService,
@@ -479,10 +481,147 @@ async def _fetch_books(q: str, page: int, topic: Optional[str] = None) -> dict:
     return {"books": unique}
 
 
+# ── CORS Proxy for Gutenberg and Book Sources ────────────────────
+
+ALLOWED_PROXY_DOMAINS = {
+    "www.gutenberg.org",
+    "gutenberg.org",
+    "gutendex.com",
+    "openlibrary.org",
+    "covers.openlibrary.org",
+}
+
+def _proxy_book_urls(book: dict, request: Request) -> dict:
+    """Rewrite book cover_url and download_url to go through backend proxy to avoid CORS."""
+    proxied = book.copy()
+    base_url = str(request.base_url).rstrip("/")
+    api_prefix = settings.API_V1_PREFIX.strip("/")
+    books_prefix = router.prefix.strip("/")
+    path_prefix = f"{api_prefix}/{books_prefix}".strip("/")
+    
+    if book.get("cover_url"):
+        cover_url = book["cover_url"]
+        if "gutenberg.org" in cover_url:
+            proxied["cover_url"] = f"{base_url}/{path_prefix}/proxy/image?url={quote(cover_url)}"
+            
+    if book.get("download_url"):
+        download_url = book["download_url"]
+        if "gutenberg.org" in download_url:
+            proxied["download_url"] = f"{base_url}/{path_prefix}/proxy/text?url={quote(download_url)}"
+            
+    return proxied
+
+
+@router.get("/proxy/image", summary="Proxy book cover images to bypass CORS")
+async def proxy_image(url: str = Query(..., description="The image URL to proxy")):
+    """
+    Proxy book cover images from Gutenberg or Open Library to bypass browser CORS.
+    """
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.netloc not in ALLOWED_PROXY_DOMAINS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Domain not allowed for proxying."
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid URL."
+        )
+        
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.get(
+                url, 
+                headers={"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
+                follow_redirects=True
+            )
+            if resp.status_code != 200:
+                raise HTTPException(
+                    status_code=resp.status_code,
+                    detail=f"Failed to fetch image: HTTP {resp.status_code}"
+                )
+            return Response(
+                content=resp.content,
+                media_type=resp.headers.get("content-type", "image/jpeg"),
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
+                }
+            )
+        except httpx.RequestError as e:
+            logger.error("HTTP request error proxying image %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to reach image source: {str(e)}"
+            )
+        except Exception as e:
+            logger.error("Unexpected error proxying image %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal proxy error."
+            )
+
+
+@router.get("/proxy/text", summary="Proxy book plain-text content to bypass CORS")
+async def proxy_text(url: str = Query(..., description="The text URL to proxy")):
+    """
+    Proxy book plain-text content from Gutenberg to bypass browser CORS.
+    """
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.netloc not in ALLOWED_PROXY_DOMAINS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Domain not allowed for proxying."
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid URL."
+        )
+        
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp = await client.get(
+                url, 
+                headers={"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
+                follow_redirects=True
+            )
+            if resp.status_code != 200:
+                raise HTTPException(
+                    status_code=resp.status_code,
+                    detail=f"Failed to fetch text: HTTP {resp.status_code}"
+                )
+            
+            content_type = resp.headers.get("content-type", "text/plain; charset=utf-8")
+            
+            return Response(
+                content=resp.content,
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
+                }
+            )
+        except httpx.RequestError as e:
+            logger.error("HTTP request error proxying text %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to reach text source: {str(e)}"
+            )
+        except Exception as e:
+            logger.error("Unexpected error proxying text %s: %s", url, e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal proxy error."
+            )
+
+
 # ── Endpoints ────────────────────────────────────────────────────
 
 @router.get("/recommended", summary="Get curated books by CEFR level")
 async def get_recommended_books(
+    request: Request,
     level: Optional[str] = Query(None, description="CEFR level filter: A1/A2/B1/B2/C1/C2"),
 ):
     """
@@ -496,7 +635,7 @@ async def get_recommended_books(
 
     return {
         "books": [
-            {**b, "cefr_info": CEFR_LEVELS.get(b["cefr_level"], {})}
+            _proxy_book_urls({**b, "cefr_info": CEFR_LEVELS.get(b["cefr_level"], {})}, request)
             for b in books
         ],
         "total": len(books),
@@ -506,6 +645,7 @@ async def get_recommended_books(
 
 @router.get("/search", summary="Search books from Gutendex + Open Library")
 async def search_books(
+    request: Request,
     q: str = Query(..., min_length=2, description="Search query"),
     level: Optional[str] = Query(None, description="CEFR level filter"),
     topic: Optional[str] = Query(None, description="Genre filter (Fiction/Fantasy/Mystery/etc.)"),
@@ -547,7 +687,7 @@ async def search_books(
             books = [b for b in books if b.get("topic", "").lower() == topic.lower()]
 
         return {
-            "books": books,
+            "books": [_proxy_book_urls(b, request) for b in books],
             "total": len(books),
             "page": page,
             "query": q,
@@ -587,6 +727,7 @@ LEVEL_DEFAULT_TOPICS = {
 
 @router.get("/browse", summary="Browse books by CEFR level with lazy pagination")
 async def browse_books(
+    request: Request,
     level: str = Query(..., description="CEFR level: A1/A2/B1/B2/C1/C2"),
     page: int = Query(1, ge=1, description="Page number"),
     topic: Optional[str] = Query(None, description="Genre override"),
@@ -620,7 +761,7 @@ async def browse_books(
         )
         books: list[dict] = result.data.get("books", [])
         return {
-            "books": books,
+            "books": [_proxy_book_urls(b, request) for b in books],
             "level": level,
             "page": page,
             "topic": search_topic,

@@ -25,10 +25,26 @@ class _ShopScreenState extends State<ShopScreen>
 
   final List<_CategoryTab> _categories = [
     _CategoryTab('all', 'shop.categoryAll', Icons.apps),
-    _CategoryTab(ShopItemEntity.categoryPowerUps, 'shop.categoryPowerUps', Icons.bolt),
-    _CategoryTab(ShopItemEntity.categoryBoosts, 'shop.categoryBoosts', Icons.rocket_launch),
-    _CategoryTab(ShopItemEntity.categoryCosmetics, 'shop.categoryCosmetics', Icons.palette),
-    _CategoryTab(ShopItemEntity.categorySpecial, 'shop.categorySpecial', Icons.star),
+    _CategoryTab(
+      ShopItemEntity.categoryPowerUps,
+      'shop.categoryPowerUps',
+      Icons.bolt,
+    ),
+    _CategoryTab(
+      ShopItemEntity.categoryBoosts,
+      'shop.categoryBoosts',
+      Icons.rocket_launch,
+    ),
+    _CategoryTab(
+      ShopItemEntity.categoryCosmetics,
+      'shop.categoryCosmetics',
+      Icons.palette,
+    ),
+    _CategoryTab(
+      ShopItemEntity.categorySpecial,
+      'shop.categorySpecial',
+      Icons.star,
+    ),
   ];
 
   @override

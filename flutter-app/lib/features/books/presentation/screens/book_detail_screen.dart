@@ -300,7 +300,12 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'books.pageProgress'.tr(namedArgs: {'current': '${progress.currentPage + 1}', 'total': '${progress.totalPages}'}),
+                            'books.pageProgress'.tr(
+                              namedArgs: {
+                                'current': '${progress.currentPage + 1}',
+                                'total': '${progress.totalPages}',
+                              },
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark

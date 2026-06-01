@@ -18,7 +18,7 @@ from api.models.schemas import (
 )
 from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
-from api.services.graph_cag import get_graph_cag, GraphCAGPipeline
+from api.services.trace_cag import get_trace_cag, TraceCAGPipeline
 from api.services.v3_pipeline import get_v3_pipeline
 
 router = APIRouter()
@@ -42,8 +42,8 @@ class AnalyzeRequest(BaseModel):
 # ============================================================
 
 @router.post(
-    "/graph-cag/analyze",
-    summary="Analyze input with GraphCAG Pipeline",
+    "/trace-cag/analyze",
+    summary="Analyze input with TraceCAG Pipeline",
     description="""
     LangGraph-based AI analysis with Knowledge Graph integration.
     
@@ -61,12 +61,12 @@ class AnalyzeRequest(BaseModel):
     - KG concept expansion: <5ms
     """
 )
-async def analyze_with_graph_cag(request: AnalyzeRequest):
+async def analyze_with_trace_cag(request: AnalyzeRequest):
     """
-    Main endpoint for GraphCAG-powered text analysis.
+    Main endpoint for TraceCAG-powered text analysis.
     """
     try:
-        pipeline = await get_graph_cag()
+        pipeline = await get_trace_cag()
         return await pipeline.analyze(
             user_input=request.text,
             session_id=request.session_id,
@@ -78,7 +78,7 @@ async def analyze_with_graph_cag(request: AnalyzeRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"GraphCAG analysis failed: {str(e)}"
+            detail=f"TraceCAG analysis failed: {str(e)}"
         )
 
 
@@ -86,7 +86,7 @@ async def analyze_with_graph_cag(request: AnalyzeRequest):
     "/analyze",
     response_model=TutorResponseV3,
     summary="Analyze input with V3 Knowledge-Centric Pipeline",
-    description="Legacy V3 pipeline - use /graph-cag/analyze for new integrations."
+    description="Legacy V3 pipeline - use /trace-cag/analyze for new integrations."
 )
 async def analyze_with_v3(request: AnalyzeRequest):
     """
@@ -109,18 +109,18 @@ async def analyze_with_v3(request: AnalyzeRequest):
 
 
 @router.get(
-    "/graph-cag/health",
-    summary="Health check for GraphCAG",
-    description="Check if GraphCAG pipeline is healthy and ready"
+    "/trace-cag/health",
+    summary="Health check for TraceCAG",
+    description="Check if TraceCAG pipeline is healthy and ready"
 )
-async def graph_cag_health():
-    """Health check endpoint for GraphCAG."""
+async def trace_cag_health():
+    """Health check endpoint for TraceCAG."""
     try:
-        pipeline = await get_graph_cag()
+        pipeline = await get_trace_cag()
         
         return {
             "status": "healthy",
-            "pipeline": "GraphCAG",
+            "pipeline": "TraceCAG",
             "nodes": [
                 "input_node", "kg_expand_node", "diagnose_node",
                 "retrieve_node", "generate_node", "tts_node"
@@ -131,7 +131,7 @@ async def graph_cag_health():
     except Exception as e:
         raise HTTPException(
             status_code=503,
-            detail=f"GraphCAG unhealthy: {str(e)}"
+            detail=f"TraceCAG unhealthy: {str(e)}"
         )
 
 
@@ -283,13 +283,13 @@ async def get_monitoring_dashboard():
         
         telemetry = get_telemetry()
         perf_monitor = get_performance_monitor()
-        graph_cag = await get_graph_cag()
+        trace_cag = await get_trace_cag()
         
         return {
             "telemetry": telemetry.get_dashboard_data(),
             "system": perf_monitor.get_system_stats(),
             "health": perf_monitor.check_resource_health(),
-            "graph_cag": {"status": "active", "backend": "LangGraph"},
+            "trace_cag": {"status": "active", "backend": "LangGraph"},
             "performance_checks": telemetry.check_performance_targets(),
             "process": perf_monitor.get_process_stats()
         }

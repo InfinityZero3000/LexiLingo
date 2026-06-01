@@ -151,6 +151,7 @@ async def get_lesson_content(
             exercises.append(Exercise(
                 id=ex.get('id', str(idx + 1)),
                 type=ex.get('type', 'multiple_choice'),
+                ui_type=ex.get('ui_type'),
                 question=ex.get('question', ''),
                 options=options,
                 correct_answer=str(ex.get('correct_answer', '')),
@@ -190,6 +191,7 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         Exercise(
             id="1",
             type="multiple_choice",
+            ui_type="multiple_choice",
             question=f"What is the main topic of '{lesson_title}'?",
             options=[
                 ExerciseOption(id="a", text="Grammar fundamentals", is_correct=True),
@@ -206,6 +208,7 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         Exercise(
             id="2",
             type="true_false",
+            ui_type="true_or_false",
             question="English is one of the most widely spoken languages in the world.",
             options=[
                 ExerciseOption(id="true", text="True", is_correct=True),
@@ -219,7 +222,8 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         Exercise(
             id="3",
             type="fill_blank",
-            question="Complete the sentence: 'I ___ learning English every day.'",
+            ui_type="fill_in_the_blank",
+            question="Complete the sentence: 'I {blank} learning English every day.'",
             correct_answer="am",
             explanation="'am' is the correct form of 'to be' for first person singular.",
             hint="Use the present continuous tense.",
@@ -229,7 +233,12 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         Exercise(
             id="4",
             type="translate",
+            ui_type="translation_choice",
             question="Translate to English: 'Xin chào'",
+            options=[
+                ExerciseOption(id="0", text="Hello", is_correct=True),
+                ExerciseOption(id="1", text="Goodbye", is_correct=False)
+            ],
             correct_answer="Hello",
             explanation="'Xin chào' is the Vietnamese word for 'Hello'.",
             hint="This is a common greeting.",
@@ -239,6 +248,7 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         Exercise(
             id="5",
             type="multiple_choice",
+            ui_type="multiple_choice",
             question="Which sentence is grammatically correct?",
             options=[
                 ExerciseOption(id="a", text="She go to school.", is_correct=False),
@@ -402,6 +412,19 @@ def _normalize_answer(answer: any, question_type: str) -> str:
     # Convert to string
     ans_str = str(answer).strip().lower()
     
+    # Handle matching/categorization pairs normalization by sorting
+    if question_type == 'matching' or (':' in ans_str and (',' in ans_str or len(ans_str.split(':')) > 2)):
+        try:
+            pairs = []
+            for part in ans_str.split(','):
+                if ':' in part:
+                    k, v = part.split(':', 1)
+                    pairs.append((k.strip(), v.strip()))
+            pairs.sort()
+            return ', '.join(f"{k}:{v}" for k, v in pairs)
+        except Exception:
+            pass
+
     # Remove punctuation for certain types
     if question_type in ['fill_blank', 'translate']:
         import re

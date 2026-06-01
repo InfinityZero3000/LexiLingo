@@ -18,14 +18,15 @@ class _StubStoryApiDataSource extends StoryApiDataSource {
   Object? metadataError;
   Object? pagedError;
 
-  TopicMessagesMetadataResult metadataResult = const TopicMessagesMetadataResult(
-    totalCount: 0,
-    hasMessages: false,
-    latestCursor: null,
-    oldestCursor: null,
-    latestTs: null,
-    oldestTs: null,
-  );
+  TopicMessagesMetadataResult metadataResult =
+      const TopicMessagesMetadataResult(
+        totalCount: 0,
+        hasMessages: false,
+        latestCursor: null,
+        oldestCursor: null,
+        latestTs: null,
+        oldestTs: null,
+      );
 
   TopicMessagesPageResult pagedResult = const TopicMessagesPageResult(
     messages: [],
@@ -73,76 +74,86 @@ void main() {
   });
 
   group('getTopicMessagesPaged metadata-first', () {
-    test('returns empty page immediately when metadata has no messages', () async {
-      apiDataSource.metadataResult = const TopicMessagesMetadataResult(
-        totalCount: 0,
-        hasMessages: false,
-        latestCursor: null,
-        oldestCursor: null,
-        latestTs: null,
-        oldestTs: null,
-      );
+    test(
+      'returns empty page immediately when metadata has no messages',
+      () async {
+        apiDataSource.metadataResult = const TopicMessagesMetadataResult(
+          totalCount: 0,
+          hasMessages: false,
+          latestCursor: null,
+          oldestCursor: null,
+          latestTs: null,
+          oldestTs: null,
+        );
 
-      final result = await repository.getTopicMessagesPaged('topic_session_1');
+        final result = await repository.getTopicMessagesPaged(
+          'topic_session_1',
+        );
 
-      expect(result.isRight(), true);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (page) {
-          expect(page.messages, isEmpty);
-          expect(page.hasMore, false);
-          expect(page.nextCursor, isNull);
-          expect(page.returned, 0);
-        },
-      );
-      expect(apiDataSource.metadataCalls, 1);
-      expect(apiDataSource.pagedCalls, 0);
-      expect(apiDataSource.lastMetadataSessionId, 'topic_session_1');
-    });
+        expect(result.isRight(), true);
+        result.fold(
+          (failure) => fail('Expected Right but got Left: $failure'),
+          (page) {
+            expect(page.messages, isEmpty);
+            expect(page.hasMore, false);
+            expect(page.nextCursor, isNull);
+            expect(page.returned, 0);
+          },
+        );
+        expect(apiDataSource.metadataCalls, 1);
+        expect(apiDataSource.pagedCalls, 0);
+        expect(apiDataSource.lastMetadataSessionId, 'topic_session_1');
+      },
+    );
 
-    test('continues to paged endpoint when metadata indicates messages exist', () async {
-      apiDataSource.metadataResult = const TopicMessagesMetadataResult(
-        totalCount: 12,
-        hasMessages: true,
-        latestCursor: 'latest',
-        oldestCursor: 'oldest',
-        latestTs: '2026-04-16T00:00:10Z',
-        oldestTs: '2026-04-16T00:00:00Z',
-      );
-      apiDataSource.pagedResult = TopicMessagesPageResult(
-        messages: [
-          TopicChatMessage(
-            id: 'm1',
-            sessionId: 'topic_session_1',
-            content: 'hello topic',
-            isUser: true,
-            timestamp: DateTime.parse('2026-04-16T00:00:00Z'),
-          ),
-        ],
-        hasMore: true,
-        nextCursor: 'next-cursor',
-        returned: 1,
-      );
+    test(
+      'continues to paged endpoint when metadata indicates messages exist',
+      () async {
+        apiDataSource.metadataResult = const TopicMessagesMetadataResult(
+          totalCount: 12,
+          hasMessages: true,
+          latestCursor: 'latest',
+          oldestCursor: 'oldest',
+          latestTs: '2026-04-16T00:00:10Z',
+          oldestTs: '2026-04-16T00:00:00Z',
+        );
+        apiDataSource.pagedResult = TopicMessagesPageResult(
+          messages: [
+            TopicChatMessage(
+              id: 'm1',
+              sessionId: 'topic_session_1',
+              content: 'hello topic',
+              isUser: true,
+              timestamp: DateTime.parse('2026-04-16T00:00:00Z'),
+            ),
+          ],
+          hasMore: true,
+          nextCursor: 'next-cursor',
+          returned: 1,
+        );
 
-      final result = await repository.getTopicMessagesPaged('topic_session_1');
+        final result = await repository.getTopicMessagesPaged(
+          'topic_session_1',
+        );
 
-      expect(result.isRight(), true);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (page) {
-          expect(page.messages.length, 1);
-          expect(page.messages.first.id, 'm1');
-          expect(page.hasMore, true);
-          expect(page.nextCursor, 'next-cursor');
-          expect(page.returned, 1);
-        },
-      );
-      expect(apiDataSource.metadataCalls, 1);
-      expect(apiDataSource.pagedCalls, 1);
-      expect(apiDataSource.lastPagedSessionId, 'topic_session_1');
-      expect(apiDataSource.lastPagedLimit, 50);
-      expect(apiDataSource.lastPagedCursor, isNull);
-    });
+        expect(result.isRight(), true);
+        result.fold(
+          (failure) => fail('Expected Right but got Left: $failure'),
+          (page) {
+            expect(page.messages.length, 1);
+            expect(page.messages.first.id, 'm1');
+            expect(page.hasMore, true);
+            expect(page.nextCursor, 'next-cursor');
+            expect(page.returned, 1);
+          },
+        );
+        expect(apiDataSource.metadataCalls, 1);
+        expect(apiDataSource.pagedCalls, 1);
+        expect(apiDataSource.lastPagedSessionId, 'topic_session_1');
+        expect(apiDataSource.lastPagedLimit, 50);
+        expect(apiDataSource.lastPagedCursor, isNull);
+      },
+    );
 
     test('still calls paged endpoint when metadata request throws', () async {
       apiDataSource.metadataError = Exception('metadata unavailable');
@@ -164,14 +175,13 @@ void main() {
       final result = await repository.getTopicMessagesPaged('topic_session_1');
 
       expect(result.isRight(), true);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (page) {
-          expect(page.messages.length, 1);
-          expect(page.messages.first.id, 'm2');
-          expect(page.returned, 1);
-        },
-      );
+      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
+        page,
+      ) {
+        expect(page.messages.length, 1);
+        expect(page.messages.first.id, 'm2');
+        expect(page.returned, 1);
+      });
       expect(apiDataSource.metadataCalls, 1);
       expect(apiDataSource.pagedCalls, 1);
     });
@@ -191,43 +201,44 @@ void main() {
       );
 
       expect(result.isRight(), true);
-      result.fold(
-        (failure) => fail('Expected Right but got Left: $failure'),
-        (page) {
-          expect(page.messages, isEmpty);
-          expect(page.returned, 0);
-          expect(page.hasMore, false);
-        },
-      );
+      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
+        page,
+      ) {
+        expect(page.messages, isEmpty);
+        expect(page.returned, 0);
+        expect(page.hasMore, false);
+      });
       expect(apiDataSource.metadataCalls, 0);
       expect(apiDataSource.pagedCalls, 1);
       expect(apiDataSource.lastPagedLimit, 20);
       expect(apiDataSource.lastPagedCursor, 'cursor-1');
     });
 
-    test('returns ServerFailure when paged endpoint throws ServerException', () async {
-      apiDataSource.metadataResult = const TopicMessagesMetadataResult(
-        totalCount: 5,
-        hasMessages: true,
-        latestCursor: 'latest',
-        oldestCursor: 'oldest',
-        latestTs: '2026-04-16T00:00:10Z',
-        oldestTs: '2026-04-16T00:00:00Z',
-      );
-      apiDataSource.pagedError = ServerException('paged failed');
+    test(
+      'returns ServerFailure when paged endpoint throws ServerException',
+      () async {
+        apiDataSource.metadataResult = const TopicMessagesMetadataResult(
+          totalCount: 5,
+          hasMessages: true,
+          latestCursor: 'latest',
+          oldestCursor: 'oldest',
+          latestTs: '2026-04-16T00:00:10Z',
+          oldestTs: '2026-04-16T00:00:00Z',
+        );
+        apiDataSource.pagedError = ServerException('paged failed');
 
-      final result = await repository.getTopicMessagesPaged('topic_session_1');
+        final result = await repository.getTopicMessagesPaged(
+          'topic_session_1',
+        );
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) {
+        expect(result.isLeft(), true);
+        result.fold((failure) {
           expect(failure, isA<ServerFailure>());
           expect(failure.message, 'paged failed');
-        },
-        (_) => fail('Expected Left but got Right'),
-      );
-      expect(apiDataSource.metadataCalls, 1);
-      expect(apiDataSource.pagedCalls, 1);
-    });
+        }, (_) => fail('Expected Left but got Right'));
+        expect(apiDataSource.metadataCalls, 1);
+        expect(apiDataSource.pagedCalls, 1);
+      },
+    );
   });
 }

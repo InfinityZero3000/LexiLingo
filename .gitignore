@@ -46,6 +46,8 @@ __pycache__/
 venv/
 ENV/
 env/
+!flutter-app/assets/env/
+!flutter-app/assets/env/*
 *.egg-info/
 .pytest_cache/
 .coverage
@@ -134,3 +136,28 @@ backups/
 # gateway runtime security logs
 gateway/nginx/logs/*.log
 default.conf
+
+scripts/extracted_media
+scripts
+!ai-service/scripts/
+!ai-service/scripts/crawl_topic_knowledge.py
+!ai-service/scripts/generate_tracecag_topic_corpus.py
+!backend-service/scripts/
+!backend-service/scripts/create_tables.py
+
+# Large generated kg_output artifacts (regenerate with generate_tracecag_topic_corpus.py / crawl_topic_knowledge.py)
+ai-service/data/kg_output/finetune_samples.jsonl
+ai-service/data/kg_output/tracecag_topic_quadruples.jsonl
+ai-service/data/kg_output/tracecag_topic_edges.jsonl
+ai-service/data/kg_output/tracecag_knowledge_prefix.full.txt
+ai-service/data/kg_output/kg_checkpoint*.jsonl
+ai-service/data/kg_output/preprocessed_dataset.jsonl
+ai-service/data/kg_output/entity_cards.json
+ai-service/data/kg_output/quadruples.json
+ai-service/data/kg_output/nodes.json
+ai-service/data/kg_output/edges.json
+
+# Duplicate of sample_stories.json (generated output, not tracked separately)
+ai-service/data/sample_stories.expanded.json
+
+.understand-anything/

@@ -4,11 +4,11 @@ Device Routes
 Endpoints for device registration and FCM token management
 """
 
-from uuid import UUID
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -25,6 +25,18 @@ from typing import List
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
 
+def _session_dialect_name(db: AsyncSession) -> str | None:
+    """Return the SQL dialect when available without coupling route tests to DB internals."""
+    try:
+        get_bind = getattr(db, "get_bind", None)
+        bind = get_bind() if callable(get_bind) else getattr(db, "bind", None)
+        dialect = getattr(bind, "dialect", None)
+        name = getattr(dialect, "name", None)
+        return name if isinstance(name, str) else None
+    except Exception:
+        return None
+
+
 @router.post("", response_model=ApiResponse[DeviceResponse], status_code=status.HTTP_201_CREATED)
 async def register_device(
     request: DeviceRegisterRequest,
@@ -36,53 +48,62 @@ async def register_device(
     
     If device already exists, updates FCM token and returns existing device.
     """
-    # Check if device already exists
-    result = await db.execute(
-        select(UserDevice).where(
-            and_(
-                UserDevice.user_id == current_user.id,
-                UserDevice.device_id == request.device_id
+    now = datetime.now(timezone.utc)
+
+    if _session_dialect_name(db) == "postgresql":
+        # Atomic upsert avoids duplicate registrations when the app starts
+        # and refreshes the same FCM token from multiple requests.
+        stmt = (
+            pg_insert(UserDevice)
+            .values(
+                user_id=current_user.id,
+                device_id=request.device_id,
+                device_type=request.device_type,
+                device_name=request.device_name,
+                fcm_token=request.fcm_token,
+                last_active=now,
+            )
+            .on_conflict_do_update(
+                index_elements=["device_id"],
+                set_=dict(
+                    fcm_token=request.fcm_token,
+                    device_name=request.device_name,
+                    last_active=now,
+                ),
+            )
+            .returning(UserDevice)
+        )
+        result = await db.execute(stmt)
+        device = result.scalar_one()
+    else:
+        result = await db.execute(
+            select(UserDevice).where(
+                and_(
+                    UserDevice.user_id == current_user.id,
+                    UserDevice.device_id == request.device_id
+                )
             )
         )
-    )
-    existing = result.scalar_one_or_none()
-    
-    if existing:
-        # Update existing device
-        existing.fcm_token = request.fcm_token
-        existing.device_name = request.device_name or existing.device_name
-        existing.last_active = datetime.now(timezone.utc)
-        await db.commit()
-        await db.refresh(existing)
-        
-        return ApiResponse(
-            success=True,
-            message="Device updated",
-            data=DeviceResponse(
-                id=str(existing.id),
-                device_id=existing.device_id,
-                device_type=existing.device_type,
-                device_name=existing.device_name,
-                fcm_token=existing.fcm_token,
-                last_active=existing.last_active,
-                created_at=existing.created_at
+        device = result.scalar_one_or_none()
+
+        if device:
+            device.fcm_token = request.fcm_token
+            device.device_name = request.device_name
+            device.last_active = now
+        else:
+            device = UserDevice(
+                user_id=current_user.id,
+                device_id=request.device_id,
+                device_type=request.device_type,
+                device_name=request.device_name,
+                fcm_token=request.fcm_token,
+                last_active=now,
             )
-        )
-    
-    # Create new device
-    device = UserDevice(
-        user_id=current_user.id,
-        device_id=request.device_id,
-        device_type=request.device_type,
-        device_name=request.device_name,
-        fcm_token=request.fcm_token,
-        last_active=datetime.now(timezone.utc)
-    )
-    
-    db.add(device)
+            db.add(device)
+
     await db.commit()
     await db.refresh(device)
-    
+
     return ApiResponse(
         success=True,
         message="Device registered",

@@ -424,7 +424,10 @@ class _CategorySection extends StatelessWidget {
                 ),
               ),
               if (onSeeAll != null)
-                TextButton(onPressed: onSeeAll, child: Text('common.seeAll'.tr())),
+                TextButton(
+                  onPressed: onSeeAll,
+                  child: Text('common.seeAll'.tr()),
+                ),
             ],
           ),
         ),
@@ -1059,7 +1062,10 @@ class _FilterSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 'course.filterCourses'.tr(),
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               if (provider.selectedLanguage != null ||
@@ -1091,7 +1097,10 @@ class _FilterSheet extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'common.language'.tr(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
@@ -1178,7 +1187,10 @@ class _FilterSheet extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'common.level'.tr(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),

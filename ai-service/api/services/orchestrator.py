@@ -1,10 +1,10 @@
 """
 AI Orchestrator Service
 
-Real lifecycle manager for the GraphCAG pipeline and all sub-services.
+Real lifecycle manager for the TraceCAG pipeline and all sub-services.
 
 Responsibilities:
-  - Coordinate initialization order: KG → ModelGateway → GraphCAGPipeline
+  - Coordinate initialization order: KG → ModelGateway → TraceCAGPipeline
   - Expose process() as the single public entry point (delegates to pipeline)
   - Aggregate cumulative request stats (latency, cache hit rate, model usage)
   - Surface health across all sub-services
@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 
 class AIOrchestrator:
     """
-    Lifecycle coordinator for the GraphCAG multi-agent pipeline.
+    Lifecycle coordinator for the TraceCAG multi-agent pipeline.
 
     Init order (enforced in initialize()):
       1. KnowledgeGraphServiceV3   — KuzuDB schema + concept seeding
       2. ModelGateway              — lazy model registry + auto-unload scheduler
-      3. GraphCAGPipeline          — LangGraph StateGraph compile
+      3. TraceCAGPipeline          — LangGraph StateGraph compile
 
     All three are singletons managed by their own modules; the Orchestrator
     holds references for health aggregation only (no ownership).
@@ -35,7 +35,7 @@ class AIOrchestrator:
     def __init__(self):
         self.start_time = datetime.now()
         self._initialized = False
-        self._pipeline = None   # GraphCAGPipeline
+        self._pipeline = None   # TraceCAGPipeline
         self._gateway = None    # ModelGateway
         self._kg = None         # KnowledgeGraphServiceV3
 
@@ -79,17 +79,17 @@ class AIOrchestrator:
         except Exception as e:
             logger.warning(f"AIOrchestrator: ModelGateway unavailable: {e}")
 
-        # 3. GraphCAGPipeline (compiles LangGraph StateGraph)
+        # 3. TraceCAGPipeline (compiles LangGraph StateGraph)
         try:
-            from api.services.graph_cag.graph import get_graph_cag
-            self._pipeline = await get_graph_cag()
-            logger.info("AIOrchestrator: GraphCAG pipeline compiled")
+            from api.services.trace_cag.graph import get_trace_cag
+            self._pipeline = await get_trace_cag()
+            logger.info("AIOrchestrator: TraceCAG pipeline compiled")
         except Exception as e:
-            logger.error(f"AIOrchestrator: GraphCAG pipeline failed: {e}")
+            logger.error(f"AIOrchestrator: TraceCAG pipeline failed: {e}")
             raise
 
         self._initialized = True
-        logger.info("AIOrchestrator ready (kg + gateway + graphcag)")
+        logger.info("AIOrchestrator ready (kg + gateway + trace-cag)")
 
     async def shutdown(self) -> None:
         """Gracefully release resources."""
@@ -112,7 +112,7 @@ class AIOrchestrator:
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
-        Single public entry point — delegates to GraphCAGPipeline.analyze().
+        Single public entry point — delegates to TraceCAGPipeline.analyze().
 
         Updates cumulative stats after each request.
 
@@ -123,7 +123,7 @@ class AIOrchestrator:
             **kwargs: Forwarded to pipeline.analyze() (learner_profile, policies…).
 
         Returns:
-            Formatted GraphCAG response dict.
+            Formatted TraceCAG response dict.
         """
         if not self._initialized:
             await self.initialize()

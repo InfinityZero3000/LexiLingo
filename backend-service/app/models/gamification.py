@@ -202,7 +202,7 @@ class LeaderboardEntry(Base):
     week_end: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     
     # League system
-    league: Mapped[str] = mapped_column(String(20), default="bronze")  # bronze, silver, gold, platinum, diamond
+    league: Mapped[str] = mapped_column(String(20), default="bronze")  # bronze, silver, gold, platinum, sapphire, ruby, amethyst, master
     
     # Stats
     xp_earned: Mapped[int] = mapped_column(Integer, default=0)

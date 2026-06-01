@@ -8,10 +8,11 @@ const splitList = (value?: string) =>
 
 const trimTrailingSlash = (url: string) => url.replace(/\/+$/, "");
 const stripApiV1 = (url: string) => trimTrailingSlash(url).replace(/\/api\/v1$/, "");
+const DEFAULT_API_URL = "https://api.lexilingo.me/api/v1";
 
 const env = (import.meta.env.VITE_ENV as string) || "development";
-const backendUrl = trimTrailingSlash((import.meta.env.VITE_BACKEND_URL as string) || "http://localhost:8000/api/v1");
-const aiUrl = trimTrailingSlash((import.meta.env.VITE_AI_URL as string) || "http://localhost:8001/api/v1");
+const backendUrl = trimTrailingSlash((import.meta.env.VITE_BACKEND_URL as string) || DEFAULT_API_URL);
+const aiUrl = trimTrailingSlash((import.meta.env.VITE_AI_URL as string) || DEFAULT_API_URL);
 const useGateway = ((import.meta.env.VITE_USE_GATEWAY as string) || "false").toLowerCase() === "true";
 const gatewayBase = stripApiV1(backendUrl);
 
@@ -35,7 +36,7 @@ export const ENV = {
   useGateway,
   /** Gateway API key for protected routes */
   apiKey: (import.meta.env.VITE_API_KEY as string) || "",
-  /** AI admin key required by ai-service /admin/config */
+  /** Optional legacy AI admin key. VITE_* values are visible in the browser. */
   aiAdminApiKey: (import.meta.env.VITE_AI_ADMIN_API_KEY as string) || "",
   /** Explicit AI admin URL. If omitted, auto-derive based on gateway mode. */
   aiAdminUrl:

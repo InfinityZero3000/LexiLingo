@@ -145,7 +145,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             _searchController.text.length >= 2) {
           return Center(
             child: Text(
-              'books.noBooksFound'.tr(namedArgs: {'query': _searchController.text}),
+              'books.noBooksFound'.tr(
+                namedArgs: {'query': _searchController.text},
+              ),
               style: TextStyle(
                 color: isDark ? Colors.white54 : AppColors.textGrey,
               ),
@@ -274,7 +276,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white38 : AppColors.textGrey.withValues(alpha: 0.6),
+                      color: isDark
+                          ? Colors.white38
+                          : AppColors.textGrey.withValues(alpha: 0.6),
                     ),
                   ),
                 ),
@@ -305,8 +309,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
 
               // Sections by CEFR level
               ..._cefrLevels.map(
-                (level) =>
-                    _buildLevelSection(context, level, provider, isDark),
+                (level) => _buildLevelSection(context, level, provider, isDark),
               ),
 
               const SizedBox(height: 32),
@@ -433,68 +436,6 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     );
   }
 
-  Widget _buildCefrFilterRow(
-    BuildContext context,
-    BookProvider provider,
-    bool isDark,
-  ) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _filterChip(context, provider, isDark, null, 'All'),
-          ..._cefrLevels.map(
-            (l) => _filterChip(context, provider, isDark, l, l),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterChip(
-    BuildContext context,
-    BookProvider provider,
-    bool isDark,
-    String? level,
-    String label,
-  ) {
-    final isSelected = provider.selectedCefrLevel == level;
-    return GestureDetector(
-      onTap: () {
-        provider.setCefrFilter(level);
-        provider.loadRecommendedBooks(cefrLevel: level);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : isDark
-              ? AppColors.surfaceDarkElevated
-              : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.grey300,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : isDark
-                ? Colors.white70
-                : AppColors.textGrey,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLevelSection(
     BuildContext context,
     String level,
@@ -565,22 +506,6 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         ),
         const SizedBox(height: 24),
       ],
-    );
-  }
-
-  Widget _buildBookGrid(BuildContext context, List<Book> books, bool isDark) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.56,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: books.length,
-      itemBuilder: (context, i) =>
-          BookCard(book: books[i], onTap: () => _openBook(context, books[i])),
     );
   }
 

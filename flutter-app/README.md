@@ -107,12 +107,13 @@ Data Source
 ## API Integration
 
 ```dart
-// Environment configuration
-API_BASE_URL=https://lexilingo-4gu6.onrender.com/api/v1
-GEMINI_API_KEY=your_key
+// Public client configuration
+API_BASE_URL=https://api.lexilingo.me/api/v1
+AI_SERVICE_URL=https://api.lexilingo.me/api/v1
 ```
 
-For local development, you can override `API_BASE_URL` to `http://localhost:8000/api/v1`.
+For local development, update `assets/env/dev_config`. Provider API keys stay in
+the backend/AI service environment, not in Flutter web assets.
 
 The app connects to:
 - **Backend Service** (port 8000) — User, courses, progress

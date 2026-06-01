@@ -112,7 +112,9 @@ class _SpeakButtonState extends State<SpeakButton> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('voice.playError'.tr(namedArgs: {'error': e.toString()})),
+            content: Text(
+              'voice.playError'.tr(namedArgs: {'error': e.toString()}),
+            ),
             backgroundColor: AppColors.errorBright,
             duration: const Duration(seconds: 2),
           ),
@@ -200,12 +202,14 @@ class SpeakIconButton extends StatefulWidget {
   final String text;
   final double size;
   final Color? color;
+  final bool autoplay;
 
   const SpeakIconButton({
     super.key,
     required this.text,
     this.size = 24,
     this.color,
+    this.autoplay = false,
   });
 
   @override
@@ -230,6 +234,12 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
         });
       }
     });
+
+    if (widget.autoplay) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _speak();
+      });
+    }
   }
 
   @override

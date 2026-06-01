@@ -10,7 +10,7 @@ abstract class StoryRepository {
   Future<Either<Failure, List<StoryListItem>>> getStories({
     String? category,
     DifficultyLevel? difficultyLevel,
-    int limit = 20,
+    int limit = 100,
   });
 
   /// Get full story details
@@ -30,7 +30,7 @@ abstract class StoryRepository {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   });
 
   /// Send a message in a topic session

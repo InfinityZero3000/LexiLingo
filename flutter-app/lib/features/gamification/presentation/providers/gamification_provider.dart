@@ -64,15 +64,22 @@ class GamificationProvider extends ChangeNotifier {
   String? get inventoryError => _inventoryError;
 
   // ============== Leaderboard State ==============
-  LeaderboardEntity? _leaderboard;
+  final Map<String, LeaderboardEntity> _leaderboards = {};
+  final Set<String> _loadingLeaderboardLeagues = {};
   LeagueStatusEntity? _leagueStatus;
-  bool _isLoadingLeaderboard = false;
+  bool _isLoadingLeagueStatus = false;
   String? _leaderboardError;
   String _selectedLeague = 'bronze';
 
-  LeaderboardEntity? get leaderboard => _leaderboard;
+  LeaderboardEntity? get leaderboard =>
+      _leaderboards[_selectedLeague.toLowerCase()];
+  LeaderboardEntity? leaderboardFor(String league) =>
+      _leaderboards[league.toLowerCase()];
   LeagueStatusEntity? get leagueStatus => _leagueStatus;
-  bool get isLoadingLeaderboard => _isLoadingLeaderboard;
+  bool get isLoadingLeagueStatus => _isLoadingLeagueStatus;
+  bool get isLoadingLeaderboard => _loadingLeaderboardLeagues.isNotEmpty;
+  bool isLoadingLeaderboardFor(String league) =>
+      _loadingLeaderboardLeagues.contains(league.toLowerCase());
   String? get leaderboardError => _leaderboardError;
   String get selectedLeague => _selectedLeague;
 
@@ -200,11 +207,12 @@ class GamificationProvider extends ChangeNotifier {
 
   // ============== Leaderboard Methods ==============
   Future<void> loadLeaderboard({String? league}) async {
-    _isLoadingLeaderboard = true;
+    final targetLeague = league ?? _selectedLeague;
+    final targetKey = targetLeague.toLowerCase();
+
+    _loadingLeaderboardLeagues.add(targetKey);
     _leaderboardError = null;
     notifyListeners();
-
-    final targetLeague = league ?? _selectedLeague;
 
     try {
       final response = await _apiClient.get(
@@ -213,7 +221,8 @@ class GamificationProvider extends ChangeNotifier {
 
       final data = _extractData(response);
       if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
-        _leaderboard = LeaderboardEntity.fromJson(data);
+        final newLeaderboard = LeaderboardEntity.fromJson(data);
+        _leaderboards[targetKey] = newLeaderboard;
         _selectedLeague = targetLeague;
       } else {
         _leaderboardError = 'Leaderboard payload is invalid';
@@ -222,21 +231,26 @@ class GamificationProvider extends ChangeNotifier {
       _leaderboardError = e.toString();
       debugPrint('Error loading leaderboard: $e');
     } finally {
-      _isLoadingLeaderboard = false;
+      _loadingLeaderboardLeagues.remove(targetKey);
       notifyListeners();
     }
   }
 
   Future<void> loadLeagueStatus() async {
+    _isLoadingLeagueStatus = true;
+    notifyListeners();
+
     try {
       final response = await _apiClient.get('/gamification/leaderboard/me');
       final data = _extractData(response);
       if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
         _leagueStatus = LeagueStatusEntity.fromJson(data);
-        notifyListeners();
       }
     } catch (e) {
       debugPrint('Error loading league status: $e');
+    } finally {
+      _isLoadingLeagueStatus = false;
+      notifyListeners();
     }
   }
 

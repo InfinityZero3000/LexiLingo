@@ -133,7 +133,9 @@ class _GameResultScreenState extends State<GameResultScreen>
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Icon(
               filled ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: filled ? AppColors.accentYellow : Theme.of(context).colorScheme.outline,
+              color: filled
+                  ? AppColors.accentYellow
+                  : Theme.of(context).colorScheme.outline,
               size: filled ? 52 : 44,
             ),
           );
@@ -176,7 +178,10 @@ class _GameResultScreenState extends State<GameResultScreen>
             '${result.correctAnswers}/${result.totalQuestions}',
           ),
           _statRow('gameResult.scoreLabel'.tr(), '${result.score}'),
-          _statRow('gameResult.durationLabel'.tr(), '${result.durationSeconds}s'),
+          _statRow(
+            'gameResult.durationLabel'.tr(),
+            '${result.durationSeconds}s',
+          ),
           _statRow('gameResult.levelLabel'.tr(), result.cefrLevel),
         ],
       ),
@@ -191,7 +196,10 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           Text(
             label,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 14,
+            ),
           ),
           Text(
             value,
@@ -238,9 +246,18 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           if (xpResult != null) ...[
             const SizedBox(height: 8),
-            _xpStatRow('gameResult.totalXpLabel'.tr(), '${xpResult.newTotalXp}'),
-            _xpStatRow('gameResult.dailyXpLabel'.tr(), '${xpResult.dailyXpToday}'),
-            _xpStatRow('gameResult.streakLabel'.tr(), '${xpResult.streakDays} days'),
+            _xpStatRow(
+              'gameResult.totalXpLabel'.tr(),
+              '${xpResult.newTotalXp}',
+            ),
+            _xpStatRow(
+              'gameResult.dailyXpLabel'.tr(),
+              '${xpResult.dailyXpToday}',
+            ),
+            _xpStatRow(
+              'gameResult.streakLabel'.tr(),
+              '${xpResult.streakDays} days',
+            ),
           ],
         ],
       ),
@@ -288,7 +305,9 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           const SizedBox(width: 6),
           Text(
-            'gameResult.streakBonusLabel'.tr(namedArgs: {'multiplier': multiplier.toStringAsFixed(1)}),
+            'gameResult.streakBonusLabel'.tr(
+              namedArgs: {'multiplier': multiplier.toStringAsFixed(1)},
+            ),
             style: TextStyle(
               color: Colors.orange.shade800,
               fontWeight: FontWeight.bold,

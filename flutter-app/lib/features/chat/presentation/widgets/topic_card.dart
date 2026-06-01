@@ -206,15 +206,38 @@ class TopicCard extends StatelessWidget {
       case 'travel':
         return Icons.flight;
       case 'business':
+      case 'work':
         return Icons.business_center;
       case 'daily_life':
+      case 'housing':
         return Icons.home;
       case 'food':
+      case 'cafe':
         return Icons.restaurant;
       case 'shopping':
         return Icons.shopping_bag;
+      case 'finance':
+        return Icons.account_balance_wallet;
       case 'health':
         return Icons.local_hospital;
+      case 'education':
+        return Icons.school;
+      case 'technology':
+        return Icons.devices;
+      case 'services':
+        return Icons.support_agent;
+      case 'culture':
+        return Icons.museum;
+      case 'leisure':
+        return Icons.sports_soccer;
+      case 'social':
+        return Icons.groups;
+      case 'emergency':
+        return Icons.emergency;
+      case 'environment':
+        return Icons.eco;
+      case 'media':
+        return Icons.mic;
       default:
         return Icons.chat_bubble;
     }

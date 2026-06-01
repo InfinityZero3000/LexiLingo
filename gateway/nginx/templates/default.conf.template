@@ -36,13 +36,13 @@ map $http_user_agent $is_scanner {
     ~*dirbuster          1;
     ~*gobuster           1;
     ~*wfuzz              1;
-    ~*"fuzz faster u fool" 1; # ffuf scanner (155 hits in logs)
+    ~*fuzz\.faster\.u\.fool 1; # ffuf scanner (155 hits in logs)
     ~*ffuf               1;
     ~*NetSystemsResearch 1;
     ~*Shodan             1;   # Shodan-Pull crawler
     ~*ncsrv              1;   # observed in logs
     ~*fasthttp           1;   # raw HTTP scanner tool
-    ~*"Hello from Palo Alto" 1; # PAN recon scanner (38 hits)
+    ~*Hello\.from\.Palo\.Alto 1; # PAN recon scanner (38 hits)
 }
 
 # ---------------------------------------------------------------------------
@@ -62,12 +62,7 @@ geo $block_ip {
 
 map $http_origin $cors_allow_origin {
     default "";
-    ~^https?://localhost(:\d+)?$ $http_origin;
-    ~^https?://127\.0\.0\.1(:\d+)?$ $http_origin;
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?$ $http_origin;
-    ~^https?://.*\.devtunnels\.ms(:\d+)?$ $http_origin;
 }
 
 log_format main_json escape=json
@@ -96,6 +91,27 @@ limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
 limit_conn_zone $binary_remote_addr zone=auth_conn_per_ip:10m;
 # Global server-wide connection cap — all IPs combined
 limit_conn_zone $server_name zone=conn_global:1m;
+
+# ---------------------------------------------------------------------------
+# Gzip compression — critical for Flutter web (JS/WASM can be 10-15 MB raw)
+# ---------------------------------------------------------------------------
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 6;
+gzip_min_length 1024;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/wasm
+    application/xml
+    application/x-font-ttf
+    font/woff
+    font/woff2
+    image/svg+xml;
 
 upstream backend_upstream {
     least_conn;
@@ -213,7 +229,7 @@ server {
     add_header Access-Control-Allow-Origin $cors_allow_origin always;
     add_header Access-Control-Allow-Credentials "true" always;
     add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
-    add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id" always;
+    add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret" always;
     add_header Access-Control-Expose-Headers "X-Request-Id,X-RateLimit-Remaining-Minute,X-RateLimit-Remaining-Day" always;
     add_header Access-Control-Max-Age 3600 always;
     add_header Vary "Origin" always;
@@ -364,11 +380,6 @@ server {
     # -------------------------------------------------------------------
     # AI Service admin routes (super-admin only; X-Admin-Key protected)
     # -------------------------------------------------------------------
-    location /api/v1/admin/ {
-        limit_req zone=ai_general_per_ip burst=20 nodelay;
-        include /etc/nginx/snippets/proxy-common.conf;
-        proxy_pass http://ai_upstream;
-    }
 
     # Backwards-compatible alias used by admin-service
     location /api/v1/ai-admin/ {
