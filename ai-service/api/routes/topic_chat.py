@@ -242,9 +242,9 @@ async def warm_topic_cache(
 
         import json
         bundle = await preloader.warm_cache(request.story_id, request.user_id)
-        
+
         # Calculate size for metadata
-        bundle_json = json.dumps(bundle)
+        bundle_json = json.dumps(bundle, default=str)
         size_kb = len(bundle_json.encode('utf-8')) / 1024
         
         return WarmTopicCacheResponse(
@@ -253,6 +253,8 @@ async def warm_topic_cache(
             message=f"Context warmed for '{bundle['title']}'",
             bundle_size_kb=round(size_kb, 2)
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -674,26 +676,6 @@ async def send_topic_message(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to send message: {str(e)}"
-        )
-
-
-@router.get(
-    "/categories",
-    summary="Get available story categories"
-)
-async def get_categories(
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Get list of available story categories."""
-    try:
-        story_service = StoryService(db)
-        categories = await story_service.get_categories()
-        return {"categories": categories}
-    except Exception as e:
-        logger.error(f"Failed to get categories: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get categories: {str(e)}"
         )
 
 

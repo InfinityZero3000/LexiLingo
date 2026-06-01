@@ -146,3 +146,35 @@ class EmailService:
         except Exception as exc:  # pragma: no cover - external IO
             logger.exception("Failed to send verification email to %s: %s", to_email, exc)
             return False
+
+    @staticmethod
+    def _build_otp_message(to_email: str, otp: str, display_name: str) -> "EmailMessage":
+        """Build an EmailMessage containing an admin login OTP."""
+        from email.message import EmailMessage as _EM
+        msg = _EM()
+        msg["Subject"] = "LexiLingo Admin — Your login code"
+        msg["From"] = settings.EMAIL_FROM or "noreply@lexilingo.me"
+        msg["To"] = to_email
+        text = (
+            f"Hi {display_name},\n\n"
+            f"Your LexiLingo Admin one-time passcode is:\n\n"
+            f"  {otp}\n\n"
+            f"This code expires in 5 minutes. Do not share it.\n\n"
+            f"If you didn't request this, ignore this email.\n\n"
+            f"— LexiLingo Team"
+        )
+        html = f"""
+<html><body style="font-family:sans-serif;background:#f8f9ff;padding:32px">
+  <div style="max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:32px">
+    <h2 style="color:#AD3200;margin:0 0 8px">LingoAdmin Login</h2>
+    <p>Hi <strong>{display_name}</strong>,</p>
+    <p>Your one-time passcode is:</p>
+    <div style="background:#FFF3EE;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
+      <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#AD3200">{otp}</span>
+    </div>
+    <p style="color:#666;font-size:13px">Expires in <strong>5 minutes</strong>. Do not share this code.</p>
+  </div>
+</body></html>"""
+        msg.set_content(text)
+        msg.add_alternative(html, subtype="html")
+        return msg

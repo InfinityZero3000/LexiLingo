@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -59,6 +58,7 @@ class LexiChatProvider extends ChangeNotifier {
   String _learnerLevel = 'B1';
   Timer? _typingStageTimer;
   DateTime? _responseStateStartedAt;
+  int _requestSequence = 0;
 
   static const Duration _minResponseIndicatorDuration = Duration(
     milliseconds: 1200,
@@ -429,8 +429,26 @@ class LexiChatProvider extends ChangeNotifier {
   }
 
   String _buildRequestId(String userId, String sessionId) {
-    final rand = Random.secure().nextInt(1 << 32).toRadixString(16);
-    return 'lexi-$userId-$sessionId-${DateTime.now().millisecondsSinceEpoch}-$rand';
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    final sequence = _nextRequestSequence();
+    final userPart = _requestIdPart(userId, fallback: 'user');
+    final sessionPart = _requestIdPart(sessionId, fallback: 'session');
+    return 'lexi-$userPart-$sessionPart-$timestamp-$sequence';
+  }
+
+  int _nextRequestSequence() {
+    _requestSequence = (_requestSequence + 1) & 0x3fffffff;
+    return _requestSequence;
+  }
+
+  String _requestIdPart(String value, {required String fallback}) {
+    final normalized = value
+        .trim()
+        .replaceAll(RegExp(r'[^A-Za-z0-9_.-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (normalized.isEmpty) return fallback;
+    return normalized.length <= 48 ? normalized : normalized.substring(0, 48);
   }
 
   // ── Send Message (streaming / typewriter effect) ───────────────────────────
@@ -482,6 +500,8 @@ class LexiChatProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    var receivedDone = false;
+
     try {
       await for (final event in repository.sendMessageStream(
         userId: uid,
@@ -515,6 +535,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final scores,
             :final audioBase64,
           ):
+            receivedDone = true;
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
               final finalContent = _messages[idx].content;
@@ -553,28 +574,92 @@ class LexiChatProvider extends ChangeNotifier {
           // storyContext is returned by the server for context continuity; no local storage needed.
           case LexiStreamError(:final error):
             logError(_tag, 'sendMessageStreaming error event: $error');
-            // Remove placeholder and fall back to sendMessage
-            _messages.removeWhere((m) => m.id == placeholderId);
-            _messages.removeWhere((m) => m.id == requestId);
-            _isLexiThinking = false;
-            _isLexiTyping = false;
-            _isSending = false;
-            notifyListeners();
-            await sendMessage(text, userId: uid);
+            await _retryNonStreamingSend(
+              text: text,
+              userId: uid,
+              requestId: requestId,
+              placeholderId: placeholderId,
+              reason: error,
+            );
             return;
         }
       }
+
+      if (!receivedDone) {
+        await _handleIncompleteStream(
+          text: text,
+          userId: uid,
+          sessionId: sessionId,
+          requestId: requestId,
+          placeholderId: placeholderId,
+        );
+      }
     } catch (e) {
       logError(_tag, 'sendMessageStreaming exception: $e');
-      _messages.removeWhere((m) => m.id == placeholderId);
-      _messages.removeWhere((m) => m.id == requestId);
-      _isLexiThinking = false;
-      _isLexiTyping = false;
-      _isSending = false;
-      notifyListeners();
-      // Fall back to regular (non-streaming) endpoint
-      await sendMessage(text, userId: uid);
+      await _retryNonStreamingSend(
+        text: text,
+        userId: uid,
+        requestId: requestId,
+        placeholderId: placeholderId,
+        reason: e.toString(),
+      );
     }
+  }
+
+  Future<void> _handleIncompleteStream({
+    required String text,
+    required String userId,
+    required String sessionId,
+    required String requestId,
+    required String placeholderId,
+  }) async {
+    final idx = _messages.indexWhere((m) => m.id == placeholderId);
+    final partialContent = idx == -1 ? '' : _messages[idx].content.trim();
+
+    if (partialContent.isEmpty) {
+      await _retryNonStreamingSend(
+        text: text,
+        userId: userId,
+        requestId: requestId,
+        placeholderId: placeholderId,
+        reason: 'stream closed before sending a response',
+      );
+      return;
+    }
+
+    if (idx != -1) {
+      _messages[idx] = _messages[idx].copyWith(syncStatus: 'synced');
+    }
+
+    final userIdx = _messages.indexWhere((m) => m.id == requestId);
+    if (userIdx != -1) {
+      _messages[userIdx] = _messages[userIdx].copyWith(syncStatus: 'synced');
+    }
+
+    _isLexiThinking = false;
+    _isLexiTyping = false;
+    _isSending = false;
+    await _cacheCurrentMessages();
+    _touchSession(sessionId, messageDelta: 2);
+    logWarn(_tag, 'Lexi stream closed without a done event; kept content');
+    notifyListeners();
+  }
+
+  Future<void> _retryNonStreamingSend({
+    required String text,
+    required String userId,
+    required String requestId,
+    required String placeholderId,
+    required String reason,
+  }) async {
+    logWarn(_tag, 'Retry Lexi message without streaming: $reason');
+    _messages.removeWhere((m) => m.id == placeholderId);
+    _messages.removeWhere((m) => m.id == requestId);
+    _isLexiThinking = false;
+    _isLexiTyping = false;
+    _isSending = false;
+    notifyListeners();
+    await sendMessage(text, userId: userId);
   }
 
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {

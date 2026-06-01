@@ -12,6 +12,7 @@ from app.models.course import Course, Unit, Lesson
 from app.models.vocabulary import VocabularyItem
 from app.models.gamification import Achievement, ShopItem
 from app.models.user import User
+from app.models.content import GrammarItem, QuestionItem, TestExam
 
 
 class TestAdminCourses:
@@ -241,6 +242,86 @@ class TestAdminVocabulary:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+
+class TestAdminContentLab:
+    """Tests for admin-managed grammar, question bank, and test exams."""
+
+    @pytest.mark.asyncio
+    async def test_list_content_lab_handles_legacy_json_shapes(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+    ):
+        """Legacy rows should not make content-lab list endpoints return 500."""
+        grammar = GrammarItem(
+            title="Legacy Grammar",
+            level="A1",
+            topic="basics",
+            summary="Legacy JSON shapes",
+            content="Use the verb to be for identity and state.",
+            examples={"sentence": "I am a student."},
+            tags={"grammar": True, "level": "beginner"},
+            is_active=True,
+        )
+        db_session.add(grammar)
+        await db_session.commit()
+        await db_session.refresh(grammar)
+
+        question = QuestionItem(
+            prompt="Choose the correct answer.",
+            question_type="mcq",
+            options={"items": ["am", "is", "are"]},
+            answer={"value": "am"},
+            explanation="Use am with I.",
+            difficulty_level="A1",
+            tags={"grammar": True},
+            grammar_id=grammar.id,
+            is_active=True,
+        )
+        db_session.add(question)
+        await db_session.commit()
+        await db_session.refresh(question)
+
+        test_exam = TestExam(
+            title="Placement A1",
+            description="A short test",
+            level="A1",
+            duration_minutes=15,
+            passing_score=70,
+            question_ids=[str(question.id)],
+            is_published=False,
+        )
+        db_session.add(test_exam)
+        await db_session.commit()
+
+        grammar_response = await async_client.get(
+            "/api/v1/admin/grammar",
+            headers=admin_headers,
+        )
+        questions_response = await async_client.get(
+            "/api/v1/admin/questions",
+            headers=admin_headers,
+        )
+        tests_response = await async_client.get(
+            "/api/v1/admin/test-exams",
+            headers=admin_headers,
+        )
+
+        assert grammar_response.status_code == 200
+        assert questions_response.status_code == 200
+        assert tests_response.status_code == 200
+
+        grammar_data = grammar_response.json()["data"][0]
+        question_data = questions_response.json()["data"][0]
+        test_data = tests_response.json()["data"][0]
+
+        assert grammar_data["examples"] == [{"sentence": "I am a student."}]
+        assert grammar_data["tags"] == ["grammar", "beginner"]
+        assert question_data["options"] == [{"items": ["am", "is", "are"]}]
+        assert question_data["tags"] == ["grammar"]
+        assert test_data["question_ids"] == [str(question.id)]
 
 
 class TestAdminAchievements:

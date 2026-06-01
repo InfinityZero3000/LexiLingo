@@ -339,22 +339,32 @@ class LeaderboardCRUD:
         db: AsyncSession,
         league: str,
         limit: int = 30
-    ) -> List[Tuple[LeaderboardEntry, User]]:
+    ) -> List[Tuple[Optional[LeaderboardEntry], User]]:
         """Get leaderboard for specific league"""
         week_start, _ = LeaderboardCRUD.get_current_week_range()
         league_filter = league.lower().strip()
         
         result = await db.execute(
             select(LeaderboardEntry, User)
-            .join(User, User.id == LeaderboardEntry.user_id)
+            .select_from(User)
+            .outerjoin(
+                LeaderboardEntry, 
+                and_(
+                    LeaderboardEntry.user_id == User.id,
+                    LeaderboardEntry.week_start == week_start,
+                )
+            )
             .where(
                 and_(
-                    LeaderboardEntry.week_start == week_start,
-                    func.lower(LeaderboardEntry.league) == league_filter,
+                    User.is_active == True,
                     func.lower(User.rank) == league_filter,
                 )
             )
-            .order_by(desc(LeaderboardEntry.xp_earned))
+            .order_by(
+                desc(func.coalesce(LeaderboardEntry.xp_earned, 0)),
+                desc(User.total_xp),
+                desc(User.updated_at)
+            )
             .limit(limit)
         )
         return list(result.all())

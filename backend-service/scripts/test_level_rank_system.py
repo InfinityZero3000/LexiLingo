@@ -32,7 +32,7 @@ BASE_URL = "http://localhost:8000/api/v1"
 
 # Test credentials
 TEST_EMAIL = "test@example.com"
-TEST_PASSWORD = "password123"
+TEST_PASSWORD = "Password123!"
 
 
 def create_table(title: str, columns: list) -> Table:
@@ -290,14 +290,14 @@ async def test_rank_calculation():
     from app.services.rank_service import calculate_rank, RankTier
     
     test_cases = [
-        (10, "A1", RankTier.BRONZE),
-        (50, "B1", RankTier.SILVER),
-        (55, "B2", RankTier.GOLD),
-        (70, "B2", RankTier.PLATINUM),
-        (85, "C1", RankTier.SAPPHIRE),
-        (90, "C1", RankTier.RUBY),
-        (95, "C1", RankTier.AMETHYST),
-        (100, "C2", RankTier.MASTER),
+        (10, "A1", RankTier.BRONZE),      # 12.67
+        (20, "A2", RankTier.SILVER),      # 25.33
+        (35, "B1", RankTier.GOLD),        # 41.00
+        (50, "B2", RankTier.PLATINUM),    # 56.67
+        (60, "C1", RankTier.SAPPHIRE),    # 69.33
+        (70, "C1", RankTier.RUBY),        # 75.33
+        (80, "C1", RankTier.AMETHYST),    # 81.33
+        (100, "C2", RankTier.MASTER),     # 100.00
     ]
     
     table = create_table("Rank Calculation Tests", ["Level", "Proficiency", "Expected", "Actual", "Status"])

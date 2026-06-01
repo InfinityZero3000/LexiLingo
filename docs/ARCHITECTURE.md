@@ -45,7 +45,7 @@ graph TB
  TRACECAG["TraceCag Pipeline<br/>(LangGraph StateGraph)<br/>Diagnose → Retrieve → Ground → Generate"]
  KG["Knowledge Graph Engine<br/>KuzuDB + TF-IDF<br/>CEFR-weighted BFS"]
  VOICE["Voice Pipeline<br/>Whisper STT · Piper TTS<br/>HuBERT Phoneme Analysis"]
- MODELS["Model Gateway<br/>Qwen2.5-1.5B · LLaMA3-VI<br/>Gemini Flash (fallback)"]
+ MODELS["Model Gateway<br/>Qwen3-1.7B · LLaMA3-VI<br/>Gemini Flash (fallback)"]
  EMBED["Embeddings<br/>all-MiniLM-L6-v2<br/>Vector Store"]
  end
 
@@ -232,7 +232,7 @@ app/core/
 | **Voice STT** | Faster-Whisper v3 (small, 244MB) |
 | **Voice TTS** | Piper (en_US-lessac-medium) |
 | **Pronunciation** | HuBERT-large-ls960-ft (Facebook) |
-| **LLM** | Qwen2.5-1.5B (primary) → Gemini Flash (fallback) |
+| **LLM** | Qwen3-1.7B (primary) → Gemini Flash (fallback) |
 | **Vietnamese** | LLaMA3-VI 3B (lazy-loaded) |
 | **Port** | 8080 (internal) |
 

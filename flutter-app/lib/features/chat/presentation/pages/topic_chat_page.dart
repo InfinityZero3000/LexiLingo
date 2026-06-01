@@ -174,7 +174,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
 
   String _currentUserId(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    return auth.user?.id ?? 'demo_user_001';
+    return auth.user?.id ?? '';
   }
 
   Future<void> _sendMessage([String? text]) async {

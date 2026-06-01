@@ -7,7 +7,7 @@ server:
 
 models:
   qwen:
-    name: "Qwen/Qwen2.5-1.5B"
+    name: "Qwen/Qwen3-1.7B"
     device: "cuda"  # or "cpu" if no GPU
     load_in_4bit: true
     lazy_load: false

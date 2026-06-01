@@ -105,7 +105,7 @@ class TopicContextPreloader:
         
         # 5. Store in Redis
         cache_key = f"{self.PRELOAD_KEY_PREFIX}{topic_id}"
-        await self.redis.set(cache_key, json.dumps(bundle), ex=3600) # 1 hour
+        await self.redis.set(cache_key, json.dumps(bundle, default=str), ex=3600) # 1 hour
         
         return bundle
 

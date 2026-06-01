@@ -353,9 +353,12 @@ async def get_leaderboard(
             ))
     
     for rank, (entry, user) in enumerate(entries, 1):
-        is_current = entry.user_id == current_user.id
+        is_current = user.id == current_user.id
         if is_current:
             current_user_rank = rank
+
+        xp = entry.xp_earned if entry is not None else 0
+        lessons = entry.lessons_completed if entry is not None else 0
 
         leaderboard_entries.append(LeaderboardUserEntry(
             rank=rank,
@@ -364,8 +367,8 @@ async def get_leaderboard(
             display_name=user.display_name,
             avatar_url=user.avatar_url if hasattr(user, 'avatar_url') else None,
             user_rank=user.rank,
-            xp_earned=entry.xp_earned,
-            lessons_completed=entry.lessons_completed,
+            xp_earned=xp,
+            lessons_completed=lessons,
             is_current_user=is_current
         ))
 

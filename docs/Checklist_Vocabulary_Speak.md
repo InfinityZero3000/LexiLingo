@@ -31,3 +31,18 @@ Source plan: `docs/ Plan_Vocabulary Speak.md`
 - [x] Flutter data/domain API wiring.
 - [x] Flutter speaking practice UI and navigation.
 - [x] Verification pass and checklist status update.
+
+## Next Plan: FSRS Reminder Scheduler
+
+Plan: `docs/superpowers/plans/2026-06-01-fsrs-reminder-scheduler.md`
+
+- [ ] Add backend reminder preferences and delivery audit tables.
+- [ ] Add user-configurable reminder settings API.
+- [ ] Add persisted notification API.
+- [ ] Add FSRS due-count scheduler adapter based on `next_review_date`.
+- [ ] Add FCM push service for vocabulary review reminders.
+- [ ] Add vocabulary review reminder email service and templates.
+- [ ] Add Celery worker and beat process configuration.
+- [ ] Sync Flutter Settings reminder controls with backend.
+- [ ] Route reminder notification taps to vocabulary review.
+- [ ] Verify backend, Flutter, worker dry-run, and production rollout safety.

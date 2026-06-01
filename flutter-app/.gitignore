@@ -33,6 +33,7 @@ migrate_working_dir/
 .pub/
 build/
 .metadata
+template/
 # pubspec.lock is intentionally tracked for apps (not libraries) to ensure
 # reproducible CI builds with the same package versions as local development.
 .packages

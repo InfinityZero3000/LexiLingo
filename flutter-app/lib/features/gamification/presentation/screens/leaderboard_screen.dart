@@ -146,9 +146,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
               centerTitle: true,
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.help_outline),
-                  onPressed: () => _showRankInfoDialog(context),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 8),
+                  child: _RankHelpButton(
+                    onPressed: () => _showRankInfoDialog(context),
+                  ),
                 ),
               ],
             ),
@@ -443,6 +445,54 @@ class _LeaderboardTab extends StatelessWidget {
             style: TextStyle(color: AppColorRoles.textMuted(isDark)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RankHelpButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _RankHelpButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final foreground = AppColorRoles.textPrimary(isDark);
+    final accent = AppColorRoles.primary(isDark);
+    final label = 'leaderboard.aboutLeagues'.tr();
+
+    return IconButton(
+      tooltip: label,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      icon: Container(
+        width: 30,
+        height: 30,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.86),
+          shape: BoxShape.circle,
+          border: Border.all(color: accent.withValues(alpha: 0.42), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          '?',
+          style: TextStyle(
+            color: foreground,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
       ),
     );
   }

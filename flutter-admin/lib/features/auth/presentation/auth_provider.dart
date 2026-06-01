@@ -1,0 +1,76 @@
+import 'package:flutter/foundation.dart';
+import '../data/auth_repository.dart';
+
+enum AuthState { unknown, authenticated, unauthenticated, loading }
+
+class AuthProvider extends ChangeNotifier {
+  final _repo = AuthRepository();
+
+  AuthState _state = AuthState.unknown;
+  AdminUser? _user;
+  String? _error;
+
+  AuthState get state => _state;
+  AdminUser? get user => _user;
+  String? get error => _error;
+  bool get isAuthenticated => _state == AuthState.authenticated;
+  bool get isSuperAdmin => _user?.isSuperAdmin ?? false;
+
+  Future<void> init() async {
+    _user = await _repo.getMe();
+    _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
+    notifyListeners();
+  }
+
+  Future<bool> requestOtp(String email) async {
+    _error = null;
+    _state = AuthState.loading;
+    notifyListeners();
+    try {
+      await _repo.requestOtp(email);
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = _parseError(e);
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> verifyOtp(String email, String otp) async {
+    _error = null;
+    _state = AuthState.loading;
+    notifyListeners();
+    try {
+      _user = await _repo.verifyOtp(email, otp);
+      _state = AuthState.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = _parseError(e);
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
+    await _repo.logout();
+    _user = null;
+    _state = AuthState.unauthenticated;
+    notifyListeners();
+  }
+
+  String _parseError(dynamic e) {
+    final str = e.toString();
+    if (str.contains('404')) return 'Email không tồn tại hoặc không có quyền admin';
+    if (str.contains('403')) return 'Tài khoản không có quyền truy cập admin';
+    if (str.contains('400')) return 'OTP không hợp lệ hoặc đã hết hạn';
+    if (str.contains('SocketException') || str.contains('connection')) {
+      return 'Không thể kết nối máy chủ';
+    }
+    return 'Có lỗi xảy ra, vui lòng thử lại';
+  }
+}

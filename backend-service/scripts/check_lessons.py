@@ -12,20 +12,21 @@ from app.core.database import engine
 async def check_lessons():
     async with engine.begin() as conn:
         result = await conn.execute(text('''
-            SELECT l.title, l.lesson_type, l.content, l.total_exercises
+            SELECT l.title, l.id, l.course_id, l.unit_id,
+                   (SELECT COUNT(*) FROM courses c WHERE c.id = l.course_id) as course_match,
+                   (SELECT COUNT(*) FROM units u WHERE u.id = l.unit_id) as unit_match,
+                   l.content IS NULL as is_null,
+                   CAST(l.content AS text) as content_text
             FROM lessons l
-            LIMIT 3
+            LIMIT 10
         '''))
-        print('=== Sample Lessons ===')
+        print('=== Diagnostic Lessons ===')
         for row in result.fetchall():
             print(f'Title: {row[0]}')
-            print(f'Type: {row[1]}')
-            print(f'Exercises: {row[3]}')
-            content = row[2]
-            if content:
-                print(f'Content (first 500 chars): {str(content)[:500]}')
-            else:
-                print('Content: None')
+            print(f'ID: {row[1]}')
+            print(f'CourseID: {row[2]} | CourseMatch: {row[4]}')
+            print(f'UnitID: {row[3]} | UnitMatch: {row[5]}')
+            print(f'IsNull: {row[6]} | ContentText: {row[7]}')
             print('-' * 40)
 
 if __name__ == "__main__":

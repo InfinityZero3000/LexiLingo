@@ -56,7 +56,7 @@
 | Component | Size (Disk) | RAM (Loaded) | When Loaded |
 |-----------|-------------|--------------|-------------|
 | **Faster-Whisper v3** | 244MB | 500MB | On voice input |
-| **Qwen2.5-1.5B-Q4** | 900MB | 1200MB | Always |
+| **Qwen3-1.7B-Q4** | 900MB | 1200MB | Always |
 | **Piper TTS** | 63MB | 200MB | On response gen |
 | **Knowledge Graph** | 50MB | 100MB | Always |
 | **Redis Cache** | - | 200MB | Always |

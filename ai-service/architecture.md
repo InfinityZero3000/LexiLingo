@@ -41,7 +41,7 @@
 |-----------|------------|------|---------|
 | STT | Faster-Whisper v3 | 244MB | 50-100ms |
 | Context Encoder | all-MiniLM-L6-v2 | 22MB | 15ms |
-| NLP (English) | Qwen2.5-1.5B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
+| NLP (English) | Qwen3-1.7B + Unified LoRA | 1.5GB + 80MB | 100-150ms |
 | NLP (Vietnamese) | LLaMA3-8B-VI (lazy) | 8GB | 200ms |
 | Knowledge Graph | NetworkX / KuzuDB | <50MB | <5ms |
 | Pronunciation | HuBERT-large | 960MB | 100-200ms |
@@ -270,7 +270,7 @@
    │                                             │
    ▼                                             ▼
 ┌─────────────────────────────┐    ┌─────────────────────────────┐
-│   PRIMARY: Qwen2.5-1.5B     │    │   PARALLEL: HuBERT-large    │
+│   PRIMARY: Qwen3-1.7B     │    │   PARALLEL: HuBERT-large    │
 │   + Unified LoRA Adapter    │    │   Pronunciation Analysis    │
 ├─────────────────────────────┤    ├─────────────────────────────┤
 │                             │    │                             │
@@ -802,7 +802,7 @@ Each node is an async function that reads/writes to `TraceCAGState`.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│              UNIFIED LoRA ADAPTER (Qwen2.5-1.5B)                 │
+│              UNIFIED LoRA ADAPTER (Qwen3-1.7B)                 │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Configuration:                                                  │
