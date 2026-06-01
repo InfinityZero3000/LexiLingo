@@ -522,122 +522,225 @@ class _ProfilePageState extends State<ProfilePage>
                             ),
                           ),
                         const SizedBox(height: 12),
-                        // Level Badge + CEFR Proficiency Badge
+                        // Level Badge + CEFR Proficiency Badge + Rank Badge
                         Consumer<LevelProvider>(
-                          builder: (_, lp, __) => Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            children: [
-                              // Numeric Level badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: AppColorRoles.primaryGradient(
-                                      isDark,
-                                    ),
+                          builder: (_, lp, __) {
+                            final rankData = rankVisualDataFor(lp.rank);
+                            final isMasterRank = lp.rank == 'master';
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                // Numeric Level badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          (isDark ? accent : AppColors.primary)
-                                              .withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.workspace_premium_rounded,
-                                      color: AppColors.surfaceLight,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'profile.level'.tr(
-                                        namedArgs: {
-                                          'level': '${lp.displayLevel}',
-                                        },
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: AppColorRoles.primaryGradient(
+                                        isDark,
                                       ),
-                                      style: TextStyle(
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (isDark
+                                                ? accent
+                                                : AppColors.primary)
+                                            .withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.workspace_premium_rounded,
                                         color: AppColors.surfaceLight,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                        size: 16,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'profile.level'.tr(
+                                          namedArgs: {
+                                            'level': '${lp.displayLevel}',
+                                          },
+                                        ),
+                                        style: TextStyle(
+                                          color: AppColors.surfaceLight,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              // CEFR Proficiency Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getTierColor(
-                                    lp.proficiencyLevel,
-                                  ).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
+                                // CEFR Proficiency Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: _getTierColor(
                                       lp.proficiencyLevel,
-                                    ).withValues(alpha: 0.5),
+                                    ).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: _getTierColor(
+                                        lp.proficiencyLevel,
+                                      ).withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _getTierIcon(lp.proficiencyLevel),
+                                        size: 14,
+                                        color: _getTierColor(
+                                          lp.proficiencyLevel,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        lp.proficiencyLevel,
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '·',
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ).withValues(alpha: 0.6),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        lp.proficiencyName,
+                                        style: TextStyle(
+                                          color: _getTierColor(
+                                            lp.proficiencyLevel,
+                                          ),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _getTierIcon(lp.proficiencyLevel),
-                                      size: 14,
-                                      color: _getTierColor(lp.proficiencyLevel),
+                                // League Rank Badge
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const LeaderboardScreen(),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      lp.proficiencyLevel,
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
+                                  ),
+                                  child: isMasterRank
+                                      ? ShaderMask(
+                                          shaderCallback: (bounds) =>
+                                              const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF5AB6FF),
+                                                  Color(0xFFFFD64F),
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ).createShader(bounds),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.4,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                RankAssetIcon(
+                                                  rank: lp.rank,
+                                                  size: 16,
+                                                  decorated: false,
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  lp.rankName,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: rankData.color.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: rankData.color.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              RankAssetIcon(
+                                                rank: lp.rank,
+                                                size: 16,
+                                                decorated: false,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                lp.rankName,
+                                                style: TextStyle(
+                                                  color: rankData.color,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '·',
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
-                                        ).withValues(alpha: 0.6),
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      lp.proficiencyName,
-                                      style: TextStyle(
-                                        color: _getTierColor(
-                                          lp.proficiencyLevel,
-                                        ),
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
                         // Member Since

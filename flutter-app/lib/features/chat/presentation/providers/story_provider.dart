@@ -199,7 +199,7 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   }) async {
     // Clear previous session state
     clearActiveSession();
@@ -260,7 +260,7 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   }) async {
     final saved = await _loadSavedTopicSession(storyId);
 

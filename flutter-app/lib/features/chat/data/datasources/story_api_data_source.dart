@@ -53,7 +53,7 @@ class StoryApiDataSource {
   Future<List<StoryListItem>> getStories({
     String? category,
     DifficultyLevel? difficultyLevel,
-    int limit = 20,
+    int limit = 100,
   }) async {
     try {
       final queryParams = <String, String>{};
@@ -61,7 +61,7 @@ class StoryApiDataSource {
       if (difficultyLevel != null) {
         queryParams['difficulty_level'] = difficultyLevel.shortName;
       }
-      if (limit != 20) queryParams['limit'] = limit.toString();
+      queryParams['limit'] = limit.toString();
 
       final uri = Uri.parse(
         '$baseUrl/topics/stories',
@@ -86,7 +86,7 @@ class StoryApiDataSource {
           queryParams['difficulty_level'] == null) {
         final retryUri = Uri.parse('$baseUrl/topics/stories').replace(
           queryParameters: {
-            if (limit != 20) 'limit': limit.toString(),
+            'limit': limit.toString(),
             'bypass_cache': 'true',
           },
         );
@@ -200,7 +200,7 @@ class StoryApiDataSource {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/topics/topic-sessions');

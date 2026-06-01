@@ -22,5 +22,7 @@ export 'presentation/screens/wallet_screen.dart';
 // Widgets
 export 'presentation/widgets/gem_counter.dart';
 export 'presentation/widgets/league_card.dart';
+export 'presentation/widgets/rank_asset_icon.dart';
+export 'presentation/widgets/rank_badge.dart';
 export 'presentation/widgets/shop_item_card.dart';
 export 'presentation/widgets/leaderboard_podium.dart';

@@ -16,7 +16,7 @@ class StartTopicSessionRequest {
     required this.userId,
     required this.storyId,
     this.sessionTitle,
-    this.preferredLlm = 'graphcag',
+    this.preferredLlm = 'tracecag',
   });
 
   Map<String, dynamic> toJson() => {

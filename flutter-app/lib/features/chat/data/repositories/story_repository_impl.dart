@@ -20,7 +20,7 @@ class StoryRepositoryImpl implements StoryRepository {
   Future<Either<Failure, List<StoryListItem>>> getStories({
     String? category,
     DifficultyLevel? difficultyLevel,
-    int limit = 20,
+    int limit = 100,
   }) async {
     try {
       final stories = await apiDataSource.getStories(
@@ -91,7 +91,7 @@ class StoryRepositoryImpl implements StoryRepository {
     required String userId,
     required String storyId,
     String? sessionTitle,
-    String preferredLlm = 'graphcag',
+    String preferredLlm = 'tracecag',
   }) async {
     try {
       final session = await apiDataSource.startTopicSession(

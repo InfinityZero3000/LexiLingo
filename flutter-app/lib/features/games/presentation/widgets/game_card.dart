@@ -29,12 +29,18 @@ class GameCard extends StatelessWidget {
   };
 
   static const Map<GameType, String> _bgImages = {
-    GameType.wordScramble: 'https://images.unsplash.com/photo-1634128221889-82ed6efeb273?auto=format&fit=crop&q=80&w=400&h=300',
-    GameType.fillBlank: 'https://images.unsplash.com/photo-1455390582262-044cdead27d8?auto=format&fit=crop&q=80&w=400&h=300',
-    GameType.matching: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400&h=300',
-    GameType.spellingBee: 'https://images.unsplash.com/photo-1473679808388-306abccfdbe8?auto=format&fit=crop&q=80&w=400&h=300',
-    GameType.grammarQuiz: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400&h=300',
-    GameType.hangman: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=400&h=300',
+    // Scrabble letter tiles on wooden surface — word scramble game
+    GameType.wordScramble: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400&h=300',
+    // Open notebook with pen — fill-in-the-blank writing exercise
+    GameType.fillBlank: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400&h=300',
+    // Playing cards spread out — matching/memory card game
+    GameType.matching: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=400&h=300',
+    // Macro bee on flower — spelling bee game
+    GameType.spellingBee: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=400&h=300',
+    // Colorful books stacked — grammar quiz / study
+    GameType.grammarQuiz: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=400&h=300',
+    // Crossword / word puzzle tiles — hangman word-guessing game
+    GameType.hangman: 'https://images.unsplash.com/photo-1555654266-5e4c0e62ab09?auto=format&fit=crop&q=80&w=400&h=300',
   };
 
   @override
