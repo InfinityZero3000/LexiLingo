@@ -80,6 +80,62 @@ services:
       timeout: 10s
       unhealthyThreshold: 3
 
+  - type: worker
+    name: lexilingo-reminder-worker
+    env: python
+    region: singapore
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: REMINDERS_ENABLED
+        value: "false"
+      - key: REMINDER_DRY_RUN
+        value: "true"
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+
+  - type: worker
+    name: lexilingo-reminder-beat
+    env: python
+    region: singapore
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: REMINDERS_ENABLED
+        value: "false"
+      - key: REMINDER_DRY_RUN
+        value: "true"
+
 # Note: After deployment, update these values:
 # 1. DATABASE_URL: Connection string từ Supabase
 # 2. FIREBASE_CREDENTIALS_JSON: Content của firebase-service-account.json

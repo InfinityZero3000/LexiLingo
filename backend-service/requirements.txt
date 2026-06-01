@@ -45,6 +45,9 @@ trafilatura>=2.0.0
 # Redis (async client — used by quota manager and rate limiting)
 redis>=7.4.0
 
+# Background jobs
+celery[redis]>=5.4,<6
+
 # System metrics (used by admin monitoring endpoints)
 psutil>=6.1.1
 

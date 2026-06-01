@@ -147,6 +147,57 @@ class EmailService:
             logger.exception("Failed to send verification email to %s: %s", to_email, exc)
             return False
 
+    @classmethod
+    async def send_vocabulary_review_reminder_email(
+        cls,
+        *,
+        to_email: str,
+        display_name: str | None,
+        due_count: int,
+    ) -> bool:
+        """Send an occasional vocabulary review reminder email."""
+        review_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}{settings.REMINDER_REVIEW_ROUTE}"
+        settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
+
+        if not settings.SMTP_HOST:
+            logger.warning(
+                "SMTP_HOST not configured. Vocabulary review reminder email was not sent. "
+                "Generated review URL for %s: %s",
+                to_email,
+                review_link,
+            )
+            return False
+
+        context = {
+            "display_name": display_name or "Learner",
+            "due_count": str(max(0, due_count)),
+            "review_link": review_link,
+            "settings_link": settings_link,
+            "support_email": settings.EMAIL_FROM,
+        }
+
+        html_body = cls._render_template("vocabulary_review_reminder.html", context)
+        text_body = cls._render_template("vocabulary_review_reminder.txt", context)
+
+        message = EmailMessage()
+        message["Subject"] = "LexiLingo - Time to review your vocabulary"
+        message["From"] = settings.EMAIL_FROM
+        message["To"] = to_email
+        message.set_content(text_body)
+        message.add_alternative(html_body, subtype="html")
+
+        try:
+            await run_in_threadpool(cls._send_message_blocking, message)
+            logger.info("Vocabulary review reminder email sent to %s", to_email)
+            return True
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception(
+                "Failed to send vocabulary review reminder email to %s: %s",
+                to_email,
+                exc,
+            )
+            return False
+
     @staticmethod
     def _build_otp_message(to_email: str, otp: str, display_name: str) -> "EmailMessage":
         """Build an EmailMessage containing an admin login OTP."""

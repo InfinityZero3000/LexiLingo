@@ -201,6 +201,27 @@ class Settings(BaseSettings):
     # Set to your load balancer IP(s) in production; leave empty for dev/direct deployments.
     TRUSTED_PROXIES: str = ""
 
+    # Reminder scheduler (disabled by default for safe rollout)
+    REMINDERS_ENABLED: bool = False
+    REMINDER_DRY_RUN: bool = True
+    REMINDER_SCAN_BATCH_SIZE: int = 250
+    REMINDER_SCAN_INTERVAL_SECONDS: int = 300
+    REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
+    REMINDER_REVIEW_ROUTE: str = "/vocabulary/review"
+    APP_PUBLIC_URL: str = "https://lexilingo.me"
+
+    # Celery. Falls back to REDIS_URL when unset.
+    CELERY_BROKER_URL: str | None = None
+    CELERY_RESULT_BACKEND: str | None = None
+
+    @property
+    def effective_celery_broker_url(self) -> str:
+        return self.CELERY_BROKER_URL or self.REDIS_URL
+
+    @property
+    def effective_celery_result_backend(self) -> str:
+        return self.CELERY_RESULT_BACKEND or self.REDIS_URL
+
     # ── External API Keys (Phase 0+ Content Features) ──
     YOUTUBE_API_KEY: str | None = None           # YouTube Data API v3
     NEWSAPI_KEY: str | None = None               # NewsAPI.org

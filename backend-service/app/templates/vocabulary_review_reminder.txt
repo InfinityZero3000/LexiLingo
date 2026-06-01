@@ -1,0 +1,9 @@
+Hi {display_name},
+
+You have {due_count} vocabulary review(s) waiting in LexiLingo.
+
+Review now: {review_link}
+
+You can change reminder settings here: {settings_link}
+
+LexiLingo Team

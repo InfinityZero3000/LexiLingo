@@ -4,9 +4,9 @@ Device Routes
 Endpoints for device registration and FCM token management
 """
 
-from uuid import UUID
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -25,6 +25,18 @@ from typing import List
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
 
+def _session_dialect_name(db: AsyncSession) -> str | None:
+    """Return the SQL dialect when available without coupling route tests to DB internals."""
+    try:
+        get_bind = getattr(db, "get_bind", None)
+        bind = get_bind() if callable(get_bind) else getattr(db, "bind", None)
+        dialect = getattr(bind, "dialect", None)
+        name = getattr(dialect, "name", None)
+        return name if isinstance(name, str) else None
+    except Exception:
+        return None
+
+
 @router.post("", response_model=ApiResponse[DeviceResponse], status_code=status.HTTP_201_CREATED)
 async def register_device(
     request: DeviceRegisterRequest,
@@ -38,30 +50,57 @@ async def register_device(
     """
     now = datetime.now(timezone.utc)
 
-    # Atomic upsert — avoids TOCTOU race condition when concurrent requests
-    # (e.g. app startup) register the same device_id simultaneously.
-    stmt = (
-        pg_insert(UserDevice)
-        .values(
-            user_id=current_user.id,
-            device_id=request.device_id,
-            device_type=request.device_type,
-            device_name=request.device_name,
-            fcm_token=request.fcm_token,
-            last_active=now,
-        )
-        .on_conflict_do_update(
-            index_elements=["device_id"],
-            set_=dict(
-                fcm_token=request.fcm_token,
+    if _session_dialect_name(db) == "postgresql":
+        # Atomic upsert avoids duplicate registrations when the app starts
+        # and refreshes the same FCM token from multiple requests.
+        stmt = (
+            pg_insert(UserDevice)
+            .values(
+                user_id=current_user.id,
+                device_id=request.device_id,
+                device_type=request.device_type,
                 device_name=request.device_name,
+                fcm_token=request.fcm_token,
                 last_active=now,
-            ),
+            )
+            .on_conflict_do_update(
+                index_elements=["device_id"],
+                set_=dict(
+                    fcm_token=request.fcm_token,
+                    device_name=request.device_name,
+                    last_active=now,
+                ),
+            )
+            .returning(UserDevice)
         )
-        .returning(UserDevice)
-    )
-    result = await db.execute(stmt)
-    device = result.scalar_one()
+        result = await db.execute(stmt)
+        device = result.scalar_one()
+    else:
+        result = await db.execute(
+            select(UserDevice).where(
+                and_(
+                    UserDevice.user_id == current_user.id,
+                    UserDevice.device_id == request.device_id
+                )
+            )
+        )
+        device = result.scalar_one_or_none()
+
+        if device:
+            device.fcm_token = request.fcm_token
+            device.device_name = request.device_name
+            device.last_active = now
+        else:
+            device = UserDevice(
+                user_id=current_user.id,
+                device_id=request.device_id,
+                device_type=request.device_type,
+                device_name=request.device_name,
+                fcm_token=request.fcm_token,
+                last_active=now,
+            )
+            db.add(device)
+
     await db.commit()
     await db.refresh(device)
 

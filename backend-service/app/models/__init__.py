@@ -76,6 +76,9 @@ from app.models.rbac import (
 # Notification model
 from app.models.notification import Notification
 
+# Reminder models
+from app.models.reminder import ReminderDelivery, UserReminderPreference
+
 # API Cache (Phase 0 — Infrastructure)
 from app.models.api_cache import APICacheEntry
 
@@ -142,6 +145,9 @@ __all__ = [
     "AuditLog",
     # Notification
     "Notification",
+    # Reminder
+    "ReminderDelivery",
+    "UserReminderPreference",
     # API Cache (Phase 0)
     "APICacheEntry",
     # Games (Phase 3)

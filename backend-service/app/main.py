@@ -60,6 +60,8 @@ from app.routes.xp import router as xp_router
 from app.routes.books import router as books_router
 from app.routes.ai_audit import router as ai_audit_router
 from app.routes.monitoring import router as monitoring_router
+from app.routes.notifications import router as notifications_router
+from app.routes.reminders import router as reminders_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -255,6 +257,8 @@ app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
 app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])
 app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
+app.include_router(reminders_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Reminder Preferences"])
+app.include_router(notifications_router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
 
 # Content Features
 app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])
