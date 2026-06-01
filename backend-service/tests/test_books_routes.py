@@ -317,6 +317,31 @@ class TestGetRecommendedBooks:
         levels = {b["cefr_level"] for b in response.json()["books"]}
         assert len(levels) >= 3
 
+    @pytest.mark.asyncio
+    async def test_recommended_respects_x_forwarded_proto(self, no_db_client: AsyncClient):
+        """Proxy URLs should have https scheme if X-Forwarded-Proto is https."""
+        headers = {"X-Forwarded-Proto": "https"}
+        response = await no_db_client.get(f"{BASE}/recommended", headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        for book in data["books"]:
+            if book.get("cover_url"):
+                assert book["cover_url"].startswith("https://")
+            if book.get("download_url"):
+                assert book["download_url"].startswith("https://")
+
+    @pytest.mark.asyncio
+    async def test_recommended_defaults_to_http_without_header(self, no_db_client: AsyncClient):
+        """Proxy URLs should have http scheme if X-Forwarded-Proto is not present (since base_url is http://test)."""
+        response = await no_db_client.get(f"{BASE}/recommended")
+        assert response.status_code == 200
+        data = response.json()
+        for book in data["books"]:
+            if book.get("cover_url"):
+                assert book["cover_url"].startswith("http://")
+            if book.get("download_url"):
+                assert book["download_url"].startswith("http://")
+
 
 # ============================================================================
 # Route Tests — GET /books/search

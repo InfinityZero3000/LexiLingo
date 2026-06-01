@@ -1085,6 +1085,10 @@
     "definitionHint": "Từ này có nghĩa là gì?",
     "exampleSentenceLabel": "Câu ví dụ (tuỳ chọn)",
     "exampleSentenceHint": "vd: Cô ấy rất kiên cường trước nghịch cảnh.",
-    "failedToSaveWord": "Không thể lưu từ vựng"
+    "failedToSaveWord": "Không thể lưu từ vựng",
+    "tabWords": "Từ vựng",
+    "tabTopics": "Thẻ ghi nhớ theo chủ đề",
+    "startLearning": "Bắt đầu",
+    "audioQuestionHint": "Nghe và đoán từ vựng"
   }
 }

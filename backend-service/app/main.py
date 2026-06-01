@@ -228,6 +228,15 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
+@app.middleware("http")
+async def forward_proto_middleware(request: Request, call_next):
+    """Respect x-forwarded-proto header to set request scheme for reverse proxies."""
+    x_forwarded_proto = request.headers.get("x-forwarded-proto")
+    if x_forwarded_proto:
+        request.scope["scheme"] = x_forwarded_proto
+    return await call_next(request)
+
+
 # ===== Request Body Size Limit (Phase 4) =====
 @app.middleware("http")
 async def limit_request_body(request: Request, call_next):

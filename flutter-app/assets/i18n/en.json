@@ -1086,6 +1086,10 @@
     "definitionHint": "What does this word mean?",
     "exampleSentenceLabel": "Example sentence (optional)",
     "exampleSentenceHint": "e.g. She was resilient in the face of adversity.",
-    "failedToSaveWord": "Failed to save word"
+    "failedToSaveWord": "Failed to save word",
+    "tabWords": "Words",
+    "tabTopics": "Topic Flashcards",
+    "startLearning": "Start",
+    "audioQuestionHint": "Listen and guess the word"
   }
 }
