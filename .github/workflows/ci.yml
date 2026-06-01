@@ -87,7 +87,7 @@ jobs:
           done
 
       - name: Create all DB tables
-        run: alembic upgrade head
+        run: python scripts/create_tables.py
 
       - name: Seed proficiency integration test data
         env:

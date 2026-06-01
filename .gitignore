@@ -142,6 +142,8 @@ scripts
 !ai-service/scripts/
 !ai-service/scripts/crawl_topic_knowledge.py
 !ai-service/scripts/generate_tracecag_topic_corpus.py
+!backend-service/scripts/
+!backend-service/scripts/create_tables.py
 
 # Large generated kg_output artifacts (regenerate with generate_tracecag_topic_corpus.py / crawl_topic_knowledge.py)
 ai-service/data/kg_output/finetune_samples.jsonl
