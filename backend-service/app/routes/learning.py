@@ -186,82 +186,273 @@ async def get_lesson_content(
 
 
 def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
-    """Generate demo exercises when DB content is empty"""
-    return [
-        Exercise(
-            id="1",
-            type="multiple_choice",
-            ui_type="multiple_choice",
-            question=f"What is the main topic of '{lesson_title}'?",
-            options=[
-                ExerciseOption(id="a", text="Grammar fundamentals", is_correct=True),
-                ExerciseOption(id="b", text="Advanced vocabulary", is_correct=False),
-                ExerciseOption(id="c", text="Pronunciation tips", is_correct=False),
-                ExerciseOption(id="d", text="Cultural insights", is_correct=False)
-            ],
-            correct_answer="Grammar fundamentals",
-            explanation="This lesson focuses on grammar fundamentals.",
-            hint="Think about the lesson title.",
-            difficulty=1,
-            points=10
-        ),
-        Exercise(
-            id="2",
-            type="true_false",
-            ui_type="true_or_false",
-            question="English is one of the most widely spoken languages in the world.",
-            options=[
-                ExerciseOption(id="true", text="True", is_correct=True),
-                ExerciseOption(id="false", text="False", is_correct=False)
-            ],
-            correct_answer="True",
-            explanation="English is indeed one of the most widely spoken languages globally.",
-            difficulty=1,
-            points=10
-        ),
-        Exercise(
-            id="3",
-            type="fill_blank",
-            ui_type="fill_in_the_blank",
-            question="Complete the sentence: 'I {blank} learning English every day.'",
-            correct_answer="am",
-            explanation="'am' is the correct form of 'to be' for first person singular.",
-            hint="Use the present continuous tense.",
-            difficulty=2,
-            points=15
-        ),
-        Exercise(
-            id="4",
-            type="translate",
-            ui_type="translation_choice",
-            question="Translate to English: 'Xin chào'",
-            options=[
-                ExerciseOption(id="0", text="Hello", is_correct=True),
-                ExerciseOption(id="1", text="Goodbye", is_correct=False)
-            ],
-            correct_answer="Hello",
-            explanation="'Xin chào' is the Vietnamese word for 'Hello'.",
-            hint="This is a common greeting.",
-            difficulty=1,
-            points=10
-        ),
-        Exercise(
-            id="5",
-            type="multiple_choice",
-            ui_type="multiple_choice",
-            question="Which sentence is grammatically correct?",
-            options=[
-                ExerciseOption(id="a", text="She go to school.", is_correct=False),
-                ExerciseOption(id="b", text="She goes to school.", is_correct=True),
-                ExerciseOption(id="c", text="She going to school.", is_correct=False),
-                ExerciseOption(id="d", text="She gone to school.", is_correct=False)
-            ],
-            correct_answer="She goes to school.",
-            explanation="Third person singular uses 'goes' in simple present tense.",
-            difficulty=2,
-            points=15
-        )
+    """Generate placeholder exercises when DB content is empty.
+    Uses lesson title as seed to vary which set is shown per lesson.
+    """
+    title_hash = sum(ord(c) for c in lesson_title) % 5
+
+    exercise_sets = [
+        # Set 0: Grammar-focused
+        [
+            Exercise(
+                id="1", type="multiple_choice", ui_type="multiple_choice",
+                question="Choose the correct verb form: 'She ___ to work every day.'",
+                options=[
+                    ExerciseOption(id="0", text="go", is_correct=False),
+                    ExerciseOption(id="1", text="goes", is_correct=True),
+                    ExerciseOption(id="2", text="going", is_correct=False),
+                    ExerciseOption(id="3", text="gone", is_correct=False),
+                ],
+                correct_answer="goes",
+                explanation="Third-person singular (she/he/it) takes verb+s/es in simple present.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="2", type="true_false", ui_type="true_or_false",
+                question="'They goes to school' is grammatically correct.",
+                options=[ExerciseOption(id="0", text="True", is_correct=False), ExerciseOption(id="1", text="False", is_correct=True)],
+                correct_answer="False",
+                explanation="'They' is plural and takes the base verb 'go', not 'goes'.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="3", type="fill_blank", ui_type="fill_in_the_blank",
+                question="Complete: 'I {blank} studying English right now.'",
+                correct_answer="am",
+                explanation="Present continuous with 'I' uses 'am + verb-ing'.",
+                hint="First-person singular form of 'to be'.",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="4", type="translate", ui_type="translation_choice",
+                question="Choose the correct translation: 'Anh ấy là giáo viên.'",
+                options=[
+                    ExerciseOption(id="0", text="He is a teacher.", is_correct=True),
+                    ExerciseOption(id="1", text="She is a teacher.", is_correct=False),
+                    ExerciseOption(id="2", text="They are teachers.", is_correct=False),
+                ],
+                correct_answer="He is a teacher.",
+                explanation="'Anh ấy' means 'He' in Vietnamese.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="5", type="fill_blank", ui_type="dialogue_completion",
+                question="A: Are you a student? B: Yes, I {blank}.",
+                correct_answer="am",
+                explanation="Short affirmative answer to 'Are you…?' is 'Yes, I am.'",
+                difficulty=1, points=10
+            ),
+        ],
+        # Set 1: Vocabulary-focused
+        [
+            Exercise(
+                id="1", type="multiple_choice", ui_type="vocabulary_flashcard",
+                question="Learn the word: 'Persevere' (kiên trì)",
+                options=[ExerciseOption(id="0", text="Got it!", is_correct=True)],
+                correct_answer="Got it!",
+                explanation="To persevere means to continue in spite of difficulty.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="2", type="matching", ui_type="match_word_to_meaning",
+                question="Match the words with their meanings.",
+                options=[
+                    ExerciseOption(id="0", text="happy"),
+                    ExerciseOption(id="1", text="sad"),
+                    ExerciseOption(id="2", text="vui vẻ"),
+                    ExerciseOption(id="3", text="buồn bã"),
+                ],
+                correct_answer="happy:vui vẻ, sad:buồn bã",
+                explanation="Happy = vui vẻ, Sad = buồn bã in Vietnamese.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="3", type="fill_blank", ui_type="fill_in_the_blank",
+                question="Complete: 'The {blank} of a word tells you its meaning.'",
+                correct_answer="definition",
+                explanation="A definition explains what a word means.",
+                hint="This is what you find in a dictionary.",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="4", type="true_false", ui_type="true_or_false",
+                question="'Enormous' and 'huge' are synonyms.",
+                options=[ExerciseOption(id="0", text="True", is_correct=True), ExerciseOption(id="1", text="False", is_correct=False)],
+                correct_answer="True",
+                explanation="Both 'enormous' and 'huge' mean very large in size.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="5", type="multiple_choice", ui_type="collocation_choice",
+                question="Complete the phrase: '___ a decision'",
+                options=[
+                    ExerciseOption(id="0", text="make", is_correct=True),
+                    ExerciseOption(id="1", text="do", is_correct=False),
+                    ExerciseOption(id="2", text="take", is_correct=False),
+                ],
+                correct_answer="make",
+                explanation="The correct collocation is 'make a decision'.",
+                difficulty=2, points=15
+            ),
+        ],
+        # Set 2: Listening / Pronunciation focused
+        [
+            Exercise(
+                id="1", type="multiple_choice", ui_type="multiple_choice",
+                question="Which word has a different vowel sound? 'cat / bat / care / hat'",
+                options=[
+                    ExerciseOption(id="0", text="cat", is_correct=False),
+                    ExerciseOption(id="1", text="bat", is_correct=False),
+                    ExerciseOption(id="2", text="care", is_correct=True),
+                    ExerciseOption(id="3", text="hat", is_correct=False),
+                ],
+                correct_answer="care",
+                explanation="'care' has the /eər/ sound; the others have the short /æ/ vowel sound.",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="2", type="translate", ui_type="speaking_repeat",
+                question="Repeat the sentence: 'Could you please speak more slowly?'",
+                correct_answer="Could you please speak more slowly",
+                explanation="Practice clear pronunciation of polite requests.",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="3", type="fill_blank", ui_type="dictation",
+                question="Listen and write: '{blank}'",
+                correct_answer="Nice to meet you",
+                explanation="A common phrase when meeting someone for the first time.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="4", type="true_false", ui_type="true_or_false",
+                question="In English, the letter 'c' always sounds like /k/.",
+                options=[ExerciseOption(id="0", text="True", is_correct=False), ExerciseOption(id="1", text="False", is_correct=True)],
+                correct_answer="False",
+                explanation="'c' can sound like /s/ (as in 'city') or /k/ (as in 'cat').",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="5", type="translate", ui_type="pronunciation_practice",
+                question="Practice pronouncing: 'I would like a cup of coffee, please.'",
+                correct_answer="I would like a cup of coffee please",
+                explanation="Focus on linking words naturally in natural speech.",
+                difficulty=2, points=15
+            ),
+        ],
+        # Set 3: Reading / Writing focused
+        [
+            Exercise(
+                id="1", type="multiple_choice", ui_type="reading_comprehension",
+                question="Read and answer: 'Anna wakes up at 7am. She has breakfast and then goes to work.' What does Anna do first after waking up?",
+                options=[
+                    ExerciseOption(id="0", text="Goes to work", is_correct=False),
+                    ExerciseOption(id="1", text="Has breakfast", is_correct=True),
+                    ExerciseOption(id="2", text="Takes a shower", is_correct=False),
+                ],
+                correct_answer="Has breakfast",
+                explanation="The text states she has breakfast before going to work.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="2", type="fill_blank", ui_type="short_writing_answer",
+                question="Write a sentence using the word 'however' to contrast two ideas.",
+                correct_answer="However",
+                explanation="'However' is used to introduce a contrast or opposing point.",
+                hint="Start your sentence with 'However,'",
+                difficulty=3, points=20
+            ),
+            Exercise(
+                id="3", type="multiple_choice", ui_type="multiple_choice",
+                question="Which linking word shows contrast?",
+                options=[
+                    ExerciseOption(id="0", text="therefore", is_correct=False),
+                    ExerciseOption(id="1", text="furthermore", is_correct=False),
+                    ExerciseOption(id="2", text="however", is_correct=True),
+                    ExerciseOption(id="3", text="consequently", is_correct=False),
+                ],
+                correct_answer="however",
+                explanation="'However' introduces a contrasting idea, unlike 'therefore' (result) or 'furthermore' (addition).",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="4", type="fill_blank", ui_type="grammar_correction",
+                question="Correct the error: 'He don't like coffee.' → '{blank}'",
+                correct_answer="He doesn't like coffee",
+                explanation="Third-person singular negative uses 'doesn't' (does not), not 'don't'.",
+                difficulty=2, points=15
+            ),
+            Exercise(
+                id="5", type="reorder", ui_type="arrange_the_sentence",
+                question="Arrange: 'morning / every / reads / she / the / newspaper'",
+                options=[
+                    ExerciseOption(id="0", text="she"),
+                    ExerciseOption(id="1", text="reads"),
+                    ExerciseOption(id="2", text="the"),
+                    ExerciseOption(id="3", text="newspaper"),
+                    ExerciseOption(id="4", text="every"),
+                    ExerciseOption(id="5", text="morning"),
+                ],
+                correct_answer="she reads the newspaper every morning",
+                explanation="Standard word order: Subject + Verb + Object + Time.",
+                difficulty=2, points=15
+            ),
+        ],
+        # Set 4: Conversation / Communication focused
+        [
+            Exercise(
+                id="1", type="fill_blank", ui_type="dialogue_completion",
+                question="A: What do you do for a living? B: I {blank} as an engineer.",
+                correct_answer="work",
+                explanation="'Work as + profession' is the standard pattern for talking about your job.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="2", type="multiple_choice", ui_type="multiple_choice",
+                question="Which response is most polite when someone thanks you?",
+                options=[
+                    ExerciseOption(id="0", text="Yeah, whatever.", is_correct=False),
+                    ExerciseOption(id="1", text="You're welcome!", is_correct=True),
+                    ExerciseOption(id="2", text="I know.", is_correct=False),
+                    ExerciseOption(id="3", text="So what?", is_correct=False),
+                ],
+                correct_answer="You're welcome!",
+                explanation="'You're welcome!' is the standard polite response to 'Thank you'.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="3", type="matching", ui_type="categorization",
+                question="Categorize: formal vs informal greetings",
+                options=[
+                    ExerciseOption(id="0", text="Good morning"),
+                    ExerciseOption(id="1", text="Hey!"),
+                    ExerciseOption(id="2", text="Formal"),
+                    ExerciseOption(id="3", text="Informal"),
+                ],
+                correct_answer="Good morning:Formal, Hey!:Informal",
+                explanation="'Good morning' is formal; 'Hey!' is informal/casual.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="4", type="true_false", ui_type="true_or_false",
+                question="'Could you help me?' is more polite than 'Help me!'",
+                options=[ExerciseOption(id="0", text="True", is_correct=True), ExerciseOption(id="1", text="False", is_correct=False)],
+                correct_answer="True",
+                explanation="Using 'Could you…?' adds politeness and formality compared to a direct command.",
+                difficulty=1, points=10
+            ),
+            Exercise(
+                id="5", type="fill_blank", ui_type="fill_in_the_blank",
+                question="Complete: 'I'm {blank} to hear that.' (expressing sympathy)",
+                correct_answer="sorry",
+                explanation="'I'm sorry to hear that' is a standard expression of sympathy.",
+                hint="This word expresses regret or sympathy.",
+                difficulty=1, points=10
+            ),
+        ],
     ]
+
+    return exercise_sets[title_hash]
 
 
 @router.post("/attempts/{attempt_id}/answer", response_model=ApiResponse[AnswerSubmitResponse])
@@ -367,7 +558,7 @@ async def _validate_answer(
     """
     correct_answer = ""
     explanation = "Keep practicing!"
-    
+
     # Try to find the exercise in lesson content
     if lesson and lesson.content and isinstance(lesson.content, dict):
         exercises = lesson.content.get('exercises', [])
@@ -375,31 +566,26 @@ async def _validate_answer(
             if str(ex.get('id', '')) == question_id:
                 correct_answer = str(ex.get('correct_answer', ''))
                 explanation = ex.get('explanation', 'Check the correct answer and try again.')
-                
-                # Normalize answers for comparison
+
                 user_ans_normalized = _normalize_answer(user_answer, question_type)
                 correct_ans_normalized = _normalize_answer(correct_answer, question_type)
-                
+
                 is_correct = user_ans_normalized == correct_ans_normalized
                 return is_correct, correct_answer, explanation
-    
-    # Fallback: Check demo exercises
-    demo_exercises = {
-        "1": ("Grammar fundamentals", "This lesson focuses on grammar fundamentals."),
-        "2": ("True", "English is indeed one of the most widely spoken languages globally."),
-        "3": ("am", "'am' is the correct form of 'to be' for first person singular."),
-        "4": ("Hello", "'Xin chào' is the Vietnamese word for 'Hello'."),
-        "5": ("She goes to school.", "Third person singular uses 'goes' in simple present tense."),
-    }
-    
-    if question_id in demo_exercises:
-        correct_answer, explanation = demo_exercises[question_id]
-        user_ans_normalized = _normalize_answer(user_answer, question_type)
-        correct_ans_normalized = _normalize_answer(correct_answer, question_type)
-        is_correct = user_ans_normalized == correct_ans_normalized
-        return is_correct, correct_answer, explanation
-    
-    # If no match found, compare directly
+
+    # Fallback: look up in the dynamic demo exercise set for this lesson
+    if lesson:
+        demo_ex_list = _generate_demo_exercises(lesson.title)
+        for demo_ex in demo_ex_list:
+            if demo_ex.id == question_id:
+                correct_answer = demo_ex.correct_answer
+                explanation = demo_ex.explanation or "Check the correct answer and try again."
+                user_ans_normalized = _normalize_answer(user_answer, question_type)
+                correct_ans_normalized = _normalize_answer(correct_answer, question_type)
+                is_correct = user_ans_normalized == correct_ans_normalized
+                return is_correct, correct_answer, explanation
+
+    # Last resort: direct comparison
     is_correct = _normalize_answer(user_answer, question_type) == _normalize_answer(correct_answer, question_type)
     return is_correct, correct_answer, explanation
 
