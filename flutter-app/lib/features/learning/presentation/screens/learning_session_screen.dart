@@ -129,12 +129,19 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             // Show current exercise
             return Column(
               children: [
-                // Progress bar
-                LinearProgressIndicator(
-                  value: provider.progress,
-                  backgroundColor: Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    AppColors.greenSuccessBright,
+                // Progress bar (thick, rounded — matches template)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: provider.progress,
+                      minHeight: 10,
+                      backgroundColor: const Color(0xFFE0E8FF),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF1A73E8),
+                      ),
+                    ),
                   ),
                 ),
 
@@ -351,47 +358,66 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, LearningProvider provider) {
+    final answered  = provider.isCurrentAnswered;
+    final correct   = provider.isCurrentCorrect ?? false;
+
+    // Button colour: correct=green, wrong=orange, not answered=primary blue
+    final checkColor = answered
+        ? (correct ? const Color(0xFF2DBD73) : const Color(0xFFFF6B35))
+        : const Color(0xFF1A73E8);
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(
+          top: BorderSide(color: Colors.grey.withValues(alpha: 0.15), width: 1),
+        ),
       ),
       child: Row(
         children: [
-          // Skip button (only if not answered)
-          if (!provider.isCurrentAnswered)
-            TextButton(
+          // Skip — always visible, outlined pill
+          Expanded(
+            child: OutlinedButton.icon(
               onPressed: () => provider.skipExercise(),
-              child: Text('common.skip'.tr()),
+              icon: const Icon(Icons.skip_next_rounded, size: 18),
+              label: Text('common.skip'.tr()),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1A73E8),
+                side: const BorderSide(color: Color(0xFF1A73E8), width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999)),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
             ),
-
-          const Spacer(),
-
-          // Check/Continue button
-          ElevatedButton(
-            onPressed: provider.isCurrentAnswered
-                ? () => provider.nextExercise()
-                : null, // Disabled until answered
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-              backgroundColor: provider.isCurrentAnswered
-                  ? ((provider.isCurrentCorrect ?? false)
-                        ? AppColors.greenSuccessBright
-                        : AppColors.orange)
-                  : Colors.grey,
-            ),
-            child: Text(
-              provider.isCurrentAnswered
-                  ? 'lesson.continueButton'.tr()
-                  : 'lesson.checkAnswer'.tr(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 12),
+          // Check / Continue — filled pill
+          Expanded(
+            flex: 2,
+            child: ElevatedButton.icon(
+              onPressed: answered ? () => provider.nextExercise() : null,
+              icon: Icon(
+                answered
+                    ? (correct ? Icons.check_circle_outline : Icons.arrow_forward_rounded)
+                    : Icons.check_circle_outline,
+                size: 20,
+                color: Colors.white,
+              ),
+              label: Text(
+                answered ? 'lesson.continueButton'.tr() : 'lesson.checkAnswer'.tr(),
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: answered ? checkColor : const Color(0xFFBBCEF0),
+                disabledBackgroundColor: const Color(0xFFBBCEF0),
+                foregroundColor: Colors.white,
+                elevation: answered ? 2 : 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999)),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
             ),
           ),
         ],

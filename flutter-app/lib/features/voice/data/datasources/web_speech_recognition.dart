@@ -101,17 +101,28 @@ class WebSpeechRecognition {
   /// Handle speech recognition results
   void _handleResult(dynamic event) {
     try {
-      final results = event['results'];
-      final resultIndex = event['resultIndex'] ?? 0;
+      final results = js_util.getProperty<dynamic>(event, 'results');
+      final resultIndex =
+          (js_util.getProperty<dynamic>(event, 'resultIndex') as num?)
+              ?.toInt() ??
+          0;
+      final length =
+          (js_util.getProperty<dynamic>(results, 'length') as num).toInt();
 
-      for (int i = resultIndex; i < results['length']; i++) {
-        final result = results[i];
-        final alternative = result[0];
+      for (int i = resultIndex; i < length; i++) {
+        final result = js_util.callMethod<dynamic>(results, 'item', [i]);
+        final alternative = js_util.callMethod<dynamic>(result, 'item', [0]);
 
-        final transcript = alternative['transcript'] as String? ?? '';
+        final transcript =
+            js_util.getProperty<dynamic>(alternative, 'transcript')
+                as String? ??
+            '';
         final confidence =
-            (alternative['confidence'] as num?)?.toDouble() ?? 0.0;
-        final isFinal = result['isFinal'] as bool? ?? false;
+            (js_util.getProperty<dynamic>(alternative, 'confidence') as num?)
+                ?.toDouble() ??
+            0.0;
+        final isFinal =
+            js_util.getProperty<dynamic>(result, 'isFinal') as bool? ?? false;
 
         _resultController?.add(
           WebSpeechResult(
@@ -128,7 +139,8 @@ class WebSpeechRecognition {
 
   /// Handle speech recognition errors
   void _handleError(dynamic event) {
-    final error = event['error'] as String? ?? 'unknown';
+    final error =
+        js_util.getProperty<dynamic>(event, 'error') as String? ?? 'unknown';
     String errorMessage;
 
     switch (error) {
