@@ -21,6 +21,8 @@ class YouTubeProvider extends ChangeNotifier {
   bool _isLoadingCaptions = false;
   String? _error;
   String _searchQuery = '';
+  String _activeChannelName = '';
+  String _activeChannelId = '';
 
   // ── Getters ──
   List<YouTubeChannel> get channels => _channels;
@@ -31,6 +33,7 @@ class YouTubeProvider extends ChangeNotifier {
   bool get isLoadingCaptions => _isLoadingCaptions;
   String? get error => _error;
   String get searchQuery => _searchQuery;
+  String get activeChannelName => _activeChannelName;
   bool get hasMore => _nextPageToken != null;
 
   // ── Actions ──
@@ -56,6 +59,8 @@ class YouTubeProvider extends ChangeNotifier {
     if (query.length < 2) return;
 
     _searchQuery = query;
+    _activeChannelName = '';
+    _activeChannelId = '';
     _isSearching = true;
     _error = null;
     _searchResults = [];
@@ -77,7 +82,7 @@ class YouTubeProvider extends ChangeNotifier {
     }
   }
 
-  /// Load next page of search results.
+  /// Load next page of search results or channel videos.
   Future<void> loadMoreResults() async {
     if (_nextPageToken == null || _isSearching) return;
 
@@ -85,10 +90,19 @@ class YouTubeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.searchVideos(
-        query: _searchQuery,
-        pageToken: _nextPageToken,
-      );
+      final YouTubeSearchResult result;
+      if (_activeChannelId.isNotEmpty) {
+        // Paginate channel videos using the channel endpoint (not search)
+        result = await _repository.getChannelVideos(
+          _activeChannelId,
+          pageToken: _nextPageToken,
+        );
+      } else {
+        result = await _repository.searchVideos(
+          query: _searchQuery,
+          pageToken: _nextPageToken,
+        );
+      }
       _searchResults.addAll(result.videos);
       _nextPageToken = result.nextPageToken;
     } catch (e) {
@@ -100,10 +114,20 @@ class YouTubeProvider extends ChangeNotifier {
   }
 
   /// Load videos from a specific channel.
-  Future<void> loadChannelVideos(String channelId) async {
+  /// Sets [_searchQuery] to a non-empty sentinel so the UI switches to
+  /// the results view (same as search results) to display the loaded videos.
+  Future<void> loadChannelVideos(
+    String channelId, {
+    String channelName = '',
+  }) async {
     _isLoading = true;
     _error = null;
     _searchResults = [];
+    // Set query so Consumer switches to _buildSearchResults
+    _searchQuery = channelName.isNotEmpty ? channelName : channelId;
+    _activeChannelName = channelName;
+    _activeChannelId = channelId;
+    _nextPageToken = null;
     notifyListeners();
 
     try {
@@ -142,10 +166,12 @@ class YouTubeProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Clear search results.
+  /// Clear search results and return to channels view.
   void clearSearch() {
     _searchResults = [];
     _searchQuery = '';
+    _activeChannelName = '';
+    _activeChannelId = '';
     _nextPageToken = null;
     _error = null;
     notifyListeners();

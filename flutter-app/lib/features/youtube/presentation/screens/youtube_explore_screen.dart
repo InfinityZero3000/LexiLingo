@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -11,9 +12,6 @@ import '../providers/youtube_provider.dart';
 /// YouTube Explore Screen — main discovery page for English learning videos.
 ///
 /// Layout: Search bar → Curated Channels carousel → Search results grid.
-/// Follows ui-ux-pro-max design methodology.
-///
-/// Phase 1: YouTube Video Integration.
 class YouTubeExploreScreen extends StatefulWidget {
   const YouTubeExploreScreen({super.key});
 
@@ -70,13 +68,11 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // ── Header (floating: hiện ngay khi scroll lên) ──
             const SliverPersistentHeader(
               floating: true,
               delegate: _YouTubeFloatingHeader(),
             ),
 
-            // ── Search Bar ──
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -84,7 +80,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               ),
             ),
 
-            // ── Curated Channels or Search Results ──
             Consumer<YouTubeProvider>(
               builder: (context, provider, _) {
                 if (provider.searchQuery.isNotEmpty) {
@@ -169,7 +164,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        // Section header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
@@ -181,7 +175,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Channel cards
         SizedBox(
           height: 180,
           child: ListView.separated(
@@ -196,7 +189,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 
         const SizedBox(height: 28),
 
-        // Quick categories
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
@@ -244,23 +236,14 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   }
 
   Widget _buildChannelCard(YouTubeChannel channel, bool isDark) {
-    final gradient = _channelGradient(channel.category);
-    final iconTileBg = isDark
-        ? Colors.black.withValues(alpha: 0.28)
-        : Colors.white.withValues(alpha: 0.92);
-    final iconColor = isDark
-        ? AppColors.surfaceLight
-        : gradient.first.withValues(alpha: 0.95);
-    final levelChipBg = isDark
-        ? Colors.white.withValues(alpha: 0.20)
-        : Colors.white.withValues(alpha: 0.92);
-    final levelChipTextColor = isDark
-        ? AppColors.surfaceLight
-        : AppColors.textDark;
+    final gradient = _channelGradient(channel.id, channel.category);
 
     return GestureDetector(
       onTap: () {
-        context.read<YouTubeProvider>().loadChannelVideos(channel.id);
+        context.read<YouTubeProvider>().loadChannelVideos(
+          channel.id,
+          channelName: channel.name,
+        );
         _searchController.text = channel.name;
         setState(() {});
       },
@@ -276,7 +259,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: gradient.first.withValues(alpha: 0.3),
+              color: gradient.first.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -287,25 +270,13 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Channel icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: iconTileBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.play_circle_fill_rounded,
-                  color: iconColor,
-                  size: 28,
-                ),
-              ),
+              // Channel avatar — real thumbnail or fallback icon
+              _buildChannelAvatar(channel, isDark),
               const Spacer(),
               Text(
                 channel.name,
-                style: TextStyle(
-                  color: AppColors.surfaceLight,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -314,15 +285,15 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               ),
               const SizedBox(height: 4),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: levelChipBg,
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   channel.level,
-                  style: TextStyle(
-                    color: levelChipTextColor,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -331,6 +302,39 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildChannelAvatar(YouTubeChannel channel, bool isDark) {
+    if (channel.thumbnail.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: CachedNetworkImage(
+          imageUrl: channel.thumbnail,
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => _channelAvatarFallback(),
+          errorWidget: (_, __, ___) => _channelAvatarFallback(),
+        ),
+      );
+    }
+    return _channelAvatarFallback();
+  }
+
+  Widget _channelAvatarFallback() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.play_circle_fill_rounded,
+        color: Colors.white,
+        size: 28,
       ),
     );
   }
@@ -360,10 +364,17 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   }
 
   // ──────────────────────────────────────
-  //  Search Results
+  //  Search Results / Channel Videos
   // ──────────────────────────────────────
 
   Widget _buildSearchResults(YouTubeProvider provider, bool isDark) {
+    // Channel videos are loading
+    if (provider.isLoading) {
+      return const SliverFillRemaining(
+        child: Center(child: LottieLoadingWidget.medium()),
+      );
+    }
+
     if (provider.isSearching && provider.searchResults.isEmpty) {
       return const SliverFillRemaining(
         child: Center(child: LottieLoadingWidget.medium()),
@@ -376,11 +387,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.search_off_rounded,
-                size: 64,
-                color: AppColors.grey400,
-              ),
+              Icon(Icons.search_off_rounded, size: 64, color: AppColors.grey400),
               const SizedBox(height: 12),
               Text(
                 'youtube.noVideos'.tr(),
@@ -395,20 +402,69 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          if (index == provider.searchResults.length) {
-            return provider.isSearching
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: LottieLoadingWidget.medium()),
-                  )
-                : const SizedBox.shrink();
-          }
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildVideoCard(provider.searchResults[index], isDark),
-          );
-        }, childCount: provider.searchResults.length + 1),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            // Section header showing channel name or search query
+            if (index == 0 && provider.activeChannelName.isNotEmpty) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.subscriptions_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        provider.activeChannelName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        context.read<YouTubeProvider>().clearSearch();
+                        setState(() {});
+                      },
+                      child: const Text('Back'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final videoIndex = provider.activeChannelName.isNotEmpty
+                ? index - 1
+                : index;
+
+            if (videoIndex < 0) return const SizedBox.shrink();
+
+            if (videoIndex == provider.searchResults.length) {
+              return provider.isSearching
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: LottieLoadingWidget.medium()),
+                    )
+                  : const SizedBox.shrink();
+            }
+
+            if (videoIndex >= provider.searchResults.length) {
+              return const SizedBox.shrink();
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildVideoCard(provider.searchResults[videoIndex], isDark),
+            );
+          },
+          childCount: provider.searchResults.length +
+              (provider.activeChannelName.isNotEmpty ? 1 : 0) +
+              1,
+        ),
       ),
     );
   }
@@ -444,13 +500,23 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      video.thumbnailUrl.isNotEmpty
+                    CachedNetworkImage(
+                      imageUrl: video.thumbnailUrl.isNotEmpty
                           ? video.thumbnailUrl
-                          : 'https://via.placeholder.com/480x270',
+                          : 'https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                      placeholder: (_, __) => Container(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        child: const Center(
+                          child: Icon(
+                            Icons.play_circle_outline,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         child: const Icon(
                           Icons.play_circle_outline,
                           size: 48,
@@ -458,7 +524,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         ),
                       ),
                     ),
-                    // Play overlay
+                    // Dark gradient overlay
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -471,14 +537,13 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                         ),
                       ),
                     ),
-                    Center(
+                    const Center(
                       child: Icon(
                         Icons.play_circle_fill_rounded,
-                        color: AppColors.surfaceLight,
+                        color: Colors.white,
                         size: 48,
                       ),
                     ),
-                    // CEFR level badge (skill: content-difficulty-levels)
                     if (video.cefrLevel.isNotEmpty)
                       Positioned(
                         top: 8,
@@ -494,8 +559,8 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                           ),
                           child: Text(
                             video.cefrLevel,
-                            style: TextStyle(
-                              color: AppColors.surfaceLight,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 11,
                             ),
@@ -542,20 +607,42 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   //  Helpers
   // ──────────────────────────────────────
 
-  List<Color> _channelGradient(String category) {
-    switch (category) {
-      case 'pronunciation':
-        return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
-      case 'academic':
+  /// Each channel gets a unique gradient so cards are visually distinct.
+  List<Color> _channelGradient(String channelId, String category) {
+    switch (channelId) {
+      // BBC Learning English — blue gradient
+      case 'UCHaHD477h-FeBbrgBrwTDpA':
+        return [const Color(0xFF1565C0), const Color(0xFF42A5F5)];
+      // TED-Ed — purple/indigo
+      case 'UCsooa4yRKGN_zEE8iknghZA':
         return [const Color(0xFF7C4DFF), const Color(0xFF536DFE)];
-      case 'news':
+      // English with Lucy — teal/green
+      case 'UCz4tgANd4yy8Oe0iXCdSWfA':
+        return [const Color(0xFF00897B), const Color(0xFF26C6DA)];
+      // EngVid — orange
+      case 'UCVBErcpqaokOf4fI5j73K_w':
+        return [const Color(0xFFEF6C00), const Color(0xFFFFCA28)];
+      // Rachel's English — pink/red (pronunciation)
+      case 'UCvn_XCl_mgQmt3sD753MZ0Q':
+        return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
+      // VOA Learning English — green (news)
+      case 'UCkowKaGPT_yWCebvqN0wBmA':
         return [AppColors.teal, const Color(0xFF26A69A)];
       default:
-        return [AppColors.primary, AppColors.primary];
+        // Fallback per category
+        switch (category) {
+          case 'pronunciation':
+            return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
+          case 'academic':
+            return [const Color(0xFF7C4DFF), const Color(0xFF536DFE)];
+          case 'news':
+            return [AppColors.teal, const Color(0xFF26A69A)];
+          default:
+            return [AppColors.primary, const Color(0xFF42A5F5)];
+        }
     }
   }
 
-  // CEFR color map (skill: content-difficulty-levels)
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':

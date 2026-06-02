@@ -103,6 +103,9 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1
 
+  # YouTube embedded player (Phase 1: YouTube Video Integration)
+  youtube_player_iframe: ^6.0.2
+
   # Localization
   easy_localization: ^3.0.7
   flutter_facebook_auth: ^7.1.5
