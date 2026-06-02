@@ -766,7 +766,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                     )
                   else
                     Icon(
-                      _isWebSpeechActive ? Icons.graphic_eq : Icons.mic,
+                      _isWebSpeechActive
+                          ? Icons.graphic_eq
+                          : Icons.pause_rounded,
                       color: _isWebSpeechActive
                           ? Colors.blue
                           : AppColors.errorBright,
