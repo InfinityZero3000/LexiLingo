@@ -566,8 +566,22 @@ class AuthProvider extends ChangeNotifier {
       return 'Network error. Please check your internet connection.';
     } else if (failure is CacheFailure) {
       return 'Local storage error.';
+    } else if (failure is ValidationFailure) {
+      return failure.message;
+    } else if (failure is ConflictFailure) {
+      return failure.message;
+    } else if (failure is RateLimitFailure) {
+      return 'Too many attempts. Please try again later.';
+    } else if (failure is PermissionFailure) {
+      return failure.message;
+    } else if (failure is NotFoundFailure) {
+      return failure.message;
+    } else if (failure is UnauthorizedFailure) {
+      return 'Session expired. Please sign in again.';
     } else {
-      return 'An error occurred. Please try again.';
+      return failure.message.isNotEmpty
+          ? failure.message
+          : 'An error occurred. Please try again.';
     }
   }
 }

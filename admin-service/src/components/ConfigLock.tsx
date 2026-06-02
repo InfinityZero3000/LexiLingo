@@ -1,9 +1,24 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Lock, ShieldAlert, Check } from "lucide-react";
 
 interface ConfigLockProps {
   children: React.ReactNode;
 }
+
+const PIN_LENGTH = 5;
+const CORRECT_PIN = "12345";
+
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable
+  );
+};
 
 export const ConfigLock = ({ children }: ConfigLockProps) => {
   const [unlocked, setUnlocked] = useState(() => {
@@ -13,42 +28,122 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
   const [success, setSuccess] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const unlockTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const resetTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
-  const correctPin = "12345";
+  const focusPinInput = useCallback(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
 
-  const handleKeyPress = (num: string) => {
-    if (pin.length < 5) {
-      const nextPin = pin + num;
-      setPin(nextPin);
-      setError(false);
-
-      if (nextPin === correctPin) {
-        setSuccess(true);
-        setTimeout(() => {
-          sessionStorage.setItem("lexilingo_config_unlocked", "true");
-          setUnlocked(true);
-        }, 600);
-      } else if (nextPin.length === 5) {
-        // Wrong pin entered
-        setTimeout(() => {
-          setShake(true);
-          setError(true);
-          setPin("");
-          setTimeout(() => setShake(false), 500);
-        }, 200);
-      }
+  const clearTimers = useCallback(() => {
+    if (unlockTimerRef.current) {
+      window.clearTimeout(unlockTimerRef.current);
+      unlockTimerRef.current = null;
     }
-  };
 
-  const handleBackspace = () => {
-    setPin(pin.slice(0, -1));
-    setError(false);
-  };
+    if (resetTimerRef.current) {
+      window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
 
-  const handleClear = () => {
-    setPin("");
+    if (shakeTimerRef.current) {
+      window.clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = null;
+    }
+  }, []);
+
+  const updatePin = useCallback((value: string) => {
+    if (success) {
+      return;
+    }
+
+    const nextPin = value.replace(/\D/g, "").slice(0, PIN_LENGTH);
+    clearTimers();
+    setPin(nextPin);
     setError(false);
-  };
+    setShake(false);
+
+    if (nextPin === CORRECT_PIN) {
+      setSuccess(true);
+      unlockTimerRef.current = window.setTimeout(() => {
+        sessionStorage.setItem("lexilingo_config_unlocked", "true");
+        setUnlocked(true);
+      }, 600);
+      return;
+    }
+
+    if (nextPin.length === PIN_LENGTH) {
+      resetTimerRef.current = window.setTimeout(() => {
+        setShake(true);
+        setError(true);
+        setPin("");
+        focusPinInput();
+        shakeTimerRef.current = window.setTimeout(() => setShake(false), 500);
+      }, 200);
+    }
+  }, [clearTimers, focusPinInput, success]);
+
+  const handleKeyPress = useCallback((num: string) => {
+    if (pin.length < PIN_LENGTH) {
+      updatePin(pin + num);
+      focusPinInput();
+    }
+  }, [focusPinInput, pin, updatePin]);
+
+  const handleBackspace = useCallback(() => {
+    updatePin(pin.slice(0, -1));
+    focusPinInput();
+  }, [focusPinInput, pin, updatePin]);
+
+  const handleClear = useCallback(() => {
+    updatePin("");
+    focusPinInput();
+  }, [focusPinInput, updatePin]);
+
+  useEffect(() => {
+    if (!unlocked) {
+      const focusTimer = window.setTimeout(focusPinInput, 50);
+      return () => window.clearTimeout(focusTimer);
+    }
+  }, [focusPinInput, unlocked]);
+
+  useEffect(() => {
+    if (unlocked) {
+      return undefined;
+    }
+
+    const handleKeyboardInput = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        handleKeyPress(event.key);
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        handleBackspace();
+        return;
+      }
+
+      if (event.key === "Delete" || event.key === "Escape") {
+        event.preventDefault();
+        handleClear();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyboardInput);
+    return () => window.removeEventListener("keydown", handleKeyboardInput);
+  }, [handleBackspace, handleClear, handleKeyPress, unlocked]);
+
+  useEffect(() => {
+    return () => clearTimers();
+  }, [clearTimers]);
 
   if (unlocked) {
     return <>{children}</>;
@@ -148,6 +243,14 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           gap: 16px;
           margin-bottom: 36px;
           justify-content: center;
+        }
+
+        .pin-input {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          pointer-events: none;
         }
 
         .pin-dot {
@@ -255,13 +358,26 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
         }
       `}</style>
 
-      <div className={`lock-card ${shake ? "shake" : ""}`}>
+      <div className={`lock-card ${shake ? "shake" : ""}`} onClick={focusPinInput}>
         <div className={`lock-icon-wrapper ${success ? "success" : error ? "error" : ""}`}>
           {success ? <Check size={28} /> : error ? <ShieldAlert size={28} /> : <Lock size={28} />}
         </div>
 
         <h2 className="lock-title">Nhập mật mã bảo mật</h2>
         <p className="lock-subtitle">Cài đặt hệ thống đang được khóa. Vui lòng nhập mã PIN để tiếp tục cấu hình.</p>
+
+        <input
+          ref={inputRef}
+          className="pin-input"
+          value={pin}
+          onChange={(event) => updatePin(event.target.value)}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={PIN_LENGTH}
+          autoComplete="one-time-code"
+          aria-label="Nhập mã PIN bảo mật"
+          autoFocus
+        />
 
         {error && (
           <div className="error-message">
@@ -273,6 +389,7 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className={`pin-dot ${
                 success ? "success" : error ? "error" : i < pin.length ? "filled" : ""
               }`}
@@ -282,17 +399,33 @@ export const ConfigLock = ({ children }: ConfigLockProps) => {
 
         <div className="keypad">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
-            <button key={num} className="keypad-btn" onClick={() => handleKeyPress(num)}>
+            <button
+              key={num}
+              type="button"
+              className="keypad-btn"
+              onClick={() => handleKeyPress(num)}
+              aria-label={`Nhập số ${num}`}
+            >
               {num}
             </button>
           ))}
-          <button className="keypad-btn action-btn" onClick={handleClear}>
+          <button type="button" className="keypad-btn action-btn" onClick={handleClear}>
             Xóa
           </button>
-          <button className="keypad-btn" onClick={() => handleKeyPress("0")}>
+          <button
+            type="button"
+            className="keypad-btn"
+            onClick={() => handleKeyPress("0")}
+            aria-label="Nhập số 0"
+          >
             0
           </button>
-          <button className="keypad-btn action-btn" onClick={handleBackspace}>
+          <button
+            type="button"
+            className="keypad-btn action-btn"
+            onClick={handleBackspace}
+            aria-label="Xóa một số"
+          >
             ←
           </button>
         </div>

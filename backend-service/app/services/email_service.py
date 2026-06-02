@@ -33,19 +33,21 @@ class EmailService:
         smtp_host = settings.SMTP_HOST
         if not smtp_host:
             raise ValueError("SMTP_HOST is not configured")
+        if not settings.SMTP_USERNAME or not settings.SMTP_PASSWORD:
+            raise ValueError("SMTP_USERNAME and SMTP_PASSWORD are required")
+
+        timeout = settings.SMTP_TIMEOUT
 
         if settings.SMTP_USE_SSL:
-            with smtplib.SMTP_SSL(smtp_host, settings.SMTP_PORT) as server:
-                if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
-                    server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+            with smtplib.SMTP_SSL(smtp_host, settings.SMTP_PORT, timeout=timeout) as server:
+                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
                 server.send_message(message)
             return
 
-        with smtplib.SMTP(smtp_host, settings.SMTP_PORT) as server:
+        with smtplib.SMTP(smtp_host, settings.SMTP_PORT, timeout=timeout) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
-            if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
-                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.send_message(message)
 
     @classmethod

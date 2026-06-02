@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:ui';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lexilingo_app/features/admin/admin_app.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -95,15 +95,13 @@ class _ProfilePageState extends State<ProfilePage>
         _adminEmails.contains(user.email.toLowerCase());
   }
 
-  Future<void> _openAdminPanel() async {
-    final uri = Uri.parse('https://admin.lexilingo.me');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open admin panel')),
-        );
-      }
-    }
+  void _openAdminPanel() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AdminApp(),
+        fullscreenDialog: true,
+      ),
+    );
   }
 
   String _formatMemberSince(BuildContext context, DateTime? createdAt) {
@@ -227,7 +225,7 @@ class _ProfilePageState extends State<ProfilePage>
             IconButton(
               icon: const Icon(Icons.admin_panel_settings_rounded),
               color: Colors.deepOrange,
-              tooltip: 'Admin Panel',
+              tooltip: 'Admin Mobile',
               onPressed: _openAdminPanel,
             ),
         ],
@@ -1792,7 +1790,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'admin.lexilingo.me',
+                          'LexiLingo Admin mobile',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

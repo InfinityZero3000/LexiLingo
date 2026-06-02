@@ -130,6 +130,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 actions: const [],
               ),
 
+              // Hero banner below heading
+              const SliverToBoxAdapter(child: _CourseBanner()),
+
               // Content
               if ((provider.isLoadingCourses || provider.isLoadingCategories) &&
                   provider.courses.isEmpty &&
@@ -348,6 +351,90 @@ class _CourseListScreenState extends State<CourseListScreen> {
     showModalBottomSheet(
       context: context,
       builder: (context) => _FilterSheet(),
+    );
+  }
+}
+
+/// Hero banner displayed at the top of the course discovery screen
+class _CourseBanner extends StatelessWidget {
+  const _CourseBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Banner image
+            Image.asset(
+              'assets/course/banner_course.png',
+              width: double.infinity,
+              height: 130,
+              fit: BoxFit.cover,
+            ),
+            // Subtle overlay so text is readable
+            Container(
+              height: 130,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [
+                    (isDark ? Colors.black : const Color(0xFF0D47A1))
+                        .withValues(alpha: 0.55),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            // Text overlay
+            Positioned(
+              right: 20,
+              top: 0,
+              bottom: 0,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Start Learning',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pick a course & start your\nlanguage journey today!',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                      height: 1.4,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -843,7 +930,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           // Icon in center
           Center(
             child: Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(
                   context,
@@ -851,7 +938,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _getLanguageIcon(course.language),
+                Icons.school,
                 size: 32,
                 color: Theme.of(context).colorScheme.surface,
               ),
@@ -864,37 +951,16 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   List<Color> _getGradientFromHash(int hash) {
     final gradients = [
-      [AppColors.primary, AppColors.purple], // Purple
-      [AppColors.purple, const Color(0xFFf5576c)], // Pink
-      [const Color(0xFF4facfe), const Color(0xFF00f2fe)], // Blue
-      [const Color(0xFF43e97b), const Color(0xFF38f9d7)], // Green
-      [const Color(0xFFfa709a), const Color(0xFFfee140)], // Sunset
-      [const Color(0xFF30cfd0), const Color(0xFF330867)], // Ocean
-      [const Color(0xFFa8edea), const Color(0xFFfed6e3)], // Pastel
-      [const Color(0xFFff9a9e), const Color(0xFFfecfef)], // Rose
+      [AppColors.primary, AppColors.purple],
+      [AppColors.purple, const Color(0xFFf5576c)],
+      [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
+      [const Color(0xFF43e97b), const Color(0xFF38f9d7)],
+      [const Color(0xFFfa709a), const Color(0xFFfee140)],
+      [const Color(0xFF30cfd0), const Color(0xFF330867)],
+      [const Color(0xFFa8edea), const Color(0xFFfed6e3)],
+      [const Color(0xFFff9a9e), const Color(0xFFfecfef)],
     ];
     return gradients[hash.abs() % gradients.length];
-  }
-
-  IconData _getLanguageIcon(String language) {
-    switch (language.toLowerCase()) {
-      case 'english':
-        return Icons.language;
-      case 'spanish':
-        return Icons.music_note;
-      case 'french':
-        return Icons.wine_bar;
-      case 'german':
-        return Icons.engineering;
-      case 'japanese':
-        return Icons.temple_buddhist;
-      case 'chinese':
-        return Icons.temple_hindu;
-      case 'korean':
-        return Icons.movie;
-      default:
-        return Icons.school;
-    }
   }
 
   String _getLanguageCode(String language) {

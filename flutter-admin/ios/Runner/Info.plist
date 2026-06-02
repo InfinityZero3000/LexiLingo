@@ -16,6 +16,17 @@
 	<string>lexilingo_admin</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>me.lexilingo.lexilingoAdmin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lexilingo-admin</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
