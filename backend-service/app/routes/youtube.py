@@ -7,6 +7,7 @@ All responses are cached via the 3-layer APICacheService.
 Phase 1: YouTube Video Integration with Auto Subtitles.
 """
 
+import asyncio
 import logging
 from typing import Optional
 
@@ -31,7 +32,7 @@ YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
 
 
 # ============================================================================
-# Curated Channel List (No API cost)
+# Curated Channel List (No API cost — thumbnails fetched from YouTube API)
 # ============================================================================
 
 CURATED_CHANNELS = [
@@ -40,7 +41,7 @@ CURATED_CHANNELS = [
         "name": "BBC Learning English",
         "description": "Learn English with the BBC. Improve grammar, vocabulary and pronunciation.",
         "level": "A2-B2",
-        "thumbnail": "https://yt3.googleusercontent.com/BBCLearningEnglish",
+        "thumbnail": "",
         "category": "general",
     },
     {
@@ -48,7 +49,7 @@ CURATED_CHANNELS = [
         "name": "TED-Ed",
         "description": "Lessons worth sharing. TED-Ed's commitment to creating lessons worth sharing.",
         "level": "B1-C1",
-        "thumbnail": "https://yt3.googleusercontent.com/TEDEd",
+        "thumbnail": "",
         "category": "academic",
     },
     {
@@ -56,7 +57,7 @@ CURATED_CHANNELS = [
         "name": "English with Lucy",
         "description": "Learn British English with Lucy. Grammar, vocabulary, and pronunciation.",
         "level": "A2-B2",
-        "thumbnail": "https://yt3.googleusercontent.com/EnglishWithLucy",
+        "thumbnail": "",
         "category": "general",
     },
     {
@@ -64,7 +65,7 @@ CURATED_CHANNELS = [
         "name": "EngVid",
         "description": "Free English video lessons by experienced teachers.",
         "level": "A1-C1",
-        "thumbnail": "https://yt3.googleusercontent.com/EngVid",
+        "thumbnail": "",
         "category": "general",
     },
     {
@@ -72,7 +73,7 @@ CURATED_CHANNELS = [
         "name": "Rachel's English",
         "description": "American English pronunciation training.",
         "level": "B1-C1",
-        "thumbnail": "https://yt3.googleusercontent.com/RachelsEnglish",
+        "thumbnail": "",
         "category": "pronunciation",
     },
     {
@@ -80,28 +81,94 @@ CURATED_CHANNELS = [
         "name": "VOA Learning English",
         "description": "Practice American English with slow-speed news.",
         "level": "A1-A2",
-        "thumbnail": "https://yt3.googleusercontent.com/VOALearningEnglish",
+        "thumbnail": "",
         "category": "news",
     },
 ]
 
 
+async def _fetch_channel_thumbnails(channel_ids: list[str]) -> dict[str, str]:
+    """
+    Fetch real thumbnail URLs for channels via YouTube channels.list API.
+    Cost: 1 quota unit per 50 channels (very cheap).
+    Returns: dict mapping channel_id -> thumbnail_url
+    """
+    if not settings.YOUTUBE_API_KEY or not channel_ids:
+        return {}
+
+    params = {
+        "part": "snippet",
+        "id": ",".join(channel_ids),
+        "key": settings.YOUTUBE_API_KEY,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(f"{YOUTUBE_API_BASE}/channels", params=params)
+            response.raise_for_status()
+            data = response.json()
+
+        thumbnails: dict[str, str] = {}
+        for item in data.get("items", []):
+            cid = item.get("id", "")
+            snippet = item.get("snippet", {})
+            # Prefer medium (240px) → default (120px)
+            thumb = (
+                snippet.get("thumbnails", {}).get("medium", {}).get("url")
+                or snippet.get("thumbnails", {}).get("default", {}).get("url")
+                or ""
+            )
+            if cid and thumb:
+                thumbnails[cid] = thumb
+        return thumbnails
+    except Exception as e:
+        logger.warning(f"Failed to fetch channel thumbnails: {e}")
+        return {}
+
+
 @router.get("/channels")
 async def get_curated_channels(
     category: Optional[str] = Query(None, description="Filter by category"),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    Get curated English learning YouTube channels.
-    
-    No API cost — returns hardcoded curated list.
+    Get curated English learning YouTube channels with real thumbnails.
+
+    Thumbnails are fetched from YouTube channels.list (1 quota unit, cached 7 days).
     """
     channels = CURATED_CHANNELS
     if category:
         channels = [c for c in channels if c["category"] == category]
-    
+
+    # Fetch real thumbnails via cache
+    cache_key = "youtube:channel_thumbnails:all"
+    cache_service = APICacheService(db)
+    channel_ids = [c["id"] for c in CURATED_CHANNELS]  # always fetch all for cache
+
+    try:
+        thumb_result = await cache_service.get_or_fetch(
+            cache_key=cache_key,
+            api_name="youtube",
+            fetch_fn=lambda: _fetch_channel_thumbnails(channel_ids),
+            priority=Priority.LOW,
+            redis_ttl=604800,   # 7 days
+            db_ttl=2592000,     # 30 days
+        )
+        thumbnails: dict = thumb_result.data if thumb_result else {}
+    except Exception:
+        thumbnails = {}
+
+    # Merge real thumbnails into channel data
+    enriched = []
+    for ch in channels:
+        enriched.append({
+            **ch,
+            "thumbnail": thumbnails.get(ch["id"], ""),
+        })
+
     return {
-        "channels": channels,
-        "total": len(channels),
+        "channels": enriched,
+        "total": len(enriched),
     }
 
 
@@ -119,7 +186,7 @@ async def search_videos(
 ):
     """
     Search YouTube videos (proxied through backend to hide API key).
-    
+
     Quota cost: 100 units per search.list call.
     Cache: Redis 6h, DB 12h, SQLite 24h on client.
     """
@@ -128,17 +195,16 @@ async def search_videos(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="YouTube API key not configured.",
         )
-    
-    # Build cache key
+
     cache_parts = [f"q:{q}", f"max:{max_results}"]
     if channel_id:
         cache_parts.append(f"ch:{channel_id}")
     if page_token:
         cache_parts.append(f"page:{page_token}")
     cache_key = f"youtube:search:{':'.join(cache_parts)}"
-    
+
     cache_service = APICacheService(db)
-    
+
     try:
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
@@ -149,7 +215,7 @@ async def search_videos(
                 channel_id=channel_id,
                 page_token=page_token,
             ),
-            priority=Priority.HIGH,  # User-initiated search
+            priority=Priority.HIGH,
             redis_ttl=21600,    # 6 hours
             db_ttl=43200,       # 12 hours
         )
@@ -172,7 +238,7 @@ async def search_videos(
 
 
 # ============================================================================
-# Video Captions (2 units for captions.list)
+# Video Captions — via youtube-transcript-api (no OAuth needed)
 # ============================================================================
 
 @router.get("/captions/{video_id}")
@@ -182,37 +248,31 @@ async def get_captions(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Fetch and parse captions/subtitles for a YouTube video.
-    
-    Quota cost: ~7 units (captions.list + download).
-    Cache: Permanent (captions don't change).
-    
+    Fetch captions/subtitles for a YouTube video.
+
+    Uses youtube-transcript-api (no OAuth, no quota cost).
+    Cache: 7 days Redis, 1 year DB (captions rarely change).
+
     Returns list of caption segments with start/end times.
     """
-    if not settings.YOUTUBE_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="YouTube API key not configured.",
-        )
-    
     cache_key = f"youtube:captions:{video_id}:{lang}"
     cache_service = APICacheService(db)
-    
+
     try:
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
             api_name="youtube",
-            fetch_fn=lambda: _fetch_captions(video_id, lang),
+            fetch_fn=lambda: _fetch_captions_transcript_api(video_id, lang),
             priority=Priority.HIGH,
             redis_ttl=604800,       # 7 days
-            db_ttl=31536000,        # 1 year (permanent)
+            db_ttl=31536000,        # 1 year
         )
         return {
             "video_id": video_id,
             "language": lang,
-            "segments": result.data,
-            "source": result.source,
-            "is_stale": result.is_stale,
+            "segments": result.data if result else [],
+            "source": result.source if result else "error",
+            "is_stale": result.is_stale if result else False,
         }
     except QuotaExhaustedError as e:
         raise HTTPException(
@@ -234,7 +294,7 @@ async def get_channel_videos(
 ):
     """
     Get latest videos from a specific YouTube channel.
-    
+
     Quota cost: 100 units.
     Cache: Redis 12h, DB 24h.
     """
@@ -243,14 +303,14 @@ async def get_channel_videos(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="YouTube API key not configured.",
         )
-    
+
     cache_parts = [f"ch:{channel_id}", f"max:{max_results}"]
     if page_token:
         cache_parts.append(f"page:{page_token}")
     cache_key = f"youtube:channel_videos:{':'.join(cache_parts)}"
-    
+
     cache_service = APICacheService(db)
-    
+
     try:
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
@@ -261,7 +321,7 @@ async def get_channel_videos(
                 channel_id=channel_id,
                 page_token=page_token,
             ),
-            priority=Priority.MEDIUM,  # Auto-load when user opens channel
+            priority=Priority.MEDIUM,
             redis_ttl=43200,    # 12 hours
             db_ttl=86400,       # 24 hours
         )
@@ -295,7 +355,7 @@ async def _youtube_search(
         "maxResults": max_results,
         "key": settings.YOUTUBE_API_KEY,
         "relevanceLanguage": "en",
-        "videoCaption": "closedCaption",  # Only videos with captions
+        "videoCaption": "closedCaption",
     }
     if q:
         params["q"] = q
@@ -303,13 +363,12 @@ async def _youtube_search(
         params["channelId"] = channel_id
     if page_token:
         params["pageToken"] = page_token
-    
+
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.get(f"{YOUTUBE_API_BASE}/search", params=params)
         response.raise_for_status()
         data = response.json()
-    
-    # Transform to cleaner format
+
     videos = []
     for item in data.get("items", []):
         snippet = item.get("snippet", {})
@@ -324,7 +383,7 @@ async def _youtube_search(
             "thumbnail_url": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
             "thumbnail_medium": snippet.get("thumbnails", {}).get("medium", {}).get("url", ""),
         })
-    
+
     return {
         "videos": videos,
         "next_page_token": data.get("nextPageToken"),
@@ -333,91 +392,105 @@ async def _youtube_search(
     }
 
 
-async def _fetch_captions(video_id: str, lang: str = "en") -> list[dict]:
+async def _fetch_captions_transcript_api(video_id: str, lang: str = "en") -> list[dict]:
     """
-    Fetch and parse captions for a YouTube video.
-    
-    Strategy:
-    1. Try YouTube Data API captions.list → get caption track URL
-    2. Download and parse the caption track (SRT/VTT format)
-    3. Return list of segments: [{start_ms, end_ms, text}, ...]
+    Fetch captions using youtube-transcript-api.
+
+    No OAuth needed — uses public transcript endpoints.
+    Tries requested language first, then falls back to English variants.
     """
-    # Step 1: List available caption tracks
-    params = {
-        "part": "snippet",
-        "videoId": video_id,
-        "key": settings.YOUTUBE_API_KEY,
-    }
-    
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.get(f"{YOUTUBE_API_BASE}/captions", params=params)
-        response.raise_for_status()
-        data = response.json()
-    
-    # Find matching language track
-    tracks = data.get("items", [])
-    target_track = None
-    for track in tracks:
-        track_lang = track.get("snippet", {}).get("language", "")
-        if track_lang == lang:
-            target_track = track
-            break
-    
-    if not target_track:
-        # Try auto-generated captions (ASR)
-        for track in tracks:
-            if track.get("snippet", {}).get("trackKind") == "ASR":
-                target_track = track
-                break
-    
-    if not target_track:
-        # No captions available — return empty
-        logger.info(f"No {lang} captions found for video {video_id}")
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+
+        # Run sync library in a thread pool to avoid blocking the event loop
+        loop = asyncio.get_running_loop()
+        transcript = await loop.run_in_executor(
+            None,
+            lambda: _get_transcript_sync(video_id, lang),
+        )
+
+        if transcript is None:
+            return []
+
+        segments = []
+        for entry in transcript:
+            start_ms = int(entry.get("start", 0) * 1000)
+            duration_ms = int(entry.get("duration", 0) * 1000)
+            text = entry.get("text", "").strip()
+            if text and text != "\n":
+                segments.append({
+                    "start_ms": start_ms,
+                    "end_ms": start_ms + duration_ms,
+                    "text": text,
+                })
+
+        return segments
+
+    except ImportError:
+        logger.warning("youtube-transcript-api not installed — falling back to timedtext")
+        return await _fetch_captions_timedtext(video_id, lang)
+    except Exception as e:
+        logger.info(f"Transcript API failed for {video_id}: {e}")
         return []
-    
-    # Step 2: Try to get captions via timedtext API (no OAuth needed)
+
+
+def _get_transcript_sync(video_id: str, lang: str) -> list | None:
+    """Sync wrapper for YouTubeTranscriptApi (runs in thread pool)."""
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+
+        # Try requested lang, then en, then any available
+        lang_variants = [lang, "en", "en-US", "en-GB"]
+        # Deduplicate while preserving order
+        seen: set[str] = set()
+        langs_to_try: list[str] = []
+        for l in lang_variants:
+            if l not in seen:
+                seen.add(l)
+                langs_to_try.append(l)
+
+        try:
+            return YouTubeTranscriptApi.get_transcript(video_id, languages=langs_to_try)
+        except NoTranscriptFound:
+            # Try auto-generated captions in any language
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            for transcript in transcript_list:
+                if transcript.is_generated:
+                    return transcript.fetch()
+            return None
+    except Exception:
+        return None
+
+
+async def _fetch_captions_timedtext(video_id: str, lang: str = "en") -> list[dict]:
+    """Fallback: YouTube timedtext API (may be blocked server-side)."""
     try:
         timedtext_url = (
             f"https://www.youtube.com/api/timedtext"
             f"?v={video_id}&lang={lang}&fmt=json3"
         )
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(timedtext_url)
             if resp.status_code == 200:
                 caption_data = resp.json()
                 return _parse_json3_captions(caption_data)
     except Exception as e:
         logger.warning(f"Timedtext API failed for {video_id}: {e}")
-    
-    # Step 3: Fallback — return track metadata only
-    return [{
-        "track_id": target_track.get("id", ""),
-        "language": lang,
-        "kind": target_track.get("snippet", {}).get("trackKind", ""),
-        "name": target_track.get("snippet", {}).get("name", ""),
-        "segments": [],
-        "note": "Full caption download requires OAuth. Track metadata only.",
-    }]
+    return []
 
 
 def _parse_json3_captions(data: dict) -> list[dict]:
     """Parse YouTube JSON3 caption format into segments."""
     segments = []
-    events = data.get("events", [])
-    
-    for event in events:
+    for event in data.get("events", []):
         start_ms = event.get("tStartMs", 0)
         duration_ms = event.get("dDurationMs", 0)
-        
-        # Reconstruct text from segments
         segs = event.get("segs", [])
         text = "".join(seg.get("utf8", "") for seg in segs).strip()
-        
         if text and text != "\n":
             segments.append({
                 "start_ms": start_ms,
                 "end_ms": start_ms + duration_ms,
                 "text": text,
             })
-    
     return segments
