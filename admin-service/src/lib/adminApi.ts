@@ -62,6 +62,55 @@ export const listRoles = async () => {
   return apiFetch<AdminResponse<RoleInfo[]>>(`${ENV.backendUrl}/admin/roles`);
 };
 
+// ============================================================================
+// Topic Chat Management (AI Service Admin)
+// ============================================================================
+
+export type TopicDifficulty = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
+export type TopicItem = {
+  story_id: string;
+  title: { en: string; vi: string };
+  difficulty_level: TopicDifficulty;
+  category: string;
+  estimated_minutes: number;
+  icon_key?: string | null;
+  suggested_prompts?: string[];
+  tags?: string[];
+};
+
+export type TopicsAdminPayload = {
+  topics: TopicItem[];
+  total: number;
+};
+
+const aiAdminHeaders = () => ({
+  ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
+});
+
+export const listTopicStoriesAdmin = async () =>
+  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`, {
+    headers: aiAdminHeaders(),
+  });
+
+export const createTopicStoryAdmin = async (payload: {
+  story_id?: string;
+  title: { en: string; vi: string };
+  difficulty_level: TopicDifficulty;
+  category: string;
+  estimated_minutes: number;
+  icon_key?: string;
+  opening_prompt?: string;
+  suggested_prompts?: string[];
+  tags?: string[];
+  is_published?: boolean;
+}) =>
+  apiFetch<AdminResponse<TopicItem>>(`${ENV.aiAdminUrl}/topics`, {
+    method: "POST",
+    headers: aiAdminHeaders(),
+    body: JSON.stringify(payload),
+  });
+
 // Grammar
 export type GrammarItem = {
   id: string;

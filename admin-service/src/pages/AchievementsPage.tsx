@@ -141,23 +141,64 @@ const BadgeFallback = ({ badge, size }: { badge: BadgeSource; size: number }) =>
 );
 
 const BadgeImage = ({ badge, size = 44 }: { badge: BadgeSource; size?: number }) => {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const imgUrl = badgeImgUrl(badge);
+  const [retryCount, setRetryCount] = useState(0);
+  const [permanentFail, setPermanentFail] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!imgUrl || failedUrl === imgUrl) {
-    return <BadgeFallback badge={badge} size={size} />;
-  }
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "80px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const imgUrl = badgeImgUrl(badge);
+  // Append ?r=N to bust cache / force HTTP/2 retry after QUIC failure
+  const resolvedUrl = imgUrl && retryCount > 0 ? `${imgUrl}?r=${retryCount}` : imgUrl;
+  const showFallback = !resolvedUrl || permanentFail;
+
+  const handleError = () => {
+    if (retryCount < 2) {
+      // Retry up to 2 times with a short delay (avoids hammering CDN)
+      setTimeout(() => setRetryCount((n) => n + 1), 800 * (retryCount + 1));
+    } else {
+      setPermanentFail(true);
+    }
+  };
 
   return (
-    <img
-      src={imgUrl}
-      alt=""
-      onError={() => setFailedUrl(imgUrl)}
-      style={{
-        width: size, height: size, objectFit: "contain", borderRadius: 8,
-        background: "var(--panel-soft)", padding: 2, display: "block",
-      }}
-    />
+    <div ref={containerRef} style={{ width: size, height: size, flexShrink: 0 }}>
+      {showFallback ? (
+        <BadgeFallback badge={badge} size={size} />
+      ) : visible ? (
+        <img
+          key={retryCount}
+          src={resolvedUrl!}
+          alt=""
+          loading="lazy"
+          onError={handleError}
+          style={{
+            width: size, height: size, objectFit: "contain", borderRadius: 8,
+            background: "var(--panel-soft)", padding: 2, display: "block",
+          }}
+        />
+      ) : (
+        <div style={{
+          width: size, height: size, background: "var(--panel-soft)",
+          borderRadius: 8, opacity: 0.4,
+        }} />
+      )}
+    </div>
   );
 };
 

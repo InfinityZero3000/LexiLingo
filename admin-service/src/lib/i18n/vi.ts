@@ -63,6 +63,7 @@ const vi = {
     courses: "Khóa học",
     units: "Chương",
     lessons: "Bài học",
+    topics: "Topic chat",
     grammarTest: "Ngữ pháp & Kiểm tra",
     contentAnalytics: "Phân tích nội dung",
     vocabulary: "Từ vựng",
