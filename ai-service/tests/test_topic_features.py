@@ -169,6 +169,60 @@ class TestTopicFeatures:
         assert payload["stories"][0]["title"]["en"] == "Safe JSON"
 
     @pytest.mark.asyncio
+    async def test_admin_create_topic_preserves_icon_key(self, mock_mongodb, mock_redis):
+        """Admin topic creation should store icon metadata and invalidate catalog cache."""
+        from api.models.story_schemas import AdminStoryCreateRequest
+        from api.routes.admin import create_admin_topic
+
+        mock_redis.delete = AsyncMock()
+        payload = AdminStoryCreateRequest(
+            title=LocalizedTitle(en="Library Study Group", vi="Nhóm học ở thư viện"),
+            difficulty_level=DifficultyLevel.B1,
+            category="education",
+            estimated_minutes=18,
+            icon_key="library",
+            suggested_prompts=["Can I join your study group?"],
+            tags=["library", "study group"],
+        )
+
+        response = await create_admin_topic(payload, _key="admin", db=mock_mongodb, redis_client=mock_redis)
+
+        stored_doc = mock_mongodb["stories"].update_one.call_args[0][1]["$set"]
+        assert response["success"] is True
+        assert response["data"]["story_id"] == "story_library_study_group"
+        assert response["data"]["icon_key"] == "library"
+        assert stored_doc["icon_key"] == "library"
+        assert stored_doc["category"] == "education"
+        assert mock_redis.delete.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_admin_list_topics_accepts_list_item_documents(self, mock_mongodb):
+        """Admin topic list should not require full story conversation metadata."""
+        from api.routes.admin import list_admin_topics
+
+        mock_cursor = MagicMock()
+        mock_cursor.sort.return_value = mock_cursor
+        mock_cursor.limit.return_value = mock_cursor
+        mock_cursor.to_list = AsyncMock(return_value=[
+            {
+                "story_id": "story_legacy_admin_topic",
+                "title": {"en": "Legacy Topic", "vi": "Topic cũ"},
+                "difficulty_level": "A2",
+                "category": "services",
+                "estimated_minutes": 12,
+                "icon_key": "repair",
+                "tags": ["repair"],
+            }
+        ])
+        mock_mongodb["stories"].find = MagicMock(return_value=mock_cursor)
+
+        response = await list_admin_topics(limit=100, _key="admin", db=mock_mongodb)
+
+        assert response["success"] is True
+        assert response["data"]["total"] == 1
+        assert response["data"]["topics"][0]["icon_key"] == "repair"
+
+    @pytest.mark.asyncio
     async def test_topic_preloader_bundle(self, mock_mongodb, mock_redis, sample_story):
         """Task 2.2 & 2.3: Verify preloader builds correct bundle and warms Redis."""
         preloader = TopicContextPreloader(mock_mongodb, mock_redis)

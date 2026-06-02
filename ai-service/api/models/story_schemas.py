@@ -53,6 +53,7 @@ class Story(BaseModel):
     vocabulary_list: List[Dict[str, Any]] = Field(default_factory=list)
     grammar_points: List[Dict[str, Any]] = Field(default_factory=list)
     estimated_minutes: int = 15
+    icon_key: Optional[str] = None
     cover_image_url: Optional[str] = None
     suggested_prompts: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
@@ -67,9 +68,26 @@ class StoryListItem(BaseModel):
     difficulty_level: DifficultyLevel
     category: str
     estimated_minutes: int = 15
+    icon_key: Optional[str] = None
     cover_image_url: Optional[str] = None
     suggested_prompts: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
+
+
+class AdminStoryCreateRequest(BaseModel):
+    story_id: Optional[str] = None
+    title: LocalizedTitle
+    difficulty_level: DifficultyLevel
+    category: str
+    estimated_minutes: int = 15
+    icon_key: Optional[str] = None
+    opening_prompt: Optional[str] = None
+    suggested_prompts: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+    is_published: bool = True
+    context_description: Optional[ContextDescription] = None
+    role_persona: Optional[RolePersona] = None
+    conversation_flow: Optional[ConversationFlow] = None
 
 
 class ListStoriesRequest(BaseModel):
