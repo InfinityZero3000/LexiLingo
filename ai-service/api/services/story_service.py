@@ -88,6 +88,21 @@ class StoryService:
 
         StoryService._sample_stories_cache = loaded
         return loaded
+
+    def list_sample_story_items(
+        self,
+        category: Optional[str] = None,
+        difficulty_level: Optional[DifficultyLevel] = None,
+    ) -> List[StoryListItem]:
+        """Return bundled sample stories as list items for catalog merging."""
+        stories = self._load_sample_stories()
+
+        if category:
+            stories = [s for s in stories if s.category == category]
+        if difficulty_level:
+            stories = [s for s in stories if s.difficulty_level == difficulty_level]
+
+        return [self._to_list_item(story) for story in stories]
     
     async def get_story_by_id(self, story_id: str) -> Optional[Story]:
         """
@@ -183,14 +198,16 @@ class StoryService:
     
     async def get_categories(self) -> List[str]:
         """Get all unique story categories."""
+        categories: set[str] = set()
+
         try:
-            categories = await self.collection.distinct("category", {"is_published": True})
-            if categories:
-                return categories
+            db_categories = await self.collection.distinct("category", {"is_published": True})
+            categories.update(str(category) for category in db_categories if category)
         except Exception as e:
             logger.warning("MongoDB get_categories failed, using fallback: %s", e)
 
-        return sorted({story.category for story in self._load_sample_stories()})
+        categories.update(story.category for story in self._load_sample_stories())
+        return sorted(categories)
     
     async def create_story(self, story: Story) -> str:
         """

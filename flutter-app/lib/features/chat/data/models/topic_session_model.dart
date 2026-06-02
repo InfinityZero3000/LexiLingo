@@ -262,7 +262,7 @@ class StoriesListResponse {
     required this.stories,
     required this.total,
     this.page = 1,
-    this.limit = 20,
+    this.limit = 100,
   });
 
   factory StoriesListResponse.fromJson(Map<String, dynamic> json) {
@@ -277,7 +277,7 @@ class StoriesListResponse {
           [],
       total: json['total'] as int? ?? 0,
       page: json['page'] as int? ?? 1,
-      limit: json['limit'] as int? ?? 20,
+      limit: json['limit'] as int? ?? 100,
     );
   }
 

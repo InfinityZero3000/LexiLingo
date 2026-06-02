@@ -7,6 +7,7 @@ Includes starting topic sessions and sending messages within topic context.
 
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 import base64
@@ -15,6 +16,7 @@ from datetime import datetime
 import uuid
 import time
 import logging
+import os
 import re
 
 from api.core.database import get_database
@@ -52,10 +54,52 @@ SAFE_FIXED_RESPONSE = (
     "Please try again shortly."
 )
 
-TOPIC_GRAPHCAG_TIMEOUT_SEC = float(getattr(settings, "TOPIC_GRAPHCAG_TIMEOUT_SEC", 12.0))
-TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC = float(
-    getattr(settings, "TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC", 6.0)
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+TOPIC_TRACECAG_TIMEOUT_SEC = _env_float(
+    "TOPIC_TRACECAG_TIMEOUT_SEC",
+    _env_float("TOPIC_GRAPHCAG_TIMEOUT_SEC", 12.0),
 )
+TOPIC_TRACECAG_RETRY_TIMEOUT_SEC = _env_float(
+    "TOPIC_TRACECAG_RETRY_TIMEOUT_SEC",
+    _env_float("TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC", 6.0),
+)
+
+
+def _normalize_preferred_llm(value: str | None) -> str:
+    normalized = str(value or "tracecag").strip().lower().replace("_", "-")
+    if normalized in {"tracecag", "trace-cag"}:
+        return "trace-cag"
+    return normalized
+
+
+def _story_list_item_payload(story: StoryListItem | dict) -> dict:
+    if hasattr(story, "model_dump"):
+        payload = story.model_dump(mode="json")
+    else:
+        payload = dict(story)
+
+    title = payload.get("title")
+    if isinstance(title, str):
+        payload["title"] = {"en": title, "vi": title}
+
+    difficulty = payload.get("difficulty_level")
+    if hasattr(difficulty, "value"):
+        payload["difficulty_level"] = difficulty.value
+
+    payload.setdefault("estimated_minutes", 15)
+    payload.setdefault("cover_image_url", None)
+    payload.setdefault("suggested_prompts", [])
+    payload.setdefault("tags", [])
+    return payload
 
 
 async def _load_full_cursor(cursor, batch_size: int = 500) -> list[dict]:
@@ -174,7 +218,7 @@ async def _ensure_topic_session_owner(
 async def list_stories(
     category: str | None = None,
     difficulty_level: DifficultyLevel | None = None,
-    limit: int = 20,
+    limit: int = 100,
     bypass_cache: bool = False,
     catalog_service = Depends(get_topic_catalog_service)
 ):
@@ -192,7 +236,11 @@ async def list_stories(
         if difficulty_level:
             filtered = [s for s in filtered if s.difficulty_level == difficulty_level]
             
-        return ListStoriesResponse(stories=filtered[:limit], total=len(filtered))
+        response_payload = {
+            "stories": [_story_list_item_payload(story) for story in filtered[:limit]],
+            "total": len(filtered),
+        }
+        return JSONResponse(content=response_payload)
         
     except Exception as e:
         logger.error(f"Failed to list stories: {e}")
@@ -347,7 +395,7 @@ async def start_topic_session(
             "title": request.session_title or story.title.en,
             "system_prompt": system_prompt,
             "session_type": "topic_based",
-            "preferred_llm": (request.preferred_llm or "qwen").lower(),
+            "preferred_llm": _normalize_preferred_llm(request.preferred_llm),
             "difficulty_level": story.difficulty_level.value,
             "created_at": created_at,
             "last_activity": created_at,
@@ -496,7 +544,7 @@ async def send_topic_message(
         history = await history_cursor.to_list(length=10)
         history.reverse()
         
-        preferred_llm = str(session.get("preferred_llm") or "trace-cag").lower()
+        preferred_llm = _normalize_preferred_llm(session.get("preferred_llm"))
 
         # Load KG seeds from session (populated by warm_subgraph in start_topic_session).
         # Fall back to a quick in-process subgraph lookup if missing (cache miss race).
@@ -537,7 +585,7 @@ async def send_topic_message(
                     generation_policy="auto",
                     kg_seed_concepts=_kg_seeds or None,
                 ),
-                timeout=TOPIC_GRAPHCAG_TIMEOUT_SEC,
+                timeout=TOPIC_TRACECAG_TIMEOUT_SEC,
             )
 
             ai_response = str(graph_result.get("tutor_response") or "").strip()
@@ -571,7 +619,7 @@ async def send_topic_message(
                         diagnosis_policy="rules",
                         generation_policy="auto",
                     ),
-                    timeout=TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC,
+                    timeout=TOPIC_TRACECAG_RETRY_TIMEOUT_SEC,
                 )
                 ai_response = str(retry_result.get("tutor_response") or "").strip()
                 retry_meta = retry_result.get("metadata", {}) or {}

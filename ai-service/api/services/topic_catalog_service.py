@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 class TopicCatalogService:
     """Service for fetching and caching topic catalog."""
     
-    CACHE_KEY = "topics:catalog"
+    CACHE_KEY = "topics:catalog:v2"
     CACHE_TTL = 3600  # 1 hour
+    CATALOG_LIMIT = 500
     
     def __init__(self, db: AsyncIOMotorDatabase, redis_client: redis.Redis):
         self.story_service = StoryService(db)
@@ -29,19 +30,32 @@ class TopicCatalogService:
         
     async def get_topics(self, bypass_cache: bool = False) -> List[StoryListItem]:
         """Fetch all available topics, checking cache first."""
+        sample_stories = self.story_service.list_sample_story_items()
+        sample_story_ids = {story.story_id for story in sample_stories}
+
         if not bypass_cache:
             try:
                 cached = await self.redis.get(self.CACHE_KEY)
                 if cached:
                     data = json.loads(cached)
                     if data:
-                        return [StoryListItem(**item) for item in data]
-                    logger.info("Ignoring empty cached topic catalog and rebuilding")
+                        cached_stories = [StoryListItem(**item) for item in data]
+                        cached_story_ids = {story.story_id for story in cached_stories}
+                        missing_sample_ids = sample_story_ids - cached_story_ids
+                        if not missing_sample_ids:
+                            return cached_stories
+                        logger.info(
+                            "Cached topic catalog missing %d bundled sample topics; rebuilding",
+                            len(missing_sample_ids),
+                        )
+                    else:
+                        logger.info("Ignoring empty cached topic catalog and rebuilding")
             except Exception as e:
                 logger.warning(f"Failed to fetch cached topics: {e}")
         
         # Cache miss or bypass
-        stories, _ = await self.story_service.list_stories(limit=100)
+        db_stories, _ = await self.story_service.list_stories(limit=self.CATALOG_LIMIT)
+        stories = self._merge_story_items(db_stories, sample_stories)
 
         if not stories:
             logger.warning("[TopicCatalog] MongoDB returned 0 stories — returning default topic catalog")
@@ -52,7 +66,7 @@ class TopicCatalogService:
             data_to_cache = []
             for s in stories:
                 if hasattr(s, "model_dump"):
-                    data_to_cache.append(s.model_dump())
+                    data_to_cache.append(s.model_dump(mode="json"))
                 else:
                     data_to_cache.append(dict(s))
 
@@ -65,6 +79,23 @@ class TopicCatalogService:
             logger.warning(f"Failed to cache topics: {e}")
 
         return stories
+
+    @staticmethod
+    def _merge_story_items(
+        primary: List[StoryListItem],
+        bundled: List[StoryListItem],
+    ) -> List[StoryListItem]:
+        """Merge DB-backed topics with bundled sample topics by story_id."""
+        merged: List[StoryListItem] = []
+        seen: set[str] = set()
+
+        for story in [*primary, *bundled]:
+            if story.story_id in seen:
+                continue
+            merged.append(story)
+            seen.add(story.story_id)
+
+        return merged
 
     @staticmethod
     def _default_topics() -> List[StoryListItem]:

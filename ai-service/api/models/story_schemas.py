@@ -75,7 +75,7 @@ class StoryListItem(BaseModel):
 class ListStoriesRequest(BaseModel):
     category: Optional[str] = None
     difficulty_level: Optional[DifficultyLevel] = None
-    limit: int = 20
+    limit: int = 100
     skip: int = 0
 
 
