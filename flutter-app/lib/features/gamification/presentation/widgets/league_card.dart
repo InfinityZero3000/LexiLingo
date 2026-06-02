@@ -20,15 +20,9 @@ class LeagueCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              leagueData.color.withValues(alpha: 0.15),
-              leagueData.color.withValues(alpha: 0.05),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          color: Theme.of(context).colorScheme.surface.withValues(
+            alpha: isDark ? 0.44 : 0.74,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -36,7 +30,20 @@ class LeagueCard extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        child: Row(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                leagueData.color.withValues(alpha: 0.15),
+                leagueData.color.withValues(alpha: 0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
           children: [
             // League Icon
             RankAssetIcon(
@@ -144,6 +151,7 @@ class LeagueCard extends StatelessWidget {
 
             const SizedBox(width: 2),
           ],
+          ),
         ),
       ),
     );
