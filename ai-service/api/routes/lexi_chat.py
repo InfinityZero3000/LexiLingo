@@ -577,6 +577,7 @@ async def _run_lexi_pipeline(
     db: AsyncIOMotorDatabase,
     quota: Any,
     start_time: float,
+    skip_tts: bool = False,
 ) -> _PipelineResult:
     """Execute the full Lexi pipeline (STT → TraceCAG → TTS → persist) and return results.
 
@@ -687,7 +688,7 @@ async def _run_lexi_pipeline(
 
     # ── TTS ──
     audio_b64: Optional[str] = None
-    if request.enable_tts:
+    if request.enable_tts and not skip_tts:
         audio_b64 = await _synthesize_tts(lexi_response)
         metadata["pipeline_steps"].append("tts_complete" if audio_b64 else "tts_skipped")
 

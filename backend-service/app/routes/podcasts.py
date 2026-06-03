@@ -49,33 +49,33 @@ CEFR_LEVELS = {
 CURATED_PODCASTS = [
     # A1-A2 — slow, clear speech
     {
+        "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9s1.rss").hexdigest()[:12],
+        "title": "BBC Learning English Stories",
+        "author": "BBC Learning English",
+        "description": (
+            "Classic stories retold in clear, simple English. Each episode"
+            " teaches vocabulary through short dramas perfect for beginners."
+        ),
+        "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9s1.rss",
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxqksj.jpg",
+        "episode_count": 100,
+        "categories": ["education", "stories"],
+        "cefr_level": "A1",
+        "language": "en",
+    },
+    {
         "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9tn.rss").hexdigest()[:12],
         "title": "BBC 6 Minute English",
         "author": "BBC Learning English",
         "description": (
             "Every week we ask an interesting question about the world and discuss"
-            " the answer in easy, B1-level English. With vocabulary explanations."
+            " the answer in easy English. With vocabulary explanations."
         ),
         "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9tn.rss",
-        "artwork_url": "https://ichef.bbci.co.uk/images/ic/1200x1200/p09jnvlt.jpg",
-        "episode_count": 0,
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxqkd0.jpg",
+        "episode_count": 500,
         "categories": ["education", "learning"],
         "cefr_level": "A2",
-        "language": "en",
-    },
-    {
-        "id": hashlib.md5(b"https://www.eslpod.com/eslpod/website/simple_sound/eslpodcast.rss").hexdigest()[:12],
-        "title": "ESL Pod",
-        "author": "Dr. Jeff McQuillan",
-        "description": (
-            "Slow, clear English conversations with detailed explanations of"
-            " vocabulary and grammar, perfect for beginner ESL learners."
-        ),
-        "feed_url": "https://www.eslpod.com/eslpod/website/simple_sound/eslpodcast.rss",
-        "artwork_url": "https://cdn.eslpod.com/img/icon.jpg",
-        "episode_count": 0,
-        "categories": ["education", "esl"],
-        "cefr_level": "A1",
         "language": "en",
     },
     # B1-B2 — normal conversational speed
@@ -88,24 +88,24 @@ CURATED_PODCASTS = [
             " expressions. Connection NOT perfection is our motto."
         ),
         "feed_url": "https://allears.libsyn.com/rss",
-        "artwork_url": "https://ssl-static.libsyn.com/p/assets/7/2/b/7/72b739d4b0c1e2f3/AEE_New_2022_AlbumArt.jpg",
-        "episode_count": 0,
+        "artwork_url": "https://static.libsyn.com/p/assets/1/d/9/d/1d9d3c6d4d7a4b4b/AE_Icon_blue.jpg",
+        "episode_count": 900,
         "categories": ["education", "english"],
         "cefr_level": "B1",
         "language": "en",
     },
     {
-        "id": hashlib.md5(b"https://culips.com/feed/podcast").hexdigest()[:12],
-        "title": "Culips ESL Podcast",
-        "author": "Culips",
+        "id": hashlib.md5(b"https://feeds.feedburner.com/businessenglishpod").hexdigest()[:12],
+        "title": "Business English Pod",
+        "author": "Business English Pod",
         "description": (
-            "Authentic English conversations about everyday topics with full"
-            " transcripts. Great for intermediate listeners."
+            "Professional English for the workplace — presentations, meetings,"
+            " negotiations, and everyday business communication skills."
         ),
-        "feed_url": "https://culips.com/feed/podcast",
-        "artwork_url": "https://culips.com/wp-content/uploads/culips-podcast-art.jpg",
-        "episode_count": 0,
-        "categories": ["education", "esl"],
+        "feed_url": "https://feeds.feedburner.com/businessenglishpod",
+        "artwork_url": "https://www.businessenglishpod.com/wordpress/wp-content/uploads/Business-English-Pod-iTunes-3000.jpeg",
+        "episode_count": 350,
+        "categories": ["education", "business"],
         "cefr_level": "B2",
         "language": "en",
     },
@@ -119,8 +119,8 @@ CURATED_PODCASTS = [
             " profound questions of our time with the world's greatest thinkers."
         ),
         "feed_url": "https://feeds.npr.org/510298/podcast.xml",
-        "artwork_url": "https://media.npr.org/assets/img/2022/01/19/ted-radio-hour_tile_npr-network-01_sq-64a0e68af71c9fc53b820ac7f3e8e88a91b0da6.jpg",
-        "episode_count": 0,
+        "artwork_url": "https://media.npr.org/assets/img/2022/09/23/ted-radio-hour_tile_npr-network-01_sq-3ca507bd2dfa5c26d7db5b41c2b981b24a8789fa.jpg?s=1400&c=66&f=jpg",
+        "episode_count": 300,
         "categories": ["education", "technology", "society"],
         "cefr_level": "C1",
         "language": "en",
@@ -134,8 +134,8 @@ CURATED_PODCASTS = [
             " by professional broadcast journalists."
         ),
         "feed_url": "https://feeds.npr.org/500005/podcast.xml",
-        "artwork_url": "https://media.npr.org/assets/img/2018/08/03/npr_nprnewsnow_podcasttile_sq-fd4d9b32d97b5c5b1440f45b5a05c9b9c4fbba4.jpg",
-        "episode_count": 0,
+        "artwork_url": "https://media.npr.org/assets/img/2023/01/24/npr-news-now_tile_sq-2334a5fd44563fa94cdcdb27384b0f05987c2d15.jpg?s=1400&c=66&f=jpg",
+        "episode_count": 3650,
         "categories": ["news"],
         "cefr_level": "C2",
         "language": "en",
@@ -267,13 +267,6 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Image proxy error",
-                headers=_PROXY_CORS,
-            )
-        except Exception as e:
-            logger.error("Unexpected error proxying podcast image %s: %s", url, e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal proxy error.",
                 headers=_PROXY_CORS,
             )
 

@@ -79,6 +79,7 @@ class BookProvider extends ChangeNotifier {
   List<Book> booksForLevel(String level) {
     final curated = _recommendedBooks
         .where((b) => b.cefrLevel == level)
+        .where((b) => _selectedTopic == null || b.topic == _selectedTopic)
         .toList();
     final browse = _levelBooks[level] ?? [];
     final seen = <String>{};

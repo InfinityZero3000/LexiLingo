@@ -382,6 +382,33 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     }
 
     if (provider.searchResults.isEmpty) {
+      // Show error state with actionable message when the API call failed.
+      if (provider.error != null) {
+        return SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.wifi_off_rounded,
+                    size: 64,
+                    color: AppColors.grey400,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _localizedApiError(provider.error!),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.grey500, fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
       return SliverFillRemaining(
         child: Center(
           child: Column(
@@ -606,6 +633,23 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   // ──────────────────────────────────────
   //  Helpers
   // ──────────────────────────────────────
+
+  /// Map API error strings to user-friendly Vietnamese messages.
+  String _localizedApiError(String error) {
+    if (error.contains('503') || error.contains('unavailable')) {
+      return 'Dịch vụ video tạm thời không khả dụng. Vui lòng thử lại sau.';
+    }
+    if (error.contains('429') || error.contains('quota') || error.contains('exhausted')) {
+      return 'Đã đạt giới hạn tìm kiếm hôm nay. Vui lòng thử lại vào ngày mai.';
+    }
+    if (error.contains('504') || error.contains('timeout')) {
+      return 'Yêu cầu mất quá nhiều thời gian. Kiểm tra kết nối mạng và thử lại.';
+    }
+    if (error.contains('401') || error.contains('403')) {
+      return 'Không có quyền truy cập dịch vụ video. Vui lòng liên hệ hỗ trợ.';
+    }
+    return 'Không thể tải video. Kiểm tra kết nối mạng và thử lại.';
+  }
 
   /// Each channel gets a unique gradient so cards are visually distinct.
   List<Color> _channelGradient(String channelId, String category) {

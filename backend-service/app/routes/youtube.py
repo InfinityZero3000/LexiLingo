@@ -29,7 +29,33 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/youtube", tags=["YouTube"])
 
+_YOUTUBE_API_ERROR_CODES = {
+    400: status.HTTP_400_BAD_REQUEST,
+    401: status.HTTP_401_UNAUTHORIZED,
+    403: status.HTTP_503_SERVICE_UNAVAILABLE,
+    404: status.HTTP_404_NOT_FOUND,
+}
+
 YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
+
+
+def _raise_youtube_api_error(response: httpx.Response) -> None:
+    """Convert a non-200 YouTube API response into an HTTPException."""
+    try:
+        detail_json = response.json()
+        msg = (
+            detail_json.get("error", {}).get("message")
+            or detail_json.get("error", {}).get("errors", [{}])[0].get("reason")
+            or response.text[:200]
+        )
+    except Exception:
+        msg = response.text[:200] or f"HTTP {response.status_code}"
+
+    http_code = _YOUTUBE_API_ERROR_CODES.get(
+        response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+    logger.warning(f"YouTube API error {response.status_code}: {msg}")
+    raise HTTPException(status_code=http_code, detail=f"YouTube API: {msg}")
 
 
 # ============================================================================
@@ -144,7 +170,7 @@ async def get_curated_channels(
         channels = [c for c in channels if c["category"] == category]
 
     # Fetch real thumbnails via cache
-    cache_key = "youtube:channel_thumbnails:all:v2"
+    cache_key = "youtube:channel_thumbnails:all:v3"
     cache_service = APICacheService(db)
     channel_ids = [c["id"] for c in CURATED_CHANNELS]  # always fetch all for cache
 
@@ -248,6 +274,19 @@ async def search_videos(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(e),
         )
+    except HTTPException:
+        raise
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="YouTube API request timed out.",
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error in YouTube search: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="YouTube service temporarily unavailable.",
+        )
 
 
 # ============================================================================
@@ -333,6 +372,7 @@ async def get_channel_videos(
                 max_results=max_results,
                 channel_id=channel_id,
                 page_token=page_token,
+                require_captions=False,
             ),
             priority=Priority.MEDIUM,
             redis_ttl=43200,    # 12 hours
@@ -349,6 +389,19 @@ async def get_channel_videos(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(e),
         )
+    except HTTPException:
+        raise
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="YouTube API request timed out.",
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error fetching channel videos {channel_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="YouTube service temporarily unavailable.",
+        )
 
 
 # ============================================================================
@@ -360,16 +413,20 @@ async def _youtube_search(
     max_results: int = 10,
     channel_id: Optional[str] = None,
     page_token: Optional[str] = None,
+    require_captions: bool = True,
 ) -> dict:
     """Call YouTube Data API v3 search.list endpoint."""
-    params = {
+    params: dict = {
         "part": "snippet",
         "type": "video",
         "maxResults": max_results,
         "key": settings.YOUTUBE_API_KEY,
         "relevanceLanguage": "en",
-        "videoCaption": "closedCaption",
     }
+    # Apply caption filter only for keyword searches — not for channel browsing,
+    # which would exclude videos with only auto-generated captions.
+    if require_captions:
+        params["videoCaption"] = "closedCaption"
     if q:
         params["q"] = q
     if channel_id:
@@ -379,7 +436,8 @@ async def _youtube_search(
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.get(f"{YOUTUBE_API_BASE}/search", params=params)
-        response.raise_for_status()
+        if response.status_code != 200:
+            _raise_youtube_api_error(response)
         data = response.json()
 
     videos = []
