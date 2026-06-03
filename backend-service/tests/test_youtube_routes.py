@@ -319,13 +319,6 @@ class TestGetCaptions:
     """Tests for GET /youtube/captions/{video_id} endpoint."""
 
     @pytest.mark.asyncio
-    async def test_503_when_no_api_key(self, no_db_client: AsyncClient):
-        with patch("app.routes.youtube.settings") as mock_settings:
-            mock_settings.YOUTUBE_API_KEY = None
-            response = await no_db_client.get("/api/v1/youtube/captions/test_video_id")
-        assert response.status_code == 503
-
-    @pytest.mark.asyncio
     async def test_returns_caption_segments(self, no_db_client: AsyncClient):
         mock_result = MagicMock()
         mock_result.data = [

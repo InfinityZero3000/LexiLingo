@@ -45,7 +45,13 @@ class TestPodcastProxyImage:
         assert response.headers.get("cache-control") == "public, max-age=86400"
         mock_client.get.assert_called_once_with(
             target_url,
-            headers={"User-Agent": "LexiLingo/1.0 (English learning app; podcast-artwork-proxy)"},
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (compatible; LexiLingo/1.0; "
+                    "+https://lexilingo.me) AppleWebKit/537.36"
+                ),
+                "Accept": "image/webp,image/avif,image/*,*/*;q=0.8",
+            },
             follow_redirects=True
         )
 
