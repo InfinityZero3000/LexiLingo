@@ -142,3 +142,8 @@ class WarmTopicCacheResponse(BaseModel):
     topic_id: str
     message: str
     bundle_size_kb: float
+    context_cache_warmed: bool = False
+    kg_cache_warmed: bool = False
+    kg_seed_count: int = 0
+    kg_node_count: int = 0
+    kg_path_count: int = 0

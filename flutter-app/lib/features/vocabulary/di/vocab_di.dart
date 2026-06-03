@@ -1,4 +1,5 @@
 import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/features/vocabulary/data/datasources/vocab_local_data_source.dart';
 import 'package:lexilingo_app/features/vocabulary/data/repositories/vocab_repository_impl.dart';
@@ -22,6 +23,10 @@ void registerVocabModule({required bool skipDatabase}) {
   sl.registerLazySingleton(() => AddWordUseCase(sl()));
 
   sl.registerFactory(
-    () => VocabProvider(getWordsUseCase: sl(), addWordUseCase: sl()),
+    () => VocabProvider(
+      getWordsUseCase: sl(),
+      addWordUseCase: sl(),
+      apiClient: sl<ApiClient>(),
+    ),
   );
 }

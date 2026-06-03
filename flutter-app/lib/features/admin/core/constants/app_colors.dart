@@ -8,16 +8,16 @@ class AppColors {
   static const Color primaryLight = Color(0xFFFF6B35);
 
   // Backgrounds
-  static const Color background = Color(0xFFF8F9FF);
+  static const Color background = Color(0xFFFFF8F5);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceDim = Color(0xFFCBDBF5);
-  static const Color surfaceContainerLow = Color(0xFFEFF4FF);
-  static const Color surfaceContainerHigh = Color(0xFFDCE9FF);
+  static const Color surfaceDim = Color(0xFFFFE5D6);
+  static const Color surfaceContainerLow = Color(0xFFFFF3EE);
+  static const Color surfaceContainerHigh = Color(0xFFFFE0CF);
 
   // Text
-  static const Color onSurface = Color(0xFF0B1C30);
-  static const Color onSurfaceVariant = Color(0xFF5C4037);
-  static const Color onSurfaceMuted = Color(0xFF8899AA);
+  static const Color onSurface = Color(0xFF1A0A00);
+  static const Color onSurfaceVariant = Color(0xFF5C3A2E);
+  static const Color onSurfaceMuted = Color(0xFF8C7068);
 
   // Semantic
   static const Color success = Color(0xFF1B7A3E);
@@ -33,5 +33,5 @@ class AppColors {
 
   // Outline
   static const Color outline = Color(0xFFE6BEB2);
-  static const Color outlineVariant = Color(0xFFD3E4FE);
+  static const Color outlineVariant = Color(0xFFFFD5C4);
 }

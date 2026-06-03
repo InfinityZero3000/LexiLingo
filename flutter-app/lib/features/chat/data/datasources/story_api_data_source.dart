@@ -9,6 +9,21 @@ import '../models/topic_session_model.dart';
 
 const _tag = 'StoryApiDataSource';
 
+String _responseDetail(http.Response response) {
+  try {
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      final detail = decoded['detail'];
+      if (detail != null) return detail.toString();
+      final message = decoded['message'];
+      if (message != null) return message.toString();
+    }
+  } catch (_) {
+    // Keep the fallback compact when the server returns non-JSON text.
+  }
+  return '';
+}
+
 class TopicMessagesMetadataResult {
   final int totalCount;
   final bool hasMessages;
@@ -85,10 +100,7 @@ class StoryApiDataSource {
           queryParams['category'] == null &&
           queryParams['difficulty_level'] == null) {
         final retryUri = Uri.parse('$baseUrl/topics/stories').replace(
-          queryParameters: {
-            'limit': limit.toString(),
-            'bypass_cache': 'true',
-          },
+          queryParameters: {'limit': limit.toString(), 'bypass_cache': 'true'},
         );
 
         logDebug(_tag, 'getStories retry with bypass_cache: $retryUri');
@@ -158,7 +170,12 @@ class StoryApiDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw ServerException('Failed to warm cache: ${response.statusCode}');
+        final detail = _responseDetail(response);
+        throw ServerException(
+          detail.isEmpty
+              ? 'Failed to warm cache: ${response.statusCode}'
+              : 'Failed to warm cache: ${response.statusCode} - $detail',
+        );
       }
 
       return jsonDecode(response.body) as Map<String, dynamic>;

@@ -10,9 +10,10 @@ Phase 1: YouTube Video Integration with Auto Subtitles.
 import asyncio
 import logging
 from typing import Optional
+from urllib.parse import quote
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -128,6 +129,7 @@ async def _fetch_channel_thumbnails(channel_ids: list[str]) -> dict[str, str]:
 
 @router.get("/channels")
 async def get_curated_channels(
+    request: Request,
     category: Optional[str] = Query(None, description="Filter by category"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -135,13 +137,14 @@ async def get_curated_channels(
     Get curated English learning YouTube channels with real thumbnails.
 
     Thumbnails are fetched from YouTube channels.list (1 quota unit, cached 7 days).
+    Thumbnails are rewritten through the image proxy to avoid CORS issues in browsers.
     """
     channels = CURATED_CHANNELS
     if category:
         channels = [c for c in channels if c["category"] == category]
 
     # Fetch real thumbnails via cache
-    cache_key = "youtube:channel_thumbnails:all"
+    cache_key = "youtube:channel_thumbnails:all:v2"
     cache_service = APICacheService(db)
     channel_ids = [c["id"] for c in CURATED_CHANNELS]  # always fetch all for cache
 
@@ -158,12 +161,22 @@ async def get_curated_channels(
     except Exception:
         thumbnails = {}
 
-    # Merge real thumbnails into channel data
+    # Build proxy base for rewriting yt3 thumbnail URLs through the image proxy.
+    base_url = str(request.base_url).rstrip("/")
+    api_prefix = settings.API_V1_PREFIX.strip("/")
+
+    def _proxy_thumbnail(url: str) -> str:
+        if not url:
+            return ""
+        return f"{base_url}/{api_prefix}/podcasts/proxy/image?url={quote(url)}"
+
+    # Merge real thumbnails into channel data, proxying through the image endpoint.
     enriched = []
     for ch in channels:
+        raw_thumb = thumbnails.get(ch["id"], "")
         enriched.append({
             **ch,
-            "thumbnail": thumbnails.get(ch["id"], ""),
+            "thumbnail": _proxy_thumbnail(raw_thumb),
         })
 
     return {

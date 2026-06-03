@@ -96,9 +96,10 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _openAdminPanel() {
+    final user = context.read<AuthProvider>().currentUser;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const AdminApp(),
+        builder: (_) => AdminApp(initialEmail: user?.email),
         fullscreenDialog: true,
       ),
     );

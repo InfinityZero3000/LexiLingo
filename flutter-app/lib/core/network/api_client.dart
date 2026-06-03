@@ -546,6 +546,30 @@ class ApiClient {
     if (streamedResponse.statusCode < 200 ||
         streamedResponse.statusCode >= 300) {
       final rawBody = await streamedResponse.stream.bytesToString();
+
+      if (streamedResponse.statusCode == 401 && _onUnauthorized != null) {
+        final refreshed = await _onUnauthorized();
+        if (refreshed) {
+          // Token refreshed — retry the stream once with the new token.
+          final retryHeaders = await _buildHeaders(headers);
+          retryHeaders['Accept'] = 'text/event-stream';
+          final retryRequest = http.Request('POST', uri);
+          retryRequest.headers.addAll(retryHeaders);
+          if (body != null) retryRequest.body = jsonEncode(body);
+          final retryResponse = await _client.send(retryRequest);
+          if (retryResponse.statusCode >= 200 && retryResponse.statusCode < 300) {
+            yield* retryResponse.stream;
+            return;
+          }
+          final retryBody = await retryResponse.stream.bytesToString();
+          throw ServerException(
+            'POST stream ${uri.path} failed with status '
+            '${retryResponse.statusCode}: $retryBody',
+          );
+        }
+        throw UnauthorizedException('Unauthorized');
+      }
+
       throw ServerException(
         'POST stream ${uri.path} failed with status '
         '${streamedResponse.statusCode}: $rawBody',

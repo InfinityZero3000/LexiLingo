@@ -300,7 +300,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                     ? () => _showWordDefinition(clean)
                     : null,
                 child: Text(
-                  word,
+                  '$word ',
                   style: TextStyle(
                     fontSize: settings.fontSize,
                     height: settings.lineSpacing,

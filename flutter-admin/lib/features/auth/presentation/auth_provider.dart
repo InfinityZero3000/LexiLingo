@@ -19,7 +19,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> init() async {
     _user = await _repo.getMe();
-    _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
+    _state = _user != null
+        ? AuthState.authenticated
+        : AuthState.unauthenticated;
     notifyListeners();
   }
 
@@ -57,6 +59,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> loginWithPassword(String email, String password) async {
+    _error = null;
+    _state = AuthState.loading;
+    notifyListeners();
+    try {
+      _user = await _repo.loginWithPassword(email, password);
+      _state = AuthState.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = _parseError(e);
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _repo.logout();
     _user = null;
@@ -66,9 +85,12 @@ class AuthProvider extends ChangeNotifier {
 
   String _parseError(dynamic e) {
     final str = e.toString();
-    if (str.contains('404')) return 'Email không tồn tại hoặc không có quyền admin';
+    if (str.contains('401')) return 'Email hoặc mật khẩu không đúng';
     if (str.contains('403')) return 'Tài khoản không có quyền truy cập admin';
-    if (str.contains('400')) return 'OTP không hợp lệ hoặc đã hết hạn';
+    if (str.contains('400')) return 'Vui lòng nhập đầy đủ email và mật khẩu';
+    if (str.contains('404')) {
+      return 'API đăng nhập admin chưa sẵn sàng trên server';
+    }
     if (str.contains('SocketException') || str.contains('connection')) {
       return 'Không thể kết nối máy chủ';
     }

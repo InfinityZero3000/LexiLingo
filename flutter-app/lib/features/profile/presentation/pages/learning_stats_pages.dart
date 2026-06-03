@@ -316,9 +316,8 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
       body: Consumer2<ProfileProvider, ProgressProvider>(
         builder: (context, profileProvider, progressProvider, _) {
           final isLoading =
-              (profileProvider.isLoadingStats || progressProvider.isLoading) &&
-              profileProvider.stats == null &&
-              progressProvider.summary == null;
+              (profileProvider.isLoadingStats && profileProvider.stats == null) ||
+              (progressProvider.isLoading && progressProvider.summary == null);
 
           if (isLoading) {
             return const Center(child: LottieLoadingWidget.medium());

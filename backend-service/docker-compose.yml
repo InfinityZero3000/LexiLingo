@@ -29,6 +29,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: lexilingo-backend-service
+    env_file:
+      - .env
     mem_limit: 1g
     memswap_limit: 1g
     ports:

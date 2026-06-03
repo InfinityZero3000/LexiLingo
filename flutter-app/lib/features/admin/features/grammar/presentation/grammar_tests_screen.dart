@@ -145,7 +145,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryBright,
         onPressed: () {},
-        child: const Icon(Icons.share, color: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

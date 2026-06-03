@@ -208,6 +208,8 @@ services:
       dockerfile: Dockerfile
     container_name: lexilingo-backend-service
     restart: unless-stopped
+    env_file:
+      - ./backend-service/.env
     deploy:
       resources:
         limits:
@@ -317,6 +319,7 @@ services:
       - "8001:8001"
     environment:
       ENVIRONMENT: development
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DB_NAME: lexilingo
       REDIS_HOST: redis-ai

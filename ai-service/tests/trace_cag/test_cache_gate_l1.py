@@ -59,8 +59,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
         raise AssertionError(f"unexpected cache key: {cache_key}")
 
     async def fake_get_bucket_candidate_keys(_bucket):
-        assert _bucket == bucket
-        return [candidate_key]
+        return [candidate_key] if _bucket == bucket else []
 
     monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
     monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
@@ -78,3 +77,129 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
     assert result["cache_hit"] is True
     assert result["cache_layer"] == "L1"
     assert result["cache_decision"] in {"reuse", "patch"}
+
+
+@pytest.mark.asyncio
+async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
+    """SCAR-L1 should patch a state-compatible QA paraphrase."""
+    user_input = "Who founded the company that makes the iPhone?"
+    candidate_input = "Who was the founder of the corporation behind the iPhone?"
+    level = "B1"
+    profile = {"level": level}
+    now = time.monotonic()
+
+    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
+    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    entry = {
+        "fingerprint": {
+            "query_norm": candidate_input.lower(),
+            "intent": "ask",
+            "level": level,
+            "root_concepts": [],
+            "session_turn": 0,
+        },
+        "graph_bucket": "test-bucket",
+        "profile_snapshot": profile,
+        "response": "Steve Jobs",
+        "evidence_bundle": [],
+        "retrieval_trace": [],
+        "execution_plan": {"strategy": "feedback", "intent": "ask"},
+        "diagnosis_errors": [],
+        "grammar_score": 0.9,
+        "fluency_score": 0.9,
+        "vocabulary_level": level,
+        "action_plan": [],
+        "overall_score": 0.9,
+        "created_at": now,
+        "ttl": 3600,
+    }
+
+    async def fake_get_cache_entry(cache_key, _level, _now):
+        if cache_key == current_key:
+            return None
+        if cache_key == candidate_key:
+            return entry
+        raise AssertionError(f"unexpected cache key: {cache_key}")
+
+    async def fake_get_bucket_candidate_keys(_bucket):
+        return [candidate_key]
+
+    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+
+    result = await nodes.cache_gate_node(
+        {
+            "user_input": user_input,
+            "session_id": "test-session",
+            "learner_profile": profile,
+            "conversation_history": [],
+            "cache_policy": "on",
+        }
+    )
+
+    assert result["cache_hit"] is True
+    assert result["cache_layer"] == "L1"
+    assert result["cache_decision"] == "patch"
+
+
+@pytest.mark.asyncio
+async def test_cache_gate_l1_rejects_answer_target_shift(monkeypatch):
+    """A near entity match with a changed answer target must fall through."""
+    user_input = "In what year did the company behind the iPhone start?"
+    candidate_input = "Who was the founder of the corporation behind the iPhone?"
+    level = "B1"
+    profile = {"level": level}
+    now = time.monotonic()
+
+    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
+    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    entry = {
+        "fingerprint": {
+            "query_norm": candidate_input.lower(),
+            "intent": "ask",
+            "level": level,
+            "root_concepts": [],
+            "session_turn": 0,
+        },
+        "graph_bucket": "test-bucket",
+        "profile_snapshot": profile,
+        "response": "Steve Jobs",
+        "evidence_bundle": [],
+        "retrieval_trace": [],
+        "execution_plan": {"strategy": "feedback", "intent": "ask"},
+        "diagnosis_errors": [],
+        "grammar_score": 0.9,
+        "fluency_score": 0.9,
+        "vocabulary_level": level,
+        "action_plan": [],
+        "overall_score": 0.9,
+        "created_at": now,
+        "ttl": 3600,
+    }
+
+    async def fake_get_cache_entry(cache_key, _level, _now):
+        if cache_key == current_key:
+            return None
+        if cache_key == candidate_key:
+            return entry
+        raise AssertionError(f"unexpected cache key: {cache_key}")
+
+    async def fake_get_bucket_candidate_keys(_bucket):
+        return [candidate_key]
+
+    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+
+    result = await nodes.cache_gate_node(
+        {
+            "user_input": user_input,
+            "session_id": "test-session",
+            "learner_profile": profile,
+            "conversation_history": [],
+            "cache_policy": "on",
+        }
+    )
+
+    assert result["cache_hit"] is False
+    assert result["cache_layer"] == "none"
+    assert result["cache_decision"] == "full"

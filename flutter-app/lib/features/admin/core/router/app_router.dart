@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
-import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/curriculum/presentation/curriculum_screen.dart';
@@ -16,6 +15,8 @@ import '../../features/grammar/presentation/grammar_tests_screen.dart';
 import '../../features/gamification/presentation/achievements_shop_screen.dart';
 import '../../features/super_admin/presentation/super_dashboard_screen.dart';
 import '../../features/super_admin/presentation/system_health_screen.dart';
+import '../../features/logs/presentation/logs_screen.dart';
+import '../../features/ads/presentation/ads_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../storage/token_storage.dart';
 
@@ -28,7 +29,7 @@ const _superAdminPaths = [
   '/settings/system-health',
 ];
 
-GoRouter createRouter(AuthProvider authProvider) {
+GoRouter createRouter(AuthProvider authProvider, {String? initialEmail}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/dashboard',
@@ -37,7 +38,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       final hasToken = await TokenStorage.hasToken();
       final loc = state.matchedLocation;
 
-      final onAuth = loc.startsWith('/login') || loc.startsWith('/otp');
+      final onAuth = loc.startsWith('/login');
 
       if (!hasToken && !onAuth) return '/login';
       if (hasToken && onAuth) return '/dashboard';
@@ -54,15 +55,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/otp',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, state) {
-          final email = state.extra as String? ?? '';
-          return OtpScreen(email: email);
-        },
+        builder: (_, __) => LoginScreen(initialEmail: initialEmail),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -79,9 +72,8 @@ GoRouter createRouter(AuthProvider authProvider) {
               GoRoute(
                 path: 'course/:id',
                 parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, state) => CourseDetailScreen(
-                  courseId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    CourseDetailScreen(courseId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: 'units',
@@ -103,9 +95,8 @@ GoRouter createRouter(AuthProvider authProvider) {
               GoRoute(
                 path: ':id/stats',
                 parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, state) => UserStatsScreen(
-                  userId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    UserStatsScreen(userId: state.pathParameters['id']!),
               ),
             ],
           ),
@@ -132,6 +123,16 @@ GoRouter createRouter(AuthProvider authProvider) {
                 path: 'achievements',
                 parentNavigatorKey: _rootNavigatorKey,
                 builder: (_, __) => const AchievementsShopScreen(),
+              ),
+              GoRoute(
+                path: 'logs',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (_, __) => const LogsScreen(),
+              ),
+              GoRoute(
+                path: 'ads',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (_, __) => const AdsScreen(),
               ),
               GoRoute(
                 path: 'super-dashboard',

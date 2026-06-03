@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 from api.core.database import get_database
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.schemas import (
     LogInteractionRequest,
     LogInteractionResponse,
@@ -65,6 +66,12 @@ async def analyze_with_trace_cag(request: AnalyzeRequest):
     """
     Main endpoint for TraceCAG-powered text analysis.
     """
+    user_id = request.user_id or "anonymous"
+    await enforce_user_quota(
+        user_id,
+        "ai.analyze",
+        token_cost=default_token_cost_for_endpoint("ai.analyze", text=request.text),
+    )
     try:
         pipeline = await get_trace_cag()
         return await pipeline.analyze(
@@ -74,7 +81,9 @@ async def analyze_with_trace_cag(request: AnalyzeRequest):
             input_type=request.input_type,
             learner_profile=request.learner_profile,
         )
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -92,6 +101,12 @@ async def analyze_with_v3(request: AnalyzeRequest):
     """
     Legacy V3 pipeline endpoint.
     """
+    user_id = request.user_id or "anonymous"
+    await enforce_user_quota(
+        user_id,
+        "ai.analyze",
+        token_cost=default_token_cost_for_endpoint("ai.analyze", text=request.text),
+    )
     try:
         pipeline = await get_v3_pipeline()
         return await pipeline.analyze(
@@ -100,7 +115,9 @@ async def analyze_with_v3(request: AnalyzeRequest):
             user_id=request.user_id,
             learner_profile=request.learner_profile,
         )
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,

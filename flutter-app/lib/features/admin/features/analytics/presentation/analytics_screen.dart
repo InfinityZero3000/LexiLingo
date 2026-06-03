@@ -333,7 +333,7 @@ class _LineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = AppColors.primaryContainer.withOpacity(0.3)
+      ..color = AppColors.primaryContainer.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final w = size.width / (points.length - 1);

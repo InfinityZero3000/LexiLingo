@@ -225,7 +225,12 @@ class TestTopicFeatures:
     @pytest.mark.asyncio
     async def test_topic_preloader_bundle(self, mock_mongodb, mock_redis, sample_story):
         """Task 2.2 & 2.3: Verify preloader builds correct bundle and warms Redis."""
-        preloader = TopicContextPreloader(mock_mongodb, mock_redis)
+        doc_service_provider = MagicMock()
+        preloader = TopicContextPreloader(
+            mock_mongodb,
+            mock_redis,
+            doc_service_provider=doc_service_provider,
+        )
         
         # Mock get_story_by_id
         mock_mongodb["stories"].find_one = AsyncMock(return_value=sample_story.model_dump())
@@ -235,6 +240,10 @@ class TestTopicFeatures:
         assert bundle["topic_id"] == "test_story_1"
         assert "prime_prompt" in bundle
         assert "Tester" in bundle["prime_prompt"]
+        assert bundle["cache_metadata"]["context_cache_warmed"] is True
+        assert "kg_seed_count" in bundle["cache_metadata"]
+        assert bundle.model_dump()["topic_id"] == "test_story_1"
+        doc_service_provider.assert_not_called()
         
         # Verify Redis warming
         cache_key = f"chat:context:test_story_1"
@@ -316,7 +325,14 @@ class TestTopicFeatures:
         mock_preloader = AsyncMock()
         mock_preloader.warm_cache.return_value = {
             "title": "Test Story",
-            "prime_prompt": "..."
+            "prime_prompt": "...",
+            "cache_metadata": {
+                "context_cache_warmed": True,
+                "kg_cache_warmed": True,
+                "kg_seed_count": 3,
+                "kg_node_count": 12,
+                "kg_path_count": 8,
+            },
         }
         
         response = await warm_topic_cache(request, mock_preloader, authenticated_user)
@@ -324,4 +340,9 @@ class TestTopicFeatures:
         assert response.success is True
         assert response.topic_id == "test_story_1"
         assert "Test Story" in response.message
+        assert response.context_cache_warmed is True
+        assert response.kg_cache_warmed is True
+        assert response.kg_seed_count == 3
+        assert response.kg_node_count == 12
+        assert response.kg_path_count == 8
         assert mock_preloader.warm_cache.called

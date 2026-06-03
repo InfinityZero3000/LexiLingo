@@ -294,12 +294,18 @@ async def warm_topic_cache(
         # Calculate size for metadata
         bundle_json = json.dumps(bundle, default=str)
         size_kb = len(bundle_json.encode('utf-8')) / 1024
+        cache_metadata = bundle.get("cache_metadata", {}) or {}
         
         return WarmTopicCacheResponse(
             success=True,
             topic_id=request.story_id,
             message=f"Context warmed for '{bundle['title']}'",
-            bundle_size_kb=round(size_kb, 2)
+            bundle_size_kb=round(size_kb, 2),
+            context_cache_warmed=bool(cache_metadata.get("context_cache_warmed")),
+            kg_cache_warmed=bool(cache_metadata.get("kg_cache_warmed")),
+            kg_seed_count=int(cache_metadata.get("kg_seed_count") or 0),
+            kg_node_count=int(cache_metadata.get("kg_node_count") or 0),
+            kg_path_count=int(cache_metadata.get("kg_path_count") or 0),
         )
     except HTTPException:
         raise

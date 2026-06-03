@@ -26,8 +26,6 @@ from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 
-from api.services.kg_service_v3 import get_kg_service
-
 logger = logging.getLogger(__name__)
 
 # ── Redis key constants ─────────────────────────────────────────────────────
@@ -125,6 +123,8 @@ async def warm_subgraph(
     logger.info("[SubgraphCache] Building subgraph for story=%s level=%s", story_id, story_level)
 
     try:
+        from api.services.kg_service_v3 import get_kg_service
+
         kg = get_kg_service()
     except Exception as exc:
         logger.error("[SubgraphCache] KG service unavailable: %s", exc)

@@ -255,12 +255,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Quick Links
+                // Quick Links — Content Management
                 _Card(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Admin Tools',
+                      Text('Content Management',
                           style: GoogleFonts.spaceGrotesk(
                               fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
@@ -286,6 +286,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.military_tech_outlined,
                         label: 'Achievements & Shop',
                         onTap: () => context.push('/settings/achievements'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // System Tools
+                _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('System Tools',
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 12),
+                      _ToolLink(
+                        icon: Icons.manage_search_outlined,
+                        label: 'Audit Logs',
+                        onTap: () => context.push('/settings/logs'),
+                      ),
+                      const Divider(height: 12),
+                      _ToolLink(
+                        icon: Icons.campaign_outlined,
+                        label: 'Banner & Ads',
+                        onTap: () => context.push('/settings/ads'),
                       ),
                     ],
                   ),

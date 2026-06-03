@@ -1,17 +1,39 @@
+import asyncio
 import json
 import logging
-from typing import Dict, Any, Optional, List
+import os
+from typing import Callable, Dict, Any, Optional
 import redis.asyncio as redis
 from fastapi import Depends
 
 from api.services.story_service import StoryService
 from api.services.topic_prompt_builder import TopicPromptBuilder
-from api.services.document_intelligence import get_doc_intel_service, DocumentIntelligenceService
 from api.core.redis_client import get_redis
 from api.core.database import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+TOPIC_KG_WARM_TIMEOUT_SEC = _env_float("TOPIC_KG_WARM_TIMEOUT_SEC", 8.0)
+
+
+class TopicContextBundle(dict):
+    """Dict-compatible bundle with Pydantic-style dumping for older callers."""
+
+    def model_dump(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        return dict(self)
+
 
 class TopicContextPreloader:
     """Service for preloading topic context and warming PCC cache with dynamic data support."""
@@ -22,11 +44,27 @@ class TopicContextPreloader:
         self,
         db: AsyncIOMotorDatabase,
         redis_client: redis.Redis,
-        doc_service: Optional[DocumentIntelligenceService] = None,
+        doc_service: Optional[Any] = None,
+        doc_service_provider: Optional[Callable[[], Optional[Any]]] = None,
     ):
         self.story_service = StoryService(db)
         self.redis = redis_client
         self.doc_service = doc_service
+        self.doc_service_provider = doc_service_provider
+
+    def _get_doc_service(self) -> Optional[Any]:
+        """Create the dynamic context service only for topics that need it."""
+        if self.doc_service is not None:
+            return self.doc_service
+        if self.doc_service_provider is None:
+            return None
+
+        try:
+            self.doc_service = self.doc_service_provider()
+            return self.doc_service
+        except Exception as exc:
+            logger.warning("Dynamic context service unavailable: %s", exc)
+            return None
         
     async def _collect_dynamic_context(self, story: Any) -> str:
         """Collect real-time information for dynamic topics using web search/scraping."""
@@ -34,7 +72,8 @@ class TopicContextPreloader:
         if "real_time" not in tags and "weather" not in tags and "news" not in tags:
             return ""
 
-        if self.doc_service is None:
+        doc_service = self._get_doc_service()
+        if doc_service is None:
             logger.info("Dynamic context skipped: document intelligence service unavailable")
             return ""
             
@@ -47,7 +86,7 @@ class TopicContextPreloader:
             
         try:
             # Use L2 retrieval (Web Search fallback)
-            external_data = await self.doc_service.query_l2(query, top_k=2)
+            external_data = await doc_service.query_l2(query, top_k=2)
             
             if not external_data:
                 return ""
@@ -100,18 +139,69 @@ class TopicContextPreloader:
             "suggested_focus": list(_objectives),
             "suggested_prompts": story.suggested_prompts or [],
             "prime_prompt": master_prompt,
-            "has_dynamic_data": bool(dynamic_context)
+            "has_dynamic_data": bool(dynamic_context),
+            "kg_seed_concepts": [],
+            "kg_topic_fingerprint": "",
+            "cache_metadata": {
+                "context_cache_warmed": False,
+                "kg_cache_warmed": False,
+                "kg_seed_count": 0,
+                "kg_node_count": 0,
+                "kg_path_count": 0,
+            },
         }
-        
-        # 5. Store in Redis
+
+        # 5. Pre-compute topic KG subgraph. This is best effort: chat can still
+        # start with the plain topic prompt if KG/Kuzu is unavailable.
+        try:
+            from api.services.subgraph_hot_cache import warm_subgraph
+
+            subgraph = await asyncio.wait_for(
+                warm_subgraph(
+                    story_id=topic_id,
+                    story_vocab=story.vocabulary_list,
+                    story_grammar=story.grammar_points,
+                    story_level=story.difficulty_level.value,
+                    redis_client=self.redis,
+                ),
+                timeout=TOPIC_KG_WARM_TIMEOUT_SEC,
+            )
+            kg_seeds = list(subgraph.get("seed_concepts") or [])
+            bundle["kg_seed_concepts"] = kg_seeds
+            bundle["kg_topic_fingerprint"] = subgraph.get("topic_fingerprint", "")
+            bundle["cache_metadata"].update(
+                {
+                    "kg_cache_warmed": bool(
+                        kg_seeds or subgraph.get("nodes") or subgraph.get("paths")
+                    ),
+                    "kg_seed_count": len(kg_seeds),
+                    "kg_node_count": len(subgraph.get("nodes") or []),
+                    "kg_path_count": len(subgraph.get("paths") or []),
+                }
+            )
+        except Exception as exc:
+            logger.warning("KG subgraph warm skipped for topic %s: %s", topic_id, exc)
+
+        # 6. Store prompt/context bundle in Redis. Storage failures should not
+        # make the warm endpoint a hard 500 because this endpoint is a preload
+        # optimization, not the source of truth for topic data.
         cache_key = f"{self.PRELOAD_KEY_PREFIX}{topic_id}"
-        await self.redis.set(cache_key, json.dumps(bundle, default=str), ex=3600) # 1 hour
+        try:
+            bundle["cache_metadata"]["context_cache_warmed"] = True
+            await self.redis.set(cache_key, json.dumps(bundle, default=str), ex=3600) # 1 hour
+        except Exception as exc:
+            bundle["cache_metadata"]["context_cache_warmed"] = False
+            logger.warning("Context cache store failed for topic %s: %s", topic_id, exc)
         
-        return bundle
+        return TopicContextBundle(bundle)
 
 async def get_topic_preloader(
     db: AsyncIOMotorDatabase = Depends(get_database),
     redis_client: redis.Redis = Depends(get_redis),
-    doc_service: DocumentIntelligenceService = Depends(get_doc_intel_service)
 ) -> TopicContextPreloader:
-    return TopicContextPreloader(db, redis_client, doc_service)
+    def _load_doc_service() -> Optional[Any]:
+        from api.services.document_intelligence import get_doc_intel_service
+
+        return get_doc_intel_service()
+
+    return TopicContextPreloader(db, redis_client, doc_service_provider=_load_doc_service)

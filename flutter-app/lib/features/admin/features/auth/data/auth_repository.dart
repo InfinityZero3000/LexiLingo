@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/storage/token_storage.dart';
@@ -35,38 +36,55 @@ class AdminUser {
   bool get hasUserZoneAccess =>
       _userZoneWhitelist.contains(email.toLowerCase());
 
-  factory AdminUser.fromJson(Map<String, dynamic> json) => AdminUser(
-        id: json['id'] ?? '',
-        email: json['email'] ?? '',
-        displayName: json['display_name'] ?? json['username'] ?? '',
-        avatarUrl: json['avatar_url'],
-        roleSlug: json['role_slug'] ?? 'admin',
-        roleLevel: json['role_level'] ?? 1,
-        isSuperAdmin: json['is_super_admin'] ?? false,
-        isAdmin: json['is_admin'] ?? true,
-        hasUserAccount: true,
-      );
+  factory AdminUser.fromJson(Map<String, dynamic> json) {
+    final roleSlug = (json['role_slug'] ?? json['role'] ?? 'admin').toString();
+    final roleLevel = _roleLevelFromJson(json, roleSlug);
+
+    return AdminUser(
+      id: json['id']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      displayName:
+          json['display_name']?.toString() ??
+          json['username']?.toString() ??
+          '',
+      avatarUrl: json['avatar_url']?.toString(),
+      roleSlug: roleSlug,
+      roleLevel: roleLevel,
+      isSuperAdmin: json['is_super_admin'] == true || roleLevel >= 2,
+      isAdmin: json['is_admin'] == true || roleLevel >= 1,
+      hasUserAccount: true,
+    );
+  }
+
+  static int _roleLevelFromJson(Map<String, dynamic> json, String roleSlug) {
+    final raw = json['role_level'];
+    if (raw is int) return raw;
+    final parsed = int.tryParse(raw?.toString() ?? '');
+    if (parsed != null) return parsed;
+
+    final normalizedRole = roleSlug.toLowerCase();
+    if (normalizedRole == 'super_admin') return 2;
+    if (normalizedRole == 'admin') return 1;
+    return 0;
+  }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'display_name': displayName,
-        'avatar_url': avatarUrl,
-        'role_slug': roleSlug,
-        'role_level': roleLevel,
-        'is_super_admin': isSuperAdmin,
-        'is_admin': isAdmin,
-      };
+    'id': id,
+    'email': email,
+    'display_name': displayName,
+    'avatar_url': avatarUrl,
+    'role_slug': roleSlug,
+    'role_level': roleLevel,
+    'is_super_admin': isSuperAdmin,
+    'is_admin': isAdmin,
+  };
 }
 
 class AuthRepository {
   final _api = ApiClient.instance;
 
   Future<void> requestOtp(String email) async {
-    await _api.post(
-      ApiEndpoints.adminRequestOtp,
-      data: {'email': email},
-    );
+    await _api.post(ApiEndpoints.adminRequestOtp, data: {'email': email});
   }
 
   Future<AdminUser> verifyOtp(String email, String otp) async {
@@ -75,16 +93,20 @@ class AuthRepository {
       data: {'email': email, 'otp': otp},
     );
 
-    final data = resp['data'] as Map<String, dynamic>;
-    await TokenStorage.saveTokens(
-      accessToken: data['access_token'],
-      refreshToken: data['refresh_token'] ?? '',
-    );
+    return _persistAdminSession(_unwrapData(resp), fallbackEmail: email);
+  }
 
-    final userJson = data['user'] as Map<String, dynamic>;
-    final user = AdminUser.fromJson(userJson);
-    await TokenStorage.saveUser(jsonEncode(userJson));
-    return user;
+  Future<AdminUser> loginWithPassword(String email, String password) async {
+    try {
+      final resp = await _api.post(
+        ApiEndpoints.adminLogin,
+        data: {'email': email, 'password': password},
+      );
+      return _persistAdminSession(_unwrapData(resp), fallbackEmail: email);
+    } on DioException catch (error) {
+      if (error.response?.statusCode != 404) rethrow;
+      return _loginWithUserEndpoint(email, password);
+    }
   }
 
   Future<AdminUser?> getMe() async {
@@ -92,7 +114,7 @@ class AuthRepository {
       final json = await TokenStorage.getUser();
       if (json != null) {
         final fresh = await _api.get(ApiEndpoints.me);
-        final userJson = fresh['data'] as Map<String, dynamic>;
+        final userJson = _unwrapData(fresh);
         await TokenStorage.saveUser(jsonEncode(userJson));
         return AdminUser.fromJson(userJson);
       }
@@ -107,10 +129,103 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await _api.post(ApiEndpoints.logout, data: {
-        'refresh_token': await TokenStorage.getRefreshToken() ?? '',
-      });
+      await _api.post(
+        ApiEndpoints.logout,
+        data: {'refresh_token': await TokenStorage.getRefreshToken() ?? ''},
+      );
     } catch (_) {}
     await TokenStorage.clear();
+  }
+
+  Future<AdminUser> _loginWithUserEndpoint(
+    String email,
+    String password,
+  ) async {
+    final resp = await _api.post(
+      ApiEndpoints.userLogin,
+      data: {'email': email, 'password': password},
+    );
+    final data = _unwrapData(resp);
+    final userJson = _userFromFlatLogin(data, fallbackEmail: email);
+
+    if ((userJson['role_level'] as int) < 1) {
+      await TokenStorage.clear();
+      throw Exception('403 Admin privileges required');
+    }
+
+    final adminData = {
+      'access_token': data['access_token'],
+      'refresh_token': data['refresh_token'] ?? '',
+      'user': userJson,
+    };
+    return _persistAdminSession(adminData, fallbackEmail: email);
+  }
+
+  Future<AdminUser> _persistAdminSession(
+    Map<String, dynamic> data, {
+    required String fallbackEmail,
+  }) async {
+    final accessToken = data['access_token']?.toString();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw StateError('Missing access token');
+    }
+
+    await TokenStorage.saveTokens(
+      accessToken: accessToken,
+      refreshToken: data['refresh_token']?.toString() ?? '',
+    );
+
+    var userJson =
+        _asStringKeyMap(data['user']) ??
+        _userFromFlatLogin(data, fallbackEmail: fallbackEmail);
+
+    try {
+      final fresh = await _api.get(ApiEndpoints.me);
+      userJson = _unwrapData(fresh);
+    } catch (_) {}
+
+    final user = AdminUser.fromJson(userJson);
+    await TokenStorage.saveUser(jsonEncode(userJson));
+    return user;
+  }
+
+  Map<String, dynamic> _unwrapData(Map<String, dynamic> resp) {
+    return _asStringKeyMap(resp['data']) ?? resp;
+  }
+
+  Map<String, dynamic>? _asStringKeyMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
+  Map<String, dynamic> _userFromFlatLogin(
+    Map<String, dynamic> data, {
+    required String fallbackEmail,
+  }) {
+    final roleSlug = (data['role'] ?? data['role_slug'] ?? 'user')
+        .toString()
+        .toLowerCase();
+    final roleLevel = _roleLevel(roleSlug);
+    final email = (data['email'] ?? fallbackEmail).toString();
+    final username = (data['username'] ?? email.split('@').first).toString();
+
+    return {
+      'id': data['user_id']?.toString() ?? data['id']?.toString() ?? '',
+      'email': email,
+      'username': username,
+      'display_name': data['display_name']?.toString() ?? username,
+      'avatar_url': data['avatar_url'],
+      'role_slug': roleSlug,
+      'role_level': roleLevel,
+      'is_super_admin': roleLevel >= 2,
+      'is_admin': roleLevel >= 1,
+    };
+  }
+
+  int _roleLevel(String roleSlug) {
+    if (roleSlug == 'super_admin') return 2;
+    if (roleSlug == 'admin') return 1;
+    return 0;
   }
 }

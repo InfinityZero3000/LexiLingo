@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
-import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/curriculum/presentation/curriculum_screen.dart';
@@ -37,7 +36,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       final hasToken = await TokenStorage.hasToken();
       final loc = state.matchedLocation;
 
-      final onAuth = loc.startsWith('/login') || loc.startsWith('/otp');
+      final onAuth = loc.startsWith('/login');
 
       if (!hasToken && !onAuth) return '/login';
       if (hasToken && onAuth) return '/dashboard';
@@ -55,14 +54,6 @@ GoRouter createRouter(AuthProvider authProvider) {
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/otp',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, state) {
-          final email = state.extra as String? ?? '';
-          return OtpScreen(email: email);
-        },
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

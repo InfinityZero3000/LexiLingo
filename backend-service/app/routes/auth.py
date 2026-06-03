@@ -833,7 +833,69 @@ async def verify_email(
 
 
 # ============================================================================
-# Admin passwordless OTP login
+# Admin password login
+# ============================================================================
+
+@router.post("/admin/login")
+async def admin_login(
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Login to the admin panel with email + password.
+    Only users with role_level >= 1 (admin/super_admin) are accepted.
+    """
+    email: str = (body.get("email") or "").strip().lower()
+    password: str = body.get("password") or ""
+
+    if not email or not password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and password are required")
+
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    hash_to_check = user.hashed_password if (user and user.hashed_password) else _DUMMY_HASH
+    password_ok = await verify_password_async(password, hash_to_check)
+
+    if not user or not password_ok:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+
+    if getattr(user, "role_level", 0) < 1:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+
+    user_id = str(user.id)
+    user.last_login = datetime.now(timezone.utc)
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+
+    access_token = create_access_token({"sub": user_id})
+    refresh_token_val = create_refresh_token({"sub": user_id})
+    await _save_refresh_token(db, user.id, refresh_token_val)
+
+    user_data = _build_user_response(user)
+
+    return {
+        "success": True,
+        "message": "Login successful",
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token_val,
+            "token_type": "bearer",
+            "user": user_data.model_dump(),
+        },
+    }
+
+
+# ============================================================================
+# Admin passwordless OTP login (kept for backward compatibility)
 # ============================================================================
 
 import random

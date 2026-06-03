@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_word_usecase.dart';
@@ -31,6 +32,7 @@ class DictionaryLookupResult {
 class VocabProvider extends ChangeNotifier {
   final GetWordsUseCase getWordsUseCase;
   final AddWordUseCase addWordUseCase;
+  final ApiClient? _apiClient;
   List<VocabWord> _words = [];
   String? _errorMessage;
   bool _isLoading = false;
@@ -39,7 +41,11 @@ class VocabProvider extends ChangeNotifier {
   DictionaryLookupResult? _lookupResult;
   bool _isLookingUp = false;
 
-  VocabProvider({required this.getWordsUseCase, required this.addWordUseCase}) {
+  VocabProvider({
+    required this.getWordsUseCase,
+    required this.addWordUseCase,
+    ApiClient? apiClient,
+  }) : _apiClient = apiClient {
     loadWords();
   }
 
@@ -64,8 +70,46 @@ class VocabProvider extends ChangeNotifier {
         _errorMessage = null;
       },
     );
+
+    // Merge with backend collection (words saved from book reader, YouTube, news).
+    if (_apiClient != null) {
+      try {
+        final backendWords = await _fetchBackendCollection();
+        final localWordSet = {for (final w in _words) w.word.toLowerCase()};
+        final merged = [
+          ..._words,
+          ...backendWords.where((w) => !localWordSet.contains(w.word.toLowerCase())),
+        ];
+        _words = merged;
+      } catch (_) {
+        // Backend unavailable — local words still shown.
+      }
+    }
+
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<List<VocabWord>> _fetchBackendCollection() async {
+    final response = await _apiClient!.get('/vocabulary/collection?limit=100');
+    final items = (response['items'] as List<dynamic>? ?? []);
+    return items
+        .map((item) {
+          final vocab = item['vocabulary'] as Map<String, dynamic>?;
+          if (vocab == null) return null;
+          final word = vocab['word'] as String? ?? '';
+          if (word.isEmpty) return null;
+          return VocabWord(
+            word: word,
+            definition: vocab['definition'] as String? ?? '',
+            pronunciation: vocab['pronunciation'] as String?,
+            audioUrl: vocab['audio_url'] as String?,
+            partOfSpeech: vocab['part_of_speech'] as String?,
+            isLearned: (item['status'] as String?) == 'mastered',
+          );
+        })
+        .whereType<VocabWord>()
+        .toList();
   }
 
   /// Look up a word in the free Dictionary API.

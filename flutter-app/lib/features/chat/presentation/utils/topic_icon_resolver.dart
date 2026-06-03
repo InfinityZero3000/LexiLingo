@@ -46,7 +46,6 @@ class TopicIconResolver {
 
   static const Map<String, IconData> _keywordIcons = {
     'airport': Icons.flight_takeoff,
-    'travel': Icons.flight_takeoff,
     'hotel': Icons.hotel_rounded,
     'direction': Icons.explore_rounded,
     'directions': Icons.explore_rounded,

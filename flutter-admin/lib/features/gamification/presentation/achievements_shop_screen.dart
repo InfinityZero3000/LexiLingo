@@ -322,9 +322,13 @@ class _ReviewRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 28,
-          height: 28,
-          color: AppColors.surfaceContainerHigh,
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.military_tech, color: AppColors.primary, size: 20),
         ),
         const SizedBox(width: 10),
         Expanded(

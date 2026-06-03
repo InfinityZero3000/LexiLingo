@@ -571,6 +571,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     final contentPadding = compact ? 10.0 : 12.0;
     final titleFontSize = compact ? 13.0 : 14.0;
     final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
+    final displayTags = _visibleCourseTags(course);
 
     return Container(
       width: cardWidth,
@@ -766,7 +767,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    course.language,
+                                    _getLanguageLabel(course.language),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -778,8 +779,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            // Extra course.tags chips
-                            ...course.tags.map(
+                            // Learner-facing tags only. Internal seed/crawl
+                            // metadata stays in data for filtering/imports.
+                            ...displayTags.map(
                               (tag) => Padding(
                                 padding: const EdgeInsets.only(left: 5),
                                 child: Container(
@@ -949,6 +951,89 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
   }
 
+  static const Set<String> _hiddenCourseTagKeys = {
+    'seed',
+    'seeded',
+    'crawl',
+    'crawled',
+    'crawler',
+    'source',
+    'import',
+    'imported',
+    'generated',
+    'auto',
+    'automatic',
+    'internal',
+    'system',
+    'demo',
+    'sample',
+    'kg',
+    'tracecag',
+    'trace_cag',
+    'graphcag',
+    'graph_cag',
+  };
+
+  List<String> _visibleCourseTags(CourseEntity course) {
+    final hiddenKeys = {
+      ..._hiddenCourseTagKeys,
+      _normalizeTagKey(course.language),
+      _normalizeTagKey(_getLanguageCode(course.language)),
+      _normalizeTagKey(_getLanguageLabel(course.language)),
+      _normalizeTagKey(course.level),
+    };
+    final seen = <String>{};
+    final visible = <String>[];
+
+    for (final tag in course.tags) {
+      final key = _normalizeTagKey(tag);
+      if (key.isEmpty) continue;
+      if (hiddenKeys.contains(key)) continue;
+      if (key.contains('crawl') || key.contains('seed')) continue;
+      if (RegExp(r'^[abc][12]$').hasMatch(key)) continue;
+      if (!seen.add(key)) continue;
+
+      visible.add(_formatCourseTag(tag));
+    }
+
+    return visible;
+  }
+
+  String _normalizeTagKey(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  String _formatCourseTag(String tag) {
+    final key = _normalizeTagKey(tag);
+    const aliases = {
+      'vocab': 'Vocabulary',
+      'vocabulary': 'Vocabulary',
+      'grammar': 'Grammar',
+      'conversation': 'Conversation',
+      'speaking': 'Speaking',
+      'listening': 'Listening',
+      'reading': 'Reading',
+      'writing': 'Writing',
+      'pronunciation': 'Pronunciation',
+      'business': 'Business',
+      'travel': 'Travel',
+      'exam': 'Exam Prep',
+    };
+    final alias = aliases[key];
+    if (alias != null) return alias;
+
+    return key
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
+  }
+
   List<Color> _getGradientFromHash(int hash) {
     final gradients = [
       [AppColors.primary, AppColors.purple],
@@ -965,24 +1050,75 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   String _getLanguageCode(String language) {
     switch (language.toLowerCase()) {
+      case 'en':
+      case 'en-us':
+      case 'en_us':
       case 'english':
         return 'EN';
+      case 'es':
       case 'spanish':
         return 'ES';
+      case 'fr':
       case 'french':
         return 'FR';
+      case 'de':
       case 'german':
         return 'DE';
+      case 'ja':
+      case 'jp':
       case 'japanese':
         return 'JP';
+      case 'zh':
+      case 'cn':
       case 'chinese':
         return 'CN';
+      case 'ko':
+      case 'kr':
       case 'korean':
         return 'KR';
+      case 'vi':
+      case 'vn':
       case 'vietnamese':
         return 'VN';
       default:
         return 'INT';
+    }
+  }
+
+  String _getLanguageLabel(String language) {
+    switch (language.toLowerCase()) {
+      case 'en':
+      case 'en-us':
+      case 'en_us':
+      case 'english':
+        return 'English';
+      case 'es':
+      case 'spanish':
+        return 'Spanish';
+      case 'fr':
+      case 'french':
+        return 'French';
+      case 'de':
+      case 'german':
+        return 'German';
+      case 'ja':
+      case 'jp':
+      case 'japanese':
+        return 'Japanese';
+      case 'zh':
+      case 'cn':
+      case 'chinese':
+        return 'Chinese';
+      case 'ko':
+      case 'kr':
+      case 'korean':
+        return 'Korean';
+      case 'vi':
+      case 'vn':
+      case 'vietnamese':
+        return 'Vietnamese';
+      default:
+        return language;
     }
   }
 

@@ -28,6 +28,7 @@ from collections import OrderedDict
 from api.services.trace_cag.state import (
     TraceCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
 )
+from api.services.trace_cag.l1_state_cache import L1Candidate, L1Request, decide_l1_reuse
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.document_intelligence import get_doc_intel_service
@@ -182,8 +183,9 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
         return True
     model_name = str(model_used or "").strip().lower()
     if model_name == "extractive_fallback":
-        # Allow caching high-support extractive answers to improve warm-hit behavior.
-        min_support = _env_float("GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.76)
+        # Allow caching extractive answers with reasonable support to improve warm-hit rate.
+        # 0.45 captures entity-span answers that may not verbatim-match long contexts (multi-hop QA).
+        min_support = _env_float("GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.45)
         support = _benchmark_answer_support_ratio(text, context)
         if support < min_support:
             return True
@@ -192,7 +194,7 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
     if any(marker in low for marker in ["i cannot", "i can't", "unable to", "not enough information", "insufficient"]):
         return True
 
-    min_quality = _env_float("GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY", 0.20)
+    min_quality = _env_float("GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY", 0.12)
     if _benchmark_cache_quality_score(text, context, model_used) < min_quality:
         return True
     return False
@@ -758,6 +760,94 @@ def _build_fingerprint(state: TraceCAGState) -> CacheFingerprint:
     )
 
 
+def _l1_signature_concepts(user_input: str, fingerprint: Mapping[str, Any]) -> set[str]:
+    raw_concepts = {str(concept) for concept in (fingerprint.get("root_concepts") or [])}
+    concepts = {concept for concept in raw_concepts if not concept.startswith("token:")}
+    concepts.update(f"entity:{entity}" for entity in _extract_l1_entities(user_input))
+    if not concepts:
+        concepts.update(raw_concepts)
+    return {str(concept) for concept in concepts if str(concept).strip()}
+
+
+def _evidence_dependency_hash(entry: CacheEntry) -> str:
+    parts: list[str] = []
+    for item in entry.get("retrieval_trace") or []:
+        if isinstance(item, dict):
+            item_id = str(item.get("item_id") or "")
+            title = str(item.get("title") or "")
+            if item_id or title:
+                parts.append(f"{item_id}:{title}")
+    if not parts:
+        for item in entry.get("evidence_bundle") or []:
+            if isinstance(item, dict):
+                content = str(item.get("content") or "")
+                if content:
+                    parts.append(content[:120])
+    if not parts:
+        return ""
+    material = "|".join(sorted(parts))
+    return hashlib.md5(material.encode()).hexdigest()
+
+
+def _build_l1_request_signature(
+    *,
+    user_input: str,
+    normalized: str,
+    fingerprint: CacheFingerprint,
+    level: str,
+    intent_hint: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+) -> L1Request:
+    return L1Request(
+        query_norm=normalized,
+        intent=intent_hint,
+        level=level,
+        profile_epoch=profile_epoch,
+        session_turn=len(conversation_history),
+        concepts=_l1_signature_concepts(user_input, fingerprint),
+        entities=_extract_l1_entities(user_input),
+        answer_target=_answer_target_hint(user_input),
+        relation_hints=_relation_hints(user_input),
+        evidence_hash="",
+    )
+
+
+def _build_l1_candidate_signature(
+    *,
+    cache_key: str,
+    entry: CacheEntry,
+    current_level: str,
+    current_profile: Mapping[str, Any],
+) -> L1Candidate:
+    candidate_fp = entry.get("fingerprint") or {}
+    candidate_query = str(candidate_fp.get("query_norm") or "").strip().lower()
+    candidate_profile = entry.get("profile_snapshot") or dict(current_profile)
+    candidate_level = str(
+        candidate_fp.get("level")
+        or (candidate_profile if isinstance(candidate_profile, Mapping) else {}).get("level")
+        or current_level
+    )
+    execution_plan = entry.get("execution_plan") or {}
+    candidate_intent = str(candidate_fp.get("intent") or execution_plan.get("intent") or "")
+
+    return L1Candidate(
+        cache_key=cache_key,
+        query_norm=candidate_query,
+        intent=candidate_intent,
+        level=candidate_level,
+        profile_epoch=_profile_epoch(candidate_profile if isinstance(candidate_profile, Mapping) else current_profile),
+        session_turn=int(candidate_fp.get("session_turn") or 0),
+        concepts=_l1_signature_concepts(candidate_query, candidate_fp),
+        entities=_extract_l1_entities(candidate_query),
+        answer_target=_answer_target_hint(candidate_query),
+        relation_hints=_relation_hints(candidate_query),
+        evidence_hash=_evidence_dependency_hash(entry),
+        created_at=float(entry.get("created_at") or time.monotonic()),
+        ttl=int(entry.get("ttl") or 3600),
+    )
+
+
 def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
     """
     Delta-patch a cached response for moderate drift (paper Alg. 1 line 13).
@@ -927,6 +1017,75 @@ def _extract_lightweight_graph_concepts(user_input: str) -> list[str]:
     return sorted(concepts)
 
 
+_L1_ENTITY_STOPWORDS = {
+    "what", "which", "who", "whom", "whose", "where", "when", "why", "how",
+    "many", "much", "the", "a", "an", "of", "in", "on", "for", "to", "from",
+    "by", "with", "and", "or", "that", "this", "those", "these", "was", "were",
+    "is", "are", "did", "does", "do", "had", "has", "have", "came", "come",
+    "out", "first", "film", "movie", "person", "company", "corporation",
+    "behind", "makes", "made", "make", "creator", "created", "founder",
+    "founded", "director", "directed", "writer", "author", "mother", "father",
+    "wife", "brother", "grandfather", "born", "birth", "year", "date", "times",
+    "taller", "higher", "country", "city", "language", "award", "won",
+}
+
+
+def _extract_l1_entities(user_input: str) -> set[str]:
+    """Extract cheap stable entity-ish tokens for SCAR-L1 candidate pooling."""
+    text = (user_input or "").lower()
+    tokens = re.findall(r"[a-z0-9][a-z0-9'-]{2,}", text)
+    entities = {
+        token.strip("-'")
+        for token in tokens
+        if token not in _L1_ENTITY_STOPWORDS and len(token.strip("-'")) >= 3
+    }
+    return {token for token in entities if token}
+
+
+def _answer_target_hint(user_input: str) -> str:
+    """Cheap answer-target class used as a hard SCAR-L1 compatibility signal."""
+    text = (user_input or "").lower()
+    if any(token in text for token in ["when", "what year", "which year", "date"]):
+        return "time"
+    if any(token in text for token in ["where", "country", "city", "place", "located"]):
+        return "place"
+    if any(token in text for token in ["how many", "how much", "times", "number"]):
+        return "number"
+    if any(token in text for token in ["who", "mother", "father", "wife", "brother", "grandfather", "founder", "director"]):
+        return "person"
+    if any(token in text for token in ["which", "what"]):
+        return "entity"
+    return "feedback"
+
+
+def _relation_hints(user_input: str) -> set[str]:
+    """Map lexical cues into coarse relation classes for SCAR-L1 safety checks."""
+    text = (user_input or "").lower()
+    relation_map = {
+        "founder": ("founder", "founded", "co-founded", "created", "creator"),
+        "maker": ("makes", "made by", "manufacturer", "behind"),
+        "birth": ("born", "birth"),
+        "director": ("director", "directed"),
+        "author": ("writer", "author", "wrote"),
+        "family": ("mother", "father", "wife", "brother", "grandfather"),
+        "mother": ("mother",),
+        "father": ("father",),
+        "wife": ("wife",),
+        "brother": ("brother",),
+        "grandfather": ("grandfather",),
+        "time_order": ("came out first", "came first", "first", "earlier", "before", "released", "debut"),
+        "comparison": ("taller", "higher", "larger", "older", "younger"),
+        "location": ("where", "country", "city", "located", "place"),
+        "award": ("award", "won"),
+        "predecessor": ("predecessor", "succeeded"),
+    }
+    hints: set[str] = set()
+    for relation, cues in relation_map.items():
+        if any(cue in text for cue in cues):
+            hints.add(relation)
+    return hints
+
+
 def _infer_intent_pre_diagnosis(user_input: str) -> str:
     text = (user_input or "").lower()
     if any(token in text for token in ["why", "explain", "what does", "how does"]):
@@ -1005,6 +1164,47 @@ def _build_graph_bucket(
     return hashlib.md5(bucket_material.encode()).hexdigest()
 
 
+def _build_l1_bucket_aliases(
+    user_input: str,
+    level: str,
+    intent: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+) -> list[str]:
+    """Return primary and SCAR-L1 alias buckets for near-hit candidate pooling."""
+    primary = _build_graph_bucket(user_input, level, intent, profile_epoch, conversation_history)
+    aliases = [primary]
+    conv_bucket = str(len(conversation_history) // 2)
+    entities = sorted(_extract_l1_entities(user_input))[:8]
+    relations = sorted(_relation_hints(user_input))[:5]
+    answer_target = _answer_target_hint(user_input)
+
+    if entities or relations:
+        material = "|".join([
+            "scar_l1_state",
+            str(level),
+            str(intent),
+            str(profile_epoch),
+            conv_bucket,
+            answer_target,
+        ] + relations + entities)
+        aliases.append(hashlib.md5(material.encode()).hexdigest())
+
+    if entities:
+        # Broad entity alias lets SCAR-L1 inspect potentially relevant unsafe
+        # shifts, then reject them with answer-target/relation certificates.
+        material = "|".join([
+            "scar_l1_entity",
+            str(level),
+            str(intent),
+            str(profile_epoch),
+            conv_bucket,
+        ] + entities)
+        aliases.append(hashlib.md5(material.encode()).hexdigest())
+
+    return list(dict.fromkeys(alias for alias in aliases if alias))
+
+
 def _register_graph_bucket(
     bucket: str,
     cache_key: str,
@@ -1019,6 +1219,20 @@ def _register_graph_bucket(
     _MEM_GRAPH_BUCKETS[bucket] = keys[:_MEM_BUCKET_MAX_ITEMS]
     if refresh_version:
         _write_bucket_version(bucket, profile_epoch=profile_epoch)
+
+
+def _register_l1_bucket_aliases(
+    user_input: str,
+    level: str,
+    intent: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+    cache_key: str,
+) -> list[str]:
+    buckets = _build_l1_bucket_aliases(user_input, level, intent, profile_epoch, conversation_history)
+    for alias in buckets:
+        _register_graph_bucket(alias, cache_key, profile_epoch=profile_epoch)
+    return buckets
 
 
 async def _register_graph_bucket_redis(bucket: str, cache_key: str, ttl: int) -> None:
@@ -1181,8 +1395,18 @@ async def _write_cache_entry(
     # Unconditional write still goes to L0 (exact key); the bucket registration
     # is the extra step that makes this entry discoverable as an L1 near-hit.
     if _is_pcc_stable(state):
-        _register_graph_bucket(graph_bucket, cache_key, profile_epoch=profile_epoch)
-        logger.debug(f"[_write_cache_entry] L1 promote key={cache_key[:8]} bucket={graph_bucket[:8]}")
+        buckets = _register_l1_bucket_aliases(
+            user_input,
+            level,
+            intent_hint,
+            profile_epoch,
+            state.get("conversation_history", []),
+            cache_key,
+        )
+        logger.debug(
+            f"[_write_cache_entry] L1 promote key={cache_key[:8]} "
+            f"buckets={','.join(bucket[:8] for bucket in buckets)}"
+        )
     else:
         logger.debug(f"[_write_cache_entry] L1 skipped (not PCC-stable) key={cache_key[:8]}")
 
@@ -1194,7 +1418,14 @@ async def _write_cache_entry(
         redis_client = await RedisClient.get_instance()
         await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
         if should_promote_l1:
-            await _register_graph_bucket_redis(graph_bucket, cache_key, ttl)
+            for alias in _build_l1_bucket_aliases(
+                user_input,
+                level,
+                intent_hint,
+                profile_epoch,
+                state.get("conversation_history", []),
+            ):
+                await _register_graph_bucket_redis(alias, cache_key, ttl)
         logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
     except Exception as e:
         logger.debug(f"[_write_cache_entry] Redis write failed: {e}")
@@ -1340,6 +1571,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     benchmark_task = state.get("benchmark_task") or ""
     profile_epoch = _profile_epoch(learner_profile)
     bucket = _build_graph_bucket(user_input, level, intent_hint, profile_epoch, conversation_history)
+    l1_buckets = _build_l1_bucket_aliases(user_input, level, intent_hint, profile_epoch, conversation_history)
 
     # Build lightweight fingerprint (pre-diagnosis: intent/root_concepts unknown)
     fingerprint = CacheFingerprint(
@@ -1387,6 +1619,15 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    l1_request = _build_l1_request_signature(
+        user_input=user_input,
+        normalized=normalized,
+        fingerprint=fingerprint,
+        level=level,
+        intent_hint=intent_hint,
+        profile_epoch=profile_epoch,
+        conversation_history=conversation_history,
+    )
 
     # --- Try in-process cache ---
     now = time.monotonic()
@@ -1450,20 +1691,27 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     # Algorithm 3, lines 3–5: validate bucket version before inspecting candidates.
     # If the bucket is stale (version mismatch or TTL expired) → invalidate and
     # fall through to L2 reconstruction immediately.
-    if not _bucket_version_valid(bucket, current_profile_epoch=profile_epoch):
-        _invalidate_bucket(bucket)
-        logger.info(f"[cache_gate_node] L1 bucket stale/invalid → invalidated, fall L2 (bucket={bucket[:8]})")
-        return _with_adaptive({
-            "cache_hit": False,
-            "cache_decision": "full",
-            "cache_layer": "none",
-            "cache_bucket": bucket,
-            "reuse_risk": 1.0,
-            "cache_fingerprint": fingerprint,
-            "path": "slow",
-        })
-    candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
-    best_candidate: tuple[str, CacheEntry, float, float] | None = None
+    valid_l1_buckets: list[str] = []
+    for candidate_bucket in l1_buckets:
+        if _bucket_version_valid(candidate_bucket, current_profile_epoch=profile_epoch):
+            valid_l1_buckets.append(candidate_bucket)
+            continue
+        _invalidate_bucket(candidate_bucket)
+        logger.info(
+            f"[cache_gate_node] L1 bucket stale/invalid -> invalidated "
+            f"(bucket={candidate_bucket[:8]})"
+        )
+
+    candidate_keys: list[str] = []
+    seen_candidate_keys: set[str] = set()
+    for candidate_bucket in valid_l1_buckets:
+        for item in await _get_bucket_candidate_keys(candidate_bucket):
+            if item == cache_key or item in seen_candidate_keys:
+                continue
+            seen_candidate_keys.add(item)
+            candidate_keys.append(item)
+
+    best_candidate: tuple[str, CacheEntry, float, float, str] | None = None
 
     # Fetch all L1 candidates concurrently.
     import asyncio as _asyncio
@@ -1476,16 +1724,38 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             continue
         if not _cache_entry_quality_ok_for_benchmark(candidate_entry, benchmark_task):
             continue
-        rank_score, rho = _rank_l1_candidate(fingerprint, candidate_entry, now)
-        if rho > tau_patch:
+        l1_candidate = _build_l1_candidate_signature(
+            cache_key=candidate_key,
+            entry=candidate_entry,
+            current_level=level,
+            current_profile=learner_profile,
+        )
+        decision = decide_l1_reuse(
+            l1_request,
+            l1_candidate,
+            now=now,
+            tau_reuse=tau_reuse,
+            tau_patch=tau_patch,
+        )
+        if decision.decision == "full":
+            logger.debug(
+                f"[cache_gate_node] L1 reject key={candidate_key[:8]} "
+                f"reasons={','.join(decision.reasons)}"
+            )
             continue
-        if best_candidate is None or rank_score > best_candidate[2]:
-            best_candidate = (candidate_key, candidate_entry, rank_score, rho)
+        if best_candidate is None or decision.rank_score > best_candidate[2]:
+            best_candidate = (
+                candidate_key,
+                candidate_entry,
+                decision.rank_score,
+                decision.risk,
+                decision.decision,
+            )
 
     if best_candidate is not None:
-        _, entry, _, rho = best_candidate
-        logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} ρ={rho:.3f}")
-        if rho <= tau_reuse:
+        _, entry, _, rho, l1_decision = best_candidate
+        logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} decision={l1_decision} ρ={rho:.3f}")
+        if l1_decision == "reuse":
             _resp_text = entry.get("response", "")
             return _with_adaptive({
                 "cache_hit": True,
@@ -3832,11 +4102,14 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         response = ""
         model_used = "llm_unavailable"
         system_prompt = (
-            "You are answering a public QA benchmark. Use only the provided context. "
-            "Return only the final answer, with no explanation, no preamble, and no extra sentences. "
-            "If the answer is yes or no, return exactly yes or no. If the answer is unknown from the context, return unknown."
+            "You are a precise QA system for multi-hop reasoning benchmarks. "
+            "The context spans multiple passages — read ALL of them, identify key entities and facts, "
+            "then chain the evidence to reach the answer. "
+            "Output ONLY the minimal final answer: a short entity/phrase (1–6 words), 'yes', or 'no'. "
+            "Never explain, never add punctuation or preamble. "
+            "If genuinely unanswerable from the context, output exactly: unknown"
         )
-        user_prompt = f"Question: {question}\n\nContext:\n{context}\n\nFinal answer only:"
+        user_prompt = f"Context:\n{context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
             import httpx
@@ -3860,7 +4133,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             provider="groq",
                             url="https://api.groq.com/openai/v1/chat/completions",
                             headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                            payload={"model": groq_model, "messages": messages, "max_tokens": 64, "temperature": 0.0},
+                            payload={"model": groq_model, "messages": messages, "max_tokens": 96, "temperature": 0.0},
                             httpx_module=httpx,
                             timeout=30.0,
                         )
@@ -3883,7 +4156,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                         request_body = {
                             "contents": [{"parts": [{"text": user_prompt}]}],
                             "system_instruction": {"parts": [{"text": system_prompt}]},
-                            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 64},
+                            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 96},
                         }
                         resp = await _throttled_post_json(
                             provider="gemini",
@@ -3915,7 +4188,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 "model": ollama_model,
                                 "messages": messages,
                                 "stream": False,
-                                "options": {"num_predict": 64, "temperature": 0.0},
+                                "options": {"num_predict": 96, "temperature": 0.0},
                             },
                             httpx_module=httpx,
                             timeout=60.0,

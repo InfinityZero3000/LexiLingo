@@ -124,6 +124,7 @@ def default_token_cost_for_endpoint(endpoint_key: str, text: str | None = None) 
         "topic.send_message": int(os.getenv("AI_TOKEN_COST_TOPIC_SEND", "1000")),
         "stt.transcribe": int(os.getenv("AI_TOKEN_COST_STT", "500")),
         "tts.synthesize": int(os.getenv("AI_TOKEN_COST_TTS", "64")),
+        "ai.analyze": int(os.getenv("AI_TOKEN_COST_ANALYZE", "800")),
     }
     base = base_defaults.get(endpoint_key, int(os.getenv("AI_TOKEN_COST_DEFAULT", "300")))
     if text is None:
