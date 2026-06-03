@@ -271,6 +271,8 @@ server {
     location @rate_limited {
         default_type application/json;
         add_header Retry-After 60 always;
+        add_header Access-Control-Allow-Origin $cors_allow_origin always;
+        add_header Access-Control-Allow-Credentials "true" always;
         return 429 '{"detail":"too_many_requests","retry_after_seconds":60}';
     }
 
@@ -350,6 +352,16 @@ server {
     location /api/v1/topics/ {
         limit_req zone=ai_general_per_ip burst=20 nodelay;
         include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
+    # SSE streaming endpoint — disable buffering so chunks reach the client immediately
+    location = /api/v1/lexi/stream {
+        limit_req zone=ai_chat_per_ip burst=12 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
         proxy_pass http://ai_upstream;
     }
 

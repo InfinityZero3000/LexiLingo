@@ -1120,7 +1120,6 @@ async def lexi_stream_chat(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",  # disable nginx proxy buffering for SSE
-            "Connection": "keep-alive",
         },
     )
 
