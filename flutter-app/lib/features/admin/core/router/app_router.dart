@@ -15,7 +15,7 @@ import '../../features/grammar/presentation/grammar_tests_screen.dart';
 import '../../features/gamification/presentation/achievements_shop_screen.dart';
 import '../../features/super_admin/presentation/super_dashboard_screen.dart';
 import '../../features/super_admin/presentation/system_health_screen.dart';
-import '../../features/logs/presentation/logs_screen.dart';
+import '../../features/system_logs/presentation/logs_screen.dart';
 import '../../features/ads/presentation/ads_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../storage/token_storage.dart';
