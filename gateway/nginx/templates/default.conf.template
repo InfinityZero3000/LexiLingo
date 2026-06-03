@@ -265,11 +265,6 @@ server {
     if ($is_scanner) { return 444; }
 
     if ($request_method = OPTIONS) {
-        add_header Access-Control-Allow-Origin $cors_allow_origin always;
-        add_header Access-Control-Allow-Credentials "true" always;
-        add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
-        add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret" always;
-        add_header Access-Control-Max-Age 3600 always;
         return 204;
     }
 
@@ -374,7 +369,6 @@ server {
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_buffering off;
         proxy_cache off;
-        proxy_read_timeout 300s;
         proxy_pass http://ai_upstream;
     }
 
