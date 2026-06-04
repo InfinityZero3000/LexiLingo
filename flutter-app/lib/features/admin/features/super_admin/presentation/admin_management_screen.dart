@@ -61,7 +61,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     final id = admin['id']?.toString() ?? '';
     if (id.isEmpty) return;
     try {
-      await ApiClient.instance.put('/admin/users/$id/role', body: {'role_level': newLevel});
+      await ApiClient.instance.put('/admin/users/$id/role', data: {'role_level': newLevel});
       _load();
     } catch (e) {
       if (mounted) {
@@ -77,7 +77,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     final isActive = (admin['is_active'] as bool?) ?? true;
     if (id.isEmpty) return;
     try {
-      await ApiClient.instance.put('/admin/users/$id/status', body: {'is_active': !isActive});
+      await ApiClient.instance.put('/admin/users/$id/status', data: {'is_active': !isActive});
       _load();
     } catch (e) {
       if (mounted) {

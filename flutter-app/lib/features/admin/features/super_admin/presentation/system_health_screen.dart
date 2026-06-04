@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../../auth/presentation/auth_provider.dart';
 
 class SystemHealthScreen extends StatefulWidget {
@@ -100,8 +101,8 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Text('System Core Health',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),

@@ -249,7 +249,7 @@ class _AddTopicSheetState extends State<_AddTopicSheet> {
     if (_titleCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      await ApiClient.instance.post('/admin/grammar', body: {
+      await ApiClient.instance.post('/admin/grammar', data: {
         'title': _titleCtrl.text.trim(),
         'content': _contentCtrl.text.trim(),
         'cefr_level': _level,

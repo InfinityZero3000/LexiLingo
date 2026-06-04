@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 
@@ -86,6 +87,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: AppColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+                onPressed: AdminShell.openDrawer,
+              ),
               title: Row(
                 children: [
                   Container(

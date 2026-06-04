@@ -59,7 +59,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await ApiClient.instance.put('/admin/system-info', body: {
+      await ApiClient.instance.put('/admin/system-info', data: {
         'app_name': _appNameCtrl.text.trim(),
         'log_level': _logLevel,
         'debug_mode': _debugMode,

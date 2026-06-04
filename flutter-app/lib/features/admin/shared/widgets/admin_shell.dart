@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 
 class AdminShell extends StatefulWidget {
