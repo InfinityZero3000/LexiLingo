@@ -160,20 +160,25 @@ async def warm_subgraph(
         try:
             kg_hits = await kg.expand_best_first(
                 seed_nodes=seed_concepts,
-                hops=2,
+                learner_level=story_level,
+                max_hops=2,
                 max_nodes=60,
             )
             expanded_nodes = [
                 {
-                    "id": n.concept_id,
-                    "title": n.title,
-                    "level": n.level,
-                    "relevance": round(n.relevance_score, 4),
+                    "id": n.id,
+                    "title": n.type,
+                    "level": n.properties.get("level", story_level),
+                    "relevance": round(1.0 / max(1, n.properties.get("depth", 1)), 4),
                 }
-                for n in kg_hits.nodes
+                for n in kg_hits.expanded_nodes
             ]
             paths = [
-                {"src": p.source, "rel": p.relation, "dst": p.target}
+                {
+                    "src": p.nodes[0] if p.nodes else "",
+                    "rel": p.edges[0] if p.edges else "related_to",
+                    "dst": p.nodes[-1] if len(p.nodes) > 1 else "",
+                }
                 for p in kg_hits.paths
             ]
         except Exception as exc:

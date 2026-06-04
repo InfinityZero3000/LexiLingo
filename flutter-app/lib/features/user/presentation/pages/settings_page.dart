@@ -43,14 +43,16 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _precacheFlagImages(BuildContext context) async {
-    for (final locale in AppLocales.supportedLocales) {
-      final imageUrl = AppLocales.flagPngUrlOf(locale.languageCode);
-      try {
-        await precacheImage(CachedNetworkImageProvider(imageUrl), context);
-      } catch (_) {
-        // Ignore preload failures; each row has its own fallback.
-      }
-    }
+    await Future.wait(
+      AppLocales.supportedLocales.map((locale) async {
+        final imageUrl = AppLocales.flagPngUrlOf(locale.languageCode);
+        try {
+          await precacheImage(CachedNetworkImageProvider(imageUrl), context);
+        } catch (_) {
+          // Ignore preload failures; each row has its own fallback.
+        }
+      }),
+    );
 
     if (!mounted) return;
 
@@ -261,10 +263,11 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: SettingsProvider.availableLanguages.map((lang) {
+          children: SettingsProvider.availableLanguages.asMap().entries.map((entry) {
+            final lang = entry.value;
             final isSelected = currentLocaleCode == lang['code'];
             return AnimatedListItem(
-              index: SettingsProvider.availableLanguages.indexOf(lang),
+              index: entry.key,
               duration: const Duration(milliseconds: 200),
               delayPerItem: const Duration(milliseconds: 30),
               child: Padding(

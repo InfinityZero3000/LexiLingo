@@ -43,6 +43,24 @@ _PROVIDER_LAST_WAIT_LOG_AT: Dict[str, float] = {}
 _PROVIDER_DISABLED_UNTIL: Dict[str, float] = {}
 _KG_QUERY_CACHE: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
 
+# Persistent httpx clients per provider — reuses TCP/TLS connections across LLM calls.
+# Created lazily on first use; not closed (process-lifetime singletons).
+_HTTPX_CLIENTS: Dict[str, Any] = {}
+
+
+def _get_httpx_client(provider: str) -> Any:
+    """Return a long-lived httpx.AsyncClient for *provider*, creating it on first use."""
+    if provider not in _HTTPX_CLIENTS:
+        import httpx
+        _HTTPX_CLIENTS[provider] = httpx.AsyncClient(
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30,
+            ),
+        )
+    return _HTTPX_CLIENTS[provider]
+
 _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "You are Lexi, an expert English tutor. "
     "Provide grounded, concise and actionable feedback. "
@@ -574,8 +592,8 @@ async def _throttled_post_json(
             if residual > 0:
                 continue  # release lock immediately, re-enter wait loop
 
-            async with httpx_module.AsyncClient(timeout=timeout) as client:
-                response = await client.post(url, headers=headers, json=payload)
+            client = _get_httpx_client(provider)
+            response = await client.post(url, headers=headers, json=payload, timeout=timeout)
 
             _PROVIDER_NEXT_REQUEST_AT[provider] = time.monotonic() + min_interval
 
@@ -3407,6 +3425,201 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
 
 
 # ============================================================
+# STREAMING HELPERS: Build prompt + stream tokens from LLM
+# ============================================================
+
+def build_generation_prompt(
+    state: Dict[str, Any],
+) -> tuple[str, List[Dict[str, Any]]]:
+    """Extract (system_prompt, messages) from raw pipeline state.
+
+    Used by the streaming endpoint so it can call the LLM with streaming
+    enabled after the rest of the pipeline (KG, diagnosis, retrieval) has
+    prepared the context.
+    """
+    errors = state.get("diagnosis_errors", [])
+    intent = state.get("diagnosis_intent", "correct")
+    level = (state.get("learner_profile") or {}).get("level", "B1")
+    user_input = str(state.get("user_input") or "")
+    context = str(state.get("retrieved_context") or "")
+    vietnamese_hint = state.get("vietnamese_hint")
+    session_turn = len(state.get("conversation_history") or [])
+    prev_overall = state.get("overall_score", 0.5)
+    fluency_score = state.get("fluency_score", 0.8)
+    error_count = len(errors)
+
+    difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
+
+    if intent == "explain" and fluency_score > 0.7:
+        strategy = "socratic"
+    elif error_count == 0:
+        strategy = "praise"
+    elif error_count <= 2:
+        strategy = "feedback"
+    else:
+        strategy = "scaffold"
+
+    system_prompt = (
+        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
+        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
+        "Gently correct mistakes with encouraging context.\n"
+        f"The learner's current CEFR level is: {level}\n"
+        f"Difficulty setting for this turn: {difficulty}\n"
+    )
+    if context:
+        system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
+
+    if strategy == "socratic":
+        system_prompt += (
+            "\nStrategy: SOCRATIC. Guide through short questions, don't reveal answer.\n"
+        )
+        if errors:
+            hints = "\n".join(
+                f"- '{e.get('span','')}' → '{e.get('correction','')}'"
+                for e in errors[:3]
+            )
+            system_prompt += f"\n--- Errors (hints only) ---\n{hints}\n"
+    elif errors:
+        errs_text = "\n".join(
+            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
+            for e in errors[:3]
+        )
+        system_prompt += f"\n--- Errors Found ---\n{errs_text}\n"
+        system_prompt += f"Strategy: {strategy}. Weave corrections naturally.\n"
+    else:
+        system_prompt += "\nNo errors found — praise the learner's effort!\n"
+
+    if vietnamese_hint:
+        system_prompt += f"\n--- Vietnamese Hint ---\n{vietnamese_hint}\n"
+
+    messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+    for msg in (state.get("conversation_history") or [])[-12:]:
+        role = msg.get("role")
+        content = msg.get("content", "")
+        if role and content:
+            messages.append({"role": role, "content": content})
+        elif msg.get("user"):
+            messages.append({"role": "user", "content": msg["user"]})
+            if msg.get("ai"):
+                messages.append({"role": "assistant", "content": msg["ai"]})
+    messages.append({"role": "user", "content": user_input})
+
+    return system_prompt, messages
+
+
+async def stream_llm_tokens(
+    *,
+    system_prompt: str,
+    messages: List[Dict[str, Any]],
+    user_input: str,
+) -> "AsyncGenerator[str, None]":
+    """Stream tokens from Groq (preferred) then Gemini as fallback.
+
+    Yields raw text deltas as they arrive from the provider.
+    Falls back silently to Gemini if Groq is unavailable or rate-limited.
+    """
+    from typing import AsyncGenerator as _AG  # local import avoids circular
+
+    async def _try_groq() -> "AsyncGenerator[str, None]":
+        import httpx as _httpx
+
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        if not groq_key or _provider_is_disabled("groq"):
+            return
+
+        client = _get_httpx_client("groq")
+        try:
+            async with client.stream(
+                "POST",
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": groq_model,
+                    "messages": messages,
+                    "max_tokens": 512,
+                    "temperature": 0.7,
+                    "stream": True,
+                },
+                timeout=25.0,
+            ) as resp:
+                if resp.status_code != 200:
+                    logger.warning("[stream_llm_tokens] Groq status %d", resp.status_code)
+                    return
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data = line[6:]
+                    if data.strip() == "[DONE]":
+                        return
+                    try:
+                        obj = json.loads(data)
+                        delta = obj["choices"][0]["delta"].get("content") or ""
+                        if delta:
+                            yield delta
+                    except Exception:
+                        pass
+        except Exception as exc:
+            logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
+
+    async def _try_gemini() -> "AsyncGenerator[str, None]":
+        gemini_key = os.getenv("GEMINI_API_KEY", "")
+        if not gemini_key or _provider_is_disabled("gemini"):
+            return
+
+        import httpx as _httpx
+
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"gemini-2.0-flash:streamGenerateContent?key={gemini_key}&alt=sse"
+        )
+        request_body = {
+            "contents": [{"role": "user", "parts": [{"text": user_input}]}],
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+        }
+        client = _get_httpx_client("gemini")
+        try:
+            async with client.stream(
+                "POST", url, json=request_body, timeout=25.0
+            ) as resp:
+                if resp.status_code != 200:
+                    logger.warning("[stream_llm_tokens] Gemini status %d", resp.status_code)
+                    return
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data = line[6:]
+                    try:
+                        obj = json.loads(data)
+                        text = (
+                            obj.get("candidates", [{}])[0]
+                            .get("content", {})
+                            .get("parts", [{}])[0]
+                            .get("text", "")
+                        )
+                        if text:
+                            yield text
+                    except Exception:
+                        pass
+        except Exception as exc:
+            logger.warning("[stream_llm_tokens] Gemini stream error: %s", exc)
+
+    # Try Groq first; if it yields nothing, fall back to Gemini
+    got_tokens = False
+    async for token in _try_groq():
+        got_tokens = True
+        yield token
+
+    if not got_tokens:
+        async for token in _try_gemini():
+            yield token
+
+
+# ============================================================
 # NODE 5: GROUNDED GENERATION (LLM call with context)
 # ============================================================
 
@@ -3419,9 +3632,13 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     into the system prompt. This is the SINGLE place where LLM
     generation happens — callers should NOT make a separate LLM call.
     """
+    # When the streaming endpoint handles generation externally, skip this node.
+    if state.get("generation_policy") == "skip":
+        return {}
+
     logger.info("[generate_node] Generating grounded tutor response...")
     start_time = time.time()
-    
+
     errors = state.get("diagnosis_errors", [])
     intent = state.get("diagnosis_intent", "correct")
     level = state.get("learner_profile", {}).get("level", "B1")

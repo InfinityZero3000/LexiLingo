@@ -10,7 +10,7 @@ Phase 1: YouTube Video Integration with Auto Subtitles.
 import asyncio
 import logging
 from typing import Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -145,7 +145,9 @@ async def _fetch_channel_thumbnails(channel_ids: list[str]) -> dict[str, str]:
                 or snippet.get("thumbnails", {}).get("default", {}).get("url")
                 or ""
             )
-            if cid and thumb:
+            # Only accept proper YouTube CDN URLs (path must start with /ytc/)
+            parsed = urlparse(thumb)
+            if cid and thumb and parsed.path.startswith("/ytc/"):
                 thumbnails[cid] = thumb
         return thumbnails
     except Exception as e:
@@ -170,7 +172,7 @@ async def get_curated_channels(
         channels = [c for c in channels if c["category"] == category]
 
     # Fetch real thumbnails via cache
-    cache_key = "youtube:channel_thumbnails:all:v3"
+    cache_key = "youtube:channel_thumbnails:all:v4"
     cache_service = APICacheService(db)
     channel_ids = [c["id"] for c in CURATED_CHANNELS]  # always fetch all for cache
 
@@ -193,6 +195,11 @@ async def get_curated_channels(
 
     def _proxy_thumbnail(url: str) -> str:
         if not url:
+            return ""
+        # Reject stale/malformed yt3 URLs — real YouTube CDN paths start with /ytc/
+        parsed = urlparse(url)
+        if "googleusercontent.com" in parsed.netloc and not parsed.path.startswith("/ytc/"):
+            logger.warning("Rejected malformed thumbnail URL: %s", url)
             return ""
         return f"{base_url}/{api_prefix}/podcasts/proxy/image?url={quote(url)}"
 

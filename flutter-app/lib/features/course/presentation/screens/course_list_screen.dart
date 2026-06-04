@@ -106,19 +106,47 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 ],
                               ),
                               const Spacer(),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: primaryAccent.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.tune_rounded,
-                                    color: primaryAccent,
+                              Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: provider.hasActiveFilters
+                                          ? primaryAccent
+                                          : primaryAccent.withValues(
+                                              alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.tune_rounded,
+                                        color: provider.hasActiveFilters
+                                            ? Colors.white
+                                            : primaryAccent,
+                                      ),
+                                      onPressed: () =>
+                                          _showFilterSheet(context),
+                                      tooltip: 'Filter',
+                                    ),
                                   ),
-                                  onPressed: () => _showFilterSheet(context),
-                                  tooltip: 'Filter',
-                                ),
+                                  if (provider.hasActiveFilters)
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Theme.of(context)
+                                                .scaffoldBackgroundColor,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
@@ -153,12 +181,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 )
               else if (provider.courses.isEmpty)
                 SliverFillRemaining(
-                  child: EmptyStateWidget.courses(
-                    onExplore: () {
-                      provider.refreshCourses();
-                      provider.loadCategories();
-                    },
-                  ),
+                  child: EmptyStateWidget.courses(),
                 )
               else
                 _buildCourseContent(context, provider),
@@ -171,18 +194,26 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayCourses = provider.filteredCourses;
+
+    // Show empty-filtered state when client-side filters result in nothing
+    if (displayCourses.isEmpty) {
+      return SliverFillRemaining(
+        child: EmptyStateWidget.searchResults(),
+      );
+    }
+
     final categories = provider.categories;
     final nonEmptyCategorySections =
         <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
     final mappedCourseIds = <String>{};
 
     for (final category in categories) {
-      final categoryCourses = provider.courses
+      final categoryCourses = displayCourses
           .where(
             (c) =>
                 c.tags.contains(category.slug) ||
                 c.tags.contains(category.name.toLowerCase()) ||
-                // fallback: if course has no tags, don't show it here unless category is general
                 (c.tags.isEmpty && category.slug == 'general'),
           )
           .toList();
@@ -195,25 +226,61 @@ class _CourseListScreenState extends State<CourseListScreen> {
       }
     }
 
-    final totalCourses = provider.courses.length;
+    final totalCourses = displayCourses.length;
     final mappingCoverage = totalCourses == 0
         ? 0.0
         : mappedCourseIds.length / totalCourses;
 
-    // Only switch to category mode when enough courses actually map to those categories.
-    // This avoids list flicker/disappear while loading additional pages.
     final shouldUseCategories =
         categories.isNotEmpty &&
         nonEmptyCategorySections.isNotEmpty &&
         mappingCoverage >= 0.6;
 
-    final sections = shouldUseCategories
-        ? nonEmptyCategorySections
-        : provider.coursesByCategory.keys.toList();
+    // When client-side sort is active, skip category grouping and show flat list
+    final forceFlat = provider.sortOrder != 'default';
+
+    if (forceFlat || !shouldUseCategories) {
+      // Flat grouped-by-level list
+      final grouped = <String, List<CourseEntity>>{};
+      for (final course in displayCourses) {
+        grouped.putIfAbsent(course.level, () => []).add(course);
+      }
+      final levelKeys = grouped.keys.toList();
+
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == levelKeys.length) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: LottieLoadingWidget.small(),
+                ),
+              );
+            }
+            final levelKey = levelKeys[index];
+            final courses = grouped[levelKey]!;
+            return _CategorySection(
+              categoryId: levelKey,
+              title: levelKey,
+              description:
+                  '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+              icon: _getLevelIcon(levelKey),
+              color: _getLevelColor(levelKey, isDark: isDark),
+              courses: courses,
+              onCourseTap: (courseId) =>
+                  _navigateToCourseDetail(context, courseId),
+              onSeeAll: null,
+            );
+          },
+          childCount: levelKeys.length + (provider.isLoadingCourses ? 1 : 0),
+        ),
+      );
+    }
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        if (index == sections.length) {
+        if (index == nonEmptyCategorySections.length) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
@@ -222,44 +289,23 @@ class _CourseListScreenState extends State<CourseListScreen> {
           );
         }
 
-        if (shouldUseCategories) {
-          final section =
-              sections[index]
-                  as MapEntry<CourseCategoryEntity, List<CourseEntity>>;
-          final category = section.key;
-          final categoryCourses = section.value;
+        final section = nonEmptyCategorySections[index];
+        final category = section.key;
+        final categoryCourses = section.value;
 
-          return _CategorySection(
-            categoryId: category.id,
-            title: category.name,
-            description:
-                '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
-            icon: _parseCategoryIcon(category.icon ?? 'book'),
-            color: _parseCategoryColor(category.color, isDark: isDark),
-            courses: categoryCourses,
-            onCourseTap: (courseId) =>
-                _navigateToCourseDetail(context, courseId),
-            onSeeAll: () => _navigateToCategoryDetail(context, category.id),
-          );
-        } else {
-          final groupedCourses = provider.coursesByCategory;
-          final levelKey = sections[index] as String;
-          final courses = groupedCourses[levelKey]!;
-
-          return _CategorySection(
-            categoryId: levelKey,
-            title: levelKey,
-            description:
-                '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
-            icon: _getLevelIcon(levelKey),
-            color: _getLevelColor(levelKey, isDark: isDark),
-            courses: courses,
-            onCourseTap: (courseId) =>
-                _navigateToCourseDetail(context, courseId),
-            onSeeAll: null,
-          );
-        }
-      }, childCount: sections.length + (provider.isLoadingCourses ? 1 : 0)),
+        return _CategorySection(
+          categoryId: category.id,
+          title: category.name,
+          description:
+              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
+          icon: _parseCategoryIcon(category.icon ?? 'book'),
+          color: _parseCategoryColor(category.color, isDark: isDark),
+          courses: categoryCourses,
+          onCourseTap: (courseId) =>
+              _navigateToCourseDetail(context, courseId),
+          onSeeAll: () => _navigateToCategoryDetail(context, category.id),
+        );
+      }, childCount: nonEmptyCategorySections.length + (provider.isLoadingCourses ? 1 : 0)),
     );
   }
 
@@ -350,7 +396,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => _FilterSheet(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => const _FilterSheet(),
     );
   }
 }
@@ -601,15 +651,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         // Background image or placeholder
-                        course.thumbnailUrl != null
-                            ? Image.network(
-                                course.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _buildHeroPlaceholder(context);
-                                },
-                              )
-                            : _buildHeroPlaceholder(context),
+                        _buildCourseThumbnail(context),
 
                         // Gradient overlay for better text visibility
                         Container(
@@ -885,58 +927,88 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroPlaceholder(BuildContext context) {
-    // Generate a unique gradient based on course ID
+  String _getCourseImageUrl() {
+    final tags = course.tags.map((t) => t.toLowerCase()).toSet();
+    final level = course.level.toLowerCase();
+
+    // Category-specific Unsplash photos (language-learning themed)
+    if (tags.contains('ielts') || tags.contains('test-prep') || tags.contains('exam')) {
+      return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
+    }
+    if (tags.contains('business') || tags.contains('business-english')) {
+      return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80';
+    }
+    if (tags.contains('conversation') || tags.contains('speaking')) {
+      return 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&q=80';
+    }
+    if (tags.contains('grammar')) {
+      return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80';
+    }
+    if (tags.contains('vocabulary') || tags.contains('vocab')) {
+      return 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80';
+    }
+    if (tags.contains('reading')) {
+      return 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&q=80';
+    }
+    if (tags.contains('listening')) {
+      return 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80';
+    }
+    if (tags.contains('writing')) {
+      return 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80';
+    }
+    if (tags.contains('travel')) {
+      return 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80';
+    }
+
+    // Level-based fallback
+    switch (level) {
+      case 'beginner':
+      case 'elementary':
+        return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80';
+      case 'intermediate':
+      case 'upper-intermediate':
+        return 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80';
+      case 'advanced':
+        return 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80';
+      default:
+        return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80';
+    }
+  }
+
+  Widget _buildCourseThumbnail(BuildContext context) {
+    final imageUrl = course.thumbnailUrl ?? _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Decorative circles
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.1),
-              ),
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
             ),
           ),
-          Positioned(
-            bottom: -10,
-            left: -10,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.1),
-              ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
             ),
           ),
-          // Icon in center
-          Center(
+          child: Center(
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.2),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -946,8 +1018,8 @@ class _HorizontalCourseCard extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1214,254 +1286,476 @@ class _HorizontalCourseCard extends StatelessWidget {
 }
 
 /// Filter Sheet Widget
-class _FilterSheet extends StatelessWidget {
+class _FilterSheet extends StatefulWidget {
   const _FilterSheet();
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late String? _language;
+  late String? _level;
+  late String? _categorySlug;
+  late bool _enrolledOnly;
+  late String _sortOrder;
+
+  static const List<(String, String?, Color)> _levels = [
+    ('All', null, Colors.grey),
+    ('Beginner', 'Beginner', AppColors.greenSuccessBright),
+    ('Elementary', 'Elementary', Colors.lightGreen),
+    ('Pre-Intermediate', 'Pre-Intermediate', Colors.teal),
+    ('Intermediate', 'Intermediate', AppColors.orange),
+    ('Upper-Intermediate', 'Upper-Intermediate', AppColors.deepOrange),
+    ('Advanced', 'Advanced', AppColors.errorBright),
+  ];
+
+  static const _sortOptions = [
+    ('Default', 'default', Icons.sort),
+    ('Most Lessons', 'lessons', Icons.book_outlined),
+    ('Highest XP', 'xp', Icons.star_outline),
+    ('A → Z', 'az', Icons.sort_by_alpha),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final p = context.read<CourseProvider>();
+    _language = p.selectedLanguage;
+    _level = p.selectedLevel;
+    _categorySlug = p.selectedCategorySlug;
+    _enrolledOnly = p.showEnrolledOnly;
+    _sortOrder = p.sortOrder;
+  }
+
+
+  bool get _hasAnyFilter =>
+      _language != null ||
+      _level != null ||
+      _categorySlug != null ||
+      _enrolledOnly ||
+      _sortOrder != 'default';
+
+  Future<void> _applyFilters() async {
+    final provider = context.read<CourseProvider>();
+    final serverParamsChanged =
+        _language != provider.selectedLanguage || _level != provider.selectedLevel;
+
+    // Apply client-side filters first (instant)
+    provider.setClientFilters(
+      categorySlug: _categorySlug,
+      clearCategory: _categorySlug == null,
+      enrolledOnly: _enrolledOnly,
+      sortOrder: _sortOrder,
+    );
+
+    if (serverParamsChanged) {
+      await provider.loadCourses(page: 1, language: _language, level: _level);
+    }
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  void _clearAll() {
+    setState(() {
+      _language = null;
+      _level = null;
+      _categorySlug = null;
+      _enrolledOnly = false;
+      _sortOrder = 'default';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CourseProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryAccent = AppColorRoles.primary(isDark);
+    final categories = provider.categories;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          const SizedBox(height: 20),
-
-          // Header
-          Row(
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: primaryAccent,
-                  borderRadius: BorderRadius.circular(12),
+              // Handle + header (fixed)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: primaryAccent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.tune_rounded,
+                            color: Theme.of(context).colorScheme.surface,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'course.filterCourses'.tr(),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_hasAnyFilter)
+                          TextButton.icon(
+                            onPressed: _clearAll,
+                            icon: const Icon(Icons.clear_all, size: 18),
+                            label: Text('common.clear'.tr()),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.red[400]),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                 ),
-                child: Icon(
-                  Icons.tune_rounded,
+              ),
+              const Divider(height: 1),
+
+              // Scrollable filter sections
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  children: [
+                    // ── Language ──────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.language,
+                      color: primaryAccent,
+                      label: 'common.language'.tr(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _Chip(
+                          label: 'All',
+                          isSelected: _language == null,
+                          color: Colors.grey,
+                          onTap: () => setState(() => _language = null),
+                        ),
+                        _Chip(
+                          label: 'English',
+                          isSelected: _language == 'English',
+                          color: primaryAccent,
+                          prefix: _LangBadge(
+                              'EN', primaryAccent, _language == 'English'),
+                          onTap: () => setState(() => _language = 'English'),
+                        ),
+                        _Chip(
+                          label: 'Spanish',
+                          isSelected: _language == 'Spanish',
+                          color: AppColors.orange,
+                          prefix: _LangBadge(
+                              'ES', AppColors.orange, _language == 'Spanish'),
+                          onTap: () => setState(() => _language = 'Spanish'),
+                        ),
+                        _Chip(
+                          label: 'Vietnamese',
+                          isSelected: _language == 'Vietnamese',
+                          color: AppColors.errorBright,
+                          prefix: _LangBadge('VI', AppColors.errorBright,
+                              _language == 'Vietnamese'),
+                          onTap: () =>
+                              setState(() => _language = 'Vietnamese'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Level ─────────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.signal_cellular_alt,
+                      color: AppColors.purple,
+                      label: 'common.level'.tr(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _levels
+                          .map(
+                            (e) => _Chip(
+                              label: e.$1,
+                              isSelected: _level == e.$2,
+                              color: e.$3,
+                              onTap: () => setState(() => _level = e.$2),
+                            ),
+                          )
+                          .toList(),
+                    ),
+
+                    // ── Category ──────────────────────────────────────
+                    if (categories.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        icon: Icons.category_outlined,
+                        color: AppColors.teal,
+                        label: 'Category',
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _Chip(
+                            label: 'All',
+                            isSelected: _categorySlug == null,
+                            color: Colors.grey,
+                            onTap: () => setState(() => _categorySlug = null),
+                          ),
+                          ...categories.map(
+                            (cat) => _Chip(
+                              label: cat.name,
+                              isSelected: _categorySlug == cat.slug,
+                              color: _parseCategoryColor(
+                                  cat.color, isDark: isDark),
+                              onTap: () => setState(
+                                  () => _categorySlug = _categorySlug == cat.slug
+                                      ? null
+                                      : cat.slug),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // ── Enrolled ──────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.bookmark_outline,
+                      color: Colors.amber[700]!,
+                      label: 'My Enrollments',
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _enrolledOnly = !_enrolledOnly),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _enrolledOnly
+                              ? Colors.amber[700]!.withValues(alpha: 0.12)
+                              : Colors.grey.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _enrolledOnly
+                                ? Colors.amber[700]!
+                                : Colors.grey.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              size: 18,
+                              color: _enrolledOnly
+                                  ? Colors.amber[700]
+                                  : Colors.grey,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Show enrolled courses only',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: _enrolledOnly
+                                    ? Colors.amber[700]
+                                    : (isDark
+                                        ? Colors.white70
+                                        : Colors.black87),
+                              ),
+                            ),
+                            const Spacer(),
+                            Switch.adaptive(
+                              value: _enrolledOnly,
+                              onChanged: (v) =>
+                                  setState(() => _enrolledOnly = v),
+                              activeThumbColor: Colors.amber[700],
+                              activeTrackColor:
+                                  Colors.amber[700]!.withValues(alpha: 0.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Sort By ───────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.sort,
+                      color: AppColors.primary,
+                      label: 'Sort By',
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _sortOptions
+                          .map(
+                            (s) => _Chip(
+                              label: s.$1,
+                              isSelected: _sortOrder == s.$2,
+                              color: AppColors.primary,
+                              prefix: Icon(
+                                s.$3,
+                                size: 14,
+                                color: _sortOrder == s.$2
+                                    ? Colors.white
+                                    : AppColors.primary,
+                              ),
+                              onTap: () => setState(() => _sortOrder = s.$2),
+                            ),
+                          )
+                          .toList(),
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+
+              // Apply button (fixed at bottom)
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                    20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+                decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  size: 20,
+                  border: Border(
+                    top: BorderSide(
+                        color: isDark ? Colors.white12 : Colors.black12),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'course.filterCourses'.tr(),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              if (provider.selectedLanguage != null ||
-                  provider.selectedLevel != null)
-                TextButton.icon(
-                  onPressed: () {
-                    provider.clearFilters();
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.clear_all, size: 18),
-                  label: Text('common.clear'.tr()),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red[400]),
-                ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Language Filter
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: primaryAccent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.language, size: 16, color: primaryAccent),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'common.language'.tr(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: _applyFilters,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: primaryAccent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildFilterChip(
-                context: context,
-                label: 'All',
-                isSelected: provider.selectedLanguage == null,
-                color: Colors.grey,
-                onTap: () {
-                  provider.filterByLanguage(null);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'English',
-                isSelected: provider.selectedLanguage == 'English',
-                color: primaryAccent,
-                iconWidget: _buildLanguageIcon(
-                  'EN',
-                  primaryAccent,
-                  provider.selectedLanguage == 'English',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('English');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Spanish',
-                isSelected: provider.selectedLanguage == 'Spanish',
-                color: AppColors.orange,
-                iconWidget: _buildLanguageIcon(
-                  'ES',
-                  AppColors.orange,
-                  provider.selectedLanguage == 'Spanish',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('Spanish');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Vietnamese',
-                isSelected: provider.selectedLanguage == 'Vietnamese',
-                color: AppColors.errorBright,
-                iconWidget: _buildLanguageIcon(
-                  'VI',
-                  AppColors.errorBright,
-                  provider.selectedLanguage == 'Vietnamese',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('Vietnamese');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Level Filter
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.signal_cellular_alt,
-                  size: 16,
-                  color: AppColors.purple,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'common.level'.tr(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildFilterChip(
-                context: context,
-                label: 'All',
-                isSelected: provider.selectedLevel == null,
-                color: Colors.grey,
-                onTap: () {
-                  provider.filterByLevel(null);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Beginner',
-                isSelected: provider.selectedLevel == 'Beginner',
-                color: AppColors.greenSuccessBright,
-                onTap: () {
-                  provider.filterByLevel('Beginner');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Intermediate',
-                isSelected: provider.selectedLevel == 'Intermediate',
-                color: AppColors.orange,
-                onTap: () {
-                  provider.filterByLevel('Intermediate');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Advanced',
-                isSelected: provider.selectedLevel == 'Advanced',
-                color: AppColors.errorBright,
-                onTap: () {
-                  provider.filterByLevel('Advanced');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildFilterChip({
-    required BuildContext context,
-    required String label,
-    required bool isSelected,
-    required Color color,
-    Widget? iconWidget,
-    required VoidCallback onTap,
-  }) {
+  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
+    if (colorHex == null || colorHex.isEmpty) {
+      return AppColorRoles.primary(isDark);
+    }
+    try {
+      final hex = colorHex.replaceAll('#', '');
+      return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
+    } catch (_) {
+      return AppColorRoles.primary(isDark);
+    }
+  }
+}
+
+/// Compact section header row used inside _FilterSheet
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+      ],
+    );
+  }
+}
+
+/// Animated filter chip used inside _FilterSheet
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final Widget? prefix;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    this.prefix,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           gradient: isSelected
@@ -1486,7 +1780,7 @@ class _FilterSheet extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (iconWidget != null) ...[iconWidget, const SizedBox(width: 6)],
+            if (prefix != null) ...[prefix!, const SizedBox(width: 6)],
             Text(
               label,
               style: TextStyle(
@@ -1508,8 +1802,18 @@ class _FilterSheet extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildLanguageIcon(String code, Color color, bool isSelected) {
+/// Language badge prefix (e.g. "EN", "ES") inside a chip
+class _LangBadge extends StatelessWidget {
+  final String code;
+  final Color color;
+  final bool isSelected;
+
+  const _LangBadge(this.code, this.color, this.isSelected);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(

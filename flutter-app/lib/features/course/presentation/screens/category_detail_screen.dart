@@ -364,6 +364,51 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 }
 
+String _courseImageUrl(CourseEntity course) {
+  if (course.thumbnailUrl != null) return course.thumbnailUrl!;
+  final tags = course.tags.map((t) => t.toLowerCase()).toSet();
+  final level = course.level.toLowerCase();
+  if (tags.contains('ielts') || tags.contains('test-prep') || tags.contains('exam')) {
+    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
+  }
+  if (tags.contains('business') || tags.contains('business-english')) {
+    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80';
+  }
+  if (tags.contains('conversation') || tags.contains('speaking')) {
+    return 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&q=80';
+  }
+  if (tags.contains('grammar')) {
+    return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80';
+  }
+  if (tags.contains('vocabulary') || tags.contains('vocab')) {
+    return 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80';
+  }
+  if (tags.contains('reading')) {
+    return 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&q=80';
+  }
+  if (tags.contains('listening')) {
+    return 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80';
+  }
+  if (tags.contains('writing')) {
+    return 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80';
+  }
+  if (tags.contains('travel')) {
+    return 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80';
+  }
+  switch (level) {
+    case 'beginner':
+    case 'elementary':
+      return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80';
+    case 'intermediate':
+    case 'upper-intermediate':
+      return 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80';
+    case 'advanced':
+      return 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80';
+    default:
+      return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80';
+  }
+}
+
 /// Course Card Widget for grid view
 class _CourseCard extends StatelessWidget {
   final CourseEntity course;
@@ -392,15 +437,11 @@ class _CourseCard extends StatelessWidget {
                 child: SizedBox(
                   width: 100,
                   height: 100,
-                  child: course.thumbnailUrl != null
-                      ? Image.network(
-                          course.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderImage();
-                          },
-                        )
-                      : _buildPlaceholderImage(),
+                  child: Image.network(
+                    _courseImageUrl(course),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -523,14 +564,11 @@ class _CourseGridCard extends StatelessWidget {
                 ),
                 child: SizedBox(
                   width: double.infinity,
-                  child: course.thumbnailUrl != null
-                      ? Image.network(
-                          course.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildPlaceholderImage(),
-                        )
-                      : _buildPlaceholderImage(),
+                  child: Image.network(
+                    _courseImageUrl(course),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                  ),
                 ),
               ),
             ),

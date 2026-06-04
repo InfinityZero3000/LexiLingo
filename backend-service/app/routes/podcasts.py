@@ -80,17 +80,17 @@ CURATED_PODCASTS = [
     },
     # B1-B2 — normal conversational speed
     {
-        "id": hashlib.md5(b"https://allears.libsyn.com/rss").hexdigest()[:12],
-        "title": "All Ears English",
-        "author": "Lindsay McMahon & Michelle Kaplan",
+        "id": hashlib.md5(b"https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20").hexdigest()[:12],
+        "title": "VOA Learning English",
+        "author": "Voice of America",
         "description": (
-            "Real English conversations about American culture, idioms, and"
-            " expressions. Connection NOT perfection is our motto."
+            "Clear, slow-paced English news and stories using limited vocabulary."
+            " Formerly VOA Special English — perfect for building fluency."
         ),
-        "feed_url": "https://allears.libsyn.com/rss",
-        "artwork_url": "https://static.libsyn.com/p/assets/1/d/9/d/1d9d3c6d4d7a4b4b/AE_Icon_blue.jpg",
-        "episode_count": 900,
-        "categories": ["education", "english"],
+        "feed_url": "https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20",
+        "artwork_url": "https://gdb.voanews.com/0684e143-ca54-4c31-bbc7-c26e19b2fb70.jpg",
+        "episode_count": 250,
+        "categories": ["education", "news"],
         "cefr_level": "B1",
         "language": "en",
     },

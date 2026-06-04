@@ -134,7 +134,9 @@ class PodcastCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            '${podcast.episodeCount} eps',
+                            podcast.episodeCount > 0
+                                ? '${podcast.episodeCount} eps'
+                                : '– eps',
                             style: TextStyle(
                               color: isDark
                                   ? Colors.white38

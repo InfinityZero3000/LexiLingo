@@ -28,7 +28,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<YouTubeProvider>().loadChannels();
+      final provider = context.read<YouTubeProvider>();
+      provider.clearSearch();
+      provider.loadChannels();
     });
     _scrollController.addListener(_onScroll);
   }
@@ -39,6 +41,16 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onBackPressed() {
+    final provider = context.read<YouTubeProvider>();
+    if (provider.searchQuery.isNotEmpty) {
+      _searchController.clear();
+      provider.clearSearch();
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   void _onScroll() {
@@ -63,32 +75,38 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            const SliverPersistentHeader(
-              floating: true,
-              delegate: _YouTubeFloatingHeader(),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: _buildSearchBar(isDark),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBackPressed();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPersistentHeader(
+                floating: true,
+                delegate: _YouTubeFloatingHeader(onBack: _onBackPressed),
               ),
-            ),
 
-            Consumer<YouTubeProvider>(
-              builder: (context, provider, _) {
-                if (provider.searchQuery.isNotEmpty) {
-                  return _buildSearchResults(provider, isDark);
-                }
-                return _buildChannelsSection(provider, isDark);
-              },
-            ),
-          ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: _buildSearchBar(isDark),
+                ),
+              ),
+
+              Consumer<YouTubeProvider>(
+                builder: (context, provider, _) {
+                  if (provider.searchQuery.isNotEmpty) {
+                    return _buildSearchResults(provider, isDark);
+                  }
+                  return _buildChannelsSection(provider, isDark);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -244,8 +262,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
           channel.id,
           channelName: channel.name,
         );
-        _searchController.text = channel.name;
-        setState(() {});
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -307,11 +323,16 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   }
 
   Widget _buildChannelAvatar(YouTubeChannel channel, bool isDark) {
-    if (channel.thumbnail.isNotEmpty) {
+    // Only load thumbnails routed through our proxy or proper CDN (guards against
+    // malformed URLs from stale server-side cache, e.g. yt3.googleusercontent.com/ChannelName)
+    final thumb = channel.thumbnail;
+    final isUsable = thumb.isNotEmpty &&
+        (thumb.contains('/podcasts/proxy/') || thumb.contains('/ytc/'));
+    if (isUsable) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: CachedNetworkImage(
-          imageUrl: channel.thumbnail,
+          imageUrl: thumb,
           width: 48,
           height: 48,
           fit: BoxFit.cover,
@@ -712,7 +733,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 // ──────────────────────────────────────
 
 class _YouTubeFloatingHeader extends SliverPersistentHeaderDelegate {
-  const _YouTubeFloatingHeader();
+  final VoidCallback onBack;
+
+  const _YouTubeFloatingHeader({required this.onBack});
 
   static const double _height = 72.0;
 
@@ -742,7 +765,7 @@ class _YouTubeFloatingHeader extends SliverPersistentHeaderDelegate {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: onBack,
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             style: IconButton.styleFrom(
               backgroundColor: isDark
@@ -764,5 +787,5 @@ class _YouTubeFloatingHeader extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_YouTubeFloatingHeader old) => false;
+  bool shouldRebuild(_YouTubeFloatingHeader old) => old.onBack != onBack;
 }

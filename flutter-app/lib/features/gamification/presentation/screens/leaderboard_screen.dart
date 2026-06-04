@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/leaderboard_podium.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/league_card.dart';
@@ -22,6 +23,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   late TabController _tabController;
   bool _didPrecacheRankingAssets = false;
   bool _isLoadingInitialRankTab = true;
+  LeaderboardEntryEntity? _selectedLeaderboardEntry;
 
   static const List<String> _leagues = [
     'bronze',
@@ -91,6 +93,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   void _onTabChanged() {
     final league = _leagues[_tabController.index];
     context.read<GamificationProvider>().setLeague(league);
+    setState(() {
+      _selectedLeaderboardEntry = null;
+    });
   }
 
   @override
@@ -163,7 +168,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         ? const _LeagueCardSkeleton()
                         : LeagueCard(
                             status: provider.leagueStatus!,
+                            selectedEntry: _selectedLeaderboardEntry,
                             onTap: () {
+                              if (_selectedLeaderboardEntry != null) {
+                                // Deselect and revert to current user's card
+                                setState(() {
+                                  _selectedLeaderboardEntry = null;
+                                });
+                                return;
+                              }
                               // Jump to user's league tab
                               final index = _leagues.indexOf(
                                 provider.leagueStatus!.league.toLowerCase(),
@@ -240,6 +253,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                               return _LeaderboardTab(
                                 league: league,
                                 isBootstrapping: isBootstrapping,
+                                onEntrySelected: (entry) {
+                                  setState(() {
+                                    _selectedLeaderboardEntry = entry;
+                                  });
+                                },
                               );
                             }).toList(),
                           ),
@@ -377,8 +395,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 class _LeaderboardTab extends StatelessWidget {
   final String league;
   final bool isBootstrapping;
+  final void Function(LeaderboardEntryEntity?)? onEntrySelected;
 
-  const _LeaderboardTab({required this.league, required this.isBootstrapping});
+  const _LeaderboardTab({
+    required this.league,
+    required this.isBootstrapping,
+    this.onEntrySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -418,6 +441,7 @@ class _LeaderboardTab extends StatelessWidget {
             await provider.loadLeaderboard(league: league);
             await provider.loadLeagueStatus();
           },
+          onEntrySelected: onEntrySelected,
         );
       },
     );

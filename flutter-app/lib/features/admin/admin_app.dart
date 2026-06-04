@@ -9,9 +9,7 @@ import 'shared/admin_exit_scope.dart';
 /// Full-screen admin panel embedded inside the main flutter-app.
 /// Opened via Navigator.push from profile_page when the user is an admin.
 class AdminApp extends StatefulWidget {
-  const AdminApp({super.key, this.initialEmail});
-
-  final String? initialEmail;
+  const AdminApp({super.key});
 
   @override
   State<AdminApp> createState() => _AdminAppState();
@@ -19,10 +17,7 @@ class AdminApp extends StatefulWidget {
 
 class _AdminAppState extends State<AdminApp> {
   late final AuthProvider _authProvider;
-  late final _router = createRouter(
-    _authProvider,
-    initialEmail: widget.initialEmail,
-  );
+  late final _router = createRouter(_authProvider);
 
   @override
   void initState() {

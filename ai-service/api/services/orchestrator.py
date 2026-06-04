@@ -102,6 +102,11 @@ class AIOrchestrator:
         self._initialized = False
         logger.info("AIOrchestrator shutdown")
 
+    @property
+    def pipeline(self):
+        """Direct access to the TraceCAGPipeline (used by the streaming endpoint)."""
+        return self._pipeline
+
     # ── Public entry point ───────────────────────────────────────────────────
 
     async def process(

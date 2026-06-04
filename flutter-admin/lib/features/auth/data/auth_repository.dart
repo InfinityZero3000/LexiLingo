@@ -175,14 +175,9 @@ class AuthRepository {
       refreshToken: data['refresh_token']?.toString() ?? '',
     );
 
-    var userJson =
+    final userJson =
         _asStringKeyMap(data['user']) ??
         _userFromFlatLogin(data, fallbackEmail: fallbackEmail);
-
-    try {
-      final fresh = await _api.get(ApiEndpoints.me);
-      userJson = _unwrapData(fresh);
-    } catch (_) {}
 
     final user = AdminUser.fromJson(userJson);
     await TokenStorage.saveUser(jsonEncode(userJson));

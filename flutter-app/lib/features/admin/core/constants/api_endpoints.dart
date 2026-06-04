@@ -4,6 +4,7 @@ class ApiEndpoints {
   // Auth
   static const String userLogin = '/auth/login';
   static const String adminLogin = '/auth/admin/login';
+  static const String googleLogin = '/auth/google';
   static const String adminRequestOtp = '/auth/admin/request-otp';
   static const String adminVerifyOtp = '/auth/admin/verify-otp';
   static const String refreshToken = '/auth/refresh';

@@ -11,7 +11,7 @@ class AppTheme {
         onPrimary: Colors.white,
         primaryContainer: AppColors.primaryContainer,
         onPrimaryContainer: AppColors.onSurface,
-        secondary: Color(0xFF4E6071),
+        secondary: Color(0xFF2AA7A1),
         onSecondary: Colors.white,
         surface: AppColors.surface,
         onSurface: AppColors.onSurface,
@@ -82,7 +82,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryBright,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -111,11 +111,11 @@ class AppTheme {
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.outlineVariant),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.outlineVariant),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -132,7 +132,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
+          side: const BorderSide(color: AppColors.outline, width: 0.8),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -141,13 +141,13 @@ class AppTheme {
         labelStyle: GoogleFonts.spaceGrotesk(fontSize: 11, fontWeight: FontWeight.w700),
       ),
       dividerTheme: const DividerThemeData(
-        color: AppColors.surfaceContainerHigh,
+        color: AppColors.outline,
         thickness: 1,
         space: 1,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.primaryBright,
         unselectedItemColor: AppColors.onSurfaceMuted,
         selectedLabelStyle: GoogleFonts.spaceGrotesk(fontSize: 10, fontWeight: FontWeight.w700),
         unselectedLabelStyle: GoogleFonts.spaceGrotesk(fontSize: 10),

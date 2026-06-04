@@ -87,6 +87,9 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Load settings for user
   Future<void> loadSettings(String userId) async {
+    // Skip reload if already loaded for this user — avoids spinner flash on re-entry
+    if (_activeUserId == userId && _settings != null && !_isLoading) return;
+
     _activeUserId = userId;
     _isLoading = true;
     _error = null;

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/storage/token_storage.dart';
@@ -96,17 +95,16 @@ class AuthRepository {
     return _persistAdminSession(_unwrapData(resp), fallbackEmail: email);
   }
 
-  Future<AdminUser> loginWithPassword(String email, String password) async {
-    try {
-      final resp = await _api.post(
-        ApiEndpoints.adminLogin,
-        data: {'email': email, 'password': password},
-      );
-      return _persistAdminSession(_unwrapData(resp), fallbackEmail: email);
-    } on DioException catch (error) {
-      if (error.response?.statusCode != 404) rethrow;
-      return _loginWithUserEndpoint(email, password);
-    }
+  Future<AdminUser> loginWithGoogle(String idToken) async {
+    final resp = await _api.post(
+      ApiEndpoints.googleLogin,
+      data: {'id_token': idToken, 'source': 'admin'},
+    );
+    final data = _unwrapData(resp);
+    final email = (data['user'] as Map?)?['email']?.toString() ??
+        data['email']?.toString() ??
+        '';
+    return _persistAdminSession(data, fallbackEmail: email);
   }
 
   Future<AdminUser?> getMe() async {
@@ -137,30 +135,6 @@ class AuthRepository {
     await TokenStorage.clear();
   }
 
-  Future<AdminUser> _loginWithUserEndpoint(
-    String email,
-    String password,
-  ) async {
-    final resp = await _api.post(
-      ApiEndpoints.userLogin,
-      data: {'email': email, 'password': password},
-    );
-    final data = _unwrapData(resp);
-    final userJson = _userFromFlatLogin(data, fallbackEmail: email);
-
-    if ((userJson['role_level'] as int) < 1) {
-      await TokenStorage.clear();
-      throw Exception('403 Admin privileges required');
-    }
-
-    final adminData = {
-      'access_token': data['access_token'],
-      'refresh_token': data['refresh_token'] ?? '',
-      'user': userJson,
-    };
-    return _persistAdminSession(adminData, fallbackEmail: email);
-  }
-
   Future<AdminUser> _persistAdminSession(
     Map<String, dynamic> data, {
     required String fallbackEmail,
@@ -175,14 +149,9 @@ class AuthRepository {
       refreshToken: data['refresh_token']?.toString() ?? '',
     );
 
-    var userJson =
+    final userJson =
         _asStringKeyMap(data['user']) ??
         _userFromFlatLogin(data, fallbackEmail: fallbackEmail);
-
-    try {
-      final fresh = await _api.get(ApiEndpoints.me);
-      userJson = _unwrapData(fresh);
-    } catch (_) {}
 
     final user = AdminUser.fromJson(userJson);
     await TokenStorage.saveUser(jsonEncode(userJson));
