@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 
 class GrammarTestsScreen extends StatefulWidget {
   const GrammarTestsScreen({super.key});
@@ -38,8 +39,8 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Text('Grammar & Tests',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
