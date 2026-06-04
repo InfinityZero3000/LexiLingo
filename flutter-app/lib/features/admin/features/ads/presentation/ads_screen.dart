@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_shell.dart';
 
 class AdsScreen extends StatelessWidget {
   const AdsScreen({super.key});
@@ -12,8 +13,8 @@ class AdsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Text('Banner & Ads',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
