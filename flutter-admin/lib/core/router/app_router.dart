@@ -15,17 +15,19 @@ import '../../features/grammar/presentation/grammar_tests_screen.dart';
 import '../../features/gamification/presentation/achievements_shop_screen.dart';
 import '../../features/super_admin/presentation/super_dashboard_screen.dart';
 import '../../features/super_admin/presentation/system_health_screen.dart';
+import '../../features/super_admin/presentation/admin_management_screen.dart';
+import '../../features/system_logs/presentation/logs_screen.dart';
+import '../../features/ads/presentation/ads_screen.dart';
+import '../../features/topics/presentation/topics_screen.dart';
+import '../../features/system_settings/presentation/system_settings_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../storage/token_storage.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Super admin-only paths — any non-super admin is redirected to /settings.
-const _superAdminPaths = [
-  '/settings/super-dashboard',
-  '/settings/system-health',
-];
+/// Routes accessible only to super admins.
+const _superAdminPaths = ['/super/dashboard', '/super/admins'];
 
 GoRouter createRouter(AuthProvider authProvider) {
   return GoRouter(
@@ -41,10 +43,9 @@ GoRouter createRouter(AuthProvider authProvider) {
       if (!hasToken && !onAuth) return '/login';
       if (hasToken && onAuth) return '/dashboard';
 
-      // Guard super admin routes — redirect non-super-admins back to settings.
       final onSuperAdmin = _superAdminPaths.any((p) => loc.startsWith(p));
       if (onSuperAdmin && hasToken && !authProvider.isSuperAdmin) {
-        return '/settings';
+        return '/dashboard';
       }
 
       return null;
@@ -59,10 +60,13 @@ GoRouter createRouter(AuthProvider authProvider) {
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AdminShell(child: child),
         routes: [
+          // ── Overview ──────────────────────────────────────────────────────
           GoRoute(
             path: '/dashboard',
             builder: (_, __) => const DashboardScreen(),
           ),
+
+          // ── Content ───────────────────────────────────────────────────────
           GoRoute(
             path: '/curriculum',
             builder: (_, __) => const CurriculumScreen(),
@@ -70,9 +74,8 @@ GoRouter createRouter(AuthProvider authProvider) {
               GoRoute(
                 path: 'course/:id',
                 parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, state) => CourseDetailScreen(
-                  courseId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    CourseDetailScreen(courseId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: 'units',
@@ -88,53 +91,72 @@ GoRouter createRouter(AuthProvider authProvider) {
             ],
           ),
           GoRoute(
+            path: '/topics',
+            builder: (_, __) => const TopicsScreen(),
+          ),
+          GoRoute(
+            path: '/vocabulary',
+            builder: (_, __) => const VocabularyScreen(),
+          ),
+          GoRoute(
+            path: '/grammar',
+            builder: (_, __) => const GrammarTestsScreen(),
+          ),
+          GoRoute(
+            path: '/analytics',
+            builder: (_, __) => const AnalyticsScreen(),
+          ),
+
+          // ── Users ─────────────────────────────────────────────────────────
+          GoRoute(
             path: '/users',
             builder: (_, __) => const UsersScreen(),
             routes: [
               GoRoute(
                 path: ':id/stats',
                 parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, state) => UserStatsScreen(
-                  userId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    UserStatsScreen(userId: state.pathParameters['id']!),
               ),
             ],
+          ),
+
+          // ── Gamification ──────────────────────────────────────────────────
+          GoRoute(
+            path: '/achievements',
+            builder: (_, __) => const AchievementsShopScreen(),
+          ),
+
+          // ── System ────────────────────────────────────────────────────────
+          GoRoute(
+            path: '/ads',
+            builder: (_, __) => const AdsScreen(),
+          ),
+          GoRoute(
+            path: '/logs',
+            builder: (_, __) => const LogsScreen(),
+          ),
+          GoRoute(
+            path: '/system-health',
+            builder: (_, __) => const SystemHealthScreen(),
+          ),
+          GoRoute(
+            path: '/system-settings',
+            builder: (_, __) => const SystemSettingsScreen(),
           ),
           GoRoute(
             path: '/settings',
             builder: (_, __) => const SettingsScreen(),
-            routes: [
-              GoRoute(
-                path: 'analytics',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const AnalyticsScreen(),
-              ),
-              GoRoute(
-                path: 'vocabulary',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const VocabularyScreen(),
-              ),
-              GoRoute(
-                path: 'grammar',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const GrammarTestsScreen(),
-              ),
-              GoRoute(
-                path: 'achievements',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const AchievementsShopScreen(),
-              ),
-              GoRoute(
-                path: 'super-dashboard',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const SuperDashboardScreen(),
-              ),
-              GoRoute(
-                path: 'system-health',
-                parentNavigatorKey: _rootNavigatorKey,
-                builder: (_, __) => const SystemHealthScreen(),
-              ),
-            ],
+          ),
+
+          // ── Super Admin ───────────────────────────────────────────────────
+          GoRoute(
+            path: '/super/dashboard',
+            builder: (_, __) => const SuperDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/super/admins',
+            builder: (_, __) => const AdminManagementScreen(),
           ),
         ],
       ),
