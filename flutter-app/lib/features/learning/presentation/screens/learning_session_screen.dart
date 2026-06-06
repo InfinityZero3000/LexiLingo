@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/services/sound_service.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
@@ -29,15 +30,51 @@ class LearningSessionScreen extends StatefulWidget {
 }
 
 class _LearningSessionScreenState extends State<LearningSessionScreen> {
+  bool _wasAnswered = false;
+  bool _wasCompleted = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LearningProvider>().startLesson(
-        widget.courseId,
-        widget.lessonId,
-      );
+      final provider = context.read<LearningProvider>();
+      provider.startLesson(widget.courseId, widget.lessonId);
+      provider.addListener(_onProviderChange);
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<LearningProvider>().removeListener(_onProviderChange);
+    super.dispose();
+  }
+
+  void _onProviderChange() {
+    final provider = context.read<LearningProvider>();
+
+    // Lesson just completed
+    if (!_wasCompleted && provider.isCompleted) {
+      _wasCompleted = true;
+      SoundService.instance.playComplete();
+      return;
+    }
+
+    // Answer just submitted (isCurrentAnswered flipped from false → true)
+    final nowAnswered = provider.isCurrentAnswered;
+    if (!_wasAnswered && nowAnswered) {
+      final correct = provider.isCurrentCorrect ?? false;
+      if (correct) {
+        SoundService.instance.playCorrect();
+      } else {
+        SoundService.instance.playWrong();
+      }
+    }
+
+    // Reset tracking when moving to the next exercise
+    if (_wasAnswered && !nowAnswered) {
+      _wasCompleted = false;
+    }
+    _wasAnswered = nowAnswered;
   }
 
   @override
@@ -207,8 +244,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           return DialogueCompletionWidget(
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'dictation':
@@ -360,6 +399,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   Widget _buildActionButtons(BuildContext context, LearningProvider provider) {
     final answered  = provider.isCurrentAnswered;
     final correct   = provider.isCurrentCorrect ?? false;
+    final canCheckDraft = provider.hasCurrentDraftAnswer;
 
     // Button colour: correct=green, wrong=orange, not answered=primary blue
     final checkColor = answered
@@ -396,7 +436,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
-              onPressed: answered ? () => provider.nextExercise() : null,
+              onPressed: answered
+                  ? () => provider.nextExercise()
+                  : canCheckDraft
+                      ? () => provider.submitCurrentDraftAnswer()
+                      : null,
               icon: Icon(
                 answered
                     ? (correct ? Icons.check_circle_outline : Icons.arrow_forward_rounded)

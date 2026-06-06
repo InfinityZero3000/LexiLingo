@@ -66,6 +66,7 @@ class LearningProvider with ChangeNotifier {
   LessonAttemptModel? _currentAttempt;
   int _currentExerciseIndex = 0;
   Map<int, String> _userAnswers = {};
+  Map<int, String> _draftAnswers = {};
   Map<int, bool> _answerResults = {};
   Map<int, AnswerResponseModel> _answerResponses = {};
   bool _isLoading = false;
@@ -96,6 +97,9 @@ class LearningProvider with ChangeNotifier {
 
   bool get isCurrentAnswered => _userAnswers.containsKey(_currentExerciseIndex);
   String? get currentUserAnswer => _userAnswers[_currentExerciseIndex];
+  String? get currentDraftAnswer => _draftAnswers[_currentExerciseIndex];
+  bool get hasCurrentDraftAnswer =>
+      currentDraftAnswer?.trim().isNotEmpty ?? false;
   bool? get isCurrentCorrect => _answerResults[_currentExerciseIndex];
   AnswerResponseModel? get currentAnswerResponse =>
       _answerResponses[_currentExerciseIndex];
@@ -134,6 +138,7 @@ class LearningProvider with ChangeNotifier {
 
       _currentExerciseIndex = 0;
       _userAnswers = {};
+      _draftAnswers = {};
       _answerResults = {};
       _answerResponses = {};
       _xpEarned = 0;
@@ -153,6 +158,7 @@ class LearningProvider with ChangeNotifier {
     if (exercise == null) return;
 
     _userAnswers[_currentExerciseIndex] = answer;
+    _draftAnswers.remove(_currentExerciseIndex);
     final timeSpentMs = _exerciseStartTime != null
         ? DateTime.now().difference(_exerciseStartTime!).inMilliseconds
         : 5000;
@@ -191,6 +197,23 @@ class LearningProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  void updateDraftAnswer(String answer) {
+    if (isCurrentAnswered) return;
+
+    if (answer.trim().isEmpty) {
+      _draftAnswers.remove(_currentExerciseIndex);
+    } else {
+      _draftAnswers[_currentExerciseIndex] = answer;
+    }
+    notifyListeners();
+  }
+
+  Future<void> submitCurrentDraftAnswer() async {
+    final answer = currentDraftAnswer?.trim();
+    if (answer == null || answer.isEmpty) return;
+    await submitAnswer(answer);
   }
 
   void nextExercise() {
@@ -327,6 +350,7 @@ class LearningProvider with ChangeNotifier {
     _currentAttempt = null;
     _currentExerciseIndex = 0;
     _userAnswers = {};
+    _draftAnswers = {};
     _answerResults = {};
     _answerResponses = {};
     _xpEarned = 0;

@@ -79,7 +79,10 @@ async def start_lesson(
                 started_at=existing.started_at,
                 total_questions=existing.total_questions,
                 lives_remaining=existing.lives_remaining,
-                hints_available=3 - existing.hints_used
+                hints_available=max(
+                    0,
+                    3 + existing.bonus_hints - existing.hints_used,
+                )
             )
         )
     
@@ -91,6 +94,7 @@ async def start_lesson(
         total_questions=10,  # TODO: Get from lesson content
         lives_remaining=3,
         hints_used=0,
+        bonus_hints=0,
         passed=False,
         score=0,
         xp_earned=0,
@@ -540,7 +544,10 @@ async def submit_answer(
             explanation=explanation,
             xp_earned=xp,
             lives_remaining=attempt.lives_remaining,
-            hints_remaining=max(0, 3 - attempt.hints_used),
+            hints_remaining=max(
+                0,
+                3 + attempt.bonus_hints - attempt.hints_used,
+            ),
             current_score=float(attempt.score)
         )
     )
@@ -794,32 +801,43 @@ async def get_course_roadmap(
     units_roadmap = []
     completed_units = 0
     completed_lessons_count = 0
-    
-    for unit in sorted(course.units, key=lambda u: u.order_index):
+
+    sorted_units = sorted(course.units, key=lambda unit: unit.order_index)
+    for unit_number, unit in enumerate(sorted_units, start=1):
         lessons_items = []
         unit_completed = 0
-        
-        for lesson in sorted(unit.lessons, key=lambda l: l.order_index):
+
+        sorted_lessons = sorted(
+            unit.lessons,
+            key=lambda lesson: lesson.order_index
+        )
+        for lesson_index, lesson in enumerate(sorted_lessons):
             progress = progress_map.get(lesson.id)
-            
-            # Check if locked
-            is_locked = False
-            if lesson.order_index > 0:
-                prev = next((l for l in unit.lessons if l.order_index == lesson.order_index - 1), None)
-                if prev:
-                    prev_prog = progress_map.get(prev.id)
-                    is_locked = not (prev_prog and prev_prog.status == "completed")
-            
+
+            previous_lesson = (
+                sorted_lessons[lesson_index - 1]
+                if lesson_index > 0
+                else None
+            )
+            previous_progress = (
+                progress_map.get(previous_lesson.id)
+                if previous_lesson
+                else None
+            )
+            is_locked = previous_lesson is not None and not (
+                previous_progress and previous_progress.status == "completed"
+            )
+
             is_completed = (progress.status == "completed") if progress else False
             if is_completed:
                 unit_completed += 1
                 completed_lessons_count += 1
-            
+
             is_current = not is_locked and not is_completed
-            
+
             lesson_item = LessonProgressItem(
                 lesson_id=lesson.id,
-                lesson_number=lesson.order_index + 1,
+                lesson_number=lesson_index + 1,
                 title=lesson.title,
                 description=lesson.description,
                 is_locked=is_locked,
@@ -833,19 +851,23 @@ async def get_course_roadmap(
                 background_color="#4CAF50" if is_completed else "#9E9E9E" if is_locked else "#2196F3"
             )
             lessons_items.append(lesson_item)
-        
-        unit_comp = (unit_completed / len(unit.lessons) * 100) if unit.lessons else 0
+
+        unit_comp = (
+            unit_completed / len(sorted_lessons) * 100
+            if sorted_lessons
+            else 0
+        )
         is_unit_current = any(l.is_current for l in lessons_items)
-        
+
         if unit_comp >= 100:
             completed_units += 1
-        
+
         unit_roadmap = UnitProgressRoadmap(
             unit_id=unit.id,
-            unit_number=unit.order_index + 1,
+            unit_number=unit_number,
             title=unit.title,
             description=unit.description,
-            total_lessons=len(unit.lessons),
+            total_lessons=len(sorted_lessons),
             completed_lessons=unit_completed,
             completion_percentage=unit_comp,
             is_current=is_unit_current,

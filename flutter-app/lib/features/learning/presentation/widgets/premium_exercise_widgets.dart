@@ -907,9 +907,10 @@ class TranslationChoiceWidget extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // 6. Dialogue Completion
 // ═══════════════════════════════════════════════════════════════
-class DialogueCompletionWidget extends StatelessWidget {
+class DialogueCompletionWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -918,14 +919,49 @@ class DialogueCompletionWidget extends StatelessWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
   });
 
+  @override
+  State<DialogueCompletionWidget> createState() =>
+      _DialogueCompletionWidgetState();
+}
+
+class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
+  late final TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.userAnswer ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant DialogueCompletionWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.userAnswer != oldWidget.userAnswer &&
+        widget.userAnswer != _controller.text) {
+      _controller.text = widget.userAnswer ?? '';
+      _controller.selection = TextSelection.collapsed(
+        offset: _controller.text.length,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   // Parse "A: ... B: ..." into two lines
   (String, String) _parseDialogue() {
-    final q = exercise.question;
+    final q = widget.exercise.question;
     final bIdx = q.indexOf(RegExp(r'\bB:'));
     if (bIdx == -1) return (q, '');
     return (
@@ -937,7 +973,7 @@ class DialogueCompletionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (lineA, lineB) = _parseDialogue();
-    final options = exercise.options ?? [];
+    final options = widget.exercise.options ?? [];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -1002,7 +1038,7 @@ class DialogueCompletionWidget extends StatelessWidget {
                     ),
                   ),
                   child: lineB.contains('{blank}')
-                      ? _buildBlankedLine(lineB, userAnswer)
+                      ? _buildBlankedLine(lineB)
                       : Text(
                           lineB.isEmpty ? '[_____]' : lineB,
                           style: const TextStyle(
@@ -1023,25 +1059,25 @@ class DialogueCompletionWidget extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           ...options.map((opt) {
-            final sel  = userAnswer == opt;
-            final corr = exercise.correctAnswer == opt;
+            final sel  = widget.userAnswer == opt;
+            final corr = widget.exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _OptionCard(
                 text: opt,
                 isSelected: sel,
                 isCorrect: corr,
-                isAnswered: isAnswered,
-                onTap: () => onAnswer(opt),
+                isAnswered: widget.isAnswered,
+                onTap: () => widget.onAnswer(opt),
                 radius: 16,
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (widget.isAnswered && widget.exercise.explanation != null) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
-              isCorrect: isCorrect ?? false,
+              explanation: widget.exercise.explanation!,
+              isCorrect: widget.isCorrect ?? false,
             ),
           ],
         ],
@@ -1049,7 +1085,7 @@ class DialogueCompletionWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBlankedLine(String line, String? selected) {
+  Widget _buildBlankedLine(String line) {
     final parts = line.split('{blank}');
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -1061,21 +1097,46 @@ class DialogueCompletionWidget extends StatelessWidget {
                 color: _kTextDark)),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          width: 84,
+          height: 36,
           decoration: BoxDecoration(
-            color: selected != null ? _kPrimary : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            color: widget.isAnswered ? _kPrimary : Colors.white,
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: _kPrimary,
-              style: selected != null ? BorderStyle.none : BorderStyle.solid,
+              width: 1.5,
             ),
           ),
-          child: Text(
-            selected ?? '  ____  ',
+          child: TextField(
+            key: const Key('dialogue-blank-input'),
+            controller: _controller,
+            focusNode: _focusNode,
+            enabled: !widget.isAnswered,
+            textAlign: TextAlign.center,
+            textInputAction: TextInputAction.done,
+            onChanged: widget.onInputChanged,
+            onSubmitted: (value) {
+              if (widget.onInputChanged == null && value.trim().isNotEmpty) {
+                widget.onAnswer(value.trim());
+              }
+            },
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: selected != null ? Colors.white : _kPrimary,
+              color: widget.isAnswered ? Colors.white : _kTextDark,
+            ),
+            decoration: const InputDecoration(
+              hintText: '____',
+              hintStyle: TextStyle(
+                color: _kPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 8,
+              ),
             ),
           ),
         ),
@@ -2062,7 +2123,7 @@ class _VocabularyFlashcardWidgetState
                   ],
                 ),
                 child: const Text(
-                  'Đã hiểu rồi! 👍',
+                  'Đã hiểu rồi!',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
