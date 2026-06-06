@@ -944,7 +944,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     ];
     const conversation = [
       'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop at café
-      'https://images.unsplash.com/photo-1526378800651-3ae35efb2dae?w=800&q=80', // coffee on book
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
       'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&q=80', // laptop keyboard
     ];
     const grammar = [
@@ -985,7 +985,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     const intermediate = [
       'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80',    // open book pages
       'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
-      'https://images.unsplash.com/photo-1526378800651-3ae35efb2dae?w=800&q=80', // coffee on book
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
     ];
     const advanced = [
       'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
