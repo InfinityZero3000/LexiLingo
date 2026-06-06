@@ -526,6 +526,7 @@ class TestYoutubeSearchInternal:
             mock_settings.YOUTUBE_API_KEY = "test_key"
 
             mock_resp = MagicMock()
+            mock_resp.status_code = 200
             mock_resp.json.return_value = mock_response_data
             mock_resp.raise_for_status = MagicMock()
 
@@ -553,6 +554,7 @@ class TestYoutubeSearchInternal:
             mock_settings.YOUTUBE_API_KEY = "test_key"
 
             mock_resp = MagicMock()
+            mock_resp.status_code = 200
             mock_resp.json.return_value = {"items": [], "pageInfo": {"totalResults": 0}}
             mock_resp.raise_for_status = MagicMock()
 
