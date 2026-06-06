@@ -437,6 +437,103 @@ export const deleteUnit = async (id: string) =>
   });
 
 // ============================================================================
+// Exercise Types
+// ============================================================================
+
+export const UI_TYPES = [
+  "multiple_choice",
+  "true_or_false",
+  "fill_in_the_blank",
+  "arrange_the_sentence",
+  "translation_choice",
+  "dialogue_completion",
+  "collocation_choice",
+  "dictation",
+  "grammar_correction",
+  "image_based_choice",
+  "listen_and_choose",
+  "match_word_to_meaning",
+  "vocabulary_flashcard",
+  "pronunciation_practice",
+  "reading_comprehension",
+  "short_writing_answer",
+  "speaking_repeat",
+  "categorization",
+  "cognitive_fluidity",
+] as const;
+
+export type UiType = typeof UI_TYPES[number];
+
+export const UI_TYPE_LABELS: Record<UiType, string> = {
+  multiple_choice: "Multiple Choice",
+  true_or_false: "True or False",
+  fill_in_the_blank: "Fill in the Blank",
+  arrange_the_sentence: "Arrange the Sentence",
+  translation_choice: "Translation Choice",
+  dialogue_completion: "Dialogue Completion",
+  collocation_choice: "Collocation Choice",
+  dictation: "Dictation",
+  grammar_correction: "Grammar Correction",
+  image_based_choice: "Image Based Choice",
+  listen_and_choose: "Listen and Choose",
+  match_word_to_meaning: "Match Word to Meaning",
+  vocabulary_flashcard: "Vocabulary Flashcard",
+  pronunciation_practice: "Pronunciation Practice",
+  reading_comprehension: "Reading Comprehension",
+  short_writing_answer: "Short Writing Answer",
+  speaking_repeat: "Speaking Repeat",
+  categorization: "Categorization",
+  cognitive_fluidity: "Cognitive Fluidity",
+};
+
+export const UI_TYPE_TO_TYPE: Record<UiType, string> = {
+  multiple_choice: "multiple_choice",
+  collocation_choice: "multiple_choice",
+  image_based_choice: "multiple_choice",
+  listen_and_choose: "multiple_choice",
+  reading_comprehension: "multiple_choice",
+  vocabulary_flashcard: "multiple_choice",
+  true_or_false: "true_false",
+  fill_in_the_blank: "fill_blank",
+  dictation: "fill_blank",
+  short_writing_answer: "fill_blank",
+  dialogue_completion: "fill_blank",
+  grammar_correction: "fill_blank",
+  arrange_the_sentence: "reorder",
+  translation_choice: "translate",
+  speaking_repeat: "translate",
+  pronunciation_practice: "translate",
+  match_word_to_meaning: "matching",
+  cognitive_fluidity: "matching",
+  categorization: "matching",
+};
+
+export type ExerciseOption = {
+  id: string;
+  text: string;
+  is_correct: boolean;
+};
+
+export type Exercise = {
+  id: string;
+  type: string;
+  ui_type: string;
+  question: string;
+  options?: ExerciseOption[] | null;
+  correct_answer: string;
+  explanation?: string | null;
+  hint?: string | null;
+  audio_url?: string | null;
+  image_url?: string | null;
+  difficulty: number;
+  points: number;
+};
+
+export type LessonContent = {
+  exercises: Exercise[];
+};
+
+// ============================================================================
 // Lesson Management
 // ============================================================================
 
@@ -450,9 +547,14 @@ export type LessonItem = {
   xp_reward: number;
   pass_threshold: number;
   total_exercises: number;
+  estimated_minutes?: number;
   prerequisites: string[];
   created_at: string;
   updated_at: string;
+};
+
+export type LessonDetail = LessonItem & {
+  content?: LessonContent | null;
 };
 
 export const listLessonsAdmin = async (params: { unit_id?: string; course_id?: string }) => {
@@ -486,6 +588,23 @@ export const updateLesson = async (id: string, payload: Partial<LessonItem>) =>
 export const deleteLesson = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/lessons/${id}`, {
     method: "DELETE",
+  });
+
+export const getLessonDetail = async (id: string) =>
+  apiFetch<AdminResponse<LessonDetail>>(`${ENV.backendUrl}/admin/lessons/${id}`);
+
+export const updateLessonContent = async (
+  id: string,
+  exercises: Exercise[],
+  estimatedMinutes: number
+) =>
+  apiFetch<AdminResponse<LessonDetail>>(`${ENV.backendUrl}/admin/lessons/${id}/content`, {
+    method: "PUT",
+    body: JSON.stringify({
+      content: { exercises },
+      estimated_minutes: estimatedMinutes,
+      total_exercises: exercises.length,
+    }),
   });
 
 // ============================================================================
