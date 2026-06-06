@@ -7,11 +7,15 @@ import uuid
 import re
 import math
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
 
 from app.models.vocabulary import (
     VocabularyItem,
@@ -68,7 +72,12 @@ class VocabularyCRUD:
         if difficulty_level:
             conditions.append(VocabularyItem.difficulty_level == difficulty_level)
         if tag:
-            conditions.append(VocabularyItem.tags.contains([tag]))
+            if db.bind.dialect.name == "postgresql":
+                from sqlalchemy.dialects.postgresql import JSONB
+                from sqlalchemy import cast
+                conditions.append(cast(VocabularyItem.tags, JSONB).contains([tag]))
+            else:
+                conditions.append(VocabularyItem.tags.contains([tag]))
         
         if conditions:
             query = query.where(and_(*conditions))
@@ -638,12 +647,60 @@ class VocabularyCRUD:
         db: AsyncSession,
         user_id: uuid.UUID
     ) -> List[VocabularyDeck]:
-        """Get all decks for a user"""
-        result = await db.execute(
-            select(VocabularyDeck).where(
-                VocabularyDeck.user_id == user_id
-            ).order_by(VocabularyDeck.created_at.desc())
+        """Get all decks for a user with computed item counts"""
+        query = (
+            select(VocabularyDeck, func.count(VocabularyDeckItem.id).label("item_count"))
+            .outerjoin(VocabularyDeckItem, VocabularyDeckItem.deck_id == VocabularyDeck.id)
+            .where(VocabularyDeck.user_id == user_id)
+            .group_by(VocabularyDeck.id)
+            .order_by(VocabularyDeck.created_at.desc())
         )
+        result = await db.execute(query)
+        decks = []
+        for row in result.all():
+            deck, count = row
+            deck.item_count = count  # Assign count to the dynamic item_count field
+            decks.append(deck)
+        return decks
+
+    async def get_deck(
+        self,
+        db: AsyncSession,
+        deck_id: uuid.UUID
+    ) -> Optional[VocabularyDeck]:
+        """Get deck by ID"""
+        result = await db.execute(
+            select(VocabularyDeck).where(VocabularyDeck.id == deck_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def delete_deck(
+        self,
+        db: AsyncSession,
+        deck_id: uuid.UUID
+    ) -> bool:
+        """Delete a deck"""
+        deck = await self.get_deck(db, deck_id)
+        if not deck:
+            return False
+        await db.delete(deck)
+        await db.commit()
+        return True
+
+    async def get_deck_items(
+        self,
+        db: AsyncSession,
+        deck_id: uuid.UUID
+    ) -> List[UserVocabulary]:
+        """Get all user vocabulary items in a deck with vocabulary relationships loaded"""
+        query = (
+            select(UserVocabulary)
+            .join(VocabularyDeckItem, VocabularyDeckItem.user_vocabulary_id == UserVocabulary.id)
+            .options(joinedload(UserVocabulary.vocabulary))
+            .where(VocabularyDeckItem.deck_id == deck_id)
+            .order_by(VocabularyDeckItem.order, VocabularyDeckItem.added_at.desc())
+        )
+        result = await db.execute(query)
         return list(result.scalars().all())
     
     async def add_to_deck(
@@ -679,6 +736,122 @@ class VocabularyCRUD:
         await db.refresh(deck_item)
         
         return deck_item
+
+    async def remove_from_deck(
+        self,
+        db: AsyncSession,
+        deck_id: uuid.UUID,
+        user_vocabulary_id: uuid.UUID
+    ) -> bool:
+        """Remove a vocabulary item from a deck"""
+        result = await db.execute(
+            select(VocabularyDeckItem).where(
+                and_(
+                    VocabularyDeckItem.deck_id == deck_id,
+                    VocabularyDeckItem.user_vocabulary_id == user_vocabulary_id
+                )
+            )
+        )
+        deck_item = result.scalar_one_or_none()
+        if not deck_item:
+            return False
+        await db.delete(deck_item)
+        await db.commit()
+        return True
+
+    async def ensure_basic_words_for_user(
+        self,
+        db: AsyncSession,
+        user: "User | uuid.UUID"
+    ) -> None:
+        """
+        Check if user has all 'basic_200' words in their collection.
+        If any are missing, bulk add them.
+        """
+        from app.models.user import User
+        
+        # 1. Resolve User object and check has_seeded_basic_words flag
+        if isinstance(user, uuid.UUID):
+            user_obj = await db.get(User, user)
+            if not user_obj:
+                return
+        else:
+            user_obj = user
+            
+        if user_obj.has_seeded_basic_words:
+            return
+
+        user_id = user_obj.id
+        from sqlalchemy.dialects.postgresql import JSONB
+        from sqlalchemy import cast, insert
+        
+        # 2. Fetch all 'basic_200' vocabulary item IDs
+        if db.bind.dialect.name == "postgresql":
+            basic_items_query = select(VocabularyItem.id).where(
+                cast(VocabularyItem.tags, JSONB).contains(["basic_200"])
+            )
+        else:
+            basic_items_query = select(VocabularyItem.id).where(
+                VocabularyItem.tags.contains(["basic_200"])
+            )
+            
+        basic_items_result = await db.execute(basic_items_query)
+        basic_item_ids = [r[0] for r in basic_items_result.all()]
+        
+        if not basic_item_ids:
+            # Mark as seeded even if empty, to avoid querying again
+            user_obj.has_seeded_basic_words = True
+            db.add(user_obj)
+            await db.commit()
+            return
+            
+        # 3. Fetch vocabulary item IDs already in user's collection
+        user_vocab_query = select(UserVocabulary.vocabulary_id).where(
+            UserVocabulary.user_id == user_id
+        )
+        user_vocab_result = await db.execute(user_vocab_query)
+        existing_vocab_ids = {r[0] for r in user_vocab_result.all()}
+        
+        # 4. Find missing basic word IDs
+        missing_ids = [vid for vid in basic_item_ids if vid not in existing_vocab_ids]
+        
+        if missing_ids:
+            # 5. Bulk insert missing words using SQLAlchemy core insert statement
+            now = datetime.now(timezone.utc)
+            next_review = now + timedelta(days=1)
+            
+            bulk_data = [
+                {
+                    "id": uuid.uuid4(),
+                    "user_id": user_id,
+                    "vocabulary_id": vid,
+                    "status": VocabularyStatus.LEARNING,
+                    "ease_factor": 2.5,
+                    "interval": 1,
+                    "repetitions": 0,
+                    "next_review_date": next_review,
+                    "fsrs_stability": 0.0,
+                    "fsrs_difficulty": 0.0,
+                    "fsrs_elapsed_days": 0,
+                    "fsrs_scheduled_days": 0,
+                    "fsrs_reps": 0,
+                    "fsrs_lapses": 0,
+                    "fsrs_state": 0,
+                    "added_at": now,
+                    "total_reviews": 0,
+                    "correct_reviews": 0,
+                    "streak": 0,
+                    "longest_streak": 0,
+                    "total_xp_earned": 0,
+                }
+                for vid in missing_ids
+            ]
+            await db.execute(insert(UserVocabulary), bulk_data)
+
+        # 6. Mark user as seeded and commit
+        user_obj.has_seeded_basic_words = True
+        db.add(user_obj)
+        await db.commit()
 
 
 # Global instance

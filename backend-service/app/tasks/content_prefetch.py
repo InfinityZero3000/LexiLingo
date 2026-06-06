@@ -166,37 +166,25 @@ async def prefetch_podcasts(db: AsyncSession) -> dict:
 
 
 # ──────────────────────────────────────────────────────────
-#  API Call Stubs (to be implemented with actual API clients)
+#  API Call Integrations (delegated to actual fetch helpers)
 # ──────────────────────────────────────────────────────────
 
 async def _fetch_news_category(category: str) -> list[dict]:
-    """
-    Fetch news articles from NewsAPI.org for a given category.
-    
-    TODO: Implement with actual NewsAPI client.
-    Will be implemented in Phase 1 (News Reading feature).
-    """
-    logger.info(f"[STUB] Would fetch news for category: {category}")
-    return []
+    """Fetch news articles from NewsAPI.org (or fallback) for a given category."""
+    from app.routes.news import _fetch_news
+    res = await _fetch_news(category=category, page=1, page_size=10)
+    return res.get("articles", [])
 
 
 async def _fetch_youtube_channel(channel_id: str) -> list[dict]:
-    """
-    Fetch latest videos from a YouTube channel.
-    
-    TODO: Implement with YouTube Data API v3 client.
-    Will be implemented in Phase 1 (YouTube feature).
-    """
-    logger.info(f"[STUB] Would fetch YouTube channel: {channel_id}")
-    return []
+    """Fetch latest videos from a YouTube channel using search.list."""
+    from app.routes.youtube import _youtube_search
+    res = await _youtube_search(q="", max_results=10, channel_id=channel_id, require_captions=False)
+    return res.get("videos", [])
 
 
 async def _fetch_rss_feed(feed_url: str) -> list[dict]:
-    """
-    Parse RSS feed and extract episode list.
-    
-    TODO: Implement with httpx + feedparser/xmltodict.
-    Will be implemented in Phase 4 (Podcast feature).
-    """
-    logger.info(f"[STUB] Would parse RSS feed: {feed_url}")
-    return []
+    """Parse RSS feed and extract episode list."""
+    from app.routes.podcasts import _fetch_rss_episodes
+    res = await _fetch_rss_episodes(feed_url=feed_url, limit=20)
+    return res.get("episodes", [])

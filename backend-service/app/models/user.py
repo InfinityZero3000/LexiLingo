@@ -49,6 +49,11 @@ class User(Base):
         default=False,
         nullable=False,
     )
+    has_seeded_basic_words: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     
     # RBAC
     role_id: Mapped[uuid.UUID] = mapped_column(

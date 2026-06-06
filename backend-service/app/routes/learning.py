@@ -86,12 +86,19 @@ async def start_lesson(
             )
         )
     
+    # Determine total questions dynamically from lesson content or demo fallback
+    total_questions = 10
+    if lesson.content and isinstance(lesson.content, dict) and lesson.content.get("exercises"):
+        total_questions = len(lesson.content["exercises"])
+    else:
+        total_questions = len(_generate_demo_exercises(lesson.title))
+
     # Create new attempt
     new_attempt = LessonAttempt(
         user_id=current_user.id,
         lesson_id=lesson_id,
         started_at=datetime.now(timezone.utc),
-        total_questions=10,  # TODO: Get from lesson content
+        total_questions=total_questions,
         lives_remaining=3,
         hints_used=0,
         bonus_hints=0,
