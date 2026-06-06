@@ -16,7 +16,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_detail
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
-import 'package:lexilingo_app/features/progress/presentation/widgets/streak_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/points_calendar_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
@@ -223,12 +223,7 @@ class _HomePageNewState extends State<HomePageNew> {
                 .toList(growable: false),
             onTap: () {
               if (streak != null) {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => StreakDetailsSheet(streak: streak),
-                );
+                showPointsCalendarDialog(context, streak);
               }
             },
           ),

@@ -203,7 +203,11 @@
     "englishProficiency": "영어 능력 (CEFR)",
     "proficiencySubtitle": "배치 테스트 및 평가로 결정",
     "xpThisLevel": "이 레벨 {current} / {total} XP",
-    "xpTotal": "총 {xp} XP"
+    "xpTotal": "총 {xp} XP",
+    "pointsCalendar": "포인트 캘린더",
+    "setupCheckinReminder": "체크인 알림 설정",
+    "checkinReminder": "체크인 알림",
+    "setTime": "시간 설정"
   },
   "course": {
     "title": "행동",
@@ -965,7 +969,12 @@
     "quickReply3": "매일 대화에 도전해보세요.",
     "correctionLabel": "보정",
     "pendingSync": "동기화 대기 중",
-    "languageNotes": "언어 참고사항"
+    "languageNotes": "언어 참고사항",
+    "listenButton": "듣기",
+    "viewNotesButton": "노트 보기",
+    "correctionsSection": "수정",
+    "vietnameseHintSection": "베트남어 힌트",
+    "relatedConceptsSection": "관련 개념"
   },
   "youtube": {
     "subtitles": "자막",

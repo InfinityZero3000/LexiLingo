@@ -203,7 +203,11 @@
     "startStreakToday": "Bắt đầu chuỗi học của bạn ngay hôm nay!",
     "streakAtRisk": "Nguy hiểm!",
     "doneForToday": "Đã hoàn thành hôm nay!",
-    "practiceToKeepStreak": "Học ngay để giữ chuỗi của bạn!"
+    "practiceToKeepStreak": "Học ngay để giữ chuỗi của bạn!",
+    "pointsCalendar": "Lịch Điểm Danh",
+    "setupCheckinReminder": "Cài đặt nhắc nhở điểm danh",
+    "checkinReminder": "Nhắc nhở điểm danh",
+    "setTime": "Đặt giờ"
   },
   "course": {
     "title": "Khóa học",
@@ -965,7 +969,12 @@
     "quickReply3": "Hãy cho mình một thử thách hội thoại hàng ngày.",
     "correctionLabel": "Sửa lỗi",
     "pendingSync": "Đang đồng bộ",
-    "languageNotes": "Ghi chú ngôn ngữ"
+    "languageNotes": "Ghi chú ngôn ngữ",
+    "listenButton": "Nghe",
+    "viewNotesButton": "Xem ghi chú",
+    "correctionsSection": "Sửa lỗi",
+    "vietnameseHintSection": "Gợi ý tiếng Việt",
+    "relatedConceptsSection": "Khái niệm liên quan"
   },
   "youtube": {
     "subtitles": "Phụ đề",

@@ -101,14 +101,14 @@ class LexiCorrectionsSheet extends StatelessWidget {
               children: [
                 // Corrections
                 if (corrections.isNotEmpty) ...[
-                  _sectionTitle(context, 'Corrections'),
+                  _sectionTitle(context, 'lexiChat.correctionsSection'.tr()),
                   const SizedBox(height: 12),
                   ...corrections.map((c) => _correctionCard(context, c)),
                   const SizedBox(height: 16),
                 ],
                 // Vietnamese hint
                 if (vietnameseHint != null) ...[
-                  _sectionTitle(context, 'Vietnamese Hint'),
+                  _sectionTitle(context, 'lexiChat.vietnameseHintSection'.tr()),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -149,7 +149,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 ],
                 // Linked concepts
                 if (linkedConcepts.isNotEmpty) ...[
-                  _sectionTitle(context, 'Related Concepts'),
+                  _sectionTitle(context, 'lexiChat.relatedConceptsSection'.tr()),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

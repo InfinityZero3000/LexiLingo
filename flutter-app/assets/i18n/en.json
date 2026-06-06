@@ -203,7 +203,11 @@
     "startStreakToday": "Start your streak today!",
     "streakAtRisk": "At Risk!",
     "doneForToday": "Done for today!",
-    "practiceToKeepStreak": "Practice now to keep your streak!"
+    "practiceToKeepStreak": "Practice now to keep your streak!",
+    "pointsCalendar": "Points Calendar",
+    "setupCheckinReminder": "Set up check-in reminder",
+    "checkinReminder": "Check-in reminder",
+    "setTime": "Set time"
   },
   "course": {
     "title": "Courses",
@@ -965,7 +969,12 @@
     "quickReply3": "Give me a daily conversation challenge.",
     "correctionLabel": "Correction",
     "pendingSync": "Pending sync",
-    "languageNotes": "Language Notes"
+    "languageNotes": "Language Notes",
+    "listenButton": "Listen",
+    "viewNotesButton": "View Notes",
+    "correctionsSection": "Corrections",
+    "vietnameseHintSection": "Vietnamese Hint",
+    "relatedConceptsSection": "Related Concepts"
   },
   "youtube": {
     "subtitles": "Subtitles",

@@ -112,7 +112,7 @@ class LexiDialogueBubble extends StatelessWidget {
               // Message text
               _buildLexiMessageContent(context, isDark),
               // Action buttons row
-              if (message.hasAudio || message.hasCorrections)
+              if (message.hasAudio || onShowCorrections != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Wrap(
@@ -123,14 +123,14 @@ class LexiDialogueBubble extends StatelessWidget {
                         _buildActionChip(
                           context,
                           icon: Icons.volume_up_rounded,
-                          label: 'Listen',
+                          label: 'lexiChat.listenButton'.tr(),
                           onTap: onPlayAudio,
                         ),
-                      if (message.hasCorrections)
+                      if (onShowCorrections != null)
                         _buildActionChip(
                           context,
                           icon: Icons.auto_fix_high_rounded,
-                          label: 'View Notes',
+                          label: 'lexiChat.viewNotesButton'.tr(),
                           onTap: onShowCorrections,
                           color: AppColors.accentYellow,
                         ),

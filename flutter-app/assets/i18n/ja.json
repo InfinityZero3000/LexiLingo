@@ -203,7 +203,11 @@
     "startStreakToday": "今日から連続記録を始めましょう！",
     "streakAtRisk": "危険にさらされています!",
     "doneForToday": "今日はこれで終わりです！",
-    "practiceToKeepStreak": "連勝記録を維持するために今すぐ練習してください!"
+    "practiceToKeepStreak": "連勝記録を維持するために今すぐ練習してください!",
+    "pointsCalendar": "ポイントカレンダー",
+    "setupCheckinReminder": "チェックインリマインダーを設定",
+    "checkinReminder": "チェックインリマインダー",
+    "setTime": "時間を設定"
   },
   "course": {
     "title": "コース",
@@ -965,7 +969,12 @@
     "quickReply3": "日常会話にチャレンジしてみませんか。",
     "correctionLabel": "修正",
     "pendingSync": "同期保留中",
-    "languageNotes": "言語ノート"
+    "languageNotes": "言語ノート",
+    "listenButton": "再生",
+    "viewNotesButton": "メモを見る",
+    "correctionsSection": "修正",
+    "vietnameseHintSection": "ベトナム語ヒント",
+    "relatedConceptsSection": "関連概念"
   },
   "youtube": {
     "subtitles": "字幕",

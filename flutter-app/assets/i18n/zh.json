@@ -203,7 +203,11 @@
     "startStreakToday": "从今天开始你的连胜！",
     "streakAtRisk": "有危险！",
     "doneForToday": "今天就完成了！",
-    "practiceToKeepStreak": "现在就练习以保持你的连胜！"
+    "practiceToKeepStreak": "现在就练习以保持你的连胜！",
+    "pointsCalendar": "打卡日历",
+    "setupCheckinReminder": "设置打卡提醒",
+    "checkinReminder": "打卡提醒",
+    "setTime": "设置时间"
   },
   "course": {
     "title": "课程",
@@ -965,7 +969,12 @@
     "quickReply3": "给我一个日常对话挑战。",
     "correctionLabel": "更正",
     "pendingSync": "待同步",
-    "languageNotes": "语言注释"
+    "languageNotes": "语言注释",
+    "listenButton": "聆听",
+    "viewNotesButton": "查看笔记",
+    "correctionsSection": "纠错",
+    "vietnameseHintSection": "越南语提示",
+    "relatedConceptsSection": "相关概念"
   },
   "youtube": {
     "subtitles": "字幕",

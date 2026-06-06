@@ -1081,8 +1081,27 @@ async def lexi_stream_chat(
 
         # 2. Context preparation — KG + diagnose + retrieve, NO LLM generation.
         #    Heartbeat pings keep the SSE connection alive while this runs.
+        #    get_orchestrator() may block on cold start (model loading); run it as
+        #    a task so we can keep pinging while it initialises.
         try:
-            orchestrator = await get_orchestrator()
+            orch_task = asyncio.create_task(get_orchestrator())
+            loop = asyncio.get_event_loop()
+            orch_deadline = loop.time() + 60.0
+            while not orch_task.done():
+                if loop.time() >= orch_deadline:
+                    orch_task.cancel()
+                    yield (
+                        f"event: error\ndata: "
+                        f"{json.dumps({'error': 'Service is starting up. Please try again.'})}\n\n"
+                    )
+                    return
+                try:
+                    await asyncio.wait_for(asyncio.shield(orch_task), timeout=_HEARTBEAT_INTERVAL_S)
+                except asyncio.TimeoutError:
+                    yield ": ping\n\n"
+                except Exception:
+                    break
+            orchestrator = await orch_task
             ctx_task = asyncio.create_task(
                 orchestrator.pipeline.analyze_for_streaming(
                     user_input=user_text,

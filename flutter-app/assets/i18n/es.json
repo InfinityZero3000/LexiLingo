@@ -203,7 +203,11 @@
     "startStreakToday": "¡Comienza tu racha hoy!",
     "streakAtRisk": "¡En riesgo!",
     "doneForToday": "¡Listo por hoy!",
-    "practiceToKeepStreak": "¡Practica ahora para mantener tu racha!"
+    "practiceToKeepStreak": "¡Practica ahora para mantener tu racha!",
+    "pointsCalendar": "Calendario de Puntos",
+    "setupCheckinReminder": "Configurar recordatorio de entrada",
+    "checkinReminder": "Recordatorio de entrada",
+    "setTime": "Establecer hora"
   },
   "course": {
     "title": "Cursos",
@@ -965,7 +969,12 @@
     "quickReply3": "Dame un desafío de conversación diario.",
     "correctionLabel": "Corrección",
     "pendingSync": "Sincronización pendiente",
-    "languageNotes": "Notas de idioma"
+    "languageNotes": "Notas de idioma",
+    "listenButton": "Escuchar",
+    "viewNotesButton": "Ver notas",
+    "correctionsSection": "Correcciones",
+    "vietnameseHintSection": "Sugerencia en vietnamita",
+    "relatedConceptsSection": "Conceptos relacionados"
   },
   "youtube": {
     "subtitles": "Subtítulos",
