@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
 from app.core.cache import build_cache_key, set_cached
-from app.models.gamification import Achievement, ShopItem, UserWallet
+from app.models.gamification import (
+    Achievement,
+    ShopItem,
+    UserInventory,
+    UserWallet,
+)
 from app.models.user import User
 
 
@@ -224,6 +229,86 @@ class TestInventory:
         data = response.json()
         assert data["success"] is True
         assert "items" in data["data"]
+
+    @pytest.mark.asyncio
+    async def test_equip_owned_avatar_is_permanent(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+        test_user: User,
+    ):
+        avatar_url = (
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=RouteTest"
+        )
+        item = ShopItem(
+            name="Route Test Avatar",
+            description="Owned avatar",
+            item_type="avatar",
+            price_gems=10,
+            icon_url=avatar_url,
+            effects={"avatar_url": avatar_url},
+            is_available=True,
+        )
+        db_session.add(item)
+        await db_session.flush()
+        inventory = UserInventory(
+            user_id=test_user.id,
+            shop_item_id=item.id,
+            quantity=1,
+        )
+        db_session.add(inventory)
+        await db_session.commit()
+        await db_session.refresh(inventory)
+
+        response = await async_client.post(
+            "/api/v1/gamification/inventory/avatar/equip",
+            headers=auth_headers,
+            json={"inventory_id": str(inventory.id)},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["avatar_url"] == avatar_url
+        await db_session.refresh(test_user)
+        await db_session.refresh(inventory)
+        assert test_user.avatar_url == avatar_url
+        assert inventory.quantity == 1
+
+    @pytest.mark.asyncio
+    async def test_cannot_purchase_owned_avatar_again(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+        test_user: User,
+    ):
+        item = ShopItem(
+            name="Already Owned Avatar",
+            description="Owned avatar",
+            item_type="avatar",
+            price_gems=10,
+            effects={"avatar_url": "https://example.com/avatar.svg"},
+            is_available=True,
+        )
+        db_session.add(item)
+        await db_session.flush()
+        db_session.add(
+            UserInventory(
+                user_id=test_user.id,
+                shop_item_id=item.id,
+                quantity=1,
+            )
+        )
+        await db_session.commit()
+
+        response = await async_client.post(
+            "/api/v1/gamification/shop/purchase",
+            headers=auth_headers,
+            json={"item_id": str(item.id), "quantity": 1},
+        )
+
+        assert response.status_code == 400
+        assert "already owned" in response.json()["error"]["message"].lower()
 
 
 class TestSocial:

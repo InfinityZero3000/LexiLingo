@@ -25,11 +25,11 @@ Provider, DiceBear SVG, pytest, flutter_test
 - Modify: `backend-service/app/routes/admin.py`
 - Test: `backend-service/tests/test_shop_catalog.py`
 
-- [ ] Define four repriced items, five new consumables, and 36 avatar items.
-- [ ] Add an idempotent migration that updates existing rows and inserts missing
+- [x] Define four repriced items, five new consumables, and 36 avatar items.
+- [x] Add an idempotent migration that updates existing rows and inserts missing
   rows by unique item name.
-- [ ] Reuse the catalog in development sample seeding.
-- [ ] Test item counts, price ranges, avatar URLs, and effect metadata.
+- [x] Reuse the catalog in development sample seeding.
+- [x] Test item counts, price ranges, avatar URLs, and effect metadata.
 
 ## Chunk 2: Real Effects And Avatar Ownership
 
@@ -42,10 +42,10 @@ Provider, DiceBear SVG, pytest, flutter_test
 - Modify: `backend-service/app/schemas/progress.py`
 - Test: `backend-service/tests/test_item_effects_service.py`
 
-- [ ] Add `bonus_hints` to lesson attempts.
-- [ ] Include bonus hints in start and answer responses.
-- [ ] Make hint packs and heart refills update an unfinished attempt.
-- [ ] Respect configurable streak-freeze quantities and XP durations.
+- [x] Add `bonus_hints` to lesson attempts.
+- [x] Include bonus hints in start and answer responses.
+- [x] Make hint packs and heart refills update an unfinished attempt.
+- [x] Respect configurable streak-freeze quantities and XP durations.
 
 ### Task 3: Add permanent avatar equip
 
@@ -55,10 +55,10 @@ Provider, DiceBear SVG, pytest, flutter_test
 - Modify: `backend-service/app/schemas/gamification.py`
 - Test: `backend-service/tests/test_gamification_routes.py`
 
-- [ ] Reject repeated avatar purchases already owned by the user.
-- [ ] Add an equip endpoint that validates owned avatar inventory.
-- [ ] Update `users.avatar_url` without decrementing inventory.
-- [ ] Return the equipped URL and refreshed user state.
+- [x] Reject repeated avatar purchases already owned by the user.
+- [x] Add an equip endpoint that validates owned avatar inventory.
+- [x] Update `users.avatar_url` without decrementing inventory.
+- [x] Return the equipped URL and refreshed user state.
 
 ## Chunk 3: Flutter Shop And Profile
 
@@ -70,10 +70,10 @@ Provider, DiceBear SVG, pytest, flutter_test
 - Modify: `flutter-app/lib/features/gamification/presentation/screens/shop_screen.dart`
 - Test: `flutter-app/test/features/gamification/shop_item_test.dart`
 
-- [ ] Map backend `item_type`, `effects`, and stock fields correctly.
-- [ ] Derive shop categories from supported item types.
-- [ ] Render avatar SVG/PNG URLs in cards and dialogs.
-- [ ] Show owned state and prevent duplicate avatar purchases.
+- [x] Map backend `item_type`, `effects`, and stock fields correctly.
+- [x] Derive shop categories from supported item types.
+- [x] Render avatar SVG/PNG URLs in cards and dialogs.
+- [x] Show owned state and prevent duplicate avatar purchases.
 
 ### Task 5: Equip and reselect purchased avatars
 
@@ -84,18 +84,18 @@ Provider, DiceBear SVG, pytest, flutter_test
 - Modify: `flutter-app/assets/i18n/vi.json`
 - Test: `flutter-app/test/features/gamification/avatar_inventory_test.dart`
 
-- [ ] Fix inventory use request to match the backend request schema.
-- [ ] Add provider method for permanent avatar equip.
-- [ ] Offer "Equip now" after avatar purchase.
-- [ ] Merge owned avatar URLs into the profile picker.
-- [ ] Add localized user-facing strings.
+- [x] Fix inventory use request to match the backend request schema.
+- [x] Add provider method for permanent avatar equip.
+- [x] Offer "Equip now" after avatar purchase.
+- [x] Merge owned avatar URLs into the profile picker.
+- [x] Add localized user-facing strings.
 
 ## Chunk 4: Verification
 
 ### Task 6: Run focused and static checks
 
-- [ ] Run backend catalog, effect, and gamification route tests.
-- [ ] Run Flutter shop/avatar tests.
-- [ ] Run Python compilation or lint checks on modified backend files.
-- [ ] Run `flutter analyze` on modified Flutter files.
-- [ ] Review the final diff for unrelated worktree changes.
+- [x] Run backend catalog, effect, and gamification route tests.
+- [x] Run Flutter shop/avatar tests.
+- [x] Run Python compilation or lint checks on modified backend files.
+- [x] Run `flutter analyze` on modified Flutter files.
+- [x] Review the final diff for unrelated worktree changes.
