@@ -384,8 +384,6 @@ server {
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_buffering off;
         proxy_cache off;
-        proxy_read_timeout 600s;
-        proxy_send_timeout 600s;
         include /etc/nginx/snippets/cors-headers.conf;
         add_header X-Accel-Buffering no always;
         proxy_pass http://ai_upstream;
