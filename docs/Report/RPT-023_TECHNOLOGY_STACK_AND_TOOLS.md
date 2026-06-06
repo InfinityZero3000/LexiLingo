@@ -45,8 +45,8 @@
 | **Package** | `langgraph >= 0.0.66` |
 | **Role** | Stateful multi-step AI pipeline orchestration |
 | **Pattern** | StateGraph + conditional edges |
-| **State** | `GraphCAGState` (TypedDict, 40+ fields) |
-| **Use Case** | GraphCAG pipeline (8 nodes, 6 edges) |
+| **State** | `TRACECAGState` (TypedDict, 40+ fields) |
+| **Use Case** | TRACECAG pipeline (8 nodes, 6 edges) |
 
 **Tại sao LangGraph?**
 - Native async support → `ainvoke()`, `astream()`
@@ -153,7 +153,7 @@ config = LoraConfig(
 |-----------|-------|
 | **Piper** | `piper-tts >= 1.2.0` — Low-latency local TTS |
 | **gTTS** | `gTTS >= 2.5.0` — Google TTS fallback |
-| **Note** | TTS handled externally by lexi_chat.py (không trong GraphCAG) |
+| **Note** | TTS handled externally by lexi_chat.py (không trong TRACECAG) |
 | **File** | `ai-service/api/services/tts_service.py` |
 
 #### 🔷 sentence-transformers (Embeddings)
@@ -381,14 +381,14 @@ gateway/observability/
 
 ## 8. Đặc Biệt: Các Tool Tự Phát Triển
 
-### 8.1 GraphCAG Node Visualizer
+### 8.1 TRACECAG Node Visualizer
 
 ```
 Route: GET /visualizer
-Redirect: /static/graphcag-node-viz.html
-Location: ai-service/static/graphcag-node-viz.html
+Redirect: /static/TRACECAG-node-viz.html
+Location: ai-service/static/TRACECAG-node-viz.html
 
-Purpose: Visual tool để debug GraphCAG pipeline execution
+Purpose: Visual tool để debug TRACECAG pipeline execution
 - Hiển thị nodes và edges
 - Trace pipeline execution path
 - Hover để xem state tại mỗi node

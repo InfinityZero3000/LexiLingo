@@ -207,7 +207,7 @@ TRACE-CAG **không gian lận** sau khi xóa các bugs. Kết quả phản ánh 
 |---|---|---|
 | **CRITICAL — Module path** | `benchmark_rag_policies.py`, `benchmark_public_qa.py` | `api.services.graph_cag.*` → `api.services.trace_cag.*` (5 chỗ) |
 | **CRITICAL — Wrong function** | `benchmark_rag_policies.py:261` | `get_graph_cag` → `get_trace_cag` |
-| **BUG 1 — Dataset key** | `benchmark_rag_policies.py` | Thêm alias `tracecag_drift_probes` → `graphcag_drift_probes/` |
+| **BUG 1 — Dataset key** | `benchmark_rag_policies.py` | Thêm alias `tracecag_drift_probes` → `TRACECAG_drift_probes/` |
 | **BUG 2 — Cache leak** | `benchmark_public_qa.py` | Thêm `_KG_QUERY_CACHE.clear()` + reset `_RANKER_INSTANCE=None` giữa modes |
 | **BUG 3 — Tau inflation** | `nodes_v2.py:1365-1368` | Xóa `tau_reuse += 0.03 / tau_patch += 0.04` chỉ cho tracecag_rapid |
 | **BUG 4 — Budget bias** | `nodes_v2.py:2320-2331` | Xóa `budget -1` cho graphrag và `budget +2 floor 7` cho tracecag_rapid |

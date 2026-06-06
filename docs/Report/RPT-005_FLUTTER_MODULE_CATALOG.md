@@ -45,7 +45,7 @@ Cách tổ chức này phù hợp với **Clean Architecture + Provider**, giúp
 | Module | Trách nhiệm | Màn hình chính |
 |--------|------------|--------------|
 | `features/chat` | Topic/story chat, thông điệp, session | `StorySelectionPage`, `TopicChatPage` |
-| `features/lexi_chat` | Luồng chat trợ lý Lexi (GraphCAG) | `LexiChatPage` |
+| `features/lexi_chat` | Luồng chat trợ lý Lexi (TRACECAG) | `LexiChatPage` |
 | `features/voice` | Transcribe, pronunciation, speech synthesis | `VoicePracticeScreen` |
 
 ### 3.4 Nhóm Nội Dung Bổ Trợ
@@ -87,7 +87,7 @@ Cách tổ chức này phù hợp với **Clean Architecture + Provider**, giúp
 | Module | Kết Nối | AI Engine |
 |--------|---------|----------|
 | `chat` | AI Service `/chat` + `/topics` | Basic LLM, topic-based |
-| `lexi_chat` | AI Service `/lexi` | GraphCAG Pipeline (đầy đủ) |
+| `lexi_chat` | AI Service `/lexi` | TRACECAG Pipeline (đầy đủ) |
 
 ---
 

@@ -455,7 +455,7 @@ class LlamaImplicitGraphRouter:
         )
 
 
-class JITGraphCAGPipeline:
+class JITTRACECAGPipeline:
     def __init__(self, cfg: RuntimeConfig) -> None:
         self.cfg = cfg
         self.extractor = JITMiniGraphExtractor(
@@ -544,7 +544,7 @@ def build_config(args: argparse.Namespace) -> RuntimeConfig:
     )
 
 
-def run_once(pipeline: JITGraphCAGPipeline, query: str) -> None:
+def run_once(pipeline: JITTRACECAGPipeline, query: str) -> None:
     result = pipeline.process_query(query)
     print("\n=== RESULT ===")
     print(f"Query: {result['query']}")
@@ -557,7 +557,7 @@ def run_once(pipeline: JITGraphCAGPipeline, query: str) -> None:
         print(f"Warning: {result['warning']}")
 
 
-def run_interactive(pipeline: JITGraphCAGPipeline) -> None:
+def run_interactive(pipeline: JITTRACECAGPipeline) -> None:
     print("Interactive mode. Type 'exit' to stop.")
     while True:
         try:
@@ -581,7 +581,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
 
     cfg = build_config(args)
-    pipeline = JITGraphCAGPipeline(cfg)
+    pipeline = JITTRACECAGPipeline(cfg)
 
     if args.query:
         run_once(pipeline, args.query)

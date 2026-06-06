@@ -23,7 +23,7 @@
 | RPT-013 | Git Examples | Còn hiệu lực |
 | RPT-014 | VPS Nginx SSL Deployment | Còn hiệu lực |
 | RPT-015 | MVP Architecture | Còn hiệu lực |
-| RPT-016 | GraphCAG KG Redis Cache | Được thay thế chi tiết bởi RPT-021 |
+| RPT-016 | TRACECAG KG Redis Cache | Được thay thế chi tiết bởi RPT-021 |
 | RPT-017 | Project Master Report | Đã cập nhật dấu và bổ sung bảng ưu tiên |
 
 ---
@@ -33,9 +33,9 @@
 | File | Tiêu Đề | Nội Dung Chính |
 |------|---------|----------------|
 | **RPT-018** | Feature Analysis | Tất cả tính năng theo 7 nhóm category |
-| **RPT-019** | AI Service Deep Dive | GraphCAG, Model Gateway, Smart Router, toàn bộ AI services |
+| **RPT-019** | AI Service Deep Dive | TRACECAG, Model Gateway, Smart Router, toàn bộ AI services |
 | **RPT-020** | Backend Service Report | 24 route modules, services, kiến trúc database |
-| **RPT-021** | GraphCAG Algorithm Flow | Node-by-node algorithm, RAPID cache, scoring metrics |
+| **RPT-021** | TRACECAG Algorithm Flow | Node-by-node algorithm, RAPID cache, scoring metrics |
 | **RPT-022** | Flutter App Architecture | 28 providers, 21 features, navigation, dependencies |
 | **RPT-023** | Technology Stack & Tools | Toàn bộ tech stack và 7 special tools tự phát triển |
 | **RPT-024** | Games Engine | 6 mini-games liên hoàn, bộ seed CEFR embedded trong DB |
@@ -48,7 +48,7 @@
 ## Tóm Tắt Phát Hiện Từ Phân Tích
 
 ### Tính Năng Nổi Bật
-1. **GraphCAG Pipeline** — 11 nodes LangGraph với RAPID 2-level cache (L0/L1)
+1. **TRACECAG Pipeline** — 11 nodes LangGraph với RAPID 2-level cache (L0/L1)
 2. **Model Gateway** — Lazy loading, auto-unload theo idle timeout, smart routing
 3. **Dual-Stream Voice** — STT/Thinking/TTS đồng thời, interruption handling
 4. **CEFR Assessment** — 6 chiều đánh giá, chống XP grinding, exam-gated promotion
@@ -62,7 +62,7 @@
 4. `subgraph_hot_cache.py` — Pre-cached subgraphs phổ biến
 5. `document_intelligence.py` — Phân tích nội dung thông minh
 6. `topic_preloader.py` — Background topic warming
-7. **GraphCAG Node Visualizer** — Debug tool tại `/visualizer`
+7. **TRACECAG Node Visualizer** — Debug tool tại `/visualizer`
 
 ### Số Liệu Thống Kê Dự Án
 

@@ -1,4 +1,4 @@
-# RPT-019 — AI Service Deep Dive: GraphCAG, Model Gateway & Tools
+# RPT-019 — AI Service Deep Dive: TRACECAG, Model Gateway & Tools
 
 > **Cập nhật:** 2026-04-24 | **AI Service Version:** 2.1.0
 
@@ -7,7 +7,7 @@
 ## 1. Tổng Quan AI Service
 
 AI Service (`ai-service/`) là bộ não của LexiLingo, cung cấp:
-- **GraphCAG Pipeline** — tutor AI thông minh với Knowledge Graph
+- **TRACECAG Pipeline** — tutor AI thông minh với Knowledge Graph
 - **Model Gateway** — quản lý tập trung tất cả AI models
 - **Smart Router** — định tuyến model thông minh
 - **Voice Pipeline** — STT/TTS/Pronunciation analysis
@@ -22,13 +22,13 @@ AI Service (`ai-service/`) là bộ não của LexiLingo, cung cấp:
 
 ---
 
-## 2. GraphCAG Pipeline — Phân Tích Chi Tiết
+## 2. TRACECAG Pipeline — Phân Tích Chi Tiết
 
 ### 2.1 Khái Niệm Cốt Lõi
 
-**GraphCAG = Graph (Knowledge Graph) + CAG (Cache-Augmented Generation)**
+**TRACECAG = Graph (Knowledge Graph) + CAG (Cache-Augmented Generation)**
 
-Khác với RAG truyền thống (tìm kiếm document), GraphCAG:
+Khác với RAG truyền thống (tìm kiếm document), TRACECAG:
 - **CAG**: Grounding LLM bằng cached learner context (Redis: profile, history)
 - **Graph**: Mở rộng context bằng KuzuDB knowledge graph hops
 
@@ -106,12 +106,12 @@ def should_analyze_pronunciation(state) → "pronunciation_node" | "end":
     # text → END trực tiếp
 ```
 
-### 2.5 GraphCAG State Schema
+### 2.5 TRACECAG State Schema
 
 ```python
 # File: ai-service/api/services/graph_cag/state.py
 
-class GraphCAGState(TypedDict, total=False):
+class TRACECAGState(TypedDict, total=False):
     # INPUT
     user_input: str
     session_id: str
@@ -277,7 +277,7 @@ File: ai-service/api/routes/websocket_stream.py
 
 Client WebSocket
     ├── Audio chunks → STT (Whisper streaming)
-    ├── Partial transcript → GraphCAG thinking
+    ├── Partial transcript → TRACECAG thinking
     └── Response chunks → TTS (chunked) → Audio stream
 ```
 
@@ -285,7 +285,7 @@ Client WebSocket
 
 ```
 [LISTENING Stream]   → [THINKING Stream]   → [SPEAKING Stream]
-• VAD                  • GraphCAG               • Chunked TTS
+• VAD                  • TRACECAG               • Chunked TTS
 • STT                  • LLM                    • Audio streaming
 • Partial transcripts  • Thinking buffer         
         │                                              │
@@ -333,7 +333,7 @@ Just-In-Time graph construction:
 File: ai-service/api/services/subgraph_hot_cache.py
 
 - Pre-cache các subgraph phổ biến
-- Cung cấp kg_seed_concepts cho GraphCAG (bỏ qua KG lookup)
+- Cung cấp kg_seed_concepts cho TRACECAG (bỏ qua KG lookup)
 - TTL-based invalidation
 ```
 
@@ -431,9 +431,9 @@ File: backend-service/app/routes/ai_audit.py
 | `/api/v1/topics` | `topic_chat.py` | Topic-based chat |
 | `/api/v1/admin` | `admin.py` | Admin operations |
 | `/api/v1/ai` | `ai.py` | AI analytics |
-| `/api/v1/lexi*` | `lexi_chat.py` | Lexi Chat (GraphCAG) |
+| `/api/v1/lexi*` | `lexi_chat.py` | Lexi Chat (TRACECAG) |
 | `/warmup` | `main.py` | Model preload trigger |
-| `/visualizer` | `main.py` | GraphCAG node visualizer |
+| `/visualizer` | `main.py` | TRACECAG node visualizer |
 
 ---
 
@@ -455,4 +455,4 @@ File: backend-service/app/routes/ai_audit.py
 
 ---
 
-*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md)*
+*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md)*

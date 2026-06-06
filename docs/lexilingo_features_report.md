@@ -77,9 +77,9 @@ Trang chủ đóng vai trò là "Bộ não" dẫn đường, giúp người dùn
         *   `POST /chat/sessions`, `GET /chat/sessions/user/{userId}`
         *   `GET /lexi/sessions/{id}/messages` (Truy xuất lịch sử hội thoại Contextual).
 *   **Điểm nhấn công nghệ (Features):**
-    *   **GraphCAG (Graph Context-Aware Generation):** Kiến trúc cốt lõi kết hợp giữa Knowledge Graph (KuzuDB) và Redis KV Cache, giúp truy xuất ngữ cảnh (ngữ pháp, từ vựng) siêu tốc. Hệ thống tự động phân tích câu nói của người dùng, ánh xạ với đồ thị tri thức để đưa ra chẩn đoán lỗi sai và phản hồi (correction/explanation) cực kỳ chính xác.
+    *   **TRACECAG (Graph Context-Aware Generation):** Kiến trúc cốt lõi kết hợp giữa Knowledge Graph (KuzuDB) và Redis KV Cache, giúp truy xuất ngữ cảnh (ngữ pháp, từ vựng) siêu tốc. Hệ thống tự động phân tích câu nói của người dùng, ánh xạ với đồ thị tri thức để đưa ra chẩn đoán lỗi sai và phản hồi (correction/explanation) cực kỳ chính xác.
     *   **Contextual LLM (Mô hình ngôn ngữ lớn có ngữ cảnh):** AI có khả năng nhớ bối cảnh (ví dụ: bối cảnh đang ở sân bay, mua sắm) kết hợp lịch sử hội thoại được lưu trên Redis để phản hồi tự nhiên.
-    *   **Giao tiếp Âm thanh hai chiều (Two-way Voice Interaction):** Quá trình chuyển đổi từ Speech $\rightarrow$ Text (Người dùng) $\rightarrow$ GraphCAG/LLM Processing $\rightarrow$ Text $\rightarrow$ Speech (AI) diễn ra gần như tức thời.
+    *   **Giao tiếp Âm thanh hai chiều (Two-way Voice Interaction):** Quá trình chuyển đổi từ Speech $\rightarrow$ Text (Người dùng) $\rightarrow$ TRACECAG/LLM Processing $\rightarrow$ Text $\rightarrow$ Speech (AI) diễn ra gần như tức thời.
 
 ### 2.4 Phân Hệ Nội Dung Thực Tế (Real-World Media Integrations)
 Mục đích là đưa người dùng nhúng (immerse) vào tiếng Anh đời thực thay vì các bài học sách giáo khoa.
@@ -144,7 +144,7 @@ Nền tảng kiến thức cơ bản cho người học từ mất gốc đến 
 *   **Điểm nhấn công nghệ (Features):**
     *   **Thuật toán Đánh giá Đa chiều:** Tính điểm dựa trên 6 kỹ năng (Vocab, Grammar, Reading, Listening, Speaking, Writing) với trọng số (Skill Weighting) và hệ số độ khó (Difficulty Multiplier).
     *   **Phân tích Xu hướng (Trend Analysis) & Time Decay:** Đánh giá người học đang cải thiện, giữ vững hay đi xuống; đồng thời tự động giảm nhẹ điểm (Time Decay) nếu người dùng nghỉ học quá lâu (quên kiến thức).
-    *   **Đồng bộ với AI Service:** Điểm CEFR được đồng bộ làm `Learner Profile` cho GraphCAG, giúp AI quyết định nên dùng từ vựng khó hay độ khắt khe khi sửa lỗi ngữ pháp.
+    *   **Đồng bộ với AI Service:** Điểm CEFR được đồng bộ làm `Learner Profile` cho TRACECAG, giúp AI quyết định nên dùng từ vựng khó hay độ khắt khe khi sửa lỗi ngữ pháp.
 
 ---
 
@@ -158,7 +158,7 @@ Nền tảng kiến thức cơ bản cho người học từ mất gốc đến 
 ### 3.2 Hướng phát triển tương lai (Future Works)
 - **Offline Mode:** Tích hợp Hive/Isar Database trên local để lưu trữ từ vựng và bài học, cho phép đồng bộ `SyncQueueLifecycleRunner` khi có kết nối mạng lại.
 - **Micro-Frontend:** Nếu ứng dụng lớn hơn, có thể chuyển đổi cấu trúc các Feature thành các package Flutter độc lập (Melos workspace) để tăng tốc độ build và quản lý team.
-- **Mở rộng Đồ thị tri thức (Knowledge Graph):** Bổ sung thêm các quy tắc ngữ âm (Phonetics) và thành ngữ (Idioms) phức tạp vào KuzuDB để AI Tutor (GraphCAG) có thể chẩn đoán và hướng dẫn phát âm chuyên sâu hơn, tiệm cận với giáo viên bản ngữ.
+- **Mở rộng Đồ thị tri thức (Knowledge Graph):** Bổ sung thêm các quy tắc ngữ âm (Phonetics) và thành ngữ (Idioms) phức tạp vào KuzuDB để AI Tutor (TRACECAG) có thể chẩn đoán và hướng dẫn phát âm chuyên sâu hơn, tiệm cận với giáo viên bản ngữ.
 
 ---
 *Báo cáo được trích xuất dựa trên kiến trúc và mã nguồn thực tế của dự án LexiLingo.*

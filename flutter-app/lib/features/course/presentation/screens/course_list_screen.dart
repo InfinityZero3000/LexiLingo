@@ -1102,7 +1102,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     'kg',
     'tracecag',
     'trace_cag',
-    'graphcag',
+    'TRACECAG',
     'graph_cag',
   };
 

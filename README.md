@@ -6,7 +6,7 @@
 
 ### The AI English Tutor That Actually Understands You
 
-**GraphCAG · Real-Time Voice · Knowledge Graph · CEFR Assessment**
+**TRACECAG · Real-Time Voice · Knowledge Graph · CEFR Assessment**
 
 ---
 
@@ -25,7 +25,7 @@
 
 <br/>
 
-[**Quick Start**](#6-getting-started) · [**Architecture**](#2-architecture-overview) · [**API Overview**](#9-api--service-overview) · [**GraphCAG**](#10-ai--graphcag--knowledge-graph)
+[**Quick Start**](#6-getting-started) · [**Architecture**](#2-architecture-overview) · [**API Overview**](#9-api--service-overview) · [**TRACECAG**](#10-ai--TRACECAG--knowledge-graph)
 
 </div>
 
@@ -47,7 +47,7 @@ LexiLingo is a full-stack AI English tutoring platform built as a **monorepo wit
 
 - **Adaptive vocabulary** — SM-2 spaced repetition with per-user ease factor (EF-adjusted intervals)
 - **Structured courses** — CEFR-tagged A1→C2 curriculum with units, lessons, and exercises
-- **AI tutor (Lexi Chat)** — Contextual conversation powered by the GraphCAG pipeline
+- **AI tutor (Lexi Chat)** — Contextual conversation powered by the TRACECAG pipeline
 - **Topic-based chat** — Conversation practice across 68 topic catalogs (60 TraceCAG-generated, A1–C1, 16 categories)
 - **Voice / pronunciation** — Real-time dual-stream STT/TTS + HuBERT phoneme analysis with Vietnamese-specific error feedback
 - **CEFR proficiency assessment** — Multi-skill diagnostic (grammar, vocabulary, fluency)
@@ -77,9 +77,9 @@ The system is organized into 8 architectural layers:
 
 ![LexiLingo System Architecture](docs/architecture_lexilingo.png)
 
-### Why GraphCAG over RAG?
+### Why TRACECAG over RAG?
 
-| | Traditional RAG | LexiLingo GraphCAG |
+| | Traditional RAG | LexiLingo TRACECAG |
 |-|----------------|--------------------|
 | **Context source** | Static document chunks | Live KuzuDB knowledge graph + Redis learner cache |
 | **Personalization** | None — same docs for everyone | Per-user mastery scores, error history, CEFR level |
@@ -93,7 +93,7 @@ The system is organized into 8 architectural layers:
 
 | Feature | Description | Main layer |
 |---------|-------------|-----------|
-| GraphCAG AI Tutor | Responses grounded in learner's live knowledge graph via TraceCag pipeline | AI Service |
+| TRACECAG AI Tutor | Responses grounded in learner's live knowledge graph via TraceCag pipeline | AI Service |
 | CEFR Assessment | Multi-skill proficiency test (grammar 40%, vocabulary 30%, fluency 30%) | AI Service + Backend |
 | Spaced Repetition | SM-2 algorithm with per-user ease factor and overdue priority queue | Backend |
 | Voice Pronunciation | Dual-stream WebSocket: simultaneous STT (Whisper) + TTS (Piper) + HuBERT phoneme scoring | AI Service |
@@ -267,7 +267,7 @@ All requests route through **Kong Gateway** (`:80`/`:443` in production). Intera
 
 ---
 
-## 9. GraphCAG / Knowledge Graph
+## 9. TRACECAG / Knowledge Graph
 
 The AI tutor uses a **LangGraph StateGraph** (`ai-service/api/services/trace_cag/`) with 4 nodes: **Diagnose → Retrieve → Ground → Generate**. Each response is grounded in the learner's live KuzuDB concept graph rather than static documents. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed pipeline diagram.
 

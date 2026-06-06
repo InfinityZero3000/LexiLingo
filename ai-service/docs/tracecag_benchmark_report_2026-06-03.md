@@ -16,7 +16,7 @@
 | hipporag_proxy | 0% | N/A | 0% | N/A | N/A |
 | tracecag_rapid | 35.0% | ~70% | **50.0%** | **100%** | ~110x |
 
-> **Fix áp dụng:** `GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT` 0.76→0.45; `GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY` 0.20→0.12. Warm passes giờ luôn được serve từ L0 in-memory cache.
+> **Fix áp dụng:** `TRACECAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT` 0.76→0.45; `TRACECAG_BENCHMARK_CACHE_MIN_QUALITY` 0.20→0.12. Warm passes giờ luôn được serve từ L0 in-memory cache.
 
 ---
 
@@ -304,8 +304,8 @@ L1 graph-bucket cache yêu cầu semantic similarity giữa 2 queries khác nhau
 | tracecag_rapid | ~70% | **100%** | +30pp |
 
 **Fix áp dụng (nodes_v2.py):**
-- `GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT`: 0.76 → **0.45**
-- `GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY`: 0.20 → **0.12**
+- `TRACECAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT`: 0.76 → **0.45**
+- `TRACECAG_BENCHMARK_CACHE_MIN_QUALITY`: 0.20 → **0.12**
 
 ---
 
@@ -415,8 +415,8 @@ KG được seed với 162 concepts, 150 edges từ LexiLingo domain (grammar, v
 
 | Cải tiến | File | Thay đổi | Kết quả |
 |----------|------|----------|---------|
-| **Fix warm miss** | `nodes_v2.py` | `GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT`: 0.76 → 0.45 | Warm hit: ~70% → **100%** ✅ |
-| **Fix quality gate** | `nodes_v2.py` | `GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY`: 0.20 → 0.12 | Cache write tăng |
+| **Fix warm miss** | `nodes_v2.py` | `TRACECAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT`: 0.76 → 0.45 | Warm hit: ~70% → **100%** ✅ |
+| **Fix quality gate** | `nodes_v2.py` | `TRACECAG_BENCHMARK_CACHE_MIN_QUALITY`: 0.20 → 0.12 | Cache write tăng |
 | **Upgrade model** | `model-development/.env` | `GROQ_MODEL=llama-3.3-70b-versatile` | 70b confirmed chạy ✅ |
 | **Upgrade model (shell)** | `run_benchmark_all_datasets.sh` | Default: `llama-3.3-70b-versatile` | Fallback đúng model ✅ |
 | **Improve QA prompt** | `nodes_v2.py:~3834` | System prompt → multi-hop chain-of-thought | Better reasoning |

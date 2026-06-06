@@ -106,7 +106,7 @@ def _kg_cache_key(query: str, level: str, top_k: int) -> str:
 
 def _kg_cache_get(key: str) -> Optional[List[Dict[str, Any]]]:
     now = time.monotonic()
-    ttl_seconds = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_TTL_SECONDS", 900))
+    ttl_seconds = max(1, _env_int("TRACECAG_KG_QUERY_CACHE_TTL_SECONDS", 900))
     item = _KG_QUERY_CACHE.get(key)
     if not item:
         return None
@@ -118,7 +118,7 @@ def _kg_cache_get(key: str) -> Optional[List[Dict[str, Any]]]:
 
 
 def _kg_cache_set(key: str, data: List[Dict[str, Any]]) -> None:
-    max_entries = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_MAX_ENTRIES", 200))
+    max_entries = max(1, _env_int("TRACECAG_KG_QUERY_CACHE_MAX_ENTRIES", 200))
     _KG_QUERY_CACHE[key] = {"ts": time.monotonic(), "data": list(data)}
     _KG_QUERY_CACHE.move_to_end(key)
     while len(_KG_QUERY_CACHE) > max_entries:
@@ -150,7 +150,7 @@ def _provider_rpm(provider: str) -> int:
         "gemini": 10,
         "ollama": 120,
     }
-    raw = os.getenv(f"GRAPHCAG_{provider.upper()}_RPM", str(defaults.get(provider, 30)))
+    raw = os.getenv(f"TRACECAG_{provider.upper()}_RPM", str(defaults.get(provider, 30)))
     try:
         return max(1, int(raw))
     except ValueError:
@@ -203,7 +203,7 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
     if model_name == "extractive_fallback":
         # Allow caching extractive answers with reasonable support to improve warm-hit rate.
         # 0.45 captures entity-span answers that may not verbatim-match long contexts (multi-hop QA).
-        min_support = _env_float("GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.45)
+        min_support = _env_float("TRACECAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.45)
         support = _benchmark_answer_support_ratio(text, context)
         if support < min_support:
             return True
@@ -212,7 +212,7 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
     if any(marker in low for marker in ["i cannot", "i can't", "unable to", "not enough information", "insufficient"]):
         return True
 
-    min_quality = _env_float("GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY", 0.12)
+    min_quality = _env_float("TRACECAG_BENCHMARK_CACHE_MIN_QUALITY", 0.12)
     if _benchmark_cache_quality_score(text, context, model_used) < min_quality:
         return True
     return False
@@ -318,7 +318,7 @@ def _provider_pressure_score() -> float:
     providers = ("groq", "gemini", "ollama")
     disabled = sum(1 for provider in providers if _provider_is_disabled(provider))
     max_cooldown = max((_provider_cooldown_seconds(provider) for provider in providers), default=0.0)
-    cooldown_component = min(1.0, max_cooldown / max(1.0, _env_float("GRAPHCAG_ADAPTIVE_COOLDOWN_SCALE", 120.0)))
+    cooldown_component = min(1.0, max_cooldown / max(1.0, _env_float("TRACECAG_ADAPTIVE_COOLDOWN_SCALE", 120.0)))
     disabled_component = min(1.0, disabled / max(len(providers), 1))
     return _clip01((0.65 * cooldown_component) + (0.35 * disabled_component))
 
@@ -361,9 +361,9 @@ def _adaptive_context_features(
 
 
 def _adaptive_weighting() -> tuple[float, float, float]:
-    f1_w = _env_float("GRAPHCAG_ADAPTIVE_W_F1", 0.52)
-    retrieval_w = _env_float("GRAPHCAG_ADAPTIVE_W_RETRIEVAL", 0.31)
-    pcc_w = _env_float("GRAPHCAG_ADAPTIVE_W_PCC", 0.17)
+    f1_w = _env_float("TRACECAG_ADAPTIVE_W_F1", 0.52)
+    retrieval_w = _env_float("TRACECAG_ADAPTIVE_W_RETRIEVAL", 0.31)
+    pcc_w = _env_float("TRACECAG_ADAPTIVE_W_PCC", 0.17)
     total = max(f1_w + retrieval_w + pcc_w, 1e-6)
     return f1_w / total, retrieval_w / total, pcc_w / total
 
@@ -443,7 +443,7 @@ def _choose_adaptive_profile(
             dual_incorrect=dual_incorrect,
         )
 
-    epsilon = _clip01(_env_float("GRAPHCAG_ADAPTIVE_EPSILON", 0.03))
+    epsilon = _clip01(_env_float("TRACECAG_ADAPTIVE_EPSILON", 0.03))
     explore = random.random() < epsilon
     if explore:
         chosen_profile = random.choice(list(_ADAPTIVE_PROFILES.keys()))
@@ -482,10 +482,10 @@ def report_adaptive_benchmark_feedback(
     if profile_name not in _ADAPTIVE_PROFILES:
         return
 
-    target_latency = max(50.0, _env_float("GRAPHCAG_ADAPTIVE_TARGET_LATENCY_MS", 380.0))
-    target_incorrect = _clip01(_env_float("GRAPHCAG_ADAPTIVE_TARGET_INCORRECT_REUSE", 0.12))
-    lr = max(0.001, _env_float("GRAPHCAG_ADAPTIVE_LR", 0.07))
-    dual_lr = max(0.001, _env_float("GRAPHCAG_ADAPTIVE_DUAL_LR", 0.04))
+    target_latency = max(50.0, _env_float("TRACECAG_ADAPTIVE_TARGET_LATENCY_MS", 380.0))
+    target_incorrect = _clip01(_env_float("TRACECAG_ADAPTIVE_TARGET_INCORRECT_REUSE", 0.12))
+    lr = max(0.001, _env_float("TRACECAG_ADAPTIVE_LR", 0.07))
+    dual_lr = max(0.001, _env_float("TRACECAG_ADAPTIVE_DUAL_LR", 0.04))
 
     retrieval_score = (0.50 * recall_at_1) + (0.30 * recall_at_3) + (0.20 * recall_at_5)
     safety_score = 0.0 if incorrect_reuse else 1.0
@@ -544,8 +544,8 @@ async def _throttled_post_json(
     cooling key does not block other callers (e.g. a rotated key) from proceeding.
     The lock is held only during the actual HTTP round-trip + timestamp update.
     """
-    # Allow benchmark mode to fast-fail immediately via GRAPHCAG_LLM_MAX_RETRIES=1
-    env_retries = os.getenv("GRAPHCAG_LLM_MAX_RETRIES")
+    # Allow benchmark mode to fast-fail immediately via TRACECAG_LLM_MAX_RETRIES=1
+    env_retries = os.getenv("TRACECAG_LLM_MAX_RETRIES")
     if env_retries:
         try:
             max_retries = max(1, int(env_retries))
@@ -626,7 +626,7 @@ async def _throttled_post_json(
 
 
 def _benchmark_provider_order() -> List[str]:
-    provider = os.getenv("GRAPHCAG_BENCHMARK_LLM_PROVIDER", "auto").strip().lower()
+    provider = os.getenv("TRACECAG_BENCHMARK_LLM_PROVIDER", "auto").strip().lower()
     if provider == "template":
         logger.warning("[benchmark] provider='template' is deprecated; switching to auto/extractive fallback")
         provider = "auto"
@@ -636,9 +636,9 @@ def _benchmark_provider_order() -> List[str]:
     order: List[str] = []
     if os.getenv("GROQ_API_KEY", "") or os.getenv("GROQ_API_KEYS", ""):
         order.append("groq")
-    if _env_flag("GRAPHCAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
+    if _env_flag("TRACECAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
         order.append("gemini")
-    if _env_flag("GRAPHCAG_ENABLE_OLLAMA_FALLBACK", False):
+    if _env_flag("TRACECAG_ENABLE_OLLAMA_FALLBACK", False):
         order.append("ollama")
 
     order = [provider for provider in order if not _provider_is_disabled(provider)]
@@ -666,21 +666,21 @@ def _cefr_distance(a: str, b: str) -> int:
 # ============================================================
 
 # Reuse-risk weights (tunable, sum to ~1.0)
-_W_INTENT = _env_float("GRAPHCAG_PCC_W_INTENT", 0.30)      # w1: intent mismatch (0/1)
-_W_CONCEPT = _env_float("GRAPHCAG_PCC_W_CONCEPT", 0.25)    # w2: concept drift (1-Jaccard)
-_W_LEVEL = _env_float("GRAPHCAG_PCC_W_LEVEL", 0.20)        # w3: normalized level drift
-_W_PROGRESS = _env_float("GRAPHCAG_PCC_W_PROGRESS", 0.10)  # w4: profile progress drift
-_W_STALENESS = _env_float("GRAPHCAG_PCC_W_STALENESS", 0.15)  # w5: staleness ratio
+_W_INTENT = _env_float("TRACECAG_PCC_W_INTENT", 0.30)      # w1: intent mismatch (0/1)
+_W_CONCEPT = _env_float("TRACECAG_PCC_W_CONCEPT", 0.25)    # w2: concept drift (1-Jaccard)
+_W_LEVEL = _env_float("TRACECAG_PCC_W_LEVEL", 0.20)        # w3: normalized level drift
+_W_PROGRESS = _env_float("TRACECAG_PCC_W_PROGRESS", 0.10)  # w4: profile progress drift
+_W_STALENESS = _env_float("TRACECAG_PCC_W_STALENESS", 0.15)  # w5: staleness ratio
 
 # Thresholds for ternary decision
-_TAU_REUSE = _env_float("GRAPHCAG_PCC_TAU_REUSE", 0.25)  # τ₀: max risk for direct reuse
-_TAU_PATCH = _env_float("GRAPHCAG_PCC_TAU_PATCH", 0.55)  # τ₁: max risk for delta patching
+_TAU_REUSE = _env_float("TRACECAG_PCC_TAU_REUSE", 0.25)  # τ₀: max risk for direct reuse
+_TAU_PATCH = _env_float("TRACECAG_PCC_TAU_PATCH", 0.55)  # τ₁: max risk for delta patching
 
 # L1 ranking weights (paper-inspired: risk + overlap + recency)
-_L1_RISK_WEIGHT = _env_float("GRAPHCAG_L1_RISK_WEIGHT", 1.0)
-_L1_OVERLAP_WEIGHT = _env_float("GRAPHCAG_L1_OVERLAP_WEIGHT", 0.5)
-_L1_RECENCY_WEIGHT = _env_float("GRAPHCAG_L1_RECENCY_WEIGHT", 0.3)
-_L1_RECENCY_LAMBDA = _env_float("GRAPHCAG_L1_RECENCY_LAMBDA", 0.10)
+_L1_RISK_WEIGHT = _env_float("TRACECAG_L1_RISK_WEIGHT", 1.0)
+_L1_OVERLAP_WEIGHT = _env_float("TRACECAG_L1_OVERLAP_WEIGHT", 0.5)
+_L1_RECENCY_WEIGHT = _env_float("TRACECAG_L1_RECENCY_WEIGHT", 0.3)
+_L1_RECENCY_LAMBDA = _env_float("TRACECAG_L1_RECENCY_LAMBDA", 0.10)
 
 
 def _is_exact_reuse_match(fingerprint: CacheFingerprint, entry: CacheEntry) -> bool:
@@ -2588,8 +2588,8 @@ def _compute_evidence_budget(
     benchmark_candidates: bool,
     adaptive_profile: str = "",
 ) -> int:
-    base = max(2, _env_int("GRAPHCAG_EVIDENCE_BUDGET_BASE", 5))
-    max_budget = max(base, _env_int("GRAPHCAG_EVIDENCE_BUDGET_MAX", 9))
+    base = max(2, _env_int("TRACECAG_EVIDENCE_BUDGET_BASE", 5))
+    max_budget = max(base, _env_int("TRACECAG_EVIDENCE_BUDGET_MAX", 9))
     complexity = _question_complexity_score(question)
     budget = base + max(0, complexity - 2)
 
@@ -2816,7 +2816,7 @@ def _rank_benchmark_candidates(
 
 
 def _ranker_enabled() -> bool:
-    return _env_flag("GRAPHCAG_USE_LEARNED_RANKER", True)
+    return _env_flag("TRACECAG_USE_LEARNED_RANKER", True)
 
 
 def _candidate_feature_vector(question: str, item: Dict[str, Any]) -> Dict[str, float]:
@@ -2891,14 +2891,14 @@ def _rank_with_online_ranker(
         return sorted(evidence_items, key=lambda item: float(item.get("fusion_score", item.get("vec_sim", 0.0))), reverse=True)
 
     ranker = get_retrieval_ranker()
-    blended_weight = _clip01(_env_float("GRAPHCAG_RANKER_BLEND", 0.42))
+    blended_weight = _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42))
 
     # Keep graph/title heuristic dominant until online ranker has enough updates.
     mode = str(benchmark_mode or "").strip().lower()
     if mode == "trace-cag_rapid":
         snapshot = ranker.snapshot()
         updates = int(snapshot.get("updates", 0) or 0)
-        warmup_updates = max(1, _env_int("GRAPHCAG_RANKER_WARMUP_UPDATES", 40))
+        warmup_updates = max(1, _env_int("TRACECAG_RANKER_WARMUP_UPDATES", 40))
         if updates < warmup_updates:
             blended_weight = min(blended_weight, 0.22)
         else:
@@ -3008,9 +3008,9 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     start_time = time.time()
     retrieve_start = time.monotonic()
 
-    kg_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_KG_MS", 120.0))
-    vector_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
-    fusion_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
+    kg_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_KG_MS", 120.0))
+    vector_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
+    fusion_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
     total_budget_ms = kg_budget_ms + vector_budget_ms + fusion_budget_ms
 
     def _elapsed_ms() -> float:
@@ -3081,8 +3081,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.services.kg_service_v3 import get_kg_service
 
             learner_level = state.get("learner_profile", {}).get("level", "B1")
-            top_k = max(1, _env_int("GRAPHCAG_KG_TOPK", 8))
-            token_budget = max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160))
+            top_k = max(1, _env_int("TRACECAG_KG_TOPK", 8))
+            token_budget = max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160))
 
             cache_key = _kg_cache_key(user_input, learner_level, top_k)
             queried_nodes = _kg_cache_get(cache_key)
@@ -3401,8 +3401,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "recency_lambda": _RECENCY_LAMBDA,
             },
             "kg_topk": {
-                "top_k": max(1, _env_int("GRAPHCAG_KG_TOPK", 8)),
-                "context_token_budget": max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
+                "top_k": max(1, _env_int("TRACECAG_KG_TOPK", 8)),
+                "context_token_budget": max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
                 "query_cache_size": len(_KG_QUERY_CACHE),
             },
             "jit_graph": jit_graph_meta,
@@ -3415,7 +3415,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             "ranker": benchmark_ranker,
             "learned_ranker": {
                 "enabled": _ranker_enabled(),
-                "blend": _clip01(_env_float("GRAPHCAG_RANKER_BLEND", 0.42)),
+                "blend": _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42)),
                 "snapshot": ranker_snapshot,
             },
             "adaptive": {
@@ -3763,7 +3763,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     response = ""
     model_used = "llm_unavailable"
 
-    local_llama_enabled = _env_flag("GRAPHCAG_ENABLE_LOCAL_LLAMA_KV", False)
+    local_llama_enabled = _env_flag("TRACECAG_ENABLE_LOCAL_LLAMA_KV", False)
     if local_llama_enabled and not response:
         try:
             local_llama = get_local_llama_kv_service()
@@ -4446,7 +4446,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     adaptive_profile = str(state.get("adaptive_profile") or "").strip().lower()
     adaptive_config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced") if adaptive_profile else None
     support_floor = float(state.get("adaptive_controller", {}).get("support_floor") or (adaptive_config.support_floor if adaptive_config else 0.4))
-    grounding_margin = float(_env_float("GRAPHCAG_BENCHMARK_GROUNDING_MARGIN", 0.18))
+    grounding_margin = float(_env_float("TRACECAG_BENCHMARK_GROUNDING_MARGIN", 0.18))
 
     response = _postprocess_benchmark_qa_answer(
         question,

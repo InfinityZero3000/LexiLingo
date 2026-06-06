@@ -66,11 +66,11 @@ def _env_float(name: str, default: float) -> float:
 
 TOPIC_TRACECAG_TIMEOUT_SEC = _env_float(
     "TOPIC_TRACECAG_TIMEOUT_SEC",
-    _env_float("TOPIC_GRAPHCAG_TIMEOUT_SEC", 12.0),
+    _env_float("TOPIC_TRACECAG_TIMEOUT_SEC", 12.0),
 )
 TOPIC_TRACECAG_RETRY_TIMEOUT_SEC = _env_float(
     "TOPIC_TRACECAG_RETRY_TIMEOUT_SEC",
-    _env_float("TOPIC_GRAPHCAG_RETRY_TIMEOUT_SEC", 6.0),
+    _env_float("TOPIC_TRACECAG_RETRY_TIMEOUT_SEC", 6.0),
 )
 
 

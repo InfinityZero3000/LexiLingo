@@ -102,7 +102,7 @@ Return `full` otherwise.
 
 ## Benchmark Target
 
-On the existing `graphcag_drift_probes` n=48 pilot:
+On the existing `TRACECAG_drift_probes` n=48 pilot:
 
 - Keep incorrect reuse rate at `0.0`.
 - Keep PCC precision at `1.0` or at least `>= 0.98`.

@@ -32,7 +32,7 @@ Khối monorepo hiện tại gồm **4 dịch vụ runtime chính:**
 
 1. Flutter gửi request đến Backend (auth, profile, course, progress) và AI service (chat, voice, phân tích).
 2. Backend xử lý nghiệp vụ học tập trên PostgreSQL, có Redis middleware cho rate limit/cache.
-3. AI service xử lý GraphCAG pipeline, model routing và STT/TTS, liên kết KG (KuzuDB).
+3. AI service xử lý TRACECAG pipeline, model routing và STT/TTS, liên kết KG (KuzuDB).
 4. Gateway (Kong/Nginx) đóng vai trò edge routing, CORS, rate limit và observability.
 
 ### 3.2 Công Nghệ Từng Khối
@@ -41,7 +41,7 @@ Khối monorepo hiện tại gồm **4 dịch vụ runtime chính:**
 |------|-------|
 | Flutter | Dart/Flutter + Provider + GetIt + Firebase |
 | Backend | FastAPI + SQLAlchemy + Alembic + Redis + Firebase Auth |
-| AI | FastAPI + GraphCAG + KuzuDB + Whisper/Piper/HuBERT + Model Gateway |
+| AI | FastAPI + TRACECAG + KuzuDB + Whisper/Piper/HuBERT + Model Gateway |
 | Admin | React + Vite + TypeScript |
 
 ---
@@ -98,13 +98,13 @@ App tổ chức theo feature module trong [flutter-app/lib/features](../../flutt
 
 ---
 
-## 6. AI Service (GraphCAG và Model Stack)
+## 6. AI Service (TRACECAG và Model Stack)
 
 ### 6.1 App và Routes
 - AI app entry: [ai-service/api/main.py](../../ai-service/api/main.py)
 - API routes: [ai-service/api/routes](../../ai-service/api/routes)
 
-### 6.2 GraphCAG Pipeline
+### 6.2 TRACECAG Pipeline
 - State: [ai-service/api/services/graph_cag/state.py](../../ai-service/api/services/graph_cag/state.py)
 - Nodes v2: [ai-service/api/services/graph_cag/nodes_v2.py](../../ai-service/api/services/graph_cag/nodes_v2.py)
 - Edges/routing: [ai-service/api/services/graph_cag/edges.py](../../ai-service/api/services/graph_cag/edges.py)
@@ -206,7 +206,7 @@ Admin dashboard hiện là khối tách riêng, phụ trách công cụ vận h�
 ### 12.1 Debt Đã Được Ghi Nhận Rõ Ràng
 
 Theo instruction nội bộ [copilot-instructions.md](../../.github/copilot-instructions.md):
-- Cache fast-path GraphCAG chưa wired (`check_cache_hit` có tồn tại nhưng chưa được nối flow)
+- Cache fast-path TRACECAG chưa wired (`check_cache_hit` có tồn tại nhưng chưa được nối flow)
 - `nodes.py` (v1) là dead path, pipeline dùng `nodes_v2.py`
 - KG service từng có issue re-seed database khi restart
 - MCP URI naming chưa đồng nhất
@@ -228,14 +228,14 @@ Theo instruction nội bộ [copilot-instructions.md](../../.github/copilot-inst
 - Kiến trúc tách service rõ ràng, dễ scale theo khối
 - Flutter feature-rich và có tổ chức module theo domain
 - Backend routes/ORM/schemas có độ phủ cao
-- AI service có pipeline GraphCAG rõ ràng và bộ model stack đầy đủ
+- AI service có pipeline TRACECAG rõ ràng và bộ model stack đầy đủ
 - Đã có benchmark/system-testing scripts phục vụ đánh giá năng lực
 
 ### 13.2 Điểm Cần Ưu Tiên
 
 | Ưu Tiên | Hành Động |
 |---------|----------|
-| 🔴 Cao | Chốt và cleanup debt trong GraphCAG (cache fast path, v1 dead code) |
+| 🔴 Cao | Chốt và cleanup debt trong TRACECAG (cache fast path, v1 dead code) |
 | 🔴 Cao | Secret hygiene và quy trình rotation |
 | 🟡 Trung | Chuẩn hóa MCP contracts và tài liệu runtime/coding-time |
 | 🟢 Thấp | Chuẩn hóa tài liệu tổng thể theo một bộ report duy nhất |
@@ -267,4 +267,4 @@ LexiLingo đang ở trạng thái monorepo đã vượt ngưỡng MVP có cấu 
 
 ---
 
-*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md)*
+*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md)*

@@ -29,7 +29,7 @@ Bộ tài liệu Report được đánh mã theo thứ tự để theo dõi rõ 
 | 13 | `RPT-013_GIT_EXAMPLES.md` | Ví dụ thao tác git |
 | 14 | `RPT-014_VPS_NGINX_SSL_DEPLOYMENT.md` | Báo cáo VPS, NGINX, SSL |
 | 15 | `RPT-015_MVP_ARCHITECTURE.md` | Báo cáo kiến trúc MVP |
-| 16 | `RPT-016_GRAPHCAG_KG_REDIS_CACHE.md` | Báo cáo GraphCAG/KG/Redis cache |
+| 16 | `RPT-016_TRACECAG_KG_REDIS_CACHE.md` | Báo cáo TRACECAG/KG/Redis cache |
 | 17 | `RPT-017_PROJECT_MASTER_REPORT.md` | Báo cáo tổng thể toàn dự án |
 
 ---
@@ -41,9 +41,9 @@ Bộ tài liệu Report được đánh mã theo thứ tự để theo dõi rõ 
 | # | File | Mô tả |
 |---|------|--------|
 | 18 | `RPT-018_FEATURE_ANALYSIS.md` | **Phân tích tính năng toàn diện** — AI, Learning, Gamification, Content, Voice |
-| 19 | `RPT-019_AI_SERVICE_DEEP_DIVE.md` | **AI Service chuyên sâu** — GraphCAG, Model Gateway, Smart Router, toàn bộ AI services |
+| 19 | `RPT-019_AI_SERVICE_DEEP_DIVE.md` | **AI Service chuyên sâu** — TRACECAG, Model Gateway, Smart Router, toàn bộ AI services |
 | 20 | `RPT-020_BACKEND_SERVICE_REPORT.md` | **Backend Service** — 24 route modules, services, kiến trúc database |
-| 21 | `RPT-021_GRAPHCAG_ALGORITHM_FLOW.md` | **GraphCAG algorithm flow** — từng node, thuật toán cache, scoring metrics |
+| 21 | `RPT-021_TRACECAG_ALGORITHM_FLOW.md` | **TRACECAG algorithm flow** — từng node, thuật toán cache, scoring metrics |
 | 22 | `RPT-022_FLUTTER_APP_ARCHITECTURE.md` | **Kiến trúc Flutter app** — 28 providers, 21 features, navigation, dependencies |
 | 23 | `RPT-023_TECHNOLOGY_STACK_AND_TOOLS.md` | **Technology stack & tools** — toàn bộ tech stack và các tools đặc biệt |
 | 24 | `RPT-024_GAMES_ENGINE.md` | **Games Engine** — 6 mini-games, CEFR config, XP rewards |

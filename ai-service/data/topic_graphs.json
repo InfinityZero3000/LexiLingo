@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "description": "Topic-specific knowledge graphs for LexiLingo GraphCAG",
+  "description": "Topic-specific knowledge graphs for LexiLingo TRACECAG",
   "concepts": [
     {
       "id": "topic:apartment_renting",
@@ -44,12 +44,40 @@
     }
   ],
   "edges": [
-    {"from": "topic:apartment_renting", "to": "entity:lease_agreement", "relation": "requires"},
-    {"from": "topic:apartment_renting", "to": "entity:security_deposit", "relation": "includes_cost"},
-    {"from": "topic:software_interview", "to": "entity:technical_debt", "relation": "discusses"},
-    {"from": "topic:software_interview", "to": "entity:microservices", "relation": "discusses"},
-    {"from": "topic:cafe_ordering", "to": "concept:vocab.food", "relation": "specialization_of"},
-    {"from": "topic:medical_consultation", "to": "concept:vocab.health", "relation": "specialization_of"},
-    {"from": "entity:lease_agreement", "to": "concept:vocab.shopping", "relation": "related_to"}
+    {
+      "from": "topic:apartment_renting",
+      "to": "entity:lease_agreement",
+      "relation": "requires"
+    },
+    {
+      "from": "topic:apartment_renting",
+      "to": "entity:security_deposit",
+      "relation": "includes_cost"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "entity:technical_debt",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:software_interview",
+      "to": "entity:microservices",
+      "relation": "discusses"
+    },
+    {
+      "from": "topic:cafe_ordering",
+      "to": "concept:vocab.food",
+      "relation": "specialization_of"
+    },
+    {
+      "from": "topic:medical_consultation",
+      "to": "concept:vocab.health",
+      "relation": "specialization_of"
+    },
+    {
+      "from": "entity:lease_agreement",
+      "to": "concept:vocab.shopping",
+      "relation": "related_to"
+    }
   ]
 }

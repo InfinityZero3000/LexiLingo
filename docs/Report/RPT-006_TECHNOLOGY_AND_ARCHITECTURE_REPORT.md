@@ -6,7 +6,7 @@
 
 ## 1. Tóm Tắt Kiến Trúc
 
-LexiLingo sử dụng mô hình microservices kết hợp client Flutter. Flutter app đóng vai trò giao diện đa nền tảng, `backend-service` phụ trách nghiệp vụ người dùng/lộ trình/progress, `ai-service` phụ trách GraphCAG và các năng lực AI (chat, phát âm, voice).
+LexiLingo sử dụng mô hình microservices kết hợp client Flutter. Flutter app đóng vai trò giao diện đa nền tảng, `backend-service` phụ trách nghiệp vụ người dùng/lộ trình/progress, `ai-service` phụ trách TRACECAG và các năng lực AI (chat, phát âm, voice).
 
 ```
 Flutter App (iOS/Android/Web)
@@ -15,7 +15,7 @@ Flutter App (iOS/Android/Web)
         │     Auth, Users, Courses, Progress, Gamification, Content
         │
         └─── AI Service (FastAPI + MongoDB + Redis + KuzuDB)
-              GraphCAG Pipeline, Model Gateway, STT/TTS, Pronunciation
+              TRACECAG Pipeline, Model Gateway, STT/TTS, Pronunciation
 ```
 
 ---
@@ -114,7 +114,7 @@ Từ góc nhìn runtime, luồng cơ bản:
 ## 7. Tích Hợp Backend và AI
 
 - **Backend service**: xử lý user profile, course, progress, auth state.
-- **AI service**: xử lý chat, phân tích ngôn ngữ, voice và các thành phần GraphCAG.
+- **AI service**: xử lý chat, phân tích ngôn ngữ, voice và các thành phần TRACECAG.
 - Flutter app phối hợp 2 kênh này để tạo trải nghiệm học liền mạch.
 
 ---

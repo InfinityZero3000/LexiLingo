@@ -314,17 +314,17 @@ class LocalLlamaKVService:
 
         cpu_threads = max(1, min((os.cpu_count() or 8) - 1, 12))
         return LocalLlamaConfig(
-            enabled=_flag("GRAPHCAG_ENABLE_LOCAL_LLAMA_KV", False),
-            model_path=os.getenv("GRAPHCAG_LOCAL_LLAMA_MODEL_PATH", ""),
-            n_ctx=max(512, _int("GRAPHCAG_LOCAL_LLAMA_N_CTX", 2048)),
-            n_batch=max(32, _int("GRAPHCAG_LOCAL_LLAMA_N_BATCH", 256)),
-            n_threads=max(1, _int("GRAPHCAG_LOCAL_LLAMA_N_THREADS", cpu_threads)),
-            n_threads_batch=max(1, _int("GRAPHCAG_LOCAL_LLAMA_N_THREADS_BATCH", cpu_threads)),
-            max_tokens=max(16, _int("GRAPHCAG_LOCAL_LLAMA_MAX_TOKENS", 384)),
-            temperature=max(0.0, min(1.5, _float("GRAPHCAG_LOCAL_LLAMA_TEMPERATURE", 0.7))),
-            top_p=max(0.1, min(1.0, _float("GRAPHCAG_LOCAL_LLAMA_TOP_P", 0.9))),
-            repeat_penalty=max(0.9, min(2.0, _float("GRAPHCAG_LOCAL_LLAMA_REPEAT_PENALTY", 1.1))),
-            keep_session_ms=max(60000, _int("GRAPHCAG_LOCAL_LLAMA_KEEP_SESSION_MS", 600000)),
+            enabled=_flag("TRACECAG_ENABLE_LOCAL_LLAMA_KV", False),
+            model_path=os.getenv("TRACECAG_LOCAL_LLAMA_MODEL_PATH", ""),
+            n_ctx=max(512, _int("TRACECAG_LOCAL_LLAMA_N_CTX", 2048)),
+            n_batch=max(32, _int("TRACECAG_LOCAL_LLAMA_N_BATCH", 256)),
+            n_threads=max(1, _int("TRACECAG_LOCAL_LLAMA_N_THREADS", cpu_threads)),
+            n_threads_batch=max(1, _int("TRACECAG_LOCAL_LLAMA_N_THREADS_BATCH", cpu_threads)),
+            max_tokens=max(16, _int("TRACECAG_LOCAL_LLAMA_MAX_TOKENS", 384)),
+            temperature=max(0.0, min(1.5, _float("TRACECAG_LOCAL_LLAMA_TEMPERATURE", 0.7))),
+            top_p=max(0.1, min(1.0, _float("TRACECAG_LOCAL_LLAMA_TOP_P", 0.9))),
+            repeat_penalty=max(0.9, min(2.0, _float("TRACECAG_LOCAL_LLAMA_REPEAT_PENALTY", 1.1))),
+            keep_session_ms=max(60000, _int("TRACECAG_LOCAL_LLAMA_KEEP_SESSION_MS", 600000)),
         )
 
 

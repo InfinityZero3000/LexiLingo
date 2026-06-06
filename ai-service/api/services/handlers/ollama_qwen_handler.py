@@ -13,6 +13,7 @@ NO HuggingFace dependency - pure Ollama API.
 import logging
 import asyncio
 import json
+import os
 import httpx
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
@@ -116,6 +117,70 @@ class OllamaQwenHandler:
         self._loaded = False
         logger.info("[OllamaQwenHandler] Handler unloaded")
     
+    async def _invoke_cloud(
+        self,
+        messages_list: List[Dict[str, str]],
+        system_prompt: Optional[str],
+        max_tokens: int,
+        temperature: Optional[float],
+    ) -> Optional[str]:
+        """Attempt to call Groq or Gemini API directly, returning the response or None on failure."""
+        from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+        
+        # 1. Try Groq first
+        groq_key = await get_available_groq_key(estimated_tokens=max_tokens)
+        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        if groq_key:
+            try:
+                full_messages = []
+                if system_prompt:
+                    full_messages.append({"role": "system", "content": system_prompt})
+                full_messages.extend(messages_list)
+
+                payload = {
+                    "model": groq_model,
+                    "messages": full_messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature if temperature is not None else self.config.temperature,
+                }
+                
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {groq_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json=payload,
+                        timeout=15.0,
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        tokens = data.get("usage", {}).get("total_tokens", 500)
+                        await record_groq_key_usage(groq_key, tokens)
+                        return data["choices"][0]["message"]["content"]
+                    else:
+                        logger.warning(f"[OllamaQwenHandler] Groq returned status {response.status_code}: {response.text[:200]}")
+            except Exception as e:
+                logger.warning(f"[OllamaQwenHandler] Groq call failed: {e}")
+
+        # 2. Try Gemini fallback
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        if gemini_key:
+            try:
+                from api.services.handlers.gemini_handler import get_gemini_handler
+                handler = get_gemini_handler()
+                return await handler.chat(
+                    messages=messages_list,
+                    system_prompt=system_prompt,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+            except Exception as e:
+                logger.warning(f"[OllamaQwenHandler] Gemini fallback call failed: {e}")
+                
+        return None
+
     async def chat(
         self,
         messages: Optional[List[Dict[str, str]]] = None,
@@ -149,10 +214,26 @@ class OllamaQwenHandler:
         
         messages_list = messages or []
 
+        # 1. Cloud-First Path: If prefer_cloud is enabled and keys are present, try cloud first.
+        prefer_cloud = os.getenv("TRACECAG_PREFER_CLOUD_LLM", "true").lower() in ("true", "1", "yes", "on")
+        has_cloud_keys = bool(os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEYS") or os.getenv("GEMINI_API_KEY"))
+
+        if prefer_cloud and has_cloud_keys:
+            logger.info("[OllamaQwenHandler] Running low-latency cloud model (Groq/Gemini)...")
+            cloud_res = await self._invoke_cloud(
+                messages_list=messages_list,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+            if cloud_res is not None:
+                return cloud_res
+            logger.warning("[OllamaQwenHandler] Cloud model calls failed, falling back to local Ollama...")
+
+        # 2. Local Ollama Path (or fallback when cloud fails/unconfigured)
         # If Ollama is offline, fall back to Groq directly
         if not await self.load():
             logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
-            import os
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
             groq_key = await get_available_groq_key(estimated_tokens=max_tokens)
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")

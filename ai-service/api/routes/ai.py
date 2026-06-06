@@ -39,7 +39,7 @@ class AnalyzeRequest(BaseModel):
 
 
 # ============================================================
-# GRAPHCAG ENDPOINTS (LangGraph-based)
+# TRACECAG ENDPOINTS (LangGraph-based)
 # ============================================================
 
 @router.post(
