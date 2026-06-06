@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_word_usecase.dart';
@@ -33,6 +35,8 @@ class VocabProvider extends ChangeNotifier {
   final GetWordsUseCase getWordsUseCase;
   final AddWordUseCase addWordUseCase;
   final ApiClient? _apiClient;
+  final QuickSaveVocabularyService? _quickSaveService;
+  StreamSubscription<QuickSaveVocabularyResult>? _savedWordsSubscription;
   List<VocabWord> _words = [];
   String? _errorMessage;
   bool _isLoading = false;
@@ -45,8 +49,13 @@ class VocabProvider extends ChangeNotifier {
     required this.getWordsUseCase,
     required this.addWordUseCase,
     ApiClient? apiClient,
-  }) : _apiClient = apiClient {
-    loadWords();
+    QuickSaveVocabularyService? quickSaveService,
+  }) : _apiClient = apiClient,
+       _quickSaveService = quickSaveService {
+    _savedWordsSubscription = _quickSaveService?.savedWords.listen((_) {
+      unawaited(loadWords());
+    });
+    unawaited(loadWords());
   }
 
   List<VocabWord> get words => _words;
@@ -78,7 +87,9 @@ class VocabProvider extends ChangeNotifier {
         final localWordSet = {for (final w in _words) w.word.toLowerCase()};
         final merged = [
           ..._words,
-          ...backendWords.where((w) => !localWordSet.contains(w.word.toLowerCase())),
+          ...backendWords.where(
+            (w) => !localWordSet.contains(w.word.toLowerCase()),
+          ),
         ];
         _words = merged;
       } catch (_) {
@@ -88,6 +99,12 @@ class VocabProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _savedWordsSubscription?.cancel();
+    super.dispose();
   }
 
   Future<List<VocabWord>> _fetchBackendCollection() async {

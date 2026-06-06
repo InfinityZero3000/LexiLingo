@@ -87,8 +87,17 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
       final response = await apiClient.get('/vocabulary/items$queryString');
 
-      final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => VocabularyItemModel.fromJson(json)).toList();
+      final data = response['data'];
+      if (data is! List<dynamic>) {
+        throw ServerException('Invalid vocabulary items response');
+      }
+
+      return data.map((json) {
+        if (json is! Map<String, dynamic>) {
+          throw ServerException('Invalid vocabulary item response');
+        }
+        return VocabularyItemModel.fromJson(json);
+      }).toList();
     } on ServerException {
       rethrow;
     } catch (e) {
