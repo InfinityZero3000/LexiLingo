@@ -1321,7 +1321,8 @@ async def get_lexi_messages(
     By default this endpoint returns a bounded page to avoid heavy full-session scans.
     Set `full=true` only for maintenance/legacy flows that require the entire history.
     """
-    if not full:
+    is_full = full if isinstance(full, bool) else False
+    if not is_full:
         return await get_lexi_messages_paged(
             session_id=session_id,
             limit=limit,
@@ -1330,8 +1331,18 @@ async def get_lexi_messages(
             current_user=current_user,
         )
 
-    session_doc = await _ensure_session_owner(session_id, current_user, db)
-    cached_session = await _store.get_session(session_id)
+    session_doc = None
+    try:
+        session_doc = await _ensure_session_owner(session_id, current_user, db)
+        cached_session = await _store.get_session(session_id)
+    except HTTPException as e:
+        cached_session = await _store.get_session(session_id)
+        if e.status_code == 404 and cached_session:
+            owner_user_id = str(cached_session.get("user_id") or "")
+            if owner_user_id and hasattr(current_user, "user_id") and owner_user_id != current_user.user_id:
+                raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+        else:
+            raise
     cached_messages = await _store.get_messages(session_id) if cached_session else []
 
     expected_count = int((session_doc or {}).get("message_count") or 0)

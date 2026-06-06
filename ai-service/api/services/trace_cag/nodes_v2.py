@@ -634,7 +634,7 @@ def _benchmark_provider_order() -> List[str]:
         return [provider]
 
     order: List[str] = []
-    if os.getenv("GROQ_API_KEY", ""):
+    if os.getenv("GROQ_API_KEY", "") or os.getenv("GROQ_API_KEYS", ""):
         order.append("groq")
     if _env_flag("GRAPHCAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
         order.append("gemini")
@@ -2109,7 +2109,8 @@ Be encouraging and focus on the most important errors first."""
         used_model = "qwen_grammar"
 
         if not (result.get("success") and result.get("data")):
-            groq_key = os.getenv("GROQ_API_KEY", "")
+            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+            groq_key = await get_available_groq_key(estimated_tokens=150)
             groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
             if groq_key:
                 try:
@@ -2128,7 +2129,10 @@ Be encouraging and focus on the most important errors first."""
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
-                        content = resp.json()["choices"][0]["message"]["content"]
+                        data = resp.json()
+                        tokens = data.get("usage", {}).get("total_tokens", 150)
+                        await record_groq_key_usage(groq_key, tokens)
+                        content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}
                         used_model = f"groq/{groq_model}"
                     else:
@@ -3523,13 +3527,15 @@ async def stream_llm_tokens(
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         import httpx as _httpx
+        from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-        groq_key = os.getenv("GROQ_API_KEY", "")
+        groq_key = await get_available_groq_key(estimated_tokens=512)
         groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
         if not groq_key or _provider_is_disabled("groq"):
             return
 
         client = _get_httpx_client("groq")
+        tokens_yielded = 0
         try:
             async with client.stream(
                 "POST",
@@ -3555,14 +3561,16 @@ async def stream_llm_tokens(
                         continue
                     data = line[6:]
                     if data.strip() == "[DONE]":
-                        return
+                        break
                     try:
                         obj = json.loads(data)
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
+                            tokens_yielded += len(delta.split())
                             yield delta
                     except Exception:
                         pass
+            await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
         except Exception as exc:
             logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
 
@@ -3802,8 +3810,9 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             # Race Groq and Gemini concurrently; first successful response wins.
             # Ollama is kept as last-resort with a tighter 15s timeout.
             import asyncio as _asyncio
+            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_key = os.getenv("GROQ_API_KEY", "")
+            groq_key = await get_available_groq_key(estimated_tokens=512)
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
@@ -3819,8 +3828,11 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         httpx_module=httpx,
                         timeout=20.0,
                     )
-                    if resp.status_code == 200:
-                        return resp.json()["choices"][0]["message"]["content"], f"groq/{groq_model}"
+                    if resp is not None and resp.status_code == 200:
+                        data = resp.json()
+                        tokens = data.get("usage", {}).get("total_tokens", 500)
+                        await record_groq_key_usage(groq_key, tokens)
+                        return data["choices"][0]["message"]["content"], f"groq/{groq_model}"
                 except Exception as e:
                     logger.warning(f"[generate_node] Groq failed: {e}")
                 return None, None
@@ -3842,7 +3854,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         httpx_module=httpx,
                         timeout=20.0,
                     )
-                    if resp.status_code == 200:
+                    if resp is not None and resp.status_code == 200:
                         candidates = resp.json().get("candidates", [])
                         if candidates:
                             return candidates[0]["content"]["parts"][0]["text"], "gemini-2.0-flash"
@@ -3898,7 +3910,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         timeout=15.0,
                         max_retries=1,
                     )
-                    if resp.status_code == 200:
+                    if resp is not None and resp.status_code == 200:
                         response = resp.json().get("message", {}).get("content", "")
                         model_used = f"ollama/{ollama_model}"
                 except Exception as e:
@@ -4341,7 +4353,8 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     break
 
                 if provider == "groq":
-                    groq_key = os.getenv("GROQ_API_KEY", "")
+                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+                    groq_key = await get_available_groq_key(estimated_tokens=96)
                     groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
                     if not groq_key:
                         continue
@@ -4354,12 +4367,15 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             httpx_module=httpx,
                             timeout=30.0,
                         )
-                        if resp.status_code == 200:
-                            response = resp.json()["choices"][0]["message"]["content"].strip()
+                        if resp is not None and resp.status_code == 200:
+                            data = resp.json()
+                            tokens = data.get("usage", {}).get("total_tokens", 96)
+                            await record_groq_key_usage(groq_key, tokens)
+                            response = data["choices"][0]["message"]["content"].strip()
                             model_used = f"groq/{groq_model}"
                         else:
                             logger.warning(
-                                f"[_generate_benchmark_qa_response] Groq returned {resp.status_code}: {resp.text[:200]}"
+                                f"[_generate_benchmark_qa_response] Groq returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
                             )
                     except Exception as e:
                         logger.warning(f"[_generate_benchmark_qa_response] Groq failed: {e}")
@@ -4382,14 +4398,14 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             httpx_module=httpx,
                             timeout=30.0,
                         )
-                        if resp.status_code == 200:
+                        if resp is not None and resp.status_code == 200:
                             candidates = resp.json().get("candidates", [])
                             if candidates:
                                 response = candidates[0]["content"]["parts"][0]["text"].strip()
                                 model_used = "gemini-2.0-flash"
                         else:
                             logger.warning(
-                                f"[_generate_benchmark_qa_response] Gemini returned {resp.status_code}: {resp.text[:200]}"
+                                f"[_generate_benchmark_qa_response] Gemini returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
                             )
                     except Exception as e:
                         logger.warning(f"[_generate_benchmark_qa_response] Gemini failed: {e}")
@@ -4411,12 +4427,12 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             timeout=60.0,
                             max_retries=1,
                         )
-                        if resp.status_code == 200:
+                        if resp is not None and resp.status_code == 200:
                             response = resp.json().get("message", {}).get("content", "").strip()
                             model_used = f"ollama/{ollama_model}"
                         else:
                             logger.warning(
-                                f"[_generate_benchmark_qa_response] Ollama returned {resp.status_code}: {resp.text[:200]}"
+                                f"[_generate_benchmark_qa_response] Ollama returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
                             )
                     except Exception as e:
                         logger.warning(f"[_generate_benchmark_qa_response] Ollama failed: {e}")

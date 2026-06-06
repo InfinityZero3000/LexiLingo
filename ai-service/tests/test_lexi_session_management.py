@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
 
 from api.routes import lexi_chat as lexi_route
+from api.core.auth import AuthenticatedUser
 
 
 @pytest.fixture
@@ -76,7 +77,11 @@ async def test_list_lexi_sessions_returns_mongo_rows(mock_db):
     cursor.to_list = AsyncMock(return_value=rows)
     mock_db["lexi_sessions"].find.return_value = cursor
 
-    result = await lexi_route.list_lexi_sessions(user_id="u1", db=mock_db)
+    result = await lexi_route.list_lexi_sessions(
+        user_id="u1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
 
     assert result.success is True
     assert len(result.sessions) == 2
@@ -87,6 +92,11 @@ async def test_list_lexi_sessions_returns_mongo_rows(mock_db):
 @pytest.mark.asyncio
 async def test_rename_lexi_session_updates_db_and_cache(mock_db, mock_store):
     mock_db["lexi_sessions"].update_one.return_value = MagicMock(matched_count=1)
+    mock_db["lexi_sessions"].find_one.return_value = {
+        "session_id": "s1",
+        "user_id": "u1",
+        "title": "Old",
+    }
     mock_store.get_session.return_value = {
         "session_id": "s1",
         "title": "Old",
@@ -98,6 +108,7 @@ async def test_rename_lexi_session_updates_db_and_cache(mock_db, mock_store):
         session_id="s1",
         request=req,
         db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert result["success"] is True
@@ -112,7 +123,12 @@ async def test_rename_lexi_session_not_found_raises_404(mock_db, mock_store):
 
     req = lexi_route.LexiSessionRenameRequest(title="X")
     with pytest.raises(HTTPException) as exc:
-        await lexi_route.rename_lexi_session(session_id="missing", request=req, db=mock_db)
+        await lexi_route.rename_lexi_session(
+            session_id="missing",
+            request=req,
+            db=mock_db,
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+        )
 
     assert exc.value.status_code == 404
 
@@ -151,7 +167,12 @@ async def test_get_messages_fallback_rehydrates_cache(mock_db, mock_store):
     )
     mock_db["lexi_messages"].find.return_value = cursor
 
-    result = await lexi_route.get_lexi_messages(session_id="s1", db=mock_db)
+    result = await lexi_route.get_lexi_messages(
+        session_id="s1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+        full=True,
+    )
 
     assert result["success"] is True
     assert result["session_id"] == "s1"
@@ -162,7 +183,15 @@ async def test_get_messages_fallback_rehydrates_cache(mock_db, mock_store):
 
 @pytest.mark.asyncio
 async def test_delete_lexi_session_cleans_db_and_cache(mock_db, mock_store):
-    result = await lexi_route.delete_lexi_session(session_id="s1", db=mock_db)
+    mock_db["lexi_sessions"].find_one.return_value = {
+        "session_id": "s1",
+        "user_id": "u1",
+    }
+    result = await lexi_route.delete_lexi_session(
+        session_id="s1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
 
     assert result["success"] is True
     mock_db["lexi_sessions"].delete_one.assert_awaited_once_with({"session_id": "s1"})

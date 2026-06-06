@@ -59,6 +59,43 @@ class GroqKeyPool:
     def count(self) -> int:
         return len(self._keys)
 
+    async def record_usage(self, api_key: str, tokens_used: int) -> None:
+        """Record usage for a specific API key."""
+        try:
+            idx = self._keys.index(api_key)
+            await self._limiters[idx].record(tokens_used)
+        except ValueError:
+            pass
+
+
+_pool_instance: Optional[GroqKeyPool] = None
+
+
+def get_groq_key_pool() -> Optional[GroqKeyPool]:
+    """Retrieve the global GroqKeyPool instance."""
+    return _pool_instance
+
+
+async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
+    """
+    Get the next available Groq API key from the pool.
+    Falls back to the single GROQ_API_KEY environment variable if pool is empty/disabled.
+    """
+    pool = get_groq_key_pool()
+    if pool:
+        slot = await pool.get_available(estimated_tokens)
+        if slot:
+            api_key, _ = slot
+            return api_key
+    return os.getenv("GROQ_API_KEY", "").strip() or None
+
+
+async def record_groq_key_usage(api_key: str, tokens_used: int) -> None:
+    """Record token usage for a specific Groq key in the rate limiter pool."""
+    pool = get_groq_key_pool()
+    if pool:
+        await pool.record_usage(api_key, tokens_used)
+
 
 def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
     """
@@ -66,6 +103,7 @@ def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
     Reads GROQ_API_KEYS (comma-separated) first; falls back to GROQ_API_KEY.
     Returns None if no keys are configured.
     """
+    global _pool_instance
     raw = os.getenv("GROQ_API_KEYS", "").strip()
     keys = [k.strip() for k in raw.split(",") if k.strip()] if raw else []
 
@@ -78,4 +116,5 @@ def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
         return None
 
     logger.info("GroqKeyPool initialized with %d key(s)", len(keys))
-    return GroqKeyPool(keys=keys, redis_client=redis_client)
+    _pool_instance = GroqKeyPool(keys=keys, redis_client=redis_client)
+    return _pool_instance

@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
 from api.routes import topic_chat as topic_route
+from api.core.auth import AuthenticatedUser
 
 
 @pytest.fixture
@@ -192,7 +193,12 @@ async def test_lexi_messages_returns_cached_when_cache_is_complete(mock_lexi_db,
         {"id": "m2", "role": "assistant", "content": "hi", "timestamp": "2026-04-16T10:00:01"},
     ]
 
-    result = await lexi_route.get_lexi_messages(session_id="lexi_s1", db=mock_lexi_db)
+    result = await lexi_route.get_lexi_messages(
+        session_id="lexi_s1",
+        db=mock_lexi_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+        full=True,
+    )
 
     assert result["success"] is True
     assert len(result["messages"]) == 2
@@ -210,7 +216,12 @@ async def test_lexi_messages_uses_cached_payload_when_session_doc_missing(mock_l
         {"id": "m1", "role": "user", "content": "cached", "timestamp": "2026-04-16T10:00:00"}
     ]
 
-    result = await lexi_route.get_lexi_messages(session_id="lexi_s1", db=mock_lexi_db)
+    result = await lexi_route.get_lexi_messages(
+        session_id="lexi_s1",
+        db=mock_lexi_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+        full=True,
+    )
 
     assert result["success"] is True
     assert len(result["messages"]) == 1
@@ -223,6 +234,11 @@ async def test_lexi_messages_raises_404_when_no_db_and_no_cache(mock_lexi_db, mo
     mock_lexi_store.get_session.return_value = None
 
     with pytest.raises(HTTPException) as exc:
-        await lexi_route.get_lexi_messages(session_id="missing", db=mock_lexi_db)
+        await lexi_route.get_lexi_messages(
+            session_id="missing",
+            db=mock_lexi_db,
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+            full=True,
+        )
 
     assert exc.value.status_code == 404

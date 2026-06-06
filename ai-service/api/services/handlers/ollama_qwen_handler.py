@@ -48,6 +48,7 @@ class OllamaQwenHandler:
         self.config = config or OllamaQwenConfig()
         self.client: Optional[httpx.AsyncClient] = None
         self._loaded = False
+        self._ollama_offline = False  # Track if Ollama is permanently/currently offline
         
     @property
     def is_loaded(self) -> bool:
@@ -67,6 +68,8 @@ class OllamaQwenHandler:
         """
         if self._loaded:
             return True
+        if self._ollama_offline:
+            return False
         
         try:
             logger.info(f"[OllamaQwenHandler] Connecting to Ollama at {self.config.base_url}...")
@@ -76,8 +79,8 @@ class OllamaQwenHandler:
                 timeout=self.config.timeout,
             )
             
-            # Health check
-            response = await self.client.get("/api/tags")
+            # Health check with a tight 2-second timeout to fail fast
+            response = await self.client.get("/api/tags", timeout=2.0)
             if response.status_code == 200:
                 models = response.json().get("models", [])
                 model_names = [m["name"] for m in models]
@@ -96,11 +99,13 @@ class OllamaQwenHandler:
                 logger.info(f"[OllamaQwenHandler]  Connected to Ollama")
                 return True
             else:
-                logger.error(f"[OllamaQwenHandler] Ollama not responding: {response.status_code}")
+                logger.error(f"[OllamaQwenHandler] Ollama not responding: {response.status_code} (marking Ollama as offline)")
+                self._ollama_offline = True
                 return False
                 
         except Exception as e:
-            logger.error(f"[OllamaQwenHandler] Failed to connect: {e}")
+            logger.error(f"[OllamaQwenHandler] Failed to connect (marking Ollama as offline): {e}")
+            self._ollama_offline = True
             return False
     
     async def unload(self) -> None:
@@ -122,7 +127,7 @@ class OllamaQwenHandler:
         **kwargs,
     ) -> str:
         """
-        Generate chat response via Ollama.
+        Generate chat response via Ollama, falling back to Groq if Ollama is offline.
         
         Args:
             messages: List of {"role": "user/assistant", "content": "..."}
@@ -134,9 +139,6 @@ class OllamaQwenHandler:
         Returns:
             Generated response text
         """
-        if not await self.load():
-            raise RuntimeError("Failed to connect to Ollama")
-        
         # Handle simple message input
         if message and not messages:
             messages = [{"role": "user", "content": message}]
@@ -145,12 +147,52 @@ class OllamaQwenHandler:
         if system and not system_prompt:
             system_prompt = system
         
+        messages_list = messages or []
+
+        # If Ollama is offline, fall back to Groq directly
+        if not await self.load():
+            logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
+            import os
+            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+            groq_key = await get_available_groq_key(estimated_tokens=max_tokens)
+            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+            if not groq_key:
+                raise RuntimeError("Ollama is offline and no Groq API key is available in the pool")
+            
+            full_messages = []
+            if system_prompt:
+                full_messages.append({"role": "system", "content": system_prompt})
+            full_messages.extend(messages_list)
+
+            payload = {
+                "model": groq_model,
+                "messages": full_messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature if temperature is not None else self.config.temperature,
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                    timeout=20.0,
+                )
+                response.raise_for_status()
+                data = response.json()
+                tokens = data.get("usage", {}).get("total_tokens", 500)
+                await record_groq_key_usage(groq_key, tokens)
+                return data["choices"][0]["message"]["content"]
+
         # Build messages with system prompt
-        if system_prompt and messages:
+        if system_prompt and messages_list:
             full_messages = [{"role": "system", "content": system_prompt}]
-            full_messages.extend(messages)
+            full_messages.extend(messages_list)
         else:
-            full_messages = messages or []
+            full_messages = messages_list
         
         payload = {
             "model": self.config.model,
