@@ -17,18 +17,15 @@ class YouTubeExploreScreen extends StatefulWidget {
   State<YouTubeExploreScreen> createState() => _YouTubeExploreScreenState();
 }
 
-class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
-    with SingleTickerProviderStateMixin {
+class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  late final TabController _tabController;
   Timer? _debounce;
   late final YouTubeProvider _youtubeProvider;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _youtubeProvider = context.read<YouTubeProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _youtubeProvider.clearSearch();
@@ -41,7 +38,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
   @override
   void dispose() {
     _youtubeProvider.clearAll();
-    _tabController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
@@ -92,17 +88,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             children: [
               _buildHeader(isDark),
               _buildSearchBar(isDark),
-              _buildTabBar(isDark),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildDiscoverTab(isDark),
-                    _buildSavedTab(isDark),
-                  ],
-                ),
-              ),
+              Expanded(child: _buildDiscoverTab(isDark)),
             ],
           ),
         ),
@@ -158,7 +144,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 clipBehavior: Clip.none,
                 children: [
                   IconButton(
-                    onPressed: () => _tabController.animateTo(1),
+                    onPressed: () => _showSavedPopup(isDark),
                     icon: const Icon(Icons.bookmark_rounded),
                     style: IconButton.styleFrom(
                       backgroundColor: isDark
@@ -258,52 +244,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
-        ),
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────
-  //  Tab Bar
-  // ──────────────────────────────────────
-
-  Widget _buildTabBar(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Container(
-        height: 42,
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color:
-                isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.grey200,
-          ),
-        ),
-        child: TabBar(
-          controller: _tabController,
-          indicator: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicatorPadding: const EdgeInsets.all(3),
-          labelColor: Colors.white,
-          unselectedLabelColor:
-              isDark ? Colors.white54 : AppColors.textGrey,
-          labelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          dividerColor: Colors.transparent,
-          tabs: const [
-            Tab(text: 'Khám phá'),
-            Tab(text: 'Đã lưu'),
-          ],
         ),
       ),
     );
@@ -812,204 +752,15 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
   }
 
   // ──────────────────────────────────────
-  //  Saved Tab
+  //  Saved Videos Popup
   // ──────────────────────────────────────
 
-  Widget _buildSavedTab(bool isDark) {
-    return Consumer<YouTubeProvider>(
-      builder: (context, provider, _) {
-        final saved = provider.savedVideos;
-
-        if (saved.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.bookmark_border_rounded,
-                  size: 64,
-                  color: isDark ? Colors.white24 : AppColors.grey300,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Chưa có video nào được lưu',
-                  style: TextStyle(
-                    color: isDark ? Colors.white38 : AppColors.textGrey,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Nhấn  trên thẻ video để lưu lại',
-                  style: TextStyle(
-                    color: isDark ? Colors.white24 : AppColors.grey400,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-          itemCount: saved.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) =>
-              _buildSavedVideoCard(saved[index], isDark, provider),
-        );
-      },
-    );
-  }
-
-  Widget _buildSavedVideoCard(
-      SavedVideo saved, bool isDark, YouTubeProvider provider) {
-    return GestureDetector(
-      onTap: () {
-        final video = YouTubeVideo(
-          videoId: saved.videoId,
-          title: saved.title,
-          description: '',
-          channelTitle: saved.channelTitle,
-          channelId: '',
-          publishedAt: '',
-          thumbnailUrl: saved.thumbnailUrl,
-          cefrLevel: saved.cefrLevel,
-        );
-        Navigator.pushNamed(context, '/youtube/player', arguments: video);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-        ),
-        child: Row(
-          children: [
-            // Thumbnail
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: SizedBox(
-                width: 120,
-                height: 80,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: saved.thumbnailUrl.isNotEmpty
-                          ? saved.thumbnailUrl
-                          : 'https://img.youtube.com/vi/${saved.videoId}/mqdefault.jpg',
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) =>
-                          Container(color: AppColors.primary.withValues(alpha: 0.08)),
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        child: const Icon(Icons.play_circle_outline,
-                            size: 32, color: AppColors.primary),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.35),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Center(
-                      child: Icon(Icons.play_circle_fill_rounded,
-                          color: Colors.white, size: 30),
-                    ),
-                    if (saved.cefrLevel.isNotEmpty)
-                      Positioned(
-                        top: 5,
-                        left: 5,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _cefrColor(saved.cefrLevel),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            saved.cefrLevel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      saved.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.textDark,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      saved.channelTitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Đã lưu ${_timeAgo(saved.savedAt)}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark ? Colors.white24 : AppColors.grey400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            IconButton(
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
-              onPressed: () => provider.unsaveVideo(saved.videoId),
-              icon: const Icon(
-                Icons.bookmark_remove_rounded,
-                size: 22,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-        ),
-      ),
+  void _showSavedPopup(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SavedVideosSheet(isDark: isDark),
     );
   }
 
@@ -1022,15 +773,6 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
-  }
-
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'vừa xong';
-    if (diff.inHours < 1) return '${diff.inMinutes} phút trước';
-    if (diff.inDays < 1) return '${diff.inHours} giờ trước';
-    if (diff.inDays < 30) return '${diff.inDays} ngày trước';
-    return '${diff.inDays ~/ 30} tháng trước';
   }
 
   String _localizedApiError(String error) {
@@ -1096,6 +838,333 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
       default:
         return AppColors.primary;
     }
+  }
+}
+
+// ──────────────────────────────────────
+//  Saved Videos Bottom Sheet
+// ──────────────────────────────────────
+
+class _SavedVideosSheet extends StatelessWidget {
+  final bool isDark;
+  const _SavedVideosSheet({required this.isDark});
+
+  Color _cefrColor(String level) {
+    switch (level) {
+      case 'A1': return AppColors.greenSuccessBright;
+      case 'A2': return AppColors.greenSuccessSoft;
+      case 'B1': return AppColors.warning;
+      case 'B2': return AppColors.orange;
+      case 'C1': return AppColors.deepOrange;
+      case 'C2': return AppColors.purple;
+      default: return AppColors.primary;
+    }
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'vừa xong';
+    if (diff.inHours < 1) return '${diff.inMinutes} phút trước';
+    if (diff.inDays < 1) return '${diff.inHours} giờ trước';
+    if (diff.inDays < 30) return '${diff.inDays} ngày trước';
+    return '${diff.inDays ~/ 30} tháng trước';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.backgroundDark : const Color(0xFFF7F8FC),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle + header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : AppColors.grey300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.bookmark_rounded,
+                              color: AppColors.primary, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Video đã lưu',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const Spacer(),
+                        Consumer<YouTubeProvider>(
+                          builder: (_, provider, __) => Text(
+                            '${provider.savedVideos.length} video',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white38 : AppColors.textGrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                  height: 1,
+                  color: isDark ? Colors.white12 : AppColors.grey200),
+              // Content
+              Expanded(
+                child: Consumer<YouTubeProvider>(
+                  builder: (context, provider, _) {
+                    final saved = provider.savedVideos;
+
+                    if (saved.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.bookmark_border_rounded,
+                                size: 64,
+                                color: isDark
+                                    ? Colors.white24
+                                    : AppColors.grey300),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Chưa có video nào được lưu',
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white38
+                                    : AppColors.textGrey,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Nhấn  trên thẻ video để lưu lại',
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white24
+                                    : AppColors.grey400,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                      itemCount: saved.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final s = saved[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            final video = YouTubeVideo(
+                              videoId: s.videoId,
+                              title: s.title,
+                              description: '',
+                              channelTitle: s.channelTitle,
+                              channelId: '',
+                              publishedAt: '',
+                              thumbnailUrl: s.thumbnailUrl,
+                              cefrLevel: s.cefrLevel,
+                            );
+                            Navigator.pushNamed(context, '/youtube/player',
+                                arguments: video);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isDark
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                            ),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.horizontal(
+                                      left: Radius.circular(16)),
+                                  child: SizedBox(
+                                    width: 120,
+                                    height: 80,
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        CachedNetworkImage(
+                                          imageUrl: s.thumbnailUrl.isNotEmpty
+                                              ? s.thumbnailUrl
+                                              : 'https://img.youtube.com/vi/${s.videoId}/mqdefault.jpg',
+                                          fit: BoxFit.cover,
+                                          placeholder: (_, __) => Container(
+                                              color: AppColors.primary
+                                                  .withValues(alpha: 0.08)),
+                                          errorWidget: (_, __, ___) => Container(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.08),
+                                            child: const Icon(
+                                                Icons.play_circle_outline,
+                                                size: 32,
+                                                color: AppColors.primary),
+                                          ),
+                                        ),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.transparent,
+                                                Colors.black
+                                                    .withValues(alpha: 0.35),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const Center(
+                                          child: Icon(
+                                              Icons.play_circle_fill_rounded,
+                                              color: Colors.white,
+                                              size: 30),
+                                        ),
+                                        if (s.cefrLevel.isNotEmpty)
+                                          Positioned(
+                                            top: 5,
+                                            left: 5,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 5,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: _cefrColor(s.cefrLevel),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                s.cefrLevel,
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 9,
+                                                    fontWeight:
+                                                        FontWeight.w700),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(10, 8, 6, 8),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          s.title,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? Colors.white
+                                                : AppColors.textDark,
+                                            height: 1.3,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          s.channelTitle,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isDark
+                                                ? Colors.white38
+                                                : AppColors.textGrey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Đã lưu ${_timeAgo(s.savedAt)}',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: isDark
+                                                ? Colors.white24
+                                                : AppColors.grey400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  padding: const EdgeInsets.all(8),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () =>
+                                      provider.unsaveVideo(s.videoId),
+                                  icon: const Icon(
+                                      Icons.bookmark_remove_rounded,
+                                      size: 22,
+                                      color: AppColors.primary),
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
