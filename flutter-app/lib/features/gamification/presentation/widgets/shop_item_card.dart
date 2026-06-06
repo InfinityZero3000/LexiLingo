@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 
 /// Shop Item Card Widget
 /// Displays a purchasable item in the shop
@@ -10,6 +11,7 @@ class ShopItemCard extends StatelessWidget {
   final int userGems;
   final VoidCallback? onPurchase;
   final bool isLoading;
+  final bool isOwned;
 
   const ShopItemCard({
     super.key,
@@ -17,6 +19,7 @@ class ShopItemCard extends StatelessWidget {
     required this.userGems,
     this.onPurchase,
     this.isLoading = false,
+    this.isOwned = false,
   });
 
   bool get canAfford => userGems >= item.priceGems;
@@ -209,7 +212,11 @@ class ShopItemCard extends StatelessWidget {
 
                       // Buy Button
                       GestureDetector(
-                        onTap: canAfford && !item.isOutOfStock && !isLoading
+                        onTap:
+                            canAfford &&
+                                !item.isOutOfStock &&
+                                !isLoading &&
+                                !isOwned
                             ? onPurchase
                             : null,
                         child: Container(
@@ -218,7 +225,7 @@ class ShopItemCard extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: canAfford && !item.isOutOfStock
+                            color: canAfford && !item.isOutOfStock && !isOwned
                                 ? AppColors.greenSuccessBright
                                 : Colors.grey[300],
                             borderRadius: BorderRadius.circular(8),
@@ -230,11 +237,18 @@ class ShopItemCard extends StatelessWidget {
                                   child: LottieLoadingWidget.tiny(),
                                 )
                               : Text(
-                                  item.isOutOfStock ? 'SOLD' : 'BUY',
+                                  isOwned
+                                      ? 'OWNED'
+                                      : item.isOutOfStock
+                                      ? 'SOLD'
+                                      : 'BUY',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: canAfford && !item.isOutOfStock
+                                    color:
+                                        canAfford &&
+                                            !item.isOutOfStock &&
+                                            !isOwned
                                         ? Colors.white
                                         : Colors.grey[600],
                                   ),
@@ -253,6 +267,30 @@ class ShopItemCard extends StatelessWidget {
   }
 
   Widget _buildItemIcon(BuildContext context) {
+    if (item.isAvatar && item.avatarUrl != null) {
+      return Container(
+        width: 92,
+        height: 92,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _getCategoryColor(
+            context,
+            item.category,
+          ).withValues(alpha: 0.1),
+          border: Border.all(
+            color: _getCategoryColor(context, item.category),
+            width: 2,
+          ),
+        ),
+        child: ClipOval(
+          child: NetworkAvatarImage(
+            imageUrl: item.avatarUrl,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+
     IconData icon;
     switch (item.effectType) {
       case ShopItemEntity.effectStreakFreeze:

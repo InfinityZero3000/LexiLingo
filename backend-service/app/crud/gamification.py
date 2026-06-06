@@ -495,6 +495,20 @@ class ShopCRUD:
         
         if item.stock_quantity is not None and item.stock_quantity < quantity:
             return None, "Insufficient stock"
+
+        if item.item_type == "avatar":
+            if quantity != 1:
+                return None, "Avatars can only be purchased once"
+            owned_result = await db.execute(
+                select(UserInventory).where(
+                    and_(
+                        UserInventory.user_id == user_id,
+                        UserInventory.shop_item_id == item_id,
+                    )
+                )
+            )
+            if owned_result.scalar_one_or_none():
+                return None, "Avatar already owned"
         
         total_cost = item.price_gems * quantity
         

@@ -62,6 +62,14 @@ class GamificationProvider extends ChangeNotifier {
   List<InventoryItemEntity> get inventory => _inventory;
   bool get isLoadingInventory => _isLoadingInventory;
   String? get inventoryError => _inventoryError;
+  bool ownsItem(String shopItemId) =>
+      _inventory.any((entry) => entry.item.id == shopItemId);
+  List<String> get ownedAvatarUrls => _inventory
+      .where((entry) => entry.item.isAvatar)
+      .map((entry) => entry.item.avatarUrl)
+      .whereType<String>()
+      .toSet()
+      .toList();
 
   // ============== Leaderboard State ==============
   final Map<String, LeaderboardEntity> _leaderboards = {};
@@ -191,7 +199,8 @@ class GamificationProvider extends ChangeNotifier {
   Future<bool> useItem(String inventoryId) async {
     try {
       final response = await _apiClient.post(
-        '/gamification/inventory/$inventoryId/use',
+        '/gamification/inventory/use',
+        body: {'inventory_id': inventoryId},
       );
 
       if (_isSuccessResponse(response)) {
@@ -203,6 +212,31 @@ class GamificationProvider extends ChangeNotifier {
       debugPrint('Error using item: $e');
       return false;
     }
+  }
+
+  Future<String?> equipAvatar(String shopItemId) async {
+    InventoryItemEntity? inventoryItem;
+    for (final entry in _inventory) {
+      if (entry.item.id == shopItemId && entry.item.isAvatar) {
+        inventoryItem = entry;
+        break;
+      }
+    }
+    if (inventoryItem == null) return null;
+
+    try {
+      final response = await _apiClient.post(
+        '/gamification/inventory/avatar/equip',
+        body: {'inventory_id': inventoryItem.id},
+      );
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        return data['avatar_url'] as String?;
+      }
+    } catch (e) {
+      debugPrint('Error equipping avatar: $e');
+    }
+    return null;
   }
 
   // ============== Leaderboard Methods ==============

@@ -8,6 +8,8 @@ import 'package:lexilingo_app/features/gamification/presentation/widgets/gem_cou
 import 'package:lexilingo_app/features/gamification/presentation/widgets/shop_item_card.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/presentation/screens/wallet_screen.dart';
+import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 
 /// Shop Screen
 /// Browse and purchase items with gems
@@ -132,10 +134,17 @@ class _ShopScreenState extends State<ShopScreen>
                           color: AppColors.purple,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.card_giftcard,
-                          color: AppColors.surfaceLight,
-                        ),
+                        child: item.isAvatar
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: NetworkAvatarImage(
+                                  imageUrl: item.avatarUrl,
+                                ),
+                              )
+                            : Icon(
+                                Icons.card_giftcard,
+                                color: AppColors.surfaceLight,
+                              ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -238,19 +247,41 @@ class _ShopScreenState extends State<ShopScreen>
           ],
         ),
         actions: [
-          Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('shop.great'.tr()),
+          ),
+          if (item.isAvatar)
+            ElevatedButton(
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(this.context);
+                final avatarUrl = await this.context
+                    .read<GamificationProvider>()
+                    .equipAvatar(item.id);
+                if (!mounted) return;
+                if (avatarUrl != null) {
+                  await this.context.read<AuthProvider>().refreshCurrentUser();
+                  if (!mounted) return;
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('shop.avatarEquipped'.tr())),
+                  );
+                } else {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('shop.avatarEquipFailed'.tr()),
+                      backgroundColor: AppColors.errorBright,
+                    ),
+                  );
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: AppColors.surfaceLight,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
               ),
-              child: Text('shop.great'.tr()),
+              child: Text('shop.equipNow'.tr()),
             ),
-          ),
         ],
       ),
     );
@@ -416,6 +447,7 @@ class _ShopScreenState extends State<ShopScreen>
                 return ShopItemCard(
                   item: item,
                   userGems: provider.gems,
+                  isOwned: item.isAvatar && provider.ownsItem(item.id),
                   isLoading: _purchasingItemId == item.id,
                   onPurchase: () => _handlePurchase(item),
                 );

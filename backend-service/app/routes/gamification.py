@@ -8,6 +8,7 @@ from uuid import UUID
 from datetime import datetime, timezone
 from math import radians, sin, cos, sqrt, atan2
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,6 +21,7 @@ from app.core.cache import (
     set_cached,
 )
 from app.models.user import User
+from app.models.gamification import ShopItem, UserInventory
 from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
 )
@@ -28,7 +30,8 @@ from app.schemas.gamification import (
     WalletResponse, WalletHistoryResponse, WalletTransactionResponse,
     LeaderboardResponse, LeaderboardUserEntry, UserLeagueStatusResponse,
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
-    InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
+    EquipAvatarRequest, EquipAvatarResponse, InventoryResponse,
+    UserInventoryItemResponse, UseItemRequest, UseItemResponse,
     FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
     LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse
@@ -558,6 +561,55 @@ async def get_my_inventory(
             items=response_items,
             total_items=len(response_items)
         )
+    )
+
+
+@router.post(
+    "/inventory/avatar/equip",
+    response_model=ApiResponse[EquipAvatarResponse],
+)
+async def equip_owned_avatar(
+    request: EquipAvatarRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(UserInventory, ShopItem)
+        .join(ShopItem, ShopItem.id == UserInventory.shop_item_id)
+        .where(
+            and_(
+                UserInventory.id == request.inventory_id,
+                UserInventory.user_id == current_user.id,
+                ShopItem.item_type == "avatar",
+            )
+        )
+    )
+    owned = result.first()
+    if not owned:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Owned avatar not found",
+        )
+
+    inventory, item = owned
+    avatar_url = (item.effects or {}).get("avatar_url") or item.icon_url
+    if not avatar_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Avatar item has no image URL",
+        )
+
+    current_user.avatar_url = avatar_url
+    await db.commit()
+    await db.refresh(current_user)
+
+    return ApiResponse(
+        success=True,
+        message=f"{item.name} equipped",
+        data=EquipAvatarResponse(
+            avatar_url=avatar_url,
+            inventory_id=inventory.id,
+        ),
     )
 
 

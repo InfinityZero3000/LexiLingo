@@ -247,6 +247,17 @@ class PurchaseResponse(BaseModel):
         from_attributes = True
 
 
+class EquipAvatarRequest(BaseModel):
+    """Equip an avatar owned in the user's inventory."""
+    inventory_id: UUID
+
+
+class EquipAvatarResponse(BaseModel):
+    """Result of equipping a permanent avatar cosmetic."""
+    avatar_url: str
+    inventory_id: UUID
+
+
 class UserInventoryItemResponse(BaseModel):
     """User's inventory item"""
     id: UUID
