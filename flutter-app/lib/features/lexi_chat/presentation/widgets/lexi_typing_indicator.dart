@@ -5,8 +5,13 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 /// Three subtle bouncing dots with clean design.
 class LexiTypingIndicator extends StatefulWidget {
   final bool isThinking;
+  final String name;
 
-  const LexiTypingIndicator({super.key, this.isThinking = false});
+  const LexiTypingIndicator({
+    super.key,
+    this.isThinking = false,
+    this.name = 'Lexi',
+  });
 
   @override
   State<LexiTypingIndicator> createState() => _LexiTypingIndicatorState();
@@ -69,7 +74,7 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.isThinking ? 'Lexi is thinking' : 'Lexi is typing',
+                  widget.isThinking ? '${widget.name} is thinking' : '${widget.name} is typing',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

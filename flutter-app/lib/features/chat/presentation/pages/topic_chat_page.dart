@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
+import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import '../../data/models/story_model.dart';
 import '../../data/models/topic_session_model.dart';
 import '../providers/story_provider.dart';
@@ -266,10 +267,21 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 _buildSuggestedPrompts(isDark),
 
               // 4. Typing indicator
-              if (provider.isSendingMessage) _buildTypingIndicator(isDark),
+              if (provider.isSendingMessage)
+                LexiTypingIndicator(
+                  isThinking: true,
+                  name: provider.currentSession?.rolePersona.name.split(' ').first ?? 'AI',
+                ),
 
-              // 5. Input field
-              if (!_taskBannerDismissedByUser) _buildTaskBanner(isDark),
+              // 5. Task banner (collapses to zero height when hidden)
+              if (!_taskBannerDismissedByUser)
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  child: _taskBannerVisible
+                      ? _buildTaskBanner(isDark)
+                      : const SizedBox.shrink(),
+                ),
               _buildInputField(
                 isEnabled: provider.hasActiveSession,
                 isDark: isDark,
@@ -402,30 +414,6 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildTypingIndicator(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: LottieLoadingWidget.tiny(),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            '${widget.story.title.en.split(' ').first} is typing...',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColorRoles.textMuted(isDark),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTaskBanner(bool isDark) {
     final Color accent = switch (_taskBannerType) {
       _TaskBannerType.loading => AppColorRoles.primary(isDark),
@@ -439,85 +427,74 @@ class _TopicChatPageState extends State<TopicChatPage> {
       _TaskBannerType.error => Icons.info_outline,
     };
 
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      offset: _taskBannerVisible ? Offset.zero : const Offset(0, 1),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: _taskBannerVisible ? 1 : 0,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Dismissible(
-            key: ValueKey('task-banner-$_taskBannerTitle-$_taskBannerType'),
-            direction: DismissDirection.horizontal,
-            onDismissed: (_) => _dismissTaskBannerByUser(),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.surfaceDarkCard
-                    : AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: accent.withValues(alpha: 0.25)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Dismissible(
+        key: ValueKey('task-banner-$_taskBannerTitle-$_taskBannerType'),
+        direction: DismissDirection.horizontal,
+        onDismissed: (_) => _dismissTaskBannerByUser(),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDarkCard : AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accent.withValues(alpha: 0.25)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.08),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(icon, color: accent, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _taskBannerTitle,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColorRoles.textPrimary(isDark),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'topicChat.swipeToCloseHint'.tr(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColorRoles.textMuted(isDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_taskBannerDetail.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _taskBannerDetail,
+                  Icon(icon, color: accent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _taskBannerTitle,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: AppColorRoles.textSecondary(isDark),
+                        fontWeight: FontWeight.w700,
+                        color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
-                  ],
-                  if (_taskBannerProgress != null) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(99),
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        value: _taskBannerProgress,
-                        backgroundColor: accent.withValues(alpha: 0.16),
-                        valueColor: AlwaysStoppedAnimation<Color>(accent),
-                      ),
+                  ),
+                  Text(
+                    'topicChat.swipeToCloseHint'.tr(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColorRoles.textMuted(isDark),
                     ),
-                  ],
+                  ),
                 ],
               ),
-            ),
+              if (_taskBannerDetail.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _taskBannerDetail,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColorRoles.textSecondary(isDark),
+                  ),
+                ),
+              ],
+              if (_taskBannerProgress != null) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: _taskBannerProgress,
+                    backgroundColor: accent.withValues(alpha: 0.16),
+                    valueColor: AlwaysStoppedAnimation<Color>(accent),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -660,6 +637,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
         builder: (context, scrollController) => VocabularyPreviewSheet(
           vocabulary: session.vocabularyPreview,
           scrollController: scrollController,
+          sourceReference: widget.story.storyId,
         ),
       ),
     );
@@ -877,17 +855,12 @@ class _TopicMessageBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: isUser
-                      ? Text(message.displayContent, style: bubbleTextStyle)
-                      : QuickSaveSelectionArea(
-                          sourceType: 'topic_chat',
-                          sourceReference: message.id,
-                          contextSentence: message.displayContent,
-                          child: Text(
-                            message.displayContent,
-                            style: bubbleTextStyle,
-                          ),
-                        ),
+                  child: QuickSaveSelectionArea(
+                    sourceType: 'topic_chat',
+                    sourceReference: message.id,
+                    contextSentence: message.displayContent,
+                    child: Text(message.displayContent, style: bubbleTextStyle),
+                  ),
                 ),
               ),
             ],
@@ -907,11 +880,13 @@ class _TopicMessageBubble extends StatelessWidget {
 class VocabularyPreviewSheet extends StatelessWidget {
   final List<VocabularyItem> vocabulary;
   final ScrollController scrollController;
+  final String sourceReference;
 
   const VocabularyPreviewSheet({
     super.key,
     required this.vocabulary,
     required this.scrollController,
+    required this.sourceReference,
   });
 
   @override
@@ -1008,6 +983,19 @@ class VocabularyPreviewSheet extends StatelessWidget {
                           ),
                         ),
                     ],
+                  ),
+                  trailing: IconButton(
+                    tooltip: 'Save to Vocabulary',
+                    icon: const Icon(Icons.bookmark_add_outlined),
+                    onPressed: () => showQuickSaveWordSheet(
+                      context,
+                      word: item.term,
+                      sourceType: 'topic_chat_preview',
+                      sourceReference: sourceReference,
+                      contextSentence: item.exampleInStory,
+                      definition: item.definition,
+                      partOfSpeech: item.partOfSpeech,
+                    ),
                   ),
                 );
               },
