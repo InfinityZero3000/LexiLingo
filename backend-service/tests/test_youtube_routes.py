@@ -32,7 +32,7 @@ async def no_db_client():
 
     app.dependency_overrides[get_db] = mock_get_db
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         yield client
     app.dependency_overrides.clear()
 
@@ -301,14 +301,14 @@ class TestSearchVideos:
             MockCache.return_value = mock_cache_instance
 
             response = await no_db_client.get(
-                "/api/v1/youtube/search?q=grammar&channel_id=UCHaHD477h-FeBbrgBrwTDpA"
+                "/api/v1/youtube/search?q=grammar&channel_id=UCHaHD477h-FeBbVh9Sh7syA"
             )
 
         assert response.status_code == 200
         # Verify cache key included channel_id
         call_args = mock_cache_instance.get_or_fetch.call_args
         cache_key = call_args.kwargs.get("cache_key") or call_args.args[0]
-        assert "UCHaHD477h-FeBbrgBrwTDpA" in cache_key
+        assert "UCHaHD477h-FeBbVh9Sh7syA" in cache_key
 
 
 # ============================================================================
@@ -415,7 +415,7 @@ class TestGetChannelVideos:
         with patch("app.routes.youtube.settings") as mock_settings:
             mock_settings.YOUTUBE_API_KEY = None
             response = await no_db_client.get(
-                "/api/v1/youtube/channels/UCHaHD477h-FeBbrgBrwTDpA/videos"
+                "/api/v1/youtube/channels/UCHaHD477h-FeBbVh9Sh7syA/videos"
             )
         assert response.status_code == 503
 
@@ -429,7 +429,7 @@ class TestGetChannelVideos:
                     "title": "Lesson 1",
                     "description": "",
                     "channel_title": "BBC",
-                    "channel_id": "UCHaHD477h-FeBbrgBrwTDpA",
+                    "channel_id": "UCHaHD477h-FeBbVh9Sh7syA",
                     "published_at": "2024-01-01T00:00:00Z",
                     "thumbnail_url": "",
                     "thumbnail_medium": "",
@@ -450,12 +450,12 @@ class TestGetChannelVideos:
             MockCache.return_value = mock_cache_instance
 
             response = await no_db_client.get(
-                "/api/v1/youtube/channels/UCHaHD477h-FeBbrgBrwTDpA/videos"
+                "/api/v1/youtube/channels/UCHaHD477h-FeBbVh9Sh7syA/videos"
             )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["channel_id"] == "UCHaHD477h-FeBbrgBrwTDpA"
+        assert data["channel_id"] == "UCHaHD477h-FeBbVh9Sh7syA"
         assert "data" in data
         assert "source" in data
 

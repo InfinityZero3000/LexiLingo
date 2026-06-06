@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
@@ -63,7 +65,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<YouTubeProvider>().loadCaptions(widget.video.videoId);
+      final provider = context.read<YouTubeProvider>();
+      provider.loadCaptions(widget.video.videoId);
+      provider.addToHistory(widget.video);
     });
   }
 
@@ -226,6 +230,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           child: Column(
             children: [
               _buildPlayerArea(isDark),
+              _buildActiveSubtitleCard(isDark),
               _buildInfoBar(isDark),
               _buildActionBar(isDark),
               _buildTabBar(isDark),
@@ -274,6 +279,77 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActiveSubtitleCard(bool isDark) {
+    return Consumer<YouTubeProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoadingCaptions) {
+          return const SizedBox.shrink();
+        }
+        final captions = provider.captions;
+        final hasActive = _activeCaptionIndex >= 0 && _activeCaptionIndex < captions.length;
+        final activeText = hasActive ? captions[_activeCaptionIndex].text : '';
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : AppColors.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppColors.primary.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.subtitles_rounded,
+                color: hasActive ? AppColors.primary : (isDark ? Colors.white30 : AppColors.grey400),
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: hasActive
+                    ? Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: activeText.split(' ').map((word) {
+                          return GestureDetector(
+                            onTap: () => _onWordTap(word, contextSentence: activeText),
+                            child: Text(
+                              '$word ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : AppColors.textDark,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppColors.primary.withValues(alpha: 0.4),
+                                decorationStyle: TextDecorationStyle.dashed,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      )
+                    : Text(
+                        'Phụ đề thời gian thực sẽ hiển thị tại đây...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? Colors.white30 : AppColors.textGrey,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -927,6 +1003,9 @@ class _WordTranslationSheet extends StatefulWidget {
 
 class _WordTranslationSheetState extends State<_WordTranslationSheet> {
   late Future<WordTranslation> _translationFuture;
+  bool _isSavingWord = false;
+  bool _isSavedWord = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -936,6 +1015,51 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       videoId: widget.videoId,
       contextSentence: widget.contextSentence,
     );
+  }
+
+  Future<void> _quickSave(WordTranslation t) async {
+    if (_isSavingWord || _isSavedWord) return;
+
+    setState(() {
+      _isSavingWord = true;
+      _saveError = null;
+    });
+
+    try {
+      final service = sl<QuickSaveVocabularyService>();
+      final result = await service.quickSaveWord(
+        word: t.word,
+        sourceType: 'youtube',
+        sourceReference: widget.videoId,
+        contextSentence: widget.contextSentence,
+        definition: t.hasDefinition ? t.definition : null,
+        translation: t.hasTranslation ? t.translation : null,
+        partOfSpeech: t.partOfSpeech.isNotEmpty ? t.partOfSpeech : null,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isSavingWord = false;
+        _isSavedWord = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.alreadyInCollection
+              ? '"${result.normalizedWord}" đã có trong sổ tay từ vựng.'
+              : 'Đã lưu "${result.normalizedWord}" vào sổ tay từ vựng.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.greenSuccess,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSavingWord = false;
+        _saveError = 'Không thể lưu từ này. Vui lòng thử lại.';
+      });
+    }
   }
 
   @override
@@ -1154,6 +1278,18 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
             const SizedBox(height: 16),
           ],
 
+          if (_saveError != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _saveError!,
+              style: const TextStyle(
+                color: AppColors.errorBright,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
           // Action buttons
           Row(
             children: [
@@ -1174,24 +1310,28 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showQuickSaveWordSheet(
-                      context,
-                      word: t.word,
-                      sourceType: 'youtube',
-                      sourceReference: widget.videoId,
-                      contextSentence: widget.contextSentence,
-                      definition: t.hasDefinition ? t.definition : null,
-                      translation: t.hasTranslation ? t.translation : null,
-                      partOfSpeech:
-                          t.partOfSpeech.isNotEmpty ? t.partOfSpeech : null,
-                    );
-                  },
-                  icon: const Icon(Icons.bookmark_add_rounded, size: 16),
-                  label: const Text('Lưu từ'),
+                  onPressed: (_isSavingWord || _isSavedWord) ? null : () => _quickSave(t),
+                  icon: _isSavingWord
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          _isSavedWord ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
+                          size: 16,
+                        ),
+                  label: Text(_isSavingWord
+                      ? 'Đang lưu...'
+                      : _isSavedWord
+                          ? 'Đã lưu'
+                          : 'Lưu từ'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: _isSavedWord ? AppColors.greenSuccess : AppColors.primary,
+                    disabledBackgroundColor: _isSavedWord ? AppColors.greenSuccess.withValues(alpha: 0.6) : null,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 13),

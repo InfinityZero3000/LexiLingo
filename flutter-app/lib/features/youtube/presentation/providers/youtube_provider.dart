@@ -31,6 +31,14 @@ class YouTubeProvider extends ChangeNotifier {
   final Map<String, SavedVideo> _savedVideos = {};
   static const _prefsSavedKey = 'youtube_saved_videos';
 
+  // ── Watch History (persisted) ──
+  final List<YouTubeVideo> _watchHistory = [];
+  static const _prefsHistoryKey = 'youtube_watch_history';
+
+  // ── Recommended videos ──
+  List<YouTubeVideo> _recommendedVideos = [];
+  bool _isLoadingRecommendations = false;
+
   // ── Translation session state ──
   // Memory cache: "${word}:${lang}" -> WordTranslation (survives video navigation)
   final Map<String, WordTranslation> _translationMemCache = {};
@@ -53,6 +61,13 @@ class YouTubeProvider extends ChangeNotifier {
   List<SavedVideo> get savedVideos =>
       _savedVideos.values.toList().reversed.toList();
 
+  /// Watch history, newest first.
+  List<YouTubeVideo> get watchHistory => List.unmodifiable(_watchHistory);
+
+  /// Recommended videos.
+  List<YouTubeVideo> get recommendedVideos => _recommendedVideos;
+  bool get isLoadingRecommendations => _isLoadingRecommendations;
+
   bool isVideoSaved(String videoId) => _savedVideos.containsKey(videoId);
 
   /// Returns looked-up words for a specific video (newest first).
@@ -66,11 +81,37 @@ class YouTubeProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsSavedKey);
+      if (raw != null) {
+        final list = jsonDecode(raw) as List<dynamic>;
+        for (final item in list) {
+          final v = SavedVideo.fromJson(item as Map<String, dynamic>);
+          _savedVideos[v.videoId] = v;
+        }
+      }
+
+      // Also load watch history
+      final rawHist = prefs.getString(_prefsHistoryKey);
+      if (rawHist != null) {
+        final listHist = jsonDecode(rawHist) as List<dynamic>;
+        _watchHistory.clear();
+        for (final item in listHist) {
+          _watchHistory.add(YouTubeVideo.fromJson(item as Map<String, dynamic>));
+        }
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  /// Load persisted watch history from SharedPreferences.
+  Future<void> loadWatchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_prefsHistoryKey);
       if (raw == null) return;
       final list = jsonDecode(raw) as List<dynamic>;
+      _watchHistory.clear();
       for (final item in list) {
-        final v = SavedVideo.fromJson(item as Map<String, dynamic>);
-        _savedVideos[v.videoId] = v;
+        _watchHistory.add(YouTubeVideo.fromJson(item as Map<String, dynamic>));
       }
       notifyListeners();
     } catch (_) {}
@@ -270,6 +311,68 @@ class YouTubeProvider extends ChangeNotifier {
       list.insert(0, entry); // newest first
     }
     notifyListeners();
+  }
+
+  // ── Watch History Actions ──
+
+  Future<void> addToHistory(YouTubeVideo video) async {
+    _watchHistory.removeWhere((v) => v.videoId == video.videoId);
+    _watchHistory.insert(0, video);
+    if (_watchHistory.length > 20) {
+      _watchHistory.removeLast();
+    }
+    notifyListeners();
+    await _persistWatchHistory();
+  }
+
+  Future<void> clearWatchHistory() async {
+    _watchHistory.clear();
+    notifyListeners();
+    await _persistWatchHistory();
+  }
+
+  Future<void> _persistWatchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = _watchHistory.map((v) => v.toJson()).toList();
+      await prefs.setString(_prefsHistoryKey, jsonEncode(list));
+    } catch (_) {}
+  }
+
+  // ── Recommendations Actions ──
+
+  Future<void> loadRecommendations() async {
+    _isLoadingRecommendations = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      String query = 'Learn English';
+      String? channelId;
+
+      if (_watchHistory.isNotEmpty) {
+        final recent = _watchHistory.first;
+        if (recent.channelId.isNotEmpty) {
+          channelId = recent.channelId;
+          final words = recent.title.split(' ');
+          if (words.isNotEmpty) {
+            query = words.take(2).join(' ');
+          }
+        }
+      }
+
+      final result = await _repository.searchVideos(
+        query: query.isNotEmpty ? query : 'Learn English',
+        channelId: channelId,
+        maxResults: 10,
+      );
+      _recommendedVideos = result.videos;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoadingRecommendations = false;
+      notifyListeners();
+    }
   }
 
   // ── Clear ──

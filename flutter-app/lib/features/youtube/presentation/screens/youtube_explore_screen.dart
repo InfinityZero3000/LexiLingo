@@ -17,26 +17,31 @@ class YouTubeExploreScreen extends StatefulWidget {
   State<YouTubeExploreScreen> createState() => _YouTubeExploreScreenState();
 }
 
-class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
+class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
+    with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
   late final YouTubeProvider _youtubeProvider;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _youtubeProvider = context.read<YouTubeProvider>();
+    _tabController = TabController(length: 4, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _youtubeProvider.clearSearch();
       _youtubeProvider.loadChannels();
       _youtubeProvider.loadSavedVideos();
+      _youtubeProvider.loadRecommendations();
     });
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _youtubeProvider.clearAll();
     _searchController.dispose();
     _scrollController.dispose();
@@ -88,7 +93,31 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
             children: [
               _buildHeader(isDark),
               _buildSearchBar(isDark),
-              Expanded(child: _buildDiscoverTab(isDark)),
+              Expanded(
+                child: Consumer<YouTubeProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.searchQuery.isNotEmpty) {
+                      return _buildSearchResults(provider, isDark);
+                    }
+                    return Column(
+                      children: [
+                        _buildTabBar(isDark),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildHomeContent(provider, isDark),
+                              _buildRecommendationsTab(provider, isDark),
+                              _buildSavedTab(provider, isDark),
+                              _buildHistoryTab(provider, isDark),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -137,6 +166,18 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
               ],
             ),
           ),
+          IconButton(
+            onPressed: () => _showGuideDialog(isDark),
+            icon: const Icon(Icons.help_outline_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.white,
+              foregroundColor: isDark ? Colors.white70 : AppColors.textGrey,
+              padding: const EdgeInsets.all(10),
+            ),
+          ),
+          const SizedBox(width: 8),
           Consumer<YouTubeProvider>(
             builder: (context, provider, _) {
               final count = provider.savedVideos.length;
@@ -144,7 +185,13 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   IconButton(
-                    onPressed: () => _showSavedPopup(isDark),
+                    onPressed: () {
+                      if (_youtubeProvider.searchQuery.isNotEmpty) {
+                        _searchController.clear();
+                        _youtubeProvider.clearSearch();
+                      }
+                      _tabController.animateTo(2); // Index 2 is Saved tab
+                    },
                     icon: const Icon(Icons.bookmark_rounded),
                     style: IconButton.styleFrom(
                       backgroundColor: isDark
@@ -795,17 +842,17 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 
   List<Color> _channelGradient(String channelId, String category) {
     switch (channelId) {
-      case 'UCHaHD477h-FeBbrgBrwTDpA':
+      case 'UCHaHD477h-FeBbVh9Sh7syA': // BBC Learning English
         return [const Color(0xFF1565C0), const Color(0xFF42A5F5)];
-      case 'UCsooa4yRKGN_zEE8iknghZA':
+      case 'UCsooa4yRKGN_zEE8iknghZA': // TED-Ed
         return [const Color(0xFF7C4DFF), const Color(0xFF536DFE)];
-      case 'UCz4tgANd4yy8Oe0iXCdSWfA':
+      case 'UCz4tgANd4yy8Oe0iXCdSWfA': // English with Lucy
         return [const Color(0xFF00897B), const Color(0xFF26C6DA)];
-      case 'UCVBErcpqaokOf4fI5j73K_w':
+      case 'UCVBErcpqaokOf4fI5j73K_w': // EngVid
         return [const Color(0xFFEF6C00), const Color(0xFFFFCA28)];
-      case 'UCvn_XCl_mgQmt3sD753MZ0Q':
+      case 'UCvn_XCl_mgQmt3sD753zdJA': // Rachel's English
         return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
-      case 'UCkowKaGPT_yWCebvqN0wBmA':
+      case 'UCKyTokYo0nK2OA-az-sDijA': // VOA Learning English
         return [AppColors.teal, const Color(0xFF26A69A)];
       default:
         switch (category) {
@@ -819,6 +866,406 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
             return [AppColors.primary, const Color(0xFF42A5F5)];
         }
     }
+  }
+
+  Widget _buildTabBar(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.grey100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        indicator: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: isDark ? Colors.white58 : AppColors.textGrey,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+        padding: const EdgeInsets.all(4),
+        tabs: const [
+          Tab(text: 'Khám phá'),
+          Tab(text: 'Đề xuất'),
+          Tab(text: 'Đã lưu'),
+          Tab(text: 'Lịch sử'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendationsTab(YouTubeProvider provider, bool isDark) {
+    if (provider.isLoadingRecommendations) {
+      return const Center(child: LottieLoadingWidget.medium());
+    }
+
+    final videos = provider.recommendedVideos;
+    if (videos.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => provider.loadRecommendations(),
+        color: AppColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 60),
+              Icon(Icons.auto_awesome_rounded, size: 64, color: isDark ? Colors.white24 : AppColors.grey300),
+              const SizedBox(height: 16),
+              Text(
+                'Chưa có đề xuất nào',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : AppColors.textDark,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Hãy xem một vài video để chúng tôi gợi ý những nội dung phù hợp cho bạn.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDark ? Colors.white30 : AppColors.textGrey,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => provider.loadRecommendations(),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tải lại'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.loadRecommendations(),
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        itemCount: videos.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _buildVideoCard(videos[index], isDark);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSavedTab(YouTubeProvider provider, bool isDark) {
+    final saved = provider.savedVideos;
+    if (saved.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.bookmark_border_rounded,
+                size: 64,
+                color: isDark ? Colors.white24 : AppColors.grey300),
+            const SizedBox(height: 16),
+            Text(
+              'Chưa có video nào được lưu',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : AppColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Nhấn biểu tượng bookmark trên video để lưu lại học sau.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? Colors.white30 : AppColors.textGrey,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      itemCount: saved.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final s = saved[index];
+        final video = YouTubeVideo(
+          videoId: s.videoId,
+          title: s.title,
+          description: '',
+          channelTitle: s.channelTitle,
+          channelId: '',
+          publishedAt: '',
+          thumbnailUrl: s.thumbnailUrl,
+          cefrLevel: s.cefrLevel,
+        );
+        return _buildVideoCard(video, isDark);
+      },
+    );
+  }
+
+  Widget _buildHistoryTab(YouTubeProvider provider, bool isDark) {
+    final history = provider.watchHistory;
+    if (history.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history_rounded,
+                size: 64,
+                color: isDark ? Colors.white24 : AppColors.grey300),
+            const SizedBox(height: 16),
+            Text(
+              'Lịch sử trống',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : AppColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Các video bạn đã xem sẽ xuất hiện tại đây.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? Colors.white30 : AppColors.textGrey,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _showClearHistoryDialog(provider),
+              icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+              label: const Text('Xóa lịch sử'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+            itemCount: history.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              return _buildVideoCard(history[index], isDark);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showClearHistoryDialog(YouTubeProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa lịch sử xem'),
+        content: const Text('Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem video không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              provider.clearWatchHistory();
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGuideDialog(bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.auto_awesome_rounded,
+                          color: AppColors.primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Cẩm nang học tiếng Anh',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Học qua video là phương pháp cực kỳ hiệu quả để nâng cao phản xạ tiếng Anh tự nhiên. Hãy tận dụng tối đa các công cụ hỗ trợ:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : AppColors.textGrey,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildGuideItem(
+                  icon: Icons.subtitles_rounded,
+                  color: Colors.blue,
+                  title: 'Phụ đề tương tác thời gian thực',
+                  desc: 'Phụ đề hiển thị chạy song song dưới video player. Chạm trực tiếp vào bất kỳ từ nào để tra nghĩa nhanh.',
+                  isDark: isDark,
+                ),
+                _buildGuideItem(
+                  icon: Icons.bookmark_add_rounded,
+                  color: Colors.green,
+                  title: 'Lưu từ vựng nhanh 1 chạm',
+                  desc: 'Khi mở bảng dịch nghĩa, chỉ cần nhấn "Lưu từ" để thêm ngay từ vựng vào Sổ tay từ vựng của bạn mà không có thêm màn hình trung gian.',
+                  isDark: isDark,
+                ),
+                _buildGuideItem(
+                  icon: Icons.repeat_rounded,
+                  color: Colors.purple,
+                  title: 'Phương pháp Shadowing',
+                  desc: 'Tạm dừng sau mỗi câu nói của người bản xứ và lặp lại thật to để cải thiện phát âm, ngữ điệu và trọng âm.',
+                  isDark: isDark,
+                ),
+                _buildGuideItem(
+                  icon: Icons.history_edu_rounded,
+                  color: Colors.orange,
+                  title: 'Xem lại lịch sử tra cứu',
+                  desc: 'Trong khi phát video, lịch sử các từ bạn đã tra trong phiên học sẽ được hiển thị ngay bên dưới để ôn tập tức thì.',
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Bắt đầu học ngay',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuideItem({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String desc,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  desc,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _cefrColor(String level) {

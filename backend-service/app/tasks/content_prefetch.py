@@ -32,11 +32,11 @@ logger = logging.getLogger(__name__)
 
 # YouTube channels for English learning
 CURATED_YOUTUBE_CHANNELS = {
-    "BBC Learning English": "UCHaHD477h-FeBbrgBrwTDpA",
+    "BBC Learning English": "UCHaHD477h-FeBbVh9Sh7syA",
     "TED-Ed": "UCsooa4yRKGN_zEE8iknghZA",
     "English with Lucy": "UCz4tgANd4yy8Oe0iXCdSWfA",
-    "Rachel's English": "UCvn_XCl_mgQmt3sD753MZ0Q",
-    "VOA Learning English": "UCkowKaGPT_yWCebvqN0wBmA",
+    "Rachel's English": "UCvn_XCl_mgQmt3sD753zdJA",
+    "VOA Learning English": "UCKyTokYo0nK2OA-az-sDijA",
     "EngVid": "UCVBErcpqaokOf4fI5j73K_w",
 }
 

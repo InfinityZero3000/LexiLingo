@@ -64,7 +64,7 @@ def _raise_youtube_api_error(response: httpx.Response) -> None:
 
 CURATED_CHANNELS = [
     {
-        "id": "UCHaHD477h-FeBbrgBrwTDpA",
+        "id": "UCHaHD477h-FeBbVh9Sh7syA",
         "name": "BBC Learning English",
         "description": "Learn English with the BBC. Improve grammar, vocabulary and pronunciation.",
         "level": "A2-B2",
@@ -96,7 +96,7 @@ CURATED_CHANNELS = [
         "category": "general",
     },
     {
-        "id": "UCvn_XCl_mgQmt3sD753MZ0Q",
+        "id": "UCvn_XCl_mgQmt3sD753zdJA",
         "name": "Rachel's English",
         "description": "American English pronunciation training.",
         "level": "B1-C1",
@@ -104,7 +104,7 @@ CURATED_CHANNELS = [
         "category": "pronunciation",
     },
     {
-        "id": "UCkowKaGPT_yWCebvqN0wBmA",
+        "id": "UCKyTokYo0nK2OA-az-sDijA",
         "name": "VOA Learning English",
         "description": "Practice American English with slow-speed news.",
         "level": "A1-A2",
@@ -222,8 +222,19 @@ async def get_curated_channels(
 # Video Search (100 units per search.list call)
 # ============================================================================
 
+def _proxy_url(url: str, request: Request) -> str:
+    if not url:
+        return ""
+    if "youtube.com" in url or "ytimg.com" in url or "googleusercontent.com" in url:
+        base_url = str(request.base_url).rstrip("/")
+        api_prefix = settings.API_V1_PREFIX.strip("/")
+        return f"{base_url}/{api_prefix}/podcasts/proxy/image?url={quote(url)}"
+    return url
+
+
 @router.get("/search")
 async def search_videos(
+    request: Request,
     q: str = Query(..., min_length=2, max_length=200, description="Search query"),
     max_results: int = Query(10, ge=1, le=25),
     channel_id: Optional[str] = Query(None, description="Filter by channel ID"),
@@ -265,8 +276,18 @@ async def search_videos(
             redis_ttl=21600,    # 6 hours
             db_ttl=43200,       # 12 hours
         )
+        data_copy = dict(result.data) if result and result.data else {}
+        if "videos" in data_copy:
+            data_copy["videos"] = [
+                {
+                    **video,
+                    "thumbnail_url": _proxy_url(video.get("thumbnail_url", ""), request),
+                    "thumbnail_medium": _proxy_url(video.get("thumbnail_medium", ""), request),
+                }
+                for video in data_copy["videos"]
+            ]
         return {
-            "data": result.data,
+            "data": data_copy,
             "source": result.source,
             "is_stale": result.is_stale,
         }
@@ -344,8 +365,69 @@ async def get_captions(
 # Channel Videos (100 units per search.list)
 # ============================================================================
 
+async def _fetch_channel_videos_from_playlist(
+    channel_id: str,
+    max_results: int = 10,
+    page_token: Optional[str] = None,
+) -> dict:
+    """
+    Fetch channel videos from its uploads playlist (much cheaper than search).
+    """
+    if len(channel_id) > 1 and channel_id[1] == 'C':
+        playlist_id = channel_id[0] + 'U' + channel_id[2:]
+    else:
+        playlist_id = channel_id
+
+    params = {
+        "part": "snippet",
+        "playlistId": playlist_id,
+        "maxResults": max_results,
+        "key": settings.YOUTUBE_API_KEY,
+    }
+    if page_token:
+        params["pageToken"] = page_token
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.get(f"{YOUTUBE_API_BASE}/playlistItems", params=params)
+        if response.status_code != 200:
+            logger.info(f"playlistItems failed for {channel_id}, falling back to search: {response.text[:200]}")
+            return await _youtube_search(
+                q="",
+                max_results=max_results,
+                channel_id=channel_id,
+                page_token=page_token,
+                require_captions=False,
+            )
+        data = response.json()
+
+    videos = []
+    for item in data.get("items", []):
+        snippet = item.get("snippet", {})
+        video_id = snippet.get("resourceId", {}).get("videoId", "")
+        if not video_id:
+            continue
+        videos.append({
+            "video_id": video_id,
+            "title": snippet.get("title", ""),
+            "description": snippet.get("description", ""),
+            "channel_title": snippet.get("channelTitle", ""),
+            "channel_id": snippet.get("channelId", ""),
+            "published_at": snippet.get("publishedAt", ""),
+            "thumbnail_url": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
+            "thumbnail_medium": snippet.get("thumbnails", {}).get("medium", {}).get("url", ""),
+        })
+
+    return {
+        "videos": videos,
+        "next_page_token": data.get("nextPageToken"),
+        "prev_page_token": data.get("prevPageToken"),
+        "total_results": data.get("pageInfo", {}).get("totalResults", 0),
+    }
+
+
 @router.get("/channels/{channel_id}/videos")
 async def get_channel_videos(
+    request: Request,
     channel_id: str,
     max_results: int = Query(10, ge=1, le=50),
     page_token: Optional[str] = Query(None),
@@ -374,20 +456,28 @@ async def get_channel_videos(
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
             api_name="youtube",
-            fetch_fn=lambda: _youtube_search(
-                q="",
-                max_results=max_results,
+            fetch_fn=lambda: _fetch_channel_videos_from_playlist(
                 channel_id=channel_id,
+                max_results=max_results,
                 page_token=page_token,
-                require_captions=False,
             ),
             priority=Priority.MEDIUM,
             redis_ttl=43200,    # 12 hours
             db_ttl=86400,       # 24 hours
         )
+        data_copy = dict(result.data) if result and result.data else {}
+        if "videos" in data_copy:
+            data_copy["videos"] = [
+                {
+                    **video,
+                    "thumbnail_url": _proxy_url(video.get("thumbnail_url", ""), request),
+                    "thumbnail_medium": _proxy_url(video.get("thumbnail_medium", ""), request),
+                }
+                for video in data_copy["videos"]
+            ]
         return {
             "channel_id": channel_id,
-            "data": result.data,
+            "data": data_copy,
             "source": result.source,
             "is_stale": result.is_stale,
         }
@@ -588,7 +678,8 @@ async def _fetch_captions_transcript_api(video_id: str, lang: str = "en") -> lis
     Tries requested language first, then falls back to English variants.
     """
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+        from youtube_transcript_api import YouTubeTranscriptApi
+        from dataclasses import asdict
 
         # Run sync library in a thread pool to avoid blocking the event loop
         loop = asyncio.get_running_loop()
@@ -598,13 +689,19 @@ async def _fetch_captions_transcript_api(video_id: str, lang: str = "en") -> lis
         )
 
         if transcript is None:
-            return []
+            logger.info(f"Transcript is None for {video_id}, falling back to timedtext")
+            return await _fetch_captions_timedtext(video_id, lang)
 
         segments = []
         for entry in transcript:
-            start_ms = int(entry.get("start", 0) * 1000)
-            duration_ms = int(entry.get("duration", 0) * 1000)
-            text = entry.get("text", "").strip()
+            try:
+                entry_dict = asdict(entry)
+            except TypeError:
+                entry_dict = entry
+
+            start_ms = int(entry_dict.get("start", 0) * 1000)
+            duration_ms = int(entry_dict.get("duration", 0) * 1000)
+            text = entry_dict.get("text", "").strip()
             if text and text != "\n":
                 segments.append({
                     "start_ms": start_ms,
@@ -614,18 +711,20 @@ async def _fetch_captions_transcript_api(video_id: str, lang: str = "en") -> lis
 
         return segments
 
-    except ImportError:
-        logger.warning("youtube-transcript-api not installed — falling back to timedtext")
-        return await _fetch_captions_timedtext(video_id, lang)
     except Exception as e:
-        logger.info(f"Transcript API failed for {video_id}: {e}")
-        return []
+        logger.info(f"Transcript API failed for {video_id}: {e}, falling back to timedtext")
+        return await _fetch_captions_timedtext(video_id, lang)
 
 
 def _get_transcript_sync(video_id: str, lang: str) -> list | None:
     """Sync wrapper for YouTubeTranscriptApi (runs in thread pool)."""
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
+        import requests
+
+        session = requests.Session()
+        session.proxies = {"https": "http://172.21.0.1:8888", "http": "http://172.21.0.1:8888"}
+        api = YouTubeTranscriptApi(http_client=session)
 
         # Try requested lang, then en, then any available
         lang_variants = [lang, "en", "en-US", "en-GB"]
@@ -638,15 +737,19 @@ def _get_transcript_sync(video_id: str, lang: str) -> list | None:
                 langs_to_try.append(l)
 
         try:
-            return YouTubeTranscriptApi.get_transcript(video_id, languages=langs_to_try)
-        except NoTranscriptFound:
-            # Try auto-generated captions in any language
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            for transcript in transcript_list:
-                if transcript.is_generated:
-                    return transcript.fetch()
+            return api.fetch(video_id, languages=langs_to_try)
+        except Exception as e:
+            logger.info(f"youtube-transcript-api fetch failed, trying list transcripts: {e}")
+            try:
+                transcript_list = api.list(video_id)
+                for transcript in transcript_list:
+                    if transcript.is_generated:
+                        return transcript.fetch()
+            except Exception as e2:
+                logger.info(f"youtube-transcript-api list failed: {e2}")
             return None
-    except Exception:
+    except Exception as e:
+        logger.info(f"youtube-transcript-api call failed inside _get_transcript_sync: {e}")
         return None
 
 
