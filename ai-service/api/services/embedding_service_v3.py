@@ -81,6 +81,42 @@ class EmbeddingServiceV3:
         return self._model
 
     def embed_texts(self, texts: List[str]) -> np.ndarray:
+        if not texts:
+            return np.empty((0, self._fallback_dim), dtype=np.float32)
+
+        # Attempt Gemini Cloud Embeddings first if configured
+        prefer_cloud = os.getenv("TRACECAG_PREFER_CLOUD_LLM", "true").lower() in {"1", "true", "yes"}
+        gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+        if prefer_cloud and gemini_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=gemini_key)
+                
+                # Use standard text-embedding-004 model
+                response = genai.embed_content(
+                    model="models/text-embedding-004",
+                    contents=texts,
+                )
+                if response and "embedding" in response:
+                    embeddings = response["embedding"]
+                    if isinstance(embeddings, list) and len(embeddings) > 0:
+                        if isinstance(embeddings[0], list):
+                            # List of list of floats
+                            arr = np.array(embeddings, dtype=np.float32)
+                            norms = np.linalg.norm(arr, axis=1, keepdims=True)
+                            norms[norms == 0] = 1.0  # avoid division by zero
+                            logger.info(f"Generated {len(texts)} embeddings via Gemini API")
+                            return arr / norms
+                        elif isinstance(embeddings[0], (int, float)):
+                            # Single list of floats
+                            arr = np.array([embeddings], dtype=np.float32)
+                            norms = np.linalg.norm(arr, axis=1, keepdims=True)
+                            norms[norms == 0] = 1.0
+                            logger.info("Generated 1 embedding via Gemini API")
+                            return arr / norms
+            except Exception as e:
+                logger.warning(f"Failed to generate embeddings via Gemini API: {e}. Falling back to local model.")
+
         model = self._load_model()
         if model is None:
             return self._embed_texts_fallback(texts)
