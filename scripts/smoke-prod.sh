@@ -41,7 +41,7 @@ check_status "News Categories" "/api/v1/news/categories" "200"
 check_status "Auth Me (no token)" "/api/v1/auth/me" "401"
 
 # AI routes via gateway
-check_status "GraphCAG Health" "/api/v1/ai/graph-cag/health" "200"
+check_status "TraceCAG Health" "/api/v1/ai/trace-cag/health" "200"
 
 # Chat route via gateway (AI service)
 check_status "Chat Session Messages" "/api/v1/chat/sessions/test/messages?limit=1" "200"
