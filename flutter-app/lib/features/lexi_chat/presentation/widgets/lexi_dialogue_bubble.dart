@@ -211,13 +211,18 @@ class LexiDialogueBubble extends StatelessWidget {
               bottomRight: Radius.circular(16),
             ),
           ),
-          child: Text(
-            message.content,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: Theme.of(context).colorScheme.surface,
-              letterSpacing: -0.1,
+          child: QuickSaveSelectionArea(
+            sourceType: 'lexi_chat',
+            sourceReference: message.id,
+            contextSentence: message.content,
+            child: Text(
+              message.content,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Theme.of(context).colorScheme.surface,
+                letterSpacing: -0.1,
+              ),
             ),
           ),
         ),
