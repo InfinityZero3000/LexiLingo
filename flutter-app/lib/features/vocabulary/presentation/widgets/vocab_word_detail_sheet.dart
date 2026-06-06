@@ -101,7 +101,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Flashcard',
+                      'vocabulary.flashcard'.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -171,7 +171,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           Expanded(
                             child: _ActionButton(
                               icon: Icons.flip,
-                              label: _showBack ? 'Show Front' : 'Flip Card',
+                              label: _showBack ? 'vocabulary.showFront'.tr() : 'vocabulary.flipCard'.tr(),
                               onTap: _flip,
                               color: AppColors.primary,
                             ),
@@ -193,7 +193,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                         const SizedBox(height: 12),
                         _ActionButton(
                           icon: Icons.bookmark_add_outlined,
-                          label: 'vocabulary.addToDeck'.tr(defaultValue: 'Thêm vào bộ sưu tập'),
+                          label: 'vocabulary.addToDeck'.tr(),
                           onTap: () => _showAddToDeckOptions(context),
                           color: AppColors.primary,
                         ),
@@ -206,13 +206,17 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
             ],
           ),
         );
+      },
+    );
+  }
+
   void _showAddToDeckOptions(BuildContext context) {
     final vocabProvider = Provider.of<VocabProvider>(context, listen: false);
     final userVocabId = widget.word.userVocabularyId;
 
     if (userVocabId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add this word to your collection first.')),
+        SnackBar(content: Text('vocabulary.addWordFirst'.tr())),
       );
       return;
     }
@@ -230,7 +234,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'vocabulary.addToDeckTitle'.tr(defaultValue: 'Thêm vào bộ sưu tập'),
+                    'vocabulary.addToDeckTitle'.tr(),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 12),
@@ -238,7 +242,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
-                        child: Text('vocabulary.noDecksFound'.tr(defaultValue: 'Chưa có bộ sưu tập nào.')),
+                        child: Text('vocabulary.noDecksFound'.tr()),
                       ),
                     )
                   else
@@ -268,8 +272,8 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                                     SnackBar(
                                       content: Text(
                                         success
-                                            ? 'Added to "${deck.name}" successfully'
-                                            : 'Failed to add to deck',
+                                            ? 'vocabulary.addToDeckSuccess'.tr(args: [deck.name])
+                                            : 'vocabulary.addToDeckFailed'.tr(),
                                       ),
                                     ),
                                   );
@@ -480,7 +484,7 @@ class _CardBack extends StatelessWidget {
           // Example
           if (word.example != null && word.example!.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _SectionLabel(label: 'Example'),
+            _SectionLabel(label: 'vocabulary.exampleLabel'.tr()),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
@@ -561,7 +565,7 @@ class _FlipHintChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        showBack ? 'Back' : 'Front',
+        showBack ? 'vocabulary.cardBack'.tr() : 'vocabulary.cardFront'.tr(),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

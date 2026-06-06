@@ -222,7 +222,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         children: [
           // Section 1: System Topics Header
           Text(
-            'vocabulary.systemTopicsHeader'.tr(defaultValue: 'Chủ đề hệ thống'),
+            'vocabulary.systemTopicsHeader'.tr(),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -253,7 +253,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'vocabulary.customDecksHeader'.tr(defaultValue: 'Bộ sưu tập của bạn'),
+                'vocabulary.customDecksHeader'.tr(),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -366,7 +366,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${deck.itemCount} ' + 'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()], defaultValue: 'từ vựng'),
+                  '${deck.itemCount} ${'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()])}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
@@ -416,7 +416,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         border: Border.all(
           color: isDark ? Colors.white24 : Colors.black12,
           width: 2,
-          style: BorderStyle.dashed,
+          style: BorderStyle.solid,
         ),
       ),
       child: Material(
@@ -436,7 +436,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'vocabulary.createCustomDeck'.tr(defaultValue: 'Tạo bộ sưu tập'),
+                  'vocabulary.createCustomDeck'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -471,7 +471,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('vocabulary.createNewDeck'.tr(defaultValue: 'Tạo bộ sưu tập mới')),
+              title: Text('vocabulary.createNewDeck'.tr()),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -479,21 +479,21 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     TextField(
                       controller: nameController,
                       decoration: InputDecoration(
-                        labelText: 'vocabulary.deckName'.tr(defaultValue: 'Tên bộ sưu tập'),
+                        labelText: 'vocabulary.deckName'.tr(),
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: descController,
                       decoration: InputDecoration(
-                        labelText: 'vocabulary.deckDescription'.tr(defaultValue: 'Mô tả'),
+                        labelText: 'vocabulary.deckDescription'.tr(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'vocabulary.selectColor'.tr(defaultValue: 'Chọn màu sắc'),
+                        'vocabulary.selectColor'.tr(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -539,7 +539,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('common.cancel'.tr(defaultValue: 'Hủy')),
+                  child: Text('common.cancel'.tr()),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -554,14 +554,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       if (!success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(vocabProvider.errorMessage ?? 'Failed to create deck'),
+                            content: Text(vocabProvider.errorMessage ?? 'vocabulary.createDeckFailed'.tr()),
                             backgroundColor: AppColors.errorBright,
                           ),
                         );
                       }
                     }
                   },
-                  child: Text('common.create'.tr(defaultValue: 'Tạo')),
+                  child: Text('common.create'.tr()),
                 ),
               ],
             );
@@ -580,17 +580,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('vocabulary.deleteDeckTitle'.tr(defaultValue: 'Xóa bộ sưu tập')),
+          title: Text('vocabulary.deleteDeckTitle'.tr()),
           content: Text(
-            'vocabulary.deleteDeckPrompt'.tr(
-              args: [deck.name],
-              defaultValue: 'Bạn có chắc chắn muốn xóa bộ sưu tập "${deck.name}"? Các từ vựng bên trong sẽ không bị xóa khỏi tài khoản của bạn.',
-            ),
+            'vocabulary.deleteDeckPrompt'.tr(args: [deck.name]),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('common.cancel'.tr(defaultValue: 'Hủy')),
+              child: Text('common.cancel'.tr()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -604,14 +601,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   if (!success) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(vocabProvider.errorMessage ?? 'Failed to delete deck'),
+                        content: Text(vocabProvider.errorMessage ?? 'vocabulary.deleteDeckFailed'.tr()),
                         backgroundColor: AppColors.errorBright,
                       ),
                     );
                   }
                 }
               },
-              child: Text('common.delete'.tr(defaultValue: 'Xóa')),
+              child: Text('common.delete'.tr()),
             ),
           ],
         );
@@ -657,7 +654,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         Navigator.pop(context); // Dismiss loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start study: $e'),
+            content: Text('vocabulary.startStudyFailed'.tr()),
             backgroundColor: AppColors.errorBright,
           ),
         );
@@ -706,7 +703,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
                 const Spacer(),
                 Text(
-                  topic.title,
+                  topic.titleKey.tr(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -715,7 +712,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  topic.subtitle,
+                  topic.subtitleKey.tr(),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
@@ -795,7 +792,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         Navigator.pop(context); // Dismiss loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start topic study: $e'),
+            content: Text('vocabulary.startStudyFailed'.tr()),
             backgroundColor: AppColors.errorBright,
           ),
         );
@@ -1253,7 +1250,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     }
     if (_wordFound == false) {
       return Tooltip(
-        message: 'Word not found in dictionary',
+        message: 'vocabulary.wordNotFound'.tr(),
         child: Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
       );
     }
@@ -1300,16 +1297,16 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _TopicConfig {
-  final String title;
+  final String titleKey;
   final String tag;
-  final String subtitle;
+  final String subtitleKey;
   final IconData icon;
   final List<Color> gradient;
 
   const _TopicConfig({
-    required this.title,
+    required this.titleKey,
     required this.tag,
-    required this.subtitle,
+    required this.subtitleKey,
     required this.icon,
     required this.gradient,
   });
@@ -1317,44 +1314,44 @@ class _TopicConfig {
 
 const List<_TopicConfig> _topics = [
   _TopicConfig(
-    title: 'General',
+    titleKey: 'vocabulary.topicGeneral',
     tag: 'general',
-    subtitle: 'Audio-only Quiz',
+    subtitleKey: 'vocabulary.topicGeneralSubtitle',
     icon: Icons.hearing_rounded,
     gradient: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
   ),
   _TopicConfig(
-    title: 'Travel',
+    titleKey: 'vocabulary.topicTravel',
     tag: 'travel',
-    subtitle: 'Explore the world',
+    subtitleKey: 'vocabulary.topicTravelSubtitle',
     icon: Icons.flight_takeoff_rounded,
     gradient: [Color(0xFFF97316), Color(0xFFFACC15)],
   ),
   _TopicConfig(
-    title: 'Business',
+    titleKey: 'vocabulary.topicBusiness',
     tag: 'business',
-    subtitle: 'Career & Work',
+    subtitleKey: 'vocabulary.topicBusinessSubtitle',
     icon: Icons.business_center_rounded,
     gradient: [Color(0xFF0F766E), Color(0xFF14B8A6)],
   ),
   _TopicConfig(
-    title: 'Daily Life',
+    titleKey: 'vocabulary.topicDailyLife',
     tag: 'daily',
-    subtitle: 'Everyday conversations',
+    subtitleKey: 'vocabulary.topicDailyLifeSubtitle',
     icon: Icons.coffee_rounded,
     gradient: [Color(0xFF9333EA), Color(0xFFEC4899)],
   ),
   _TopicConfig(
-    title: 'Science',
+    titleKey: 'vocabulary.topicScience',
     tag: 'science',
-    subtitle: 'Concepts & Discoveries',
+    subtitleKey: 'vocabulary.topicScienceSubtitle',
     icon: Icons.science_rounded,
     gradient: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
   ),
   _TopicConfig(
-    title: 'Technology',
+    titleKey: 'vocabulary.topicTechnology',
     tag: 'technology',
-    subtitle: 'Software & Digital Age',
+    subtitleKey: 'vocabulary.topicTechnologySubtitle',
     icon: Icons.devices_rounded,
     gradient: [Color(0xFF475569), Color(0xFF1E293B)],
   ),
