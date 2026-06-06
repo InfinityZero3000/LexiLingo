@@ -109,6 +109,103 @@ class CaptionSegment {
       positionMs >= startMs && positionMs < endMs;
 }
 
+/// Word translation — result of a lookup triggered during video playback.
+class WordTranslation {
+  final String word;
+  final String translation;    // Vietnamese (or target-lang) translation
+  final String phonetic;       // IPA: /spæk/
+  final String partOfSpeech;   // noun, verb, adjective…
+  final String definition;     // English definition
+  final List<String> examples; // example sentences from dictionary
+  final String? contextSentence; // the caption line the word was tapped in
+
+  const WordTranslation({
+    required this.word,
+    this.translation = '',
+    this.phonetic = '',
+    this.partOfSpeech = '',
+    this.definition = '',
+    this.examples = const [],
+    this.contextSentence,
+  });
+
+  factory WordTranslation.fromJson(Map<String, dynamic> json) {
+    return WordTranslation(
+      word: json['word'] as String? ?? '',
+      translation: json['translation'] as String? ?? '',
+      phonetic: json['phonetic'] as String? ?? '',
+      partOfSpeech: json['part_of_speech'] as String? ?? '',
+      definition: json['definition'] as String? ?? '',
+      examples: (json['examples'] as List<dynamic>? ?? [])
+          .map((e) => e as String)
+          .toList(),
+    );
+  }
+
+  bool get hasTranslation => translation.isNotEmpty;
+  bool get hasPhonetic => phonetic.isNotEmpty;
+  bool get hasDefinition => definition.isNotEmpty;
+
+  WordTranslation copyWith({String? contextSentence}) {
+    return WordTranslation(
+      word: word,
+      translation: translation,
+      phonetic: phonetic,
+      partOfSpeech: partOfSpeech,
+      definition: definition,
+      examples: examples,
+      contextSentence: contextSentence ?? this.contextSentence,
+    );
+  }
+}
+
+/// A video bookmarked/saved by the user for offline reference.
+class SavedVideo {
+  final String videoId;
+  final String title;
+  final String channelTitle;
+  final String thumbnailUrl;
+  final String cefrLevel;
+  final DateTime savedAt;
+
+  const SavedVideo({
+    required this.videoId,
+    required this.title,
+    required this.channelTitle,
+    required this.thumbnailUrl,
+    required this.cefrLevel,
+    required this.savedAt,
+  });
+
+  factory SavedVideo.fromVideo(YouTubeVideo video) => SavedVideo(
+        videoId: video.videoId,
+        title: video.title,
+        channelTitle: video.channelTitle,
+        thumbnailUrl: video.thumbnailUrl,
+        cefrLevel: video.cefrLevel,
+        savedAt: DateTime.now(),
+      );
+
+  factory SavedVideo.fromJson(Map<String, dynamic> json) => SavedVideo(
+        videoId: json['videoId'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        channelTitle: json['channelTitle'] as String? ?? '',
+        thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
+        cefrLevel: json['cefrLevel'] as String? ?? '',
+        savedAt: DateTime.tryParse(json['savedAt'] as String? ?? '') ??
+            DateTime.now(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'videoId': videoId,
+        'title': title,
+        'channelTitle': channelTitle,
+        'thumbnailUrl': thumbnailUrl,
+        'cefrLevel': cefrLevel,
+        'savedAt': savedAt.toIso8601String(),
+      };
+}
+
 /// Search result response from YouTube API.
 class YouTubeSearchResult {
   final List<YouTubeVideo> videos;

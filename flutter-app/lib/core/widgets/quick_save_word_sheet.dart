@@ -10,6 +10,9 @@ Future<void> showQuickSaveWordSheet(
   required String sourceType,
   String? sourceReference,
   String? contextSentence,
+  String? definition,
+  String? translation,
+  String? partOfSpeech,
 }) async {
   await showModalBottomSheet(
     context: context,
@@ -20,6 +23,9 @@ Future<void> showQuickSaveWordSheet(
       sourceType: sourceType,
       sourceReference: sourceReference,
       contextSentence: contextSentence,
+      definition: definition,
+      translation: translation,
+      partOfSpeech: partOfSpeech,
     ),
   );
 }
@@ -30,6 +36,9 @@ class _QuickSaveWordSheet extends StatefulWidget {
   final String sourceType;
   final String? sourceReference;
   final String? contextSentence;
+  final String? definition;
+  final String? translation;
+  final String? partOfSpeech;
 
   const _QuickSaveWordSheet({
     required this.hostContext,
@@ -37,6 +46,9 @@ class _QuickSaveWordSheet extends StatefulWidget {
     required this.sourceType,
     this.sourceReference,
     this.contextSentence,
+    this.definition,
+    this.translation,
+    this.partOfSpeech,
   });
 
   @override
@@ -62,6 +74,9 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
         sourceType: widget.sourceType,
         sourceReference: widget.sourceReference,
         contextSentence: widget.contextSentence,
+        definition: widget.definition,
+        translation: widget.translation,
+        partOfSpeech: widget.partOfSpeech,
       );
 
       if (!mounted) return;

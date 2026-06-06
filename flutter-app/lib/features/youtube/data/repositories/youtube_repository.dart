@@ -114,6 +114,49 @@ class YouTubeRepository {
         .toList();
   }
 
+  // ──── Word Translation / Dictionary Lookup ────
+
+  /// Look up an English word: phonetic + definition + Vietnamese translation.
+  ///
+  /// Uses SQLite local cache (30-day TTL via 'dictionary' type) so repeated
+  /// lookups are instant. Backend caches in Redis for 30 days too.
+  /// Never throws — returns a WordTranslation with empty fields on failure.
+  Future<WordTranslation> translateWord(
+    String word, {
+    String lang = 'vi',
+  }) async {
+    final cleanWord = word.toLowerCase().trim();
+    final cacheKey = 'youtube:translate:$cleanWord:$lang';
+
+    try {
+      final data = await _cache.getOrFetch(
+        key: cacheKey,
+        type: 'dictionary', // 30-day TTL in local SQLite
+        fetchFn: () async {
+          final uri = Uri.parse(
+            '$_baseUrl/translate',
+          ).replace(queryParameters: {'word': cleanWord, 'lang': lang});
+          final response = await _client.get(uri);
+          if (response.statusCode >= 400) {
+            return {
+              'word': cleanWord,
+              'translation': '',
+              'phonetic': '',
+              'part_of_speech': '',
+              'definition': '',
+              'examples': <String>[],
+            };
+          }
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        },
+      );
+      if (data == null) return WordTranslation(word: cleanWord);
+      return WordTranslation.fromJson(data);
+    } catch (_) {
+      return WordTranslation(word: cleanWord);
+    }
+  }
+
   // ──── Channel Videos ────
 
   /// Get latest videos from a specific channel.

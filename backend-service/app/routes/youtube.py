@@ -412,6 +412,116 @@ async def get_channel_videos(
 
 
 # ============================================================================
+# Word Translate / Dictionary Lookup (Free — no API key needed)
+# ============================================================================
+
+@router.get("/translate")
+async def translate_word(
+    word: str = Query(..., min_length=1, max_length=100),
+    lang: str = Query("vi", description="Target language code (e.g. vi, fr, ja)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Look up an English word: phonetic + definition + translation.
+
+    Sources (no API keys needed):
+    - https://api.dictionaryapi.dev  — English definition, IPA, examples
+    - https://api.mymemory.translated.net — free translation (5 000 chars/day)
+
+    Cache: 30-day Redis, 90-day DB (word meanings rarely change).
+    Returns gracefully on lookup failure (empty fields, never 4xx/5xx).
+    """
+    clean_word = word.lower().strip()
+    cache_key = f"youtube:translate:{clean_word}:{lang}"
+    cache_service = APICacheService(db)
+
+    try:
+        result = await cache_service.get_or_fetch(
+            cache_key=cache_key,
+            api_name="youtube",
+            fetch_fn=lambda: _fetch_word_data(clean_word, lang),
+            priority=Priority.MEDIUM,
+            redis_ttl=2592000,   # 30 days
+            db_ttl=7776000,      # 90 days
+        )
+        return result.data if result else _empty_word_result(clean_word)
+    except Exception as e:
+        logger.warning(f"Word lookup failed for '{word}': {e}")
+        return _empty_word_result(clean_word)
+
+
+def _empty_word_result(word: str) -> dict:
+    return {
+        "word": word,
+        "translation": "",
+        "phonetic": "",
+        "part_of_speech": "",
+        "definition": "",
+        "examples": [],
+    }
+
+
+async def _fetch_word_data(word: str, lang: str = "vi") -> dict:
+    """Fetch definition (Free Dictionary API) + translation (MyMemory) concurrently."""
+    dict_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+    trans_url = "https://api.mymemory.translated.net/get"
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        dict_resp, trans_resp = await asyncio.gather(
+            client.get(dict_url),
+            client.get(trans_url, params={"q": word, "langpair": f"en|{lang}"}),
+            return_exceptions=True,
+        )
+
+    phonetic = ""
+    part_of_speech = ""
+    definition = ""
+    examples: list[str] = []
+
+    if isinstance(dict_resp, httpx.Response) and dict_resp.status_code == 200:
+        try:
+            entries = dict_resp.json()
+            if entries and isinstance(entries, list):
+                entry = entries[0]
+                phonetic = entry.get("phonetic", "")
+                if not phonetic:
+                    for p in entry.get("phonetics", []):
+                        if p.get("text"):
+                            phonetic = p["text"]
+                            break
+                meanings = entry.get("meanings", [])
+                if meanings:
+                    m = meanings[0]
+                    part_of_speech = m.get("partOfSpeech", "")
+                    defs = m.get("definitions", [])
+                    if defs:
+                        definition = defs[0].get("definition", "")
+                    for d in defs[:3]:
+                        ex = d.get("example")
+                        if ex:
+                            examples.append(ex)
+        except Exception:
+            pass
+
+    translation = ""
+    if isinstance(trans_resp, httpx.Response) and trans_resp.status_code == 200:
+        try:
+            trans_data = trans_resp.json()
+            translation = trans_data.get("responseData", {}).get("translatedText", "")
+        except Exception:
+            pass
+
+    return {
+        "word": word,
+        "translation": translation,
+        "phonetic": phonetic,
+        "part_of_speech": part_of_speech,
+        "definition": definition,
+        "examples": examples,
+    }
+
+
+# ============================================================================
 # Internal API Call Functions
 # ============================================================================
 

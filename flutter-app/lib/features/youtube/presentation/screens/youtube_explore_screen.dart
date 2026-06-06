@@ -1,17 +1,15 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
 
-/// YouTube Explore Screen — main discovery page for English learning videos.
-///
-/// Layout: Search bar → Curated Channels carousel → Search results grid.
+/// YouTube Explore Screen — two tabs: Discover + Saved videos.
 class YouTubeExploreScreen extends StatefulWidget {
   const YouTubeExploreScreen({super.key});
 
@@ -19,24 +17,31 @@ class YouTubeExploreScreen extends StatefulWidget {
   State<YouTubeExploreScreen> createState() => _YouTubeExploreScreenState();
 }
 
-class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
+class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
+    with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  late final TabController _tabController;
   Timer? _debounce;
+  late final YouTubeProvider _youtubeProvider;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _youtubeProvider = context.read<YouTubeProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<YouTubeProvider>();
-      provider.clearSearch();
-      provider.loadChannels();
+      _youtubeProvider.clearSearch();
+      _youtubeProvider.loadChannels();
+      _youtubeProvider.loadSavedVideos();
     });
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _youtubeProvider.clearAll();
+    _tabController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
@@ -44,10 +49,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   }
 
   void _onBackPressed() {
-    final provider = context.read<YouTubeProvider>();
-    if (provider.searchQuery.isNotEmpty) {
+    if (_youtubeProvider.searchQuery.isNotEmpty) {
       _searchController.clear();
-      provider.clearSearch();
+      _youtubeProvider.clearSearch();
     } else {
       Navigator.pop(context);
     }
@@ -56,7 +60,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      context.read<YouTubeProvider>().loadMoreResults();
+      _youtubeProvider.loadMoreResults();
     }
   }
 
@@ -81,33 +85,118 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
         if (!didPop) _onBackPressed();
       },
       child: Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : const Color(0xFFF7F8FC),
         body: SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverPersistentHeader(
-                floating: true,
-                delegate: _YouTubeFloatingHeader(onBack: _onBackPressed),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: _buildSearchBar(isDark),
+          child: Column(
+            children: [
+              _buildHeader(isDark),
+              _buildSearchBar(isDark),
+              _buildTabBar(isDark),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildDiscoverTab(isDark),
+                    _buildSavedTab(isDark),
+                  ],
                 ),
-              ),
-
-              Consumer<YouTubeProvider>(
-                builder: (context, provider, _) {
-                  if (provider.searchQuery.isNotEmpty) {
-                    return _buildSearchResults(provider, isDark);
-                  }
-                  return _buildChannelsSection(provider, isDark);
-                },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────
+  //  Header
+  // ──────────────────────────────────────
+
+  Widget _buildHeader(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _onBackPressed,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            style: IconButton.styleFrom(
+              backgroundColor:
+                  isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
+              foregroundColor: isDark ? Colors.white : AppColors.textDark,
+              padding: const EdgeInsets.all(10),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'youtube.exploreTitle'.tr(),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                ),
+                Text(
+                  'Học tiếng Anh qua video',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white38 : AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Consumer<YouTubeProvider>(
+            builder: (context, provider, _) {
+              final count = provider.savedVideos.length;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    onPressed: () => _tabController.animateTo(1),
+                    icon: const Icon(Icons.bookmark_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.white,
+                      foregroundColor:
+                          count > 0 ? AppColors.primary : AppColors.textGrey,
+                      padding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            count > 9 ? '9+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -117,52 +206,57 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   // ──────────────────────────────────────
 
   Widget _buildSearchBar(bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-        ],
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.grey200,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+          border: Border.all(
+            color:
+                isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.grey200,
+          ),
         ),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        style: const TextStyle(fontSize: 15),
-        decoration: InputDecoration(
-          hintText: 'Search English learning videos...',
-          hintStyle: TextStyle(
-            color: isDark ? Colors.white54 : AppColors.textGrey,
-            fontSize: 15,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: isDark ? Colors.white38 : AppColors.textGrey,
-          ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, size: 20),
-                  onPressed: () {
-                    _searchController.clear();
-                    context.read<YouTubeProvider>().clearSearch();
-                    setState(() {});
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+        child: TextField(
+          controller: _searchController,
+          onChanged: (q) {
+            _onSearchChanged(q);
+            setState(() {});
+          },
+          style: const TextStyle(fontSize: 15),
+          decoration: InputDecoration(
+            hintText: 'Tìm video học tiếng Anh...',
+            hintStyle: TextStyle(
+              color: isDark ? Colors.white38 : AppColors.textGrey,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: isDark ? Colors.white30 : AppColors.textGrey,
+              size: 20,
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear_rounded, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      context.read<YouTubeProvider>().clearSearch();
+                      setState(() {});
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
       ),
@@ -170,88 +264,183 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   }
 
   // ──────────────────────────────────────
-  //  Curated Channels Section
+  //  Tab Bar
   // ──────────────────────────────────────
 
-  Widget _buildChannelsSection(YouTubeProvider provider, bool isDark) {
+  Widget _buildTabBar(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        height: 42,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.grey200,
+          ),
+        ),
+        child: TabBar(
+          controller: _tabController,
+          indicator: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicatorPadding: const EdgeInsets.all(3),
+          labelColor: Colors.white,
+          unselectedLabelColor:
+              isDark ? Colors.white54 : AppColors.textGrey,
+          labelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          dividerColor: Colors.transparent,
+          tabs: const [
+            Tab(text: 'Khám phá'),
+            Tab(text: 'Đã lưu'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────
+  //  Discover Tab
+  // ──────────────────────────────────────
+
+  Widget _buildDiscoverTab(bool isDark) {
+    return Consumer<YouTubeProvider>(
+      builder: (context, provider, _) {
+        if (provider.searchQuery.isNotEmpty) {
+          return _buildSearchResults(provider, isDark);
+        }
+        return _buildHomeContent(provider, isDark);
+      },
+    );
+  }
+
+  Widget _buildHomeContent(YouTubeProvider provider, bool isDark) {
     if (provider.isLoading) {
-      return const SliverFillRemaining(
-        child: Center(child: LottieLoadingWidget.medium()),
-      );
+      return const Center(child: LottieLoadingWidget.medium());
     }
 
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'youtube.channelsTitle'.tr(),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded,
+                    size: 18, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Kênh học tiếng Anh',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-
-        SizedBox(
-          height: 180,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            itemCount: provider.channels.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) =>
-                _buildChannelCard(provider.channels[index], isDark),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 160,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: provider.channels.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) =>
+                  _buildChannelCard(provider.channels[index], isDark),
+            ),
           ),
         ),
-
-        const SizedBox(height: 28),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'youtube.browseByCategory'.tr(),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.category_rounded,
+                    size: 18, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Theo chủ đề',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildCategoryChip(
-                'General',
-                Icons.school_rounded,
-                AppColors.primary,
-              ),
-              _buildCategoryChip(
-                'Pronunciation',
-                Icons.record_voice_over_rounded,
-                const Color(0xFFE91E63),
-              ),
-              _buildCategoryChip(
-                'Academic',
-                Icons.auto_stories_rounded,
-                AppColors.purple,
-              ),
-              _buildCategoryChip(
-                'News',
-                Icons.newspaper_rounded,
-                AppColors.teal,
-              ),
-            ],
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _kCategories
+                  .map((cat) => _buildCategoryChip(cat, isDark))
+                  .toList(),
+            ),
           ),
         ),
-
-        const SizedBox(height: 40),
-      ]),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
     );
   }
+
+  static const _kCategories = [
+    _CategoryInfo('Tổng quát', Icons.school_rounded, Color(0xFF2196F3), 'general'),
+    _CategoryInfo('Phát âm', Icons.record_voice_over_rounded, Color(0xFFE91E63), 'pronunciation'),
+    _CategoryInfo('Học thuật', Icons.auto_stories_rounded, Color(0xFF7C4DFF), 'academic'),
+    _CategoryInfo('Tin tức', Icons.newspaper_rounded, Color(0xFF009688), 'news'),
+  ];
+
+  Widget _buildCategoryChip(_CategoryInfo cat, bool isDark) {
+    return GestureDetector(
+      onTap: () => context.read<YouTubeProvider>().loadChannels(
+            category: cat.key,
+          ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: cat.color.withValues(alpha: isDark ? 0.15 : 0.09),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: cat.color.withValues(alpha: isDark ? 0.25 : 0.18),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(cat.icon, size: 16, color: cat.color),
+            const SizedBox(width: 6),
+            Text(
+              cat.label,
+              style: TextStyle(
+                color: cat.color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────
+  //  Channel Cards
+  // ──────────────────────────────────────
 
   Widget _buildChannelCard(YouTubeChannel channel, bool isDark) {
     final gradient = _channelGradient(channel.id, channel.category);
@@ -259,59 +448,59 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     return GestureDetector(
       onTap: () {
         context.read<YouTubeProvider>().loadChannelVideos(
-          channel.id,
-          channelName: channel.name,
-        );
+              channel.id,
+              channelName: channel.name,
+            );
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 200,
+      child: Container(
+        width: 150,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: gradient,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: gradient.first.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: gradient.first.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Channel avatar — real thumbnail or fallback icon
-              _buildChannelAvatar(channel, isDark),
+              _buildChannelAvatar(channel),
               const Spacer(),
               Text(
                 channel.name,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
+                  height: 1.3,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   channel.level,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -322,257 +511,413 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
     );
   }
 
-  Widget _buildChannelAvatar(YouTubeChannel channel, bool isDark) {
-    // Only load thumbnails routed through our proxy or proper CDN (guards against
-    // malformed URLs from stale server-side cache, e.g. yt3.googleusercontent.com/ChannelName)
+  Widget _buildChannelAvatar(YouTubeChannel channel) {
     final thumb = channel.thumbnail;
     final isUsable = thumb.isNotEmpty &&
         (thumb.contains('/podcasts/proxy/') || thumb.contains('/ytc/'));
     if (isUsable) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: CachedNetworkImage(
           imageUrl: thumb,
-          width: 48,
-          height: 48,
+          width: 40,
+          height: 40,
           fit: BoxFit.cover,
-          placeholder: (_, __) => _channelAvatarFallback(),
-          errorWidget: (_, __, ___) => _channelAvatarFallback(),
+          placeholder: (_, __) => _avatarFallback(),
+          errorWidget: (_, __, ___) => _avatarFallback(),
         ),
       );
     }
-    return _channelAvatarFallback();
+    return _avatarFallback();
   }
 
-  Widget _channelAvatarFallback() {
+  Widget _avatarFallback() {
     return Container(
-      width: 48,
-      height: 48,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: const Icon(
-        Icons.play_circle_fill_rounded,
-        color: Colors.white,
-        size: 28,
-      ),
+      child: const Icon(Icons.play_circle_fill_rounded,
+          color: Colors.white, size: 24),
     );
   }
 
-  Widget _buildCategoryChip(String label, IconData icon, Color color) {
-    return ActionChip(
-      avatar: Icon(icon, color: color, size: 18),
-      label: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
+  // ──────────────────────────────────────
+  //  Search Results
+  // ──────────────────────────────────────
+
+  Widget _buildSearchResults(YouTubeProvider provider, bool isDark) {
+    if (provider.isLoading || (provider.isSearching && provider.searchResults.isEmpty)) {
+      return const Center(child: LottieLoadingWidget.medium());
+    }
+
+    if (provider.searchResults.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off_rounded, size: 56, color: AppColors.grey400),
+            const SizedBox(height: 12),
+            Text(
+              provider.error != null
+                  ? _localizedApiError(provider.error!)
+                  : 'youtube.noVideos'.tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: AppColors.grey500, fontSize: 15, height: 1.4),
+            ),
+          ],
         ),
-      ),
-      backgroundColor: color.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withValues(alpha: 0.2)),
-      ),
-      onPressed: () {
-        context.read<YouTubeProvider>().loadChannels(
-          category: label.toLowerCase(),
+      );
+    }
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        if (provider.activeChannelName.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.subscriptions_rounded,
+                      size: 18, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      provider.activeChannelName,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      _searchController.clear();
+                      context.read<YouTubeProvider>().clearSearch();
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                    label: const Text('Quay lại'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index >= provider.searchResults.length) {
+                  return provider.isSearching
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: LottieLoadingWidget.medium()),
+                        )
+                      : const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _buildVideoCard(
+                      provider.searchResults[index], isDark),
+                );
+              },
+              childCount: provider.searchResults.length + 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────
+  //  Video Card (compact horizontal)
+  // ──────────────────────────────────────
+
+  Widget _buildVideoCard(YouTubeVideo video, bool isDark) {
+    return Consumer<YouTubeProvider>(
+      builder: (context, provider, _) {
+        final isSaved = provider.isVideoSaved(video.videoId);
+
+        return GestureDetector(
+          onTap: () =>
+              Navigator.pushNamed(context, '/youtube/player', arguments: video),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+            ),
+            child: Row(
+              children: [
+                // Thumbnail
+                ClipRRect(
+                  borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(16)),
+                  child: SizedBox(
+                    width: 120,
+                    height: 80,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: video.thumbnailUrl.isNotEmpty
+                              ? video.thumbnailUrl
+                              : 'https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg',
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                              color: AppColors.primary
+                                  .withValues(alpha: 0.08)),
+                          errorWidget: (_, __, ___) => Container(
+                            color:
+                                AppColors.primary.withValues(alpha: 0.08),
+                            child: const Icon(Icons.play_circle_outline,
+                                size: 32, color: AppColors.primary),
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.35)
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Center(
+                          child: Icon(Icons.play_circle_fill_rounded,
+                              color: Colors.white, size: 30),
+                        ),
+                        if (video.cefrLevel.isNotEmpty)
+                          Positioned(
+                            top: 5,
+                            left: 5,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _cefrColor(video.cefrLevel),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                video.cefrLevel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Info
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          video.title,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : AppColors.textDark,
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          video.channelTitle,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white38 : AppColors.textGrey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Action buttons column
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        if (isSaved) {
+                          provider.unsaveVideo(video.videoId);
+                        } else {
+                          provider.saveVideo(video);
+                        }
+                      },
+                      icon: Icon(
+                        isSaved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
+                        size: 22,
+                        color: isSaved ? AppColors.primary : AppColors.grey400,
+                      ),
+                    ),
+                    IconButton(
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _shareVideo(video),
+                      icon: Icon(
+                        Icons.open_in_new_rounded,
+                        size: 18,
+                        color: isDark ? Colors.white30 : AppColors.grey400,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
   // ──────────────────────────────────────
-  //  Search Results / Channel Videos
+  //  Saved Tab
   // ──────────────────────────────────────
 
-  Widget _buildSearchResults(YouTubeProvider provider, bool isDark) {
-    // Channel videos are loading
-    if (provider.isLoading) {
-      return const SliverFillRemaining(
-        child: Center(child: LottieLoadingWidget.medium()),
-      );
-    }
+  Widget _buildSavedTab(bool isDark) {
+    return Consumer<YouTubeProvider>(
+      builder: (context, provider, _) {
+        final saved = provider.savedVideos;
 
-    if (provider.isSearching && provider.searchResults.isEmpty) {
-      return const SliverFillRemaining(
-        child: Center(child: LottieLoadingWidget.medium()),
-      );
-    }
-
-    if (provider.searchResults.isEmpty) {
-      // Show error state with actionable message when the API call failed.
-      if (provider.error != null) {
-        return SliverFillRemaining(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.wifi_off_rounded,
-                    size: 64,
-                    color: AppColors.grey400,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _localizedApiError(provider.error!),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.grey500, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-
-      return SliverFillRemaining(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.search_off_rounded, size: 64, color: AppColors.grey400),
-              const SizedBox(height: 12),
-              Text(
-                'youtube.noVideos'.tr(),
-                style: TextStyle(color: AppColors.grey500, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            // Section header showing channel name or search query
-            if (index == 0 && provider.activeChannelName.isNotEmpty) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.subscriptions_rounded,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        provider.activeChannelName,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        context.read<YouTubeProvider>().clearSearch();
-                        setState(() {});
-                      },
-                      child: const Text('Back'),
-                    ),
-                  ],
+        if (saved.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.bookmark_border_rounded,
+                  size: 64,
+                  color: isDark ? Colors.white24 : AppColors.grey300,
                 ),
-              );
-            }
+                const SizedBox(height: 12),
+                Text(
+                  'Chưa có video nào được lưu',
+                  style: TextStyle(
+                    color: isDark ? Colors.white38 : AppColors.textGrey,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Nhấn  trên thẻ video để lưu lại',
+                  style: TextStyle(
+                    color: isDark ? Colors.white24 : AppColors.grey400,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
-            final videoIndex = provider.activeChannelName.isNotEmpty
-                ? index - 1
-                : index;
-
-            if (videoIndex < 0) return const SizedBox.shrink();
-
-            if (videoIndex == provider.searchResults.length) {
-              return provider.isSearching
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: LottieLoadingWidget.medium()),
-                    )
-                  : const SizedBox.shrink();
-            }
-
-            if (videoIndex >= provider.searchResults.length) {
-              return const SizedBox.shrink();
-            }
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildVideoCard(provider.searchResults[videoIndex], isDark),
-            );
-          },
-          childCount: provider.searchResults.length +
-              (provider.activeChannelName.isNotEmpty ? 1 : 0) +
-              1,
-        ),
-      ),
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          itemCount: saved.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) =>
+              _buildSavedVideoCard(saved[index], isDark, provider),
+        );
+      },
     );
   }
 
-  Widget _buildVideoCard(YouTubeVideo video, bool isDark) {
+  Widget _buildSavedVideoCard(
+      SavedVideo saved, bool isDark, YouTubeProvider provider) {
     return GestureDetector(
       onTap: () {
+        final video = YouTubeVideo(
+          videoId: saved.videoId,
+          title: saved.title,
+          description: '',
+          channelTitle: saved.channelTitle,
+          channelId: '',
+          publishedAt: '',
+          thumbnailUrl: saved.thumbnailUrl,
+          cefrLevel: saved.cefrLevel,
+        );
         Navigator.pushNamed(context, '/youtube/player', arguments: video);
       },
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             // Thumbnail
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: SizedBox(
+                width: 120,
+                height: 80,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
-                      imageUrl: video.thumbnailUrl.isNotEmpty
-                          ? video.thumbnailUrl
-                          : 'https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg',
+                      imageUrl: saved.thumbnailUrl.isNotEmpty
+                          ? saved.thumbnailUrl
+                          : 'https://img.youtube.com/vi/${saved.videoId}/mqdefault.jpg',
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        child: const Center(
-                          child: Icon(
-                            Icons.play_circle_outline,
-                            size: 48,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.primary.withValues(alpha: 0.08)),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.primary.withValues(alpha: 0.08),
-                        child: const Icon(
-                          Icons.play_circle_outline,
-                          size: 48,
-                          color: AppColors.primary,
-                        ),
+                        child: const Icon(Icons.play_circle_outline,
+                            size: 32, color: AppColors.primary),
                       ),
                     ),
-                    // Dark gradient overlay
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -580,37 +925,32 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.4),
+                            Colors.black.withValues(alpha: 0.35),
                           ],
                         ),
                       ),
                     ),
                     const Center(
-                      child: Icon(
-                        Icons.play_circle_fill_rounded,
-                        color: Colors.white,
-                        size: 48,
-                      ),
+                      child: Icon(Icons.play_circle_fill_rounded,
+                          color: Colors.white, size: 30),
                     ),
-                    if (video.cefrLevel.isNotEmpty)
+                    if (saved.cefrLevel.isNotEmpty)
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: 5,
+                        left: 5,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 3,
-                          ),
+                              horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _cefrColor(video.cefrLevel),
-                            borderRadius: BorderRadius.circular(6),
+                            color: _cefrColor(saved.cefrLevel),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            video.cefrLevel,
+                            saved.cefrLevel,
                             style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              fontSize: 11,
                             ),
                           ),
                         ),
@@ -619,32 +959,54 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
                 ),
               ),
             ),
-            // Info
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    video.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      saved.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : AppColors.textDark,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    video.channelTitle,
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : AppColors.textGrey,
-                      fontSize: 12,
+                    const SizedBox(height: 4),
+                    Text(
+                      saved.channelTitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.white38 : AppColors.textGrey,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Đã lưu ${_timeAgo(saved.savedAt)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? Colors.white24 : AppColors.grey400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            IconButton(
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+              onPressed: () => provider.unsaveVideo(saved.videoId),
+              icon: const Icon(
+                Icons.bookmark_remove_rounded,
+                size: 22,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 4),
           ],
         ),
       ),
@@ -655,46 +1017,55 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
   //  Helpers
   // ──────────────────────────────────────
 
-  /// Map API error strings to user-friendly Vietnamese messages.
-  String _localizedApiError(String error) {
-    if (error.contains('503') || error.contains('unavailable')) {
-      return 'Dịch vụ video tạm thời không khả dụng. Vui lòng thử lại sau.';
+  void _shareVideo(YouTubeVideo video) async {
+    final url = Uri.parse('https://www.youtube.com/watch?v=${video.videoId}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
-    if (error.contains('429') || error.contains('quota') || error.contains('exhausted')) {
-      return 'Đã đạt giới hạn tìm kiếm hôm nay. Vui lòng thử lại vào ngày mai.';
-    }
-    if (error.contains('504') || error.contains('timeout')) {
-      return 'Yêu cầu mất quá nhiều thời gian. Kiểm tra kết nối mạng và thử lại.';
-    }
-    if (error.contains('401') || error.contains('403')) {
-      return 'Không có quyền truy cập dịch vụ video. Vui lòng liên hệ hỗ trợ.';
-    }
-    return 'Không thể tải video. Kiểm tra kết nối mạng và thử lại.';
   }
 
-  /// Each channel gets a unique gradient so cards are visually distinct.
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'vừa xong';
+    if (diff.inHours < 1) return '${diff.inMinutes} phút trước';
+    if (diff.inDays < 1) return '${diff.inHours} giờ trước';
+    if (diff.inDays < 30) return '${diff.inDays} ngày trước';
+    return '${diff.inDays ~/ 30} tháng trước';
+  }
+
+  String _localizedApiError(String error) {
+    if (error.contains('503') || error.contains('unavailable')) {
+      return 'Dịch vụ video tạm thời không khả dụng.\nVui lòng thử lại sau.';
+    }
+    if (error.contains('429') ||
+        error.contains('quota') ||
+        error.contains('exhausted')) {
+      return 'Đã đạt giới hạn tìm kiếm hôm nay.\nVui lòng thử lại vào ngày mai.';
+    }
+    if (error.contains('504') || error.contains('timeout')) {
+      return 'Yêu cầu mất quá nhiều thời gian.\nKiểm tra kết nối mạng và thử lại.';
+    }
+    if (error.contains('401') || error.contains('403')) {
+      return 'Không có quyền truy cập.\nVui lòng liên hệ hỗ trợ.';
+    }
+    return 'Không thể tải video.\nKiểm tra kết nối mạng và thử lại.';
+  }
+
   List<Color> _channelGradient(String channelId, String category) {
     switch (channelId) {
-      // BBC Learning English — blue gradient
       case 'UCHaHD477h-FeBbrgBrwTDpA':
         return [const Color(0xFF1565C0), const Color(0xFF42A5F5)];
-      // TED-Ed — purple/indigo
       case 'UCsooa4yRKGN_zEE8iknghZA':
         return [const Color(0xFF7C4DFF), const Color(0xFF536DFE)];
-      // English with Lucy — teal/green
       case 'UCz4tgANd4yy8Oe0iXCdSWfA':
         return [const Color(0xFF00897B), const Color(0xFF26C6DA)];
-      // EngVid — orange
       case 'UCVBErcpqaokOf4fI5j73K_w':
         return [const Color(0xFFEF6C00), const Color(0xFFFFCA28)];
-      // Rachel's English — pink/red (pronunciation)
       case 'UCvn_XCl_mgQmt3sD753MZ0Q':
         return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
-      // VOA Learning English — green (news)
       case 'UCkowKaGPT_yWCebvqN0wBmA':
         return [AppColors.teal, const Color(0xFF26A69A)];
       default:
-        // Fallback per category
         switch (category) {
           case 'pronunciation':
             return [const Color(0xFFE91E63), const Color(0xFFFF5252)];
@@ -729,63 +1100,14 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen> {
 }
 
 // ──────────────────────────────────────
-//  Floating Header Delegate
+//  Category Info record
 // ──────────────────────────────────────
 
-class _YouTubeFloatingHeader extends SliverPersistentHeaderDelegate {
-  final VoidCallback onBack;
+class _CategoryInfo {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String key;
 
-  const _YouTubeFloatingHeader({required this.onBack});
-
-  static const double _height = 72.0;
-
-  @override
-  double get minExtent => _height;
-
-  @override
-  double get maxExtent => _height;
-
-  @override
-  FloatingHeaderSnapConfiguration get snapConfiguration =>
-      FloatingHeaderSnapConfiguration(
-        curve: Curves.easeOut,
-        duration: const Duration(milliseconds: 200),
-      );
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            style: IconButton.styleFrom(
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.04),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'youtube.exploreTitle'.tr(),
-              style: Theme.of(context).textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_YouTubeFloatingHeader old) => old.onBack != onBack;
+  const _CategoryInfo(this.label, this.icon, this.color, this.key);
 }

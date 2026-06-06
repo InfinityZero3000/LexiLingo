@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/youtube_repository.dart';
 import '../../domain/entities/youtube_entities.dart';
 
@@ -24,6 +26,17 @@ class YouTubeProvider extends ChangeNotifier {
   String _activeChannelName = '';
   String _activeChannelId = '';
 
+  // ── Saved videos (persisted) ──
+  // videoId -> SavedVideo (insertion order = save order, newest first via LinkedHashMap)
+  final Map<String, SavedVideo> _savedVideos = {};
+  static const _prefsSavedKey = 'youtube_saved_videos';
+
+  // ── Translation session state ──
+  // Memory cache: "${word}:${lang}" -> WordTranslation (survives video navigation)
+  final Map<String, WordTranslation> _translationMemCache = {};
+  // Per-video history: videoId -> ordered list of looked-up words (newest first)
+  final Map<String, List<WordTranslation>> _videoTranslationHistory = {};
+
   // ── Getters ──
   List<YouTubeChannel> get channels => _channels;
   List<YouTubeVideo> get searchResults => _searchResults;
@@ -35,6 +48,33 @@ class YouTubeProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String get activeChannelName => _activeChannelName;
   bool get hasMore => _nextPageToken != null;
+
+  /// Saved videos, newest first.
+  List<SavedVideo> get savedVideos =>
+      _savedVideos.values.toList().reversed.toList();
+
+  bool isVideoSaved(String videoId) => _savedVideos.containsKey(videoId);
+
+  /// Returns looked-up words for a specific video (newest first).
+  List<WordTranslation> translationHistoryFor(String videoId) =>
+      List.unmodifiable(_videoTranslationHistory[videoId] ?? const []);
+
+  // ── Init ──
+
+  /// Load persisted saved videos from SharedPreferences.
+  Future<void> loadSavedVideos() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_prefsSavedKey);
+      if (raw == null) return;
+      final list = jsonDecode(raw) as List<dynamic>;
+      for (final item in list) {
+        final v = SavedVideo.fromJson(item as Map<String, dynamic>);
+        _savedVideos[v.videoId] = v;
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
 
   // ── Actions ──
 
@@ -166,7 +206,77 @@ class YouTubeProvider extends ChangeNotifier {
     return null;
   }
 
+  // ── Save / Unsave Videos ──
+
+  Future<void> saveVideo(YouTubeVideo video) async {
+    _savedVideos[video.videoId] = SavedVideo.fromVideo(video);
+    notifyListeners();
+    await _persistSavedVideos();
+  }
+
+  Future<void> unsaveVideo(String videoId) async {
+    _savedVideos.remove(videoId);
+    notifyListeners();
+    await _persistSavedVideos();
+  }
+
+  Future<void> _persistSavedVideos() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = _savedVideos.values.map((v) => v.toJson()).toList();
+      await prefs.setString(_prefsSavedKey, jsonEncode(list));
+    } catch (_) {}
+  }
+
+  // ── Translation ──
+
+  /// Translate / look up a word.
+  ///
+  /// Checks in-memory cache first (instant). On cache miss, calls the backend
+  /// and stores the result in both the memory cache and the video's history.
+  /// Always resolves — never throws.
+  Future<WordTranslation> translateWord(
+    String word, {
+    String lang = 'vi',
+    String? videoId,
+    String? contextSentence,
+  }) async {
+    final memKey = '${word.toLowerCase()}:$lang';
+
+    WordTranslation result;
+
+    if (_translationMemCache.containsKey(memKey)) {
+      result = _translationMemCache[memKey]!;
+    } else {
+      result = await _repository.translateWord(word, lang: lang);
+      _translationMemCache[memKey] = result;
+    }
+
+    if (videoId != null) {
+      final withCtx = result.copyWith(contextSentence: contextSentence);
+      _addToHistory(videoId, withCtx);
+      return withCtx;
+    }
+
+    return result;
+  }
+
+  void _addToHistory(String videoId, WordTranslation entry) {
+    final list = _videoTranslationHistory[videoId] ??= [];
+    final idx = list.indexWhere((t) => t.word == entry.word);
+    if (idx >= 0) {
+      list[idx] = entry; // update context sentence if changed
+    } else {
+      list.insert(0, entry); // newest first
+    }
+    notifyListeners();
+  }
+
+  // ── Clear ──
+
   /// Clear search results and return to channels view.
+  /// Translation history and memory cache are intentionally preserved so
+  /// words looked up during this session survive channel navigation.
   void clearSearch() {
     _searchResults = [];
     _searchQuery = '';
@@ -175,6 +285,14 @@ class YouTubeProvider extends ChangeNotifier {
     _nextPageToken = null;
     _error = null;
     notifyListeners();
+  }
+
+  /// Clear everything including translation history.
+  /// Call this when the user navigates away from the YouTube section entirely.
+  void clearAll() {
+    _translationMemCache.clear();
+    _videoTranslationHistory.clear();
+    clearSearch();
   }
 
   /// Clear error state.
