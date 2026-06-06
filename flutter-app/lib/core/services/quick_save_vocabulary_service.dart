@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:lexilingo_app/core/network/api_client.dart';
 
 /// Result payload from quick-save vocabulary endpoint.
@@ -28,8 +30,13 @@ class QuickSaveVocabularyResult {
 /// Service used by multiple screens to quick-save selected words.
 class QuickSaveVocabularyService {
   final ApiClient apiClient;
+  final StreamController<QuickSaveVocabularyResult> _savedWordsController =
+      StreamController<QuickSaveVocabularyResult>.broadcast();
 
   QuickSaveVocabularyService({required this.apiClient});
+
+  Stream<QuickSaveVocabularyResult> get savedWords =>
+      _savedWordsController.stream;
 
   Future<QuickSaveVocabularyResult> quickSaveWord({
     required String word,
@@ -61,6 +68,12 @@ class QuickSaveVocabularyService {
       },
     );
 
-    return QuickSaveVocabularyResult.fromJson(response);
+    final result = QuickSaveVocabularyResult.fromJson(response);
+    _savedWordsController.add(result);
+    return result;
+  }
+
+  void dispose() {
+    _savedWordsController.close();
   }
 }

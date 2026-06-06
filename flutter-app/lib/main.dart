@@ -24,6 +24,7 @@ import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
 import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/services/language_flag_cache.dart';
 import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
@@ -198,6 +199,11 @@ class _LexiLingoAppState extends State<LexiLingoApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(LanguageFlagCache.preload(context));
+      }
+    });
     if (!kIsWeb) {
       _syncQueueRunner = SyncQueueLifecycleRunner(
         apiClient: di.sl<ApiClient>(),

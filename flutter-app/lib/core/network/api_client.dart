@@ -265,7 +265,7 @@ class ApiClient {
   }
 
   // Maximum number of additional attempts after the first one.
-  static const int _maxRetries = 2;
+  static const int _maxRetries = 1;
 
   /// Internal method: sends request and returns raw ApiResponse.
   ///
