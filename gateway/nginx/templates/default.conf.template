@@ -259,7 +259,25 @@ server {
     if ($is_scanner) { return 444; }
 
     if ($request_method = OPTIONS) {
+        add_header Access-Control-Allow-Origin $cors_allow_origin;
+        add_header Access-Control-Allow-Credentials "true";
+        add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS";
+        add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret";
+        add_header Access-Control-Max-Age 3600;
         return 204;
+    }
+
+    # CORS headers on 5xx/gateway errors so browser doesn't show a false CORS error
+    # when the backend is temporarily unavailable.
+    error_page 502 503 504 @upstream_error;
+    location @upstream_error {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin $cors_allow_origin always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret" always;
+        add_header Vary "Origin" always;
+        return 502 '{"error":{"code":"SERVICE_UNAVAILABLE","message":"Service temporarily unavailable. Please try again."}}';
     }
 
     location @rate_limited {

@@ -763,7 +763,10 @@
     "categoryPowerUps": "Sức mạnh",
     "categoryBoosts": "Tăng tốc",
     "categoryCosmetics": "Trang trí",
-    "categorySpecial": "Đặc biệt"
+    "categorySpecial": "Đặc biệt",
+    "equipNow": "Trang bị ngay",
+    "avatarEquipped": "Đã trang bị avatar!",
+    "avatarEquipFailed": "Không thể trang bị avatar này."
   },
   "leaderboard": {
     "title": "Bảng xếp hạng",

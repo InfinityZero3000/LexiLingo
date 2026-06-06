@@ -763,7 +763,10 @@
     "categoryPowerUps": "Power-ups",
     "categoryBoosts": "Boosts",
     "categoryCosmetics": "Cosmetics",
-    "categorySpecial": "Special"
+    "categorySpecial": "Special",
+    "equipNow": "Equip now",
+    "avatarEquipped": "Avatar equipped successfully!",
+    "avatarEquipFailed": "Could not equip this avatar."
   },
   "leaderboard": {
     "title": "Leaderboard",
