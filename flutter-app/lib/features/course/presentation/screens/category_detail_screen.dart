@@ -283,7 +283,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             delayPerItem: const Duration(milliseconds: 50),
             child: _CourseCard(
               course: course,
-              onTap: () => _navigateToCourseDetail(context, course.id),
+              onTap: () => _navigateToCourseDetail(context, course),
             ),
           );
         }, childCount: courses.length),
@@ -310,7 +310,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             delayPerItem: const Duration(milliseconds: 50),
             child: _CourseGridCard(
               course: course,
-              onTap: () => _navigateToCourseDetail(context, course.id),
+              onTap: () => _navigateToCourseDetail(context, course),
             ),
           );
         }, childCount: courses.length),
@@ -318,11 +318,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
 
-  void _navigateToCourseDetail(BuildContext context, String courseId) {
+  void _navigateToCourseDetail(BuildContext context, CourseEntity course) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CourseDetailScreen(courseId: courseId),
+        builder: (context) => CourseDetailScreen(
+          courseId: course.id,
+          initialThumbnailUrl: course.thumbnailUrl,
+          fallbackThumbnailUrl: _courseImageUrl(course),
+        ),
       ),
     );
   }

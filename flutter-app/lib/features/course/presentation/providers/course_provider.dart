@@ -46,6 +46,7 @@ class CourseProvider with ChangeNotifier {
   CourseDetailEntity? _courseDetail;
   bool _isLoadingDetail = false;
   String? _detailError;
+  final Map<String, CourseDetailEntity> _detailCache = {};
 
   // State: Enrollment
   bool _isEnrolling = false;
@@ -310,10 +311,21 @@ class CourseProvider with ChangeNotifier {
   }
 
   /// Load course detail with roadmap
-  Future<void> loadCourseDetail(String courseId) async {
+  Future<void> loadCourseDetail(String courseId, {bool forceRefresh = false}) async {
+    if (_isLoadingDetail) return;
+
+    if (!forceRefresh && _detailCache.containsKey(courseId)) {
+      _courseDetail = _detailCache[courseId];
+      _detailError = null;
+      notifyListeners();
+      return;
+    }
+
     _isLoadingDetail = true;
     _detailError = null;
-    _courseDetail = null;
+    if (_courseDetail?.id != courseId) {
+      _courseDetail = null;
+    }
     notifyListeners();
 
     final result = await getCourseDetailUseCase(courseId);
@@ -326,6 +338,8 @@ class CourseProvider with ChangeNotifier {
       },
       (detail) {
         _courseDetail = detail;
+        _detailCache[courseId] = detail;
+        _detailError = null;
         _isLoadingDetail = false;
         notifyListeners();
       },
@@ -372,6 +386,7 @@ class CourseProvider with ChangeNotifier {
             userProgress: _courseDetail!.userProgress ?? 0.0,
             units: _courseDetail!.units,
           );
+          _detailCache[courseId] = _courseDetail!;
         }
 
         // Update course in list
@@ -507,6 +522,7 @@ class CourseProvider with ChangeNotifier {
   void reset() {
     _courses = [];
     _courseDetail = null;
+    _detailCache.clear();
     _isLoadingCourses = false;
     _isLoadingDetail = false;
     _isEnrolling = false;

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -268,8 +269,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
               icon: _getLevelIcon(levelKey),
               color: _getLevelColor(levelKey, isDark: isDark),
               courses: courses,
-              onCourseTap: (courseId) =>
-                  _navigateToCourseDetail(context, courseId),
+              onCourseTap: (course, fallbackThumbnailUrl) =>
+                  _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
               onSeeAll: null,
             );
           },
@@ -301,21 +302,27 @@ class _CourseListScreenState extends State<CourseListScreen> {
           icon: _parseCategoryIcon(category.icon ?? 'book'),
           color: _parseCategoryColor(category.color, isDark: isDark),
           courses: categoryCourses,
-          onCourseTap: (courseId) =>
-              _navigateToCourseDetail(context, courseId),
+          onCourseTap: (course, fallbackThumbnailUrl) =>
+              _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
           onSeeAll: () => _navigateToCategoryDetail(context, category.id),
         );
       }, childCount: nonEmptyCategorySections.length + (provider.isLoadingCourses ? 1 : 0)),
     );
   }
 
-  void _navigateToCourseDetail(BuildContext context, String courseId) {
+  void _navigateToCourseDetail(
+    BuildContext context,
+    CourseEntity course,
+    String fallbackThumbnailUrl,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CourseDetailScreen(
-          courseId: courseId,
-          heroTag: 'discovery-course-image-$courseId',
+          courseId: course.id,
+          heroTag: 'discovery-course-image-${course.id}',
+          initialThumbnailUrl: course.thumbnailUrl,
+          fallbackThumbnailUrl: fallbackThumbnailUrl,
         ),
       ),
     );
@@ -498,7 +505,8 @@ class _CategorySection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<CourseEntity> courses;
-  final Function(String courseId) onCourseTap;
+  final void Function(CourseEntity course, String fallbackThumbnailUrl)
+  onCourseTap;
   final VoidCallback? onSeeAll;
 
   const _CategorySection({
@@ -587,7 +595,8 @@ class _CategorySection extends StatelessWidget {
                 child: _HorizontalCourseCard(
                   course: course,
                   compact: isCompactMobile,
-                  onTap: () => onCourseTap(course.id),
+                  onTap: (fallbackThumbnailUrl) =>
+                      onCourseTap(course, fallbackThumbnailUrl),
                 ),
               );
             },
@@ -605,7 +614,7 @@ class _CategorySection extends StatelessWidget {
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
   final bool compact;
-  final VoidCallback onTap;
+  final ValueChanged<String> onTap;
 
   const _HorizontalCourseCard({
     required this.course,
@@ -633,7 +642,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(cardRadius),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: () => onTap(_getCourseImageUrl()),
           borderRadius: BorderRadius.circular(cardRadius),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1036,50 +1045,65 @@ class _HorizontalCourseCard extends StatelessWidget {
   }
 
   Widget _buildCourseThumbnail(BuildContext context) {
-    final imageUrl = course.thumbnailUrl ?? _getCourseImageUrl();
+    final primaryUrl = course.thumbnailUrl;
+    final fallbackUrl = _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
 
-    return Image.network(
-      imageUrl,
+    Widget gradientLoading() => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
+    );
+
+    Widget finalFallback(BuildContext ctx) => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).colorScheme.surface.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.school,
+            size: 32,
+            color: Theme.of(ctx).colorScheme.surface,
+          ),
+        ),
+      ),
+    );
+
+    // DB thumbnail exists: try it first, fall back to computed URL on error
+    if (primaryUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: primaryUrl,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => gradientLoading(),
+        errorWidget: (_, __, ___) => CachedNetworkImage(
+          imageUrl: fallbackUrl,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => gradientLoading(),
+          errorWidget: (ctx, __, ___) => finalFallback(ctx),
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: fallbackUrl,
       fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors,
-            ),
-          ),
-        );
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors,
-            ),
-          ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.school,
-                size: 32,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-            ),
-          ),
-        );
-      },
+      placeholder: (_, __) => gradientLoading(),
+      errorWidget: (ctx, __, ___) => finalFallback(ctx),
     );
   }
 

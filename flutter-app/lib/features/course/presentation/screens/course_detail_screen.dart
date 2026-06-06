@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -13,8 +14,16 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
   final String? heroTag;
+  final String? initialThumbnailUrl;
+  final String? fallbackThumbnailUrl;
 
-  const CourseDetailScreen({super.key, required this.courseId, this.heroTag});
+  const CourseDetailScreen({
+    super.key,
+    required this.courseId,
+    this.heroTag,
+    this.initialThumbnailUrl,
+    this.fallbackThumbnailUrl,
+  });
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -331,19 +340,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     BuildContext context,
     CourseDetailEntity course,
   ) {
-    if (course.thumbnailUrl != null) {
+    final imageUrls = buildCourseThumbnailCandidates(
+      detailThumbnailUrl: course.thumbnailUrl,
+      initialThumbnailUrl: widget.initialThumbnailUrl,
+      fallbackThumbnailUrl: widget.fallbackThumbnailUrl,
+    );
+
+    if (imageUrls.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            course.thumbnailUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: Colors.grey[300],
-                child: const Icon(Icons.school, size: 64),
-              );
-            },
+          _CourseHeroNetworkImage(
+            imageUrls: imageUrls,
+            placeholder: _buildCourseImagePlaceholder(context),
           ),
           Container(
             decoration: BoxDecoration(
@@ -360,6 +369,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ],
       );
     }
+    return _buildCourseImagePlaceholder(context);
+  }
+
+  Widget _buildCourseImagePlaceholder(BuildContext context) {
     return Container(
       color: Theme.of(context).primaryColor,
       child: Icon(
@@ -367,6 +380,55 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         size: 64,
         color: Theme.of(context).colorScheme.surface,
       ),
+    );
+  }
+}
+
+List<String> buildCourseThumbnailCandidates({
+  String? detailThumbnailUrl,
+  String? initialThumbnailUrl,
+  String? fallbackThumbnailUrl,
+}) {
+  final candidates = <String>[];
+
+  for (final value in [
+    detailThumbnailUrl,
+    initialThumbnailUrl,
+    fallbackThumbnailUrl,
+  ]) {
+    final url = value?.trim();
+    if (url != null && url.isNotEmpty && !candidates.contains(url)) {
+      candidates.add(url);
+    }
+  }
+
+  return candidates;
+}
+
+class _CourseHeroNetworkImage extends StatelessWidget {
+  final List<String> imageUrls;
+  final Widget placeholder;
+
+  const _CourseHeroNetworkImage({
+    required this.imageUrls,
+    required this.placeholder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildCandidate(0);
+  }
+
+  Widget _buildCandidate(int index) {
+    if (index >= imageUrls.length) {
+      return placeholder;
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrls[index],
+      fit: BoxFit.cover,
+      placeholder: (_, __) => placeholder,
+      errorWidget: (_, __, ___) => _buildCandidate(index + 1),
     );
   }
 }
