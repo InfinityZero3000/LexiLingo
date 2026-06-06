@@ -117,11 +117,32 @@ class ContextManager:
     def _extract_topics(self, history: List[Dict[str, Any]]) -> List[str]:
         """
         Extract main topics from conversation history
-        Simple keyword-based extraction (can be enhanced with NLP)
+        Simple keyword-based extraction
         """
-        # TODO: Implement proper topic extraction with NLP
-        # For now, return empty
-        return []
+        topic_keywords = {
+            "travel": ["travel", "trip", "flight", "hotel", "vacation", "journey", "country", "visit"],
+            "food": ["food", "eat", "restaurant", "recipe", "cook", "meal", "dinner", "breakfast", "lunch", "drink"],
+            "work & career": ["job", "work", "office", "career", "interview", "business", "company", "boss", "colleague"],
+            "hobbies": ["hobby", "music", "movie", "book", "read", "game", "play", "hike", "paint", "art"],
+            "family & friends": ["family", "friend", "parent", "mother", "father", "sister", "brother", "child", "son", "daughter"],
+            "education": ["school", "university", "college", "study", "learn", "class", "teacher", "student", "exam"],
+            "technology": ["computer", "phone", "internet", "software", "ai", "tech", "app", "website", "online"],
+            "sports": ["sport", "football", "soccer", "basketball", "tennis", "gym", "exercise", "run", "swim"],
+            "health": ["health", "doctor", "hospital", "medicine", "sick", "pain", "fit", "diet"]
+        }
+        
+        extracted = set()
+        for turn in history:
+            user_msg = turn.get("user", "").lower()
+            ai_msg = turn.get("ai", "").lower()
+            combined = f"{user_msg} {ai_msg}"
+            
+            for topic, keywords in topic_keywords.items():
+                for kw in keywords:
+                    if f" {kw}" in f" {combined}":
+                        extracted.add(topic)
+                        break
+        return list(extracted)[:3]
     
     async def update_after_interaction(
         self,
@@ -157,7 +178,16 @@ class ContextManager:
             await self.learner_cache.add_error(user_id, error_type)
         
         # Update learner level if needed
-        # TODO: Implement level progression logic
+        try:
+            sessions = await self.learner_cache.get_sessions(user_id)
+            if len(sessions) > 0 and len(sessions) % 5 == 0:
+                from api.services.assessment_service import get_assessment_service
+                assess_service = get_assessment_service()
+                assessment = await assess_service.assess_user(user_id, force=True)
+                if assessment and assessment.current_level:
+                    await self.learner_cache.set_level(user_id, assessment.current_level.value)
+        except Exception:
+            pass
         
     def generate_cache_key(self, text: str, context: Dict[str, Any]) -> str:
         """

@@ -222,6 +222,7 @@ class AssessmentService:
                             "$sum": {"$size": {"$ifNull": ["$analysis.grammar_errors", []]}}
                         },
                         "vocab_levels": {"$push": "$analysis.vocabulary_level"},
+                        "active_dates": {"$addToSet": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}}},
                     }
                 },
             ]
@@ -246,6 +247,10 @@ class AssessmentService:
             # Fluency from average
             fluency = result.get("avg_fluency", 0.5) or 0.5
 
+            # Consistency score based on active days regularity (aiming for at least 8 distinct days of interaction)
+            active_days = len(result.get("active_dates", []))
+            consistency = min(1.0, active_days / 8.0)
+
             # Error trend
             trend = await self._calculate_error_trend(user_id, days)
 
@@ -253,7 +258,7 @@ class AssessmentService:
                 grammar_accuracy=grammar_accuracy,
                 vocabulary_complexity=vocab_score,
                 fluency_score=fluency,
-                consistency_score=0.8,  # TODO: Calculate from session regularity
+                consistency_score=consistency,
                 interaction_count=total,
                 error_trend=trend,
             )
