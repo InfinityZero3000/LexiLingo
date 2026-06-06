@@ -212,20 +212,457 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   Widget _buildTopicFlashcardsTab(BuildContext context) {
-    return GridView.builder(
+    final vocabProvider = Provider.of<VocabProvider>(context);
+    final customDecks = vocabProvider.decks;
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section 1: System Topics Header
+          Text(
+            'vocabulary.systemTopicsHeader'.tr(defaultValue: 'Chủ đề hệ thống'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 12),
+
+          // Grid for system topics
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: _topics.length,
+            itemBuilder: (context, index) {
+              final topic = _topics[index];
+              return _buildTopicCard(context, topic);
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Section 2: Custom Decks Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'vocabulary.customDecksHeader'.tr(defaultValue: 'Bộ sưu tập của bạn'),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.primary),
+                onPressed: () => _showCreateDeckDialog(context, vocabProvider),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Grid for custom decks
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: customDecks.length + 1, // +1 for the "Create Deck" card
+            itemBuilder: (context, index) {
+              if (index == customDecks.length) {
+                return _buildCreateDeckCard(context, vocabProvider);
+              }
+              final deck = customDecks[index];
+              return _buildCustomDeckCard(context, deck, vocabProvider);
+            },
+          ),
+        ],
       ),
-      itemCount: _topics.length,
-      itemBuilder: (context, index) {
-        final topic = _topics[index];
-        return _buildTopicCard(context, topic);
+    );
+  }
+
+  Widget _buildCustomDeckCard(
+    BuildContext context,
+    VocabularyDeck deck,
+    VocabProvider vocabProvider,
+  ) {
+    Color deckColor;
+    try {
+      final hex = deck.color.replaceAll('#', '');
+      deckColor = Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      deckColor = AppColors.primary;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [deckColor, deckColor.withValues(alpha: 0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: deckColor.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onLongPress: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
+          onTap: () => _startDeckStudy(context, deck),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.collections_bookmark_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
+                      onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  deck.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${deck.itemCount} ' + 'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()], defaultValue: 'từ vựng'),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'vocabulary.startLearning'.tr(),
+                        style: TextStyle(
+                          color: deckColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.play_arrow_rounded,
+                        color: deckColor,
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateDeckCard(BuildContext context, VocabProvider vocabProvider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white24 : Colors.black12,
+          width: 2,
+          style: BorderStyle.dashed,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _showCreateDeckDialog(context, vocabProvider),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_rounded,
+                  size: 40,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'vocabulary.createCustomDeck'.tr(defaultValue: 'Tạo bộ sưu tập'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateDeckDialog(BuildContext context, VocabProvider vocabProvider) {
+    final nameController = TextEditingController();
+    final descController = TextEditingController();
+    String selectedColor = '#2196F3';
+
+    final List<String> colors = [
+      '#2196F3', // Blue
+      '#4CAF50', // Green
+      '#FF9800', // Orange
+      '#E91E63', // Pink
+      '#9C27B0', // Purple
+      '#9E9E9E', // Grey
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('vocabulary.createNewDeck'.tr(defaultValue: 'Tạo bộ sưu tập mới')),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'vocabulary.deckName'.tr(defaultValue: 'Tên bộ sưu tập'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descController,
+                      decoration: InputDecoration(
+                        labelText: 'vocabulary.deckDescription'.tr(defaultValue: 'Mô tả'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'vocabulary.selectColor'.tr(defaultValue: 'Chọn màu sắc'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 48,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: colors.length,
+                        itemBuilder: (context, index) {
+                          final colorHex = colors[index];
+                          final color = Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
+                          final isSelected = selectedColor == colorHex;
+
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedColor = colorHex;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: isSelected
+                                    ? Border.all(color: Colors.black, width: 3)
+                                    : null,
+                              ),
+                              child: isSelected
+                                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('common.cancel'.tr(defaultValue: 'Hủy')),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty) return;
+                    final success = await vocabProvider.createDeck(
+                      nameController.text.trim(),
+                      descController.text.trim().isEmpty ? null : descController.text.trim(),
+                      selectedColor,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      if (!success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(vocabProvider.errorMessage ?? 'Failed to create deck'),
+                            backgroundColor: AppColors.errorBright,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Text('common.create'.tr(defaultValue: 'Tạo')),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
+  }
+
+  void _showDeleteDeckConfirmation(
+    BuildContext context,
+    VocabularyDeck deck,
+    VocabProvider vocabProvider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('vocabulary.deleteDeckTitle'.tr(defaultValue: 'Xóa bộ sưu tập')),
+          content: Text(
+            'vocabulary.deleteDeckPrompt'.tr(
+              args: [deck.name],
+              defaultValue: 'Bạn có chắc chắn muốn xóa bộ sưu tập "${deck.name}"? Các từ vựng bên trong sẽ không bị xóa khỏi tài khoản của bạn.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('common.cancel'.tr(defaultValue: 'Hủy')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorBright,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final success = await vocabProvider.deleteDeck(deck.id);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (!success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(vocabProvider.errorMessage ?? 'Failed to delete deck'),
+                        backgroundColor: AppColors.errorBright,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text('common.delete'.tr(defaultValue: 'Xóa')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _startDeckStudy(BuildContext context, VocabularyDeck deck) async {
+    final flashcardProvider = Provider.of<FlashcardProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      ),
+    );
+
+    try {
+      await flashcardProvider.startDeckSession(deckId: deck.id);
+      if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading dialog
+        if (flashcardProvider.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(flashcardProvider.errorMessage!),
+              backgroundColor: AppColors.errorBright,
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const FlashcardReviewScreen(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start study: $e'),
+            backgroundColor: AppColors.errorBright,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildTopicCard(BuildContext context, _TopicConfig topic) {

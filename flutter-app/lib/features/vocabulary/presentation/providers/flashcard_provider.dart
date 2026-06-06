@@ -212,6 +212,81 @@ class FlashcardProvider extends ChangeNotifier {
     }
   }
 
+  /// Start a new review session for a custom deck
+  Future<void> startDeckSession({required String deckId, int limit = 20}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _currentSession = null;
+    notifyListeners();
+
+    try {
+      final result = await vocabularyRepository.getDeckItems(deckId);
+
+      await result.fold(
+        (failure) async {
+          _errorMessage = _getFailureMessage(failure);
+          _isLoading = false;
+          notifyListeners();
+        },
+        (deckItems) async {
+          if (deckItems.isEmpty) {
+            _errorMessage = 'No vocabulary found in this deck!';
+            _isLoading = false;
+            notifyListeners();
+            return;
+          }
+
+          final cards = <ReviewCardEntity>[];
+
+          for (final userVocab in deckItems.take(limit)) {
+            final vocabResult = await vocabularyRepository.getVocabularyItem(
+              userVocab.vocabularyId,
+            );
+
+            vocabResult.fold(
+              (failure) {
+                debugPrint(
+                  'Failed to load vocabulary: ${userVocab.vocabularyId}',
+                );
+              },
+              (vocabularyItem) {
+                cards.add(
+                  ReviewCardEntity(
+                    userVocabulary: userVocab,
+                    vocabularyItem: vocabularyItem,
+                  ),
+                );
+              },
+            );
+          }
+
+          if (cards.isEmpty) {
+            _errorMessage = 'Failed to load vocabulary items';
+            _isLoading = false;
+            notifyListeners();
+            return;
+          }
+
+          // Create session
+          _currentSession = ReviewSessionEntity(
+            cards: cards,
+            startedAt: DateTime.now(),
+            totalCards: cards.length,
+          );
+
+          _cardStartTime = DateTime.now();
+          _isLoading = false;
+          _isCardFlipped = false;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      _errorMessage = 'Unexpected error: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Flip current card (front <-> back)
   void flipCard() {
     _isCardFlipped = !_isCardFlipped;

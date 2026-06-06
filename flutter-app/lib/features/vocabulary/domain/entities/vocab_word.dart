@@ -1,5 +1,6 @@
 class VocabWord {
   final int? id;
+  final String? userVocabularyId; // Backend UserVocabulary UUID
   final String word;
   final String definition;
   final bool isLearned;
@@ -10,6 +11,7 @@ class VocabWord {
 
   VocabWord({
     this.id,
+    this.userVocabularyId,
     required this.word,
     required this.definition,
     this.isLearned = false,

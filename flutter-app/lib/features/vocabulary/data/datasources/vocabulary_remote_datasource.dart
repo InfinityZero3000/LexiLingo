@@ -54,6 +54,9 @@ abstract class VocabularyRemoteDataSource {
 
   /// Get vocabulary statistics
   Future<Map<String, dynamic>> getVocabularyStats();
+
+  /// Get vocabulary items in a deck
+  Future<List<UserVocabularyModel>> getDeckItems(String deckId);
 }
 
 /// Implementation of VocabularyRemoteDataSource
@@ -237,6 +240,19 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       rethrow;
     } catch (e) {
       throw ServerException('Failed to fetch vocabulary stats: $e');
+    }
+  }
+
+  @override
+  Future<List<UserVocabularyModel>> getDeckItems(String deckId) async {
+    try {
+      final response = await apiClient.get('/vocabulary/decks/$deckId/items');
+      final List<dynamic> data = response as List<dynamic>;
+      return data.map((json) => UserVocabularyModel.fromJson(json)).toList();
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to fetch deck items: $e');
     }
   }
 }

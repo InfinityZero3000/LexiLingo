@@ -56,6 +56,7 @@ class VocabProvider extends ChangeNotifier {
       unawaited(loadWords());
     });
     unawaited(loadWords());
+    unawaited(loadDecks());
   }
 
   List<VocabWord> get words => _words;
@@ -117,6 +118,7 @@ class VocabProvider extends ChangeNotifier {
           final word = vocab['word'] as String? ?? '';
           if (word.isEmpty) return null;
           return VocabWord(
+            userVocabularyId: item['id'] as String?,
             word: word,
             definition: vocab['definition'] as String? ?? '',
             pronunciation: vocab['pronunciation'] as String?,
@@ -246,5 +248,125 @@ class VocabProvider extends ChangeNotifier {
     } else {
       return 'An error occurred. Please try again.';
     }
+  }
+
+  // ===== Vocabulary Decks =====
+  List<VocabularyDeck> _decks = [];
+  List<VocabularyDeck> get decks => _decks;
+
+  Future<void> loadDecks() async {
+    if (_apiClient == null) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiClient!.get('/vocabulary/decks');
+      final items = response['data'] ?? response;
+      if (items is List) {
+        _decks = items.map((d) => VocabularyDeck.fromJson(d as Map<String, dynamic>)).toList();
+      } else {
+        _decks = [];
+      }
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = 'Failed to load decks: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createDeck(String name, String? description, String color) async {
+    if (_apiClient == null) return false;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final descParam = description != null ? '&description=${Uri.encodeComponent(description)}' : '';
+      final colorParam = '&color=${Uri.encodeComponent(color)}';
+      await _apiClient!.post('/vocabulary/decks?name=${Uri.encodeComponent(name)}$descParam$colorParam');
+      _errorMessage = null;
+      await loadDecks();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to create deck: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> addWordToDeck(String deckId, String userVocabularyId) async {
+    if (_apiClient == null) return false;
+    try {
+      await _apiClient!.post(
+        '/vocabulary/decks/$deckId/items',
+        body: {'user_vocabulary_id': userVocabularyId},
+      );
+      await loadDecks();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to add word to deck: $e';
+      return false;
+    }
+  }
+
+  Future<bool> removeWordFromDeck(String deckId, String userVocabularyId) async {
+    if (_apiClient == null) return false;
+    try {
+      await _apiClient!.delete('/vocabulary/decks/$deckId/items/$userVocabularyId');
+      await loadDecks();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to remove word from deck: $e';
+      return false;
+    }
+  }
+
+  Future<bool> deleteDeck(String deckId) async {
+    if (_apiClient == null) return false;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _apiClient!.delete('/vocabulary/decks/$deckId');
+      await loadDecks();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to delete deck: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+
+class VocabularyDeck {
+  final String id;
+  final String name;
+  final String? description;
+  final String color;
+  final bool isPublic;
+  final int itemCount;
+
+  const VocabularyDeck({
+    required this.id,
+    required this.name,
+    this.description,
+    required this.color,
+    this.isPublic = false,
+    this.itemCount = 0,
+  });
+
+  factory VocabularyDeck.fromJson(Map<String, dynamic> json) {
+    return VocabularyDeck(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      color: json['color'] as String? ?? "#2196F3",
+      isPublic: json['is_public'] as bool? ?? false,
+      itemCount: json['item_count'] as int? ?? 0,
+    );
   }
 }

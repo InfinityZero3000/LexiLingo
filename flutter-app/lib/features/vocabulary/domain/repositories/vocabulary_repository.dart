@@ -60,4 +60,7 @@ abstract class VocabularyRepository {
 
   /// Get vocabulary statistics
   Future<Either<Failure, Map<String, dynamic>>> getVocabularyStats();
+
+  /// Get vocabulary items in a deck
+  Future<Either<Failure, List<UserVocabularyEntity>>> getDeckItems(String deckId);
 }
