@@ -66,6 +66,17 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshCurrentUser() async {
+    final result = await getCurrentUserUseCase(NoParams());
+    result.fold((failure) => _errorMessage = _getFailureMessage(failure), (
+      user,
+    ) {
+      _user = user;
+      _errorMessage = null;
+    });
+    notifyListeners();
+  }
+
   // Check current user on app start
   Future<void> _checkCurrentUser() async {
     try {

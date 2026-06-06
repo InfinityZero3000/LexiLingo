@@ -19,8 +19,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _flagsReady = false;
-
   static const double _flagWidth = 48;
   static const double _flagHeight = 32;
 
@@ -29,7 +27,6 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSettings();
-      _precacheFlagImages(context);
     });
   }
 
@@ -42,23 +39,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _precacheFlagImages(BuildContext context) async {
-    await Future.wait(
-      AppLocales.supportedLocales.map((locale) async {
-        final imageUrl = AppLocales.flagPngUrlOf(locale.languageCode);
-        try {
-          await precacheImage(CachedNetworkImageProvider(imageUrl), context);
-        } catch (_) {
-          // Ignore preload failures; each row has its own fallback.
-        }
-      }),
-    );
-
-    if (!mounted) return;
-
-    setState(() => _flagsReady = true);
-  }
-
   Widget _buildFlagWidget(BuildContext context, String languageCode) {
     final imageUrl = AppLocales.flagPngUrlOf(languageCode);
 
@@ -67,14 +47,14 @@ class _SettingsPageState extends State<SettingsPage> {
       child: SizedBox(
         width: _flagWidth,
         height: _flagHeight,
-        child: _flagsReady
-            ? Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    _buildFlagFallback(context, languageCode),
-              )
-            : _buildFlagSkeleton(context),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          fadeInDuration: Duration.zero,
+          placeholder: (_, __) => _buildFlagSkeleton(context),
+          errorWidget: (_, __, ___) =>
+              _buildFlagFallback(context, languageCode),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
+import 'package:lexilingo_app/core/services/sound_service.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
@@ -128,6 +129,7 @@ class SettingsProvider extends ChangeNotifier {
       _settings = Settings(id: 0, userId: userId, language: savedLocale);
     } finally {
       _isLoading = false;
+      SoundService.instance.setEnabled(_settings?.soundEnabled ?? true);
       notifyListeners();
       // Sync reminder asynchronously — must not block isLoading flag.
       if (_settings != null && _error == null) {
@@ -335,6 +337,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> updateSoundEnabled(bool enabled) async {
     if (_settings == null) return;
 
+    SoundService.instance.setEnabled(enabled);
+
     final oldEnabled = _settings!.soundEnabled;
     _settings = _settings!.copyWith(soundEnabled: enabled);
     notifyListeners();
@@ -344,6 +348,7 @@ class SettingsProvider extends ChangeNotifier {
       result.fold(
         (failure) {
           _settings = _settings!.copyWith(soundEnabled: oldEnabled);
+          SoundService.instance.setEnabled(oldEnabled);
           _error = failure.message;
           notifyListeners();
         },
@@ -353,6 +358,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     } catch (e) {
       _settings = _settings!.copyWith(soundEnabled: oldEnabled);
+      SoundService.instance.setEnabled(oldEnabled);
       _error = e.toString();
       notifyListeners();
     }

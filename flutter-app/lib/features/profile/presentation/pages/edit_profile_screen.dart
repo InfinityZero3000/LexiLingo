@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/utils/avatar_utils.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
+import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 
 /// Edit Profile Screen
 /// Allows users to update their display name and avatar.
@@ -30,7 +31,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
 
-  static const List<String> _avatarOptions = AvatarUtils.presetAvatarUrls;
+  List<String> _avatarOptions = List.of(AvatarUtils.presetAvatarUrls);
 
   @override
   void initState() {
@@ -42,6 +43,17 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final normalizedAvatar = AvatarUtils.normalizeAvatarUrl(user?.avatarUrl);
     _avatarUrlController = TextEditingController(text: normalizedAvatar ?? '');
     _selectedAvatarUrl = normalizedAvatar;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final gamification = context.read<GamificationProvider>();
+      await gamification.loadInventory();
+      if (!mounted) return;
+      setState(() {
+        _avatarOptions = {
+          ...AvatarUtils.presetAvatarUrls,
+          ...gamification.ownedAvatarUrls,
+        }.toList();
+      });
+    });
 
     _animController = AnimationController(
       duration: const Duration(milliseconds: 600),
