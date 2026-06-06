@@ -27,7 +27,7 @@
     Referrer-Policy = "no-referrer"
     X-XSS-Protection = "1; mode=block"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com; connect-src 'self' https://api.lexilingo.me https://accounts.google.com https://oauth2.googleapis.com; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://static.cloudflareinsights.com https://vercel.live; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com https://vercel.live; connect-src 'self' https://api.lexilingo.me https://accounts.google.com https://oauth2.googleapis.com https://cloudflareinsights.com https://vercel.live; form-action 'self'"
 
 # Cache static assets
 [[headers]]
