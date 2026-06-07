@@ -447,16 +447,21 @@ class DailyChallengesSheet extends StatelessWidget {
   }
 
   void _claimReward(BuildContext context, String challengeId) async {
+    final challenge = provider.challenges.firstWhere((c) => c.id == challengeId);
     final success = await provider.claimReward(challengeId);
     if (success && context.mounted) {
+      // Optimistically update XP immediately so the header reflects it right away.
+      final levelProvider = context.read<LevelProvider>();
+      levelProvider.updateLevel(levelProvider.totalXp + challenge.xpReward);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('home.rewardClaimed'.tr()),
           backgroundColor: AppColors.greenSuccessBright,
         ),
       );
-      // Fetch level updates to reflect claimed XP
-      context.read<LevelProvider>().fetchLevelFull(sl<ApiClient>());
+      // Sync with server in background to apply any XP-boost multipliers.
+      levelProvider.fetchLevelFull(sl<ApiClient>());
     }
   }
 }

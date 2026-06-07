@@ -413,7 +413,12 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                onPressed: cur > 0 ? provider.previousPage : null,
+                onPressed: cur > 0
+                    ? () => _pageController.previousPage(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      )
+                    : null,
                 icon: Icon(Icons.navigate_before_rounded, color: textColor),
               ),
               Text(
@@ -431,7 +436,12 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 ),
               ),
               IconButton(
-                onPressed: cur < totalPages - 1 ? provider.nextPage : null,
+                onPressed: cur < totalPages - 1
+                    ? () => _pageController.nextPage(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      )
+                    : null,
                 icon: Icon(Icons.navigate_next_rounded, color: textColor),
               ),
             ],

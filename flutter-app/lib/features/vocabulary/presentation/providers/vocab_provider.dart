@@ -40,6 +40,7 @@ class VocabProvider extends ChangeNotifier {
   List<VocabWord> _words = [];
   String? _errorMessage;
   bool _isLoading = false;
+  String? _selectedTag;
 
   // Dictionary lookup state
   DictionaryLookupResult? _lookupResult;
@@ -62,6 +63,26 @@ class VocabProvider extends ChangeNotifier {
   List<VocabWord> get words => _words;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
+  String? get selectedTag => _selectedTag;
+
+  List<String> get availableTags {
+    final tags = <String>{};
+    for (final w in _words) {
+      if (w.tags != null) tags.addAll(w.tags!);
+    }
+    final sorted = tags.toList()..sort();
+    return sorted;
+  }
+
+  List<VocabWord> get filteredWords {
+    if (_selectedTag == null) return _words;
+    return _words.where((w) => w.tags?.contains(_selectedTag) == true).toList();
+  }
+
+  void setTagFilter(String? tag) {
+    _selectedTag = tag;
+    notifyListeners();
+  }
   DictionaryLookupResult? get lookupResult => _lookupResult;
   bool get isLookingUp => _isLookingUp;
 
@@ -117,6 +138,10 @@ class VocabProvider extends ChangeNotifier {
           if (vocab == null) return null;
           final word = vocab['word'] as String? ?? '';
           if (word.isEmpty) return null;
+          final rawTags = vocab['tags'];
+          final tags = rawTags is List
+              ? rawTags.whereType<String>().toList()
+              : null;
           return VocabWord(
             userVocabularyId: item['id'] as String?,
             word: word,
@@ -125,6 +150,7 @@ class VocabProvider extends ChangeNotifier {
             audioUrl: vocab['audio_url'] as String?,
             partOfSpeech: vocab['part_of_speech'] as String?,
             isLearned: (item['status'] as String?) == 'mastered',
+            tags: tags,
           );
         })
         .whereType<VocabWord>()

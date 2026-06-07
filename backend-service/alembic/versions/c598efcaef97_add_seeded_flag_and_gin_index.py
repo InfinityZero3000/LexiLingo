@@ -22,16 +22,13 @@ def upgrade() -> None:
     # 1. Add column to users table
     op.add_column('users', sa.Column('has_seeded_basic_words', sa.Boolean(), server_default='false', nullable=False))
     
-    # 2. Add GIN index for JSONB tags column on PostgreSQL
+    # 2. Add GIN index on tags column (cast to jsonb to support GIN on json columns)
     bind = op.get_bind()
     if bind.dialect.name == 'postgresql':
-        op.create_index(
-            'ix_vocabulary_items_tags_gin',
-            'vocabulary_items',
-            ['tags'],
-            unique=False,
-            postgresql_using='gin'
-        )
+        op.execute(sa.text(
+            "CREATE INDEX IF NOT EXISTS ix_vocabulary_items_tags_gin "
+            "ON vocabulary_items USING gin ((tags::jsonb) jsonb_path_ops)"
+        ))
 
 
 def downgrade() -> None:

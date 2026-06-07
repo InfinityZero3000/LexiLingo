@@ -20,10 +20,24 @@ class VocabLibraryPage extends StatefulWidget {
 class _VocabLibraryPageState extends State<VocabLibraryPage> {
   final TextEditingController _searchController = TextEditingController();
 
+  static const Map<String, _TagMeta> _tagMeta = {
+    'general':    _TagMeta(label: 'Tổng quát',  icon: Icons.hearing_rounded),
+    'travel':     _TagMeta(label: 'Du lịch',    icon: Icons.flight),
+    'business':   _TagMeta(label: 'Kinh doanh', icon: Icons.work),
+    'daily':      _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee),
+    'science':    _TagMeta(label: 'Khoa học',   icon: Icons.science_rounded),
+    'technology': _TagMeta(label: 'Công nghệ',  icon: Icons.devices_rounded),
+    'ielts':      _TagMeta(label: 'IELTS',       icon: Icons.school_rounded),
+    'academic':   _TagMeta(label: 'Học thuật',  icon: Icons.menu_book_rounded),
+    'health':     _TagMeta(label: 'Sức khỏe',   icon: Icons.health_and_safety_rounded),
+    'food':       _TagMeta(label: 'Ẩm thực',    icon: Icons.restaurant_rounded),
+    'sports':     _TagMeta(label: 'Thể thao',   icon: Icons.sports_rounded),
+  };
+
   @override
   Widget build(BuildContext context) {
     final vocabProvider = Provider.of<VocabProvider>(context);
-    List<VocabWord> words = vocabProvider.words;
+    final List<VocabWord> words = vocabProvider.filteredWords;
 
     return DefaultTabController(
       length: 2,
@@ -135,48 +149,33 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
 
                 // Filters
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildFilterChip('vocabulary.filterAll'.tr(), true),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterTravel'.tr(),
-                        false,
-                        icon: Icons.flight,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterBusiness'.tr(),
-                        false,
-                        icon: Icons.work,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterDaily'.tr(),
-                        false,
-                        icon: Icons.coffee,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTopicFilterBar(context, vocabProvider),
 
-                // "Recent Words" Header
+                // Words Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'vocabulary.recentWordsHeader'.tr(),
+                        vocabProvider.selectedTag == null
+                            ? 'vocabulary.recentWordsHeader'.tr()
+                            : (_tagMeta[vocabProvider.selectedTag]?.label ??
+                                    _capitalizeTag(vocabProvider.selectedTag!))
+                                .toUpperCase(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      if (!vocabProvider.isLoading)
+                        Text(
+                          '${words.length} từ',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -800,35 +799,88 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     }
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, {IconData? icon}) {
+  Widget _buildTopicFilterBar(BuildContext context, VocabProvider vocabProvider) {
+    final availableTags = vocabProvider.availableTags;
+    final selectedTag = vocabProvider.selectedTag;
+
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _buildFilterChip(
+            'vocabulary.filterAll'.tr(),
+            selectedTag == null,
+            onTap: () => vocabProvider.setTagFilter(null),
+          ),
+          ...availableTags.map((tag) {
+            final meta = _tagMeta[tag];
+            return Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: _buildFilterChip(
+                meta?.label ?? _capitalizeTag(tag),
+                selectedTag == tag,
+                icon: meta?.icon,
+                onTap: () => vocabProvider.setTagFilter(
+                  selectedTag == tag ? null : tag,
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _capitalizeTag(String tag) =>
+      tag.isEmpty ? tag : tag[0].toUpperCase() + tag.substring(1);
+
+  Widget _buildFilterChip(
+    String label,
+    bool isSelected, {
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return FilterChip(
-      selected: isSelected,
-      showCheckmark: false,
-      avatar: icon != null
-          ? Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : AppColors.textGrey,
-            )
-          : null,
-      label: Text(
-        label,
-        style: TextStyle(
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(
+          horizontal: icon != null ? 10 : 14,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white
-              : (isDark ? Colors.white70 : AppColors.textDark),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          fontSize: 12,
+              ? AppColors.primary
+              : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : AppColors.textGrey,
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white70 : AppColors.textDark),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
-      backgroundColor: isDark
-          ? Colors.white.withValues(alpha: 0.06)
-          : AppColors.grey100,
-      selectedColor: AppColors.primary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      side: BorderSide.none,
-      onSelected: (_) {},
     );
   }
 
@@ -1294,6 +1346,12 @@ class _InfoChip extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TagMeta {
+  final String label;
+  final IconData icon;
+  const _TagMeta({required this.label, required this.icon});
 }
 
 class _TopicConfig {

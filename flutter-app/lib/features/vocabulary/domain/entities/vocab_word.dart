@@ -8,6 +8,7 @@ class VocabWord {
   final String? audioUrl; // Remote audio URL for TTS playback
   final String? example; // Example sentence
   final String? partOfSpeech; // noun, verb, adjective…
+  final List<String>? tags; // Topic tags, e.g. ["business", "travel"]
 
   VocabWord({
     this.id,
@@ -19,5 +20,6 @@ class VocabWord {
     this.audioUrl,
     this.example,
     this.partOfSpeech,
+    this.tags,
   });
 }
