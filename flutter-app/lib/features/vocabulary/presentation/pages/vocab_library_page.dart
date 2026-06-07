@@ -32,6 +32,20 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     'health':     _TagMeta(label: 'Sức khỏe',   icon: Icons.health_and_safety_rounded),
     'food':       _TagMeta(label: 'Ẩm thực',    icon: Icons.restaurant_rounded),
     'sports':     _TagMeta(label: 'Thể thao',   icon: Icons.sports_rounded),
+    'daily_life': _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee_rounded),
+    'government': _TagMeta(label: 'Chính phủ',  icon: Icons.gavel_rounded),
+    'economics':  _TagMeta(label: 'Kinh tế',    icon: Icons.monetization_on_rounded),
+    'education':  _TagMeta(label: 'Giáo dục',   icon: Icons.school_rounded),
+    'lesson':     _TagMeta(label: 'Bài học',    icon: Icons.import_contacts_rounded),
+    'philosophy': _TagMeta(label: 'Triết học',  icon: Icons.psychology_rounded),
+    'basic_200':  _TagMeta(label: 'Từ cơ bản',  icon: Icons.star_outline_rounded),
+    'nature':     _TagMeta(label: 'Tự nhiên',   icon: Icons.nature_people_rounded),
+    'core-vocab': _TagMeta(label: 'Cốt lõi',    icon: Icons.grade_rounded),
+    'auto':       _TagMeta(label: 'Tự động lưu', icon: Icons.bolt_rounded),
+    'crawl':      _TagMeta(label: 'Thu thập',    icon: Icons.download_rounded),
+    'society':    _TagMeta(label: 'Xã hội',     icon: Icons.people_rounded),
+    'seed':       _TagMeta(label: 'Mầm',        icon: Icons.spa_rounded),
+    'history':    _TagMeta(label: 'Lịch sử',    icon: Icons.history_edu_rounded),
   };
 
   @override
@@ -324,83 +338,112 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           borderRadius: BorderRadius.circular(20),
           onLongPress: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
           onTap: () => _startDeckStudy(context, deck),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Stack(
+            clipBehavior: Clip.antiAlias,
+            children: [
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Transform.rotate(
+                  angle: -0.25,
+                  child: Icon(
+                    Icons.collections_bookmark_rounded,
+                    size: 90,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.collections_bookmark_rounded,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.collections_bookmark_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
+                          onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      deck.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         color: Colors.white,
-                        size: 24,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
-                      onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${deck.itemCount} ${'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()])}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'vocabulary.startLearning'.tr(),
+                            style: TextStyle(
+                              color: deckColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            color: deckColor,
+                            size: 14,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const Spacer(),
-                Text(
-                  deck.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${deck.itemCount} ${'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()])}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'vocabulary.startLearning'.tr(),
-                        style: TextStyle(
-                          color: deckColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        color: deckColor,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -683,70 +726,99 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () => _startTopicStudy(context, topic),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+          child: Stack(
+            clipBehavior: Clip.antiAlias,
+            children: [
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 90,
+                  height: 90,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
+                ),
+              ),
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Transform.rotate(
+                  angle: -0.25,
                   child: Icon(
                     topic.icon,
-                    color: Colors.white,
-                    size: 24,
+                    size: 90,
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  topic.titleKey.tr(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  topic.subtitleKey.tr(),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'vocabulary.startLearning'.tr(),
-                        style: TextStyle(
-                          color: topic.gradient[0],
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        color: topic.gradient[0],
-                        size: 14,
+                      child: Icon(
+                        topic.icon,
+                        color: Colors.white,
+                        size: 24,
                       ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      topic.titleKey.tr(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      topic.subtitleKey.tr(),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'vocabulary.startLearning'.tr(),
+                            style: TextStyle(
+                              color: topic.gradient[0],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            color: topic.gradient[0],
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

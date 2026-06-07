@@ -25,7 +25,7 @@ class YouTubeRepository {
   /// Get curated English learning YouTube channels.
   Future<List<YouTubeChannel>> getCuratedChannels({String? category}) async {
     // v4: bumped to force re-fetch after thumbnail proxy was fixed server-side.
-    final cacheKey = 'youtube:channels:v4${category != null ? ':$category' : ''}';
+    final cacheKey = 'youtube:channels:v5${category != null ? ':$category' : ''}';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,

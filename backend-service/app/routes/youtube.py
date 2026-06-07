@@ -145,9 +145,7 @@ async def _fetch_channel_thumbnails(channel_ids: list[str]) -> dict[str, str]:
                 or snippet.get("thumbnails", {}).get("default", {}).get("url")
                 or ""
             )
-            # Only accept proper YouTube CDN URLs (path must start with /ytc/)
-            parsed = urlparse(thumb)
-            if cid and thumb and parsed.path.startswith("/ytc/"):
+            if cid and thumb:
                 thumbnails[cid] = thumb
         return thumbnails
     except Exception as e:
@@ -172,7 +170,7 @@ async def get_curated_channels(
         channels = [c for c in channels if c["category"] == category]
 
     # Fetch real thumbnails via cache
-    cache_key = "youtube:channel_thumbnails:all:v4"
+    cache_key = "youtube:channel_thumbnails:all:v5"
     cache_service = APICacheService(db)
     channel_ids = [c["id"] for c in CURATED_CHANNELS]  # always fetch all for cache
 
@@ -195,11 +193,6 @@ async def get_curated_channels(
 
     def _proxy_thumbnail(url: str) -> str:
         if not url:
-            return ""
-        # Reject stale/malformed yt3 URLs — real YouTube CDN paths start with /ytc/
-        parsed = urlparse(url)
-        if "googleusercontent.com" in parsed.netloc and not parsed.path.startswith("/ytc/"):
-            logger.warning("Rejected malformed thumbnail URL: %s", url)
             return ""
         return f"{base_url}/{api_prefix}/podcasts/proxy/image?url={quote(url)}"
 

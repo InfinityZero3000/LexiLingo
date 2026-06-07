@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/network/api_config.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
@@ -47,6 +48,14 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
     _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  String _getProxiedUrl(String url) {
+    if (url.isEmpty) return '';
+    if (url.startsWith('http') && !url.contains('/podcasts/proxy/')) {
+      return '${ApiConfig.baseUrl}/podcasts/proxy/image?url=${Uri.encodeComponent(url)}';
+    }
+    return url;
   }
 
   void _onBackPressed() {
@@ -462,6 +471,10 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
 
   Widget _buildChannelCard(YouTubeChannel channel, bool isDark) {
     final gradient = _channelGradient(channel.id, channel.category);
+    final thumb = channel.thumbnail;
+    final isUsable =
+        thumb.isNotEmpty &&
+        (thumb.contains('/podcasts/proxy/') || thumb.contains('/ytc/'));
 
     return GestureDetector(
       onTap: () {
@@ -487,38 +500,67 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              _buildChannelAvatar(channel),
-              const Spacer(),
-              Text(
-                channel.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
+              // Channel Avatar Image Background (if usable)
+              if (isUsable)
+                CachedNetworkImage(
+                  imageUrl: thumb,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 5),
+              // Dark Gradient Overlay for text contrast & blending
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  channel.level,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: isUsable ? 0.35 : 0.0),
+                      Colors.black.withValues(alpha: isUsable ? 0.75 : 0.15),
+                    ],
                   ),
+                ),
+              ),
+              // Card Content
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPlayIcon(),
+                    const Spacer(),
+                    Text(
+                      channel.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        channel.level,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -528,28 +570,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
     );
   }
 
-  Widget _buildChannelAvatar(YouTubeChannel channel) {
-    final thumb = channel.thumbnail;
-    final isUsable =
-        thumb.isNotEmpty &&
-        (thumb.contains('/podcasts/proxy/') || thumb.contains('/ytc/'));
-    if (isUsable) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: CachedNetworkImage(
-          imageUrl: thumb,
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => _avatarFallback(),
-          errorWidget: (_, __, ___) => _avatarFallback(),
-        ),
-      );
-    }
-    return _avatarFallback();
-  }
-
-  Widget _avatarFallback() {
+  Widget _buildPlayIcon() {
     return Container(
       width: 40,
       height: 40,
@@ -712,8 +733,8 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                       children: [
                         CachedNetworkImage(
                           imageUrl: video.thumbnailUrl.isNotEmpty
-                              ? video.thumbnailUrl
-                              : 'https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg',
+                              ? _getProxiedUrl(video.thumbnailUrl)
+                              : _getProxiedUrl('https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg'),
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
                             color: AppColors.primary.withValues(alpha: 0.08),
@@ -1347,6 +1368,14 @@ class _SavedVideosSheet extends StatelessWidget {
   final bool isDark;
   const _SavedVideosSheet({required this.isDark});
 
+  String _getProxiedUrl(String url) {
+    if (url.isEmpty) return '';
+    if (url.startsWith('http') && !url.contains('/podcasts/proxy/')) {
+      return '${ApiConfig.baseUrl}/podcasts/proxy/image?url=${Uri.encodeComponent(url)}';
+    }
+    return url;
+  }
+
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
@@ -1549,8 +1578,8 @@ class _SavedVideosSheet extends StatelessWidget {
                                       children: [
                                         CachedNetworkImage(
                                           imageUrl: s.thumbnailUrl.isNotEmpty
-                                              ? s.thumbnailUrl
-                                              : 'https://img.youtube.com/vi/${s.videoId}/mqdefault.jpg',
+                                              ? _getProxiedUrl(s.thumbnailUrl)
+                                              : _getProxiedUrl('https://img.youtube.com/vi/${s.videoId}/mqdefault.jpg'),
                                           fit: BoxFit.cover,
                                           placeholder: (_, __) => Container(
                                             color: AppColors.primary.withValues(

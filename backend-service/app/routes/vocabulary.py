@@ -146,7 +146,7 @@ async def get_vocabulary_item(
 @router.get("/collection", response_model=UserVocabularyListResponse)
 async def get_user_collection(
     vocab_status: Optional[str] = Query(None, alias="status", description="learning, reviewing, mastered"),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -156,7 +156,7 @@ async def get_user_collection(
 
     Query params:
     - status: Filter by learning status (learning/reviewing/mastered)
-    - limit: Results per page (max 100)
+    - limit: Results per page (max 1000)
     - offset: Pagination offset
 
     Returns:

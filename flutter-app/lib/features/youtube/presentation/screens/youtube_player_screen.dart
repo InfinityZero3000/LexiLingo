@@ -229,6 +229,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           opacity: _fadeController,
           child: Column(
             children: [
+              _buildTopHeader(isDark),
               _buildPlayerArea(isDark),
               _buildActiveSubtitleCard(isDark),
               _buildInfoBar(isDark),
@@ -252,33 +253,52 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   }
 
   // ─────────────────────────────────────────────
+  //  Top Header Bar
+  // ─────────────────────────────────────────────
+
+  Widget _buildTopHeader(bool isDark) {
+    return Container(
+      color: isDark ? AppColors.backgroundDark : Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : AppColors.grey100,
+              foregroundColor: isDark ? Colors.white : AppColors.textDark,
+              padding: const EdgeInsets.all(10),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Học qua video',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
   //  Player
   // ─────────────────────────────────────────────
 
   Widget _buildPlayerArea(bool isDark) {
-    return Stack(
-      children: [
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Container(
-            color: Colors.black,
-            child: YoutubePlayer(controller: _ytController),
-          ),
-        ),
-        Positioned(
-          top: 8,
-          left: 8,
-          child: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.black54,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.all(8),
-            ),
-          ),
-        ),
-      ],
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        color: Colors.black,
+        child: YoutubePlayer(controller: _ytController),
+      ),
     );
   }
 

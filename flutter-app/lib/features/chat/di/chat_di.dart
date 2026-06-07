@@ -2,7 +2,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
-import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/database/database_helper.dart' as chat_db;
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/features/chat/data/datasources/chat_api_data_source.dart';
@@ -88,7 +87,7 @@ void registerChatModule({required bool skipDatabase}) {
   // ============================================================
   sl.registerLazySingleton<StoryApiDataSource>(
     () => StoryApiDataSource(
-      authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
+      apiClient: sl<AiApiClient>(),
     ),
   );
 

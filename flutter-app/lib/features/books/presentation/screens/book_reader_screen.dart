@@ -269,7 +269,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     Color textColor,
     Color bgColor,
   ) {
-    final words = pageText.split(RegExp(r'(\s+)'));
+    final matches = RegExp(r'(\s+|[^\s]+)').allMatches(pageText);
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
@@ -280,11 +280,12 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       ),
       child: RichText(
         text: TextSpan(
-          children: words.map((word) {
-            final clean = word.trim().replaceAll(RegExp(r'[^\w]'), '');
-            if (clean.isEmpty) {
+          children: matches.map((match) {
+            final val = match.group(0)!;
+            final isWhitespace = RegExp(r'\s').hasMatch(val);
+            if (isWhitespace) {
               return TextSpan(
-                text: word,
+                text: val,
                 style: TextStyle(
                   fontSize: settings.fontSize,
                   height: settings.lineSpacing,
@@ -292,6 +293,19 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 ),
               );
             }
+
+            final clean = val.replaceAll(RegExp(r'[^\w]'), '');
+            if (clean.isEmpty) {
+              return TextSpan(
+                text: val,
+                style: TextStyle(
+                  fontSize: settings.fontSize,
+                  height: settings.lineSpacing,
+                  color: textColor,
+                ),
+              );
+            }
+
             return WidgetSpan(
               alignment: PlaceholderAlignment.baseline,
               baseline: TextBaseline.alphabetic,
@@ -300,7 +314,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                     ? () => _showWordDefinition(clean)
                     : null,
                 child: Text(
-                  '$word ',
+                  val,
                   style: TextStyle(
                     fontSize: settings.fontSize,
                     height: settings.lineSpacing,
